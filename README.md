@@ -15,7 +15,7 @@ The library provides packages for dealing with OpenAPI specifications.
 
 ## Dependencies
   * Go 1.7. Works in pre-1.7 versions if you provide _context.Context_ to the compiler.
-  * Tests require [github.com/jban332/kincore](github.com/jban332/kincore)
+  * Tests require [github.com/jban332/kincore](https://github.com/jban332/kincore)
 
 ## Other OpenAPI  implementations
 ### go-openapi
