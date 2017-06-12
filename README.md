@@ -11,6 +11,7 @@ The library provides packages for dealing with OpenAPI specifications.
     * JSON schemas (`openapi3.Schema`)
     * HTTP requests
     * HTTP responses
+  * Generates JSON schemas for Go types.
 
 ## Dependencies
   * Go 1.7. Works in pre-1.7 versions if you provide _context.Context_ to the compiler.
