@@ -9,23 +9,22 @@ package openapi2
 
 import (
 	"fmt"
-	"github.com/jban332/kinapi/jsoninfo"
-	"github.com/jban332/kinapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 type Swagger struct {
-	Info                openapi3.Info               `json:"info"`
-	ExternalDocs        *openapi3.ExternalDocs      `json:"externalDocs,omitempty"`
-	Schemes             []string                    `json:"schemas,omitempty"`
-	Host                string                      `json:"host,omitempty"`
-	BasePath            string                      `json:"basePath,omitempty"`
-	Paths               map[string]*PathItem        `json:"paths,omitempty"`
-	Definitions         map[string]*openapi3.Schema `json:"definitions,omitempty,noref"`
-	Parameters          map[string]*Parameter       `json:"parameters,omitempty,noref"`
-	Responses           map[string]*Response        `json:"responses,omitempty,noref"`
-	SecurityDefinitions map[string]*SecurityScheme  `json:"securityDefinitions,omitempty"`
-	Security            SecurityRequirements        `json:"security,omitempty"`
-	Tags                openapi3.Tags               `json:"tags,omitempty"`
+	Info                openapi3.Info                  `json:"info"`
+	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty"`
+	Schemes             []string                       `json:"schemas,omitempty"`
+	Host                string                         `json:"host,omitempty"`
+	BasePath            string                         `json:"basePath,omitempty"`
+	Paths               map[string]*PathItem           `json:"paths,omitempty"`
+	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty,noref"`
+	Parameters          map[string]*Parameter          `json:"parameters,omitempty,noref"`
+	Responses           map[string]*Response           `json:"responses,omitempty,noref"`
+	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty"`
+	Security            SecurityRequirements           `json:"security,omitempty"`
+	Tags                openapi3.Tags                  `json:"tags,omitempty"`
 }
 
 func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {
@@ -138,33 +137,34 @@ type Operation struct {
 type Parameters []*Parameter
 
 type Parameter struct {
-	jsoninfo.RefProps
-	In               string           `json:"in,omitempty"`
-	Name             string           `json:"name,omitempty"`
-	Description      string           `json:"description,omitempty"`
-	Required         bool             `json:"required,omitempty"`
-	Schema           *openapi3.Schema `json:"schema,omitempty"`
-	Type             string           `json:"type,omitempty"`
-	Format           string           `json:"format,omitempty"`
-	Enum             []interface{}    `json:"enum,omitempty"`
-	Minimum          *float64         `json:"minimum,omitempty"`
-	Maximum          *float64         `json:"maximum,omitempty"`
-	ExclusiveMinimum *float64         `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *float64         `json:"exclusiveMaximum,omitempty"`
-	MinLength        int64            `json:"minLength,omitempty"`
-	MaxLength        *int64           `json:"maxLength,omitempty"`
-	Pattern          string           `json:"pattern,omitempty"`
+	Ref              string              `json:"$ref,omitempty"`
+	In               string              `json:"in,omitempty"`
+	Name             string              `json:"name,omitempty"`
+	Description      string              `json:"description,omitempty"`
+	Required         bool                `json:"required,omitempty"`
+	Schema           *openapi3.SchemaRef `json:"schema,omitempty"`
+	Type             string              `json:"type,omitempty"`
+	Format           string              `json:"format,omitempty"`
+	Enum             []interface{}       `json:"enum,omitempty"`
+	Minimum          *float64            `json:"minimum,omitempty"`
+	Maximum          *float64            `json:"maximum,omitempty"`
+	ExclusiveMinimum *float64            `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *float64            `json:"exclusiveMaximum,omitempty"`
+	MinLength        int64               `json:"minLength,omitempty"`
+	MaxLength        *int64              `json:"maxLength,omitempty"`
+	Pattern          string              `json:"pattern,omitempty"`
 }
 
 type Response struct {
-	jsoninfo.RefProps
+	Ref         string                 `json:"$ref,omitempty"`
 	Description string                 `json:"description,omitempty"`
-	Schema      *openapi3.Schema       `json:"schema,omitempty"`
+	Schema      *openapi3.SchemaRef    `json:"schema,omitempty"`
 	Headers     map[string]*Header     `json:"headers,omitempty"`
 	Examples    map[string]interface{} `json:"examples,omitempty"`
 }
 
 type Header struct {
+	Ref         string `json:"$ref,omitempty"`
 	Description string `json:"description,omitempty"`
 	Type        string `json:"type,omitempty"`
 }
@@ -172,6 +172,7 @@ type Header struct {
 type SecurityRequirements []map[string][]string
 
 type SecurityScheme struct {
+	Ref              string        `json:"$ref,omitempty"`
 	Description      string        `json:"description,omitempty"`
 	Type             string        `json:"type,omitempty"`
 	In               string        `json:"in,omitempty"`

@@ -40,13 +40,13 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	}
 
 	// Find input for the current status
-	inputSpecs := route.Operation.Responses
-	if inputSpecs != nil && len(inputSpecs) > 0 {
-		inputSpec := inputSpecs.Get(status) // Response
-		if inputSpec == nil {
-			inputSpec = inputSpecs.Default() // Default input
+	responses := route.Operation.Responses
+	if responses != nil && len(responses) > 0 {
+		responseRef := responses.Get(status) // Response
+		if responseRef == nil {
+			responseRef = responses.Default() // Default input
 		}
-		if inputSpec == nil {
+		if responseRef == nil {
 			// By default, status that is not documented is allowed
 			if !options.IncludeResponseStatus {
 				return nil
@@ -58,7 +58,14 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 				Reason: "status is not supported",
 			}
 		}
-		content := inputSpec.Content
+		response := responseRef.Value
+		if response == nil {
+			return &ResponseError{
+				Input:  input,
+				Reason: "response has not been resolved",
+			}
+		}
+		content := response.Content
 		if content != nil && len(content) > 0 && options.ExcludeResponseBody == false {
 			inputMIME := input.Header.Get("Content-Type")
 			mediaType := parseMediaType(inputMIME)
@@ -69,8 +76,10 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 					Reason: "input header 'Content-type' has unexpected value",
 				}
 			}
-			schema := contentType.Schema
-			if schema != nil && mediaType == "application/json" {
+			schemaRef := contentType.Schema
+			if schemaRef != nil && mediaType == "application/json" {
+				schema := schemaRef.Value
+
 				// Read request body
 				body := input.Body
 

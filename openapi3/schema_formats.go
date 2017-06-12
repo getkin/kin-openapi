@@ -17,7 +17,7 @@ func DefineStringFormat(name string, pattern string) {
 }
 
 func init() {
-	// This pattern catches obviously wrong email addresses.
+	// This pattern catches only some suspiciously wrong-looking email addresses.
 	// Use DefineStringFormat(...) if you need something stricter.
 	DefineStringFormat("email", `^[^@]+@[^@<>",\w]+$`)
 

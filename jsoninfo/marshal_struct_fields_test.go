@@ -2,7 +2,7 @@ package jsoninfo_test
 
 import (
 	"encoding/json"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 	"testing"
 	"time"
 )
@@ -42,7 +42,6 @@ type OriginalNameType struct {
 }
 
 type RootType struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
 	EmbeddedType0
 	EmbeddedType1
@@ -54,17 +53,6 @@ type EmbeddedType0 struct {
 
 type EmbeddedType1 struct {
 	Field1 string `json:"embedded1,omitempty"`
-}
-
-type RefParentType struct {
-	jsoninfo.RefProps
-	Item   *RefType            `json:"item,omitempty"`
-	NoRefs map[string]*RefType `json:"definitions,omitempty,noref"`
-}
-
-type RefType struct {
-	jsoninfo.RefProps
-	String string `json:"string,omitempty"`
 }
 
 type Example struct {
@@ -146,54 +134,6 @@ var Examples = []Example{
 			"embedded0": "0",
 			"embedded1": "1",
 			"x-other":   nil,
-		},
-	},
-
-	// JSON references
-	{
-		Value: &RefParentType{},
-		JSON:  Object{},
-	},
-	{
-		Value: &RefParentType{
-			Item: &RefType{
-				String: "abc",
-			},
-		},
-		JSON: Object{
-			"item": Object{
-				"string": "abc",
-			},
-		},
-	},
-	{
-		Value: &RefParentType{
-			Item: &RefType{
-				RefProps: jsoninfo.RefProps{
-					Ref: "abc",
-				},
-			},
-		},
-		JSON: Object{
-			"item": Object{
-				"$ref": "abc",
-			},
-		},
-	},
-	{
-		NoUnmarshal: true,
-		Value: &RefParentType{
-			Item: &RefType{
-				RefProps: jsoninfo.RefProps{
-					Ref: "abc",
-				},
-				String: "someString",
-			},
-		},
-		JSON: Object{
-			"item": Object{
-				"$ref": "abc",
-			},
 		},
 	},
 }

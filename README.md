@@ -1,15 +1,26 @@
-# kinapi
+# kin-openapi
 The library provides packages for dealing with OpenAPI specifications.
 
-The main features are:
-  * Targets OpenAPI version 3.
-  * Transforms OpenAPI files from v2 to v3
-  * Transforms OpenAPI files from v3 to v2
+## Features
+  * Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
+  * Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md). Uses OpenAPI 3.0 elements where they are backwards compatible with version 2.0.
+  * Transforms documents between OpenAPI versions:
+    * 2.0 -> 3.0
+    * 3.0 -> 2.0
+  * Validates:
+    * JSON schemas (`openapi3.Schema`)
+  * Generates JSON schemas for Go types.
 
-## kinapi vs go-openapi
+## Dependencies
+  * Go 1.7. Works in pre-1.7 versions if you provide _context.Context_ to the compiler.
+  * Tests require [github.com/jban332/kincore](https://github.com/jban332/kincore)
+
+## Other OpenAPI  implementations
+### go-openapi
 The [go-openapi](https://github.com/go-openapi) project provides a stable and well-tested implementation of OpenAPI version 2.
 
-The main difference is that this library targets OpenAPI version 3. You might also find that the API is slightly less cluttered because of the approach we chose to serializing/deserializing JSON.
+### Others
+See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
 
 # Packages
   * `jsoninfo`
@@ -27,6 +38,31 @@ The main difference is that this library targets OpenAPI version 3. You might al
   * `pathpattern`
     * Support for OpenAPI style path patterns.
 
-# Dependencies
-  * Go 1.5
-  * Tests require [github.com/jban332/kincore](github.com/jban332/kincore)
+# Using JSON serialization in other projects
+The package `jsoninfo` was written to deal with JSON references and extension properties.
+
+It:
+  * Marshals/unmarshal JSON references
+  * Marshals/unmarshal JSON extension properties (`"x-someExtension"`)
+  * Refuses to unmarshal unsupported properties.
+
+Usage looks like:
+```
+type Example struct {
+ // Allow extension properties ("x-someProperty")
+ jsoninfo.ExtensionProps
+ 
+ // Allow reference property ("$ref")
+ jsoninfo.RefProps
+ 
+ // Normal properties
+ SomeField float64
+}
+
+func (example *Example) MarshalJSON() ([]byte, error) {
+ return jsoninfo.MarshalStructFields(example)
+}
+
+func (example *Example) UnmarshalJSON(data []byte) error {
+ return jsoninfo.UnmarshalStructFields(data, example)
+}

@@ -1,7 +1,7 @@
 package openapi3
 
 import (
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Info is specified by OpenAPI/Swagger standard version 3.0.

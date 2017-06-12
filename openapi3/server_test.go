@@ -1,7 +1,7 @@
 package openapi3_test
 
 import (
-	"github.com/jban332/kinapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kincore/jsontest"
 	"testing"
 )

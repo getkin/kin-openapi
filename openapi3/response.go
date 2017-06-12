@@ -2,28 +2,28 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
+	"strconv"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
-type Responses map[string]*Response
+type Responses map[string]*ResponseRef
 
 func NewResponses() Responses {
 	return make(Responses, 8)
 }
 
-func (responses Responses) Default() *Response {
+func (responses Responses) Default() *ResponseRef {
 	return responses["default"]
 }
 
-func (responses Responses) Get(status int) *Response {
-	return responses[fmt.Sprint(status)]
+func (responses Responses) Get(status int) *ResponseRef {
+	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
 func (all Responses) Validate(c context.Context) error {
-	for _, resp := range all {
-		err := resp.Validate(c)
+	for _, v := range all {
+		err := v.Validate(c)
 		if err != nil {
 			return err
 		}
@@ -33,11 +33,11 @@ func (all Responses) Validate(c context.Context) error {
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 type Response struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
-
-	Description string  `json:"description,omitempty"`
-	Content     Content `json:"content,omitempty"`
+	Description string              `json:"description,omitempty"`
+	Headers     map[string]*Schema  `json:"headers,omitempty"`
+	Content     Content             `json:"content,omitempty"`
+	Links       map[string]*LinkRef `json:"links,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -56,6 +56,11 @@ func (response *Response) WithContent(content Content) *Response {
 
 func (response *Response) WithJSONSchema(schema *Schema) *Response {
 	response.Content = NewContentWithJSONSchema(schema)
+	return response
+}
+
+func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
+	response.Content = NewContentWithJSONSchemaRef(schema)
 	return response
 }
 

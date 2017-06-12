@@ -1,8 +1,8 @@
 package openapi3filter_test
 
 import (
-	"github.com/jban332/kinapi/openapi3"
-	"github.com/jban332/kinapi/openapi3filter"
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3filter"
 	"net/http"
 	"sort"
 	"testing"
@@ -34,7 +34,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	// Build router
-	router := openapi3filter.NewRouter(swagger)
+	router := openapi3filter.NewRouter().AddSwagger3(swagger)
 
 	// Declare a helper function
 	expect := func(method string, uri string, operation *openapi3.Operation, params map[string]string) {

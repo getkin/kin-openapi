@@ -1,10 +1,10 @@
 package openapi3_test
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kincore/jsontest"
-	"github.com/jban332/kinapi/jsoninfo"
-	"github.com/jban332/kinapi/openapi3"
 	"testing"
 )
 
@@ -20,56 +20,80 @@ func expect(t *testing.T, swagger *openapi3.Swagger, value interface{}) {
 	swagger = &openapi3.Swagger{}
 	err = json.Unmarshal(data, &swagger)
 	jsontest.ExpectWithErr(t, swagger, err).Value(value)
+
+	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
+	swagger.ResolveRefs()
+
+	t.Log("Validate unmarshalled *openapi3.Swagger")
+	err = swagger.Validate(context.TODO())
+	jsontest.ExpectErr(t, err).Err(nil)
 }
 
 func TestRefs(t *testing.T) {
 	parameter := &openapi3.Parameter{
-		RefProps: jsoninfo.RefProps{
-			Ref: "#/components/parameters/someParameter",
-		},
 		Description: "Some parameter",
+		Name:        "example",
+		In:          "query",
 	}
 	requestBody := &openapi3.RequestBody{
-		RefProps: jsoninfo.RefProps{
-			Ref: "#/components/requestBodies/someRequestBody",
-		},
 		Description: "Some request body",
 	}
 	response := &openapi3.Response{
-		RefProps: jsoninfo.RefProps{
-			Ref: "#/components/responses/someResponse",
-		},
 		Description: "Some response",
 	}
 	schema := &openapi3.Schema{
-		RefProps: jsoninfo.RefProps{
-			Ref: "#/components/schemas/someSchema",
-		},
 		Description: "Some schema",
 	}
 	swagger := &openapi3.Swagger{
 		OpenAPI: "3.0",
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
-				Get: &openapi3.Operation{
+				Post: &openapi3.Operation{
 					Parameters: openapi3.Parameters{
-						parameter,
+						{
+							Ref:   "#/components/parameters/someParameter",
+							Value: parameter,
+						},
+					},
+					RequestBody: &openapi3.RequestBodyRef{
+						Ref:   "#/components/requestBodies/someRequestBody",
+						Value: requestBody,
+					},
+					Responses: openapi3.Responses{
+						"200": &openapi3.ResponseRef{
+							Ref:   "#/components/responses/someResponse",
+							Value: response,
+						},
+					},
+				},
+				Parameters: openapi3.Parameters{
+					{
+						Ref:   "#/components/parameters/someParameter",
+						Value: parameter,
 					},
 				},
 			},
 		},
 		Components: openapi3.Components{
-			Parameters: map[string]*openapi3.Parameter{
-				"someParameter": parameter,
+			Parameters: map[string]*openapi3.ParameterRef{
+				"someParameter": {
+					Value: parameter,
+				},
 			},
-			RequestBodies: map[string]*openapi3.RequestBody{
-				"someRequestBody": requestBody,
+			RequestBodies: map[string]*openapi3.RequestBodyRef{
+				"someRequestBody": {
+					Value: requestBody,
+				},
 			},
-			Responses: map[string]*openapi3.Response{
-				"someResponse": response,
+			Responses: map[string]*openapi3.ResponseRef{
+				"someResponse": {
+					Value: response,
+				},
 			},
-			Schemas: map[string]*openapi3.Schema{
-				"someSchema": schema,
+			Schemas: map[string]*openapi3.SchemaRef{
+				"someSchema": {
+					Value: schema,
+				},
 			},
 		},
 	}
@@ -78,10 +102,23 @@ func TestRefs(t *testing.T) {
 		"info":    Object{},
 		"paths": Object{
 			"/hello": Object{
-				"get": Object{
+				"parameters": Array{
+					Object{
+						"$ref": "#/components/parameters/someParameter",
+					},
+				},
+				"post": Object{
 					"parameters": Array{
 						Object{
 							"$ref": "#/components/parameters/someParameter",
+						},
+					},
+					"body": Object{
+						"$ref": "#/components/requestBodies/someRequestBody",
+					},
+					"responses": Object{
+						"200": Object{
+							"$ref": "#/components/responses/someResponse",
 						},
 					},
 				},
@@ -91,6 +128,8 @@ func TestRefs(t *testing.T) {
 			"parameters": Object{
 				"someParameter": Object{
 					"description": "Some parameter",
+					"name":        "example",
+					"in":          "query",
 				},
 			},
 			"requestBodies": Object{

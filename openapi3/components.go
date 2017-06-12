@@ -2,23 +2,24 @@ package openapi3
 
 import (
 	"context"
-	"errors"
-	"github.com/jban332/kinapi/jsoninfo"
+	"fmt"
+	"github.com/jban332/kin-openapi/jsoninfo"
+	"regexp"
 )
 
 // Components is specified by OpenAPI/Swagger standard version 3.0.
 type Components struct {
 	jsoninfo.ExtensionProps
-	Schemas         map[string]*Schema         `json:"schemas,omitempty,noref"`
-	Parameters      map[string]*Parameter      `json:"parameters,omitempty,noref"`
-	Headers         map[string]*Parameter      `json:"headers,omitempty"`
-	RequestBodies   map[string]*RequestBody    `json:"requestBodies,omitempty,noref"`
-	Responses       map[string]*Response       `json:"responses,omitempty,noref"`
-	SecuritySchemes map[string]*SecurityScheme `json:"securitySchemes,omitempty"`
-	Examples        map[string]interface{}     `json:"examples,omitempty,noref"`
-	Tags            Tags                       `json:"tags,omitempty"`
-	Links           map[string]*Link           `json:"links,omitempty,noref"`
-	Callbacks       map[string]*Callback       `json:"callbacks,omitempty,noref"`
+	Schemas         map[string]*SchemaRef         `json:"schemas,omitempty"`
+	Parameters      map[string]*ParameterRef      `json:"parameters,omitempty"`
+	Headers         map[string]*HeaderRef         `json:"headers,omitempty"`
+	RequestBodies   map[string]*RequestBodyRef    `json:"requestBodies,omitempty"`
+	Responses       map[string]*ResponseRef       `json:"responses,omitempty"`
+	SecuritySchemes map[string]*SecuritySchemeRef `json:"securitySchemes,omitempty"`
+	Examples        map[string]*ExampleRef        `json:"examples,omitempty"`
+	Tags            Tags                          `json:"tags,omitempty"`
+	Links           map[string]*LinkRef           `json:"links,omitempty"`
+	Callbacks       map[string]*CallbackRef       `json:"callbacks,omitempty"`
 }
 
 func NewComponents() Components {
@@ -79,12 +80,6 @@ func (components *Components) Validate(c context.Context) error {
 			if err := ValidateIdentifier(k); err != nil {
 				return err
 			}
-			if v.Name != "" {
-				return errors.New("Header component can't contain 'name'")
-			}
-			if v.In != "" {
-				return errors.New("Header component can't contain 'in'")
-			}
 			if err := v.Validate(c); err != nil {
 				return err
 			}
@@ -101,4 +96,15 @@ func (components *Components) Validate(c context.Context) error {
 		}
 	}
 	return nil
+}
+
+const identifierPattern = `^[a-zA-Z0-9.\-_]+$`
+
+var identifierRegExp = regexp.MustCompile(identifierPattern)
+
+func ValidateIdentifier(value string) error {
+	if identifierRegExp.MatchString(value) {
+		return nil
+	}
+	return fmt.Errorf("Identifier '%s' is not supported by OpenAPI version 3 standard (regexp: '%s')", value, identifierPattern)
 }

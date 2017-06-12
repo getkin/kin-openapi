@@ -3,9 +3,9 @@ package openapi2conv_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jban332/kinapi/openapi2"
-	"github.com/jban332/kinapi/openapi2conv"
-	"github.com/jban332/kinapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi2"
+	"github.com/jban332/kin-openapi/openapi2conv"
+	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kincore/jsontest"
 	"testing"
 )
@@ -171,11 +171,11 @@ func Test_openapi2(t *testing.T) {
 			panic(err)
 		}
 		t.Log("Converting V3 -> V2")
-		actualV2 := openapi2conv.FromV3Swagger(swagger3)
-		jsontest.Expect(t, actualV2).Value(example.V2)
+		actualV2, err := openapi2conv.FromV3Swagger(swagger3)
+		jsontest.ExpectWithErr(t, actualV2, err).Value(example.V2)
 
 		t.Log("Converting V2 -> V3")
-		actualV3 := openapi2conv.ToV3Swagger(swagger2)
-		jsontest.Expect(t, actualV3).Value(example.V3)
+		actualV3, err := openapi2conv.ToV3Swagger(swagger2)
+		jsontest.ExpectWithErr(t, actualV3, err).Value(example.V3)
 	}
 }

@@ -1,18 +1,15 @@
 package openapi3
 
-import "github.com/jban332/kinapi/jsoninfo"
+import "context"
 
 // Callback is specified by OpenAPI/Swagger standard version 3.0.
-type Callback struct {
-	jsoninfo.RefProps
-	jsoninfo.ExtensionProps
-	Description string `json:"description,omitempty"`
-}
+type Callback map[string]*PathItem
 
-func (value *Callback) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
-}
-
-func (value *Callback) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+func (value Callback) Validate(c context.Context) error {
+	for _, v := range value {
+		if err := v.Validate(c); err != nil {
+			return err
+		}
+	}
+	return nil
 }

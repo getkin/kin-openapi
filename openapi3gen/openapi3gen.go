@@ -3,8 +3,8 @@ package openapi3gen
 
 import (
 	"fmt"
-	"github.com/jban332/kinapi/jsoninfo"
-	"github.com/jban332/kinapi/openapi3"
+	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/jban332/kin-openapi/openapi3"
 	"reflect"
 	"sync"
 	"time"
@@ -52,11 +52,9 @@ func schemaFromType(parents []*openapi3.Schema, t reflect.Type) (*openapi3.Schem
 	// Try get the schema again
 	schema, _ = typeInfo.Schema.(*openapi3.Schema)
 	if schema != nil {
-		if schema.Ref == "" {
-			for _, parent := range parents {
-				if schema == parent {
-					panic(fmt.Errorf("Type '%s' has a cyclic schema", t.String()))
-				}
+		for _, parent := range parents {
+			if schema == parent {
+				panic(fmt.Errorf("Type '%s' has a cyclic schema", t.String()))
 			}
 		}
 		return schema, nil
@@ -74,7 +72,9 @@ func schemaFromType(parents []*openapi3.Schema, t reflect.Type) (*openapi3.Schem
 	// Add fields
 	for _, field := range typeInfo.Fields {
 		fieldSchema := &openapi3.Schema{}
-		schema.Properties[field.JSONName] = fieldSchema
+		schema.Properties[field.JSONName] = &openapi3.SchemaRef{
+			Value: fieldSchema,
+		}
 		t := field.Type
 		for t.Kind() == reflect.Ptr {
 			t = t.Elem()
@@ -113,7 +113,9 @@ func schemaFromType(parents []*openapi3.Schema, t reflect.Type) (*openapi3.Schem
 			if err != nil {
 				return nil, err
 			}
-			fieldSchema.AdditionalProperties = valueSchema
+			fieldSchema.AdditionalProperties = &openapi3.SchemaRef{
+				Value: valueSchema,
+			}
 		case reflect.Struct:
 			fieldSchema.Type = "object"
 			newFieldSchema, err := schemaFromType(parents, t)
@@ -121,7 +123,9 @@ func schemaFromType(parents []*openapi3.Schema, t reflect.Type) (*openapi3.Schem
 				return nil, err
 			}
 			if newFieldSchema != nil {
-				schema.Properties[field.JSONName] = newFieldSchema
+				schema.Properties[field.JSONName] = &openapi3.SchemaRef{
+					Value: newFieldSchema,
+				}
 			}
 		}
 	}

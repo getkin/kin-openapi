@@ -3,20 +3,22 @@ package openapi3
 import (
 	"context"
 	"fmt"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Parameters is specified by OpenAPI/Swagger 3.0 standard.
-type Parameters []*Parameter
+type Parameters []*ParameterRef
 
 func NewParameters() Parameters {
-	return make([]*Parameter, 0, 4)
+	return make(Parameters, 0, 4)
 }
 
 func (all Parameters) GetByInAndName(in string, name string) *Parameter {
 	for _, item := range all {
-		if item.Name == name && item.In == in {
-			return item
+		if v := item.Value; v != nil {
+			if v.Name == name && v.In == in {
+				return v
+			}
 		}
 	}
 	return nil
@@ -25,16 +27,22 @@ func (all Parameters) GetByInAndName(in string, name string) *Parameter {
 func (all Parameters) Validate(c context.Context) error {
 	m := make(map[string]struct{})
 	for _, item := range all {
-		in := item.In
-		name := item.Name
-		key := in + ":" + name
-		if _, exists := m[key]; exists {
-			return fmt.Errorf("More than one '%s' parameter has name '%s'", in, name)
-		}
-		m[key] = struct{}{}
 		err := item.Validate(c)
 		if err != nil {
 			return err
+		}
+		if v := item.Value; v != nil {
+			in := v.In
+			name := v.Name
+			key := in + ":" + name
+			if _, exists := m[key]; exists {
+				return fmt.Errorf("More than one '%s' parameter has name '%s'", in, name)
+			}
+			m[key] = struct{}{}
+			err := item.Validate(c)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -42,7 +50,6 @@ func (all Parameters) Validate(c context.Context) error {
 
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
 type Parameter struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
 	Name            string        `json:"name,omitempty"`
 	In              string        `json:"in,omitempty"`
@@ -52,7 +59,7 @@ type Parameter struct {
 	Style           string        `json:"style,omitempty"`
 	AllowEmptyValue bool          `json:"allowEmptyValue,omitempty"`
 	AllowReserved   bool          `json:"allowReserved,omitempty"`
-	Schema          *Schema       `json:"schema,omitempty"`
+	Schema          *SchemaRef    `json:"schema,omitempty"`
 	Example         interface{}   `json:"example,omitempty"`
 	Examples        []interface{} `json:"examples,omitempty"`
 }
@@ -104,7 +111,13 @@ func (parameter *Parameter) WithRequired(value bool) *Parameter {
 }
 
 func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
-	parameter.Schema = value
+	if value == nil {
+		parameter.Schema = nil
+	} else {
+		parameter.Schema = &SchemaRef{
+			Value: value,
+		}
+	}
 	return parameter
 }
 

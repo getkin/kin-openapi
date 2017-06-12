@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jban332/kinapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -26,7 +26,8 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 
 	// For each parameter of the PathItem
 	if pathItemParameters != nil {
-		for _, parameter := range pathItemParameters {
+		for _, parameterRef := range pathItemParameters {
+			parameter := parameterRef.Value
 			if operationParameters != nil {
 				override := operationParameters.GetByInAndName(parameter.In, parameter.Name)
 				if override != nil {
@@ -43,7 +44,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// For each parameter of the Operation
 	if operationParameters != nil {
 		for _, parameter := range operationParameters {
-			err := ValidateParameter(c, input, parameter)
+			err := ValidateParameter(c, input, parameter.Value)
 			if err != nil {
 				return err
 			}
@@ -51,9 +52,9 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 
 	// RequestBody
-	inputBody := operation.RequestBody
-	if inputBody != nil && options.ExcludeRequestBody == false {
-		err := ValidateRequestBody(c, input, inputBody)
+	requestBody := operation.RequestBody
+	if requestBody != nil && options.ExcludeRequestBody == false {
+		err := ValidateRequestBody(c, input, requestBody.Value)
 		if err != nil {
 			return err
 		}
@@ -125,8 +126,9 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		}
 		return nil
 	}
-	schema := parameter.Schema
-	if schema != nil {
+	schemaRef := parameter.Schema
+	if schemaRef != nil {
+		schema := schemaRef.Value
 		// Only check schema if no transformation is needed
 		if schema.TypesContains("string") {
 			err := schema.VisitJSONString(value)
@@ -142,29 +144,30 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	return nil
 }
 
-func ValidateRequestBody(c context.Context, input *RequestValidationInput, inputBody *openapi3.RequestBody) error {
+func ValidateRequestBody(c context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
 	req := input.Request
-	content := inputBody.Content
+	content := requestBody.Content
 	if content != nil && len(content) > 0 {
 		inputMIME := req.Header.Get("Content-Type")
 		mediaType := parseMediaType(inputMIME)
-		contentType := inputBody.Content[mediaType]
+		contentType := requestBody.Content[mediaType]
 		if contentType == nil {
 			return &RequestError{
 				Input:       input,
-				RequestBody: inputBody,
+				RequestBody: requestBody,
 				Reason:      "header 'Content-type' has unexpected value",
 			}
 		}
-		schema := contentType.Schema
-		if schema != nil && mediaType == "application/json" {
+		schemaRef := contentType.Schema
+		if schemaRef != nil && mediaType == "application/json" {
+			schema := schemaRef.Value
 			body := req.Body
 			defer body.Close()
 			data, err := ioutil.ReadAll(body)
 			if err != nil {
 				return &RequestError{
 					Input:       input,
-					RequestBody: inputBody,
+					RequestBody: requestBody,
 					Reason:      "reading failed",
 					Err:         err,
 				}
@@ -179,7 +182,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, input
 			if err != nil {
 				return &RequestError{
 					Input:       input,
-					RequestBody: inputBody,
+					RequestBody: requestBody,
 					Reason:      "decoding JSON failed",
 					Err:         err,
 				}
@@ -190,7 +193,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, input
 			if err != nil {
 				return &RequestError{
 					Input:       input,
-					RequestBody: inputBody,
+					RequestBody: requestBody,
 					Reason:      "doesn't input the schema",
 					Err:         err,
 				}
@@ -282,7 +285,10 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 	for _, name := range names {
 		var securityScheme *openapi3.SecurityScheme
 		if securitySchemes != nil {
-			securityScheme = securitySchemes[name]
+			securitySchemeRef := securitySchemes[name]
+			if securitySchemeRef != nil {
+				securityScheme = securitySchemeRef.Value
+			}
 		}
 		if securityScheme == nil {
 			return &RequestError{

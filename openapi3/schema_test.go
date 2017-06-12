@@ -2,8 +2,8 @@ package openapi3_test
 
 import (
 	"encoding/base64"
+	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kincore/jsontest"
-	"github.com/jban332/kinapi/openapi3"
 	"testing"
 )
 
@@ -164,7 +164,7 @@ var SchemaExamples = []SchemaExample{
 			Type:     "array",
 			MinItems: 2,
 			MaxItems: openapi3.Int64Ptr(3),
-			Items:    openapi3.NewFloat64Schema(),
+			Items:    openapi3.NewFloat64Schema().NewRef(),
 		},
 		Serialization: map[string]interface{}{
 			"type":     "array",
@@ -198,8 +198,8 @@ var SchemaExamples = []SchemaExample{
 	{
 		Schema: &openapi3.Schema{
 			Type: "object",
-			Properties: map[string]*openapi3.Schema{
-				"numberProperty": openapi3.NewFloat64Schema(),
+			Properties: map[string]*openapi3.SchemaRef{
+				"numberProperty": openapi3.NewFloat64Schema().NewRef(),
 			},
 		},
 		Serialization: map[string]interface{}{
@@ -235,8 +235,10 @@ var SchemaExamples = []SchemaExample{
 	{
 		Schema: &openapi3.Schema{
 			Type: "object",
-			AdditionalProperties: &openapi3.Schema{
-				Type: "number",
+			AdditionalProperties: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Type: "number",
+				},
 			},
 		},
 		Serialization: map[string]interface{}{
@@ -279,12 +281,14 @@ var SchemaExamples = []SchemaExample{
 	// NOT
 	{
 		Schema: &openapi3.Schema{
-			Not: &openapi3.Schema{
-				Enum: []interface{}{
-					nil,
-					true,
-					3.14,
-					"not this",
+			Not: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Enum: []interface{}{
+						nil,
+						true,
+						3.14,
+						"not this",
+					},
 				},
 			},
 		},
@@ -314,13 +318,17 @@ var SchemaExamples = []SchemaExample{
 	// ANY OF
 	{
 		Schema: &openapi3.Schema{
-			AnyOf: []*openapi3.Schema{
-				openapi3.NewFloat64Schema().
-					WithMin(1).
-					WithMax(2),
-				openapi3.NewFloat64Schema().
-					WithMin(2).
-					WithMax(3),
+			AnyOf: []*openapi3.SchemaRef{
+				{
+					Value: openapi3.NewFloat64Schema().
+						WithMin(1).
+						WithMax(2),
+				},
+				{
+					Value: openapi3.NewFloat64Schema().
+						WithMin(2).
+						WithMax(3),
+				},
 			},
 		},
 		Serialization: map[string]interface{}{
@@ -351,13 +359,17 @@ var SchemaExamples = []SchemaExample{
 	// ALL OF
 	{
 		Schema: &openapi3.Schema{
-			AllOf: []*openapi3.Schema{
-				openapi3.NewFloat64Schema().
-					WithMin(1).
-					WithMax(2),
-				openapi3.NewFloat64Schema().
-					WithMin(2).
-					WithMax(3),
+			AllOf: []*openapi3.SchemaRef{
+				{
+					Value: openapi3.NewFloat64Schema().
+						WithMin(1).
+						WithMax(2),
+				},
+				{
+					Value: openapi3.NewFloat64Schema().
+						WithMin(2).
+						WithMax(3),
+				},
 			},
 		},
 		Serialization: map[string]interface{}{
@@ -388,13 +400,17 @@ var SchemaExamples = []SchemaExample{
 	// ONE OF
 	{
 		Schema: &openapi3.Schema{
-			OneOf: []*openapi3.Schema{
-				openapi3.NewFloat64Schema().
-					WithMin(1).
-					WithMax(2),
-				openapi3.NewFloat64Schema().
-					WithMin(2).
-					WithMax(3),
+			OneOf: []*openapi3.SchemaRef{
+				{
+					Value: openapi3.NewFloat64Schema().
+						WithMin(1).
+						WithMax(2),
+				},
+				{
+					Value: openapi3.NewFloat64Schema().
+						WithMin(2).
+						WithMax(3),
+				},
 			},
 		},
 		Serialization: map[string]interface{}{

@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 type Swagger struct {
@@ -24,11 +24,14 @@ func (value *Swagger) MarshalJSON() ([]byte, error) {
 }
 
 func (value *Swagger) UnmarshalJSON(data []byte) error {
-	err := jsoninfo.UnmarshalStructFields(data, value)
-	if err != nil {
-		return err
+	return jsoninfo.UnmarshalStructFields(data, value)
+}
+
+func (value *Swagger) ResolveRefs() error {
+	resolver := &resolver{
+		Swagger: value,
 	}
-	return value.resolveRefs()
+	return resolver.ResolveRefs()
 }
 
 func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {

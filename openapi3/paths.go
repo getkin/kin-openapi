@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"fmt"
-	"github.com/jban332/kinapi/jsoninfo"
 	"strings"
 )
 
@@ -20,7 +19,7 @@ func (paths Paths) Validate(c context.Context) error {
 		if strings.HasPrefix(path, "/") == false {
 			return fmt.Errorf("Path '%v' does not start with '/'", path)
 		}
-		if strings.Contains(path, "//") == false {
+		if strings.Contains(path, "//") {
 			return fmt.Errorf("Path '%v' contains '//'", path)
 		}
 		normalizedPaths[path] = path
@@ -31,6 +30,18 @@ func (paths Paths) Validate(c context.Context) error {
 	return nil
 }
 
+// Find returns a path that matches the key.
+//
+// The method ignores differences in template variable names (except possible "*" suffix).
+//
+// For example:
+//
+//   paths := openapi3.Paths {
+//     "/person/{personName}": &openapi3.PathItem{},
+//   }
+//   pathItem := path.Find("/person/{name}")
+//
+// would return the correct path item.
 func (paths Paths) Find(key string) *PathItem {
 	// Try directly access the map
 	pathItem := paths[key]
@@ -85,139 +96,4 @@ func normalizePathKey(key string) string {
 		buf = append(buf, c)
 	}
 	return string(buf)
-}
-
-type PathItem struct {
-	jsoninfo.RefProps
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
-	Delete      *Operation `json:"delete,omitempty"`
-	Get         *Operation `json:"get,omitempty"`
-	Head        *Operation `json:"head,omitempty"`
-	Options     *Operation `json:"options,omitempty"`
-	Patch       *Operation `json:"patch,omitempty"`
-	Post        *Operation `json:"post,omitempty"`
-	Put         *Operation `json:"put,omitempty"`
-	Trace       *Operation `json:"trace,omitempty"`
-	Servers     Servers    `json:"servers,omitempty"`
-	Parameters  Parameters `json:"parameters,omitempty"`
-}
-
-func (value *PathItem) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
-}
-
-func (value *PathItem) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
-}
-
-func (pathItem *PathItem) Operations() map[string]*Operation {
-	operations := make(map[string]*Operation, 4)
-	if v := pathItem.Delete; v != nil {
-		operations["DELETE"] = v
-	}
-	if v := pathItem.Get; v != nil {
-		operations["GET"] = v
-	}
-	if v := pathItem.Head; v != nil {
-		operations["HEAD"] = v
-	}
-	if v := pathItem.Options; v != nil {
-		operations["OPTIONS"] = v
-	}
-	if v := pathItem.Patch; v != nil {
-		operations["PATCH"] = v
-	}
-	if v := pathItem.Post; v != nil {
-		operations["POST"] = v
-	}
-	if v := pathItem.Put; v != nil {
-		operations["PUT"] = v
-	}
-	return operations
-}
-
-func (pathItem *PathItem) GetOperation(method string) *Operation {
-	switch method {
-	case "DELETE":
-		return pathItem.Delete
-	case "GET":
-		return pathItem.Get
-	case "HEAD":
-		return pathItem.Head
-	case "OPTIONS":
-		return pathItem.Options
-	case "PATCH":
-		return pathItem.Patch
-	case "POST":
-		return pathItem.Post
-	case "PUT":
-		return pathItem.Put
-	case "TRACE":
-		return pathItem.Trace
-	default:
-		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
-	}
-}
-
-func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
-	switch method {
-	case "DELETE":
-		pathItem.Delete = operation
-	case "GET":
-		pathItem.Get = operation
-	case "HEAD":
-		pathItem.Head = operation
-	case "OPTIONS":
-		pathItem.Options = operation
-	case "PATCH":
-		pathItem.Patch = operation
-	case "POST":
-		pathItem.Post = operation
-	case "PUT":
-		pathItem.Put = operation
-	case "TRACE":
-		pathItem.Trace = operation
-	default:
-		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
-	}
-}
-
-func (pathItem *PathItem) Validate(c context.Context) error {
-	if v := pathItem.Delete; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "DELETE"); err != nil {
-			return err
-		}
-	}
-	if v := pathItem.Get; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "GET"); err != nil {
-			return err
-		}
-	}
-	if v := pathItem.Head; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "HEAD"); err != nil {
-			return err
-		}
-	}
-	if v := pathItem.Options; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "OPTONS"); err != nil {
-			return err
-		}
-	}
-	if v := pathItem.Patch; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "PATCH"); err != nil {
-			return err
-		}
-	}
-	if v := pathItem.Post; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "POST"); err != nil {
-			return err
-		}
-	}
-	if v := pathItem.Put; v != nil {
-		if err := v.ValidateOperation(c, pathItem, "PUT"); err != nil {
-			return err
-		}
-	}
-	return nil
 }

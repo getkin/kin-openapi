@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 	"math"
 	"regexp"
 	"strconv"
@@ -26,13 +26,12 @@ func Int64Ptr(value int64) *int64 {
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 type Schema struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
 
-	OneOf        []*Schema     `json:"oneOf,omitempty"`
-	AnyOf        []*Schema     `json:"anyOf,omitempty"`
-	AllOf        []*Schema     `json:"allOf,omitempty"`
-	Not          *Schema       `json:"not,omitempty"`
+	OneOf        []*SchemaRef  `json:"oneOf,omitempty"`
+	AnyOf        []*SchemaRef  `json:"anyOf,omitempty"`
+	AllOf        []*SchemaRef  `json:"allOf,omitempty"`
+	Not          *SchemaRef    `json:"not,omitempty"`
 	Type         string        `json:"-" multijson:"type,omitempty"`
 	Types        []string      `json:"-" multijson:"type,omitempty"`
 	Format       string        `json:"format,omitempty"`
@@ -63,19 +62,19 @@ type Schema struct {
 	compiledPattern *compiledPattern
 
 	// Array
-	MinItems int64   `json:"minItems,omitempty"`
-	MaxItems *int64  `json:"maxItems,omitempty"`
-	Items    *Schema `json:"items,omitempty"`
+	MinItems int64      `json:"minItems,omitempty"`
+	MaxItems *int64     `json:"maxItems,omitempty"`
+	Items    *SchemaRef `json:"items,omitempty"`
 
 	// Object
-	Required                    []string           `json:"required,omitempty"`
-	Properties                  map[string]*Schema `json:"properties,omitempty"`
-	AdditionalProperties        *Schema            `json:"-" multijson:"additionalProperties,omitempty"`
-	AdditionalPropertiesAllowed bool               `json:"-" multijson:"additionalProperties,omitempty"`
-	Discriminator               string             `json:"discriminator,omitempty"`
+	Required                    []string              `json:"required,omitempty"`
+	Properties                  map[string]*SchemaRef `json:"properties,omitempty"`
+	AdditionalProperties        *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty"`
+	AdditionalPropertiesAllowed bool                  `json:"-" multijson:"additionalProperties,omitempty"`
+	Discriminator               string                `json:"discriminator,omitempty"`
 
-	// A propriatery extension we thought is useful for many
-	AdditionalKeys *Schema `json:"x-additionalKeys,omitempty"`
+	PatternProperties         string `json:"patternProperties,omitempty"`
+	compiledPatternProperties *compiledPattern
 }
 
 func NewSchema() *Schema {
@@ -90,15 +89,39 @@ func (value *Schema) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStructFields(data, value)
 }
 
+func (value *Schema) NewRef() *SchemaRef {
+	return &SchemaRef{
+		Value: value,
+	}
+}
+
 func NewOneOfSchema(schemas ...*Schema) *Schema {
+	refs := make([]*SchemaRef, len(schemas))
+	for i, schema := range schemas {
+		refs[i].Value = schema
+	}
 	return &Schema{
-		OneOf: schemas,
+		OneOf: refs,
+	}
+}
+
+func NewAnyOfSchema(schemas ...*Schema) *Schema {
+	refs := make([]*SchemaRef, len(schemas))
+	for i, schema := range schemas {
+		refs[i].Value = schema
+	}
+	return &Schema{
+		AnyOf: refs,
 	}
 }
 
 func NewAllOfSchema(schemas ...*Schema) *Schema {
+	refs := make([]*SchemaRef, len(schemas))
+	for i, schema := range schemas {
+		refs[i].Value = schema
+	}
 	return &Schema{
-		AllOf: schemas,
+		AllOf: refs,
 	}
 }
 
@@ -157,7 +180,7 @@ func NewArraySchema() *Schema {
 func NewObjectSchema() *Schema {
 	return &Schema{
 		Type:       "object",
-		Properties: make(map[string]*Schema),
+		Properties: make(map[string]*SchemaRef),
 	}
 }
 
@@ -234,7 +257,9 @@ func (schema *Schema) WithPattern(pattern string) *Schema {
 }
 
 func (schema *Schema) WithItems(value *Schema) *Schema {
-	schema.Items = value
+	schema.Items = &SchemaRef{
+		Value: value,
+	}
 	return schema
 }
 
@@ -251,42 +276,41 @@ func (schema *Schema) WithMaxItems(n int64) *Schema {
 func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema {
 	properties := schema.Properties
 	if properties == nil {
-		properties = make(map[string]*Schema)
+		properties = make(map[string]*SchemaRef)
 		schema.Properties = properties
 	}
-	properties[name] = propertySchema
+	properties[name] = &SchemaRef{
+		Value: propertySchema,
+	}
 	return schema
 }
 
 func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema {
-	schema.Properties = properties
+	result := make(map[string]*SchemaRef, len(properties))
+	for k, v := range properties {
+		result[k] = &SchemaRef{
+			Value: v,
+		}
+	}
+	schema.Properties = result
 	return schema
 }
 
 func (schema *Schema) WithAnyAdditionalProperties() *Schema {
-	schema.AdditionalProperties = NewObjectSchema()
+	schema.AdditionalProperties = nil
+	schema.AdditionalPropertiesAllowed = true
 	return schema
 }
 
-func (schema *Schema) WithAdditionalProperties(additionalProperties *Schema) *Schema {
-	schema.AdditionalProperties = additionalProperties
-	return schema
-}
-
-// AddToSchemaSet puts this schema and all referred schemas to a map
-func (schema *Schema) AddToSchemaSet(schemas map[*Schema]struct{}) {
-	if _, exists := schemas[schema]; exists {
-		return
-	}
-	schemas[schema] = struct{}{}
-	if v := schema.Items; v != nil {
-		v.AddToSchemaSet(schemas)
-	}
-	if properties := schema.Properties; properties != nil {
-		for _, v := range properties {
-			v.AddToSchemaSet(schemas)
+func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
+	if v == nil {
+		schema.AdditionalProperties = nil
+	} else {
+		schema.AdditionalProperties = &SchemaRef{
+			Value: v,
 		}
 	}
+	return schema
 }
 
 func (schema *Schema) TypesContains(value string) bool {
@@ -312,22 +336,38 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		}
 	}
 	stack = append(stack, schema)
-	for _, v := range schema.OneOf {
+	for _, item := range schema.OneOf {
+		v := item.Value
+		if v == nil {
+			return newRefErr(item.Ref)
+		}
 		if err := v.validate(stack, c); err == nil {
 			return err
 		}
 	}
-	for _, v := range schema.AnyOf {
+	for _, item := range schema.AnyOf {
+		v := item.Value
+		if v == nil {
+			return newRefErr(item.Ref)
+		}
 		if err := v.validate(stack, c); err != nil {
 			return err
 		}
 	}
-	for _, v := range schema.AllOf {
+	for _, item := range schema.AllOf {
+		v := item.Value
+		if v == nil {
+			return newRefErr(item.Ref)
+		}
 		if err := v.validate(stack, c); err != nil {
 			return err
 		}
 	}
-	if v := schema.Not; v != nil {
+	if ref := schema.Not; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return newRefErr(ref.Ref)
+		}
 		if err := v.validate(stack, c); err != nil {
 			return err
 		}
@@ -353,19 +393,31 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	default:
 		return fmt.Errorf("Unsupported 'type' value '%v", schemaType)
 	}
-	if v := schema.Items; v != nil {
+	if ref := schema.Items; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return newRefErr(ref.Ref)
+		}
 		if err := v.validate(stack, c); err != nil {
 			return err
 		}
 	}
-	if v := schema.Properties; v != nil {
-		for _, x := range v {
-			if err := x.validate(stack, c); err != nil {
+	if m := schema.Properties; m != nil {
+		for _, ref := range m {
+			v := ref.Value
+			if v == nil {
+				return newRefErr(ref.Ref)
+			}
+			if err := v.validate(stack, c); err != nil {
 				return err
 			}
 		}
 	}
-	if v := schema.AdditionalProperties; v != nil {
+	if ref := schema.AdditionalProperties; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return newRefErr(ref.Ref)
+		}
 		if err := v.validate(stack, c); err != nil {
 			return err
 		}
@@ -429,7 +481,11 @@ func (schema *Schema) visitJSON(value interface{}, fast bool) error {
 }
 
 func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
-	if v := schema.Not; v != nil {
+	if ref := schema.Not; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return newRefErr(ref.Ref)
+		}
 		if err := v.visitJSON(value, true); err == nil {
 			if fast {
 				return errSchema
@@ -444,7 +500,11 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 	if v := schema.OneOf; len(v) > 0 {
 		ok := 0
 		for _, item := range v {
-			err := item.visitJSON(value, true)
+			v := item.Value
+			if v == nil {
+				return newRefErr(item.Ref)
+			}
+			err := v.visitJSON(value, true)
 			if err == nil {
 				ok++
 			}
@@ -463,7 +523,11 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 	if v := schema.AnyOf; len(v) > 0 {
 		ok := false
 		for _, item := range v {
-			err := item.visitJSON(value, true)
+			v := item.Value
+			if v == nil {
+				return newRefErr(item.Ref)
+			}
+			err := v.visitJSON(value, true)
 			if err == nil {
 				ok = true
 				break
@@ -482,7 +546,11 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 	}
 	if v := schema.AllOf; len(v) > 0 {
 		for _, item := range v {
-			err := item.visitJSON(value, true)
+			v := item.Value
+			if v == nil {
+				return newRefErr(item.Ref)
+			}
+			err := v.visitJSON(value, true)
 			if err != nil {
 				if fast {
 					return errSchema
@@ -800,7 +868,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 			}
 			schema.compiledPattern = cp
 		} else if v := schema.Format; len(v) > 0 {
-			// No pattern, but does have a schema
+			// No pattern, but does have a format
 			re := SchemaStringFormats[v]
 			if re != nil {
 				cp = &compiledPattern{
@@ -876,7 +944,11 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 			Reason:      fmt.Sprintf("Maximum number of items is %d", *v),
 		}
 	}
-	if itemSchema := schema.Items; itemSchema != nil {
+	if itemSchemaRef := schema.Items; itemSchemaRef != nil {
+		itemSchema := itemSchemaRef.Value
+		if itemSchema == nil {
+			return newRefErr(itemSchemaRef.Ref)
+		}
 		for i, item := range value {
 			err := itemSchema.VisitJSON(item)
 			if err != nil {
@@ -913,13 +985,41 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 			SchemaField: "type",
 		}
 	}
+
+	// "properties"
 	properties := schema.Properties
-	additionalKeys := schema.AdditionalKeys
-	additionalProperties := schema.AdditionalProperties
+
+	// "patternProperties"
+	var cp *compiledPattern
+	patternProperties := schema.PatternProperties
+	if len(patternProperties) > 0 {
+		cp = schema.compiledPatternProperties
+		if cp == nil {
+			re, err := regexp.Compile(patternProperties)
+			if err != nil {
+				return fmt.Errorf("Error while compiling regular expression '%s': %v", patternProperties, err)
+			}
+			cp = &compiledPattern{
+				Regexp:    re,
+				ErrReason: "JSON property doesn't match the regular expression '" + patternProperties + "'",
+			}
+			schema.compiledPatternProperties = cp
+		}
+	}
+
+	// "additionalProperties"
+	var additionalProperties *Schema
+	if ref := schema.AdditionalProperties; ref != nil {
+		additionalProperties = ref.Value
+	}
 	for k, v := range value {
 		if properties != nil {
-			p := properties[k]
-			if p != nil {
+			propertyRef := properties[k]
+			if propertyRef != nil {
+				p := propertyRef.Value
+				if p == nil {
+					return newRefErr(propertyRef.Ref)
+				}
 				err := p.VisitJSON(v)
 				if err != nil {
 					if fast {
@@ -931,16 +1031,12 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 			}
 		}
 		if additionalProperties != nil || schema.AdditionalPropertiesAllowed {
-			if additionalKeys != nil {
-				err := additionalKeys.VisitJSONString(k)
-				if err != nil {
-					if fast {
-						return errSchema
-					}
+			if cp != nil {
+				if cp.Regexp.MatchString(k) == false {
 					return &SchemaError{
 						Schema:      schema,
-						SchemaField: "x-additionalKeys",
-						Reason:      fmt.Sprintf("Invalid property name '%s'", k),
+						SchemaField: "patternProperties",
+						Reason:      cp.ErrReason,
 					}
 				}
 			}

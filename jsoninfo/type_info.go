@@ -19,7 +19,6 @@ var (
 type TypeInfo struct {
 	MultipleFields   bool // Whether multiple Go fields share the same JSON name
 	Type             reflect.Type
-	Ref              []int
 	Extensions       []int
 	Fields           []FieldInfo
 	typeExtensions   []typeExtension
@@ -145,8 +144,6 @@ iteration:
 			ft := f.Type
 			if ft == extensionPropsType {
 				typeInfo.Extensions = index
-			} else if ft == refPropsType {
-				typeInfo.Ref = index
 			} else {
 				typeInfo.addFields(index, ft)
 			}
@@ -220,4 +217,3 @@ iteration:
 }
 
 var extensionPropsType = reflect.TypeOf(ExtensionProps{})
-var refPropsType = reflect.TypeOf(RefProps{})

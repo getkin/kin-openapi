@@ -3,8 +3,8 @@ package openapi3filter_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jban332/kinapi/openapi3"
-	"github.com/jban332/kinapi/openapi3filter"
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3filter"
 	"github.com/jban332/kincore/jsontest"
 	"io"
 	"io/ioutil"
@@ -27,7 +27,7 @@ type ExampleResponse struct {
 
 func TestFilter(t *testing.T) {
 	// Declare router
-	router := openapi3filter.NewRouter(&openapi3.Swagger{
+	swagger := &openapi3.Swagger{
 		Servers: openapi3.Servers{
 			{
 				URL: "http://example.com/api/",
@@ -38,20 +38,25 @@ func TestFilter(t *testing.T) {
 				Post: &openapi3.Operation{
 					Parameters: openapi3.Parameters{
 						{
-							In:     "path",
-							Name:   "pathArg",
-							Schema: openapi3.NewStringSchema().WithMaxLength(2),
+							Value: &openapi3.Parameter{
+								In:     "path",
+								Name:   "pathArg",
+								Schema: openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
+							},
 						},
 						{
-							In:     "query",
-							Name:   "queryArg",
-							Schema: openapi3.NewStringSchema().WithMaxLength(2),
+							Value: &openapi3.Parameter{
+								In:     "query",
+								Name:   "queryArg",
+								Schema: openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
+							},
 						},
 					},
 				},
 			},
 		},
-	})
+	}
+	router := openapi3filter.NewRouter().AddSwagger3(swagger)
 
 	// Declare helper method
 	var req ExampleRequest

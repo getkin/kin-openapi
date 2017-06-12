@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 	"strings"
 )
 
@@ -15,9 +15,12 @@ func NewContent() Content {
 
 func NewContentWithJSONSchema(schema *Schema) Content {
 	return Content{
-		"application/json": &ContentType{
-			Schema: schema,
-		},
+		"application/json": NewContentType().WithSchema(schema),
+	}
+}
+func NewContentWithJSONSchemaRef(schema *SchemaRef) Content {
+	return Content{
+		"application/json": NewContentType().WithSchemaRef(schema),
 	}
 }
 
@@ -44,16 +47,37 @@ func (content Content) Validate(c context.Context) error {
 
 // ContentType is specified by OpenAPI/Swagger 3.0 standard.
 type ContentType struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
-	Ref         string        `json:"$ref,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Schema      *Schema       `json:"schema,omitempty"`
-	Examples    []interface{} `json:"examples,omitempty"`
+	Description string       `json:"description,omitempty"`
+	Schema      *SchemaRef   `json:"schema,omitempty"`
+	Examples    []ExampleRef `json:"examples,omitempty"`
 }
 
 func NewContentType() *ContentType {
 	return &ContentType{}
+}
+
+func (contentType *ContentType) WithSchema(schema *Schema) *ContentType {
+	if schema == nil {
+		contentType.Schema = nil
+	} else {
+		contentType.Schema = &SchemaRef{
+			Value: schema,
+		}
+	}
+	return contentType
+}
+
+func (contentType *ContentType) WithSchemaRef(schema *SchemaRef) *ContentType {
+	contentType.Schema = schema
+	return contentType
+}
+
+func (contentType *ContentType) WithExample(value interface{}) *ContentType {
+	contentType.Examples = append(contentType.Examples, ExampleRef{
+		Value: &value,
+	})
+	return contentType
 }
 
 func (value *ContentType) MarshalJSON() ([]byte, error) {

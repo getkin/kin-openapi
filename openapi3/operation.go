@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 	"strconv"
 )
 
@@ -10,30 +10,37 @@ import (
 type Operation struct {
 	jsoninfo.ExtensionProps
 
-	// Optional ID.
-	ID string `json:"id,omitempty"`
-
-	// Optional summary what the operation does.
-	Summary string `json:"summary,omitempty"`
-
-	// Optional description what the operation does.
-	Description string `json:"description,omitempty"`
-
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty"`
 
-	// Optional security requirements.
-	// If the pointer is nil, the security is the application default security.
-	Security *SecurityRequirements `json:"security,omitempty"`
+	// Optional short summary.
+	Summary string `json:"summary,omitempty"`
+
+	// Optional description. Should use CommonMark syntax.
+	Description string `json:"description,omitempty"`
+
+	// Optional operation ID.
+	OperationID string `json:"operationId,omitempty"`
 
 	// Optional parameters.
 	Parameters Parameters `json:"parameters,omitempty"`
 
 	// Optional body parameter.
-	RequestBody *RequestBody `json:"body,omitempty"`
+	RequestBody *RequestBodyRef `json:"body,omitempty"`
 
 	// Optional responses.
 	Responses Responses `json:"responses,omitempty"`
+
+	// Optional callbacks
+	Callbacks map[string]*CallbackRef `json:"callbacks,omitempty"`
+
+	Deprecated bool `json:"deprecated,omitempty"`
+
+	// Optional security requirements that overrides top-level security.
+	Security *SecurityRequirements `json:"security,omitempty"`
+
+	// Optional servers that overrides top-level servers.
+	Servers *Servers `json:"servers,omitempty"`
 }
 
 func NewOperation() *Operation {
@@ -49,7 +56,9 @@ func (value *Operation) UnmarshalJSON(data []byte) error {
 }
 
 func (operation *Operation) AddParameter(p *Parameter) {
-	operation.Parameters = append(operation.Parameters, p)
+	operation.Parameters = append(operation.Parameters, &ParameterRef{
+		Value: p,
+	})
 }
 
 func (operation *Operation) AddResponse(status int, response *Response) {
@@ -58,9 +67,13 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 		operation.Responses = NewResponses()
 	}
 	if status == 0 {
-		responses["default"] = response
+		responses["default"] = &ResponseRef{
+			Value: response,
+		}
 	} else {
-		responses[strconv.FormatInt(int64(status), 10)] = response
+		responses[strconv.FormatInt(int64(status), 10)] = &ResponseRef{
+			Value: response,
+		}
 	}
 }
 

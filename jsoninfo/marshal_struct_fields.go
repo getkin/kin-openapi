@@ -12,7 +12,6 @@ import (
 //   * Marshals struct fields, ignoring MarshalJSON() and fields without 'json' tag.
 //   * Ignores fields without 'json' tag (to avoid accidental vulnerabilities).
 //   * Correctly handles:
-//     * jsoninfo.RefProps
 //     * jsoninfo.ExtensionProps
 //
 // Note that the above rules apply only to the argument!
@@ -34,38 +33,9 @@ func MarshalStructFields(v interface{}) ([]byte, error) {
 	}
 	value = value.Elem()
 
-	// Handle non-blank ref
-	if refHolder, ok := v.(RefHolder); ok {
-		ref := refHolder.GetRef()
-		if len(ref) > 0 {
-			return json.Marshal(&RefProps{
-				Ref: ref,
-			})
-		}
-	}
-
 	// Obtain typeInfo
 	typeInfo := GetTypeInfo(value.Type())
 	return marshalStructFields(value, typeInfo)
-}
-
-func marshalWithoutRef(value reflect.Value) ([]byte, error) {
-loop:
-	for {
-		switch value.Kind() {
-		case reflect.Ptr, reflect.Interface:
-			value = value.Elem()
-			continue loop
-		case reflect.Struct:
-			typeInfo := GetTypeInfo(value.Type())
-			if len(typeInfo.Ref) > 0 {
-				// The function doesn't do special treatment for ref
-				return marshalStructFields(value, typeInfo)
-			}
-		}
-		break
-	}
-	return json.Marshal(value)
 }
 
 func marshalStructFields(value reflect.Value, typeInfo *TypeInfo) ([]byte, error) {
@@ -121,54 +91,9 @@ iteration:
 				result[field.JSONName] = []byte("null")
 				continue
 			}
-			if field.JSONNoRef {
-				fieldData, err := marshalWithoutRef(fieldValue.Addr())
-				if err != nil {
-					return nil, err
-				}
-				result[field.JSONName] = fieldData
-				continue iteration
-			}
 		case reflect.Struct:
-			if field.JSONNoRef {
-				fieldData, err := marshalWithoutRef(fieldValue.Addr())
-				if err != nil {
-					return nil, err
-				}
-				result[field.JSONName] = fieldData
-				continue iteration
-			}
 		case reflect.Map:
 			if field.JSONOmitEmpty && (fieldValue.IsNil() || fieldValue.Len() == 0) {
-				continue iteration
-			}
-			if field.JSONNoRef {
-				// We need to build the map manually
-				resultMap := make(map[string]json.RawMessage)
-				for _, k := range fieldValue.MapKeys() {
-					v := fieldValue.MapIndex(k)
-
-					// Marshal without ref
-					d, err := marshalWithoutRef(v)
-					if err != nil {
-						return nil, err
-					}
-
-					// Put to map
-					switch k.Kind() {
-					case reflect.String:
-						resultMap[k.String()] = d
-					default:
-						return nil, fmt.Errorf("Struct field can't have 'noref' and have map key of type '%s'", k.Type().String())
-					}
-				}
-
-				// Marshal map
-				data, err := json.Marshal(resultMap)
-				if err != nil {
-					return nil, err
-				}
-				result[field.JSONName] = data
 				continue iteration
 			}
 		case reflect.Slice:
@@ -217,7 +142,6 @@ iteration:
 //   * Unmarshals struct fields, ignoring UnmarshalJSON(...)
 //   * Ignores fields without 'json' tag (to avoid accidental vulnerabilities).
 //   * Correctly handles the following embedded fields:
-//     * jsoninfo.RefProps
 //     * jsoninfo.ExtensionProps
 //   * Returns an error if a JSON object has a property that not's part of the struct.
 //
@@ -250,23 +174,6 @@ func UnmarshalStructFields(data []byte, v interface{}) error {
 	err := json.Unmarshal(data, &remainingFields)
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshal extension properties: %v\nInput: %s", err, string(data))
-	}
-
-	// Ref
-	if refIndex := typeInfo.Ref; len(refIndex) > 0 {
-		refData, exists := remainingFields["$ref"]
-		if exists {
-			if len(remainingFields) != 1 {
-				return fmt.Errorf("Encountered JSON that has both '$ref' and other properties")
-			}
-			var ref string
-			err := json.Unmarshal(refData, &ref)
-			if err != nil {
-				return err
-			}
-			value.FieldByIndex(refIndex).Addr().Interface().(RefHolder).SetRef(ref)
-			return nil
-		}
 	}
 
 	// Supported fields

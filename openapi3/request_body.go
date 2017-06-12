@@ -2,12 +2,11 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kinapi/jsoninfo"
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
 type RequestBody struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
 	Description string  `json:"description,omitempty"`
 	Required    bool    `json:"required,omitempty"`
@@ -30,6 +29,11 @@ func (requestBody *RequestBody) WithRequired(value bool) *RequestBody {
 
 func (requestBody *RequestBody) WithContent(content Content) *RequestBody {
 	requestBody.Content = content
+	return requestBody
+}
+
+func (requestBody *RequestBody) WithJSONSchemaRef(value *SchemaRef) *RequestBody {
+	requestBody.Content = NewContentWithJSONSchemaRef(value)
 	return requestBody
 }
 

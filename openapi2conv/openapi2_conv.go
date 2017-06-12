@@ -2,12 +2,13 @@
 package openapi2conv
 
 import (
-	"github.com/jban332/kinapi/openapi2"
-	"github.com/jban332/kinapi/openapi3"
+	"fmt"
+	"github.com/jban332/kin-openapi/openapi2"
+	"github.com/jban332/kin-openapi/openapi3"
 	"net/url"
 )
 
-func ToV3Swagger(swagger *openapi2.Swagger) *openapi3.Swagger {
+func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 	result := &openapi3.Swagger{
 		OpenAPI: "3.0",
 		Info:    swagger.Info,
@@ -33,15 +34,22 @@ func ToV3Swagger(swagger *openapi2.Swagger) *openapi3.Swagger {
 	if paths := swagger.Paths; paths != nil {
 		resultPaths := make(map[string]*openapi3.PathItem, len(paths))
 		for path, pathItem := range paths {
-			resultPaths[path] = ToV3PathItem(swagger, pathItem)
+			r, err := ToV3PathItem(swagger, pathItem)
+			if err != nil {
+				return nil, err
+			}
+			resultPaths[path] = r
 		}
 		result.Paths = resultPaths
 	}
 	if parameters := swagger.Parameters; parameters != nil {
-		result.Components.Parameters = make(map[string]*openapi3.Parameter)
-		result.Components.RequestBodies = make(map[string]*openapi3.RequestBody)
+		result.Components.Parameters = make(map[string]*openapi3.ParameterRef)
+		result.Components.RequestBodies = make(map[string]*openapi3.RequestBodyRef)
 		for k, parameter := range parameters {
-			resultParameter, resultRequestBody := ToV3Parameter(parameter)
+			resultParameter, resultRequestBody, err := ToV3Parameter(parameter)
+			if err != nil {
+				return nil, err
+			}
 			if resultParameter != nil {
 				result.Components.Parameters[k] = resultParameter
 			}
@@ -51,47 +59,58 @@ func ToV3Swagger(swagger *openapi2.Swagger) *openapi3.Swagger {
 		}
 	}
 	if responses := swagger.Responses; responses != nil {
-		result.Components.Responses = make(map[string]*openapi3.Response, len(responses))
+		result.Components.Responses = make(map[string]*openapi3.ResponseRef, len(responses))
 		for k, response := range responses {
-			result.Components.Responses[k] = ToV3Response(response)
+			r, err := ToV3Response(response)
+			if err != nil {
+				return nil, err
+			}
+			result.Components.Responses[k] = r
 		}
 	}
 	result.Components.Schemas = swagger.Definitions
 	if m := swagger.SecurityDefinitions; m != nil {
-		resultSecuritySchemes := make(map[string]*openapi3.SecurityScheme)
+		resultSecuritySchemes := make(map[string]*openapi3.SecuritySchemeRef)
 		for k, v := range m {
-			resultSecuritySchemes[k] = ToV3SecurityScheme(v)
+			r, err := ToV3SecurityScheme(v)
+			if err != nil {
+				return nil, err
+			}
+			resultSecuritySchemes[k] = r
 		}
 		result.Components.SecuritySchemes = resultSecuritySchemes
 	}
 	result.Security = ToV3SecurityRequirements(swagger.Security)
-	return result
+	return result, nil
 }
 
-func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) *openapi3.PathItem {
-	resultPathItem := &openapi3.PathItem{
-		Delete:  ToV3Operation(swagger, pathItem, pathItem.Delete),
-		Get:     ToV3Operation(swagger, pathItem, pathItem.Get),
-		Head:    ToV3Operation(swagger, pathItem, pathItem.Head),
-		Options: ToV3Operation(swagger, pathItem, pathItem.Options),
-		Patch:   ToV3Operation(swagger, pathItem, pathItem.Patch),
-		Post:    ToV3Operation(swagger, pathItem, pathItem.Post),
-		Put:     ToV3Operation(swagger, pathItem, pathItem.Put),
+func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*openapi3.PathItem, error) {
+	result := &openapi3.PathItem{}
+	for method, operation := range pathItem.Operations() {
+		resultOperation, err := ToV3Operation(swagger, pathItem, operation)
+		if err != nil {
+			return nil, err
+		}
+		result.SetOperation(method, resultOperation)
 	}
 	if parameters := pathItem.Parameters; parameters != nil {
 		for _, parameter := range parameters {
-			v3Parameter, _ := ToV3Parameter(parameter)
-			if v3Parameter != nil {
-				resultPathItem.Parameters = append(resultPathItem.Parameters, v3Parameter)
+			v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
+			if err != nil {
+				return nil, err
 			}
+			if v3RequestBody != nil {
+				return nil, fmt.Errorf("PathItem shouldn't have a body parameter")
+			}
+			result.Parameters = append(result.Parameters, v3Parameter)
 		}
 	}
-	return resultPathItem
+	return result, nil
 }
 
-func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, operation *openapi2.Operation) *openapi3.Operation {
+func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, operation *openapi2.Operation) (*openapi3.Operation, error) {
 	if operation == nil {
-		return nil
+		return nil, nil
 	}
 	result := &openapi3.Operation{
 		Description: operation.Description,
@@ -101,47 +120,50 @@ func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, opera
 		resultSecurity := ToV3SecurityRequirements(*v)
 		result.Security = &resultSecurity
 	}
-	for _, parameter := range pathItem.Parameters {
-		_, v3RequestBody := ToV3Parameter(parameter)
-		if v3RequestBody != nil {
-			result.RequestBody = v3RequestBody
-		}
-	}
 	for _, parameter := range operation.Parameters {
-		v3Parameter, v3RequestBody := ToV3Parameter(parameter)
+		v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
+		if err != nil {
+			return nil, err
+		}
 		if v3RequestBody != nil {
 			result.RequestBody = v3RequestBody
 		} else if v3Parameter != nil {
-			result.AddParameter(v3Parameter)
+			result.Parameters = append(result.Parameters, v3Parameter)
 		}
 	}
 	if responses := operation.Responses; responses != nil {
-		resultResponses := make(openapi3.Responses)
-		result.Responses = resultResponses
+		resultResponses := make(openapi3.Responses, len(responses))
 		for k, response := range responses {
-			resultResponses[k] = ToV3Response(response)
+			result, err := ToV3Response(response)
+			if err != nil {
+				return nil, err
+			}
+			resultResponses[k] = result
 		}
+		result.Responses = resultResponses
 	}
-	return result
+	return result, nil
 }
 
-func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.Parameter, *openapi3.RequestBody) {
+func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *openapi3.RequestBodyRef, error) {
 	if parameter == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	in := parameter.In
 	if in == "body" {
-		requestBody := &openapi3.RequestBody{
+		result := &openapi3.RequestBody{
 			Description: parameter.Description,
 			Required:    parameter.Required,
 		}
-		if schema := parameter.Schema; schema != nil {
+		if schemaRef := parameter.Schema; schemaRef != nil {
 			// Assume it's JSON
-			requestBody.WithJSONSchema(schema)
+			result.WithJSONSchemaRef(schemaRef)
 		}
-		return nil, requestBody
+		return nil, &openapi3.RequestBodyRef{
+			Value: result,
+		}, nil
 	}
-	resultParameter := &openapi3.Parameter{
+	result := &openapi3.Parameter{
 		In:          in,
 		Name:        parameter.Name,
 		Description: parameter.Description,
@@ -149,25 +171,40 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.Parameter, *openapi
 		Schema:      parameter.Schema,
 	}
 	if parameter.Type != "" {
-		parameter.Schema = &openapi3.Schema{
-			Type:         parameter.Type,
-			Format:       parameter.Format,
-			Enum:         parameter.Enum,
-			Min:          parameter.Minimum,
-			Max:          parameter.Maximum,
-			ExclusiveMin: parameter.ExclusiveMinimum,
-			ExclusiveMax: parameter.ExclusiveMinimum,
-			MinLength:    parameter.MinLength,
-			MaxLength:    parameter.MaxLength,
+		result.Schema = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				Type:         parameter.Type,
+				Format:       parameter.Format,
+				Enum:         parameter.Enum,
+				Min:          parameter.Minimum,
+				Max:          parameter.Maximum,
+				ExclusiveMin: parameter.ExclusiveMinimum,
+				ExclusiveMax: parameter.ExclusiveMinimum,
+				MinLength:    parameter.MinLength,
+				MaxLength:    parameter.MaxLength,
+			},
 		}
 	}
-	return resultParameter, nil
+	return &openapi3.ParameterRef{
+		Value: result,
+	}, nil, nil
 }
 
-func ToV3Response(response *openapi2.Response) *openapi3.Response {
-	return &openapi3.Response{
+func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
+	if ref := response.Ref; len(ref) > 0 {
+		return &openapi3.ResponseRef{
+			Ref: ref,
+		}, nil
+	}
+	result := &openapi3.Response{
 		Description: response.Description,
 	}
+	if schemaRef := response.Schema; schemaRef != nil {
+		result.WithJSONSchemaRef(schemaRef)
+	}
+	return &openapi3.ResponseRef{
+		Value: result,
+	}, nil
 }
 
 func ToV3SecurityRequirements(requirements openapi2.SecurityRequirements) openapi3.SecurityRequirements {
@@ -181,9 +218,9 @@ func ToV3SecurityRequirements(requirements openapi2.SecurityRequirements) openap
 	return result
 }
 
-func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) *openapi3.SecurityScheme {
+func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.SecuritySchemeRef, error) {
 	if securityScheme == nil {
-		return nil
+		return nil, nil
 	}
 	result := &openapi3.SecurityScheme{
 		Description: securityScheme.Description,
@@ -192,12 +229,10 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) *openapi3.Secur
 	case "basic":
 		result.Type = "http"
 		result.Scheme = "basic"
-		return result
 	case "apiKey":
 		result.Type = "apiKey"
 		result.In = securityScheme.In
 		result.Name = securityScheme.Name
-		return result
 	case "oauth2":
 		result.Type = "oauth2"
 		flows := &openapi3.OAuthFlows{}
@@ -219,14 +254,16 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) *openapi3.Secur
 		case "password":
 			flows.Password = flow
 		default:
-			return nil
+			return nil, fmt.Errorf("Unsupported flow '%s'", securityScheme.Flow)
 		}
-		return result
 	}
-	return nil
+	return &openapi3.SecuritySchemeRef{
+		Ref:   securityScheme.Ref,
+		Value: result,
+	}, nil
 }
 
-func FromV3Swagger(swagger *openapi3.Swagger) *openapi2.Swagger {
+func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	result := &openapi2.Swagger{
 		Info: swagger.Info,
 		Tags: swagger.Components.Tags,
@@ -265,19 +302,27 @@ func FromV3Swagger(swagger *openapi3.Swagger) *openapi2.Swagger {
 				if operation == nil {
 					continue
 				}
-				result.AddOperation(path, method, FromV3Operation(swagger, operation))
+				resultOperation, err := FromV3Operation(swagger, operation)
+				if err != nil {
+					return nil, err
+				}
+				result.AddOperation(path, method, resultOperation)
 			}
 		}
 	}
 	if m := swagger.Components.SecuritySchemes; m != nil {
 		resultSecuritySchemes := make(map[string]*openapi2.SecurityScheme)
 		for id, securityScheme := range m {
-			resultSecuritySchemes[id] = FromV3SecurityScheme(swagger, securityScheme)
+			v, err := FromV3SecurityScheme(swagger, securityScheme)
+			if err != nil {
+				return nil, err
+			}
+			resultSecuritySchemes[id] = v
 		}
 		result.SecurityDefinitions = resultSecuritySchemes
 	}
 	result.Security = FromV3SecurityRequirements(swagger.Security)
-	return result
+	return result, nil
 }
 
 func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) openapi2.SecurityRequirements {
@@ -291,28 +336,31 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 	return result
 }
 
-func FromV3PathItem(swagger *openapi3.Swagger, pathItem *openapi3.PathItem) *openapi2.PathItem {
-	resultPathItem := &openapi2.PathItem{
-		Delete:  FromV3Operation(swagger, pathItem.Delete),
-		Get:     FromV3Operation(swagger, pathItem.Get),
-		Head:    FromV3Operation(swagger, pathItem.Head),
-		Options: FromV3Operation(swagger, pathItem.Options),
-		Patch:   FromV3Operation(swagger, pathItem.Patch),
-		Post:    FromV3Operation(swagger, pathItem.Post),
-		Put:     FromV3Operation(swagger, pathItem.Put),
+func FromV3PathItem(swagger *openapi3.Swagger, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
+	result := &openapi2.PathItem{}
+	for method, operation := range pathItem.Operations() {
+		r, err := FromV3Operation(swagger, operation)
+		if err != nil {
+			return nil, err
+		}
+		result.SetOperation(method, r)
 	}
 	for _, parameter := range pathItem.Parameters {
-		resultPathItem.Parameters = append(resultPathItem.Parameters,
-			FromV3Parameter(parameter))
+		p, err := FromV3Parameter(parameter)
+		if err != nil {
+			return nil, err
+		}
+		result.Parameters = append(result.Parameters, p)
 	}
-	return resultPathItem
+	return result, nil
 }
 
 func findNameForRequestBody(operation *openapi3.Operation) string {
 nameSearch:
 	for _, name := range attemptedBodyParameterNames {
-		for _, p := range operation.Parameters {
-			if p.Name == name {
+		for _, parameterRef := range operation.Parameters {
+			parameter := parameterRef.Value
+			if parameter != nil && parameter.Name == name {
 				continue nameSearch
 			}
 		}
@@ -321,9 +369,9 @@ nameSearch:
 	return ""
 }
 
-func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) *openapi2.Operation {
+func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (*openapi2.Operation, error) {
 	if operation == nil {
-		return nil
+		return nil, nil
 	}
 	result := &openapi2.Operation{
 		Description: operation.Description,
@@ -334,44 +382,72 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) *
 		result.Security = &resultSecurity
 	}
 	for _, parameter := range operation.Parameters {
-		result.Parameters = append(result.Parameters, FromV3Parameter(parameter))
-	}
-	if requestBody := operation.RequestBody; requestBody != nil {
-		// Find parameter name that we can use for the body
-		name := findNameForRequestBody(operation)
-
-		// If found an available name
-		if name != "" {
-			resultParameter := &openapi2.Parameter{
-				In:          "body",
-				Name:        name,
-				Description: requestBody.Description,
-				Required:    requestBody.Required,
-			}
-
-			// Add JSON schema
-			contentType := requestBody.GetContentType("application/json")
-			if contentType != nil {
-				resultParameter.Schema = contentType.Schema
-			}
-
-			// OK
-			result.Parameters = append(result.Parameters, resultParameter)
+		r, err := FromV3Parameter(parameter)
+		if err != nil {
+			return nil, err
 		}
+		result.Parameters = append(result.Parameters, r)
+	}
+	if v := operation.RequestBody; v != nil {
+		r, err := FromV3RequestBody(swagger, operation, v)
+		if err != nil {
+			return nil, err
+		}
+		result.Parameters = append(result.Parameters, r)
 	}
 	if responses := operation.Responses; responses != nil {
 		resultResponses := make(map[string]*openapi2.Response, len(responses))
 		result.Responses = resultResponses
 		for k, response := range responses {
-			resultResponses[k] = FromV3Response(response)
+			r, err := FromV3Response(response)
+			if err != nil {
+				return nil, err
+			}
+			resultResponses[k] = r
 		}
 	}
-	return result
+	return result, nil
 }
 
-func FromV3Parameter(parameter *openapi3.Parameter) *openapi2.Parameter {
+func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation, requestBodyRef *openapi3.RequestBodyRef) (*openapi2.Parameter, error) {
+	if ref := requestBodyRef.Ref; len(ref) > 0 {
+		return &openapi2.Parameter{
+			Ref: ref,
+		}, nil
+	}
+	requestBody := requestBodyRef.Value
+
+	// Find parameter name that we can use for the body
+	name := findNameForRequestBody(operation)
+
+	// If found an available name
+	if name == "" {
+		return nil, fmt.Errorf("Could not find a name for request body")
+	}
+	result := &openapi2.Parameter{
+		In:          "body",
+		Name:        name,
+		Description: requestBody.Description,
+		Required:    requestBody.Required,
+	}
+
+	// Add JSON schema
+	contentType := requestBody.GetContentType("application/json")
+	if contentType != nil {
+		result.Schema = contentType.Schema
+	}
+	return result, nil
+}
+
+func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
+	if v := ref.Ref; len(v) > 0 {
+		return &openapi2.Parameter{
+			Ref: v,
+		}, nil
+	}
+	parameter := ref.Value
 	if parameter == nil {
-		return nil
+		return nil, nil
 	}
 	result := &openapi2.Parameter{
 		Description: parameter.Description,
@@ -380,7 +456,8 @@ func FromV3Parameter(parameter *openapi3.Parameter) *openapi2.Parameter {
 		Required:    parameter.Required,
 		Schema:      parameter.Schema,
 	}
-	if schema := parameter.Schema; schema != nil {
+	if schemaRef := parameter.Schema; schemaRef != nil {
+		schema := schemaRef.Value
 		result.Type = schema.Type
 		result.Format = schema.Format
 		result.Enum = schema.Enum
@@ -392,10 +469,14 @@ func FromV3Parameter(parameter *openapi3.Parameter) *openapi2.Parameter {
 		result.MaxLength = schema.MaxLength
 		result.Pattern = schema.Pattern
 	}
-	return result
+	return result, nil
 }
 
-func FromV3Response(response *openapi3.Response) *openapi2.Response {
+func FromV3Response(ref *openapi3.ResponseRef) (*openapi2.Response, error) {
+	response := ref.Value
+	if response == nil {
+		return nil, nil
+	}
 	result := &openapi2.Response{
 		Description: response.Description,
 	}
@@ -404,14 +485,16 @@ func FromV3Response(response *openapi3.Response) *openapi2.Response {
 			result.Schema = ct.Schema
 		}
 	}
-	return result
+	return result, nil
 }
 
-func FromV3SecurityScheme(swagger *openapi3.Swagger, securityScheme *openapi3.SecurityScheme) *openapi2.SecurityScheme {
+func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {
+	securityScheme := ref.Value
 	if securityScheme == nil {
-		return nil
+		return nil, nil
 	}
 	result := &openapi2.SecurityScheme{
+		Ref:         ref.Ref,
 		Description: securityScheme.Description,
 	}
 	switch securityScheme.Type {
@@ -419,40 +502,38 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, securityScheme *openapi3.Se
 		switch securityScheme.Scheme {
 		case "basic":
 			result.Type = "basic"
-			return result
 		default:
 			result.Type = "apiKey"
 			result.In = "header"
 			result.Name = "Authorization"
-			return result
 		}
 	case "apiKey":
 		result.Type = "apiKey"
 		result.In = securityScheme.In
 		result.Name = securityScheme.Name
-		return result
 	case "oauth2":
 		result.Type = "oauth2"
 		flows := securityScheme.Flow
-		if flows == nil {
-			return nil
+		if flows != nil {
+			var flow *openapi3.OAuthFlow
+			// TODO: Is this the right priority? What if multiple defined?
+			if flow = flows.Implicit; flow != nil {
+				result.Flow = "implicit"
+			} else if flow = flows.AuthorizationCode; flow != nil {
+				result.Flow = "accesscode"
+			} else if flow = flows.Password; flow != nil {
+				result.Flow = "password"
+			} else {
+				return nil, nil
+			}
+			for scope := range flow.Scopes {
+				result.Scopes = append(result.Scopes, scope)
+			}
 		}
-		var flow *openapi3.OAuthFlow
-		// TODO: Is this the right priority? What if multiple defined?
-		if flow = flows.Implicit; flow != nil {
-			result.Flow = "implicit"
-		} else if flow = flows.AuthorizationCode; flow != nil {
-			result.Flow = "accesscode"
-		} else if flow = flows.Password; flow != nil {
-			result.Flow = "password"
-		} else {
-			return nil
-		}
-		for scope := range flow.Scopes {
-			result.Scopes = append(result.Scopes, scope)
-		}
+	default:
+		return nil, fmt.Errorf("Unsupported security scheme type '%s'", securityScheme.Type)
 	}
-	return nil
+	return result, nil
 }
 
 var attemptedBodyParameterNames = []string{

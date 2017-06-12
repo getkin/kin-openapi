@@ -3,10 +3,10 @@ package openapi3filter
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jban332/kinapi/openapi2"
-	"github.com/jban332/kinapi/openapi2conv"
-	"github.com/jban332/kinapi/openapi3"
-	"github.com/jban332/kinapi/pathpattern"
+	"github.com/jban332/kin-openapi/openapi2"
+	"github.com/jban332/kin-openapi/openapi2conv"
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/pathpattern"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -68,7 +68,7 @@ func NewRouterFromFile(path string) (*Router, error) {
 	swagger3 := &openapi3.Swagger{}
 	err = json.Unmarshal(data, swagger3)
 	if err == nil {
-		return NewRouter(swagger3), nil
+		return NewRouter().AddSwagger3(swagger3), nil
 	}
 
 	// Try version 2
@@ -76,8 +76,11 @@ func NewRouterFromFile(path string) (*Router, error) {
 		swagger2 := &openapi2.Swagger{}
 		err := json.Unmarshal(data, swagger2)
 		if err == nil {
-			swagger3 := openapi2conv.ToV3Swagger(swagger2)
-			return NewRouter(swagger3), nil
+			swagger3, err := openapi2conv.ToV3Swagger(swagger2)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to convert OpenAPI 2.0 -> 3.0: %v", err)
+			}
+			return NewRouter().AddSwagger3(swagger3), nil
 		}
 	}
 	// Version 2 didn't work
@@ -89,16 +92,13 @@ func NewRouterFromFile(path string) (*Router, error) {
 //
 // If the given Swagger has servers, router will use them.
 // All operations of the Swagger will be added to the router.
-func NewRouter(swagger *openapi3.Swagger) *Router {
-	router := &Router{
-		swagger: swagger,
-	}
-	router.AddSwagger(swagger)
-	return router
+func NewRouter() *Router {
+	return &Router{}
 }
 
-// AddSwagger adds all operations (but not servers) in the router.
-func (router *Router) AddSwagger(swagger *openapi3.Swagger) {
+// AddSwagger3 adds all operations (but not servers) in the router.
+func (router *Router) AddSwagger3(swagger *openapi3.Swagger) *Router {
+	router.swagger = swagger
 	root := router.node()
 	if paths := swagger.Paths; paths != nil {
 		for path, pathItem := range paths {
@@ -114,6 +114,7 @@ func (router *Router) AddSwagger(swagger *openapi3.Swagger) {
 			}
 		}
 	}
+	return router
 }
 
 // AddRoute adds a route in the router.

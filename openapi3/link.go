@@ -1,22 +1,18 @@
 package openapi3
 
 import (
-	"github.com/jban332/kinapi/jsoninfo"
+	"context"
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Link is specified by OpenAPI/Swagger standard version 3.0.
 type Link struct {
-	jsoninfo.RefProps
 	jsoninfo.ExtensionProps
-	LinkProperties
-}
-
-type LinkProperties struct {
-	Description string                     `json:"description,omitempty"`
-	Href        string                     `json:"href,omitempty"`
-	OperationID string                     `json:"operationId,omitempty"`
-	Parameters  map[string]interface{}     `json:"parameters,omitempty"`
-	Headers     map[string]*Schema `json:"headers,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Href        string                 `json:"href,omitempty"`
+	OperationID string                 `json:"operationId,omitempty"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+	Headers     map[string]*Schema     `json:"headers,omitempty"`
 }
 
 func (value *Link) MarshalJSON() ([]byte, error) {
@@ -25,4 +21,8 @@ func (value *Link) MarshalJSON() ([]byte, error) {
 
 func (value *Link) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStructFields(data, value)
+}
+
+func (value *Link) Validate(c context.Context) error {
+	return nil
 }
