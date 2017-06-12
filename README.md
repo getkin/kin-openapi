@@ -38,31 +38,42 @@ See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/I
   * `pathpattern`
     * Support for OpenAPI style path patterns.
 
-# Using JSON serialization in other projects
-The package `jsoninfo` was written to deal with JSON references and extension properties.
+# Getting started
+```go
+import (
+ "github.com/jban332/kin-openapi/openapi3"
+ "github.com/jban332/kin-openapi/openapi3filter"
+ "net/http"
+)
 
-It:
-  * Marshals/unmarshal JSON references
-  * Marshals/unmarshal JSON extension properties (`"x-someExtension"`)
-  * Refuses to unmarshal unsupported properties.
+var router = openapi3filter.NewRouter().AddSwagger3FromFile("swagger.json")
+
+func ValidateRequest(req *http.Request) {
+ openapi3filter.ValidateRequest(nil, &openapi3filter.ValidateRequestInput {
+  Request: req,
+  Router:  router,
+ })
+}
+
+```
+
+# Package `jsoninfo`
+The package `jsoninfo` marshals/unmarshal JSON extension properties (`"x-someExtension"`)
 
 Usage looks like:
 ```
 type Example struct {
- // Allow extension properties ("x-someProperty")
- jsoninfo.ExtensionProps
- 
- // Allow reference property ("$ref")
- jsoninfo.RefProps
- 
- // Normal properties
- SomeField float64
+  // Allow extension properties ("x-someProperty")
+  jsoninfo.ExtensionProps
+  
+  // Normal properties
+  SomeField float64
 }
 
 func (example *Example) MarshalJSON() ([]byte, error) {
- return jsoninfo.MarshalStructFields(example)
+  return jsoninfo.MarshalStructFields(example)
 }
 
 func (example *Example) UnmarshalJSON(data []byte) error {
- return jsoninfo.UnmarshalStructFields(data, example)
+  return jsoninfo.UnmarshalStructFields(data, example)
 }
