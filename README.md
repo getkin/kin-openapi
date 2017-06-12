@@ -1,26 +1,27 @@
-# kin-openapi
-The library provides packages for dealing with OpenAPI specifications.
+# Overview
+This library provides packages for dealing with OpenAPI specifications.
 
 ## Features
   * Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
-  * Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md). Uses OpenAPI 3.0 elements where they are backwards compatible with version 2.0.
+  * Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).
+    * Uses OpenAPI 3.0 elements where they are backwards compatible with version 2.0.
   * Transforms documents between OpenAPI versions:
     * 2.0 -> 3.0
     * 3.0 -> 2.0
   * Validates:
-    * JSON schemas (`openapi3.Schema`)
-  * Generates JSON schemas for Go types.
+    * JSON schemas
+    * HTTP request
+    * HTTP responses
+  * Generates [JSON schemas](http://json-schema.org/) for Go types.
 
 ## Dependencies
   * Go 1.7. Works in pre-1.7 versions if you provide _context.Context_ to the compiler.
   * Tests require [github.com/jban332/kincore](https://github.com/jban332/kincore)
 
-## Other OpenAPI  implementations
-### go-openapi
-The [go-openapi](https://github.com/go-openapi) project provides a stable and well-tested implementation of OpenAPI version 2.
-
-### Others
-See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
+## Alternatives
+  * [go-openapi](https://github.com/go-openapi)
+    * Provides a stable and well-tested implementation of OpenAPI version 2.
+  * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
 
 # Packages
   * `jsoninfo`
@@ -41,18 +42,18 @@ See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/I
 # Getting started
 ```go
 import (
- "github.com/jban332/kin-openapi/openapi3"
- "github.com/jban332/kin-openapi/openapi3filter"
- "net/http"
+  "github.com/jban332/kin-openapi/openapi3"
+  "github.com/jban332/kin-openapi/openapi3filter"
+  "net/http"
 )
 
 var router = openapi3filter.NewRouter().AddSwagger3FromFile("swagger.json")
 
 func ValidateRequest(req *http.Request) {
- openapi3filter.ValidateRequest(nil, &openapi3filter.ValidateRequestInput {
-  Request: req,
-  Router:  router,
- })
+  openapi3filter.ValidateRequest(nil, &openapi3filter.ValidateRequestInput {
+    Request: req,
+    Router:  router,
+  })
 }
 
 ```
