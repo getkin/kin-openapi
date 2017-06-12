@@ -6,7 +6,7 @@ import (
 	"github.com/jban332/kin-openapi/openapi2"
 	"github.com/jban332/kin-openapi/openapi2conv"
 	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kincore/jsontest"
+	"github.com/jban332/kin-core/jsontest"
 	"testing"
 )
 

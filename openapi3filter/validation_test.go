@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-openapi/openapi3filter"
-	"github.com/jban332/kincore/jsontest"
+	"github.com/jban332/kin-core/jsontest"
 	"io"
 	"io/ioutil"
 	"net/http"
