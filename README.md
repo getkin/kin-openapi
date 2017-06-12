@@ -2,20 +2,30 @@
 The library provides packages for dealing with OpenAPI specifications.
 
 ## Features
-  * Targets OpenAPI version 3.
-  * Transforms OpenAPI files from v2 to v3
-  * Transforms OpenAPI files from v3 to v2
+  * Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
+  * Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md). Uses OpenAPI 3.0 elements where they are backwards compatible with version 2.0.
+  * Transforms documents between OpenAPI versions:
+    * 2.0 -> 3.0
+    * 3.0 -> 2.0
+  * Validates:
+    * JSON schemas (`openapi3.Schema`)
+    * HTTP requests
+    * HTTP responses
 
 ## Dependencies
-  * Go 1.7. Works in pre-1.7 versions if you provide `context.Context` to the compiler.
-  * Tests require [github.com/jban332/kincore](github.com/jban332/kincore)
+  * Go 1.7. Works in pre-1.7 versions if you provide _context.Context_ to the compiler.
+  * Tests require [github.com/jban332/kincore](github.com/jban332/kincore)
 
-## kinapi vs go-openapi
+## Other OpenAPI  implementations
+### go-openapi
 The [go-openapi](https://github.com/go-openapi) project provides a stable and well-tested implementation of OpenAPI version 2.
 
 The differences are:
   * This library targets OpenAPI version 3.
   * _go-openapi_ uses embedded structs in JSON marshalling/unmarshalling, while we use `jsoninfo` package.
+
+### Others
+See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
 
 # Packages
   * `jsoninfo`
