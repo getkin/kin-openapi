@@ -1,15 +1,21 @@
 # kinapi
 The library provides packages for dealing with OpenAPI specifications.
 
-The main features are:
+## Features
   * Targets OpenAPI version 3.
   * Transforms OpenAPI files from v2 to v3
   * Transforms OpenAPI files from v3 to v2
 
+## Dependencies
+  * Go 1.7. Works in pre-1.7 versions if you provide `context.Context` to the compiler.
+  * Tests require [github.com/jban332/kincore](github.com/jban332/kincore)
+
 ## kinapi vs go-openapi
 The [go-openapi](https://github.com/go-openapi) project provides a stable and well-tested implementation of OpenAPI version 2.
 
-The main difference is that this library targets OpenAPI version 3. You might also find that the API is slightly less cluttered because of the approach we chose to serializing/deserializing JSON.
+The differences are:
+  * This library targets OpenAPI version 3.
+  * _go-openapi_ uses embedded structs in JSON marshalling/unmarshalling, while we use `jsoninfo` package.
 
 # Packages
   * `jsoninfo`
@@ -27,6 +33,31 @@ The main difference is that this library targets OpenAPI version 3. You might al
   * `pathpattern`
     * Support for OpenAPI style path patterns.
 
-# Dependencies
-  * Go 1.5
-  * Tests require [github.com/jban332/kincore](github.com/jban332/kincore)
+# Using JSON serialization in other projects
+The package `jsoninfo` was written to deal with JSON references and extension properties.
+
+It:
+  * Marshals/unmarshal JSON references
+  * Marshals/unmarshal JSON extension properties (`"x-someExtension"`)
+  * Refuses to unmarshal unsupported properties.
+
+Usage looks like:
+```
+type Example struct {
+ // Allow extension properties ("x-someProperty")
+ jsoninfo.ExtensionProps
+ 
+ // Allow reference property ("$ref")
+ jsoninfo.RefProps
+ 
+ // Normal properties
+ SomeField float64
+}
+
+func (example *Example) MarshalJSON() ([]byte, error) {
+ return jsoninfo.MarshalStructFields(example)
+}
+
+func (example *Example) UnmarshalJSON(data []byte) error {
+ return jsoninfo.UnmarshalStructFields(data, example)
+}
