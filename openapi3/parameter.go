@@ -50,7 +50,7 @@ func (all Parameters) Validate(c context.Context) error {
 
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
 type Parameter struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Name            string        `json:"name,omitempty"`
 	In              string        `json:"in,omitempty"`
 	Description     string        `json:"description,omitempty"`

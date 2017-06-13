@@ -7,7 +7,7 @@ import (
 
 // Link is specified by OpenAPI/Swagger standard version 3.0.
 type Link struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Description string                 `json:"description,omitempty"`
 	Href        string                 `json:"href,omitempty"`
 	OperationID string                 `json:"operationId,omitempty"`

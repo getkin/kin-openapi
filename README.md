@@ -65,7 +65,7 @@ Usage looks like:
 ```
 type Example struct {
   // Allow extension properties ("x-someProperty")
-  jsoninfo.ExtensionProps
+  openapi3.ExtensionProps
   
   // Normal properties
   SomeField float64

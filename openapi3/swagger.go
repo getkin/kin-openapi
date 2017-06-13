@@ -6,7 +6,7 @@ import (
 )
 
 type Swagger struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	OpenAPI      string               `json:"openapi"` // Required
 	Info         Info                 `json:"info"`    // Required
 	Servers      Servers              `json:"servers,omitempty"`

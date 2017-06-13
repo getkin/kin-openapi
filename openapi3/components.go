@@ -9,7 +9,7 @@ import (
 
 // Components is specified by OpenAPI/Swagger standard version 3.0.
 type Components struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Schemas         map[string]*SchemaRef         `json:"schemas,omitempty"`
 	Parameters      map[string]*ParameterRef      `json:"parameters,omitempty"`
 	Headers         map[string]*HeaderRef         `json:"headers,omitempty"`

@@ -1,33 +1,18 @@
 package jsoninfo_test
 
 import (
+	"github.com/jban332/kin-openapi/openapi3"
+)
+
+import (
 	"encoding/json"
 	"github.com/jban332/kin-openapi/jsoninfo"
 	"testing"
 	"time"
 )
 
-type SimpleType struct {
-	Bool    bool      `json:"bool,omitempty"`
-	Int     int       `json:"int,omitempty"`
-	Int64   int64     `json:"int64,omitempty"`
-	Float64 float64   `json:"float64,omitempty"`
-	Time    time.Time `json:"time,omitempty"`
-	String  string    `json:"string,omitempty"`
-	Bytes   []byte    `json:"bytes,omitempty"`
-}
-
-type SimplePtrType struct {
-	Bool    *bool      `json:"bool,omitempty"`
-	Int     *int       `json:"int,omitempty"`
-	Int64   *int64     `json:"int64,omitempty"`
-	Float64 *float64   `json:"float64,omitempty"`
-	Time    *time.Time `json:"time,omitempty"`
-	String  *string    `json:"string,omitempty"`
-	Bytes   *[]byte    `json:"bytes,omitempty"`
-}
-
-type EmptyType struct {
+type Simple struct {
+	openapi3.ExtensionProps
 	Bool    bool      `json:"bool"`
 	Int     int       `json:"int"`
 	Int64   int64     `json:"int64"`
@@ -37,41 +22,70 @@ type EmptyType struct {
 	Bytes   []byte    `json:"bytes"`
 }
 
+type SimpleOmitEmpty struct {
+	openapi3.ExtensionProps
+	Bool    bool      `json:"bool,omitempty"`
+	Int     int       `json:"int,omitempty"`
+	Int64   int64     `json:"int64,omitempty"`
+	Float64 float64   `json:"float64,omitempty"`
+	Time    time.Time `json:"time,omitempty"`
+	String  string    `json:"string,omitempty"`
+	Bytes   []byte    `json:"bytes,omitempty"`
+}
+
+type SimplePtrOmitEmpty struct {
+	openapi3.ExtensionProps
+	Bool    *bool      `json:"bool,omitempty"`
+	Int     *int       `json:"int,omitempty"`
+	Int64   *int64     `json:"int64,omitempty"`
+	Float64 *float64   `json:"float64,omitempty"`
+	Time    *time.Time `json:"time,omitempty"`
+	String  *string    `json:"string,omitempty"`
+	Bytes   *[]byte    `json:"bytes,omitempty"`
+}
+
 type OriginalNameType struct {
+	openapi3.ExtensionProps
 	Field string `json:",omitempty"`
 }
 
 type RootType struct {
-	jsoninfo.ExtensionProps
+	openapi3.ExtensionProps
 	EmbeddedType0
 	EmbeddedType1
 }
 
 type EmbeddedType0 struct {
+	openapi3.ExtensionProps
 	Field0 string `json:"embedded0,omitempty"`
 }
 
 type EmbeddedType1 struct {
+	openapi3.ExtensionProps
 	Field1 string `json:"embedded1,omitempty"`
 }
 
+// Example describes expected outcome of:
+//   1.Marshal JSON
+//   2.Unmarshal value
+//   3.Marshal value
 type Example struct {
 	NoMarshal   bool
 	NoUnmarshal bool
-	Value       interface{}
+	Value       jsoninfo.StrictStruct
 	JSON        interface{}
 }
 
 var Examples = []Example{
 	// Primitives
 	{
-		Value: &SimpleType{},
+		Value: &SimpleOmitEmpty{},
 		JSON: Object{
 			"time": time.Unix(0, 0),
 		},
 	},
 	{
-		Value: &SimpleType{},
+		Value: &SimpleOmitEmpty{},
 		JSON: Object{
 			"bool":    true,
 			"int":     42,
@@ -85,11 +99,11 @@ var Examples = []Example{
 
 	// Pointers
 	{
-		Value: &SimplePtrType{},
+		Value: &SimplePtrOmitEmpty{},
 		JSON:  Object{},
 	},
 	{
-		Value: &SimplePtrType{},
+		Value: &SimplePtrOmitEmpty{},
 		JSON: Object{
 			"bool":    true,
 			"int":     42,
@@ -103,7 +117,7 @@ var Examples = []Example{
 
 	// JSON tag "fieldName"
 	{
-		Value: &EmptyType{},
+		Value: &Simple{},
 		JSON: Object{
 			"bool":    false,
 			"int":     0,
@@ -133,7 +147,7 @@ var Examples = []Example{
 		JSON: Object{
 			"embedded0": "0",
 			"embedded1": "1",
-			"x-other":   nil,
+			"x-other":   "abc",
 		},
 	},
 }

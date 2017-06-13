@@ -2,11 +2,10 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 type Header struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 
 	// Optional description. Should use CommonMark syntax.
 	Description string `json:"description,omitempty"`

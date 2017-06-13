@@ -47,7 +47,7 @@ func (content Content) Validate(c context.Context) error {
 
 // ContentType is specified by OpenAPI/Swagger 3.0 standard.
 type ContentType struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Description string       `json:"description,omitempty"`
 	Schema      *SchemaRef   `json:"schema,omitempty"`
 	Examples    []ExampleRef `json:"examples,omitempty"`

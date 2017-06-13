@@ -8,7 +8,7 @@ import (
 )
 
 type SecurityScheme struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 
 	Type         string      `json:"type,omitempty"`
 	Description  string      `json:"description,omitempty"`
@@ -147,7 +147,7 @@ func (securityScheme *SecurityScheme) Validate(c context.Context) error {
 }
 
 type OAuthFlows struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Implicit          *OAuthFlow `json:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty"`
 	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty"`
@@ -179,7 +179,7 @@ func (flows *OAuthFlows) Validate(c context.Context) error {
 }
 
 type OAuthFlow struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	AuthorizationURL string            `json:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty"`
 	RefreshURL       string            `json:"refreshUrl,omitempty"`

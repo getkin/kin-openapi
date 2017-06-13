@@ -8,7 +8,7 @@ import (
 
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 type Operation struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty"`

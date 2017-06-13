@@ -3,9 +3,9 @@ package openapi3filter_test
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/jban332/kin-core/jsontest"
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-openapi/openapi3filter"
-	"github.com/jban332/kin-core/jsontest"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -61,7 +61,7 @@ func TestFilter(t *testing.T) {
 	// Declare helper method
 	var req ExampleRequest
 	var resp ExampleResponse
-	expect := func(req ExampleRequest, resp ExampleResponse) jsontest.ResultTester {
+	expect := func(req ExampleRequest, resp ExampleResponse) *jsontest.ValueTester {
 		t.Logf("Request: %s %s", req.Method, req.URL)
 		httpReq, _ := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
 		httpReq.Header.Set("Content-Type", req.ContentType)

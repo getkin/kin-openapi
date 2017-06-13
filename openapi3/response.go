@@ -33,7 +33,7 @@ func (all Responses) Validate(c context.Context) error {
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 type Response struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Description string              `json:"description,omitempty"`
 	Headers     map[string]*Schema  `json:"headers,omitempty"`
 	Content     Content             `json:"content,omitempty"`

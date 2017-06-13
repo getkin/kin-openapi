@@ -7,6 +7,7 @@ import (
 )
 
 type PathItem struct {
+	ExtensionProps
 	Summary     string     `json:"summary,omitempty"`
 	Description string     `json:"description,omitempty"`
 	Delete      *Operation `json:"delete,omitempty"`

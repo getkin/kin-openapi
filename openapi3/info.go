@@ -6,7 +6,7 @@ import (
 
 // Info is specified by OpenAPI/Swagger standard version 3.0.
 type Info struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Title          string   `json:"title,omitempty"`
 	Description    string   `json:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty"`
@@ -25,7 +25,7 @@ func (value *Info) UnmarshalJSON(data []byte) error {
 
 // Contact is specified by OpenAPI/Swagger standard version 3.0.
 type Contact struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Name  string `json:"name,omitempty"`
 	URL   string `json:"url,omitempty"`
 	Email string `json:"email,omitempty"`
@@ -41,7 +41,7 @@ func (value *Contact) UnmarshalJSON(data []byte) error {
 
 // License is specified by OpenAPI/Swagger standard version 3.0.
 type License struct {
-	jsoninfo.ExtensionProps
+	ExtensionProps
 	Name string `json:"name,omitempty"`
 	URL  string `json:"url,omitempty"`
 }
