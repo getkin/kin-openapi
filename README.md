@@ -1,22 +1,27 @@
 # Overview
 This library provides packages for dealing with OpenAPI specifications.
 
-## Features
-  * Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
-  * Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).
-    * Uses OpenAPI 3.0 elements where they are backwards compatible with version 2.0.
-  * Transforms documents between OpenAPI versions:
-    * 2.0 -> 3.0
-    * 3.0 -> 2.0
-  * Validates:
-    * JSON schemas
-    * HTTP request
-    * HTTP responses
-  * Generates [JSON schemas](http://json-schema.org/) for Go types.
+## Status
+### Current
+  * [X] Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
+  * [X] Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).
+    * Does NOT support all features.
+  * [X] Converts OpenAPI files to other versions:
+    * [X] 2.0 -> 3.0
+    * [X] 3.0 -> 2.0
+  * [X] Validates:
+    * [X] That JSON value matches [OpenAPI 3.0 schema object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#schemaObject)
+    * [X] That HTTP request matches [OpenAPI operation object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#operationObject)
+    * [X] That HTTP response matches OpenAPI 3.0 operation object
+  * [X] Generates [JSON schemas](http://json-schema.org/) for some Go types.
+
+### TODO
+  * [ ] More tests
 
 ## Dependencies
-  * Go 1.7. Works in pre-1.7 versions if you provide _context.Context_ to the compiler.
-  * Tests require [github.com/jban332/kin-core](https://github.com/jban332/kin-core)
+  * Go 1.7.
+    * Should work in pre-1.7 versions if you provide [context](https://golang.org/pkg/context/) from Go 1.7 standard library.
+  * Tests require [github.com/jban332/kin-test](https://github.com/jban332/kin-core)
 
 ## Alternatives
   * [go-openapi](https://github.com/go-openapi)
@@ -83,7 +88,7 @@ func ValidateRequest(req *http.Request) {
 
 ```
 
-# Using package `jsoninfo`
+## Having extension properties in your own structs
 The package `jsoninfo` marshals/unmarshal JSON extension properties (`"x-someExtension"`)
 
 Usage looks like:
