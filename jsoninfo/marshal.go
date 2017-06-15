@@ -33,12 +33,25 @@ func (encoder *ObjectEncoder) Bytes() ([]byte, error) {
 	return json.Marshal(encoder.result)
 }
 
-// EncodeExtensionMap adds all properties to the result.
-func (encoder *ObjectEncoder) EncodeExtensionMap(value map[string]json.RawMessage) {
-	result := encoder.result
-	for k, v := range value {
-		result[k] = v
+// EncodeExtension adds a key/value to the current JSON object.
+func (encoder *ObjectEncoder) EncodeExtension(key string, value interface{}) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
 	}
+	encoder.result[key] = data
+	return nil
+}
+
+// EncodeExtensionMap adds all properties to the result.
+func (encoder *ObjectEncoder) EncodeExtensionMap(value map[string]json.RawMessage) error {
+	if value != nil {
+		result := encoder.result
+		for k, v := range value {
+			result[k] = v
+		}
+	}
+	return nil
 }
 
 func (encoder *ObjectEncoder) EncodeStructFieldsAndExtensions(value interface{}) error {

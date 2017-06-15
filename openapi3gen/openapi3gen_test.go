@@ -47,7 +47,7 @@ type Array []interface{}
 type Object map[string]interface{}
 
 func TestSimple(t *testing.T) {
-	schema, refs, err := openapi3gen.NewSchemaRefForValue(&Example{})
+	schema, _, err := openapi3gen.NewSchemaRefForValue(&Example{})
 	jsontest.ExpectWithErr(t, schema, err).Value(Object{
 		"type": "object",
 		"properties": Object{
