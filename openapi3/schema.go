@@ -82,11 +82,11 @@ func NewSchema() *Schema {
 }
 
 func (value *Schema) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *Schema) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (value *Schema) NewRef() *SchemaRef {
@@ -274,14 +274,18 @@ func (schema *Schema) WithMaxItems(n int64) *Schema {
 }
 
 func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema {
+	return schema.WithPropertyRef(name, &SchemaRef{
+		Value: propertySchema,
+	})
+}
+
+func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema {
 	properties := schema.Properties
 	if properties == nil {
 		properties = make(map[string]*SchemaRef)
 		schema.Properties = properties
 	}
-	properties[name] = &SchemaRef{
-		Value: propertySchema,
-	}
+	properties[name] = ref
 	return schema
 }
 

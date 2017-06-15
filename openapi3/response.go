@@ -65,11 +65,11 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 }
 
 func (value *Response) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *Response) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (response *Response) Validate(c context.Context) error {

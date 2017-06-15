@@ -81,11 +81,11 @@ func (contentType *ContentType) WithExample(value interface{}) *ContentType {
 }
 
 func (value *ContentType) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *ContentType) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (ct *ContentType) Validate(c context.Context) error {

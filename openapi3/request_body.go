@@ -51,11 +51,11 @@ func (requestBody *RequestBody) GetContentType(mediaType string) *ContentType {
 }
 
 func (value *RequestBody) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *RequestBody) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (requestBody *RequestBody) Validate(c context.Context) error {

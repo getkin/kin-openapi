@@ -14,19 +14,14 @@ type ExtensionProps struct {
 // Assert that the type implements the interface
 var _ jsoninfo.StrictStruct = &ExtensionProps{}
 
-// MarshalJSONUnsupportedFields will be invoked by package "jsoninfo"
-func (extensionProps *ExtensionProps) MarshalJSONUnsupportedFields(dest map[string]json.RawMessage) error {
-	extensions := extensionProps.Extensions
-	if extensions != nil {
-		for k, v := range extensions {
-			dest[k] = v
-		}
-	}
-	return nil
+// EncodeWith will be invoked by package "jsoninfo"
+func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
+	encoder.EncodeExtensionMap(props.Extensions)
+	return encoder.EncodeStructFieldsAndExtensions(value)
 }
 
-// UnmarshalJSONUnsupportedFields will be invoked by package "jsoninfo"
-func (extensionProps *ExtensionProps) UnmarshalJSONUnsupportedFields(data []byte, extensions map[string]json.RawMessage) error {
-	extensionProps.Extensions = extensions
-	return nil
+// DecodeWith will be invoked by package "jsoninfo"
+func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
+	props.Extensions = decoder.DecodeExtensionMap()
+	return decoder.DecodeStructFieldsAndExtensions(value)
 }

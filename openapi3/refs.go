@@ -147,6 +147,13 @@ type SchemaRef struct {
 	Value *Schema
 }
 
+func NewSchemaRef(ref string, value *Schema) *SchemaRef {
+	return &SchemaRef{
+		Ref:   ref,
+		Value: value,
+	}
+}
+
 func (value *SchemaRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }

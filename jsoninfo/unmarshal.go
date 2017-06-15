@@ -6,16 +6,46 @@ import (
 	"reflect"
 )
 
-// UnmarshalStructFields function:
+// UnmarshalStrictStruct function:
 //   * Unmarshals struct fields, ignoring UnmarshalJSON(...) and fields without 'json' tag.
 //   * Correctly handles StrictStruct
-func UnmarshalStructFields(data []byte, v StrictStruct) error {
-	reflection := reflect.ValueOf(v)
+func UnmarshalStrictStruct(data []byte, value StrictStruct) error {
+	decoder, err := NewObjectDecoder(data)
+	if err != nil {
+		return err
+	}
+	return value.DecodeWith(decoder, value)
+}
+
+type ObjectDecoder struct {
+	Data            []byte
+	remainingFields map[string]json.RawMessage
+}
+
+func NewObjectDecoder(data []byte) (*ObjectDecoder, error) {
+	var remainingFields map[string]json.RawMessage
+	err := json.Unmarshal(data, &remainingFields)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to unmarshal extension properties: %v\nInput: %s", err, string(data))
+	}
+	return &ObjectDecoder{
+		Data:            data,
+		remainingFields: remainingFields,
+	}, nil
+}
+
+// DecodeExtensionMap returns all properties that were not decoded previously.
+func (decoder *ObjectDecoder) DecodeExtensionMap() map[string]json.RawMessage {
+	return decoder.remainingFields
+}
+
+func (decoder *ObjectDecoder) DecodeStructFieldsAndExtensions(value interface{}) error {
+	reflection := reflect.ValueOf(value)
 	if reflection.Kind() != reflect.Ptr {
-		panic(fmt.Errorf("Value %T is not a pointer", v))
+		panic(fmt.Errorf("Value %T is not a pointer", value))
 	}
 	if reflection.IsNil() {
-		panic(fmt.Errorf("Value %T is nil", v))
+		panic(fmt.Errorf("Value %T is nil", value))
 	}
 	reflection = reflection.Elem()
 	for (reflection.Kind() == reflect.Interface || reflection.Kind() == reflect.Ptr) && !reflection.IsNil() {
@@ -23,24 +53,26 @@ func UnmarshalStructFields(data []byte, v StrictStruct) error {
 	}
 	reflectionType := reflection.Type()
 	if reflectionType.Kind() != reflect.Struct {
-		panic(fmt.Errorf("Value %T is not a struct", v))
+		panic(fmt.Errorf("Value %T is not a struct", value))
 	}
 	typeInfo := GetTypeInfo(reflectionType)
 
-	// Unmarshal everything
-	var remainingFields map[string]json.RawMessage
-	err := json.Unmarshal(data, &remainingFields)
-	if err != nil {
-		return fmt.Errorf("Failed to unmarshal extension properties: %v\nInput: %s", err, string(data))
-	}
-
 	// Supported fields
 	fields := typeInfo.Fields
+	remainingFields := decoder.remainingFields
 	for fieldIndex, field := range fields {
+		// Fields without JSON tag are ignored
+		if !field.HasJSONTag {
+			continue
+		}
+
+		// Get data
 		fieldData, exists := remainingFields[field.JSONName]
 		if !exists {
 			continue
 		}
+
+		// Unmarshal
 		if field.TypeIsUnmarshaller {
 			fieldType := field.Type
 			isPtr := false
@@ -90,5 +122,14 @@ func UnmarshalStructFields(data []byte, v StrictStruct) error {
 	}
 
 	// Extensions
-	return v.UnmarshalJSONUnsupportedFields(data, remainingFields)
+	for _, extension := range typeInfo.Extensions() {
+		f := extension.DecodeFunc
+		if f != nil {
+			err := f(decoder, value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

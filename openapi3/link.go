@@ -16,11 +16,11 @@ type Link struct {
 }
 
 func (value *Link) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *Link) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (value *Link) Validate(c context.Context) error {

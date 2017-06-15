@@ -10,6 +10,7 @@ import (
 // FieldInfo contains information about JSON serialization of a field.
 type FieldInfo struct {
 	MultipleFields     bool // Whether multiple Go fields share this JSON name
+	HasJSONTag         bool
 	Index              []int
 	Type               reflect.Type
 	TypeIsMarshaller   bool
@@ -74,6 +75,7 @@ iteration:
 
 		// Parse the tag
 		if len(jsonTag) > 0 {
+			field.HasJSONTag = true
 			for i, part := range strings.Split(jsonTag, ",") {
 				if i == 0 {
 					if len(part) > 0 {

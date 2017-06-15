@@ -17,9 +17,9 @@ type TypeInfo struct {
 	MultipleFields bool // Whether multiple Go fields share the same JSON name
 	Type           reflect.Type
 	Fields         []FieldInfo
-	extensions     []*ExtensionInfo
-	Schema         interface{}
-	SchemaMutex    sync.RWMutex
+
+	// extensions
+	extensions []*ExtensionInfo
 }
 
 func GetTypeInfoForValue(value interface{}) *TypeInfo {

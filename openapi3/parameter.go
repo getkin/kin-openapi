@@ -122,11 +122,11 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
 }
 
 func (value *Parameter) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *Parameter) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (parameter *Parameter) Validate(c context.Context) error {

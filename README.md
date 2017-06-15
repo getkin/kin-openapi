@@ -62,7 +62,7 @@ func ValidateRequest(req *http.Request) {
 The package `jsoninfo` marshals/unmarshal JSON extension properties (`"x-someExtension"`)
 
 Usage looks like:
-```
+```go
 type Example struct {
   // Allow extension properties ("x-someProperty")
   openapi3.ExtensionProps
@@ -72,9 +72,10 @@ type Example struct {
 }
 
 func (example *Example) MarshalJSON() ([]byte, error) {
-  return jsoninfo.MarshalStructFields(example)
+  return jsoninfo.MarshalStrictStruct(example)
 }
 
 func (example *Example) UnmarshalJSON(data []byte) error {
-  return jsoninfo.UnmarshalStructFields(data, example)
+  return jsoninfo.UnmarshalStrictStruct(data, example)
 }
+```

@@ -23,11 +23,11 @@ type PathItem struct {
 }
 
 func (value *PathItem) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *PathItem) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {

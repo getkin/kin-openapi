@@ -170,7 +170,7 @@ func TestExtensions(t *testing.T) {
 		// Unmarshal
 		if !example.NoUnmarshal {
 			t.Logf("Unmarshalling %T", x)
-			err = jsoninfo.UnmarshalStructFields(expectedData, x)
+			err = jsoninfo.UnmarshalStrictStruct(expectedData, x)
 			if err != nil {
 				t.Fatalf("Error unmarshalling %T: %v", x, err)
 			}
@@ -179,7 +179,7 @@ func TestExtensions(t *testing.T) {
 
 		// Marshal
 		if !example.NoMarshal {
-			data, err := jsoninfo.MarshalStructFields(x)
+			data, err := jsoninfo.MarshalStrictStruct(x)
 			if err != nil {
 				t.Fatalf("Error marshalling: %v", err)
 			}

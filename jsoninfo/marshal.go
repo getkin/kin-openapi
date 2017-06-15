@@ -6,10 +6,42 @@ import (
 	"reflect"
 )
 
-// MarshalStructFields function:
+// MarshalStrictStruct function:
 //   * Marshals struct fields, ignoring MarshalJSON() and fields without 'json' tag.
 //   * Correctly handles StrictStruct semantics.
-func MarshalStructFields(value StrictStruct) ([]byte, error) {
+func MarshalStrictStruct(value StrictStruct) ([]byte, error) {
+	encoder := NewObjectEncoder()
+	err := value.EncodeWith(encoder, value)
+	if err != nil {
+		return nil, err
+	}
+	return encoder.Bytes()
+}
+
+type ObjectEncoder struct {
+	result map[string]json.RawMessage
+}
+
+func NewObjectEncoder() *ObjectEncoder {
+	return &ObjectEncoder{
+		result: make(map[string]json.RawMessage, 8),
+	}
+}
+
+// Bytes returns the result of encoding.
+func (encoder *ObjectEncoder) Bytes() ([]byte, error) {
+	return json.Marshal(encoder.result)
+}
+
+// EncodeExtensionMap adds all properties to the result.
+func (encoder *ObjectEncoder) EncodeExtensionMap(value map[string]json.RawMessage) {
+	result := encoder.result
+	for k, v := range value {
+		result[k] = v
+	}
+}
+
+func (encoder *ObjectEncoder) EncodeStructFieldsAndExtensions(value interface{}) error {
 	reflection := reflect.ValueOf(value)
 
 	// Follow "encoding/json" semantics
@@ -29,17 +61,17 @@ func MarshalStructFields(value StrictStruct) ([]byte, error) {
 	typeInfo := GetTypeInfo(reflection.Type())
 
 	// Declare result
-	result := make(map[string]json.RawMessage)
-
-	// Marshal extensions
-	err := value.MarshalJSONUnsupportedFields(result)
-	if err != nil {
-		return nil, err
-	}
+	result := encoder.result
 
 	// Supported fields
 iteration:
 	for _, field := range typeInfo.Fields {
+		// Fields without JSON tag are ignored
+		if !field.HasJSONTag {
+			continue
+		}
+
+		// Marshal
 		fieldValue := reflection.FieldByIndex(field.Index)
 		if v, ok := fieldValue.Interface().(json.Marshaler); ok {
 			if fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil() {
@@ -51,7 +83,7 @@ iteration:
 			}
 			fieldData, err := v.MarshalJSON()
 			if err != nil {
-				return nil, err
+				return err
 			}
 			result[field.JSONName] = fieldData
 			continue
@@ -105,9 +137,20 @@ iteration:
 		// Use plain old "encoding/json".Marshal
 		fieldData, err := json.Marshal(fieldValue.Addr().Interface())
 		if err != nil {
-			return nil, err
+			return err
 		}
 		result[field.JSONName] = fieldData
 	}
-	return json.Marshal(result)
+
+	for _, extension := range typeInfo.Extensions() {
+		f := extension.EncodeFunc
+		if f != nil {
+			err := f(encoder, value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

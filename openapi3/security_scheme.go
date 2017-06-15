@@ -40,11 +40,11 @@ func NewJWTSecurityScheme() *SecurityScheme {
 }
 
 func (value *SecurityScheme) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *SecurityScheme) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (ss *SecurityScheme) WithType(value string) *SecurityScheme {
@@ -155,11 +155,11 @@ type OAuthFlows struct {
 }
 
 func (value *OAuthFlows) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *OAuthFlows) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (flows *OAuthFlows) Validate(c context.Context) error {
@@ -187,11 +187,11 @@ type OAuthFlow struct {
 }
 
 func (value *OAuthFlow) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStructFields(value)
+	return jsoninfo.MarshalStrictStruct(value)
 }
 
 func (value *OAuthFlow) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStructFields(data, value)
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (flow *OAuthFlow) Validate(c context.Context) error {
