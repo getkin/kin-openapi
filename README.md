@@ -39,7 +39,26 @@ This library provides packages for dealing with OpenAPI specifications.
   * `pathpattern`
     * Support for OpenAPI style path patterns.
 
+
 # Getting started
+## Finding OpenAPI operation
+```go 
+func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
+  // Load Swagger file
+  router := openapi3filter.NewRouter().AddSwaggerFile("swagger.json")
+
+  // Find route
+  route, _, err := router.FindRoute("GET", req.URL.String())
+  if err!=nil {
+    return nil, err
+  }
+
+  // Get OpenAPI 3 operation
+  return route.Operation
+}
+```
+
+## Validating HTTP requests/responses
 ```go
 import (
   "github.com/jban332/kin-openapi/openapi3"
@@ -47,18 +66,24 @@ import (
   "net/http"
 )
 
-var router = openapi3filter.NewRouter().AddSwagger3FromFile("swagger.json")
+var router = openapi3filter.NewRouter().AddSwaggerFile("swagger.json")
 
 func ValidateRequest(req *http.Request) {
   openapi3filter.ValidateRequest(nil, &openapi3filter.ValidateRequestInput {
     Request: req,
     Router:  router,
   })
+  
+  // Get response
+
+  openapi3filter.ValidateResponse(nil, &openapi3filter.ValidateResponseInput {
+    // ...
+  })
 }
 
 ```
 
-# Package `jsoninfo`
+# Using package `jsoninfo`
 The package `jsoninfo` marshals/unmarshal JSON extension properties (`"x-someExtension"`)
 
 Usage looks like:
