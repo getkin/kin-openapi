@@ -18,7 +18,7 @@ func failedToResolveRefDefinitions(value string) error {
 }
 
 func failedToResolveRefFragment(value string) error {
-	return fmt.Errorf("Failed to resolve  fragment in URI: '%s'", value)
+	return fmt.Errorf("Failed to resolve fragment in URI: '%s'", value)
 }
 
 func failedToResolveRefFragmentPart(value string, what string) error {
