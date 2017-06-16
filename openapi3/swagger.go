@@ -27,13 +27,6 @@ func (value *Swagger) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
-func (value *Swagger) ResolveRefs() error {
-	resolver := &resolver{
-		Swagger: value,
-	}
-	return resolver.ResolveRefs()
-}
-
 func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {
 	paths := swagger.Paths
 	if paths == nil {

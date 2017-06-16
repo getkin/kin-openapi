@@ -343,7 +343,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
-			return newRefErr(item.Ref)
+			return foundUnresolvedRef(item.Ref)
 		}
 		if err := v.validate(stack, c); err == nil {
 			return err
@@ -352,7 +352,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	for _, item := range schema.AnyOf {
 		v := item.Value
 		if v == nil {
-			return newRefErr(item.Ref)
+			return foundUnresolvedRef(item.Ref)
 		}
 		if err := v.validate(stack, c); err != nil {
 			return err
@@ -361,7 +361,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
-			return newRefErr(item.Ref)
+			return foundUnresolvedRef(item.Ref)
 		}
 		if err := v.validate(stack, c); err != nil {
 			return err
@@ -370,7 +370,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return newRefErr(ref.Ref)
+			return foundUnresolvedRef(ref.Ref)
 		}
 		if err := v.validate(stack, c); err != nil {
 			return err
@@ -400,7 +400,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	if ref := schema.Items; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return newRefErr(ref.Ref)
+			return foundUnresolvedRef(ref.Ref)
 		}
 		if err := v.validate(stack, c); err != nil {
 			return err
@@ -410,7 +410,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		for _, ref := range m {
 			v := ref.Value
 			if v == nil {
-				return newRefErr(ref.Ref)
+				return foundUnresolvedRef(ref.Ref)
 			}
 			if err := v.validate(stack, c); err != nil {
 				return err
@@ -420,7 +420,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	if ref := schema.AdditionalProperties; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return newRefErr(ref.Ref)
+			return foundUnresolvedRef(ref.Ref)
 		}
 		if err := v.validate(stack, c); err != nil {
 			return err
@@ -488,7 +488,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return newRefErr(ref.Ref)
+			return foundUnresolvedRef(ref.Ref)
 		}
 		if err := v.visitJSON(value, true); err == nil {
 			if fast {
@@ -506,7 +506,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 		for _, item := range v {
 			v := item.Value
 			if v == nil {
-				return newRefErr(item.Ref)
+				return foundUnresolvedRef(item.Ref)
 			}
 			err := v.visitJSON(value, true)
 			if err == nil {
@@ -529,7 +529,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 		for _, item := range v {
 			v := item.Value
 			if v == nil {
-				return newRefErr(item.Ref)
+				return foundUnresolvedRef(item.Ref)
 			}
 			err := v.visitJSON(value, true)
 			if err == nil {
@@ -552,7 +552,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 		for _, item := range v {
 			v := item.Value
 			if v == nil {
-				return newRefErr(item.Ref)
+				return foundUnresolvedRef(item.Ref)
 			}
 			err := v.visitJSON(value, true)
 			if err != nil {
@@ -951,7 +951,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 	if itemSchemaRef := schema.Items; itemSchemaRef != nil {
 		itemSchema := itemSchemaRef.Value
 		if itemSchema == nil {
-			return newRefErr(itemSchemaRef.Ref)
+			return foundUnresolvedRef(itemSchemaRef.Ref)
 		}
 		for i, item := range value {
 			err := itemSchema.VisitJSON(item)
@@ -1022,7 +1022,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 			if propertyRef != nil {
 				p := propertyRef.Value
 				if p == nil {
-					return newRefErr(propertyRef.Ref)
+					return foundUnresolvedRef(propertyRef.Ref)
 				}
 				err := p.VisitJSON(v)
 				if err != nil {

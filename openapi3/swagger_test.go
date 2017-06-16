@@ -3,8 +3,8 @@ package openapi3_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-core/jsontest"
+	"github.com/jban332/kin-openapi/openapi3"
 	"testing"
 )
 
@@ -22,7 +22,8 @@ func expect(t *testing.T, swagger *openapi3.Swagger, value interface{}) {
 	jsontest.ExpectWithErr(t, swagger, err).Value(value)
 
 	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
-	swagger.ResolveRefs()
+	err = openapi3.NewSwaggerLoader().ResolveRefsIn(swagger)
+	jsontest.ExpectNoErr(t, err)
 
 	t.Log("Validate unmarshalled *openapi3.Swagger")
 	err = swagger.Validate(context.TODO())
@@ -34,6 +35,9 @@ func TestRefs(t *testing.T) {
 		Description: "Some parameter",
 		Name:        "example",
 		In:          "query",
+		Schema: &openapi3.SchemaRef{
+			Ref: "#/components/schemas/someSchema",
+		},
 	}
 	requestBody := &openapi3.RequestBody{
 		Description: "Some request body",
@@ -95,6 +99,35 @@ func TestRefs(t *testing.T) {
 					Value: schema,
 				},
 			},
+			Headers: map[string]*openapi3.HeaderRef{
+				"someHeader": {
+					Ref: "#/components/headers/otherHeader",
+				},
+				"otherHeader": {
+					Value: &openapi3.Header{},
+				},
+			},
+			Examples: map[string]*openapi3.ExampleRef{
+				"someExample": {
+					Ref: "#/components/examples/otherExample",
+				},
+				"otherExample": {
+					Value: openapi3.NewExample("abc"),
+				},
+			},
+			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{
+				"someSecurityScheme": {
+					Ref: "#/components/securitySchemes/otherSecurityScheme",
+				},
+				"otherSecurityScheme": {
+					Value: &openapi3.SecurityScheme{
+						Description: "Some security scheme",
+						Type:        "apiKey",
+						In:          "query",
+						Name:        "token",
+					},
+				},
+			},
 		},
 	}
 	expect(t, swagger, Object{
@@ -130,6 +163,9 @@ func TestRefs(t *testing.T) {
 					"description": "Some parameter",
 					"name":        "example",
 					"in":          "query",
+					"schema": Object{
+						"$ref": "#/components/schemas/someSchema",
+					},
 				},
 			},
 			"requestBodies": Object{
@@ -145,6 +181,29 @@ func TestRefs(t *testing.T) {
 			"schemas": Object{
 				"someSchema": Object{
 					"description": "Some schema",
+				},
+			},
+			"headers": Object{
+				"someHeader": Object{
+					"$ref": "#/components/headers/otherHeader",
+				},
+				"otherHeader": Object{},
+			},
+			"examples": Object{
+				"someExample": Object{
+					"$ref": "#/components/examples/otherExample",
+				},
+				"otherExample": "abc",
+			},
+			"securitySchemes": Object{
+				"someSecurityScheme": Object{
+					"$ref": "#/components/securitySchemes/otherSecurityScheme",
+				},
+				"otherSecurityScheme": Object{
+					"description": "Some security scheme",
+					"type":        "apiKey",
+					"in":          "query",
+					"name":        "token",
 				},
 			},
 		},

@@ -1,13 +1,9 @@
 package openapi3filter
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi2"
-	"github.com/jban332/kin-openapi/openapi2conv"
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-openapi/pathpattern"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -60,34 +56,6 @@ type Router struct {
 	pathNode *pathpattern.Node
 }
 
-func NewRouterFromFile(path string) (*Router, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	swagger3 := &openapi3.Swagger{}
-	err = json.Unmarshal(data, swagger3)
-	if err == nil {
-		return NewRouter().AddSwagger3(swagger3), nil
-	}
-
-	// Try version 2
-	{
-		swagger2 := &openapi2.Swagger{}
-		err := json.Unmarshal(data, swagger2)
-		if err == nil {
-			swagger3, err := openapi2conv.ToV3Swagger(swagger2)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to convert OpenAPI 2.0 -> 3.0: %v", err)
-			}
-			return NewRouter().AddSwagger3(swagger3), nil
-		}
-	}
-	// Version 2 didn't work
-	// Return an error
-	return nil, fmt.Errorf("Error deserializing Swagger v2/v3 in '%s': %v", path, err)
-}
-
 // NewRouter creates a new router.
 //
 // If the given Swagger has servers, router will use them.
@@ -96,8 +64,41 @@ func NewRouter() *Router {
 	return &Router{}
 }
 
-// AddSwagger3 adds all operations (but not servers) in the router.
-func (router *Router) AddSwagger3(swagger *openapi3.Swagger) *Router {
+// WithSwaggerFromFile loads the Swagger file and adds it using WithSwagger.
+// Panics on any error.
+func (router *Router) WithSwaggerFromFile(path string) *Router {
+	err := router.AddSwaggerFromFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return router
+}
+
+// WithSwagger adds all operations in the OpenAPI specification.
+// Panics on any error.
+func (router *Router) WithSwagger(swagger *openapi3.Swagger) *Router {
+	err := router.AddSwagger(swagger)
+	if err != nil {
+		panic(err)
+	}
+	return router
+}
+
+// AddSwaggerFromFile loads the Swagger file and adds it using AddSwagger.
+func (router *Router) AddSwaggerFromFile(path string) error {
+	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile(path)
+	if err != nil {
+		return err
+	}
+	return router.AddSwagger(swagger)
+}
+
+// AddSwagger adds all operations in the OpenAPI specification.
+func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
+	err := swagger.Validate(nil)
+	if err != nil {
+		return fmt.Errorf("Validating Swagger failed: %v", err)
+	}
 	router.swagger = swagger
 	root := router.node()
 	if paths := swagger.Paths; paths != nil {
@@ -114,7 +115,7 @@ func (router *Router) AddSwagger3(swagger *openapi3.Swagger) *Router {
 			}
 		}
 	}
-	return router
+	return nil
 }
 
 // AddRoute adds a route in the router.

@@ -34,7 +34,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	// Build router
-	router := openapi3filter.NewRouter().AddSwagger3(swagger)
+	router := openapi3filter.NewRouter().WithSwagger(swagger)
 
 	// Declare a helper function
 	expect := func(method string, uri string, operation *openapi3.Operation, params map[string]string) {

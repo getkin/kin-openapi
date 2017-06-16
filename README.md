@@ -13,7 +13,7 @@ This library provides packages for dealing with OpenAPI specifications.
     * [X] That a Go value matches [OpenAPI 3.0 schema object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#schemaObject)
     * [X] That HTTP request matches [OpenAPI operation object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#operationObject)
     * [X] That HTTP response matches OpenAPI 3.0 operation object
-  * [X] Generates [OpenAPI 3.0 schema trees] for some Go types.
+  * [X] Generates [OpenAPI 3.0 schema trees] for Go types, with some limitations.
 
 ### TODO
   * [ ] More tests
@@ -52,11 +52,16 @@ This library provides packages for dealing with OpenAPI specifications.
 
 
 # Getting started
+## Unmarshalling OpenAPI document
+```go
+swagger, err := openapi3.NewSwaggerLoader().LoadFromFile("swagger.json")
+```
+
 ## Finding OpenAPI operation
 ```go 
 func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
   // Load Swagger file
-  router := openapi3filter.NewRouter().AddSwaggerFile("swagger.json")
+  router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
 
   // Find route
   route, _, err := router.FindRoute("GET", req.URL.String())
@@ -77,7 +82,7 @@ import (
   "net/http"
 )
 
-var router = openapi3filter.NewRouter().AddSwaggerFile("swagger.json")
+var router = openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
 
 func ValidateRequest(req *http.Request) {
   openapi3filter.ValidateRequest(nil, &openapi3filter.ValidateRequestInput {

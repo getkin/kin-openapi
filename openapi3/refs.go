@@ -19,10 +19,11 @@ func (value *CallbackRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *CallbackRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type ExampleRef struct {
@@ -56,10 +57,11 @@ func (value *HeaderRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *HeaderRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type LinkRef struct {
@@ -76,10 +78,11 @@ func (value *LinkRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *LinkRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type ParameterRef struct {
@@ -96,10 +99,11 @@ func (value *ParameterRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *ParameterRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type ResponseRef struct {
@@ -116,10 +120,11 @@ func (value *ResponseRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *ResponseRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type RequestBodyRef struct {
@@ -136,10 +141,11 @@ func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *RequestBodyRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type SchemaRef struct {
@@ -163,10 +169,11 @@ func (value *SchemaRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *SchemaRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }
 
 type SecuritySchemeRef struct {
@@ -183,8 +190,9 @@ func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 }
 
 func (value *SecuritySchemeRef) Validate(c context.Context) error {
-	if v := value.Value; v != nil {
-		return v.Validate(c)
+	v := value.Value
+	if v == nil {
+		return foundUnresolvedRef(value.Ref)
 	}
-	return nil
+	return v.Validate(c)
 }

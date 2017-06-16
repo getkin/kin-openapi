@@ -56,7 +56,7 @@ func TestFilter(t *testing.T) {
 			},
 		},
 	}
-	router := openapi3filter.NewRouter().AddSwagger3(swagger)
+	router := openapi3filter.NewRouter().WithSwagger(swagger)
 
 	// Declare helper method
 	var req ExampleRequest
