@@ -13,7 +13,7 @@ This library provides packages for dealing with OpenAPI specifications.
     * [X] That a Go value matches [OpenAPI 3.0 schema object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#schemaObject)
     * [X] That HTTP request matches [OpenAPI operation object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#operationObject)
     * [X] That HTTP response matches OpenAPI 3.0 operation object
-  * [X] Generates [OpenAPI 3.0 schema trees] for Go types, with some limitations.
+  * [X] Generates JSON schemas for Go types.
 
 ### TODO
   * [ ] More tests
