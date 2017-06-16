@@ -17,9 +17,6 @@ type TypeInfo struct {
 	MultipleFields bool // Whether multiple Go fields share the same JSON name
 	Type           reflect.Type
 	Fields         []FieldInfo
-
-	// extensions
-	extensions []*ExtensionInfo
 }
 
 func GetTypeInfoForValue(value interface{}) *TypeInfo {
@@ -60,18 +57,6 @@ func GetTypeInfo(t reflect.Type) *TypeInfo {
 	typeInfos[t] = typeInfo
 	typeInfosMutex.Unlock()
 	return typeInfo
-}
-
-func (typeInfo *TypeInfo) AddExtension(ext *ExtensionInfo) {
-	typeInfo.mutex.Lock()
-	defer typeInfo.mutex.Unlock()
-	typeInfo.extensions = append(typeInfo.extensions, ext)
-}
-
-func (typeInfo *TypeInfo) Extensions() []*ExtensionInfo {
-	typeInfo.mutex.RLock()
-	defer typeInfo.mutex.RUnlock()
-	return typeInfo.extensions
 }
 
 // FieldNames returns all field names
