@@ -4,11 +4,8 @@ This library provides packages for dealing with OpenAPI specifications.
 ## Status
 ### Current
   * [X] Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
-  * [X] Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md)
+  * [X] Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md) and converts 2.0 -> 3.0 and 3.0->2.0.
     * Does NOT support all features.
-  * [X] Converts OpenAPI files to other versions:
-    * [X] 2.0 -> 3.0
-    * [X] 3.0 -> 2.0
   * [X] Validates:
     * [X] That a Go value matches [OpenAPI 3.0 schema object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#schemaObject)
     * [X] That HTTP request matches [OpenAPI operation object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#operationObject)
@@ -52,12 +49,13 @@ This library provides packages for dealing with OpenAPI specifications.
 
 
 # Getting started
-## Unmarshalling OpenAPI document
+## Loading OpenAPI document
+Use `SwaggerLoader`, which resolves all JSON references:
 ```go
 swagger, err := openapi3.NewSwaggerLoader().LoadFromFile("swagger.json")
 ```
 
-## Finding OpenAPI operation
+## Getting OpenAPI operation that matches request
 ```go 
 func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
   // Load Swagger file
