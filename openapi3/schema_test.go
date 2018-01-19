@@ -2,8 +2,8 @@ package openapi3_test
 
 import (
 	"encoding/base64"
-	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-core/jsontest"
+	"github.com/jban332/kin-openapi/openapi3"
 	"testing"
 )
 

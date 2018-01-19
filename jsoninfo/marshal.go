@@ -155,15 +155,5 @@ iteration:
 		result[field.JSONName] = fieldData
 	}
 
-	for _, extension := range typeInfo.Extensions() {
-		f := extension.EncodeFunc
-		if f != nil {
-			err := f(encoder, value)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	return nil
 }

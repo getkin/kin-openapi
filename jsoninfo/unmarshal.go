@@ -120,16 +120,5 @@ func (decoder *ObjectDecoder) DecodeStructFieldsAndExtensions(value interface{})
 			delete(remainingFields, field.JSONName)
 		}
 	}
-
-	// Extensions
-	for _, extension := range typeInfo.Extensions() {
-		f := extension.DecodeFunc
-		if f != nil {
-			err := f(decoder, value)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }

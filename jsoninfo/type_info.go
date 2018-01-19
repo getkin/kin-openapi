@@ -13,10 +13,9 @@ var (
 
 // TypeInfo contains information about JSON serialization of a type
 type TypeInfo struct {
-	mutex          sync.RWMutex
-	MultipleFields bool // Whether multiple Go fields share the same JSON name
-	Type           reflect.Type
-	Fields         []FieldInfo
+	mutex  sync.RWMutex
+	Type   reflect.Type
+	Fields []FieldInfo
 }
 
 func GetTypeInfoForValue(value interface{}) *TypeInfo {
