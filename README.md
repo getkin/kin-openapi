@@ -21,8 +21,7 @@ This library provides packages for dealing with OpenAPI specifications.
 
 ## Dependencies
   * Go 1.7.
-    * Should work in pre-1.7 versions if you provide [context](https://golang.org/pkg/context/) from Go 1.7 standard library.
-  * Tests require [github.com/jban332/kin-test](https://github.com/jban332/kin-core)
+  * Tests require [github.com/jban332/kin-test](https://github.com/jban332/kin-test)
 
 ## Credits
   * jban332@gmail.com
