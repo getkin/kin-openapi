@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/jban332/kin-openapi.svg?branch=master)](https://travis-ci.org/jban332/kin-openapi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jban332/kin-openapi)](https://goreportcard.com/report/github.com/jban332/kin-openapi)
+[![GoDoc](https://godoc.org/github.com/jban332/kin-openapi?status.svg)](https://godoc.org/github.com/jban332/kin-openapi)
 
 # Overview
 This library provides packages for dealing with OpenAPI specifications.
