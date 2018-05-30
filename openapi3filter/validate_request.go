@@ -18,6 +18,9 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 	route := input.Route
 	operation := route.Operation
+	if route == nil {
+		return fmt.Errorf("invalid route")
+	}
 	if operation == nil {
 		return errRouteMissingOperation
 	}
