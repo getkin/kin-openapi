@@ -89,6 +89,9 @@ func (value *ContentType) UnmarshalJSON(data []byte) error {
 }
 
 func (ct *ContentType) Validate(c context.Context) error {
+	if ct == nil {
+		return nil
+	}
 	if schema := ct.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return err

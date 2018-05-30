@@ -354,6 +354,9 @@ func (resolver *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *R
 	}
 	if content := value.Content; content != nil {
 		for _, contentType := range content {
+			if contentType == nil {
+				continue
+			}
 			if schema := contentType.Schema; schema != nil {
 				err := resolver.resolveSchemaRef(swagger, schema)
 				if err != nil {
