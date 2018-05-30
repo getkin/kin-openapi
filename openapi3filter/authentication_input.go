@@ -2,7 +2,7 @@ package openapi3filter
 
 import (
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/ronniedada/kin-openapi/openapi3"
 	"strings"
 )
 

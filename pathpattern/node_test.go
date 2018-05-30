@@ -1,7 +1,7 @@
 package pathpattern_test
 
 import (
-	"github.com/jban332/kin-openapi/pathpattern"
+	"github.com/ronniedada/kin-openapi/pathpattern"
 	"testing"
 )
 

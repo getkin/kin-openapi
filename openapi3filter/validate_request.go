@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/ronniedada/kin-openapi/openapi3"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -18,6 +18,9 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 	route := input.Route
 	operation := route.Operation
+	if route == nil {
+		return fmt.Errorf("invalid route")
+	}
 	if operation == nil {
 		return errRouteMissingOperation
 	}

@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/ronniedada/kin-openapi/jsoninfo"
 	"strings"
 )
 
@@ -89,6 +89,9 @@ func (value *ContentType) UnmarshalJSON(data []byte) error {
 }
 
 func (ct *ContentType) Validate(c context.Context) error {
+	if ct == nil {
+		return nil
+	}
 	if schema := ct.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return err
