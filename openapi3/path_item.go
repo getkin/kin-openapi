@@ -3,7 +3,7 @@ package openapi3
 import (
 	"context"
 	"fmt"
-	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/ronniedada/kin-openapi/jsoninfo"
 )
 
 type PathItem struct {

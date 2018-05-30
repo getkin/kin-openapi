@@ -2,8 +2,8 @@ package openapi3gen_test
 
 import (
 	"encoding/json"
-	"github.com/jban332/kin-openapi/openapi3gen"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/ronniedada/kin-openapi/openapi3gen"
+	"github.com/ronniedada/kin-test/jsontest"
 	"testing"
 	"time"
 )

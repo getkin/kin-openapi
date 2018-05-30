@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/ronniedada/kin-openapi/jsoninfo"
 	"math"
 	"regexp"
 	"strconv"

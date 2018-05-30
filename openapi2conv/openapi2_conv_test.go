@@ -3,10 +3,10 @@ package openapi2conv_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi2"
-	"github.com/jban332/kin-openapi/openapi2conv"
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/ronniedada/kin-openapi/openapi2"
+	"github.com/ronniedada/kin-openapi/openapi2conv"
+	"github.com/ronniedada/kin-openapi/openapi3"
+	"github.com/ronniedada/kin-test/jsontest"
 	"testing"
 )
 

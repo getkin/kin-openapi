@@ -3,7 +3,7 @@ package openapi3filter
 import (
 	"errors"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/ronniedada/kin-openapi/openapi3"
 	"net/http"
 )
 

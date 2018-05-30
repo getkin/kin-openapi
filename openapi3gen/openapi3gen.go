@@ -3,8 +3,8 @@ package openapi3gen
 
 import (
 	"encoding/json"
-	"github.com/jban332/kin-openapi/jsoninfo"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/ronniedada/kin-openapi/jsoninfo"
+	"github.com/ronniedada/kin-openapi/openapi3"
 	"reflect"
 	"strings"
 	"time"

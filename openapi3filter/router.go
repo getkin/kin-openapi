@@ -2,8 +2,8 @@ package openapi3filter
 
 import (
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-openapi/pathpattern"
+	"github.com/ronniedada/kin-openapi/openapi3"
+	"github.com/ronniedada/kin-openapi/pathpattern"
 	"net/http"
 	"net/url"
 	"strings"
