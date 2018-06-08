@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
@@ -98,7 +99,7 @@ func (value *Schema) NewRef() *SchemaRef {
 func NewOneOfSchema(schemas ...*Schema) *Schema {
 	refs := make([]*SchemaRef, len(schemas))
 	for i, schema := range schemas {
-		refs[i].Value = schema
+		refs[i] = &SchemaRef{Value: schema}
 	}
 	return &Schema{
 		OneOf: refs,
@@ -108,7 +109,7 @@ func NewOneOfSchema(schemas ...*Schema) *Schema {
 func NewAnyOfSchema(schemas ...*Schema) *Schema {
 	refs := make([]*SchemaRef, len(schemas))
 	for i, schema := range schemas {
-		refs[i].Value = schema
+		refs[i] = &SchemaRef{Value: schema}
 	}
 	return &Schema{
 		AnyOf: refs,
@@ -118,7 +119,7 @@ func NewAnyOfSchema(schemas ...*Schema) *Schema {
 func NewAllOfSchema(schemas ...*Schema) *Schema {
 	refs := make([]*SchemaRef, len(schemas))
 	for i, schema := range schemas {
-		refs[i].Value = schema
+		refs[i] = &SchemaRef{Value: schema}
 	}
 	return &Schema{
 		AllOf: refs,
