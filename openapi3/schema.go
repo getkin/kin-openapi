@@ -380,16 +380,14 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 	schemaType := schema.Type
 	switch schemaType {
 	case "":
-	case "boolean":
-	case "number":
-		if format := schema.Format; len(format) > 0 {
-			switch format {
-			case "int32", "int64", "float", "double":
-			default:
-				return fmt.Errorf("Unsupported 'format' value '%v", format)
-			}
-		}
+	case "integer", "long", "float", "double":
 	case "string":
+	case "byte":
+	case "binary":
+	case "boolean":
+	case "date":
+	case "dateTime":
+	case "password":
 	case "array":
 		if schema.Items == nil {
 			return fmt.Errorf("When schema type is 'array', schema 'items' must be non-null")
