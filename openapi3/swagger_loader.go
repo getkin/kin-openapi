@@ -381,6 +381,27 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 			return err
 		}
 	}
+	if v := value.Not; v != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
+			return err
+		}
+	}
+	for _, v := range value.AllOf {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
+			return err
+		}
+	}
+	for _, v := range value.AnyOf {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
+			return err
+		}
+	}
+	for _, v := range value.OneOf {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

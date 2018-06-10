@@ -22,12 +22,12 @@ func ExampleSwaggerLoader() {
 func TestResolveSchemaRef(t *testing.T) {
 	source := []byte(`{"info":{"description":"An API"},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
 	loader := openapi3.NewSwaggerLoader()
-	oais, err := loader.LoadSwaggerFromData(source)
+	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
-	err = oais.Validate(loader.Context)
+	err = doc.Validate(loader.Context)
 
 	require.NoError(t, err)
-	refAVisited := oais.Components.Schemas["A"].Value.AllOf[0]
+	refAVisited := doc.Components.Schemas["A"].Value.AllOf[0]
 	require.Equal(t, "#/components/schemas/B", refAVisited.Ref)
 	require.NotNil(t, refAVisited.Value)
 }
