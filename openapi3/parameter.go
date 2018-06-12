@@ -55,11 +55,11 @@ type Parameter struct {
 	Name            string        `json:"name,omitempty"`
 	In              string        `json:"in,omitempty"`
 	Description     string        `json:"description,omitempty"`
-	Deprecated      bool          `json:"deprecated,omitempty"`
-	Required        bool          `json:"required,omitempty"`
 	Style           string        `json:"style,omitempty"`
 	AllowEmptyValue bool          `json:"allowEmptyValue,omitempty"`
 	AllowReserved   bool          `json:"allowReserved,omitempty"`
+	Deprecated      bool          `json:"deprecated,omitempty"`
+	Required        bool          `json:"required,omitempty"`
 	Schema          *SchemaRef    `json:"schema,omitempty"`
 	Example         interface{}   `json:"example,omitempty"`
 	Examples        []interface{} `json:"examples,omitempty"`

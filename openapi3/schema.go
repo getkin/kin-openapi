@@ -43,6 +43,8 @@ type Schema struct {
 	Examples     []interface{} `json:"examples,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 
+	// Object-related, here for struct compactness
+	AdditionalPropertiesAllowed bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Properties
 	Nullable  bool        `json:"nullable,omitempty"`
 	ReadOnly  bool        `json:"readOnly,omitempty"`
@@ -68,11 +70,10 @@ type Schema struct {
 	Items    *SchemaRef `json:"items,omitempty"`
 
 	// Object
-	Required                    []string              `json:"required,omitempty"`
-	Properties                  map[string]*SchemaRef `json:"properties,omitempty"`
-	AdditionalProperties        *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty"`
-	AdditionalPropertiesAllowed bool                  `json:"-" multijson:"additionalProperties,omitempty"`
-	Discriminator               string                `json:"discriminator,omitempty"`
+	Required             []string              `json:"required,omitempty"`
+	Properties           map[string]*SchemaRef `json:"properties,omitempty"`
+	AdditionalProperties *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty"`
+	Discriminator        string                `json:"discriminator,omitempty"`
 
 	PatternProperties         string `json:"patternProperties,omitempty"`
 	compiledPatternProperties *compiledPattern
