@@ -19,12 +19,12 @@ type Swagger struct {
 	visitedSchemas map[*Schema]struct{}
 }
 
-func (value *Swagger) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (swagger *Swagger) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(swagger)
 }
 
-func (value *Swagger) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (swagger *Swagger) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, swagger)
 }
 
 func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {

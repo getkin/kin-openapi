@@ -13,8 +13,8 @@ func NewParameters() Parameters {
 	return make(Parameters, 0, 4)
 }
 
-func (all Parameters) GetByInAndName(in string, name string) *Parameter {
-	for _, item := range all {
+func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
+	for _, item := range parameters {
 		if v := item.Value; v != nil {
 			if v.Name == name && v.In == in {
 				return v
@@ -24,9 +24,9 @@ func (all Parameters) GetByInAndName(in string, name string) *Parameter {
 	return nil
 }
 
-func (all Parameters) Validate(c context.Context) error {
+func (parameters Parameters) Validate(c context.Context) error {
 	m := make(map[string]struct{})
-	for _, item := range all {
+	for _, item := range parameters {
 		err := item.Validate(c)
 		if err != nil {
 			return err
@@ -121,12 +121,12 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
 	return parameter
 }
 
-func (value *Parameter) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (parameter *Parameter) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(parameter)
 }
 
-func (value *Parameter) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (parameter *Parameter) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
 
 func (parameter *Parameter) Validate(c context.Context) error {

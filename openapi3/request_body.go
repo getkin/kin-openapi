@@ -50,12 +50,12 @@ func (requestBody *RequestBody) GetContentType(mediaType string) *ContentType {
 	return m[mediaType]
 }
 
-func (value *RequestBody) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (requestBody *RequestBody) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(requestBody)
 }
 
-func (value *RequestBody) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
 }
 
 func (requestBody *RequestBody) Validate(c context.Context) error {

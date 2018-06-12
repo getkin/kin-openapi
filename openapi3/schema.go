@@ -82,17 +82,17 @@ func NewSchema() *Schema {
 	return &Schema{}
 }
 
-func (value *Schema) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (schema *Schema) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(schema)
 }
 
-func (value *Schema) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (schema *Schema) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, schema)
 }
 
-func (value *Schema) NewRef() *SchemaRef {
+func (schema *Schema) NewRef() *SchemaRef {
 	return &SchemaRef{
-		Value: value,
+		Value: schema,
 	}
 }
 

@@ -22,12 +22,12 @@ type PathItem struct {
 	Parameters  Parameters `json:"parameters,omitempty"`
 }
 
-func (value *PathItem) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(pathItem)
 }
 
-func (value *PathItem) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, pathItem)
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {

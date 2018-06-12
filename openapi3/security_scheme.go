@@ -39,12 +39,12 @@ func NewJWTSecurityScheme() *SecurityScheme {
 	}
 }
 
-func (value *SecurityScheme) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (ss *SecurityScheme) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(ss)
 }
 
-func (value *SecurityScheme) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, ss)
 }
 
 func (ss *SecurityScheme) WithType(value string) *SecurityScheme {
@@ -77,16 +77,16 @@ func (ss *SecurityScheme) WithBearerFormat(value string) *SecurityScheme {
 	return ss
 }
 
-func (securityScheme *SecurityScheme) Validate(c context.Context) error {
+func (ss *SecurityScheme) Validate(c context.Context) error {
 	hasIn := false
 	hasBearerFormat := false
 	hasFlow := false
-	switch securityScheme.Type {
+	switch ss.Type {
 	case "apiKey":
 		hasIn = true
 		hasBearerFormat = true
 	case "http":
-		scheme := securityScheme.Scheme
+		scheme := ss.Scheme
 		switch scheme {
 		case "bearer":
 			hasBearerFormat = true
@@ -97,51 +97,49 @@ func (securityScheme *SecurityScheme) Validate(c context.Context) error {
 	case "oauth2":
 		hasFlow = true
 	case "openIdConnect":
-		return fmt.Errorf("Support for security schemes with type '%v' has not been implemented", securityScheme.Type)
+		return fmt.Errorf("Support for security schemes with type '%v' has not been implemented", ss.Type)
 	default:
-		return fmt.Errorf("Security scheme 'type' can't be '%v'", securityScheme.Type)
+		return fmt.Errorf("Security scheme 'type' can't be '%v'", ss.Type)
 	}
 
 	// Validate "in" and "name"
 	if hasIn {
-		switch securityScheme.In {
+		switch ss.In {
 		case "query", "header":
 		default:
-			return fmt.Errorf("Security scheme of type 'apiKey' should have 'in'. It can be 'query' or 'header', not '%s'",
-				securityScheme.In)
+			return fmt.Errorf("Security scheme of type 'apiKey' should have 'in'. It can be 'query' or 'header', not '%s'", ss.In)
 		}
-		if securityScheme.Name == "" {
+		if ss.Name == "" {
 			return errors.New("Security scheme of type 'apiKey' should have 'name'")
 		}
-	} else if len(securityScheme.In) > 0 {
-		return fmt.Errorf("Security scheme of type '%s' can't have 'in'", securityScheme.Type)
-	} else if len(securityScheme.Name) > 0 {
+	} else if len(ss.In) > 0 {
+		return fmt.Errorf("Security scheme of type '%s' can't have 'in'", ss.Type)
+	} else if len(ss.Name) > 0 {
 		return errors.New("Security scheme of type 'apiKey' can't have 'name'")
 	}
 
 	// Validate "format"
 	if hasBearerFormat {
-		switch securityScheme.BearerFormat {
+		switch ss.BearerFormat {
 		case "", "JWT":
 		default:
-			return fmt.Errorf("Security scheme has unsupported 'bearerFormat' value '%s'", securityScheme.BearerFormat)
+			return fmt.Errorf("Security scheme has unsupported 'bearerFormat' value '%s'", ss.BearerFormat)
 		}
-	} else if len(securityScheme.BearerFormat) > 0 {
+	} else if len(ss.BearerFormat) > 0 {
 		return errors.New("Security scheme of type 'apiKey' can't have 'bearerFormat'")
 	}
 
 	// Validate "flow"
 	if hasFlow {
-		flow := securityScheme.Flow
+		flow := ss.Flow
 		if flow == nil {
-			return fmt.Errorf("Security scheme of type '%v' should have 'flow'", securityScheme.Type)
+			return fmt.Errorf("Security scheme of type '%v' should have 'flow'", ss.Type)
 		}
 		if err := flow.Validate(c); err != nil {
 			return fmt.Errorf("Security scheme 'flow' is invalid: %v", err)
 		}
-	} else if securityScheme.Flow != nil {
-		return fmt.Errorf("Security scheme of type '%s' can't have 'flow'",
-			securityScheme.Type)
+	} else if ss.Flow != nil {
+		return fmt.Errorf("Security scheme of type '%s' can't have 'flow'", ss.Type)
 	}
 	return nil
 }
@@ -154,12 +152,12 @@ type OAuthFlows struct {
 	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty"`
 }
 
-func (value *OAuthFlows) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(flows)
 }
 
-func (value *OAuthFlows) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, flows)
 }
 
 func (flows *OAuthFlows) Validate(c context.Context) error {
@@ -186,12 +184,12 @@ type OAuthFlow struct {
 	Scopes           map[string]string `json:"scopes"`
 }
 
-func (value *OAuthFlow) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (flow *OAuthFlow) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(flow)
 }
 
-func (value *OAuthFlow) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }
 
 func (flow *OAuthFlow) Validate(c context.Context) error {

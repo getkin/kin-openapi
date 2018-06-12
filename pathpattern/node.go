@@ -59,20 +59,20 @@ type Node struct {
 	Suffixes      SuffixList
 }
 
-func (node *Node) String() string {
+func (currentNode *Node) String() string {
 	buf := bytes.NewBuffer(make([]byte, 0, 255))
-	node.toBuffer(buf, "")
+	currentNode.toBuffer(buf, "")
 	return buf.String()
 }
 
-func (node *Node) toBuffer(buf *bytes.Buffer, linePrefix string) {
-	if value := node.Value; value != nil {
+func (currentNode *Node) toBuffer(buf *bytes.Buffer, linePrefix string) {
+	if value := currentNode.Value; value != nil {
 		buf.WriteString(linePrefix)
 		buf.WriteString("VALUE: ")
 		fmt.Fprint(buf, value)
 		buf.WriteString("\n")
 	}
-	suffixes := node.Suffixes
+	suffixes := currentNode.Suffixes
 	if len(suffixes) > 0 {
 		newLinePrefix := linePrefix + "  "
 		for _, suffix := range suffixes {
@@ -262,27 +262,27 @@ loop:
 	}
 }
 
-func (node *Node) Match(path string) (*Node, []string) {
+func (currentNode *Node) Match(path string) (*Node, []string) {
 	for strings.HasSuffix(path, "/") {
 		path = path[:len(path)-1]
 	}
 	variableValues := make([]string, 0, 8)
-	return node.matchRemaining(path, false, variableValues)
+	return currentNode.matchRemaining(path, false, variableValues)
 }
 
-func (node *Node) matchRemaining(remaining string, hasExtraSlash bool, paramValues []string) (*Node, []string) {
+func (currentNode *Node) matchRemaining(remaining string, hasExtraSlash bool, paramValues []string) (*Node, []string) {
 	// Remove "/" from the beginning
 	// if len(remaining) > 0 && remaining[0] == '/' {
 	// 	remaining = remaining[1:]
 	// }
 
 	// Check if this node matches
-	if len(remaining) == 0 && node.Value != nil {
-		return node, paramValues
+	if len(remaining) == 0 && currentNode.Value != nil {
+		return currentNode, paramValues
 	}
 
 	// See if any suffix  matches
-	for _, suffix := range node.Suffixes {
+	for _, suffix := range currentNode.Suffixes {
 		var resultNode *Node
 		var resultValues []string
 		switch suffix.Kind {

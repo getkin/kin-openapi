@@ -26,12 +26,12 @@ func NewComponents() Components {
 	return Components{}
 }
 
-func (value *Components) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (components *Components) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(components)
 }
 
-func (value *Components) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (components *Components) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, components)
 }
 
 func (components *Components) Validate(c context.Context) error {

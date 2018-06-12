@@ -21,8 +21,8 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
-func (all Responses) Validate(c context.Context) error {
-	for _, v := range all {
+func (responses Responses) Validate(c context.Context) error {
+	for _, v := range responses {
 		err := v.Validate(c)
 		if err != nil {
 			return err
@@ -64,12 +64,12 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 	return response
 }
 
-func (value *Response) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (response *Response) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(response)
 }
 
-func (value *Response) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (response *Response) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
 func (response *Response) Validate(c context.Context) error {

@@ -47,12 +47,12 @@ func NewOperation() *Operation {
 	return &Operation{}
 }
 
-func (value *Operation) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (operation *Operation) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(operation)
 }
 
-func (value *Operation) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (operation *Operation) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }
 
 func (operation *Operation) AddParameter(p *Parameter) {
