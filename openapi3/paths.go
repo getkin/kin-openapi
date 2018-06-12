@@ -16,7 +16,7 @@ func (paths Paths) Validate(c context.Context) error {
 		if oldPath, exists := normalizedPaths[normalizedPath]; exists {
 			return fmt.Errorf("Conflicting paths '%v' and '%v'", path, oldPath)
 		}
-		if strings.HasPrefix(path, "/") == false {
+		if path == "" || path[0] != '/' {
 			return fmt.Errorf("Path '%v' does not start with '/'", path)
 		}
 		if strings.Contains(path, "//") {

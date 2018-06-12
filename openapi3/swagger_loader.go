@@ -70,92 +70,67 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 	return swagger, swaggerLoader.ResolveRefsIn(swagger)
 }
 
-func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger) error {
+func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger) (err error) {
 	swaggerLoader.visited = make(map[interface{}]struct{})
 
 	// Visit all components
-	if m := swagger.Components.Headers; m != nil {
-		for _, component := range m {
-			err := swaggerLoader.resolveHeaderRef(swagger, component)
-			if err != nil {
-				return err
-			}
+	components := swagger.Components
+	for _, component := range components.Headers {
+		if err = swaggerLoader.resolveHeaderRef(swagger, component); err != nil {
+			return
 		}
 	}
-	if m := swagger.Components.Parameters; m != nil {
-		for _, component := range m {
-			err := swaggerLoader.resolveParameterRef(swagger, component)
-			if err != nil {
-				return err
-			}
+	for _, component := range components.Parameters {
+		if err = swaggerLoader.resolveParameterRef(swagger, component); err != nil {
+			return
 		}
 	}
-	if m := swagger.Components.RequestBodies; m != nil {
-		for _, component := range m {
-			err := swaggerLoader.resolveRequestBodyRef(swagger, component)
-			if err != nil {
-				return err
-			}
+	for _, component := range components.RequestBodies {
+		if err = swaggerLoader.resolveRequestBodyRef(swagger, component); err != nil {
+			return
 		}
 	}
-	if m := swagger.Components.Responses; m != nil {
-		for _, component := range m {
-			err := swaggerLoader.resolveResponseRef(swagger, component)
-			if err != nil {
-				return err
-			}
+	for _, component := range components.Responses {
+		if err = swaggerLoader.resolveResponseRef(swagger, component); err != nil {
+			return
 		}
 	}
-	if m := swagger.Components.Schemas; m != nil {
-		for _, component := range m {
-			err := swaggerLoader.resolveSchemaRef(swagger, component)
-			if err != nil {
-				return err
-			}
+	for _, component := range components.Schemas {
+		if err = swaggerLoader.resolveSchemaRef(swagger, component); err != nil {
+			return
 		}
 	}
-	if m := swagger.Components.SecuritySchemes; m != nil {
-		for _, component := range m {
-			err := swaggerLoader.resolveSecuritySchemeRef(swagger, component)
-			if err != nil {
-				return err
-			}
+	for _, component := range components.SecuritySchemes {
+		if err = swaggerLoader.resolveSecuritySchemeRef(swagger, component); err != nil {
+			return
 		}
 	}
 
 	// Visit all operations
-	if paths := swagger.Paths; paths != nil {
-		for _, pathItem := range paths {
-			if pathItem == nil {
-				continue
-			}
-			for _, operation := range pathItem.Operations() {
-				if parameters := operation.Parameters; parameters != nil {
-					for _, parameter := range parameters {
-						err := swaggerLoader.resolveParameterRef(swagger, parameter)
-						if err != nil {
-							return err
-						}
-					}
+	for _, pathItem := range swagger.Paths {
+		if pathItem == nil {
+			continue
+		}
+		for _, operation := range pathItem.Operations() {
+			for _, parameter := range operation.Parameters {
+				if err = swaggerLoader.resolveParameterRef(swagger, parameter); err != nil {
+					return
 				}
 				if requestBody := operation.RequestBody; requestBody != nil {
-					err := swaggerLoader.resolveRequestBodyRef(swagger, requestBody)
-					if err != nil {
-						return err
+					if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody); err != nil {
+						return
 					}
 				}
-				if responses := operation.Responses; responses != nil {
-					for _, response := range responses {
-						err := swaggerLoader.resolveResponseRef(swagger, response)
-						if err != nil {
-							return err
-						}
+				for _, response := range operation.Responses {
+					if err = swaggerLoader.resolveResponseRef(swagger, response); err != nil {
+						return
 					}
 				}
 			}
 		}
 	}
-	return nil
+
+	return
 }
 
 func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, prefix string) (components *Components, id string, err error) {
@@ -302,13 +277,11 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	if value == nil {
 		return nil
 	}
-	if content := value.Content; content != nil {
-		for _, contentType := range content {
-			if schema := contentType.Schema; schema != nil {
-				err := swaggerLoader.resolveSchemaRef(swagger, schema)
-				if err != nil {
-					return err
-				}
+	for _, contentType := range value.Content {
+		if schema := contentType.Schema; schema != nil {
+			err := swaggerLoader.resolveSchemaRef(swagger, schema)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -348,18 +321,16 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	if value == nil {
 		return nil
 	}
-	if content := value.Content; content != nil {
-		for _, contentType := range content {
-			if contentType == nil {
-				continue
+	for _, contentType := range value.Content {
+		if contentType == nil {
+			continue
+		}
+		if schema := contentType.Schema; schema != nil {
+			err := swaggerLoader.resolveSchemaRef(swagger, schema)
+			if err != nil {
+				return err
 			}
-			if schema := contentType.Schema; schema != nil {
-				err := swaggerLoader.resolveSchemaRef(swagger, schema)
-				if err != nil {
-					return err
-				}
-				contentType.Schema = schema
-			}
+			contentType.Schema = schema
 		}
 	}
 	return nil
@@ -403,12 +374,9 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 			return err
 		}
 	}
-	if m := value.Properties; m != nil {
-		for _, v := range m {
-			err := swaggerLoader.resolveSchemaRef(swagger, v)
-			if err != nil {
-				return err
-			}
+	for _, v := range value.Properties {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
+			return err
 		}
 	}
 	if v := value.AdditionalProperties; v != nil {

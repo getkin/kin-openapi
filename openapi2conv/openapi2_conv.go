@@ -94,17 +94,15 @@ func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*open
 		}
 		result.SetOperation(method, resultOperation)
 	}
-	if parameters := pathItem.Parameters; parameters != nil {
-		for _, parameter := range parameters {
-			v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
-			if err != nil {
-				return nil, err
-			}
-			if v3RequestBody != nil {
-				return nil, fmt.Errorf("PathItem shouldn't have a body parameter")
-			}
-			result.Parameters = append(result.Parameters, v3Parameter)
+	for _, parameter := range pathItem.Parameters {
+		v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
+		if err != nil {
+			return nil, err
 		}
+		if v3RequestBody != nil {
+			return nil, fmt.Errorf("PathItem shouldn't have a body parameter")
+		}
+		result.Parameters = append(result.Parameters, v3Parameter)
 	}
 	return result, nil
 }
@@ -294,21 +292,19 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	if isHTTP {
 		result.Schemes = append(result.Schemes, "http")
 	}
-	if paths := swagger.Paths; paths != nil {
-		for path, pathItem := range paths {
-			if pathItem == nil {
+	for path, pathItem := range swagger.Paths {
+		if pathItem == nil {
+			continue
+		}
+		for method, operation := range pathItem.Operations() {
+			if operation == nil {
 				continue
 			}
-			for method, operation := range pathItem.Operations() {
-				if operation == nil {
-					continue
-				}
-				resultOperation, err := FromV3Operation(swagger, operation)
-				if err != nil {
-					return nil, err
-				}
-				result.AddOperation(path, method, resultOperation)
+			resultOperation, err := FromV3Operation(swagger, operation)
+			if err != nil {
+				return nil, err
 			}
+			result.AddOperation(path, method, resultOperation)
 		}
 	}
 	if m := swagger.Components.SecuritySchemes; m != nil {

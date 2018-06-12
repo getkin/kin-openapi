@@ -405,15 +405,13 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 			return err
 		}
 	}
-	if m := schema.Properties; m != nil {
-		for _, ref := range m {
-			v := ref.Value
-			if v == nil {
-				return foundUnresolvedRef(ref.Ref)
-			}
-			if err := v.validate(stack, c); err != nil {
-				return err
-			}
+	for _, ref := range schema.Properties {
+		v := ref.Value
+		if v == nil {
+			return foundUnresolvedRef(ref.Ref)
+		}
+		if err := v.validate(stack, c); err != nil {
+			return err
 		}
 	}
 	if ref := schema.AdditionalProperties; ref != nil {
@@ -606,24 +604,22 @@ func (schema *Schema) VisitJSONBoolean(value bool) error {
 	return schema.visitJSONBoolean(value, false)
 }
 
-func (schema *Schema) visitJSONBoolean(value bool, fast bool) error {
-	err := schema.visitSetOperations(value, fast)
-	if err != nil {
-		return err
+func (schema *Schema) visitJSONBoolean(value bool, fast bool) (err error) {
+	if err = schema.visitSetOperations(value, fast); err != nil {
+		return
 	}
-	err = schema.validateTypeListAllows("boolean", fast)
-	if err != nil {
-		return err
+	if err = schema.validateTypeListAllows("boolean", fast); err != nil {
+		return
 	}
-	if enum := schema.Enum; enum != nil {
-		for _, validValue := range enum {
-			switch validValue := validValue.(type) {
-			case bool:
-				if value == validValue {
-					return nil
-				}
+	for _, validValue := range schema.Enum {
+		switch validValue := validValue.(type) {
+		case bool:
+			if value == validValue {
+				return
 			}
 		}
+	}
+	if schema.Enum != nil {
 		if fast {
 			return errSchema
 		}
@@ -633,7 +629,7 @@ func (schema *Schema) visitJSONBoolean(value bool, fast bool) error {
 			SchemaField: "enum",
 		}
 	}
-	return nil
+	return
 }
 
 var (
@@ -659,15 +655,16 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 	if err := schema.validateTypeListAllows("number", fast); err != nil {
 		return err
 	}
-	if v := schema.Enum; v != nil {
-		for _, item := range v {
-			switch item := item.(type) {
-			case float64:
-				if value == item {
-					return nil
-				}
+
+	for _, item := range schema.Enum {
+		switch item := item.(type) {
+		case float64:
+			if value == item {
+				return nil
 			}
 		}
+	}
+	if schema.Enum != nil {
 		if fast {
 			return errSchema
 		}
@@ -678,6 +675,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 			Reason:      "JSON number is not one of the allowed values",
 		}
 	}
+
 	if v := schema.ExclusiveMin; v != nil && !(*v < value) {
 		if fast {
 			return errSchema
@@ -749,15 +747,15 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 	}
 
 	// "enum"
-	if enum := schema.Enum; enum != nil {
-		for _, validValue := range enum {
-			switch validValue := validValue.(type) {
-			case string:
-				if value == validValue {
-					return nil
-				}
+	for _, validValue := range schema.Enum {
+		switch validValue := validValue.(type) {
+		case string:
+			if value == validValue {
+				return nil
 			}
 		}
+	}
+	if schema.Enum != nil {
 		if fast {
 			return errSchema
 		}
@@ -833,7 +831,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 		}
 	}
 	if cp != nil {
-		if cp.Regexp.MatchString(value) == false {
+		if !cp.Regexp.MatchString(value) {
 			field := "format"
 			if schema.Pattern != "" {
 				field = "pattern"
@@ -965,7 +963,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 		}
 		if additionalProperties != nil || schema.AdditionalPropertiesAllowed {
 			if cp != nil {
-				if cp.Regexp.MatchString(k) == false {
+				if !cp.Regexp.MatchString(k) {
 					return &SchemaError{
 						Schema:      schema,
 						SchemaField: "patternProperties",
@@ -1098,7 +1096,7 @@ func (err *SchemaError) Error() string {
 	} else {
 		buf.WriteString(reason)
 	}
-	if SchemaErrorDetailsDisabled == false {
+	if !SchemaErrorDetailsDisabled {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("  ", "  ")

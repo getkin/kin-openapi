@@ -35,68 +35,62 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, components)
 }
 
-func (components *Components) Validate(c context.Context) error {
-	if m := components.Schemas; m != nil {
-		for k, v := range m {
-			if err := ValidateIdentifier(k); err != nil {
-				return err
-			}
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+func (components *Components) Validate(c context.Context) (err error) {
+	for k, v := range components.Schemas {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	if m := components.Parameters; m != nil {
-		for k, v := range m {
-			if err := ValidateIdentifier(k); err != nil {
-				return err
-			}
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+
+	for k, v := range components.Parameters {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	if m := components.RequestBodies; m != nil {
-		for k, v := range m {
-			if err := ValidateIdentifier(k); err != nil {
-				return err
-			}
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+
+	for k, v := range components.RequestBodies {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	if m := components.Responses; m != nil {
-		for k, v := range m {
-			if err := ValidateIdentifier(k); err != nil {
-				return err
-			}
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+
+	for k, v := range components.Responses {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	if m := components.Headers; m != nil {
-		for k, v := range m {
-			if err := ValidateIdentifier(k); err != nil {
-				return err
-			}
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+
+	for k, v := range components.Headers {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	if m := components.SecuritySchemes; m != nil {
-		for k, v := range m {
-			if err := ValidateIdentifier(k); err != nil {
-				return err
-			}
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+
+	for k, v := range components.SecuritySchemes {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	return nil
+
+	return
 }
 
 const identifierPattern = `^[a-zA-Z0-9.\-_]+$`

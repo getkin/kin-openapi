@@ -17,12 +17,9 @@ var _ jsoninfo.StrictStruct = &ExtensionProps{}
 
 // EncodeWith will be invoked by package "jsoninfo"
 func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
-	if m := props.Extensions; m != nil {
-		for k, v := range m {
-			err := encoder.EncodeExtension(k, v)
-			if err != nil {
-				return err
-			}
+	for k, v := range props.Extensions {
+		if err := encoder.EncodeExtension(k, v); err != nil {
+			return err
 		}
 	}
 	return encoder.EncodeStructFieldsAndExtensions(value)
@@ -31,7 +28,7 @@ func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value i
 // DecodeWith will be invoked by package "jsoninfo"
 func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
 	source := decoder.DecodeExtensionMap()
-	if source != nil && len(source) > 0 {
+	if len(source) > 0 {
 		result := make(map[string]interface{}, len(source))
 		for k, v := range source {
 			result[k] = json.RawMessage(v)

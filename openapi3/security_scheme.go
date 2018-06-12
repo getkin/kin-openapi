@@ -200,7 +200,7 @@ func (flow *OAuthFlow) Validate(c context.Context) error {
 	if v := flow.TokenURL; v == "" {
 		return fmt.Errorf("An OAuth flow is missing 'tokenUrl'")
 	}
-	if v := flow.Scopes; v == nil || len(v) == 0 {
+	if v := flow.Scopes; len(v) == 0 {
 		return fmt.Errorf("An OAuth flow is missing 'scopes'")
 	}
 	return nil

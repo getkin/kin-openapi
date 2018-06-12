@@ -99,15 +99,13 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 	return params, input, true
 }
 
-func (server *Server) Validate(c context.Context) error {
-	if m := server.Variables; m != nil {
-		for _, v := range m {
-			if err := v.Validate(c); err != nil {
-				return err
-			}
+func (server *Server) Validate(c context.Context) (err error) {
+	for _, v := range server.Variables {
+		if err = v.Validate(c); err != nil {
+			return
 		}
 	}
-	return nil
+	return
 }
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.0.

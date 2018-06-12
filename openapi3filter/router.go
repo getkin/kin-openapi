@@ -102,18 +102,16 @@ func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
 	}
 	router.swagger = swagger
 	root := router.node()
-	if paths := swagger.Paths; paths != nil {
-		for path, pathItem := range paths {
-			for method, operation := range pathItem.Operations() {
-				method = strings.ToUpper(method)
-				root.Add(method+" "+path, &Route{
-					Swagger:   swagger,
-					Path:      path,
-					PathItem:  pathItem,
-					Method:    method,
-					Operation: operation,
-				}, nil)
-			}
+	for path, pathItem := range swagger.Paths {
+		for method, operation := range pathItem.Operations() {
+			method = strings.ToUpper(method)
+			root.Add(method+" "+path, &Route{
+				Swagger:   swagger,
+				Path:      path,
+				PathItem:  pathItem,
+				Method:    method,
+				Operation: operation,
+			}, nil)
 		}
 	}
 	return nil

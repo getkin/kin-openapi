@@ -121,11 +121,11 @@ iteration:
 			}
 		case reflect.Bool:
 			x := fieldValue.Bool()
-			if field.JSONOmitEmpty && x == false {
+			if field.JSONOmitEmpty && !x {
 				continue iteration
 			}
 			s := "false"
-			if x == true {
+			if x {
 				s = "true"
 			}
 			result[field.JSONName] = []byte(s)

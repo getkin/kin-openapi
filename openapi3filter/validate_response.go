@@ -66,7 +66,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 			}
 		}
 		content := response.Content
-		if content != nil && len(content) > 0 && options.ExcludeResponseBody == false {
+		if len(content) > 0 && !options.ExcludeResponseBody {
 			inputMIME := input.Header.Get("Content-Type")
 			mediaType := parseMediaType(inputMIME)
 			contentType := content[mediaType]

@@ -29,35 +29,28 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	pathItemParameters := route.PathItem.Parameters
 
 	// For each parameter of the PathItem
-	if pathItemParameters != nil {
-		for _, parameterRef := range pathItemParameters {
-			parameter := parameterRef.Value
-			if operationParameters != nil {
-				override := operationParameters.GetByInAndName(parameter.In, parameter.Name)
-				if override != nil {
-					continue
-				}
+	for _, parameterRef := range pathItemParameters {
+		parameter := parameterRef.Value
+		if operationParameters != nil {
+			if override := operationParameters.GetByInAndName(parameter.In, parameter.Name); override != nil {
+				continue
 			}
-			err := ValidateParameter(c, input, parameter)
-			if err != nil {
+			if err := ValidateParameter(c, input, parameter); err != nil {
 				return err
 			}
 		}
 	}
 
 	// For each parameter of the Operation
-	if operationParameters != nil {
-		for _, parameter := range operationParameters {
-			err := ValidateParameter(c, input, parameter.Value)
-			if err != nil {
-				return err
-			}
+	for _, parameter := range operationParameters {
+		if err := ValidateParameter(c, input, parameter.Value); err != nil {
+			return err
 		}
 	}
 
 	// RequestBody
 	requestBody := operation.RequestBody
-	if requestBody != nil && options.ExcludeRequestBody == false {
+	if requestBody != nil && !options.ExcludeRequestBody {
 		err := ValidateRequestBody(c, input, requestBody.Value)
 		if err != nil {
 			return err
