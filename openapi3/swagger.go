@@ -14,9 +14,6 @@ type Swagger struct {
 	Components   Components           `json:"components,omitempty"`
 	Security     SecurityRequirements `json:"security,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty"`
-
-	// To prevent infinite recursion
-	visitedSchemas map[*Schema]struct{}
 }
 
 func (swagger *Swagger) MarshalJSON() ([]byte, error) {

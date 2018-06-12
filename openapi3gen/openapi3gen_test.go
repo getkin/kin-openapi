@@ -43,7 +43,6 @@ type Example struct {
 
 type ExampleChild string
 
-type Array []interface{}
 type Object map[string]interface{}
 
 func TestSimple(t *testing.T) {

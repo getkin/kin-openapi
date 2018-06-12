@@ -153,7 +153,6 @@ var Examples = []Example{
 }
 
 type Object map[string]interface{}
-type Array []interface{}
 
 func TestExtensions(t *testing.T) {
 	for _, example := range Examples {

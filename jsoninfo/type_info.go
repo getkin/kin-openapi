@@ -13,7 +13,6 @@ var (
 
 // TypeInfo contains information about JSON serialization of a type
 type TypeInfo struct {
-	mutex  sync.RWMutex
 	Type   reflect.Type
 	Fields []FieldInfo
 }

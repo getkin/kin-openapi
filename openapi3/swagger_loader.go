@@ -13,10 +13,6 @@ func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("Found unresolved ref: '%s'", ref)
 }
 
-func failedToResolveRefDefinitions(value string) error {
-	return fmt.Errorf("Failed to resolve fragment in URI: '%s'", value)
-}
-
 func failedToResolveRefFragment(value string) error {
 	return fmt.Errorf("Failed to resolve fragment in URI: '%s'", value)
 }

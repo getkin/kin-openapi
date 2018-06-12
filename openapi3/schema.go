@@ -1046,10 +1046,6 @@ func (schema *Schema) validateTypeListAllows(value string, fast bool) error {
 	}
 }
 
-func newSchemaError(schema *Schema, value interface{}, args ...interface{}) error {
-	return errors.New(fmt.Sprint(args...))
-}
-
 type SchemaError struct {
 	Value       interface{}
 	reversePath []string
