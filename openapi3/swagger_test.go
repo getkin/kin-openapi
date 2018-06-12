@@ -3,9 +3,10 @@ package openapi3_test
 import (
 	"context"
 	"encoding/json"
+	"testing"
+
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-test/jsontest"
-	"testing"
 )
 
 type Array []interface{}

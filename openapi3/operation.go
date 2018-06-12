@@ -2,8 +2,9 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"strconv"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.

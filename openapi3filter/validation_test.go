@@ -3,13 +3,14 @@ package openapi3filter_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-openapi/openapi3filter"
-	"github.com/jban332/kin-test/jsontest"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3filter"
+	"github.com/jban332/kin-test/jsontest"
 )
 
 type ExampleRequest struct {

@@ -2,9 +2,10 @@ package openapi3_test
 
 import (
 	"encoding/base64"
+	"testing"
+
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-test/jsontest"
-	"testing"
 )
 
 type SchemaExample struct {

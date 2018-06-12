@@ -1,14 +1,12 @@
 package jsoninfo_test
 
 import (
-	"github.com/jban332/kin-openapi/openapi3"
-)
-
-import (
 	"encoding/json"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"testing"
 	"time"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 type Simple struct {

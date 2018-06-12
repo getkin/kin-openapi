@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
 	"io/ioutil"
 	"net/http"
 	"sort"
+
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {

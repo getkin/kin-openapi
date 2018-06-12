@@ -2,8 +2,9 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"strings"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Content is specified by OpenAPI/Swagger 3.0 standard.

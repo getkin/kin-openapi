@@ -2,11 +2,12 @@ package openapi3filter
 
 import (
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-openapi/pathpattern"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/pathpattern"
 )
 
 type Route struct {

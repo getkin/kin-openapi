@@ -3,8 +3,9 @@ package openapi3
 import (
 	"context"
 	"fmt"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"regexp"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Components is specified by OpenAPI/Swagger standard version 3.0.

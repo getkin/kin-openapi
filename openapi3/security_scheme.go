@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 

@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"encoding/json"
+
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 

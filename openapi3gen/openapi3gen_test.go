@@ -2,10 +2,11 @@ package openapi3gen_test
 
 import (
 	"encoding/json"
-	"github.com/jban332/kin-openapi/openapi3gen"
-	"github.com/jban332/kin-test/jsontest"
 	"testing"
 	"time"
+
+	"github.com/jban332/kin-openapi/openapi3gen"
+	"github.com/jban332/kin-test/jsontest"
 )
 
 type CyclicType0 struct {

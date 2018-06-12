@@ -3,11 +3,12 @@ package openapi2conv_test
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
+
 	"github.com/jban332/kin-openapi/openapi2"
 	"github.com/jban332/kin-openapi/openapi2conv"
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-test/jsontest"
-	"testing"
 )
 
 type Object map[string]interface{}
