@@ -80,8 +80,7 @@ func TestFilter(t *testing.T) {
 			PathParams: pathParams,
 			Route:      route,
 		}
-		err = openapi3filter.ValidateRequest(context.TODO(), requestValidationInput)
-		if err != nil {
+		if err := openapi3filter.ValidateRequest(context.TODO(), requestValidationInput); err != nil {
 			return jsontest.ExpectWithErr(t, nil, err)
 		}
 		t.Logf("Response: %d", resp.Status)

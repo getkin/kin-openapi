@@ -61,8 +61,7 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 
 func (requestBody *RequestBody) Validate(c context.Context) error {
 	if v := requestBody.Content; v != nil {
-		err := v.Validate(c)
-		if err != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}

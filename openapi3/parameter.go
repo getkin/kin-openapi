@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jban332/kin-openapi/jsoninfo"
@@ -28,8 +29,7 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 func (parameters Parameters) Validate(c context.Context) error {
 	m := make(map[string]struct{})
 	for _, item := range parameters {
-		err := item.Validate(c)
-		if err != nil {
+		if err := item.Validate(c); err != nil {
 			return err
 		}
 		if v := item.Value; v != nil {
@@ -40,8 +40,7 @@ func (parameters Parameters) Validate(c context.Context) error {
 				return fmt.Errorf("More than one '%s' parameter has name '%s'", in, name)
 			}
 			m[key] = struct{}{}
-			err := item.Validate(c)
-			if err != nil {
+			if err := item.Validate(c); err != nil {
 				return err
 			}
 		}
@@ -132,7 +131,7 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 
 func (parameter *Parameter) Validate(c context.Context) error {
 	if parameter.Name == "" {
-		return fmt.Errorf("Parameter name can't be blank")
+		return errors.New("Parameter name can't be blank")
 	}
 	in := parameter.In
 	switch in {
@@ -145,8 +144,7 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		return fmt.Errorf("Parameter can't have 'in' value '%s'", parameter.In)
 	}
 	if schema := parameter.Schema; schema != nil {
-		err := schema.Validate(c)
-		if err != nil {
+		if err := schema.Validate(c); err != nil {
 			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +20,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 	route := input.Route
 	if route == nil {
-		return fmt.Errorf("invalid route")
+		return errors.New("invalid route")
 	}
 	operation := route.Operation
 	if operation == nil {
@@ -51,8 +52,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// RequestBody
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
-		err := ValidateRequestBody(c, input, requestBody.Value)
-		if err != nil {
+		if err := ValidateRequestBody(c, input, requestBody.Value); err != nil {
 			return err
 		}
 	}
@@ -60,8 +60,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// Security
 	security := operation.Security
 	if security != nil {
-		err := ValidateSecurityRequirements(c, input, *security)
-		if err != nil {
+		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
 			return err
 		}
 	}
@@ -128,8 +127,7 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		schema := schemaRef.Value
 		// Only check schema if no transformation is needed
 		if schema.TypesContains("string") {
-			err := schema.VisitJSONString(value)
-			if err != nil {
+			if err := schema.VisitJSONString(value); err != nil {
 				return &RequestError{
 					Input:     input,
 					Parameter: parameter,
@@ -175,8 +173,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 
 			// Decode JSON
 			var value interface{}
-			err = json.Unmarshal(data, &value)
-			if err != nil {
+			if err := json.Unmarshal(data, &value); err != nil {
 				return &RequestError{
 					Input:       input,
 					RequestBody: requestBody,
@@ -186,8 +183,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 			}
 
 			// Validate JSON with the schema
-			err = schema.VisitJSON(value)
-			if err != nil {
+			if err := schema.VisitJSON(value); err != nil {
 				return &RequestError{
 					Input:       input,
 					RequestBody: requestBody,
@@ -224,13 +220,12 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 					if err, ok := v.(error); ok {
 						errs[currentIndex] = err
 					} else {
-						errs[currentIndex] = fmt.Errorf("Panicked")
+						errs[currentIndex] = errors.New("Panicked")
 					}
 					doneChan <- false
 				}
 			}()
-			err := validateSecurityRequirement(c, input, currentSecurityRequirement)
-			if err == nil {
+			if err := validateSecurityRequirement(c, input, currentSecurityRequirement); err == nil {
 				doneChan <- true
 			} else {
 				errs[currentIndex] = err

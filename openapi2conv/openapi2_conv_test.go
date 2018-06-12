@@ -152,8 +152,7 @@ func copyJSON(dest, src interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed to marshal %T: %v", src, err)
 	}
-	err = json.Unmarshal(data, dest)
-	if err != nil {
+	if err := json.Unmarshal(data, dest); err != nil {
 		return fmt.Errorf("Failed to unmarshal %T: %v", dest, err)
 	}
 	return nil
@@ -163,12 +162,10 @@ func Test_openapi2(t *testing.T) {
 	for _, example := range Examples {
 		swagger2 := &openapi2.Swagger{}
 		swagger3 := &openapi3.Swagger{}
-		err := copyJSON(swagger2, example.V2)
-		if err != nil {
+		if err := copyJSON(swagger2, example.V2); err != nil {
 			panic(err)
 		}
-		err = copyJSON(swagger3, example.V3)
-		if err != nil {
+		if err := copyJSON(swagger3, example.V3); err != nil {
 			panic(err)
 		}
 		t.Log("Converting V3 -> V2")

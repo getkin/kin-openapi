@@ -167,8 +167,7 @@ func TestExtensions(t *testing.T) {
 		// Unmarshal
 		if !example.NoUnmarshal {
 			t.Logf("Unmarshalling %T", x)
-			err = jsoninfo.UnmarshalStrictStruct(expectedData, x)
-			if err != nil {
+			if err := jsoninfo.UnmarshalStrictStruct(expectedData, x); err != nil {
 				t.Fatalf("Error unmarshalling %T: %v", x, err)
 			}
 			t.Logf("Marshalling %T", x)

@@ -174,7 +174,7 @@ func (flows *OAuthFlows) Validate(c context.Context) error {
 	if v := flows.AuthorizationCode; v != nil {
 		return v.Validate(c)
 	}
-	return fmt.Errorf("No OAuth flow is defined")
+	return errors.New("No OAuth flow is defined")
 }
 
 type OAuthFlow struct {
@@ -195,13 +195,13 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 
 func (flow *OAuthFlow) Validate(c context.Context) error {
 	if v := flow.AuthorizationURL; v == "" {
-		return fmt.Errorf("An OAuth flow is missing 'authorizationUrl'")
+		return errors.New("An OAuth flow is missing 'authorizationUrl'")
 	}
 	if v := flow.TokenURL; v == "" {
-		return fmt.Errorf("An OAuth flow is missing 'tokenUrl'")
+		return errors.New("An OAuth flow is missing 'tokenUrl'")
 	}
 	if v := flow.Scopes; len(v) == 0 {
-		return fmt.Errorf("An OAuth flow is missing 'scopes'")
+		return errors.New("An OAuth flow is missing 'scopes'")
 	}
 	return nil
 }

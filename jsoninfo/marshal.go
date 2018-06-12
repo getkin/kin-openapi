@@ -11,8 +11,7 @@ import (
 //   * Correctly handles StrictStruct semantics.
 func MarshalStrictStruct(value StrictStruct) ([]byte, error) {
 	encoder := NewObjectEncoder()
-	err := value.EncodeWith(encoder, value)
-	if err != nil {
+	if err := value.EncodeWith(encoder, value); err != nil {
 		return nil, err
 	}
 	return encoder.Bytes()

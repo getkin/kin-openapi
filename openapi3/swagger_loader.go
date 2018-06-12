@@ -63,8 +63,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swagger := &Swagger{}
-	err := json.Unmarshal(data, swagger)
-	if err != nil {
+	if err := json.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
 	return swagger, swaggerLoader.ResolveRefsIn(swagger)
@@ -144,8 +143,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 		}
 		fragment := parsedURL.Fragment
 		parsedURL.Fragment = ""
-		swagger, err = swaggerLoader.LoadSwaggerFromURI(parsedURL)
-		if err != nil {
+		if swagger, err = swaggerLoader.LoadSwaggerFromURI(parsedURL); err != nil {
 			return nil, "", fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
 		ref = fragment
@@ -183,8 +181,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		if resolved == nil {
 			return failedToResolveRefFragment(ref)
 		}
-		err = swaggerLoader.resolveHeaderRef(swagger, resolved)
-		if err != nil {
+		if err := swaggerLoader.resolveHeaderRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -194,8 +191,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		return nil
 	}
 	if schema := value.Schema; schema != nil {
-		err := swaggerLoader.resolveSchemaRef(swagger, schema)
-		if err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, schema); err != nil {
 			return err
 		}
 	}
@@ -225,8 +221,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		err = swaggerLoader.resolveParameterRef(swagger, resolved)
-		if err != nil {
+		if err := swaggerLoader.resolveParameterRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -236,8 +231,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		return nil
 	}
 	if schema := value.Schema; schema != nil {
-		err := swaggerLoader.resolveSchemaRef(swagger, schema)
-		if err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, schema); err != nil {
 			return err
 		}
 	}
@@ -267,8 +261,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		err = swaggerLoader.resolveRequestBodyRef(swagger, resolved)
-		if err != nil {
+		if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -279,8 +272,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	}
 	for _, contentType := range value.Content {
 		if schema := contentType.Schema; schema != nil {
-			err := swaggerLoader.resolveSchemaRef(swagger, schema)
-			if err != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema); err != nil {
 				return err
 			}
 		}
@@ -311,8 +303,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		err = swaggerLoader.resolveResponseRef(swagger, resolved)
-		if err != nil {
+		if err := swaggerLoader.resolveResponseRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -326,8 +317,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 			continue
 		}
 		if schema := contentType.Schema; schema != nil {
-			err := swaggerLoader.resolveSchemaRef(swagger, schema)
-			if err != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema); err != nil {
 				return err
 			}
 			contentType.Schema = schema
@@ -359,8 +349,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		err = swaggerLoader.resolveSchemaRef(swagger, resolved)
-		if err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -369,8 +358,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 
 	// ResolveRefs referred schemas
 	if v := value.Items; v != nil {
-		err := swaggerLoader.resolveSchemaRef(swagger, v)
-		if err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
 			return err
 		}
 	}
@@ -380,8 +368,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		}
 	}
 	if v := value.AdditionalProperties; v != nil {
-		err := swaggerLoader.resolveSchemaRef(swagger, v)
-		if err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, v); err != nil {
 			return err
 		}
 	}
@@ -411,8 +398,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		err = swaggerLoader.resolveSecuritySchemeRef(swagger, resolved)
-		if err != nil {
+		if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -435,8 +421,7 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		err = swaggerLoader.resolveExampleRef(swagger, resolved)
-		if err != nil {
+		if err := swaggerLoader.resolveExampleRef(swagger, resolved); err != nil {
 			return err
 		}
 		component.Value = resolved.Value

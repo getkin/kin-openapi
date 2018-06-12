@@ -2,6 +2,7 @@
 package openapi2conv
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -100,7 +101,7 @@ func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*open
 			return nil, err
 		}
 		if v3RequestBody != nil {
-			return nil, fmt.Errorf("PathItem shouldn't have a body parameter")
+			return nil, errors.New("PathItem shouldn't have a body parameter")
 		}
 		result.Parameters = append(result.Parameters, v3Parameter)
 	}
@@ -419,7 +420,7 @@ func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation,
 
 	// If found an available name
 	if name == "" {
-		return nil, fmt.Errorf("Could not find a name for request body")
+		return nil, errors.New("Could not find a name for request body")
 	}
 	result := &openapi2.Parameter{
 		In:          "body",

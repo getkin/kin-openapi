@@ -105,8 +105,7 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 
 func (pathItem *PathItem) Validate(c context.Context) error {
 	for method, operation := range pathItem.Operations() {
-		err := operation.ValidateOperation(c, pathItem, method)
-		if err != nil {
+		if err := operation.ValidateOperation(c, pathItem, method); err != nil {
 			return err
 		}
 	}

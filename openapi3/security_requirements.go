@@ -17,8 +17,7 @@ func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *
 
 func (srs SecurityRequirements) Validate(c context.Context) error {
 	for _, item := range srs {
-		err := item.Validate(c)
-		if err != nil {
+		if err := item.Validate(c); err != nil {
 			return err
 		}
 	}

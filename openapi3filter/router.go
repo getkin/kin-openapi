@@ -70,8 +70,7 @@ func NewRouter() *Router {
 // WithSwaggerFromFile loads the Swagger file and adds it using WithSwagger.
 // Panics on any error.
 func (router *Router) WithSwaggerFromFile(path string) *Router {
-	err := router.AddSwaggerFromFile(path)
-	if err != nil {
+	if err := router.AddSwaggerFromFile(path); err != nil {
 		panic(err)
 	}
 	return router
@@ -80,8 +79,7 @@ func (router *Router) WithSwaggerFromFile(path string) *Router {
 // WithSwagger adds all operations in the OpenAPI specification.
 // Panics on any error.
 func (router *Router) WithSwagger(swagger *openapi3.Swagger) *Router {
-	err := router.AddSwagger(swagger)
-	if err != nil {
+	if err := router.AddSwagger(swagger); err != nil {
 		panic(err)
 	}
 	return router

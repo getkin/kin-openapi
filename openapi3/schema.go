@@ -391,7 +391,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) error {
 	case "password":
 	case "array":
 		if schema.Items == nil {
-			return fmt.Errorf("When schema type is 'array', schema 'items' must be non-null")
+			return errors.New("When schema type is 'array', schema 'items' must be non-null")
 		}
 	case "object":
 	default:
@@ -506,8 +506,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			err := v.visitJSON(value, true)
-			if err == nil {
+			if err := v.visitJSON(value, true); err == nil {
 				ok++
 			}
 		}
@@ -529,8 +528,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			err := v.visitJSON(value, true)
-			if err == nil {
+			if err := v.visitJSON(value, true); err == nil {
 				ok = true
 				break
 			}
@@ -552,8 +550,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			err := v.visitJSON(value, true)
-			if err != nil {
+			if err := v.visitJSON(value, true); err != nil {
 				if fast {
 					return errSchema
 				}
@@ -569,12 +566,10 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) error {
 }
 
 func (schema *Schema) visitJSONNull(fast bool) error {
-	err := schema.visitSetOperations(nil, fast)
-	if err != nil {
+	if err := schema.visitSetOperations(nil, fast); err != nil {
 		return err
 	}
-	err = schema.validateTypeListAllows("null", fast)
-	if err != nil {
+	if err := schema.validateTypeListAllows("null", fast); err != nil {
 		return err
 	}
 	if enum := schema.Enum; enum != nil {
@@ -643,8 +638,7 @@ func (schema *Schema) VisitJSONNumber(value float64) error {
 }
 
 func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
-	err := schema.visitSetOperations(value, fast)
-	if err != nil {
+	if err := schema.visitSetOperations(value, fast); err != nil {
 		return err
 	}
 	if math.IsNaN(value) {
@@ -739,8 +733,7 @@ func (schema *Schema) VisitJSONString(value string) error {
 }
 
 func (schema *Schema) visitJSONString(value string, fast bool) error {
-	err := schema.visitSetOperations(value, fast)
-	if err != nil {
+	if err := schema.visitSetOperations(value, fast); err != nil {
 		return err
 	}
 	if err := schema.validateTypeListAllows("string", fast); err != nil {
@@ -853,12 +846,10 @@ func (schema *Schema) VisitJSONArray(value []interface{}) error {
 }
 
 func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
-	err := schema.visitSetOperations(value, fast)
-	if err != nil {
+	if err := schema.visitSetOperations(value, fast); err != nil {
 		return err
 	}
-	err = schema.validateTypeListAllows("array", fast)
-	if err != nil {
+	if err := schema.validateTypeListAllows("array", fast); err != nil {
 		return err
 	}
 
@@ -895,8 +886,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 			return foundUnresolvedRef(itemSchemaRef.Ref)
 		}
 		for i, item := range value {
-			err := itemSchema.VisitJSON(item)
-			if err != nil {
+			if err := itemSchema.VisitJSON(item); err != nil {
 				return markSchemaErrorIndex(err, i)
 			}
 		}
@@ -909,12 +899,10 @@ func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
 }
 
 func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) error {
-	err := schema.visitSetOperations(value, fast)
-	if err != nil {
+	if err := schema.visitSetOperations(value, fast); err != nil {
 		return err
 	}
-	err = schema.validateTypeListAllows("object", fast)
-	if err != nil {
+	if err := schema.validateTypeListAllows("object", fast); err != nil {
 		return err
 	}
 
@@ -952,8 +940,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 				if p == nil {
 					return foundUnresolvedRef(propertyRef.Ref)
 				}
-				err := p.VisitJSON(v)
-				if err != nil {
+				if err := p.VisitJSON(v); err != nil {
 					if fast {
 						return errSchema
 					}
@@ -973,8 +960,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 				}
 			}
 			if additionalProperties != nil {
-				err := additionalProperties.VisitJSON(v)
-				if err != nil {
+				if err := additionalProperties.VisitJSON(v); err != nil {
 					if fast {
 						return errSchema
 					}

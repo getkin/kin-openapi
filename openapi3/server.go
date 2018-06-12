@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/url"
 	"strings"
 )
@@ -51,7 +51,7 @@ func (server Server) ParameterNames() ([]string, error) {
 		pattern = pattern[i+1:]
 		i = strings.IndexByte(pattern, '}')
 		if i < 0 {
-			return nil, fmt.Errorf("Missing '}'")
+			return nil, errors.New("Missing '}'")
 		}
 		params = append(params, strings.TrimSpace(pattern[:i]))
 		pattern = pattern[i+1:]
@@ -119,13 +119,13 @@ func (serverVariable *ServerVariable) Validate(c context.Context) error {
 	switch serverVariable.Default.(type) {
 	case float64, string:
 	default:
-		return fmt.Errorf("Variable 'default' must be either JSON number or JSON string")
+		return errors.New("Variable 'default' must be either JSON number or JSON string")
 	}
 	for _, item := range serverVariable.Enum {
 		switch item.(type) {
 		case float64, string:
 		default:
-			return fmt.Errorf("Every variable 'enum' item must be number of string")
+			return errors.New("Every variable 'enum' item must be number of string")
 		}
 	}
 	return nil

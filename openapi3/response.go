@@ -24,8 +24,7 @@ func (responses Responses) Get(status int) *ResponseRef {
 
 func (responses Responses) Validate(c context.Context) error {
 	for _, v := range responses {
-		err := v.Validate(c)
-		if err != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}
