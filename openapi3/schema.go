@@ -332,10 +332,10 @@ func (schema *Schema) TypesContains(value string) bool {
 }
 
 func (schema *Schema) Validate(c context.Context) error {
-	return schema.validate(make([]*Schema, 2), c)
+	return schema.validate(c, make([]*Schema, 2))
 }
 
-func (schema *Schema) validate(stack []*Schema, c context.Context) error {
+func (schema *Schema) validate(c context.Context, stack []*Schema) error {
 	for _, existing := range stack {
 		if existing == schema {
 			return nil
@@ -347,7 +347,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err := v.validate(stack, c); err == nil {
+		if err := v.validate(c, stack); err == nil {
 			return err
 		}
 	}
@@ -356,7 +356,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err := v.validate(stack, c); err != nil {
+		if err := v.validate(c, stack); err != nil {
 			return err
 		}
 	}
@@ -365,7 +365,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err := v.validate(stack, c); err != nil {
+		if err := v.validate(c, stack); err != nil {
 			return err
 		}
 	}
@@ -374,7 +374,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(stack, c); err != nil {
+		if err := v.validate(c, stack); err != nil {
 			return err
 		}
 	}
@@ -402,7 +402,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(stack, c); err != nil {
+		if err := v.validate(c, stack); err != nil {
 			return err
 		}
 	}
@@ -411,7 +411,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(stack, c); err != nil {
+		if err := v.validate(c, stack); err != nil {
 			return err
 		}
 	}
@@ -420,7 +420,7 @@ func (schema *Schema) validate(stack []*Schema, c context.Context) error {
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(stack, c); err != nil {
+		if err := v.validate(c, stack); err != nil {
 			return err
 		}
 	}

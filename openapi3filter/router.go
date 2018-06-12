@@ -1,6 +1,7 @@
 package openapi3filter
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -96,8 +97,7 @@ func (router *Router) AddSwaggerFromFile(path string) error {
 
 // AddSwagger adds all operations in the OpenAPI specification.
 func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
-	err := swagger.Validate(nil)
-	if err != nil {
+	if err := swagger.Validate(context.TODO()); err != nil {
 		return fmt.Errorf("Validating Swagger failed: %v", err)
 	}
 	router.swagger = swagger

@@ -2,6 +2,7 @@ package openapi3filter_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -79,7 +80,7 @@ func TestFilter(t *testing.T) {
 			PathParams: pathParams,
 			Route:      route,
 		}
-		err = openapi3filter.ValidateRequest(nil, requestValidationInput)
+		err = openapi3filter.ValidateRequest(context.TODO(), requestValidationInput)
 		if err != nil {
 			return jsontest.ExpectWithErr(t, nil, err)
 		}
@@ -100,7 +101,7 @@ func TestFilter(t *testing.T) {
 			}
 			responseValidationInput.SetBodyBytes(data)
 		}
-		err = openapi3filter.ValidateResponse(nil, responseValidationInput)
+		err = openapi3filter.ValidateResponse(context.TODO(), responseValidationInput)
 		return jsontest.ExpectWithErr(t, nil, err)
 	}
 
