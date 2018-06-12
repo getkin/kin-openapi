@@ -273,13 +273,12 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 		return ErrAuthenticationServiceMissing
 	}
 
-	// Visit all requirements
-	for _, name := range names {
+	if len(names) > 0 {
+		name := names[0]
 		var securityScheme *openapi3.SecurityScheme
 		if securitySchemes != nil {
-			securitySchemeRef := securitySchemes[name]
-			if securitySchemeRef != nil {
-				securityScheme = securitySchemeRef.Value
+			if ref := securitySchemes[name]; ref != nil {
+				securityScheme = ref.Value
 			}
 		}
 		if securityScheme == nil {

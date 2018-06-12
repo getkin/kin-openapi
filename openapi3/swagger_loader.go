@@ -104,6 +104,11 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger) (err error) 
 			return
 		}
 	}
+	for _, component := range components.Examples {
+		if err = swaggerLoader.resolveExampleRef(swagger, component); err != nil {
+			return
+		}
+	}
 
 	// Visit all operations
 	for _, pathItem := range swagger.Paths {
