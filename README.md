@@ -55,7 +55,7 @@ This library provides packages for dealing with OpenAPI specifications.
 ## Loading OpenAPI document
 Use `SwaggerLoader`, which resolves all JSON references:
 ```go
-swagger, err := openapi3.NewSwaggerLoader().LoadFromFile("swagger.json")
+swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
