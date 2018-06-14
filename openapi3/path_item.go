@@ -54,6 +54,9 @@ func (pathItem *PathItem) Operations() map[string]*Operation {
 	if v := pathItem.Put; v != nil {
 		operations["PUT"] = v
 	}
+	if v := pathItem.Trace; v != nil {
+		operations["TRACE"] = v
+	}
 	return operations
 }
 
@@ -104,8 +107,8 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 }
 
 func (pathItem *PathItem) Validate(c context.Context) error {
-	for method, operation := range pathItem.Operations() {
-		if err := operation.ValidateOperation(c, pathItem, method); err != nil {
+	for _, operation := range pathItem.Operations() {
+		if err := operation.Validate(c); err != nil {
 			return err
 		}
 	}

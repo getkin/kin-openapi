@@ -10,13 +10,49 @@ import (
 
 func TestLoadYAML(t *testing.T) {
 	spec := []byte(`
+openapi: 3.0.0
 info:
-  description: An API
+  title: An API
+  version: v1
+
+components:
+  schemas:
+    NewItem:
+      required: [name]
+      properties:
+        name: {type: string}
+        tag: {type: string}
+
+paths:
+  /items:
+    put:
+      description: ''
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewItem'
+      responses:
+        default: &defaultResponse # a YAML ref
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [code, message]
+                properties:
+                  code: {type: integer}
+                  message: {type: string}
 `)
 	loader := openapi3.NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromYAMLData(spec)
 	require.NoError(t, err)
-	require.Equal(t, "An API", doc.Info.Description)
+	require.Equal(t, "An API", doc.Info.Title)
+	require.Equal(t, 1, len(doc.Components.Schemas))
+	require.Equal(t, 1, len(doc.Paths))
+	def := doc.Paths["/items"].Put.Responses.Default().Value
+	require.Equal(t, "unexpected error", def.Description)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 }
