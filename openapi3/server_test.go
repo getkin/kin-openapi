@@ -4,64 +4,71 @@ import (
 	"testing"
 
 	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/stretchr/testify/require"
 )
-
-type ServerMatch struct {
-	Remaining string
-	Args      []string
-}
-
-func NewServerMatch(remaining string, args ...string) *ServerMatch {
-	return &ServerMatch{
-		Remaining: remaining,
-		Args:      args,
-	}
-}
 
 func TestServerParamNames(t *testing.T) {
 	server := &openapi3.Server{
 		URL: "http://{x}.{y}.example.com",
 	}
 	values, err := server.ParameterNames()
-	jsontest.ExpectWithErr(t, values, err).Value([]interface{}{
-		"x",
-		"y",
-	})
+	require.NoError(t, err)
+	require.Exactly(t, []string{"x", "y"}, values)
 }
 
-func TestServerParamValues(t *testing.T) {
-	var server openapi3.Server
-	expect := func(input string, expected *ServerMatch) {
+func TestServerParamValuesWithPath(t *testing.T) {
+	server := &openapi3.Server{
+		URL: "http://{arg0}.{arg1}.example.com/a/b",
+	}
+	for input, expected := range map[string]*serverMatch{
+		"http://x.example.com/a/b":                 nil,
+		"http://x.y.example.com/":                  nil,
+		"http://x.y.example.com/a/":                nil,
+		"http://x.y.example.com/a/b":               newServerMatch("/", "x", "y"),
+		"http://x.y.example.com/a/b/":              newServerMatch("/", "x", "y"),
+		"http://x.y.example.com/a/b/c":             newServerMatch("/c", "x", "y"),
+		"http://domain0.domain1.example.com/a/b/c": newServerMatch("/c", "domain0", "domain1"),
+	} {
+		t.Run(input, testServerParamValues(t, server, input, expected))
+	}
+}
+
+func TestServerParamValuesNoPath(t *testing.T) {
+	server := &openapi3.Server{
+		URL: "https://{arg0}.{arg1}.example.com/",
+	}
+	for input, expected := range map[string]*serverMatch{
+		"https://domain0.domain1.example.com/": newServerMatch("/", "domain0", "domain1"),
+	} {
+		t.Run(input, testServerParamValues(t, server, input, expected))
+	}
+}
+
+func testServerParamValues(t *testing.T, server *openapi3.Server, input string, expected *serverMatch) func(*testing.T) {
+	return func(t *testing.T) {
 		args, remaining, ok := server.MatchRawURL(input)
 		if expected == nil {
-			if ok {
-				t.Fatalf("Should not have matched!\nPattern: %s\nInput: %s",
-					server.URL,
-					input)
-
-			}
+			require.False(t, ok)
 			return
 		}
-		actual := &ServerMatch{
+		require.True(t, ok)
+
+		actual := &serverMatch{
 			Remaining: remaining,
 			Args:      args,
 		}
-		if !ok {
-			t.Fatalf("Should have matched!\nPattern: %s\nInput: %s",
-				server.URL,
-				input)
-		}
-		jsontest.Expect(t, actual).Value(expected)
+		require.Equal(t, expected, actual)
 	}
-	server.URL = "http://{arg0}.{arg1}.example.com/a/b"
-	expect("http://x.example.com/a/b", nil)
-	expect("http://x.y.example.com/", nil)
-	expect("http://x.y.example.com/a/", nil)
-	expect("http://x.y.example.com/a/b", NewServerMatch("/", "x", "y"))
-	expect("http://x.y.example.com/a/b/", NewServerMatch("/", "x", "y"))
-	expect("http://x.y.example.com/a/b/c", NewServerMatch("/c", "x", "y"))
-	expect("http://domain0.domain1.example.com/a/b/c", NewServerMatch("/c", "domain0", "domain1"))
-	server.URL = "https://{arg0}.{arg1}.example.com/"
-	expect("https://domain0.domain1.example.com/", NewServerMatch("/", "domain0", "domain1"))
+}
+
+type serverMatch struct {
+	Remaining string
+	Args      []string
+}
+
+func newServerMatch(remaining string, args ...string) *serverMatch {
+	return &serverMatch{
+		Remaining: remaining,
+		Args:      args,
+	}
 }

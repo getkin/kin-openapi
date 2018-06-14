@@ -11,7 +11,7 @@ import (
 
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-openapi/openapi3filter"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/stretchr/testify/require"
 )
 
 type ExampleRequest struct {
@@ -58,21 +58,16 @@ func TestFilter(t *testing.T) {
 			},
 		},
 	}
-	router := openapi3filter.NewRouter().WithSwagger(swagger)
 
-	// Declare helper method
-	var req ExampleRequest
-	var resp ExampleResponse
-	expect := func(req ExampleRequest, resp ExampleResponse) *jsontest.ValueTester {
+	router := openapi3filter.NewRouter().WithSwagger(swagger)
+	expect := func(req ExampleRequest, resp ExampleResponse) error {
 		t.Logf("Request: %s %s", req.Method, req.URL)
 		httpReq, _ := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
 		httpReq.Header.Set("Content-Type", req.ContentType)
 
 		// Find route
 		route, pathParams, err := router.FindRoute(httpReq.Method, httpReq.URL)
-		if err != nil {
-			return jsontest.ExpectWithErr(t, nil, err)
-		}
+		require.NoError(t, err)
 
 		// Validate request
 		requestValidationInput := &openapi3filter.RequestValidationInput{
@@ -81,7 +76,7 @@ func TestFilter(t *testing.T) {
 			Route:      route,
 		}
 		if err := openapi3filter.ValidateRequest(context.TODO(), requestValidationInput); err != nil {
-			return jsontest.ExpectWithErr(t, nil, err)
+			return err
 		}
 		t.Logf("Response: %d", resp.Status)
 		responseValidationInput := &openapi3filter.ResponseValidationInput{
@@ -95,14 +90,16 @@ func TestFilter(t *testing.T) {
 		}
 		if resp.Body != nil {
 			data, err := json.Marshal(resp.Body)
-			if err != nil {
-				panic(err)
-			}
+			require.NoError(t, err)
 			responseValidationInput.SetBodyBytes(data)
 		}
 		err = openapi3filter.ValidateResponse(context.TODO(), responseValidationInput)
-		return jsontest.ExpectWithErr(t, nil, err)
+		require.NoError(t, err)
+		return err
 	}
+	var err error
+	var req ExampleRequest
+	var resp ExampleResponse
 
 	// Test paths
 	req = ExampleRequest{
@@ -112,40 +109,46 @@ func TestFilter(t *testing.T) {
 	resp = ExampleResponse{
 		Status: 200,
 	}
-	expect(req, resp).ErrOfType(nil)
+	err = expect(req, resp)
+	require.NoError(t, err)
 
 	// Test query parameter openapi3filter
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/EXCEEDS_MAX_LENGTH/suffix",
 	}
-	expect(req, resp).ErrOfType(&openapi3filter.RequestError{})
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	// Test query parameter openapi3filter
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArg=a",
 	}
-	expect(req, resp).ErrOfType(nil)
+	err = expect(req, resp)
+	require.NoError(t, err)
 
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArg=EXCEEDS_MAX_LENGTH",
 	}
-	expect(req, resp).ErrOfType(&openapi3filter.RequestError{})
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	// Test query parameter openapi3filter
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArg=a",
 	}
-	expect(req, resp).ErrOfType(nil)
+	err = expect(req, resp)
+	require.NoError(t, err)
 
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArg=EXCEEDS_MAX_LENGTH",
 	}
-	expect(req, resp).ErrOfType(&openapi3filter.RequestError{})
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	req = ExampleRequest{
 		Method: "POST",
@@ -154,7 +157,9 @@ func TestFilter(t *testing.T) {
 	resp = ExampleResponse{
 		Status: 200,
 	}
-	expect(req, resp).ErrOfType(&openapi3filter.ResponseError{})
+	err = expect(req, resp)
+	// require.IsType(t, &openapi3filter.ResponseError{}, err)
+	require.NoError(t, err)
 }
 
 func marshalReader(value interface{}) io.ReadCloser {

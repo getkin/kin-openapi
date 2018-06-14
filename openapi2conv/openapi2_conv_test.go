@@ -2,178 +2,174 @@ package openapi2conv_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/jban332/kin-openapi/openapi2"
 	"github.com/jban332/kin-openapi/openapi2conv"
 	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/stretchr/testify/require"
 )
 
-type Object map[string]interface{}
+func TestConvOpenAPIV3ToV2(t *testing.T) {
+	var swagger3 openapi3.Swagger
+	err := json.Unmarshal([]byte(exampleV3), &swagger3)
+	require.NoError(t, err)
 
-type Array []interface{}
-
-var Examples = []Example{
-	{
-		V2: Object{
-			"info": Object{},
-			"paths": Object{
-				"/example": Object{
-					"delete": Object{
-						"description": "example delete",
-					},
-					"get": Object{
-						"description": "example get",
-						"parameters": Array{
-							Object{
-								"in":   "query",
-								"name": "x",
-							},
-							Object{
-								"in":     "body",
-								"name":   "body",
-								"schema": Object{},
-							},
-						},
-						"responses": Object{
-							"default": Object{
-								"description": "default response",
-							},
-							"404": Object{
-								"description": "404 response",
-							},
-						},
-						"security": Array{
-							Object{
-								"get_security_0": Array{"scope0", "scope1"},
-								"get_security_1": Array{},
-							},
-						},
-					},
-					"head": Object{
-						"description": "example head",
-					},
-					"patch": Object{
-						"description": "example patch",
-					},
-					"post": Object{
-						"description": "example post",
-					},
-					"put": Object{
-						"description": "example put",
-					},
-					"options": Object{
-						"description": "example options",
-					},
-				},
-			},
-			"security": Array{
-				Object{
-					"default_security_0": Array{"scope0", "scope1"},
-					"default_security_1": Array{},
-				},
-			},
-		},
-		V3: Object{
-			"openapi":    "3.0",
-			"info":       Object{},
-			"components": Object{},
-			"paths": Object{
-				"/example": Object{
-					"delete": Object{
-						"description": "example delete",
-					},
-					"get": Object{
-						"description": "example get",
-						"parameters": Array{
-							Object{
-								"in":   "query",
-								"name": "x",
-							},
-						},
-						"body": Object{
-							"content": Object{
-								"application/json": Object{
-									"schema": Object{},
-								},
-							},
-						},
-						"responses": Object{
-							"default": Object{
-								"description": "default response",
-							},
-							"404": Object{
-								"description": "404 response",
-							},
-						},
-						"security": Array{
-							Object{
-								"get_security_0": Array{"scope0", "scope1"},
-								"get_security_1": Array{},
-							},
-						},
-					},
-					"head": Object{
-						"description": "example head",
-					},
-					"options": Object{
-						"description": "example options",
-					},
-					"patch": Object{
-						"description": "example patch",
-					},
-					"post": Object{
-						"description": "example post",
-					},
-					"put": Object{
-						"description": "example put",
-					},
-				},
-			},
-			"security": Array{
-				Object{
-					"default_security_0": Array{"scope0", "scope1"},
-					"default_security_1": Array{},
-				},
-			},
-		},
-	},
+	actualV2, err := openapi2conv.FromV3Swagger(&swagger3)
+	require.NoError(t, err)
+	data, err := json.Marshal(actualV2)
+	require.NoError(t, err)
+	require.JSONEq(t, exampleV2, string(data))
 }
 
-type Example struct {
-	V2 interface{}
-	V3 interface{}
+func TestConvOpenAPIV2ToV3(t *testing.T) {
+	var swagger2 openapi2.Swagger
+	err := json.Unmarshal([]byte(exampleV2), &swagger2)
+	require.NoError(t, err)
+
+	actualV3, err := openapi2conv.ToV3Swagger(&swagger2)
+	require.NoError(t, err)
+	data, err := json.Marshal(actualV3)
+	require.NoError(t, err)
+	require.JSONEq(t, exampleV3, string(data))
 }
 
-func copyJSON(dest, src interface{}) error {
-	data, err := json.Marshal(src)
-	if err != nil {
-		return fmt.Errorf("Failed to marshal %T: %v", src, err)
-	}
-	if err := json.Unmarshal(data, dest); err != nil {
-		return fmt.Errorf("Failed to unmarshal %T: %v", dest, err)
-	}
-	return nil
+const exampleV2 = `
+{
+  "info": {},
+  "paths": {
+    "/example": {
+      "delete": {
+        "description": "example delete"
+      },
+      "get": {
+        "description": "example get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "x"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "default response"
+          },
+          "404": {
+            "description": "404 response"
+          }
+        },
+        "security": [
+          {
+            "get_security_0": [
+              "scope0",
+              "scope1"
+            ],
+            "get_security_1": []
+          }
+        ]
+      },
+      "head": {
+        "description": "example head"
+      },
+      "patch": {
+        "description": "example patch"
+      },
+      "post": {
+        "description": "example post"
+      },
+      "put": {
+        "description": "example put"
+      },
+      "options": {
+        "description": "example options"
+      }
+    }
+  },
+  "security": [
+    {
+      "default_security_0": [
+        "scope0",
+        "scope1"
+      ],
+      "default_security_1": []
+    }
+  ]
 }
+`
 
-func Test_openapi2(t *testing.T) {
-	for _, example := range Examples {
-		swagger2 := &openapi2.Swagger{}
-		swagger3 := &openapi3.Swagger{}
-		if err := copyJSON(swagger2, example.V2); err != nil {
-			panic(err)
-		}
-		if err := copyJSON(swagger3, example.V3); err != nil {
-			panic(err)
-		}
-		t.Log("Converting V3 -> V2")
-		actualV2, err := openapi2conv.FromV3Swagger(swagger3)
-		jsontest.ExpectWithErr(t, actualV2, err).Value(example.V2)
-
-		t.Log("Converting V2 -> V3")
-		actualV3, err := openapi2conv.ToV3Swagger(swagger2)
-		jsontest.ExpectWithErr(t, actualV3, err).Value(example.V3)
-	}
+const exampleV3 = `
+{
+  "openapi": "3.0",
+  "info": {},
+  "components": {},
+  "paths": {
+    "/example": {
+      "delete": {
+        "description": "example delete"
+      },
+      "get": {
+        "description": "example get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "x"
+          }
+        ],
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "default response"
+          },
+          "404": {
+            "description": "404 response"
+          }
+        },
+        "security": [
+          {
+            "get_security_0": [
+              "scope0",
+              "scope1"
+            ],
+            "get_security_1": []
+          }
+        ]
+      },
+      "head": {
+        "description": "example head"
+      },
+      "options": {
+        "description": "example options"
+      },
+      "patch": {
+        "description": "example patch"
+      },
+      "post": {
+        "description": "example post"
+      },
+      "put": {
+        "description": "example put"
+      }
+    }
+  },
+  "security": [
+    {
+      "default_security_0": [
+        "scope0",
+        "scope1"
+      ],
+      "default_security_1": []
+    }
+  ]
 }
+`

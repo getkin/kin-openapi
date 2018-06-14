@@ -2,22 +2,60 @@ package openapi3_test
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"testing"
 
 	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/stretchr/testify/require"
 )
 
-type SchemaExample struct {
+type schemaExample struct {
+	Title         string
 	Schema        *openapi3.Schema
 	Serialization interface{}
 	AllValid      []interface{}
 	AllInvalid    []interface{}
 }
 
-var SchemaExamples = []SchemaExample{
-	// EMPTY SCHEMA
+func TestSchemas(t *testing.T) {
+	for _, example := range schemaExamples {
+		t.Run(example.Title, testSchema(t, example))
+	}
+}
+
+func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
+	return func(t *testing.T) {
+		schema := example.Schema
+		if serialized := example.Serialization; serialized != nil {
+			dataSerialized, err := json.Marshal(serialized)
+			require.NoError(t, err)
+			dataSchema, err := json.Marshal(schema)
+			require.NoError(t, err)
+			require.JSONEq(t, string(dataSerialized), string(dataSchema))
+		}
+		for _, value := range example.AllValid {
+			err := validateSchema(t, schema, value)
+			require.NoError(t, err)
+		}
+		for _, value := range example.AllInvalid {
+			err := validateSchema(t, schema, value)
+			require.Error(t, err)
+		}
+	}
+}
+
+func validateSchema(t *testing.T, schema *openapi3.Schema, value interface{}) error {
+	data, err := json.Marshal(value)
+	require.NoError(t, err)
+	var val interface{}
+	err = json.Unmarshal(data, &val)
+	require.NoError(t, err)
+	return schema.VisitJSON(val)
+}
+
+var schemaExamples = []schemaExample{
 	{
+		Title:  "EMPTY SCHEMA",
 		Schema: &openapi3.Schema{},
 		AllValid: []interface{}{
 			nil,
@@ -30,8 +68,29 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// BOOLEAN
+	// {
+	// 	Title: "NULL", //TODO
+	// 	Schema: openapi3.NewNullSchema(),
+	// 	Serialization: map[string]interface{}{
+	// 		"type": "null",
+	// 	},
+	// 	AllValid: []interface{}{
+	// 		nil,
+	// 	},
+	// 	AllInvalid: []interface{}{
+	// 		false,
+	// 		true,
+	// 		0,
+	// 		0.0,
+	// 		3.14,
+	// 		"",
+	// 		[]interface{}{},
+	// 		map[string]interface{}{},
+	// 	},
+	// },
+
 	{
+		Title:  "BOOLEAN",
 		Schema: openapi3.NewBoolSchema(),
 		Serialization: map[string]interface{}{
 			"type": "boolean",
@@ -49,8 +108,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// NUMBER
 	{
+		Title: "NUMBER",
 		Schema: openapi3.NewFloat64Schema().
 			WithMin(2.5).
 			WithMax(3.5),
@@ -70,15 +129,15 @@ var SchemaExamples = []SchemaExample{
 			true,
 			2.4,
 			3.6,
-			// NaN and Inf don't even parse so they are not here
+			// NaN and Inf aren't valid JSON so they are not here
 			"",
 			[]interface{}{},
 			map[string]interface{}{},
 		},
 	},
 
-	// STRING
 	{
+		Title: "STRING",
 		Schema: openapi3.NewStringSchema().
 			WithMinLength(2).
 			WithMaxLength(3).
@@ -106,8 +165,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// STRING: format "date-time"
 	{
+		Title:  "STRING: format 'date-time'",
 		Schema: openapi3.NewDateTimeSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
@@ -127,8 +186,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// STRING: format "date-time"
 	{
+		Title:  "STRING: format 'date-time'",
 		Schema: openapi3.NewBytesSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
@@ -159,8 +218,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// ARRAY
 	{
+		Title: "ARRAY",
 		Schema: &openapi3.Schema{
 			Type:     "array",
 			MinItems: 2,
@@ -195,8 +254,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// OBJECT
 	{
+		Title: "OBJECT",
 		Schema: &openapi3.Schema{
 			Type: "object",
 			Properties: map[string]*openapi3.SchemaRef{
@@ -279,8 +338,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// NOT
 	{
+		Title: "NOT",
 		Schema: &openapi3.Schema{
 			Not: &openapi3.SchemaRef{
 				Value: &openapi3.Schema{
@@ -316,8 +375,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// ANY OF
 	{
+		Title: "ANY OF",
 		Schema: &openapi3.Schema{
 			AnyOf: []*openapi3.SchemaRef{
 				{
@@ -357,8 +416,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// ALL OF
 	{
+		Title: "ALL OF",
 		Schema: &openapi3.Schema{
 			AllOf: []*openapi3.SchemaRef{
 				{
@@ -398,8 +457,8 @@ var SchemaExamples = []SchemaExample{
 		},
 	},
 
-	// ONE OF
 	{
+		Title: "ONE OF",
 		Schema: &openapi3.Schema{
 			OneOf: []*openapi3.SchemaRef{
 				{
@@ -438,20 +497,4 @@ var SchemaExamples = []SchemaExample{
 			4,
 		},
 	},
-}
-
-func TestSchemas(t *testing.T) {
-	for _, example := range SchemaExamples {
-		schema := example.Schema
-		if value := example.Serialization; value != nil {
-			jsontest.Expect(t, schema).Value(value)
-			jsontest.ExpectMarshallingAndUnmarshalling(t, value, &openapi3.Schema{}).Value(value)
-		}
-		for _, value := range example.AllValid {
-			jsontest.Expect(t, value).MatchesSchema(schema)
-		}
-		for _, value := range example.AllInvalid {
-			jsontest.Expect(t, value).DoesNotMatchSchema(schema)
-		}
-	}
 }
