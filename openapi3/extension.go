@@ -1,8 +1,6 @@
 package openapi3
 
 import (
-	"encoding/json"
-
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
@@ -31,7 +29,7 @@ func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value i
 	if len(source) > 0 {
 		result := make(map[string]interface{}, len(source))
 		for k, v := range source {
-			result[k] = json.RawMessage(v)
+			result[k] = v
 		}
 		props.Extensions = result
 	}

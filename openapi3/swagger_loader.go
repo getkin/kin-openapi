@@ -137,7 +137,11 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger) (err error) 
 	return
 }
 
-func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, prefix string) (components *Components, id string, err error) {
+func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, prefix string) (
+	components *Components,
+	id string,
+	err error,
+) {
 	if !strings.HasPrefix(ref, "#") {
 		if !swaggerLoader.IsExternalRefsAllowed {
 			return nil, "", fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
@@ -412,7 +416,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 }
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef) error {
-	const prefix = "#/components/examples"
+	const prefix = "#/components/examples/"
 	if ref := component.Ref; len(ref) > 0 {
 		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix)
 		if err != nil {

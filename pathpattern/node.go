@@ -141,7 +141,7 @@ func (list SuffixList) Less(i, j int) bool {
 	} else if bk < ak {
 		return false
 	}
-	return a.Pattern <= b.Pattern
+	return a.Pattern > b.Pattern
 }
 
 func (list SuffixList) Len() int {
