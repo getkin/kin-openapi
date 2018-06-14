@@ -8,6 +8,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestLoadYAML(t *testing.T) {
+	spec := []byte(`
+info:
+  description: An API
+`)
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromYAMLData(spec)
+	require.NoError(t, err)
+	require.Equal(t, "An API", doc.Info.Description)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+}
+
 func ExampleSwaggerLoader() {
 	source := `{"info":{"description":"An API"}}`
 	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
