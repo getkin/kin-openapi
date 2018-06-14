@@ -2,8 +2,9 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"strconv"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
@@ -21,10 +22,9 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
-func (all Responses) Validate(c context.Context) error {
-	for _, v := range all {
-		err := v.Validate(c)
-		if err != nil {
+func (responses Responses) Validate(c context.Context) error {
+	for _, v := range responses {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}
@@ -64,12 +64,12 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 	return response
 }
 
-func (value *Response) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (response *Response) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(response)
 }
 
-func (value *Response) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (response *Response) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
 func (response *Response) Validate(c context.Context) error {

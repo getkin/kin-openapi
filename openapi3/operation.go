@@ -2,8 +2,9 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"strconv"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
@@ -47,12 +48,12 @@ func NewOperation() *Operation {
 	return &Operation{}
 }
 
-func (value *Operation) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (operation *Operation) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(operation)
 }
 
-func (value *Operation) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (operation *Operation) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }
 
 func (operation *Operation) AddParameter(p *Parameter) {

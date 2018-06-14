@@ -24,9 +24,8 @@ type ObjectDecoder struct {
 
 func NewObjectDecoder(data []byte) (*ObjectDecoder, error) {
 	var remainingFields map[string]json.RawMessage
-	err := json.Unmarshal(data, &remainingFields)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal extension properties: %v\nInput: %s", err, string(data))
+	if err := json.Unmarshal(data, &remainingFields); err != nil {
+		return nil, fmt.Errorf("Failed to unmarshal extension properties: %v\nInput: %s", err, data)
 	}
 	return &ObjectDecoder{
 		Data:            data,
@@ -81,8 +80,7 @@ func (decoder *ObjectDecoder) DecodeStructFieldsAndExtensions(value interface{})
 				isPtr = true
 			}
 			fieldValue := reflect.New(fieldType)
-			err := fieldValue.Interface().(json.Unmarshaler).UnmarshalJSON(fieldData)
-			if err != nil {
+			if err := fieldValue.Interface().(json.Unmarshaler).UnmarshalJSON(fieldData); err != nil {
 				if field.MultipleFields {
 					i := fieldIndex + 1
 					if i < len(fields) && fields[i].JSONName == field.JSONName {
@@ -104,8 +102,7 @@ func (decoder *ObjectDecoder) DecodeStructFieldsAndExtensions(value interface{})
 			if fieldPtr.Kind() != reflect.Ptr || fieldPtr.IsNil() {
 				fieldPtr = fieldPtr.Addr()
 			}
-			err := json.Unmarshal(fieldData, fieldPtr.Interface())
-			if err != nil {
+			if err := json.Unmarshal(fieldData, fieldPtr.Interface()); err != nil {
 				if field.MultipleFields {
 					i := fieldIndex + 1
 					if i < len(fields) && fields[i].JSONName == field.JSONName {

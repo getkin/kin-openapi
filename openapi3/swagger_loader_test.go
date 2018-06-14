@@ -2,6 +2,7 @@ package openapi3_test
 
 import (
 	"fmt"
+
 	"github.com/jban332/kin-openapi/openapi3"
 )
 

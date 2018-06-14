@@ -2,14 +2,16 @@ package openapi3filter_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-openapi/openapi3filter"
-	"github.com/jban332/kin-test/jsontest"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3filter"
+	"github.com/jban332/kin-test/jsontest"
 )
 
 type ExampleRequest struct {
@@ -78,8 +80,7 @@ func TestFilter(t *testing.T) {
 			PathParams: pathParams,
 			Route:      route,
 		}
-		err = openapi3filter.ValidateRequest(nil, requestValidationInput)
-		if err != nil {
+		if err := openapi3filter.ValidateRequest(context.TODO(), requestValidationInput); err != nil {
 			return jsontest.ExpectWithErr(t, nil, err)
 		}
 		t.Logf("Response: %d", resp.Status)
@@ -99,7 +100,7 @@ func TestFilter(t *testing.T) {
 			}
 			responseValidationInput.SetBodyBytes(data)
 		}
-		err = openapi3filter.ValidateResponse(nil, responseValidationInput)
+		err = openapi3filter.ValidateResponse(context.TODO(), responseValidationInput)
 		return jsontest.ExpectWithErr(t, nil, err)
 	}
 

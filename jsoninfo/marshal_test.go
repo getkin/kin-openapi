@@ -1,14 +1,12 @@
 package jsoninfo_test
 
 import (
-	"github.com/jban332/kin-openapi/openapi3"
-)
-
-import (
 	"encoding/json"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"testing"
 	"time"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 type Simple struct {
@@ -153,7 +151,6 @@ var Examples = []Example{
 }
 
 type Object map[string]interface{}
-type Array []interface{}
 
 func TestExtensions(t *testing.T) {
 	for _, example := range Examples {
@@ -170,8 +167,7 @@ func TestExtensions(t *testing.T) {
 		// Unmarshal
 		if !example.NoUnmarshal {
 			t.Logf("Unmarshalling %T", x)
-			err = jsoninfo.UnmarshalStrictStruct(expectedData, x)
-			if err != nil {
+			if err := jsoninfo.UnmarshalStrictStruct(expectedData, x); err != nil {
 				t.Fatalf("Error unmarshalling %T: %v", x, err)
 			}
 			t.Logf("Marshalling %T", x)

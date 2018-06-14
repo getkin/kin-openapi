@@ -1,8 +1,9 @@
 package pathpattern_test
 
 import (
-	"github.com/jban332/kin-openapi/pathpattern"
 	"testing"
+
+	"github.com/jban332/kin-openapi/pathpattern"
 )
 
 func TestPatterns(t *testing.T) {

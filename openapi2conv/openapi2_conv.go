@@ -2,10 +2,12 @@
 package openapi2conv
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+
 	"github.com/jban332/kin-openapi/openapi2"
 	"github.com/jban332/kin-openapi/openapi3"
-	"net/url"
 )
 
 func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
@@ -93,17 +95,15 @@ func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*open
 		}
 		result.SetOperation(method, resultOperation)
 	}
-	if parameters := pathItem.Parameters; parameters != nil {
-		for _, parameter := range parameters {
-			v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
-			if err != nil {
-				return nil, err
-			}
-			if v3RequestBody != nil {
-				return nil, fmt.Errorf("PathItem shouldn't have a body parameter")
-			}
-			result.Parameters = append(result.Parameters, v3Parameter)
+	for _, parameter := range pathItem.Parameters {
+		v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
+		if err != nil {
+			return nil, err
 		}
+		if v3RequestBody != nil {
+			return nil, errors.New("PathItem shouldn't have a body parameter")
+		}
+		result.Parameters = append(result.Parameters, v3Parameter)
 	}
 	return result, nil
 }
@@ -293,21 +293,19 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	if isHTTP {
 		result.Schemes = append(result.Schemes, "http")
 	}
-	if paths := swagger.Paths; paths != nil {
-		for path, pathItem := range paths {
-			if pathItem == nil {
+	for path, pathItem := range swagger.Paths {
+		if pathItem == nil {
+			continue
+		}
+		for method, operation := range pathItem.Operations() {
+			if operation == nil {
 				continue
 			}
-			for method, operation := range pathItem.Operations() {
-				if operation == nil {
-					continue
-				}
-				resultOperation, err := FromV3Operation(swagger, operation)
-				if err != nil {
-					return nil, err
-				}
-				result.AddOperation(path, method, resultOperation)
+			resultOperation, err := FromV3Operation(swagger, operation)
+			if err != nil {
+				return nil, err
 			}
+			result.AddOperation(path, method, resultOperation)
 		}
 	}
 	if m := swagger.Components.SecuritySchemes; m != nil {
@@ -422,7 +420,7 @@ func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation,
 
 	// If found an available name
 	if name == "" {
-		return nil, fmt.Errorf("Could not find a name for request body")
+		return nil, errors.New("Could not find a name for request body")
 	}
 	result := &openapi2.Parameter{
 		In:          "body",

@@ -2,7 +2,9 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
@@ -13,8 +15,8 @@ func NewParameters() Parameters {
 	return make(Parameters, 0, 4)
 }
 
-func (all Parameters) GetByInAndName(in string, name string) *Parameter {
-	for _, item := range all {
+func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
+	for _, item := range parameters {
 		if v := item.Value; v != nil {
 			if v.Name == name && v.In == in {
 				return v
@@ -24,11 +26,10 @@ func (all Parameters) GetByInAndName(in string, name string) *Parameter {
 	return nil
 }
 
-func (all Parameters) Validate(c context.Context) error {
+func (parameters Parameters) Validate(c context.Context) error {
 	m := make(map[string]struct{})
-	for _, item := range all {
-		err := item.Validate(c)
-		if err != nil {
+	for _, item := range parameters {
+		if err := item.Validate(c); err != nil {
 			return err
 		}
 		if v := item.Value; v != nil {
@@ -39,8 +40,7 @@ func (all Parameters) Validate(c context.Context) error {
 				return fmt.Errorf("More than one '%s' parameter has name '%s'", in, name)
 			}
 			m[key] = struct{}{}
-			err := item.Validate(c)
-			if err != nil {
+			if err := item.Validate(c); err != nil {
 				return err
 			}
 		}
@@ -54,11 +54,11 @@ type Parameter struct {
 	Name            string        `json:"name,omitempty"`
 	In              string        `json:"in,omitempty"`
 	Description     string        `json:"description,omitempty"`
-	Deprecated      bool          `json:"deprecated,omitempty"`
-	Required        bool          `json:"required,omitempty"`
 	Style           string        `json:"style,omitempty"`
 	AllowEmptyValue bool          `json:"allowEmptyValue,omitempty"`
 	AllowReserved   bool          `json:"allowReserved,omitempty"`
+	Deprecated      bool          `json:"deprecated,omitempty"`
+	Required        bool          `json:"required,omitempty"`
 	Schema          *SchemaRef    `json:"schema,omitempty"`
 	Example         interface{}   `json:"example,omitempty"`
 	Examples        []interface{} `json:"examples,omitempty"`
@@ -121,17 +121,17 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
 	return parameter
 }
 
-func (value *Parameter) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (parameter *Parameter) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(parameter)
 }
 
-func (value *Parameter) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (parameter *Parameter) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
 
 func (parameter *Parameter) Validate(c context.Context) error {
 	if parameter.Name == "" {
-		return fmt.Errorf("Parameter name can't be blank")
+		return errors.New("Parameter name can't be blank")
 	}
 	in := parameter.In
 	switch in {
@@ -144,8 +144,7 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		return fmt.Errorf("Parameter can't have 'in' value '%s'", parameter.In)
 	}
 	if schema := parameter.Schema; schema != nil {
-		err := schema.Validate(c)
-		if err != nil {
+		if err := schema.Validate(c); err != nil {
 			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)
 		}
 	}

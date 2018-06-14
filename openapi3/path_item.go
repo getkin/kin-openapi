@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"fmt"
+
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
@@ -22,12 +23,12 @@ type PathItem struct {
 	Parameters  Parameters `json:"parameters,omitempty"`
 }
 
-func (value *PathItem) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(pathItem)
 }
 
-func (value *PathItem) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, pathItem)
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
@@ -104,8 +105,7 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 
 func (pathItem *PathItem) Validate(c context.Context) error {
 	for method, operation := range pathItem.Operations() {
-		err := operation.ValidateOperation(c, pathItem, method)
-		if err != nil {
+		if err := operation.ValidateOperation(c, pathItem, method); err != nil {
 			return err
 		}
 	}

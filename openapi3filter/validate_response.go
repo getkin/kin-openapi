@@ -66,7 +66,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 			}
 		}
 		content := response.Content
-		if content != nil && len(content) > 0 && options.ExcludeResponseBody == false {
+		if len(content) > 0 && !options.ExcludeResponseBody {
 			inputMIME := input.Header.Get("Content-Type")
 			mediaType := parseMediaType(inputMIME)
 			contentType := content[mediaType]
@@ -106,11 +106,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 
 				// Decode JSON
 				var value interface{}
-				err = json.Unmarshal(data, &value)
-				if err != nil {
-					return err
-				}
-				if err != nil {
+				if err := json.Unmarshal(data, &value); err != nil {
 					return &ResponseError{
 						Input:  input,
 						Reason: "decoding JSON in the input body failed",
@@ -119,8 +115,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 				}
 
 				// Validate JSON with the schema
-				err = schema.VisitJSON(value)
-				if err != nil {
+				if err := schema.VisitJSON(value); err != nil {
 					return &ResponseError{
 						Input: input,
 						Err:   err,

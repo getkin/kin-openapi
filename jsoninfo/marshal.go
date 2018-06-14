@@ -11,8 +11,7 @@ import (
 //   * Correctly handles StrictStruct semantics.
 func MarshalStrictStruct(value StrictStruct) ([]byte, error) {
 	encoder := NewObjectEncoder()
-	err := value.EncodeWith(encoder, value)
-	if err != nil {
+	if err := value.EncodeWith(encoder, value); err != nil {
 		return nil, err
 	}
 	return encoder.Bytes()
@@ -121,11 +120,11 @@ iteration:
 			}
 		case reflect.Bool:
 			x := fieldValue.Bool()
-			if field.JSONOmitEmpty && x == false {
+			if field.JSONOmitEmpty && !x {
 				continue iteration
 			}
 			s := "false"
-			if x == true {
+			if x {
 				s = "true"
 			}
 			result[field.JSONName] = []byte(s)

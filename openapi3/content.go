@@ -2,8 +2,9 @@ package openapi3
 
 import (
 	"context"
-	"github.com/jban332/kin-openapi/jsoninfo"
 	"strings"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
 // Content is specified by OpenAPI/Swagger 3.0 standard.
@@ -24,15 +25,15 @@ func NewContentWithJSONSchemaRef(schema *SchemaRef) Content {
 	}
 }
 
-func (ct Content) Get(mime string) *ContentType {
-	if v := ct[mime]; v != nil {
+func (content Content) Get(mime string) *ContentType {
+	if v := content[mime]; v != nil {
 		return v
 	}
 	i := strings.IndexByte(mime, ';')
 	if i < 0 {
 		return nil
 	}
-	return ct[mime[:i]]
+	return content[mime[:i]]
 }
 
 func (content Content) Validate(c context.Context) error {
@@ -80,19 +81,19 @@ func (contentType *ContentType) WithExample(value interface{}) *ContentType {
 	return contentType
 }
 
-func (value *ContentType) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (contentType *ContentType) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(contentType)
 }
 
-func (value *ContentType) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (contentType *ContentType) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, contentType)
 }
 
-func (ct *ContentType) Validate(c context.Context) error {
-	if ct == nil {
+func (contentType *ContentType) Validate(c context.Context) error {
+	if contentType == nil {
 		return nil
 	}
-	if schema := ct.Schema; schema != nil {
+	if schema := contentType.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return err
 		}

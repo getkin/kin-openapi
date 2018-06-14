@@ -15,8 +15,7 @@ func MarshalRef(value string, otherwise interface{}) ([]byte, error) {
 
 func UnmarshalRef(data []byte, destRef *string, destOtherwise interface{}) error {
 	refProps := &refProps{}
-	err := json.Unmarshal(data, refProps)
-	if err == nil {
+	if err := json.Unmarshal(data, refProps); err == nil {
 		ref := refProps.Ref
 		if len(ref) > 0 {
 			*destRef = ref

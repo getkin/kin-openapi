@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
 	"io/ioutil"
 	"net/http"
 	"sort"
+
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
@@ -18,7 +20,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 	route := input.Route
 	if route == nil {
-		return fmt.Errorf("invalid route")
+		return errors.New("invalid route")
 	}
 	operation := route.Operation
 	if operation == nil {
@@ -28,37 +30,29 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	pathItemParameters := route.PathItem.Parameters
 
 	// For each parameter of the PathItem
-	if pathItemParameters != nil {
-		for _, parameterRef := range pathItemParameters {
-			parameter := parameterRef.Value
-			if operationParameters != nil {
-				override := operationParameters.GetByInAndName(parameter.In, parameter.Name)
-				if override != nil {
-					continue
-				}
+	for _, parameterRef := range pathItemParameters {
+		parameter := parameterRef.Value
+		if operationParameters != nil {
+			if override := operationParameters.GetByInAndName(parameter.In, parameter.Name); override != nil {
+				continue
 			}
-			err := ValidateParameter(c, input, parameter)
-			if err != nil {
+			if err := ValidateParameter(c, input, parameter); err != nil {
 				return err
 			}
 		}
 	}
 
 	// For each parameter of the Operation
-	if operationParameters != nil {
-		for _, parameter := range operationParameters {
-			err := ValidateParameter(c, input, parameter.Value)
-			if err != nil {
-				return err
-			}
+	for _, parameter := range operationParameters {
+		if err := ValidateParameter(c, input, parameter.Value); err != nil {
+			return err
 		}
 	}
 
 	// RequestBody
 	requestBody := operation.RequestBody
-	if requestBody != nil && options.ExcludeRequestBody == false {
-		err := ValidateRequestBody(c, input, requestBody.Value)
-		if err != nil {
+	if requestBody != nil && !options.ExcludeRequestBody {
+		if err := ValidateRequestBody(c, input, requestBody.Value); err != nil {
 			return err
 		}
 	}
@@ -66,8 +60,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// Security
 	security := operation.Security
 	if security != nil {
-		err := ValidateSecurityRequirements(c, input, *security)
-		if err != nil {
+		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
 			return err
 		}
 	}
@@ -134,8 +127,7 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		schema := schemaRef.Value
 		// Only check schema if no transformation is needed
 		if schema.TypesContains("string") {
-			err := schema.VisitJSONString(value)
-			if err != nil {
+			if err := schema.VisitJSONString(value); err != nil {
 				return &RequestError{
 					Input:     input,
 					Parameter: parameter,
@@ -181,8 +173,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 
 			// Decode JSON
 			var value interface{}
-			err = json.Unmarshal(data, &value)
-			if err != nil {
+			if err := json.Unmarshal(data, &value); err != nil {
 				return &RequestError{
 					Input:       input,
 					RequestBody: requestBody,
@@ -192,8 +183,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 			}
 
 			// Validate JSON with the schema
-			err = schema.VisitJSON(value)
-			if err != nil {
+			if err := schema.VisitJSON(value); err != nil {
 				return &RequestError{
 					Input:       input,
 					RequestBody: requestBody,
@@ -230,13 +220,12 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 					if err, ok := v.(error); ok {
 						errs[currentIndex] = err
 					} else {
-						errs[currentIndex] = fmt.Errorf("Panicked")
+						errs[currentIndex] = errors.New("Panicked")
 					}
 					doneChan <- false
 				}
 			}()
-			err := validateSecurityRequirement(c, input, currentSecurityRequirement)
-			if err == nil {
+			if err := validateSecurityRequirement(c, input, currentSecurityRequirement); err == nil {
 				doneChan <- true
 			} else {
 				errs[currentIndex] = err
@@ -284,13 +273,12 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 		return ErrAuthenticationServiceMissing
 	}
 
-	// Visit all requirements
-	for _, name := range names {
+	if len(names) > 0 {
+		name := names[0]
 		var securityScheme *openapi3.SecurityScheme
 		if securitySchemes != nil {
-			securitySchemeRef := securitySchemes[name]
-			if securitySchemeRef != nil {
-				securityScheme = securitySchemeRef.Value
+			if ref := securitySchemes[name]; ref != nil {
+				securityScheme = ref.Value
 			}
 		}
 		if securityScheme == nil {

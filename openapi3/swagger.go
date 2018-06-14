@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
@@ -14,17 +15,14 @@ type Swagger struct {
 	Components   Components           `json:"components,omitempty"`
 	Security     SecurityRequirements `json:"security,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty"`
-
-	// To prevent infinite recursion
-	visitedSchemas map[*Schema]struct{}
 }
 
-func (value *Swagger) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (swagger *Swagger) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(swagger)
 }
 
-func (value *Swagger) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (swagger *Swagger) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, swagger)
 }
 
 func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {

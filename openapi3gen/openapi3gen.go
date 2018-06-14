@@ -3,11 +3,12 @@ package openapi3gen
 
 import (
 	"encoding/json"
-	"github.com/jban332/kin-openapi/jsoninfo"
-	"github.com/jban332/kin-openapi/openapi3"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 // CycleError indicates that a type graph has one or more possible cycles.

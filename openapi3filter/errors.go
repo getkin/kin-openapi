@@ -3,8 +3,9 @@ package openapi3filter
 import (
 	"errors"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
 	"net/http"
+
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 var (

@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+
 	"github.com/jban332/kin-openapi/jsoninfo"
 )
 
@@ -50,18 +51,17 @@ func (requestBody *RequestBody) GetContentType(mediaType string) *ContentType {
 	return m[mediaType]
 }
 
-func (value *RequestBody) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (requestBody *RequestBody) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(requestBody)
 }
 
-func (value *RequestBody) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
 }
 
 func (requestBody *RequestBody) Validate(c context.Context) error {
 	if v := requestBody.Content; v != nil {
-		err := v.Validate(c)
-		if err != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}

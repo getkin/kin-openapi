@@ -16,8 +16,7 @@ type Header struct {
 
 func (value *Header) Validate(c context.Context) error {
 	if v := value.Schema; v != nil {
-		err := v.Validate(c)
-		if err != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}

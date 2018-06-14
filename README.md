@@ -37,7 +37,7 @@ This library provides packages for dealing with OpenAPI specifications.
 # Packages
   * `jsoninfo`
     * Provides information and functions for marshalling/unmarshalling JSON. The purpose is a clutter-free implementation of JSON references and OpenAPI extension properties.
-  * `openapi2` 
+  * `openapi2`
     * Parses/writes OpenAPI 2.
   * `openapi2conv`
     * Converts OpenAPI 2 specification into OpenAPI 3 specification.
@@ -45,7 +45,7 @@ This library provides packages for dealing with OpenAPI specifications.
     * Parses/writes OpenAPI 3. Includes OpenAPI schema / JSON schema valdation.
   * `openapi3filter`
     * Validates that HTTP request and HTTP response match an OpenAPI specification file.
-  * `openapi3gen` 
+  * `openapi3gen`
     * Generates OpenAPI 3 schemas for Go types.
   * `pathpattern`
     * Support for OpenAPI style path patterns.
@@ -55,11 +55,11 @@ This library provides packages for dealing with OpenAPI specifications.
 ## Loading OpenAPI document
 Use `SwaggerLoader`, which resolves all JSON references:
 ```go
-swagger, err := openapi3.NewSwaggerLoader().LoadFromFile("swagger.json")
+swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
-```go 
+```go
 func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
   // Load Swagger file
   router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
@@ -78,9 +78,10 @@ func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
 ## Validating HTTP requests/responses
 ```go
 import (
+  "net/http"
+
   "github.com/jban332/kin-openapi/openapi3"
   "github.com/jban332/kin-openapi/openapi3filter"
-  "net/http"
 )
 
 var router = openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
@@ -90,7 +91,7 @@ func ValidateRequest(req *http.Request) {
     Request: req,
     Router:  router,
   })
-  
+
   // Get response
 
   openapi3filter.ValidateResponse(nil, &openapi3filter.ValidateResponseInput {
@@ -108,7 +109,7 @@ Usage looks like:
 type Example struct {
   // Allow extension properties ("x-someProperty")
   openapi3.ExtensionProps
-  
+
   // Normal properties
   SomeField float64
 }

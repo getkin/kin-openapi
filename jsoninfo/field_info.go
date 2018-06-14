@@ -11,13 +11,13 @@ import (
 type FieldInfo struct {
 	MultipleFields     bool // Whether multiple Go fields share this JSON name
 	HasJSONTag         bool
-	Index              []int
-	Type               reflect.Type
 	TypeIsMarshaller   bool
 	TypeIsUnmarshaller bool
-	JSONName           string
 	JSONOmitEmpty      bool
 	JSONString         bool
+	Index              []int
+	Type               reflect.Type
+	JSONName           string
 }
 
 func AppendFields(fields []FieldInfo, parentIndex []int, t reflect.Type) []FieldInfo {

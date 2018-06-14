@@ -9,6 +9,7 @@ package openapi2
 
 import (
 	"fmt"
+
 	"github.com/jban332/kin-openapi/openapi3"
 )
 

@@ -1,12 +1,15 @@
 package openapi3filter
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-openapi/pathpattern"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/pathpattern"
 )
 
 type Route struct {
@@ -67,8 +70,7 @@ func NewRouter() *Router {
 // WithSwaggerFromFile loads the Swagger file and adds it using WithSwagger.
 // Panics on any error.
 func (router *Router) WithSwaggerFromFile(path string) *Router {
-	err := router.AddSwaggerFromFile(path)
-	if err != nil {
+	if err := router.AddSwaggerFromFile(path); err != nil {
 		panic(err)
 	}
 	return router
@@ -77,8 +79,7 @@ func (router *Router) WithSwaggerFromFile(path string) *Router {
 // WithSwagger adds all operations in the OpenAPI specification.
 // Panics on any error.
 func (router *Router) WithSwagger(swagger *openapi3.Swagger) *Router {
-	err := router.AddSwagger(swagger)
-	if err != nil {
+	if err := router.AddSwagger(swagger); err != nil {
 		panic(err)
 	}
 	return router
@@ -95,23 +96,22 @@ func (router *Router) AddSwaggerFromFile(path string) error {
 
 // AddSwagger adds all operations in the OpenAPI specification.
 func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
-	err := swagger.Validate(nil)
-	if err != nil {
+	if err := swagger.Validate(context.TODO()); err != nil {
 		return fmt.Errorf("Validating Swagger failed: %v", err)
 	}
 	router.swagger = swagger
 	root := router.node()
-	if paths := swagger.Paths; paths != nil {
-		for path, pathItem := range paths {
-			for method, operation := range pathItem.Operations() {
-				method = strings.ToUpper(method)
-				root.Add(method+" "+path, &Route{
-					Swagger:   swagger,
-					Path:      path,
-					PathItem:  pathItem,
-					Method:    method,
-					Operation: operation,
-				}, nil)
+	for path, pathItem := range swagger.Paths {
+		for method, operation := range pathItem.Operations() {
+			method = strings.ToUpper(method)
+			if err := root.Add(method+" "+path, &Route{
+				Swagger:   swagger,
+				Path:      path,
+				PathItem:  pathItem,
+				Method:    method,
+				Operation: operation,
+			}, nil); err != nil {
+				return err
 			}
 		}
 	}
@@ -119,17 +119,17 @@ func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
 }
 
 // AddRoute adds a route in the router.
-func (router *Router) AddRoute(route *Route) {
+func (router *Router) AddRoute(route *Route) error {
 	method := route.Method
 	if method == "" {
-		panic("Route is missing method")
+		return errors.New("Route is missing method")
 	}
 	method = strings.ToUpper(method)
 	path := route.Path
 	if path == "" {
-		panic("Route is missing path")
+		return errors.New("Route is missing path")
 	}
-	router.node().Add(method+" "+path, router, nil)
+	return router.node().Add(method+" "+path, router, nil)
 }
 
 func (router *Router) node() *pathpattern.Node {
