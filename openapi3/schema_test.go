@@ -114,9 +114,9 @@ var schemaExamples = []schemaExample{
 			WithMin(2.5).
 			WithMax(3.5),
 		Serialization: map[string]interface{}{
-			"type": "number",
-			"min":  2.5,
-			"max":  3.5,
+			"type":    "number",
+			"minimum": 2.5,
+			"maximum": 3.5,
 		},
 		AllValid: []interface{}{
 			2.5,
@@ -394,14 +394,14 @@ var schemaExamples = []schemaExample{
 		Serialization: map[string]interface{}{
 			"anyOf": []interface{}{
 				map[string]interface{}{
-					"type": "number",
-					"min":  1,
-					"max":  2,
+					"type":    "number",
+					"minimum": 1,
+					"maximum": 2,
 				},
 				map[string]interface{}{
-					"type": "number",
-					"min":  2,
-					"max":  3,
+					"type":    "number",
+					"minimum": 2,
+					"maximum": 3,
 				},
 			},
 		},
@@ -435,14 +435,14 @@ var schemaExamples = []schemaExample{
 		Serialization: map[string]interface{}{
 			"allOf": []interface{}{
 				map[string]interface{}{
-					"type": "number",
-					"min":  1,
-					"max":  2,
+					"type":    "number",
+					"minimum": 1,
+					"maximum": 2,
 				},
 				map[string]interface{}{
-					"type": "number",
-					"min":  2,
-					"max":  3,
+					"type":    "number",
+					"minimum": 2,
+					"maximum": 3,
 				},
 			},
 		},
@@ -476,14 +476,14 @@ var schemaExamples = []schemaExample{
 		Serialization: map[string]interface{}{
 			"oneOf": []interface{}{
 				map[string]interface{}{
-					"type": "number",
-					"min":  1,
-					"max":  2,
+					"type":    "number",
+					"minimum": 1,
+					"maximum": 2,
 				},
 				map[string]interface{}{
-					"type": "number",
-					"min":  2,
-					"max":  3,
+					"type":    "number",
+					"minimum": 2,
+					"maximum": 3,
 				},
 			},
 		},
