@@ -1087,9 +1087,13 @@ func (err *SchemaError) Error() string {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("  ", "  ")
-		encoder.Encode(err.Schema)
+		if err := encoder.Encode(err.Schema); err != nil {
+			panic(err)
+		}
 		buf.WriteString("\nValue:\n  ")
-		encoder.Encode(err.Value)
+		if err := encoder.Encode(err.Value); err != nil {
+			panic(err)
+		}
 	}
 	return buf.String()
 }

@@ -90,6 +90,7 @@ func eqYAML(t *testing.T, expected, actual []byte) {
 	err := yaml.Unmarshal(expected, &e)
 	require.NoError(t, err)
 	err = yaml.Unmarshal(actual, &a)
+	require.NoError(t, err)
 	require.Equal(t, e, a)
 }
 
