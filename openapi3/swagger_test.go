@@ -1,37 +1,230 @@
 package openapi3_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-test/jsontest"
+	"github.com/stretchr/testify/require"
 )
 
-type Array []interface{}
-type Object map[string]interface{}
+func TestRefsJSON(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
 
-func expect(t *testing.T, swagger *openapi3.Swagger, value interface{}) {
 	t.Log("Marshal *openapi3.Swagger to JSON")
-	data, err := json.Marshal(swagger)
-	jsontest.ExpectWithErr(t, json.RawMessage(data), err).Value(value)
+	data, err := json.Marshal(spec())
+	require.NoError(t, err)
+	require.NotEmpty(t, data)
 
 	t.Log("Unmarshal *openapi3.Swagger from JSON")
-	swagger = &openapi3.Swagger{}
-	err = json.Unmarshal(data, &swagger)
-	jsontest.ExpectWithErr(t, swagger, err).Value(value)
+	docA := &openapi3.Swagger{}
+	err = json.Unmarshal(specJSON, &docA)
+	require.NoError(t, err)
+	require.NotEmpty(t, data)
 
 	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
-	err = openapi3.NewSwaggerLoader().ResolveRefsIn(swagger)
-	jsontest.ExpectNoErr(t, err)
+	err = loader.ResolveRefsIn(docA)
+	require.NoError(t, err)
+	t.Log("Resolve refs in marshalled *openapi3.Swagger")
+	docB, err := loader.LoadSwaggerFromData(data)
+	require.NoError(t, err)
+	require.NotEmpty(t, docB)
 
-	t.Log("Validate unmarshalled *openapi3.Swagger")
-	err = swagger.Validate(context.TODO())
-	jsontest.ExpectErr(t, err).Err(nil)
+	t.Log("Validate *openapi3.Swagger")
+	err = docA.Validate(loader.Context)
+	require.NoError(t, err)
+	err = docB.Validate(loader.Context)
+	require.NoError(t, err)
+
+	t.Log("Ensure representations match")
+	dataA, err := json.Marshal(docA)
+	require.NoError(t, err)
+	dataB, err := json.Marshal(docB)
+	require.NoError(t, err)
+	require.JSONEq(t, string(data), string(specJSON))
+	require.JSONEq(t, string(data), string(dataA))
+	require.JSONEq(t, string(data), string(dataB))
 }
 
-func TestRefs(t *testing.T) {
+func TestRefsYAML(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+
+	t.Log("Marshal *openapi3.Swagger to YAML")
+	data, err := yaml.Marshal(spec())
+	require.NoError(t, err)
+	require.NotEmpty(t, data)
+
+	t.Log("Unmarshal *openapi3.Swagger from YAML")
+	docA := &openapi3.Swagger{}
+	err = yaml.Unmarshal(specYAML, &docA)
+	require.NoError(t, err)
+	require.NotEmpty(t, data)
+
+	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
+	err = loader.ResolveRefsIn(docA)
+	require.NoError(t, err)
+	t.Log("Resolve refs in marshalled *openapi3.Swagger")
+	docB, err := loader.LoadSwaggerFromYAMLData(data)
+	require.NoError(t, err)
+	require.NotEmpty(t, docB)
+
+	t.Log("Validate *openapi3.Swagger")
+	err = docA.Validate(loader.Context)
+	require.NoError(t, err)
+	err = docB.Validate(loader.Context)
+	require.NoError(t, err)
+
+	t.Log("Ensure representations match")
+	dataA, err := yaml.Marshal(docA)
+	require.NoError(t, err)
+	dataB, err := yaml.Marshal(docB)
+	require.NoError(t, err)
+	eqYAML(t, data, specYAML)
+	eqYAML(t, data, dataA)
+	eqYAML(t, data, dataB)
+}
+
+func eqYAML(t *testing.T, expected, actual []byte) {
+	var e, a interface{}
+	err := yaml.Unmarshal(expected, &e)
+	require.NoError(t, err)
+	err = yaml.Unmarshal(actual, &a)
+	require.Equal(t, e, a)
+}
+
+var specYAML = []byte(`
+openapi: '3.0'
+info: {}
+paths:
+  "/hello":
+    parameters:
+    - "$ref": "#/components/parameters/someParameter"
+    post:
+      parameters:
+      - "$ref": "#/components/parameters/someParameter"
+      body:
+        "$ref": "#/components/requestBodies/someRequestBody"
+      responses:
+        '200':
+          "$ref": "#/components/responses/someResponse"
+components:
+  parameters:
+    someParameter:
+      description: Some parameter
+      name: example
+      in: query
+      schema:
+        "$ref": "#/components/schemas/someSchema"
+  requestBodies:
+    someRequestBody:
+      description: Some request body
+  responses:
+    someResponse:
+      description: Some response
+  schemas:
+    someSchema:
+      description: Some schema
+  headers:
+    otherHeader: {}
+    someHeader:
+      "$ref": "#/components/headers/otherHeader"
+  examples:
+    otherExample: abc
+    someExample:
+      "$ref": "#/components/examples/otherExample"
+  securitySchemes:
+    otherSecurityScheme:
+      description: Some security scheme
+      type: apiKey
+      in: query
+      name: token
+    someSecurityScheme:
+      "$ref": "#/components/securitySchemes/otherSecurityScheme"
+`)
+
+var specJSON = []byte(`
+{
+  "openapi": "3.0",
+  "info": {},
+  "paths": {
+    "/hello": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/someParameter"
+        }
+      ],
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/someParameter"
+          }
+        ],
+        "body": {
+          "$ref": "#/components/requestBodies/someRequestBody"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/someResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "someParameter": {
+        "description": "Some parameter",
+        "name": "example",
+        "in": "query",
+        "schema": {
+          "$ref": "#/components/schemas/someSchema"
+        }
+      }
+    },
+    "requestBodies": {
+      "someRequestBody": {
+        "description": "Some request body"
+      }
+    },
+    "responses": {
+      "someResponse": {
+        "description": "Some response"
+      }
+    },
+    "schemas": {
+      "someSchema": {
+        "description": "Some schema"
+      }
+    },
+    "headers": {
+      "otherHeader": {},
+      "someHeader": {
+        "$ref": "#/components/headers/otherHeader"
+      }
+    },
+    "examples": {
+      "otherExample": "abc",
+      "someExample": {
+        "$ref": "#/components/examples/otherExample"
+      }
+    },
+    "securitySchemes": {
+      "otherSecurityScheme": {
+        "description": "Some security scheme",
+        "type": "apiKey",
+        "in": "query",
+        "name": "token"
+      },
+      "someSecurityScheme": {
+        "$ref": "#/components/securitySchemes/otherSecurityScheme"
+      }
+    }
+  }
+}
+`)
+
+func spec() *openapi3.Swagger {
 	parameter := &openapi3.Parameter{
 		Description: "Some parameter",
 		Name:        "example",
@@ -49,7 +242,7 @@ func TestRefs(t *testing.T) {
 	schema := &openapi3.Schema{
 		Description: "Some schema",
 	}
-	swagger := &openapi3.Swagger{
+	return &openapi3.Swagger{
 		OpenAPI: "3.0",
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
@@ -131,82 +324,4 @@ func TestRefs(t *testing.T) {
 			},
 		},
 	}
-	expect(t, swagger, Object{
-		"openapi": "3.0",
-		"info":    Object{},
-		"paths": Object{
-			"/hello": Object{
-				"parameters": Array{
-					Object{
-						"$ref": "#/components/parameters/someParameter",
-					},
-				},
-				"post": Object{
-					"parameters": Array{
-						Object{
-							"$ref": "#/components/parameters/someParameter",
-						},
-					},
-					"body": Object{
-						"$ref": "#/components/requestBodies/someRequestBody",
-					},
-					"responses": Object{
-						"200": Object{
-							"$ref": "#/components/responses/someResponse",
-						},
-					},
-				},
-			},
-		},
-		"components": Object{
-			"parameters": Object{
-				"someParameter": Object{
-					"description": "Some parameter",
-					"name":        "example",
-					"in":          "query",
-					"schema": Object{
-						"$ref": "#/components/schemas/someSchema",
-					},
-				},
-			},
-			"requestBodies": Object{
-				"someRequestBody": Object{
-					"description": "Some request body",
-				},
-			},
-			"responses": Object{
-				"someResponse": Object{
-					"description": "Some response",
-				},
-			},
-			"schemas": Object{
-				"someSchema": Object{
-					"description": "Some schema",
-				},
-			},
-			"headers": Object{
-				"someHeader": Object{
-					"$ref": "#/components/headers/otherHeader",
-				},
-				"otherHeader": Object{},
-			},
-			"examples": Object{
-				"someExample": Object{
-					"$ref": "#/components/examples/otherExample",
-				},
-				"otherExample": "abc",
-			},
-			"securitySchemes": Object{
-				"someSecurityScheme": Object{
-					"$ref": "#/components/securitySchemes/otherSecurityScheme",
-				},
-				"otherSecurityScheme": Object{
-					"description": "Some security scheme",
-					"type":        "apiKey",
-					"in":          "query",
-					"name":        "token",
-				},
-			},
-		},
-	})
 }

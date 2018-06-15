@@ -78,7 +78,7 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 	}
 }
 
-func (operation *Operation) ValidateOperation(c context.Context, pathItem *PathItem, method string) error {
+func (operation *Operation) Validate(c context.Context) error {
 	if v := operation.Parameters; v != nil {
 		if err := v.Validate(c); err != nil {
 			return err

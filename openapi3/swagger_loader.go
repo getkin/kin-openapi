@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/url"
 	"strings"
+
+	"github.com/ghodss/yaml"
 )
 
 func foundUnresolvedRef(ref string) error {
@@ -64,6 +66,14 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swagger := &Swagger{}
 	if err := json.Unmarshal(data, swagger); err != nil {
+		return nil, err
+	}
+	return swagger, swaggerLoader.ResolveRefsIn(swagger)
+}
+
+func (swaggerLoader *SwaggerLoader) LoadSwaggerFromYAMLData(data []byte) (*Swagger, error) {
+	swagger := &Swagger{}
+	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
 	return swagger, swaggerLoader.ResolveRefsIn(swagger)
