@@ -130,15 +130,15 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger) (err error) 
 				if err = swaggerLoader.resolveParameterRef(swagger, parameter); err != nil {
 					return
 				}
-				if requestBody := operation.RequestBody; requestBody != nil {
-					if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody); err != nil {
-						return
-					}
+			}
+			if requestBody := operation.RequestBody; requestBody != nil {
+				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody); err != nil {
+					return
 				}
-				for _, response := range operation.Responses {
-					if err = swaggerLoader.resolveResponseRef(swagger, response); err != nil {
-						return
-					}
+			}
+			for _, response := range operation.Responses {
+				if err = swaggerLoader.resolveResponseRef(swagger, response); err != nil {
+					return
 				}
 			}
 		}
