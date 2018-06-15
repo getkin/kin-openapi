@@ -22,6 +22,12 @@ components:
       properties:
         name: {type: string}
         tag: {type: string}
+    ErrorModel:
+      type: object
+      required: [code, message]
+      properties:
+        code: {type: integer}
+        message: {type: string}
 
 paths:
   /items:
@@ -39,17 +45,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required: [code, message]
-                properties:
-                  code: {type: integer}
-                  message: {type: string}
+                $ref: '#/components/schemas/ErrorModel'
 `)
+
 	loader := openapi3.NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromYAMLData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
-	require.Equal(t, 1, len(doc.Components.Schemas))
+	require.Equal(t, 2, len(doc.Components.Schemas))
 	require.Equal(t, 1, len(doc.Paths))
 	def := doc.Paths["/items"].Put.Responses.Default().Value
 	require.Equal(t, "unexpected error", def.Description)
