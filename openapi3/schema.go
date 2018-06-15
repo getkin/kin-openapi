@@ -54,8 +54,8 @@ type Schema struct {
 	// Number
 	ExclusiveMin *float64 `json:"exclusiveMin,omitempty"`
 	ExclusiveMax *float64 `json:"exclusiveMax,omitempty"`
-	Min          *float64 `json:"min,omitempty"`
-	Max          *float64 `json:"max,omitempty"`
+	Min          *float64 `json:"minimum,omitempty"`
+	Max          *float64 `json:"maximum,omitempty"`
 	Multiple     int64    `json:"multiple,omitempty"`
 
 	// String
@@ -700,7 +700,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 		return &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: "min",
+			SchemaField: "minimum",
 			Reason:      fmt.Sprintf("Number must be at least %g", *v),
 		}
 	}
@@ -711,7 +711,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 		return &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: "max",
+			SchemaField: "maximum",
 			Reason:      fmt.Sprintf("Number must be most %g", *v),
 		}
 	}
@@ -1087,9 +1087,13 @@ func (err *SchemaError) Error() string {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("  ", "  ")
-		encoder.Encode(err.Schema)
+		if err := encoder.Encode(err.Schema); err != nil {
+			panic(err)
+		}
 		buf.WriteString("\nValue:\n  ")
-		encoder.Encode(err.Value)
+		if err := encoder.Encode(err.Value); err != nil {
+			panic(err)
+		}
 	}
 	return buf.String()
 }
