@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/jban332/kin-openapi.svg?branch=master)](https://travis-ci.org/jban332/kin-openapi)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jban332/kin-openapi)](https://goreportcard.com/report/github.com/jban332/kin-openapi)
-[![GoDoc](https://godoc.org/github.com/jban332/kin-openapi?status.svg)](https://godoc.org/github.com/jban332/kin-openapi)
+[![Build Status](https://travis-ci.org/getkin/kin-openapi.svg?branch=master)](https://travis-ci.org/getkin/kin-openapi)
+[![Go Report Card](https://goreportcard.com/badge/github.com/getkin/kin-openapi)](https://goreportcard.com/report/github.com/getkin/kin-openapi)
+[![GoDoc](https://godoc.org/github.com/getkin/kin-openapi?status.svg)](https://godoc.org/github.com/getkin/kin-openapi)
 
 # Overview
 This library provides packages for dealing with OpenAPI specifications.
@@ -20,11 +20,8 @@ This library provides packages for dealing with OpenAPI specifications.
   * [ ] More tests
 
 ## Dependencies
-  * Go 1.7.
-  * Tests require [github.com/jban332/kin-test](https://github.com/jban332/kin-test)
-
-## Credits
-  * jban332@gmail.com
+  * Go 1.7 or greater.
+  * No other dependencies!
 
 ## License
   * [MIT License](LICENSE)
@@ -80,8 +77,8 @@ func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
 import (
   "net/http"
 
-  "github.com/jban332/kin-openapi/openapi3"
-  "github.com/jban332/kin-openapi/openapi3filter"
+  "github.com/getkin/kin-openapi/openapi3"
+  "github.com/getkin/kin-openapi/openapi3filter"
 )
 
 var router = openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")

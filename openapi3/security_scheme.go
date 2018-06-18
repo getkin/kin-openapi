@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 type SecurityScheme struct {

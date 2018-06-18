@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {

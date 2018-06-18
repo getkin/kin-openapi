@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/jban332/kin-openapi/openapi2"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {

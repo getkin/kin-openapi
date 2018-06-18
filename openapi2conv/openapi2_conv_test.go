@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/jban332/kin-openapi/openapi2"
-	"github.com/jban332/kin-openapi/openapi2conv"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi2conv"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 

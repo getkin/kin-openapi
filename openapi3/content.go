@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Content is specified by OpenAPI/Swagger 3.0 standard.

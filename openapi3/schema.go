@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/jban332/kin-openapi/jsoninfo"
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
