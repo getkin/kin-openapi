@@ -11,22 +11,28 @@ import (
 
 func TestRouter(t *testing.T) {
 	// Build swagger
+	helloCONNECT := &openapi3.Operation{}
 	helloDELETE := &openapi3.Operation{}
 	helloGET := &openapi3.Operation{}
 	helloHEAD := &openapi3.Operation{}
+	helloOPTIONS := &openapi3.Operation{}
 	helloPATCH := &openapi3.Operation{}
 	helloPOST := &openapi3.Operation{}
 	helloPUT := &openapi3.Operation{}
+	helloTRACE := &openapi3.Operation{}
 	paramsGET := &openapi3.Operation{}
 	swagger := &openapi3.Swagger{
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
-				Delete: helloDELETE,
-				Get:    helloGET,
-				Head:   helloHEAD,
-				Patch:  helloPATCH,
-				Post:   helloPOST,
-				Put:    helloPUT,
+				Connect: helloCONNECT,
+				Delete:  helloDELETE,
+				Get:     helloGET,
+				Head:    helloHEAD,
+				Options: helloOPTIONS,
+				Patch:   helloPATCH,
+				Post:    helloPOST,
+				Put:     helloPUT,
+				Trace:   helloTRACE,
 			},
 			"/params/{x}/{y}/{z*}": &openapi3.PathItem{
 				Get: paramsGET,

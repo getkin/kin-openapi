@@ -11,6 +11,7 @@ type PathItem struct {
 	ExtensionProps
 	Summary     string     `json:"summary,omitempty"`
 	Description string     `json:"description,omitempty"`
+	Connect     *Operation `json:"connect,omitempty"`
 	Delete      *Operation `json:"delete,omitempty"`
 	Get         *Operation `json:"get,omitempty"`
 	Head        *Operation `json:"head,omitempty"`
@@ -33,6 +34,9 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
 	operations := make(map[string]*Operation, 4)
+	if v := pathItem.Connect; v != nil {
+		operations["CONNECT"] = v
+	}
 	if v := pathItem.Delete; v != nil {
 		operations["DELETE"] = v
 	}
@@ -62,6 +66,8 @@ func (pathItem *PathItem) Operations() map[string]*Operation {
 
 func (pathItem *PathItem) GetOperation(method string) *Operation {
 	switch method {
+	case "CONNECT":
+		return pathItem.Connect
 	case "DELETE":
 		return pathItem.Delete
 	case "GET":
@@ -85,6 +91,8 @@ func (pathItem *PathItem) GetOperation(method string) *Operation {
 
 func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	switch method {
+	case "CONNECT":
+		pathItem.Connect = operation
 	case "DELETE":
 		pathItem.Delete = operation
 	case "GET":
