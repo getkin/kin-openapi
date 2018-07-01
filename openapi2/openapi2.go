@@ -138,22 +138,23 @@ type Operation struct {
 type Parameters []*Parameter
 
 type Parameter struct {
-	Ref              string              `json:"$ref,omitempty"`
-	In               string              `json:"in,omitempty"`
-	Name             string              `json:"name,omitempty"`
-	Description      string              `json:"description,omitempty"`
-	Required         bool                `json:"required,omitempty"`
-	Schema           *openapi3.SchemaRef `json:"schema,omitempty"`
-	Type             string              `json:"type,omitempty"`
-	Format           string              `json:"format,omitempty"`
-	Enum             []interface{}       `json:"enum,omitempty"`
-	Minimum          *float64            `json:"minimum,omitempty"`
-	Maximum          *float64            `json:"maximum,omitempty"`
-	ExclusiveMinimum *float64            `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *float64            `json:"exclusiveMaximum,omitempty"`
-	MinLength        int64               `json:"minLength,omitempty"`
-	MaxLength        *int64              `json:"maxLength,omitempty"`
-	Pattern          string              `json:"pattern,omitempty"`
+	Ref          string              `json:"$ref,omitempty"`
+	In           string              `json:"in,omitempty"`
+	Name         string              `json:"name,omitempty"`
+	Description  string              `json:"description,omitempty"`
+	Required     bool                `json:"required,omitempty"`
+	UniqueItems  bool                `json:"uniqueItems,omitempty"`
+	ExclusiveMin bool                `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax bool                `json:"exclusiveMaximum,omitempty"`
+	Schema       *openapi3.SchemaRef `json:"schema,omitempty"`
+	Type         string              `json:"type,omitempty"`
+	Format       string              `json:"format,omitempty"`
+	Enum         []interface{}       `json:"enum,omitempty"`
+	Minimum      *float64            `json:"minimum,omitempty"`
+	Maximum      *float64            `json:"maximum,omitempty"`
+	MinLength    int64               `json:"minLength,omitempty"`
+	MaxLength    *int64              `json:"maxLength,omitempty"`
+	Pattern      string              `json:"pattern,omitempty"`
 }
 
 type Response struct {

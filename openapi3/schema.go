@@ -55,6 +55,9 @@ type Schema struct {
 
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty"`
+	// Number-related, here for struct compactness
+	ExclusiveMin bool `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax bool `json:"exclusiveMaximum,omitempty"`
 	// Object-related, here for struct compactness
 	AdditionalPropertiesAllowed bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Properties
@@ -64,11 +67,9 @@ type Schema struct {
 	XML       interface{} `json:"xml,omitempty"`
 
 	// Number
-	ExclusiveMin *float64 `json:"exclusiveMin,omitempty"`
-	ExclusiveMax *float64 `json:"exclusiveMax,omitempty"`
-	Min          *float64 `json:"minimum,omitempty"`
-	Max          *float64 `json:"maximum,omitempty"`
-	MultipleOf   *float64 `json:"multipleOf,omitempty"`
+	Min        *float64 `json:"minimum,omitempty"`
+	Max        *float64 `json:"maximum,omitempty"`
+	MultipleOf *float64 `json:"multipleOf,omitempty"`
 
 	// String
 	MinLength       int64  `json:"minLength,omitempty"`
@@ -212,13 +213,13 @@ func (schema *Schema) WithMax(value float64) *Schema {
 	schema.Max = &value
 	return schema
 }
-func (schema *Schema) WithExclusiveMin(value float64) *Schema {
-	schema.ExclusiveMin = &value
+func (schema *Schema) WithExclusiveMin(value bool) *Schema {
+	schema.ExclusiveMin = value
 	return schema
 }
 
-func (schema *Schema) WithExclusiveMax(value float64) *Schema {
-	schema.ExclusiveMax = &value
+func (schema *Schema) WithExclusiveMax(value bool) *Schema {
+	schema.ExclusiveMax = value
 	return schema
 }
 
@@ -679,26 +680,26 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 		}
 	}
 
-	if v := schema.ExclusiveMin; v != nil && !(*v < value) {
+	if v := schema.ExclusiveMin; v && !(*schema.Min < value) {
 		if fast {
 			return errSchema
 		}
 		return &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: "exclusiveMin",
-			Reason:      fmt.Sprintf("Number must be more than %g", *v),
+			SchemaField: "exclusiveMinimum",
+			Reason:      fmt.Sprintf("Number must be more than %g", *schema.Min),
 		}
 	}
-	if v := schema.ExclusiveMax; v != nil && !(*v > value) {
+	if v := schema.ExclusiveMax; v && !(*schema.Max > value) {
 		if fast {
 			return errSchema
 		}
 		return &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: "exclusiveMax",
-			Reason:      fmt.Sprintf("Number must be less than %g", *v),
+			SchemaField: "exclusiveMaximum",
+			Reason:      fmt.Sprintf("Number must be less than %g", *schema.Max),
 		}
 	}
 	if v := schema.Min; v != nil && !(*v <= value) {

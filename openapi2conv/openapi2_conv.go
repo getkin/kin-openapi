@@ -178,8 +178,8 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 				Enum:         parameter.Enum,
 				Min:          parameter.Minimum,
 				Max:          parameter.Maximum,
-				ExclusiveMin: parameter.ExclusiveMinimum,
-				ExclusiveMax: parameter.ExclusiveMinimum,
+				ExclusiveMin: parameter.ExclusiveMin,
+				ExclusiveMax: parameter.ExclusiveMax,
 				MinLength:    parameter.MinLength,
 				MaxLength:    parameter.MaxLength,
 			},
@@ -461,8 +461,8 @@ func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
 		result.Enum = schema.Enum
 		result.Minimum = schema.Min
 		result.Maximum = schema.Min
-		result.ExclusiveMinimum = schema.ExclusiveMin
-		result.ExclusiveMaximum = schema.ExclusiveMax
+		result.ExclusiveMin = schema.ExclusiveMin
+		result.ExclusiveMax = schema.ExclusiveMax
 		result.MinLength = schema.MinLength
 		result.MaxLength = schema.MaxLength
 		result.Pattern = schema.Pattern
