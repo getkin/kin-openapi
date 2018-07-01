@@ -221,15 +221,17 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "ARRAY",
 		Schema: &openapi3.Schema{
-			Type:     "array",
-			MinItems: 2,
-			MaxItems: openapi3.Int64Ptr(3),
-			Items:    openapi3.NewFloat64Schema().NewRef(),
+			Type:        "array",
+			MinItems:    2,
+			MaxItems:    openapi3.Int64Ptr(3),
+			UniqueItems: true,
+			Items:       openapi3.NewFloat64Schema().NewRef(),
 		},
 		Serialization: map[string]interface{}{
-			"type":     "array",
-			"minItems": 2,
-			"maxItems": 3,
+			"type":        "array",
+			"minItems":    2,
+			"maxItems":    3,
+			"uniqueItems": true,
 			"items": map[string]interface{}{
 				"type": "number",
 			},
@@ -247,6 +249,9 @@ var schemaExamples = []schemaExample{
 			3.14,
 			[]interface{}{
 				1,
+			},
+			[]interface{}{
+				42, 42,
 			},
 			[]interface{}{
 				1, 2, 3, 4,
