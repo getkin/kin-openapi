@@ -15,6 +15,16 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
+var (
+	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
+	SchemaErrorDetailsDisabled = false
+
+	errSchema = errors.New("Input does not match the schema")
+
+	ErrSchemaInputNaN = errors.New("NaN is not allowed")
+	ErrSchemaInputInf = errors.New("Inf is not allowed")
+)
+
 // Float64Ptr is a helper for defining OpenAPI schemas.
 func Float64Ptr(value float64) *float64 {
 	return &value
@@ -43,6 +53,8 @@ type Schema struct {
 	Examples     []interface{} `json:"examples,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 
+	// Array-related, here for struct compactness
+	UniqueItems bool `json:"uniqueItems,omitempty"`
 	// Object-related, here for struct compactness
 	AdditionalPropertiesAllowed bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Properties
@@ -275,6 +287,11 @@ func (schema *Schema) WithMaxItems(n int64) *Schema {
 	return schema
 }
 
+func (schema *Schema) WithUniqueItems(unique bool) *Schema {
+	schema.UniqueItems = unique
+	return schema
+}
+
 func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema {
 	return schema.WithPropertyRef(name, &SchemaRef{
 		Value: propertySchema,
@@ -451,10 +468,6 @@ func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool {
 	return schema.visitJSONObject(value, true) == nil
 }
 
-var (
-	errSchema = errors.New("Input does not match the schema")
-)
-
 func (schema *Schema) VisitJSON(value interface{}) error {
 	return schema.visitJSON(value, false)
 }
@@ -627,11 +640,6 @@ func (schema *Schema) visitJSONBoolean(value bool, fast bool) (err error) {
 	}
 	return
 }
-
-var (
-	ErrSchemaInputNaN = errors.New("NaN is not allowed")
-	ErrSchemaInputInf = errors.New("Inf is not allowed")
-)
 
 func (schema *Schema) VisitJSONNumber(value float64) error {
 	return schema.visitJSONNumber(value, false)
@@ -879,6 +887,19 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 		}
 	}
 
+	// "uniqueItems"
+	if v := schema.UniqueItems; v && !isSliceOfUniqueItems(value) {
+		if fast {
+			return errSchema
+		}
+		return &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "uniqueItems",
+			Reason:      fmt.Sprintf("Duplicate items found"),
+		}
+	}
+
 	// "items"
 	if itemSchemaRef := schema.Items; itemSchemaRef != nil {
 		itemSchema := itemSchemaRef.Value
@@ -1098,5 +1119,11 @@ func (err *SchemaError) Error() string {
 	return buf.String()
 }
 
-// SchemaErrorDetailsDisabled disables printing of details about schema errors.
-var SchemaErrorDetailsDisabled = false
+func isSliceOfUniqueItems(xs []interface{}) bool {
+	s := len(xs)
+	m := make(map[interface{}]struct{}, s)
+	for _, x := range xs {
+		m[x] = struct{}{}
+	}
+	return s == len(m)
+}
