@@ -30,8 +30,18 @@ func Float64Ptr(value float64) *float64 {
 	return &value
 }
 
+// BoolPtr is a helper for defining OpenAPI schemas.
+func BoolPtr(value bool) *bool {
+	return &value
+}
+
 // Int64Ptr is a helper for defining OpenAPI schemas.
 func Int64Ptr(value int64) *int64 {
+	return &value
+}
+
+// Uint64Ptr is a helper for defining OpenAPI schemas.
+func Uint64Ptr(value uint64) *uint64 {
 	return &value
 }
 
@@ -72,14 +82,14 @@ type Schema struct {
 	MultipleOf *float64 `json:"multipleOf,omitempty"`
 
 	// String
-	MinLength       int64  `json:"minLength,omitempty"`
-	MaxLength       *int64 `json:"maxLength,omitempty"`
-	Pattern         string `json:"pattern,omitempty"`
+	MinLength       uint64  `json:"minLength,omitempty"`
+	MaxLength       *uint64 `json:"maxLength,omitempty"`
+	Pattern         string  `json:"pattern,omitempty"`
 	compiledPattern *compiledPattern
 
 	// Array
-	MinItems int64      `json:"minItems,omitempty"`
-	MaxItems *int64     `json:"maxItems,omitempty"`
+	MinItems uint64     `json:"minItems,omitempty"`
+	MaxItems *uint64    `json:"maxItems,omitempty"`
 	Items    *SchemaRef `json:"items,omitempty"`
 
 	// Object
@@ -235,35 +245,41 @@ func (schema *Schema) WithFormat(value string) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithLength(n int64) *Schema {
+func (schema *Schema) WithLength(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = n
 	schema.MaxLength = &n
 	return schema
 }
 
-func (schema *Schema) WithMinLength(n int64) *Schema {
+func (schema *Schema) WithMinLength(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = n
 	return schema
 }
 
-func (schema *Schema) WithMaxLength(n int64) *Schema {
+func (schema *Schema) WithMaxLength(i int64) *Schema {
+	n := uint64(i)
 	schema.MaxLength = &n
 	return schema
 }
 
-func (schema *Schema) WithLengthDecodedBase64(n int64) *Schema {
+func (schema *Schema) WithLengthDecodedBase64(i int64) *Schema {
+	n := uint64(i)
 	v := (n*8 + 5) / 6
 	schema.MinLength = v
 	schema.MaxLength = &v
 	return schema
 }
 
-func (schema *Schema) WithMinLengthDecodedBase64(n int64) *Schema {
+func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = (n*8 + 5) / 6
 	return schema
 }
 
-func (schema *Schema) WithMaxLengthDecodedBase64(n int64) *Schema {
+func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = (n*8 + 5) / 6
 	return schema
 }
@@ -280,12 +296,14 @@ func (schema *Schema) WithItems(value *Schema) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithMinItems(n int64) *Schema {
+func (schema *Schema) WithMinItems(i int64) *Schema {
+	n := uint64(i)
 	schema.MinItems = n
 	return schema
 }
 
-func (schema *Schema) WithMaxItems(n int64) *Schema {
+func (schema *Schema) WithMaxItems(i int64) *Schema {
+	n := uint64(i)
 	schema.MaxItems = &n
 	return schema
 }
@@ -322,12 +340,14 @@ func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithMinProperties(n uint64) *Schema {
+func (schema *Schema) WithMinProperties(i int64) *Schema {
+	n := uint64(i)
 	schema.MinProps = n
 	return schema
 }
 
-func (schema *Schema) WithMaxProperties(n uint64) *Schema {
+func (schema *Schema) WithMaxProperties(i int64) *Schema {
+	n := uint64(i)
 	schema.MaxProps = &n
 	return schema
 }
@@ -789,7 +809,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 	// "minLength" and "maxLength"
 	minLength := schema.MinLength
 	maxLength := schema.MaxLength
-	if minLength > 0 || maxLength != nil {
+	if minLength != 0 || maxLength != nil {
 		// JSON schema string lengths are UTF-16, not UTF-8!
 		length := int64(0)
 		for _, r := range value {
@@ -799,7 +819,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 				length++
 			}
 		}
-		if minLength > 0 && length < minLength {
+		if minLength != 0 && length < int64(minLength) {
 			if fast {
 				return errSchema
 			}
@@ -810,7 +830,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 				Reason:      fmt.Sprintf("Minimum string length is %d", minLength),
 			}
 		}
-		if maxLength != nil && length > *maxLength {
+		if maxLength != nil && length > int64(*maxLength) {
 			if fast {
 				return errSchema
 			}
@@ -882,7 +902,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 	lenValue := int64(len(value))
 
 	// "minItems""
-	if v := schema.MinItems; v != 0 && lenValue < v {
+	if v := schema.MinItems; v != 0 && lenValue < int64(v) {
 		if fast {
 			return errSchema
 		}
@@ -895,7 +915,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 	}
 
 	// "maxItems"
-	if v := schema.MaxItems; v != nil && lenValue > *v {
+	if v := schema.MaxItems; v != nil && lenValue > int64(*v) {
 		if fast {
 			return errSchema
 		}

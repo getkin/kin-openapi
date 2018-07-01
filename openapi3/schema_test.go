@@ -223,7 +223,7 @@ var schemaExamples = []schemaExample{
 		Schema: &openapi3.Schema{
 			Type:        "array",
 			MinItems:    2,
-			MaxItems:    openapi3.Int64Ptr(3),
+			MaxItems:    openapi3.Uint64Ptr(3),
 			UniqueItems: true,
 			Items:       openapi3.NewFloat64Schema().NewRef(),
 		},
@@ -263,7 +263,7 @@ var schemaExamples = []schemaExample{
 		Title: "OBJECT",
 		Schema: &openapi3.Schema{
 			Type:     "object",
-			MaxProps: func(n uint64) *uint64 { return &n }(2),
+			MaxProps: openapi3.Uint64Ptr(2),
 			Properties: map[string]*openapi3.SchemaRef{
 				"numberProperty": openapi3.NewFloat64Schema().NewRef(),
 			},
@@ -335,7 +335,7 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &openapi3.Schema{
 			Type: "object",
-			AdditionalPropertiesAllowed: func(b bool) *bool { return &b }(true),
+			AdditionalPropertiesAllowed: openapi3.BoolPtr(true),
 		},
 		Serialization: map[string]interface{}{
 			"type":                 "object",
