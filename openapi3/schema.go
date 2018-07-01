@@ -30,8 +30,18 @@ func Float64Ptr(value float64) *float64 {
 	return &value
 }
 
+// BoolPtr is a helper for defining OpenAPI schemas.
+func BoolPtr(value bool) *bool {
+	return &value
+}
+
 // Int64Ptr is a helper for defining OpenAPI schemas.
 func Int64Ptr(value int64) *int64 {
+	return &value
+}
+
+// Uint64Ptr is a helper for defining OpenAPI schemas.
+func Uint64Ptr(value uint64) *uint64 {
 	return &value
 }
 
@@ -53,10 +63,13 @@ type Schema struct {
 	Examples     []interface{} `json:"examples,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 
+	// Object-related, here for struct compactness
+	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty"`
-	// Object-related, here for struct compactness
-	AdditionalPropertiesAllowed bool `json:"-" multijson:"additionalProperties,omitempty"`
+	// Number-related, here for struct compactness
+	ExclusiveMin bool `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax bool `json:"exclusiveMaximum,omitempty"`
 	// Properties
 	Nullable  bool        `json:"nullable,omitempty"`
 	ReadOnly  bool        `json:"readOnly,omitempty"`
@@ -64,26 +77,26 @@ type Schema struct {
 	XML       interface{} `json:"xml,omitempty"`
 
 	// Number
-	ExclusiveMin *float64 `json:"exclusiveMin,omitempty"`
-	ExclusiveMax *float64 `json:"exclusiveMax,omitempty"`
-	Min          *float64 `json:"minimum,omitempty"`
-	Max          *float64 `json:"maximum,omitempty"`
-	Multiple     int64    `json:"multiple,omitempty"`
+	Min        *float64 `json:"minimum,omitempty"`
+	Max        *float64 `json:"maximum,omitempty"`
+	MultipleOf *float64 `json:"multipleOf,omitempty"`
 
 	// String
-	MinLength       int64  `json:"minLength,omitempty"`
-	MaxLength       *int64 `json:"maxLength,omitempty"`
-	Pattern         string `json:"pattern,omitempty"`
+	MinLength       uint64  `json:"minLength,omitempty"`
+	MaxLength       *uint64 `json:"maxLength,omitempty"`
+	Pattern         string  `json:"pattern,omitempty"`
 	compiledPattern *compiledPattern
 
 	// Array
-	MinItems int64      `json:"minItems,omitempty"`
-	MaxItems *int64     `json:"maxItems,omitempty"`
+	MinItems uint64     `json:"minItems,omitempty"`
+	MaxItems *uint64    `json:"maxItems,omitempty"`
 	Items    *SchemaRef `json:"items,omitempty"`
 
 	// Object
 	Required             []string              `json:"required,omitempty"`
 	Properties           map[string]*SchemaRef `json:"properties,omitempty"`
+	MinProps             uint64                `json:"minProperties,omitempty"`
+	MaxProps             *uint64               `json:"maxProperties,omitempty"`
 	AdditionalProperties *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty"`
 	Discriminator        string                `json:"discriminator,omitempty"`
 
@@ -212,13 +225,13 @@ func (schema *Schema) WithMax(value float64) *Schema {
 	schema.Max = &value
 	return schema
 }
-func (schema *Schema) WithExclusiveMin(value float64) *Schema {
-	schema.ExclusiveMin = &value
+func (schema *Schema) WithExclusiveMin(value bool) *Schema {
+	schema.ExclusiveMin = value
 	return schema
 }
 
-func (schema *Schema) WithExclusiveMax(value float64) *Schema {
-	schema.ExclusiveMax = &value
+func (schema *Schema) WithExclusiveMax(value bool) *Schema {
+	schema.ExclusiveMax = value
 	return schema
 }
 
@@ -232,35 +245,41 @@ func (schema *Schema) WithFormat(value string) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithLength(n int64) *Schema {
+func (schema *Schema) WithLength(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = n
 	schema.MaxLength = &n
 	return schema
 }
 
-func (schema *Schema) WithMinLength(n int64) *Schema {
+func (schema *Schema) WithMinLength(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = n
 	return schema
 }
 
-func (schema *Schema) WithMaxLength(n int64) *Schema {
+func (schema *Schema) WithMaxLength(i int64) *Schema {
+	n := uint64(i)
 	schema.MaxLength = &n
 	return schema
 }
 
-func (schema *Schema) WithLengthDecodedBase64(n int64) *Schema {
+func (schema *Schema) WithLengthDecodedBase64(i int64) *Schema {
+	n := uint64(i)
 	v := (n*8 + 5) / 6
 	schema.MinLength = v
 	schema.MaxLength = &v
 	return schema
 }
 
-func (schema *Schema) WithMinLengthDecodedBase64(n int64) *Schema {
+func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = (n*8 + 5) / 6
 	return schema
 }
 
-func (schema *Schema) WithMaxLengthDecodedBase64(n int64) *Schema {
+func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema {
+	n := uint64(i)
 	schema.MinLength = (n*8 + 5) / 6
 	return schema
 }
@@ -277,12 +296,14 @@ func (schema *Schema) WithItems(value *Schema) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithMinItems(n int64) *Schema {
+func (schema *Schema) WithMinItems(i int64) *Schema {
+	n := uint64(i)
 	schema.MinItems = n
 	return schema
 }
 
-func (schema *Schema) WithMaxItems(n int64) *Schema {
+func (schema *Schema) WithMaxItems(i int64) *Schema {
+	n := uint64(i)
 	schema.MaxItems = &n
 	return schema
 }
@@ -319,9 +340,22 @@ func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema {
 	return schema
 }
 
+func (schema *Schema) WithMinProperties(i int64) *Schema {
+	n := uint64(i)
+	schema.MinProps = n
+	return schema
+}
+
+func (schema *Schema) WithMaxProperties(i int64) *Schema {
+	n := uint64(i)
+	schema.MaxProps = &n
+	return schema
+}
+
 func (schema *Schema) WithAnyAdditionalProperties() *Schema {
 	schema.AdditionalProperties = nil
-	schema.AdditionalPropertiesAllowed = true
+	t := true
+	schema.AdditionalPropertiesAllowed = &t
 	return schema
 }
 
@@ -679,26 +713,26 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 		}
 	}
 
-	if v := schema.ExclusiveMin; v != nil && !(*v < value) {
+	if v := schema.ExclusiveMin; v && !(*schema.Min < value) {
 		if fast {
 			return errSchema
 		}
 		return &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: "exclusiveMin",
-			Reason:      fmt.Sprintf("Number must be more than %g", *v),
+			SchemaField: "exclusiveMinimum",
+			Reason:      fmt.Sprintf("Number must be more than %g", *schema.Min),
 		}
 	}
-	if v := schema.ExclusiveMax; v != nil && !(*v > value) {
+	if v := schema.ExclusiveMax; v && !(*schema.Max > value) {
 		if fast {
 			return errSchema
 		}
 		return &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: "exclusiveMax",
-			Reason:      fmt.Sprintf("Number must be less than %g", *v),
+			SchemaField: "exclusiveMaximum",
+			Reason:      fmt.Sprintf("Number must be less than %g", *schema.Max),
 		}
 	}
 	if v := schema.Min; v != nil && !(*v <= value) {
@@ -723,14 +757,18 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 			Reason:      fmt.Sprintf("Number must be most %g", *v),
 		}
 	}
-	if v := schema.Multiple; v != 0 && float64(int64(value)/v*v) != value {
-		if fast {
-			return errSchema
-		}
-		return &SchemaError{
-			Value:       value,
-			Schema:      schema,
-			SchemaField: "multiple",
+	if v := schema.MultipleOf; v != nil {
+		// "A numeric instance is valid only if division by this keyword's
+		//    value results in an integer."
+		if a := value / *v; math.Trunc(a) != a {
+			if fast {
+				return errSchema
+			}
+			return &SchemaError{
+				Value:       value,
+				Schema:      schema,
+				SchemaField: "multipleOf",
+			}
 		}
 	}
 	return nil
@@ -771,8 +809,8 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 	// "minLength" and "maxLength"
 	minLength := schema.MinLength
 	maxLength := schema.MaxLength
-	if minLength > 0 || maxLength != nil {
-		// JON schema string lengths are UTF-16, not UTF-8!
+	if minLength != 0 || maxLength != nil {
+		// JSON schema string lengths are UTF-16, not UTF-8!
 		length := int64(0)
 		for _, r := range value {
 			if utf16.IsSurrogate(r) {
@@ -781,7 +819,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 				length++
 			}
 		}
-		if minLength > 0 && length < minLength {
+		if minLength != 0 && length < int64(minLength) {
 			if fast {
 				return errSchema
 			}
@@ -792,7 +830,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 				Reason:      fmt.Sprintf("Minimum string length is %d", minLength),
 			}
 		}
-		if maxLength != nil && length > *maxLength {
+		if maxLength != nil && length > int64(*maxLength) {
 			if fast {
 				return errSchema
 			}
@@ -861,8 +899,10 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 		return err
 	}
 
+	lenValue := int64(len(value))
+
 	// "minItems""
-	if v := schema.MinItems; v != 0 && int64(len(value)) < v {
+	if v := schema.MinItems; v != 0 && lenValue < int64(v) {
 		if fast {
 			return errSchema
 		}
@@ -875,7 +915,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 	}
 
 	// "maxItems"
-	if v := schema.MaxItems; v != nil && int64(len(value)) > *v {
+	if v := schema.MaxItems; v != nil && lenValue > int64(*v) {
 		if fast {
 			return errSchema
 		}
@@ -929,6 +969,33 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 
 	// "properties"
 	properties := schema.Properties
+	lenValue := int64(len(value))
+
+	// "minProperties"
+	if v := schema.MinProps; v != 0 && lenValue < int64(v) {
+		if fast {
+			return errSchema
+		}
+		return &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "minProperties",
+			Reason:      fmt.Sprintf("There must be at least %d properties", v),
+		}
+	}
+
+	// "maxProperties"
+	if v := schema.MaxProps; v != nil && lenValue > int64(*v) {
+		if fast {
+			return errSchema
+		}
+		return &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "maxProperties",
+			Reason:      fmt.Sprintf("There must be at most %d properties", *v),
+		}
+	}
 
 	// "patternProperties"
 	var cp *compiledPattern
@@ -970,7 +1037,8 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 				continue
 			}
 		}
-		if additionalProperties != nil || schema.AdditionalPropertiesAllowed {
+		allowed := schema.AdditionalPropertiesAllowed
+		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
 			if cp != nil {
 				if !cp.Regexp.MatchString(k) {
 					return &SchemaError{

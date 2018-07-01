@@ -133,6 +133,10 @@ iteration:
 			if field.JSONOmitEmpty && fieldValue.Int() == 0 {
 				continue iteration
 			}
+		case reflect.Uint64, reflect.Uint, reflect.Uint32:
+			if field.JSONOmitEmpty && fieldValue.Uint() == 0 {
+				continue iteration
+			}
 		case reflect.Float64:
 			if field.JSONOmitEmpty && fieldValue.Float() == 0.0 {
 				continue iteration

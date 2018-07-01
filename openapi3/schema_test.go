@@ -223,7 +223,7 @@ var schemaExamples = []schemaExample{
 		Schema: &openapi3.Schema{
 			Type:        "array",
 			MinItems:    2,
-			MaxItems:    openapi3.Int64Ptr(3),
+			MaxItems:    openapi3.Uint64Ptr(3),
 			UniqueItems: true,
 			Items:       openapi3.NewFloat64Schema().NewRef(),
 		},
@@ -262,13 +262,15 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "OBJECT",
 		Schema: &openapi3.Schema{
-			Type: "object",
+			Type:     "object",
+			MaxProps: openapi3.Uint64Ptr(2),
 			Properties: map[string]*openapi3.SchemaRef{
 				"numberProperty": openapi3.NewFloat64Schema().NewRef(),
 			},
 		},
 		Serialization: map[string]interface{}{
-			"type": "object",
+			"type":          "object",
+			"maxProperties": 2,
 			"properties": map[string]interface{}{
 				"numberProperty": map[string]interface{}{
 					"type": "number",
@@ -279,6 +281,10 @@ var schemaExamples = []schemaExample{
 			map[string]interface{}{},
 			map[string]interface{}{
 				"numberProperty": 3.14,
+			},
+			map[string]interface{}{
+				"numberProperty": 3.14,
+				"some prop":      nil,
 			},
 		},
 		AllInvalid: []interface{}{
@@ -293,7 +299,8 @@ var schemaExamples = []schemaExample{
 			},
 			map[string]interface{}{
 				"numberProperty": 3.14,
-				"otherPropery":   nil,
+				"some prop":      42,
+				"third":          "prop",
 			},
 		},
 	},
@@ -328,7 +335,7 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &openapi3.Schema{
 			Type: "object",
-			AdditionalPropertiesAllowed: true,
+			AdditionalPropertiesAllowed: openapi3.BoolPtr(true),
 		},
 		Serialization: map[string]interface{}{
 			"type":                 "object",
