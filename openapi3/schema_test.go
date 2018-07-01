@@ -262,15 +262,15 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "OBJECT",
 		Schema: &openapi3.Schema{
-			Type: "object",
-			MaxProps: func(n uint64) *uint64 { return &n }(3),
+			Type:     "object",
+			MaxProps: func(n uint64) *uint64 { return &n }(2),
 			Properties: map[string]*openapi3.SchemaRef{
 				"numberProperty": openapi3.NewFloat64Schema().NewRef(),
 			},
 		},
 		Serialization: map[string]interface{}{
-			"type": "object",
-			"maxProperties": 3,
+			"type":          "object",
+			"maxProperties": 2,
 			"properties": map[string]interface{}{
 				"numberProperty": map[string]interface{}{
 					"type": "number",
@@ -284,7 +284,7 @@ var schemaExamples = []schemaExample{
 			},
 			map[string]interface{}{
 				"numberProperty": 3.14,
-				"some prop": 42,
+				"some prop":      nil,
 			},
 		},
 		AllInvalid: []interface{}{
@@ -299,12 +299,8 @@ var schemaExamples = []schemaExample{
 			},
 			map[string]interface{}{
 				"numberProperty": 3.14,
-				"otherPropery":   nil,
-			},
-			map[string]interface{}{
-				"numberProperty": 3.14,
-				"some prop": 42,
-				"third": "prop",
+				"some prop":      42,
+				"third":          "prop",
 			},
 		},
 	},
@@ -339,7 +335,7 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &openapi3.Schema{
 			Type: "object",
-			AdditionalPropertiesAllowed: true,
+			AdditionalPropertiesAllowed: func(b bool) *bool { return &b }(true),
 		},
 		Serialization: map[string]interface{}{
 			"type":                 "object",

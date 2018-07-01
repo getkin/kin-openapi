@@ -59,7 +59,7 @@ type Schema struct {
 	ExclusiveMin bool `json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax bool `json:"exclusiveMaximum,omitempty"`
 	// Object-related, here for struct compactness
-	AdditionalPropertiesAllowed bool `json:"-" multijson:"additionalProperties,omitempty"`
+	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Properties
 	Nullable  bool        `json:"nullable,omitempty"`
 	ReadOnly  bool        `json:"readOnly,omitempty"`
@@ -334,7 +334,8 @@ func (schema *Schema) WithMaxProperties(n uint64) *Schema {
 
 func (schema *Schema) WithAnyAdditionalProperties() *Schema {
 	schema.AdditionalProperties = nil
-	schema.AdditionalPropertiesAllowed = true
+	t := true
+	schema.AdditionalPropertiesAllowed = &t
 	return schema
 }
 
@@ -1016,7 +1017,8 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 				continue
 			}
 		}
-		if additionalProperties != nil || schema.AdditionalPropertiesAllowed {
+		allowed := schema.AdditionalPropertiesAllowed
+		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
 			if cp != nil {
 				if !cp.Regexp.MatchString(k) {
 					return &SchemaError{
