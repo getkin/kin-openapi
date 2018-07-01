@@ -63,13 +63,13 @@ type Schema struct {
 	Examples     []interface{} `json:"examples,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 
+	// Object-related, here for struct compactness
+	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
 	ExclusiveMin bool `json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax bool `json:"exclusiveMaximum,omitempty"`
-	// Object-related, here for struct compactness
-	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty"`
 	// Properties
 	Nullable  bool        `json:"nullable,omitempty"`
 	ReadOnly  bool        `json:"readOnly,omitempty"`
