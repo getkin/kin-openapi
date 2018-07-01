@@ -68,7 +68,7 @@ type Schema struct {
 	ExclusiveMax *float64 `json:"exclusiveMax,omitempty"`
 	Min          *float64 `json:"minimum,omitempty"`
 	Max          *float64 `json:"maximum,omitempty"`
-	Multiple     int64    `json:"multiple,omitempty"`
+	MultipleOf   *float64 `json:"multipleOf,omitempty"`
 
 	// String
 	MinLength       int64  `json:"minLength,omitempty"`
@@ -723,14 +723,18 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 			Reason:      fmt.Sprintf("Number must be most %g", *v),
 		}
 	}
-	if v := schema.Multiple; v != 0 && float64(int64(value)/v*v) != value {
-		if fast {
-			return errSchema
-		}
-		return &SchemaError{
-			Value:       value,
-			Schema:      schema,
-			SchemaField: "multiple",
+	if v := schema.MultipleOf; v != nil {
+		// "A numeric instance is valid only if division by this keyword's
+		//    value results in an integer."
+		if a := value / *v; math.Trunc(a) != a {
+			if fast {
+				return errSchema
+			}
+			return &SchemaError{
+				Value:       value,
+				Schema:      schema,
+				SchemaField: "multipleOf",
+			}
 		}
 	}
 	return nil
