@@ -85,6 +85,8 @@ type Schema struct {
 	// Object
 	Required             []string              `json:"required,omitempty"`
 	Properties           map[string]*SchemaRef `json:"properties,omitempty"`
+	MinProps             uint64                `json:"minProperties,omitempty"`
+	MaxProps             *uint64               `json:"maxProperties,omitempty"`
 	AdditionalProperties *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty"`
 	Discriminator        string                `json:"discriminator,omitempty"`
 
@@ -317,6 +319,16 @@ func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema {
 		}
 	}
 	schema.Properties = result
+	return schema
+}
+
+func (schema *Schema) WithMinProperties(n uint64) *Schema {
+	schema.MinProps = n
+	return schema
+}
+
+func (schema *Schema) WithMaxProperties(n uint64) *Schema {
+	schema.MaxProps = &n
 	return schema
 }
 
@@ -777,7 +789,7 @@ func (schema *Schema) visitJSONString(value string, fast bool) error {
 	minLength := schema.MinLength
 	maxLength := schema.MaxLength
 	if minLength > 0 || maxLength != nil {
-		// JON schema string lengths are UTF-16, not UTF-8!
+		// JSON schema string lengths are UTF-16, not UTF-8!
 		length := int64(0)
 		for _, r := range value {
 			if utf16.IsSurrogate(r) {
@@ -866,8 +878,10 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 		return err
 	}
 
+	lenValue := int64(len(value))
+
 	// "minItems""
-	if v := schema.MinItems; v != 0 && int64(len(value)) < v {
+	if v := schema.MinItems; v != 0 && lenValue < v {
 		if fast {
 			return errSchema
 		}
@@ -880,7 +894,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) error {
 	}
 
 	// "maxItems"
-	if v := schema.MaxItems; v != nil && int64(len(value)) > *v {
+	if v := schema.MaxItems; v != nil && lenValue > *v {
 		if fast {
 			return errSchema
 		}
@@ -934,6 +948,33 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 
 	// "properties"
 	properties := schema.Properties
+	lenValue := int64(len(value))
+
+	// "minProperties"
+	if v := schema.MinProps; v != 0 && lenValue < int64(v) {
+		if fast {
+			return errSchema
+		}
+		return &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "minProperties",
+			Reason:      fmt.Sprintf("There must be at least %d properties", v),
+		}
+	}
+
+	// "maxProperties"
+	if v := schema.MaxProps; v != nil && lenValue > int64(*v) {
+		if fast {
+			return errSchema
+		}
+		return &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "maxProperties",
+			Reason:      fmt.Sprintf("There must be at most %d properties", *v),
+		}
+	}
 
 	// "patternProperties"
 	var cp *compiledPattern
