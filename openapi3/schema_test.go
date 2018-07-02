@@ -137,6 +137,34 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "INTEGER",
+		Schema: openapi3.NewInt64Schema().
+			WithMin(2).
+			WithMax(5),
+		Serialization: map[string]interface{}{
+			"type":    "integer",
+			"format":  "int64",
+			"minimum": 2,
+			"maximum": 5,
+		},
+		AllValid: []interface{}{
+			2,
+			5,
+		},
+		AllInvalid: []interface{}{
+			nil,
+			false,
+			true,
+			1,
+			6,
+			3.5,
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
+
+	{
 		Title: "STRING",
 		Schema: openapi3.NewStringSchema().
 			WithMinLength(2).

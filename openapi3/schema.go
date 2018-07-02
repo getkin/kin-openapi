@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"regexp"
 	"strconv"
 	"strings"
@@ -164,16 +165,22 @@ func NewFloat64Schema() *Schema {
 	}
 }
 
+func NewIntegerSchema() *Schema {
+	return &Schema{
+		Type: "integer",
+	}
+}
+
 func NewInt32Schema() *Schema {
 	return &Schema{
-		Type:   "number",
+		Type:   "integer",
 		Format: "int32",
 	}
 }
 
 func NewInt64Schema() *Schema {
 	return &Schema{
-		Type:   "number",
+		Type:   "integer",
 		Format: "int64",
 	}
 }
@@ -706,7 +713,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool) error {
 	if math.IsInf(value, 0) {
 		return ErrSchemaInputInf
 	}
-	if err := schema.validateTypeListAllows("number", fast); err != nil {
+	if err := schema.validateJSONNumber(value, fast); err != nil {
 		return err
 	}
 
@@ -1099,6 +1106,14 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) e
 		}
 	}
 	return nil
+}
+
+func (schema *Schema) validateJSONNumber(value float64, fast bool) error {
+	bigFloat := big.NewFloat(value)
+	if bigFloat.IsInt() && schema.TypesContains("integer") {
+		return nil
+	}
+	return schema.validateTypeListAllows("number", fast)
 }
 
 func (schema *Schema) validateTypeListAllows(value string, fast bool) error {
