@@ -165,7 +165,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 		if swagger, err = swaggerLoader.LoadSwaggerFromURI(parsedURL); err != nil {
 			return nil, "", fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
-		ref = fragment
+		ref = fmt.Sprintf("#%s", fragment)
 	}
 	if !strings.HasPrefix(ref, prefix) {
 		return nil, "", failedToResolveRefFragment(ref)
