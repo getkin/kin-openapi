@@ -27,7 +27,7 @@ type Operation struct {
 	Parameters Parameters `json:"parameters,omitempty"`
 
 	// Optional body parameter.
-	RequestBody *RequestBodyRef `json:"body,omitempty"`
+	RequestBody *RequestBodyRef `json:"requestBody,omitempty"`
 
 	// Optional responses.
 	Responses Responses `json:"responses,omitempty"`

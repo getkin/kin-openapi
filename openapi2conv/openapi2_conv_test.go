@@ -120,7 +120,7 @@ const exampleV3 = `
             "name": "x"
           }
         ],
-        "body": {
+        "requestBody": {
           "content": {
             "application/json": {
               "schema": {}
