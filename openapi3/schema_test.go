@@ -137,6 +137,34 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "INTEGER",
+		Schema: openapi3.NewInt64Schema().
+			WithMin(2).
+			WithMax(5),
+		Serialization: map[string]interface{}{
+			"type":    "integer",
+			"format":  "int64",
+			"minimum": 2,
+			"maximum": 5,
+		},
+		AllValid: []interface{}{
+			2,
+			5,
+		},
+		AllInvalid: []interface{}{
+			nil,
+			false,
+			true,
+			1,
+			6,
+			3.5,
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
+
+	{
 		Title: "STRING",
 		Schema: openapi3.NewStringSchema().
 			WithMinLength(2).
@@ -507,6 +535,82 @@ var schemaExamples = []schemaExample{
 			0,
 			2,
 			4,
+		},
+	},
+}
+
+type schemaTypeExample struct {
+	Title      string
+	Schema     *openapi3.Schema
+	AllValid   []string
+	AllInvalid []string
+}
+
+func TestTypes(t *testing.T) {
+	for _, example := range typeExamples {
+		t.Run(example.Title, testType(t, example))
+	}
+}
+
+func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
+	return func(t *testing.T) {
+		schema := example.Schema
+		for _, typ := range example.AllValid {
+			err := validateType(t, schema, typ)
+			require.NoError(t, err)
+		}
+		for _, typ := range example.AllInvalid {
+			err := validateType(t, schema, typ)
+			require.Error(t, err)
+		}
+	}
+}
+
+func validateType(t *testing.T, schema *openapi3.Schema, typ string) error {
+	schema.WithFormat(typ)
+	return schema.Validate(nil)
+}
+
+var typeExamples = []schemaTypeExample{
+	{
+		Title:  "STRING",
+		Schema: openapi3.NewStringSchema(),
+		AllValid: []string{
+			"",
+			"byte",
+			"binary",
+			"date",
+			"dateTime",
+			"password",
+		},
+		AllInvalid: []string{
+			"unsupported",
+		},
+	},
+
+	{
+		Title:  "NUMBER",
+		Schema: openapi3.NewFloat64Schema(),
+		AllValid: []string{
+			"",
+			"float",
+			"double",
+		},
+		AllInvalid: []string{
+			"unsupported",
+		},
+	},
+
+	{
+		Title:  "INTEGER",
+		Schema: openapi3.NewIntegerSchema(),
+		AllValid: []string{
+			"",
+			"int32",
+			"int64",
+		},
+		AllInvalid: []string{
+			"unsupported",
 		},
 	},
 }

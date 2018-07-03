@@ -116,7 +116,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	case reflect.Int,
 		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		schema.Type = "number"
+		schema.Type = "integer"
 		schema.Format = "int64"
 
 	case reflect.Float32, reflect.Float64:

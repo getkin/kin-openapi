@@ -61,11 +61,11 @@ const expectedSimple = `
       "type": "boolean"
     },
     "int": {
-      "type": "number",
+      "type": "integer",
       "format": "int64"
     },
     "int64": {
-      "type": "number",
+      "type": "integer",
       "format": "int64"
     },
     "float64": {
