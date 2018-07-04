@@ -122,11 +122,9 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		}
 		return nil
 	}
-	schemaRef := parameter.Schema
-	if schemaRef != nil {
-		schema := schemaRef.Value
+	if schemaRef := parameter.Schema; schemaRef != nil {
 		// Only check schema if no transformation is needed
-		if schema.TypesContains("string") {
+		if schema := schemaRef.Value; schema.Type == "string" {
 			if err := schema.VisitJSONString(value); err != nil {
 				return &RequestError{
 					Input:     input,
