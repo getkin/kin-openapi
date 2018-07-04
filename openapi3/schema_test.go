@@ -1,8 +1,10 @@
 package openapi3_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -27,11 +29,18 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 	return func(t *testing.T) {
 		schema := example.Schema
 		if serialized := example.Serialization; serialized != nil {
-			dataSerialized, err := json.Marshal(serialized)
+			jsonSerialized, err := json.Marshal(serialized)
 			require.NoError(t, err)
-			dataSchema, err := json.Marshal(schema)
+			jsonSchema, err := json.Marshal(schema)
 			require.NoError(t, err)
-			require.JSONEq(t, string(dataSerialized), string(dataSchema))
+			require.JSONEq(t, string(jsonSerialized), string(jsonSchema))
+			var dataUnserialized openapi3.Schema
+			err = json.Unmarshal(jsonSerialized, &dataUnserialized)
+			require.NoError(t, err)
+			var dataSchema openapi3.Schema
+			err = json.Unmarshal(jsonSchema, &dataSchema)
+			require.NoError(t, err)
+			require.Equal(t, dataUnserialized, dataSchema)
 		}
 		for _, value := range example.AllValid {
 			err := validateSchema(t, schema, value)
@@ -39,6 +48,11 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 		}
 		for _, value := range example.AllInvalid {
 			err := validateSchema(t, schema, value)
+			require.Error(t, err)
+		}
+		// NaN and Inf aren't valid JSON but are handled
+		for _, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
+			err := schema.VisitJSON(value)
 			require.Error(t, err)
 		}
 	}
@@ -55,10 +69,13 @@ func validateSchema(t *testing.T, schema *openapi3.Schema, value interface{}) er
 
 var schemaExamples = []schemaExample{
 	{
-		Title:  "EMPTY SCHEMA",
-		Schema: &openapi3.Schema{},
+		Title:         "EMPTY SCHEMA",
+		Schema:        &openapi3.Schema{},
+		Serialization: map[string]interface{}{
+			// This OA3 schema is exactly this draft-04 schema:
+			//   {"not": {"type": "null"}}
+		},
 		AllValid: []interface{}{
-			nil,
 			false,
 			true,
 			3.14,
@@ -66,28 +83,54 @@ var schemaExamples = []schemaExample{
 			[]interface{}{},
 			map[string]interface{}{},
 		},
+		AllInvalid: []interface{}{
+			nil,
+		},
 	},
 
-	// {
-	// 	Title: "NULL", //TODO
-	// 	Schema: openapi3.NewNullSchema(),
-	// 	Serialization: map[string]interface{}{
-	// 		"type": "null",
-	// 	},
-	// 	AllValid: []interface{}{
-	// 		nil,
-	// 	},
-	// 	AllInvalid: []interface{}{
-	// 		false,
-	// 		true,
-	// 		0,
-	// 		0.0,
-	// 		3.14,
-	// 		"",
-	// 		[]interface{}{},
-	// 		map[string]interface{}{},
-	// 	},
-	// },
+	{
+		Title:  "JUST NULLABLE",
+		Schema: openapi3.NewSchema().WithNullable(),
+		Serialization: map[string]interface{}{
+			// This OA3 schema is exactly both this draft-04 schema: {} and:
+			// {anyOf: [type:string, type:number, type:integer, type:boolean
+			//         ,{type:array, items:{}}, type:object]}
+			"nullable": true,
+		},
+		AllValid: []interface{}{
+			nil,
+			false,
+			true,
+			0,
+			0.0,
+			3.14,
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
+
+	{
+		Title:  "NULLABLE BOOLEAN",
+		Schema: openapi3.NewBoolSchema().WithNullable(),
+		Serialization: map[string]interface{}{
+			"nullable": true,
+			"type":     "boolean",
+		},
+		AllValid: []interface{}{
+			nil,
+			false,
+			true,
+		},
+		AllInvalid: []interface{}{
+			0,
+			0.0,
+			3.14,
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
 
 	{
 		Title:  "BOOLEAN",
@@ -129,7 +172,34 @@ var schemaExamples = []schemaExample{
 			true,
 			2.4,
 			3.6,
-			// NaN and Inf aren't valid JSON so they are not here
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
+
+	{
+		Title: "INTEGER",
+		Schema: openapi3.NewInt64Schema().
+			WithMin(2).
+			WithMax(5),
+		Serialization: map[string]interface{}{
+			"type":    "integer",
+			"format":  "int64",
+			"minimum": 2,
+			"maximum": 5,
+		},
+		AllValid: []interface{}{
+			2,
+			5,
+		},
+		AllInvalid: []interface{}{
+			nil,
+			false,
+			true,
+			1,
+			6,
+			3.5,
 			"",
 			[]interface{}{},
 			map[string]interface{}{},
@@ -507,6 +577,79 @@ var schemaExamples = []schemaExample{
 			0,
 			2,
 			4,
+		},
+	},
+}
+
+type schemaTypeExample struct {
+	Title      string
+	Schema     *openapi3.Schema
+	AllValid   []string
+	AllInvalid []string
+}
+
+func TestTypes(t *testing.T) {
+	for _, example := range typeExamples {
+		t.Run(example.Title, testType(t, example))
+	}
+}
+
+func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
+	return func(t *testing.T) {
+		baseSchema := example.Schema
+		for _, typ := range example.AllValid {
+			schema := baseSchema.WithFormat(typ)
+			err := schema.Validate(context.TODO())
+			require.NoError(t, err)
+		}
+		for _, typ := range example.AllInvalid {
+			schema := baseSchema.WithFormat(typ)
+			err := schema.Validate(context.TODO())
+			require.Error(t, err)
+		}
+	}
+}
+
+var typeExamples = []schemaTypeExample{
+	{
+		Title:  "STRING",
+		Schema: openapi3.NewStringSchema(),
+		AllValid: []string{
+			"",
+			"byte",
+			"binary",
+			"date",
+			"dateTime",
+			"password",
+		},
+		AllInvalid: []string{
+			"unsupported",
+		},
+	},
+
+	{
+		Title:  "NUMBER",
+		Schema: openapi3.NewFloat64Schema(),
+		AllValid: []string{
+			"",
+			"float",
+			"double",
+		},
+		AllInvalid: []string{
+			"unsupported",
+		},
+	},
+
+	{
+		Title:  "INTEGER",
+		Schema: openapi3.NewIntegerSchema(),
+		AllValid: []string{
+			"",
+			"int32",
+			"int64",
+		},
+		AllInvalid: []string{
+			"unsupported",
 		},
 	},
 }

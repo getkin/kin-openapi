@@ -104,7 +104,7 @@ paths:
     post:
       parameters:
       - "$ref": "#/components/parameters/someParameter"
-      body:
+      requestBody:
         "$ref": "#/components/requestBodies/someRequestBody"
       responses:
         '200':
@@ -161,7 +161,7 @@ var specJSON = []byte(`
             "$ref": "#/components/parameters/someParameter"
           }
         ],
-        "body": {
+        "requestBody": {
           "$ref": "#/components/requestBodies/someRequestBody"
         },
         "responses": {
