@@ -2,6 +2,7 @@ package openapi3_test
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -82,4 +83,68 @@ func TestResolveSchemaRef(t *testing.T) {
 	refAVisited := doc.Components.Schemas["A"].Value.AllOf[0]
 	require.Equal(t, "#/components/schemas/B", refAVisited.Ref)
 	require.NotNil(t, refAVisited.Value)
+}
+
+type sourceExample struct {
+	Location *url.URL
+	Spec     []byte
+}
+
+type multipleSourceSwaggerLoaderExample struct {
+	Sources []*sourceExample
+}
+
+func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
+	loader *openapi3.SwaggerLoader,
+	location *url.URL,
+) (*openapi3.Swagger, error) {
+	source := l.resolveSourceFromURI(location)
+	if source == nil {
+		return nil, fmt.Errorf("Unsupported URI: '%s'", location.String())
+	}
+	return loader.LoadSwaggerFromData(source.Spec)
+}
+
+func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location *url.URL) *sourceExample {
+	locationString := location.String()
+	for _, v := range l.Sources {
+		if v.Location.String() == locationString {
+			return v
+		}
+	}
+	return nil
+}
+
+func TestResolveSchemaExternalRef(t *testing.T) {
+	rootLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "spec.json"}
+	externalLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "external.json"}
+	rootSpec := []byte(fmt.Sprintf(
+		`{"info":{"description":"An API"},"components":{"schemas":{"Root":{"allOf":[{"$ref":"%s#/components/schemas/External"}]}}}}`,
+		externalLocation.String(),
+	))
+	externalSpec := []byte(`{"info":{"description":"External Spec"},"components":{"schemas":{"External":{"type":"string"}}}}`)
+	multipleSourceLoader := &multipleSourceSwaggerLoaderExample{
+		Sources: []*sourceExample{
+			&sourceExample{
+				Location: rootLocation,
+				Spec:     rootSpec,
+			},
+			&sourceExample{
+				Location: externalLocation,
+				Spec:     externalSpec,
+			},
+		},
+	}
+	loader := &openapi3.SwaggerLoader{
+		IsExternalRefsAllowed:  true,
+		LoadSwaggerFromURIFunc: multipleSourceLoader.LoadSwaggerFromURI,
+	}
+	doc, err := loader.LoadSwaggerFromURI(rootLocation)
+	require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+
+	require.NoError(t, err)
+	refRootVisited := doc.Components.Schemas["Root"].Value.AllOf[0]
+	require.Equal(t, fmt.Sprintf("%s#/components/schemas/External", externalLocation.String()), refRootVisited.Ref)
+	require.NotNil(t, refRootVisited.Value)
 }
