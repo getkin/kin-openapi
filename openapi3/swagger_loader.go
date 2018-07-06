@@ -168,7 +168,8 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 		ref = fmt.Sprintf("#%s", fragment)
 	}
 	if !strings.HasPrefix(ref, prefix) {
-		return nil, "", failedToResolveRefFragment(ref)
+		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
+		return nil, "", err
 	}
 	id = ref[len(prefix):]
 	if strings.IndexByte(id, '/') >= 0 {
