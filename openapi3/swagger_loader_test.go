@@ -105,7 +105,7 @@ func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
 	return loader.LoadSwaggerFromData(source.Spec)
 }
 
-func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location *url.URL) *sourceExample {
+func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location fmt.Stringer) *sourceExample {
 	locationString := location.String()
 	for _, v := range l.Sources {
 		if v.Location.String() == locationString {
@@ -125,11 +125,11 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	externalSpec := []byte(`{"info":{"description":"External Spec"},"components":{"schemas":{"External":{"type":"string"}}}}`)
 	multipleSourceLoader := &multipleSourceSwaggerLoaderExample{
 		Sources: []*sourceExample{
-			&sourceExample{
+			{
 				Location: rootLocation,
 				Spec:     rootSpec,
 			},
-			&sourceExample{
+			{
 				Location: externalLocation,
 				Spec:     externalSpec,
 			},
@@ -147,4 +147,34 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	refRootVisited := doc.Components.Schemas["Root"].Value.AllOf[0]
 	require.Equal(t, fmt.Sprintf("%s#/components/schemas/External", externalLocation.String()), refRootVisited.Ref)
 	require.NotNil(t, refRootVisited.Value)
+}
+
+func TestLoadErrorOnRefMisuse(t *testing.T) {
+	spec := []byte(`
+openapi: '3.0.0'
+servers: [{url: /}]
+info:
+  title: ''
+  version: '1'
+components:
+  schemas:
+    Thing: {type: string}
+paths:
+  /items:
+    put:
+      description: ''
+      requestBody:
+        $ref: '#/components/schemas/Thing'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+`)
+
+	loader := openapi3.NewSwaggerLoader()
+	_, err := loader.LoadSwaggerFromYAMLData(spec)
+	require.Error(t, err)
 }
