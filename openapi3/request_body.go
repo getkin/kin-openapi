@@ -43,7 +43,7 @@ func (requestBody *RequestBody) WithJSONSchema(value *Schema) *RequestBody {
 	return requestBody
 }
 
-func (requestBody *RequestBody) GetContentType(mediaType string) *ContentType {
+func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType {
 	m := requestBody.Content
 	if m == nil {
 		return nil

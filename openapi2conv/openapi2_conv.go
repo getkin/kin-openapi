@@ -430,9 +430,9 @@ func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation,
 	}
 
 	// Add JSON schema
-	contentType := requestBody.GetContentType("application/json")
-	if contentType != nil {
-		result.Schema = contentType.Schema
+	mediaType := requestBody.GetMediaType("application/json")
+	if mediaType != nil {
+		result.Schema = mediaType.Schema
 	}
 	return result, nil
 }

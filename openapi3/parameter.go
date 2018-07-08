@@ -62,6 +62,7 @@ type Parameter struct {
 	Schema          *SchemaRef    `json:"schema,omitempty"`
 	Example         interface{}   `json:"example,omitempty"`
 	Examples        []interface{} `json:"examples,omitempty"`
+	Content         Content       `json:"content,omitempty"`
 }
 
 const (
@@ -146,6 +147,11 @@ func (parameter *Parameter) Validate(c context.Context) error {
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)
+		}
+	}
+	if content := parameter.Content; content != nil {
+		if err := content.Validate(c); err != nil {
+			return fmt.Errorf("Parameter content is invalid: %v", err)
 		}
 	}
 	return nil
