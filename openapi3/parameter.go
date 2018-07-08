@@ -51,17 +51,18 @@ func (parameters Parameters) Validate(c context.Context) error {
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
 type Parameter struct {
 	ExtensionProps
-	Name            string        `json:"name,omitempty"`
-	In              string        `json:"in,omitempty"`
-	Description     string        `json:"description,omitempty"`
-	Style           string        `json:"style,omitempty"`
-	AllowEmptyValue bool          `json:"allowEmptyValue,omitempty"`
-	AllowReserved   bool          `json:"allowReserved,omitempty"`
-	Deprecated      bool          `json:"deprecated,omitempty"`
-	Required        bool          `json:"required,omitempty"`
-	Schema          *SchemaRef    `json:"schema,omitempty"`
-	Example         interface{}   `json:"example,omitempty"`
-	Examples        []interface{} `json:"examples,omitempty"`
+	Name            string                 `json:"name,omitempty"`
+	In              string                 `json:"in,omitempty"`
+	Description     string                 `json:"description,omitempty"`
+	Style           string                 `json:"style,omitempty"`
+	AllowEmptyValue bool                   `json:"allowEmptyValue,omitempty"`
+	AllowReserved   bool                   `json:"allowReserved,omitempty"`
+	Deprecated      bool                   `json:"deprecated,omitempty"`
+	Required        bool                   `json:"required,omitempty"`
+	Schema          *SchemaRef             `json:"schema,omitempty"`
+	Example         interface{}            `json:"example,omitempty"`
+	Examples        map[string]*ExampleRef `json:"examples,omitempty"`
+	Content         Content                `json:"content,omitempty"`
 }
 
 const (
@@ -146,6 +147,11 @@ func (parameter *Parameter) Validate(c context.Context) error {
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)
+		}
+	}
+	if content := parameter.Content; content != nil {
+		if err := content.Validate(c); err != nil {
+			return fmt.Errorf("Parameter content is invalid: %v", err)
 		}
 	}
 	return nil
