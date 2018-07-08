@@ -29,7 +29,7 @@ func (value *CallbackRef) Validate(c context.Context) error {
 
 type ExampleRef struct {
 	Ref   string
-	Value *interface{}
+	Value *Example
 }
 
 func (value *ExampleRef) MarshalJSON() ([]byte, error) {

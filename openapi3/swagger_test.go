@@ -131,7 +131,9 @@ components:
     someHeader:
       "$ref": "#/components/headers/otherHeader"
   examples:
-    otherExample: abc
+    otherExample:
+      value:
+        name: Some example
     someExample:
       "$ref": "#/components/examples/otherExample"
   securitySchemes:
@@ -205,7 +207,11 @@ var specJSON = []byte(`
       }
     },
     "examples": {
-      "otherExample": "abc",
+      "otherExample": {
+        "value": {
+          "name": "Some example"
+        }
+      },
       "someExample": {
         "$ref": "#/components/examples/otherExample"
       }
@@ -243,6 +249,7 @@ func spec() *openapi3.Swagger {
 	schema := &openapi3.Schema{
 		Description: "Some schema",
 	}
+	example := map[string]string{"name": "Some example"}
 	return &openapi3.Swagger{
 		OpenAPI: "3.0",
 		Paths: openapi3.Paths{
@@ -307,7 +314,7 @@ func spec() *openapi3.Swagger {
 					Ref: "#/components/examples/otherExample",
 				},
 				"otherExample": {
-					Value: openapi3.NewExample("abc"),
+					Value: openapi3.NewExample(example),
 				},
 			},
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{

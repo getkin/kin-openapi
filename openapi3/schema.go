@@ -59,7 +59,6 @@ type Schema struct {
 	Enum         []interface{} `json:"enum,omitempty"`
 	Default      interface{}   `json:"default,omitempty"`
 	Example      interface{}   `json:"example,omitempty"`
-	Examples     []interface{} `json:"examples,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 
 	// Object-related, here for struct compactness
