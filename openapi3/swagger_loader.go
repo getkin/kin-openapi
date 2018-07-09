@@ -375,6 +375,9 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		component.Value = resolved.Value
 	}
 	value := component.Value
+	if value == nil {
+		return nil
+	}
 
 	// ResolveRefs referred schemas
 	if v := value.Items; v != nil {
