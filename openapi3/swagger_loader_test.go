@@ -85,6 +85,15 @@ func TestResolveSchemaRef(t *testing.T) {
 	require.NotNil(t, refAVisited.Value)
 }
 
+func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
+	source := []byte(`{"info":{"description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromData(source)
+	require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+	require.EqualError(t, err, "Found unresolved ref: ''")
+}
+
 type sourceExample struct {
 	Location *url.URL
 	Spec     []byte
