@@ -336,6 +336,12 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		if contentType == nil {
 			continue
 		}
+		for i, example := range contentType.Examples {
+			if err := swaggerLoader.resolveExampleRef(swagger, example); err != nil {
+				return err
+			}
+			contentType.Examples[i] = example
+		}
 		if schema := contentType.Schema; schema != nil {
 			if err := swaggerLoader.resolveSchemaRef(swagger, schema); err != nil {
 				return err
