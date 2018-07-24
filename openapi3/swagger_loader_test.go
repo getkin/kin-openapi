@@ -94,6 +94,40 @@ func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	require.EqualError(t, err, "Found unresolved ref: ''")
 }
 
+func TestResolveResponseExampleRef(t *testing.T) {
+	source := []byte(`
+openapi: 3.0.1
+info:
+  title: My API
+  version: 1.0.0
+components:
+  examples:
+    test:
+      value:
+        error: false
+paths:
+  /:
+    get:
+      responses:
+        200:
+          description: A test response
+          content:
+            application/json:
+              examples:
+                test:
+                  $ref: '#/components/examples/test'`)
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromYAMLData(source)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	example := doc.Paths["/"].Get.Responses.Get(200).Value.Content.Get("application/json").Examples["test"]
+	require.NotNil(t, example.Value)
+	require.Equal(t, example.Value.Value.(map[string]interface{})["error"].(bool), false)
+}
+
 type sourceExample struct {
 	Location *url.URL
 	Spec     []byte
