@@ -619,7 +619,7 @@ var typeExamples = []schemaTypeExample{
 			"byte",
 			"binary",
 			"date",
-			"dateTime",
+			"date-time",
 			"password",
 		},
 		AllInvalid: []string{

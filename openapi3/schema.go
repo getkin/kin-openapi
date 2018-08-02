@@ -495,7 +495,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	case "string":
 		if format := schema.Format; len(format) > 0 {
 			switch format {
-			case "byte", "binary", "date", "dateTime", "password":
+			case "byte", "binary", "date", "date-time", "password":
 			default:
 				return unsupportedFormat(format)
 			}
