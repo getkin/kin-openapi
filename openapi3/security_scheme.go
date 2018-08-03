@@ -134,13 +134,13 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	if hasFlow {
 		flow := ss.Flows
 		if flow == nil {
-			return fmt.Errorf("Security scheme of type '%v' should have 'flow'", ss.Type)
+			return fmt.Errorf("Security scheme of type '%v' should have 'flows'", ss.Type)
 		}
 		if err := flow.Validate(c); err != nil {
 			return fmt.Errorf("Security scheme 'flow' is invalid: %v", err)
 		}
 	} else if ss.Flows != nil {
-		return fmt.Errorf("Security scheme of type '%s' can't have 'flow'", ss.Type)
+		return fmt.Errorf("Security scheme of type '%s' can't have 'flows'", ss.Type)
 	}
 	return nil
 }
@@ -153,6 +153,15 @@ type OAuthFlows struct {
 	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty"`
 }
 
+type OAuthFlowType string
+
+var (
+	OAuthFlowTypeImplicit          OAuthFlowType = "implicit"
+	OAuthFlowTypePassword          OAuthFlowType = "password"
+	OAuthFlowTypeClientCredentials OAuthFlowType = "client_credentials"
+	OAuthFlowAuthorizationCode     OAuthFlowType = "authorization_code"
+)
+
 func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(flows)
 }
@@ -163,16 +172,16 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 
 func (flows *OAuthFlows) Validate(c context.Context) error {
 	if v := flows.Implicit; v != nil {
-		return v.Validate(c)
+		return v.Validate(c, OAuthFlowTypeImplicit)
 	}
 	if v := flows.Password; v != nil {
-		return v.Validate(c)
+		return v.Validate(c, OAuthFlowTypePassword)
 	}
 	if v := flows.ClientCredentials; v != nil {
-		return v.Validate(c)
+		return v.Validate(c, OAuthFlowTypeClientCredentials)
 	}
 	if v := flows.AuthorizationCode; v != nil {
-		return v.Validate(c)
+		return v.Validate(c, OAuthFlowAuthorizationCode)
 	}
 	return errors.New("No OAuth flow is defined")
 }
@@ -193,12 +202,16 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }
 
-func (flow *OAuthFlow) Validate(c context.Context) error {
-	if v := flow.AuthorizationURL; v == "" {
-		return errors.New("An OAuth flow is missing 'authorizationUrl'")
+func (flow *OAuthFlow) Validate(c context.Context, typ OAuthFlowType) error {
+	if typ == OAuthFlowAuthorizationCode || typ == OAuthFlowTypeImplicit {
+		if v := flow.AuthorizationURL; v == "" {
+			return errors.New("An OAuth flow is missing 'authorizationUrl in authorizationCode or implicit '")
+		}
 	}
-	if v := flow.TokenURL; v == "" {
-		return errors.New("An OAuth flow is missing 'tokenUrl'")
+	if typ != OAuthFlowTypeImplicit {
+		if v := flow.TokenURL; v == "" {
+			return errors.New("An OAuth flow is missing 'tokenUrl in not implicit'")
+		}
 	}
 	if v := flow.Scopes; len(v) == 0 {
 		return errors.New("An OAuth flow is missing 'scopes'")
