@@ -17,7 +17,7 @@ type SecurityScheme struct {
 	In           string      `json:"in,omitempty"`
 	Scheme       string      `json:"scheme,omitempty"`
 	BearerFormat string      `json:"bearerFormat,omitempty"`
-	Flow         *OAuthFlows `json:"flow,omitempty"`
+	Flows        *OAuthFlows `json:"flows,omitempty"`
 }
 
 func NewSecurityScheme() *SecurityScheme {
@@ -132,14 +132,14 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 
 	// Validate "flow"
 	if hasFlow {
-		flow := ss.Flow
+		flow := ss.Flows
 		if flow == nil {
 			return fmt.Errorf("Security scheme of type '%v' should have 'flow'", ss.Type)
 		}
 		if err := flow.Validate(c); err != nil {
 			return fmt.Errorf("Security scheme 'flow' is invalid: %v", err)
 		}
-	} else if ss.Flow != nil {
+	} else if ss.Flows != nil {
 		return fmt.Errorf("Security scheme of type '%s' can't have 'flow'", ss.Type)
 	}
 	return nil
