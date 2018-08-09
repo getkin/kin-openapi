@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/getkin/kin-openapi.svg?branch=master)](https://travis-ci.org/getkin/kin-openapi)
+[![Build Status](https://travis-ci.com/getkin/kin-openapi.svg?branch=master)](https://travis-ci.com/getkin/kin-openapi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/getkin/kin-openapi)](https://goreportcard.com/report/github.com/getkin/kin-openapi)
 [![GoDoc](https://godoc.org/github.com/getkin/kin-openapi?status.svg)](https://godoc.org/github.com/getkin/kin-openapi)
 
