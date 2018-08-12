@@ -153,13 +153,13 @@ type OAuthFlows struct {
 	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty"`
 }
 
-type OAuthFlowType string
+type oAuthFlowType int
 
-var (
-	OAuthFlowTypeImplicit          OAuthFlowType = "implicit"
-	OAuthFlowTypePassword          OAuthFlowType = "password"
-	OAuthFlowTypeClientCredentials OAuthFlowType = "client_credentials"
-	OAuthFlowAuthorizationCode     OAuthFlowType = "authorization_code"
+const (
+	oAuthFlowTypeImplicit oAuthFlowType = iota
+	oAuthFlowTypePassword
+	oAuthFlowTypeClientCredentials
+	oAuthFlowAuthorizationCode
 )
 
 func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
@@ -172,16 +172,16 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 
 func (flows *OAuthFlows) Validate(c context.Context) error {
 	if v := flows.Implicit; v != nil {
-		return v.Validate(c, OAuthFlowTypeImplicit)
+		return v.Validate(c, oAuthFlowTypeImplicit)
 	}
 	if v := flows.Password; v != nil {
-		return v.Validate(c, OAuthFlowTypePassword)
+		return v.Validate(c, oAuthFlowTypePassword)
 	}
 	if v := flows.ClientCredentials; v != nil {
-		return v.Validate(c, OAuthFlowTypeClientCredentials)
+		return v.Validate(c, oAuthFlowTypeClientCredentials)
 	}
 	if v := flows.AuthorizationCode; v != nil {
-		return v.Validate(c, OAuthFlowAuthorizationCode)
+		return v.Validate(c, oAuthFlowAuthorizationCode)
 	}
 	return errors.New("No OAuth flow is defined")
 }
@@ -202,13 +202,13 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }
 
-func (flow *OAuthFlow) Validate(c context.Context, typ OAuthFlowType) error {
-	if typ == OAuthFlowAuthorizationCode || typ == OAuthFlowTypeImplicit {
+func (flow *OAuthFlow) Validate(c context.Context, typ oAuthFlowType) error {
+	if typ == oAuthFlowAuthorizationCode || typ == oAuthFlowTypeImplicit {
 		if v := flow.AuthorizationURL; v == "" {
 			return errors.New("An OAuth flow is missing 'authorizationUrl in authorizationCode or implicit '")
 		}
 	}
-	if typ != OAuthFlowTypeImplicit {
+	if typ != oAuthFlowTypeImplicit {
 		if v := flow.TokenURL; v == "" {
 			return errors.New("An OAuth flow is missing 'tokenUrl in not implicit'")
 		}
