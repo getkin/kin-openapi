@@ -236,7 +236,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 	case "oauth2":
 		result.Type = "oauth2"
 		flows := &openapi3.OAuthFlows{}
-		result.Flow = flows
+		result.Flows = flows
 		scopesMap := make(map[string]string)
 		for _, scope := range securityScheme.Scopes {
 			scopesMap[scope] = ""
@@ -511,7 +511,7 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 		result.Name = securityScheme.Name
 	case "oauth2":
 		result.Type = "oauth2"
-		flows := securityScheme.Flow
+		flows := securityScheme.Flows
 		if flows != nil {
 			var flow *openapi3.OAuthFlow
 			// TODO: Is this the right priority? What if multiple defined?
