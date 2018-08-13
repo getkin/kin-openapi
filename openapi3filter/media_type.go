@@ -2,7 +2,7 @@ package openapi3filter
 
 // Definition of MediaType to be interpreted as JSON
 var DefaultJSONMediaTypes = []string{
-	"aplication/json",
+	"application/json",
 }
 
 func isMediaTypeJSON(mediaType string) bool {
