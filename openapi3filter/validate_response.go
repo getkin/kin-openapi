@@ -77,7 +77,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 				}
 			}
 			schemaRef := contentType.Schema
-			if schemaRef != nil && mediaType == "application/json" {
+			if schemaRef != nil && isMediaTypeJSON(mediaType) {
 				schema := schemaRef.Value
 
 				// Read request body
