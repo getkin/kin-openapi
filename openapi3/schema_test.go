@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -651,5 +652,50 @@ var typeExamples = []schemaTypeExample{
 		AllInvalid: []string{
 			"unsupported",
 		},
+	},
+}
+
+func TestSchemaErrors(t *testing.T) {
+	for _, example := range schemaErrorExamples {
+		t.Run(example.Title, testSchemaError(t, example))
+	}
+}
+
+func testSchemaError(t *testing.T, example schemaErrorExample) func(*testing.T) {
+	return func(t *testing.T) {
+		msg := example.Error.Error()
+		require.True(t, strings.Contains(msg, example.Want))
+	}
+}
+
+type schemaErrorExample struct {
+	Title string
+	Error *openapi3.SchemaError
+	Want  string
+}
+
+var schemaErrorExamples = []schemaErrorExample{
+	{
+		Title: "SIMPLE",
+		Error: &openapi3.SchemaError{
+			Value:  1,
+			Schema: &openapi3.Schema{},
+			Reason: "SIMPLE",
+		},
+		Want: "SIMPLE",
+	},
+	{
+		Title: "NEST",
+		Error: &openapi3.SchemaError{
+			Value:  1,
+			Schema: &openapi3.Schema{},
+			Reason: "PARENT",
+			Origin: &openapi3.SchemaError{
+				Value:  1,
+				Schema: &openapi3.Schema{},
+				Reason: "NEST",
+			},
+		},
+		Want: "NEST",
 	},
 }
