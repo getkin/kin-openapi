@@ -694,7 +694,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) (err erro
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err := v.visitJSON(value, true); err != nil {
+		if err := v.visitJSON(value, false); err != nil {
 			if fast {
 				return errSchema
 			}
@@ -702,6 +702,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool) (err erro
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "allOf",
+				Origin:      err,
 			}
 		}
 	}
@@ -1125,6 +1126,7 @@ type SchemaError struct {
 	Schema      *Schema
 	SchemaField string
 	Reason      string
+	Origin      error
 }
 
 func markSchemaErrorKey(err error, key string) error {
@@ -1153,6 +1155,10 @@ func (err *SchemaError) JSONPointer() []string {
 }
 
 func (err *SchemaError) Error() string {
+	if err.Origin != nil {
+		return err.Origin.Error()
+	}
+
 	buf := bytes.NewBuffer(make([]byte, 0, 256))
 	if len(err.reversePath) > 0 {
 		buf.WriteString(`Error at "`)
