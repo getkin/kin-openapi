@@ -113,6 +113,8 @@ func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, opera
 		return nil, nil
 	}
 	result := &openapi3.Operation{
+		OperationID: operation.OperationID,
+		Summary:     operation.Summary,
 		Description: operation.Description,
 		Tags:        operation.Tags,
 	}
