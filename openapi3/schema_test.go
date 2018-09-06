@@ -622,9 +622,8 @@ var typeExamples = []schemaTypeExample{
 			"date",
 			"date-time",
 			"password",
-		},
-		AllInvalid: []string{
-			"unsupported",
+			// Not supported bu allowed:
+			"uri",
 		},
 	},
 
@@ -635,9 +634,8 @@ var typeExamples = []schemaTypeExample{
 			"",
 			"float",
 			"double",
-		},
-		AllInvalid: []string{
-			"unsupported",
+			// Not supported but allowed:
+			"f32",
 		},
 	},
 
@@ -648,9 +646,8 @@ var typeExamples = []schemaTypeExample{
 			"",
 			"int32",
 			"int64",
-		},
-		AllInvalid: []string{
-			"unsupported",
+			// Not supported but allowed:
+			"uint8",
 		},
 	},
 }

@@ -472,34 +472,14 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	schemaType := schema.Type
 	switch schemaType {
 	case "":
 	case "boolean":
 	case "number":
-		if format := schema.Format; len(format) > 0 {
-			switch format {
-			case "float", "double":
-			default:
-				return unsupportedFormat(format)
-			}
-		}
 	case "integer":
-		if format := schema.Format; len(format) > 0 {
-			switch format {
-			case "int32", "int64":
-			default:
-				return unsupportedFormat(format)
-			}
-		}
 	case "string":
-		if format := schema.Format; len(format) > 0 {
-			switch format {
-			case "byte", "binary", "date", "date-time", "password":
-			default:
-				return unsupportedFormat(format)
-			}
-		}
 	case "array":
 		if schema.Items == nil {
 			return errors.New("When schema type is 'array', schema 'items' must be non-null")
@@ -508,6 +488,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	default:
 		return fmt.Errorf("Unsupported 'type' value '%s'", schemaType)
 	}
+
 	if ref := schema.Items; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -1199,8 +1180,4 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 		m[x] = struct{}{}
 	}
 	return s == len(m)
-}
-
-func unsupportedFormat(format string) error {
-	return fmt.Errorf("Unsupported 'format' value '%s'", format)
 }
