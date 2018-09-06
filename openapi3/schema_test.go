@@ -622,8 +622,11 @@ var typeExamples = []schemaTypeExample{
 			"date",
 			"date-time",
 			"password",
-			// Not supported bu allowed:
+			// Not supported but allowed:
 			"uri",
+		},
+		AllInvalid: []string{
+			"code/golang",
 		},
 	},
 
@@ -634,7 +637,8 @@ var typeExamples = []schemaTypeExample{
 			"",
 			"float",
 			"double",
-			// Not supported but allowed:
+		},
+		AllInvalid: []string{
 			"f32",
 		},
 	},
@@ -646,7 +650,8 @@ var typeExamples = []schemaTypeExample{
 			"",
 			"int32",
 			"int64",
-			// Not supported but allowed:
+		},
+		AllInvalid: []string{
 			"uint8",
 		},
 	},
