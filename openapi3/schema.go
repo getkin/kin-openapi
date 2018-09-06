@@ -436,6 +436,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 		}
 	}
 	stack = append(stack, schema)
+
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
@@ -445,6 +446,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	for _, item := range schema.AnyOf {
 		v := item.Value
 		if v == nil {
@@ -454,6 +456,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
@@ -463,6 +466,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -478,8 +482,29 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	case "":
 	case "boolean":
 	case "number":
+		if format := schema.Format; len(format) > 0 {
+			switch format {
+			case "float", "double":
+			default:
+				return unsupportedFormat(format)
+			}
+		}
 	case "integer":
+		if format := schema.Format; len(format) > 0 {
+			switch format {
+			case "int32", "int64":
+			default:
+				return unsupportedFormat(format)
+			}
+		}
 	case "string":
+		if format := schema.Format; len(format) > 0 {
+			switch format {
+			case "byte", "binary", "date", "date-time", "password":
+			default:
+				return unsupportedFormat(format)
+			}
+		}
 	case "array":
 		if schema.Items == nil {
 			return errors.New("When schema type is 'array', schema 'items' must be non-null")
@@ -498,6 +523,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	for _, ref := range schema.Properties {
 		v := ref.Value
 		if v == nil {
@@ -507,6 +533,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	if ref := schema.AdditionalProperties; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -516,6 +543,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	return
 }
 
@@ -1180,4 +1208,8 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 		m[x] = struct{}{}
 	}
 	return s == len(m)
+}
+
+func unsupportedFormat(format string) error {
+	return fmt.Errorf("Unsupported 'format' value '%s'", format)
 }
