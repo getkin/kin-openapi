@@ -436,6 +436,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 		}
 	}
 	stack = append(stack, schema)
+
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
@@ -445,6 +446,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	for _, item := range schema.AnyOf {
 		v := item.Value
 		if v == nil {
@@ -454,6 +456,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
@@ -463,6 +466,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -472,6 +476,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	schemaType := schema.Type
 	switch schemaType {
 	case "":
@@ -495,7 +500,14 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	case "string":
 		if format := schema.Format; len(format) > 0 {
 			switch format {
+			// Supported by OpenAPIv3.0.1:
 			case "byte", "binary", "date", "date-time", "password":
+				// In JSON Draft-07 (not validated yet though):
+			case "regex":
+			case "time", "email", "idn-email":
+			case "hostname", "idn-hostname", "ipv4", "ipv6":
+			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
+			case "json-pointer", "relative-json-pointer":
 			default:
 				return unsupportedFormat(format)
 			}
@@ -508,6 +520,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	default:
 		return fmt.Errorf("Unsupported 'type' value '%s'", schemaType)
 	}
+
 	if ref := schema.Items; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -517,6 +530,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	for _, ref := range schema.Properties {
 		v := ref.Value
 		if v == nil {
@@ -526,6 +540,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	if ref := schema.AdditionalProperties; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -535,6 +550,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			return
 		}
 	}
+
 	return
 }
 

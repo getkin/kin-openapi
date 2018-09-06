@@ -405,7 +405,7 @@ var schemaExamples = []schemaExample{
 	},
 	{
 		Schema: &openapi3.Schema{
-			Type: "object",
+			Type:                        "object",
 			AdditionalPropertiesAllowed: openapi3.BoolPtr(true),
 		},
 		Serialization: map[string]interface{}{
@@ -622,9 +622,11 @@ var typeExamples = []schemaTypeExample{
 			"date",
 			"date-time",
 			"password",
+			// Not supported but allowed:
+			"uri",
 		},
 		AllInvalid: []string{
-			"unsupported",
+			"code/golang",
 		},
 	},
 
@@ -637,7 +639,7 @@ var typeExamples = []schemaTypeExample{
 			"double",
 		},
 		AllInvalid: []string{
-			"unsupported",
+			"f32",
 		},
 	},
 
@@ -650,7 +652,7 @@ var typeExamples = []schemaTypeExample{
 			"int64",
 		},
 		AllInvalid: []string{
-			"unsupported",
+			"uint8",
 		},
 	},
 }

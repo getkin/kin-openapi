@@ -18,7 +18,7 @@ type UnsupportedPropertiesError struct {
 
 func NewUnsupportedPropertiesError(v interface{}, m map[string]json.RawMessage) error {
 	return &UnsupportedPropertiesError{
-		Value: v,
+		Value:                 v,
 		UnsupportedProperties: m,
 	}
 }
