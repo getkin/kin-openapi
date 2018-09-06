@@ -405,7 +405,7 @@ var schemaExamples = []schemaExample{
 	},
 	{
 		Schema: &openapi3.Schema{
-			Type: "object",
+			Type:                        "object",
 			AdditionalPropertiesAllowed: openapi3.BoolPtr(true),
 		},
 		Serialization: map[string]interface{}{
