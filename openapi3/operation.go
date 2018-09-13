@@ -65,7 +65,8 @@ func (operation *Operation) AddParameter(p *Parameter) {
 func (operation *Operation) AddResponse(status int, response *Response) {
 	responses := operation.Responses
 	if responses == nil {
-		operation.Responses = NewResponses()
+		responses = NewResponses()
+		operation.Responses = responses
 	}
 	if status == 0 {
 		responses["default"] = &ResponseRef{
