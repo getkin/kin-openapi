@@ -232,9 +232,11 @@ components:
   parameters:
     testParam:
       name: test
-      in: path
+      in: query
+      schema:
+        type: string
 paths:
-  '/{test}':
+  '/':
     parameters:
       - $ref: '#/components/parameters/testParam'
     get:
@@ -247,5 +249,5 @@ paths:
 	swagger, err := loader.LoadSwaggerFromYAMLData(spec)
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/{test}"].Parameters[0].Value)
+	require.NotNil(t, swagger.Paths["/"].Parameters[0].Value)
 }
