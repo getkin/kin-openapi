@@ -1,54 +1,41 @@
 [![Build Status](https://travis-ci.com/getkin/kin-openapi.svg?branch=master)](https://travis-ci.com/getkin/kin-openapi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/getkin/kin-openapi)](https://goreportcard.com/report/github.com/getkin/kin-openapi)
 [![GoDoc](https://godoc.org/github.com/getkin/kin-openapi?status.svg)](https://godoc.org/github.com/getkin/kin-openapi)
+[![Join Gitter Chat Channel -](https://badges.gitter.im/getkin/kin.svg)](https://gitter.im/getkin/kin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# Overview
-This library provides packages for dealing with OpenAPI specifications.
+# Introduction
+A [Go](https://golang.org) project for handling [OpenAPI](https://www.openapis.org/) files. We target the latest OpenAPI version (currently 3), but the project contains support for older OpenAPI versions too.
 
-## Status
-### Current
-  * [X] Reads and writes [OpenAPI version 3.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/README.md)
-  * [X] Reads and writes [OpenAPI version 2.0 documents](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md) and converts 2.0 -> 3.0 and 3.0->2.0.
-    * Does NOT support all features.
-  * [X] Validates:
-    * [X] That a Go value matches [OpenAPI 3.0 schema object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#schemaObject)
-    * [X] That HTTP request matches [OpenAPI operation object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#operationObject)
-    * [X] That HTTP response matches OpenAPI 3.0 operation object
-  * [X] Generates JSON schemas for Go types.
+Licensed under the [MIT License](LICENSE).
 
-### TODO
-  * [ ] More tests
+## Contributors and users
+The project has received pull requests from many people. Thanks to everyone!
 
-## Dependencies
-  * Go 1.7 or greater.
-  * No other dependencies!
+Here's some projects that depend on _kin-openapi_:
+  * [github.com/getkin/kin](https://github.com/getkin/kin) - "A configurable backend"
+  * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
+  * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
-## License
-  * [MIT License](LICENSE)
-
-## Alternatives
+## Alternative projects
   * [go-openapi](https://github.com/go-openapi)
-    * Provides a stable and well-tested implementation of OpenAPI version 2.
+    * Supports OpenAPI version 2.
   * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
 
-# Packages
-  * `jsoninfo`
-    * Provides information and functions for marshalling/unmarshalling JSON. The purpose is a clutter-free implementation of JSON references and OpenAPI extension properties.
-  * `openapi2`
-    * Parses/writes OpenAPI 2.
-  * `openapi2conv`
-    * Converts OpenAPI 2 specification into OpenAPI 3 specification.
-  * `openapi3`
-    * Parses/writes OpenAPI 3. Includes OpenAPI schema / JSON schema valdation.
-  * `openapi3filter`
-    * Validates that HTTP request and HTTP response match an OpenAPI specification file.
-  * `openapi3gen`
-    * Generates OpenAPI 3 schemas for Go types.
-  * `pathpattern`
-    * Support for OpenAPI style path patterns.
+# Structure
+  * _openapi2_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2))
+    * Support for OpenAPI 2 files, including serialization, deserialization, and validation.
+  * _openapi2conv_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2conv))
+    * Converts OpenAPI 2 files into OpenAPI 3 files.
+  * _openapi3_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3))
+    * Support for OpenAPI 3 files, including serialization, deserialization, and validation.
+  * _openapi3filter_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3filter))
+    * Validates HTTP requests and responses
+  * _openapi3gen_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3gen))
+    * Generates `*openapi3.Schema` values for Go types.
+  * _pathpattern_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/pathpattern))
+    * Matches strings with OpenAPI path patterns ("/path/{parameter}")
 
-
-# Getting started
+# Some recipes
 ## Loading OpenAPI document
 Use `SwaggerLoader`, which resolves all JSON references:
 ```go
@@ -96,26 +83,4 @@ func ValidateRequest(req *http.Request) {
   })
 }
 
-```
-
-## Having extension properties in your own structs
-The package `jsoninfo` marshals/unmarshal JSON extension properties (`"x-someExtension"`)
-
-Usage looks like:
-```go
-type Example struct {
-  // Allow extension properties ("x-someProperty")
-  openapi3.ExtensionProps
-
-  // Normal properties
-  SomeField float64
-}
-
-func (example *Example) MarshalJSON() ([]byte, error) {
-  return jsoninfo.MarshalStrictStruct(example)
-}
-
-func (example *Example) UnmarshalJSON(data []byte) error {
-  return jsoninfo.UnmarshalStrictStruct(data, example)
-}
 ```
