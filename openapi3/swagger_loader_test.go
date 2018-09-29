@@ -221,3 +221,33 @@ paths:
 	_, err := loader.LoadSwaggerFromYAMLData(spec)
 	require.Error(t, err)
 }
+
+func TestLoadPathParamRef(t *testing.T) {
+	spec := []byte(`
+openapi: '3.0.0'
+info:
+  title: ''
+  version: '1'
+components:
+  parameters:
+    testParam:
+      name: test
+      in: query
+      schema:
+        type: string
+paths:
+  '/':
+    parameters:
+      - $ref: '#/components/parameters/testParam'
+    get:
+      responses:
+        '200':
+          description: Test call.
+`)
+
+	loader := openapi3.NewSwaggerLoader()
+	swagger, err := loader.LoadSwaggerFromYAMLData(spec)
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/"].Parameters[0].Value)
+}

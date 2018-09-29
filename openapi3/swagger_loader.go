@@ -125,6 +125,11 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger) (err error) 
 		if pathItem == nil {
 			continue
 		}
+		for _, parameter := range pathItem.Parameters {
+			if err = swaggerLoader.resolveParameterRef(swagger, parameter); err != nil {
+				return
+			}
+		}
 		for _, operation := range pathItem.Operations() {
 			for _, parameter := range operation.Parameters {
 				if err = swaggerLoader.resolveParameterRef(swagger, parameter); err != nil {
