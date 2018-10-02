@@ -251,3 +251,35 @@ paths:
 
 	require.NotNil(t, swagger.Paths["/"].Parameters[0].Value)
 }
+
+func TestLoadRequestExampleRef(t *testing.T) {
+	spec := []byte(`
+openapi: '3.0.0'
+info:
+  title: ''
+  version: '1'
+components:
+  examples:
+    test:
+      value:
+        hello: world
+paths:
+  '/':
+    post:
+      requestBody:
+        content:
+          application/json:
+            examples:
+              test:
+                $ref: "#/components/examples/test"
+      responses:
+        '200':
+          description: Test call.
+`)
+
+	loader := openapi3.NewSwaggerLoader()
+	swagger, err := loader.LoadSwaggerFromYAMLData(spec)
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
+}
