@@ -296,6 +296,12 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		return nil
 	}
 	for _, contentType := range value.Content {
+		for name, example := range contentType.Examples {
+			if err := swaggerLoader.resolveExampleRef(swagger, example); err != nil {
+				return err
+			}
+			contentType.Examples[name] = example
+		}
 		if schema := contentType.Schema; schema != nil {
 			if err := swaggerLoader.resolveSchemaRef(swagger, schema); err != nil {
 				return err
