@@ -19,7 +19,7 @@ func DefineStringFormat(name string, pattern string) {
 func init() {
 	// This pattern catches only some suspiciously wrong-looking email addresses.
 	// Use DefineStringFormat(...) if you need something stricter.
-	DefineStringFormat("email", `^[^@]+@[^@<>",\w]+$`)
+	DefineStringFormat("email", `^[^@]+@[^@<>",\\w]+$`)
 
 	// Base64
 	// The pattern supports base64 and b./ase64url. Padding ('=') is supported.
