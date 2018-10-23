@@ -468,6 +468,13 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 }
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef) error {
+	// Prevent infinite recursion
+	visited := swaggerLoader.visited
+	if _, isVisited := visited[component]; isVisited {
+		return nil
+	}
+	visited[component] = struct{}{}
+
 	const prefix = "#/components/examples/"
 	if ref := component.Ref; len(ref) > 0 {
 		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix)
