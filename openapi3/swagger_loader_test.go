@@ -288,6 +288,40 @@ paths:
 	require.NotNil(t, swagger.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
 }
 
+func createTestServer(address string, handler http.Handler) *httptest.Server {
+	ts := httptest.NewUnstartedServer(handler)
+	l, _ := net.Listen("tcp", address)
+	ts.Listener.Close()
+	ts.Listener = l
+	return ts
+}
+func TestLoadFromRemoteURL(t *testing.T) {
+
+	fs := http.FileServer(http.Dir("testdata"))
+	ts := createTestServer("localhost:3000", fs)
+	ts.Start()
+	defer ts.Close()
+
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	url, err := url.Parse("http://localhost:3000/test.openapi.json")
+	require.NoError(t, err)
+
+	swagger, err := loader.LoadSwaggerFromURI(url)
+	require.NoError(t, err)
+
+	require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
+}
+
+func TestLoadFileWithExternalSchemaRef(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testfiles/test.openapi.json")
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Components.Schemas["test"].Value.Type)
+}
+
 func TestLoadRequestResponseHeaderRef(t *testing.T) {
 	spec := []byte(`
 {
@@ -327,29 +361,4 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
 
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 	require.Equal(t, "testheader", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
-}
-
-func createTestServer(address string, handler http.Handler) *httptest.Server {
-	ts := httptest.NewUnstartedServer(handler)
-	l, _ := net.Listen("tcp", address)
-	ts.Listener.Close()
-	ts.Listener = l
-	return ts
-}
-func TestLoadFromRemoteURL(t *testing.T) {
-
-	fs := http.FileServer(http.Dir("testdata"))
-	ts := createTestServer("localhost:3000", fs)
-	ts.Start()
-	defer ts.Close()
-
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
-	url, err := url.Parse("http://localhost:3000/test.openapi.json")
-	require.NoError(t, err)
-
-	swagger, err := loader.LoadSwaggerFromURI(url)
-	require.NoError(t, err)
-
-	require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
 }
