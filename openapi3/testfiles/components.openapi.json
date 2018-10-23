@@ -36,6 +36,12 @@
             "CustomTestHeader": {
                 "description": "description"
             }
+        },
+        "securitySchemes": {
+            "CustomTestSecurityScheme": {
+                "type": "cookie",
+                "description": "description"
+            }
         }
     }
 }

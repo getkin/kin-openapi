@@ -143,7 +143,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 		}
 	}
 	for _, component := range components.SecuritySchemes {
-		if err = swaggerLoader.resolveSecuritySchemeRef(swagger, component); err != nil {
+		if err = swaggerLoader.resolveSecuritySchemeRef(swagger, component, path); err != nil {
 			return
 		}
 	}
@@ -497,7 +497,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef) error {
+func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
 	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
@@ -508,7 +508,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	// Resolve ref
 	const prefix = "#/components/securitySchemes/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, nil)
+		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -520,7 +520,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved); err != nil {
+		if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved, path); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
