@@ -26,6 +26,11 @@
             "CustomTestExample": {
                 "description": "description"
             }
+        },
+        "requestBodies": {
+            "CustomTestRequestBody": {
+                "content": {}
+            }
         }
     }
 }

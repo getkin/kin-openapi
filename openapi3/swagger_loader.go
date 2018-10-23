@@ -128,7 +128,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 		}
 	}
 	for _, component := range components.RequestBodies {
-		if err = swaggerLoader.resolveRequestBodyRef(swagger, component); err != nil {
+		if err = swaggerLoader.resolveRequestBodyRef(swagger, component, path); err != nil {
 			return
 		}
 	}
@@ -172,7 +172,8 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 				}
 			}
 			if requestBody := operation.RequestBody; requestBody != nil {
-				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody); err != nil {
+				// TODO
+				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
 					return
 				}
 			}
@@ -313,7 +314,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef) error {
+func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, path *url.URL) error {
 	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
@@ -325,7 +326,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	const prefix = "#/components/requestBodies/"
 	if ref := component.Ref; len(ref) > 0 {
 		// TODO
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, nil)
+		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -337,7 +338,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved); err != nil {
+		if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved, path); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
