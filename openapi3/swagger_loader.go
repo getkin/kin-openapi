@@ -118,7 +118,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	// Visit all components
 	components := swagger.Components
 	for _, component := range components.Headers {
-		if err = swaggerLoader.resolveHeaderRef(swagger, component); err != nil {
+		if err = swaggerLoader.resolveHeaderRef(swagger, component, path); err != nil {
 			return
 		}
 	}
@@ -230,7 +230,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	return &swagger.Components, id, nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef) error {
+func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
 	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
@@ -241,8 +241,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	// Resolve ref
 	const prefix = "#/components/headers/"
 	if ref := component.Ref; len(ref) > 0 {
-		// TODO
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, nil)
+		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -254,7 +253,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		if resolved == nil {
 			return failedToResolveRefFragment(ref)
 		}
-		if err := swaggerLoader.resolveHeaderRef(swagger, resolved); err != nil {
+		if err := swaggerLoader.resolveHeaderRef(swagger, resolved, path); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
