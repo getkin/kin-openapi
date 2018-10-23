@@ -1,0 +1,26 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {},
+    "components": {
+        "schemas": {
+            "CustomTestSchema": {
+                "type": "string"
+            }
+        },
+        "responses": {
+            "CustomTestResponse": {
+                "description": "description"
+            }
+        },
+        "parameters": {
+            "CustomTestParameter": {
+                "name": "id",
+                "in": "header"
+            }
+        }
+    }
+}

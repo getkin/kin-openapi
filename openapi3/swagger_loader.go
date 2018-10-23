@@ -123,7 +123,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 		}
 	}
 	for _, component := range components.Parameters {
-		if err = swaggerLoader.resolveParameterRef(swagger, component); err != nil {
+		if err = swaggerLoader.resolveParameterRef(swagger, component, path); err != nil {
 			return
 		}
 	}
@@ -159,13 +159,15 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 			continue
 		}
 		for _, parameter := range pathItem.Parameters {
-			if err = swaggerLoader.resolveParameterRef(swagger, parameter); err != nil {
+			// TODO
+			if err = swaggerLoader.resolveParameterRef(swagger, parameter, nil); err != nil {
 				return
 			}
 		}
 		for _, operation := range pathItem.Operations() {
 			for _, parameter := range operation.Parameters {
-				if err = swaggerLoader.resolveParameterRef(swagger, parameter); err != nil {
+				// TODO
+				if err = swaggerLoader.resolveParameterRef(swagger, parameter, nil); err != nil {
 					return
 				}
 			}
@@ -269,7 +271,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef) error {
+func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, path *url.URL) error {
 	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
@@ -281,7 +283,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	const prefix = "#/components/parameters/"
 	if ref := component.Ref; len(ref) > 0 {
 		// TODO
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, nil)
+		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -293,7 +295,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveParameterRef(swagger, resolved); err != nil {
+		if err := swaggerLoader.resolveParameterRef(swagger, resolved, path); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
