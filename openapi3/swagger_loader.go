@@ -175,8 +175,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 				}
 			}
 			for _, response := range operation.Responses {
-				// TODO
-				if err = swaggerLoader.resolveResponseRef(swagger, response, nil); err != nil {
+				if err = swaggerLoader.resolveResponseRef(swagger, response, path); err != nil {
 					return
 				}
 			}
