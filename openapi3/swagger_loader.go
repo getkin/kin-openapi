@@ -170,7 +170,6 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 				}
 			}
 			if requestBody := operation.RequestBody; requestBody != nil {
-				// TODO
 				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
 					return
 				}

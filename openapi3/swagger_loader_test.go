@@ -592,3 +592,30 @@ func TestLoadFromDataWithPathOperationParameterRef(t *testing.T) {
 
 	require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value)
 }
+
+func TestLoadFromDataWithPathOperationReqestBodyRef(t *testing.T) {
+	spec := []byte(`
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+      "/test": {
+        "post": {
+          "responses": {},
+          "requestBody": {
+              "$ref": "components.openapi.json#/components/requestBodies/CustomTestRequestBody"
+          }
+        }
+      }
+    }
+}`)
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value)
+}
