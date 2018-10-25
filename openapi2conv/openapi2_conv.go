@@ -28,8 +28,13 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 		}
 		basePath := swagger.BasePath
 		for _, scheme := range schemes {
+			u := url.URL{
+				Scheme: scheme,
+				Host:   host,
+				Path:   basePath,
+			}
 			result.AddServer(&openapi3.Server{
-				URL: scheme + host + basePath,
+				URL: u.String(),
 			})
 		}
 	}
@@ -374,6 +379,8 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 		return nil, nil
 	}
 	result := &openapi2.Operation{
+		OperationID: operation.OperationID,
+		Summary:     operation.Summary,
 		Description: operation.Description,
 		Tags:        operation.Tags,
 	}
