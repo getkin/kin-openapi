@@ -398,7 +398,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		return nil
 	}
 	for _, header := range value.Headers {
-		if err := swaggerLoader.resolveHeaderRef(swagger, header); err != nil {
+		if err := swaggerLoader.resolveHeaderRef(swagger, header, nil); err != nil {
 			return err
 		}
 	}
