@@ -159,8 +159,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 			continue
 		}
 		for _, parameter := range pathItem.Parameters {
-			// TODO
-			if err = swaggerLoader.resolveParameterRef(swagger, parameter, nil); err != nil {
+			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
 				return
 			}
 		}

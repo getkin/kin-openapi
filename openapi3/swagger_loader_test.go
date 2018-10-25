@@ -537,3 +537,29 @@ func TestLoadFromDataWithExternalHeaderRef(t *testing.T) {
 
 	require.NotNil(t, swagger.Components.Headers["TestHeader"].Value.Description)
 }
+
+func TestLoadFromDataWithPathParameterRef(t *testing.T) {
+	spec := []byte(`
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+      "/test/{id}": {
+        "parameters": [
+          {
+            "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+          }
+        ]
+      }
+    }
+}`)
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/test/{id}"].Parameters[0].Value)
+}
