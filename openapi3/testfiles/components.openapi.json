@@ -7,40 +7,62 @@
     "paths": {},
     "components": {
         "schemas": {
-            "CustomTestSchema": {
+            "Name": {
                 "type": "string"
+            },
+            "CustomTestSchema": {
+                "$ref": "#/components/schemas/Name"
             }
         },
         "responses": {
-            "CustomTestResponse": {
+            "Name": {
                 "description": "description"
+            },
+            "CustomTestResponse": {
+                "$ref": "#/components/responses/Name"
             }
         },
         "parameters": {
-            "CustomTestParameter": {
+            "Name": {
                 "name": "id",
                 "in": "header"
+            },
+            "CustomTestParameter": {
+                "$ref": "#/components/parameters/Name"
             }
         },
         "examples": {
-            "CustomTestExample": {
+            "Name": {
                 "description": "description"
+            },
+            "CustomTestExample": {
+                "$ref": "#/components/examples/Name"
             }
         },
         "requestBodies": {
-            "CustomTestRequestBody": {
+            "Name": {
                 "content": {}
+            },
+            "CustomTestRequestBody": {
+                "$ref": "#/components/requestBodies/Name"
             }
         },
         "headers": {
-            "CustomTestHeader": {
+            "Name": {
                 "description": "description"
+            },
+            "CustomTestHeader": {
+                "$ref": "#/components/headers/Name"
             }
         },
         "securitySchemes": {
-            "CustomTestSecurityScheme": {
+            "Name": {
                 "type": "cookie",
                 "description": "description"
+            },
+            "CustomTestSecurityScheme": {
+                "$ref": "#/components/securitySchemes/Name"
+
             }
         }
     }
