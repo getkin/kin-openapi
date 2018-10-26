@@ -343,6 +343,11 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	if value == nil {
 		return nil
 	}
+	for _, header := range value.Headers {
+		if err := swaggerLoader.resolveHeaderRef(swagger, header); err != nil {
+			return err
+		}
+	}
 	for _, contentType := range value.Content {
 		if contentType == nil {
 			continue

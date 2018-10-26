@@ -283,3 +283,44 @@ paths:
 
 	require.NotNil(t, swagger.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
 }
+
+func TestLoadRequestResponseHeaderRef(t *testing.T) {
+	spec := []byte(`
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+      "/test": {
+        "post": {
+          "responses": {
+            "default": {
+              "description": "test",
+              "headers": {
+                "X-TEST-HEADER": {
+                  "$ref": "#/components/headers/TestHeader"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "headers": {
+        "TestHeader": {
+          "description": "testheader"
+        }
+      }
+    }
+}`)
+
+	loader := openapi3.NewSwaggerLoader()
+	swagger, err := loader.LoadSwaggerFromData(spec)
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.Equal(t, "testheader", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+}
