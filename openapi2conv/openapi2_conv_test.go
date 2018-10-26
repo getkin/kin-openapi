@@ -37,12 +37,17 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 const exampleV2 = `
 {
   "info": {},
+  "schemas": ["https"],
+  "host": "test.example.com",
+  "basePath": "/v2",
   "paths": {
     "/example": {
       "delete": {
         "description": "example delete"
       },
       "get": {
+        "operationId": "example-get",
+        "summary": "example get",
         "description": "example get",
         "parameters": [
           {
@@ -107,12 +112,19 @@ const exampleV3 = `
   "openapi": "3.0",
   "info": {},
   "components": {},
+  "servers": [
+    {
+      "url": "https://test.example.com/v2"
+    }
+  ],
   "paths": {
     "/example": {
       "delete": {
         "description": "example delete"
       },
       "get": {
+        "operationId": "example-get",
+        "summary": "example get",
         "description": "example get",
         "parameters": [
           {
