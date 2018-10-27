@@ -318,7 +318,6 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	// Resolve ref
 	const prefix = "#/components/requestBodies/"
 	if ref := component.Ref; len(ref) > 0 {
-		// TODO
 		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
@@ -342,8 +341,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	}
 	for _, contentType := range value.Content {
 		for name, example := range contentType.Examples {
-			// TODO
-			if err := swaggerLoader.resolveExampleRef(swagger, example, nil); err != nil {
+			if err := swaggerLoader.resolveExampleRef(swagger, example, path); err != nil {
 				return err
 			}
 			contentType.Examples[name] = example
