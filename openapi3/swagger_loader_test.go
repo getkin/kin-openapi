@@ -730,3 +730,43 @@ func TestLoadFromDataWithPathOperationReqestBodyContentExampleRef(t *testing.T) 
 
 	require.Equal(t, "description", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
 }
+
+func TestLoadFromDataWithPathOperationReqestBodyContentSchemaRef(t *testing.T) {
+	spec := []byte(`
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "responses": {},
+                "requestBody": {
+                    "$ref": "#/components/requestBodies/CustomTestRequestBody"
+                }
+            }
+        }
+    },
+    "components": {
+        "requestBodies": {
+            "CustomTestRequestBody": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}`)
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	require.NoError(t, err)
+
+	require.Equal(t, "string", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+}
