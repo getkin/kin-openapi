@@ -278,7 +278,6 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	// Resolve ref
 	const prefix = "#/components/parameters/"
 	if ref := component.Ref; len(ref) > 0 {
-		// TODO
 		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
@@ -301,8 +300,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		return nil
 	}
 	if schema := value.Schema; schema != nil {
-		// TODO
-		if err := swaggerLoader.resolveSchemaRef(swagger, schema, nil); err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
 			return err
 		}
 	}
