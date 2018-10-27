@@ -259,8 +259,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		return nil
 	}
 	if schema := value.Schema; schema != nil {
-		// TODO
-		if err := swaggerLoader.resolveSchemaRef(swagger, schema, nil); err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
 			return err
 		}
 	}
