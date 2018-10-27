@@ -403,8 +403,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 			contentType.Examples[name] = example
 		}
 		if schema := contentType.Schema; schema != nil {
-			// TODO
-			if err := swaggerLoader.resolveSchemaRef(swagger, schema, nil); err != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
 				return err
 			}
 			contentType.Schema = schema
