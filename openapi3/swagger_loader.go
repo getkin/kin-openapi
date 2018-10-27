@@ -366,7 +366,6 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	// Resolve ref
 	const prefix = "#/components/responses/"
 	if ref := component.Ref; len(ref) > 0 {
-		// TODO
 		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
@@ -398,8 +397,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 			continue
 		}
 		for name, example := range contentType.Examples {
-			// TODO
-			if err := swaggerLoader.resolveExampleRef(swagger, example, nil); err != nil {
+			if err := swaggerLoader.resolveExampleRef(swagger, example, path); err != nil {
 				return err
 			}
 			contentType.Examples[name] = example
