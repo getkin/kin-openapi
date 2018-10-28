@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -39,14 +40,30 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 	if f != nil {
 		return f(swaggerLoader, location)
 	}
+	data, err := readUrl(location)
+	if err != nil {
+		return nil, err
+	}
+	return swaggerLoader.LoadSwaggerFromData(data)
+}
+
+func readUrl(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
-		return nil, fmt.Errorf("Unsupported URI: '%s'", location.String())
+		resp, err := http.Get(location.String())
+		if err != nil {
+			return nil, err
+		}
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return data, nil
 	}
 	data, err := ioutil.ReadFile(location.Path)
 	if err != nil {
 		return nil, err
 	}
-	return swaggerLoader.LoadSwaggerFromData(data)
+	return data, nil
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
