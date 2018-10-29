@@ -48,16 +48,20 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 }
 
 func readUrl(location *url.URL) ([]byte, error) {
-	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
+	if location.Scheme != "" && location.Host != "" {
 		resp, err := http.Get(location.String())
 		if err != nil {
 			return nil, err
 		}
 		data, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
 		if err != nil {
 			return nil, err
 		}
 		return data, nil
+	}
+	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
+		return nil, fmt.Errorf("Unsupported URI: '%s'", location.String())
 	}
 	data, err := ioutil.ReadFile(location.Path)
 	if err != nil {

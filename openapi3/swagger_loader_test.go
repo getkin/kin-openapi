@@ -338,7 +338,7 @@ func createTestServer(address string, handler http.Handler) *httptest.Server {
 }
 func TestLoadFromRemoteURL(t *testing.T) {
 
-	fs := http.FileServer(http.Dir("testfiles"))
+	fs := http.FileServer(http.Dir("testdata"))
 	ts := createTestServer("localhost:3000", fs)
 	ts.Start()
 	defer ts.Close()
