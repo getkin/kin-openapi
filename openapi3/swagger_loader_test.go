@@ -547,13 +547,13 @@ func TestLoadFromDataWithPathParameterRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test/{id}": {
-        "parameters": [
-          {
-            "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
-          }
-        ]
-      }
+        "/test/{id}": {
+            "parameters": [
+                {
+                    "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+                }
+            ]
+        }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -573,16 +573,16 @@ func TestLoadFromDataWithPathOperationParameterRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test/{id}": {
-        "get": {
-          "responses": {},
-          "parameters": [
-            {
-              "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+        "/test/{id}": {
+            "get": {
+                "responses": {},
+                "parameters": [
+                    {
+                        "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+                    }
+                ]
             }
-          ]
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -602,14 +602,14 @@ func TestLoadFromDataWithPathOperationReqestBodyRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test": {
-        "post": {
-          "responses": {},
-          "requestBody": {
-              "$ref": "components.openapi.json#/components/requestBodies/CustomTestRequestBody"
-          }
+        "/test": {
+            "post": {
+                "responses": {},
+                "requestBody": {
+                    "$ref": "components.openapi.json#/components/requestBodies/CustomTestRequestBody"
+                }
+            }
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -629,15 +629,15 @@ func TestLoadFromDataWithPathOperationResponseRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test": {
-        "post": {
-          "responses": {
-            "default": {
-              "$ref": "components.openapi.json#/components/responses/CustomTestResponse"
+        "/test": {
+            "post": {
+                "responses": {
+                    "default": {
+                        "$ref": "components.openapi.json#/components/responses/CustomTestResponse"
+                    }
+                }
             }
-          }
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -657,27 +657,27 @@ func TestLoadFromDataWithPathOperationParameterSchemaRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test/{id}": {
-        "get": {
-          "responses": {},
-          "parameters": [
-            {
-              "$ref": "#/components/parameters/CustomTestParameter"
+        "/test/{id}": {
+            "get": {
+                "responses": {},
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/CustomTestParameter"
+                    }
+                ]
             }
-          ]
         }
-      }
     },
     "components": {
-      "parameters": {
-        "CustomTestParameter": {
-          "name": "id",
-          "in": "header",
-          "schema": {
-            "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
-          }
+        "parameters": {
+            "CustomTestParameter": {
+                "name": "id",
+                "in": "header",
+                "schema": {
+                    "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                }
+            }
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -780,31 +780,31 @@ func TestLoadFromDataWithPathOperationResponseExampleRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test": {
-        "post": {
-          "responses": {
-            "default": {
-              "$ref": "#/components/responses/CustomTestResponse"
+        "/test": {
+            "post": {
+                "responses": {
+                    "default": {
+                        "$ref": "#/components/responses/CustomTestResponse"
+                    }
+                }
             }
-          }
         }
-      }
     },
     "components": {
-      "responses": {
-        "CustomTestResponse": {
-          "description": "testdescription",
-          "content": {
-            "application/json": {
-              "examples": {
-                "application/json": {
-                  "$ref": "components.openapi.json#/components/examples/CustomTestExample"
+        "responses": {
+            "CustomTestResponse": {
+                "description": "testdescription",
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            "application/json": {
+                                "$ref": "components.openapi.json#/components/examples/CustomTestExample"
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -825,29 +825,29 @@ func TestLoadFromDataWithPathOperationResponseSchemaRef(t *testing.T) {
         "version": "1"
     },
     "paths": {
-      "/test": {
-        "post": {
-          "responses": {
-            "default": {
-              "$ref": "#/components/responses/CustomTestResponse"
+        "/test": {
+            "post": {
+                "responses": {
+                    "default": {
+                        "$ref": "#/components/responses/CustomTestResponse"
+                    }
+                }
             }
-          }
         }
-      }
     },
     "components": {
-      "responses": {
-        "CustomTestResponse": {
-          "description": "testdescription",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
-              }
+        "responses": {
+            "CustomTestResponse": {
+                "description": "testdescription",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
@@ -869,18 +869,18 @@ func TestLoadFromDataWithComponentHeaderSchemaRef(t *testing.T) {
     },
     "paths": {},
     "components": {
-      "headers": {
-        "TestHeader": {
-          "$ref": "#/components/headers/CustomTestHeader"
-        },
-        "CustomTestHeader": {
-          "name": "X-TEST-HEADER",
-          "in": "header",
-          "schema": {
-            "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
-          }
+        "headers": {
+            "TestHeader": {
+                "$ref": "#/components/headers/CustomTestHeader"
+            },
+            "CustomTestHeader": {
+                "name": "X-TEST-HEADER",
+                "in": "header",
+                "schema": {
+                    "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                }
+            }
         }
-      }
     }
 }`)
 	loader := openapi3.NewSwaggerLoader()
