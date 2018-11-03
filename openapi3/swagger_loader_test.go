@@ -890,3 +890,38 @@ func TestLoadFromDataWithComponentHeaderSchemaRef(t *testing.T) {
 
 	require.Equal(t, "string", swagger.Components.Headers["TestHeader"].Value.Schema.Value.Type)
 }
+
+func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
+	spec := []byte(`
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "responses": {
+                    "default": {
+                        "description": "test",
+                        "headers": {
+                            "X-TEST-HEADER": {
+                                "$ref": "components.openapi.json#/components/headers/CustomTestHeader"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}`)
+
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+}
