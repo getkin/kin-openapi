@@ -7,7 +7,7 @@
     "paths": {},
     "components": {
         "schemas": {
-            "TestSchema": {
+            "AnotherTestSchema": {
                 "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
             }
         }

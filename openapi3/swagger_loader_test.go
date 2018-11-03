@@ -316,10 +316,10 @@ func TestLoadFromRemoteURL(t *testing.T) {
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testfiles/test.openapi.json")
+	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
+	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
 
 func TestLoadFromDataWithExternalSchemaRef(t *testing.T) {
@@ -341,7 +341,7 @@ func TestLoadFromDataWithExternalSchemaRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
@@ -366,7 +366,7 @@ func TestLoadFromDataWithExternalResponseRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Responses["TestResponse"].Value.Description)
@@ -432,7 +432,7 @@ func TestLoadFromDataWithExternalParameterRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Parameters["TestParameter"].Value.Name)
@@ -457,7 +457,7 @@ func TestLoadFromDataWithExternalExampleRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Examples["TestExample"].Value.Description)
@@ -482,7 +482,7 @@ func TestLoadFromDataWithExternalRequestBodyRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.RequestBodies["TestRequestBody"].Value.Content)
@@ -507,7 +507,7 @@ func TestLoadFromDataWithExternalSecuritySchemeRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
@@ -532,7 +532,7 @@ func TestLoadFromDataWithExternalHeaderRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Headers["TestHeader"].Value.Description)
@@ -558,7 +558,7 @@ func TestLoadFromDataWithPathParameterRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test/{id}"].Parameters[0].Value)
@@ -587,7 +587,7 @@ func TestLoadFromDataWithPathOperationParameterRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value)
@@ -614,7 +614,7 @@ func TestLoadFromDataWithPathOperationReqestBodyRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value)
@@ -642,7 +642,7 @@ func TestLoadFromDataWithPathOperationResponseRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
@@ -682,7 +682,7 @@ func TestLoadFromDataWithPathOperationParameterSchemaRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
@@ -725,7 +725,7 @@ func TestLoadFromDataWithPathOperationReqestBodyContentExampleRef(t *testing.T) 
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.Equal(t, "description", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
@@ -765,7 +765,7 @@ func TestLoadFromDataWithPathOperationReqestBodyContentSchemaRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.Equal(t, "string", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
@@ -809,7 +809,7 @@ func TestLoadFromDataWithPathOperationResponseExampleRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -852,7 +852,7 @@ func TestLoadFromDataWithPathOperationResponseSchemaRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -885,7 +885,7 @@ func TestLoadFromDataWithComponentHeaderSchemaRef(t *testing.T) {
 }`)
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.Equal(t, "string", swagger.Components.Headers["TestHeader"].Value.Schema.Value.Type)
@@ -919,7 +919,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
 
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testfiles/test.openapi.json"})
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
