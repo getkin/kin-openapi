@@ -925,3 +925,61 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 }
+
+func TestLoadRemoteURL(t *testing.T) {
+
+	fs := http.FileServer(http.Dir("testdata"))
+	ts := createTestServer("localhost:3000", fs)
+	ts.Start()
+	defer ts.Close()
+
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	url, err := url.Parse("http://localhost:3000/test.openapi.json")
+	require.NoError(t, err)
+
+	swagger, err := loader.LoadSwaggerFromURI(url)
+	require.NoError(t, err)
+
+	require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
+}
+
+func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
+	spec := []byte(`
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "responses": {
+                    "default": {
+                        "description": "test",
+                        "headers": {
+                            "X-TEST-HEADER": {
+                                "$ref": "http://localhost:3000/components.openapi.json#/components/headers/CustomTestHeader"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}`)
+
+	fs := http.FileServer(http.Dir("testdata"))
+	ts := createTestServer("localhost:3000", fs)
+	ts.Start()
+	defer ts.Close()
+
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+}

@@ -111,7 +111,6 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromYAMLData(data []byte) (*Swagg
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
 }
 
-// TODO: Find better way to handle it
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
 	swaggerLoader.visited = make(map[interface{}]struct{})
 
@@ -209,7 +208,12 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 		}
 		fragment := parsedURL.Fragment
 		parsedURL.Fragment = ""
-		fullURL := join(path, parsedURL)
+
+		fullURL := parsedURL
+		if fullURL.Scheme == "" && fullURL.Host == "" {
+			fullURL = join(path, parsedURL)
+		}
+
 		if swagger, err = swaggerLoader.LoadSwaggerFromURI(fullURL); err != nil {
 			return nil, "", fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
