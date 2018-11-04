@@ -24,7 +24,7 @@ func TestRefsJSON(t *testing.T) {
 	require.NotEmpty(t, data)
 
 	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
-	err = loader.ResolveRefsIn(docA)
+	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
 	t.Log("Resolve refs in marshalled *openapi3.Swagger")
 	docB, err := loader.LoadSwaggerFromData(data)
@@ -62,7 +62,7 @@ func TestRefsYAML(t *testing.T) {
 	require.NotEmpty(t, data)
 
 	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
-	err = loader.ResolveRefsIn(docA)
+	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
 	t.Log("Resolve refs in marshalled *openapi3.Swagger")
 	docB, err := loader.LoadSwaggerFromYAMLData(data)
