@@ -322,8 +322,7 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
 
-func TestLoadFromDataWithExternalSchemaRef(t *testing.T) {
-	spec := []byte(`
+const externalSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -334,21 +333,192 @@ func TestLoadFromDataWithExternalSchemaRef(t *testing.T) {
     "components": {
         "schemas": {
             "TestSchema": {
-                "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                "$ref": "%s#/components/schemas/CustomTestSchema"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalSchemaRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalSchemaRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
+	require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
 }
 
-func TestLoadFromDataWithExternalResponseRef(t *testing.T) {
-	spec := []byte(`
+func TestLoadFromDataWithExternalRef(t *testing.T) {
+	type refTestData struct {
+		name            string
+		contentTemplate string
+		testFunc        func(t *testing.T, swagger *openapi3.Swagger)
+	}
+
+	testData := []refTestData{
+		{
+			name:            "SchemaRef",
+			contentTemplate: externalSchemaRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
+				require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
+			},
+		},
+		{
+			name:            "ResponseRef",
+			contentTemplate: externalResponseRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.Responses["TestResponse"].Value.Description)
+				require.Equal(t, "description", swagger.Components.Responses["TestResponse"].Value.Description)
+			},
+		},
+		{
+			name:            "ParameterRef",
+			contentTemplate: externalParameterRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.Parameters["TestParameter"].Value.Name)
+				require.Equal(t, "id", swagger.Components.Parameters["TestParameter"].Value.Name)
+			},
+		},
+		{
+			name:            "ExampleRef",
+			contentTemplate: externalExampleRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.Examples["TestExample"].Value.Description)
+				require.Equal(t, "description", swagger.Components.Examples["TestExample"].Value.Description)
+			},
+		},
+		{
+			name:            "RequestBodyRef",
+			contentTemplate: externalRequestBodyRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.RequestBodies["TestRequestBody"].Value.Content)
+			},
+		},
+		{
+			name:            "SecuritySchemeRef",
+			contentTemplate: externalSecuritySchemeRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
+				require.Equal(t, "description", swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
+			},
+		},
+		{
+			name:            "ExternalHeaderRef",
+			contentTemplate: externalHeaderRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.Headers["TestHeader"].Value.Description)
+				require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
+			},
+		},
+		{
+			name:            "PathParameterRef",
+			contentTemplate: externalPathParameterRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test/{id}"].Parameters[0].Value.Name)
+				require.Equal(t, "id", swagger.Paths["/test/{id}"].Parameters[0].Value.Name)
+			},
+		},
+		{
+			name:            "PathOperationParameterRef",
+			contentTemplate: externalPathOperationParameterRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value)
+				require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
+			},
+		},
+		{
+			name:            "PathOperationRequestBodyRef",
+			contentTemplate: externalPathOperationRequestBodyRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value)
+				require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content)
+			},
+		},
+		{
+			name:            "PathOperationResponseRef",
+			contentTemplate: externalPathOperationResponseRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
+				require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+			},
+		},
+		{
+			name:            "PathOperationParameterSchemaRef",
+			contentTemplate: externalPathOperationParameterSchemaRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value)
+				require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
+				require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
+			},
+		},
+		{
+			name:            "PathOperationRequestBodyExampleRef",
+			contentTemplate: externalPathOperationRequestBodyExampleRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value)
+				require.Equal(t, "description", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
+			},
+		},
+		{
+			name:            "PathOperationReqestBodyContentSchemaRef",
+			contentTemplate: externalPathOperationReqestBodyContentSchemaRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value)
+				require.Equal(t, "string", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+			},
+		},
+		{
+			name:            "PathOperationResponseExampleRef",
+			contentTemplate: externalPathOperationResponseExampleRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
+				require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+				require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Examples["application/json"].Value.Description)
+			},
+		},
+		{
+			name:            "PathOperationResponseSchemaRef",
+			contentTemplate: externalPathOperationResponseSchemaRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
+				require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+				require.Equal(t, "string", swagger.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Schema.Value.Type)
+			},
+		},
+		{
+			name:            "ComponentHeaderSchemaRef",
+			contentTemplate: externalComponentHeaderSchemaRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Components.Headers["TestHeader"].Value)
+				require.Equal(t, "string", swagger.Components.Headers["TestHeader"].Value.Schema.Value.Type)
+			},
+		},
+		{
+			name:            "RequestResponseHeaderRef",
+			contentTemplate: externalRequestResponseHeaderRefTemplate,
+			testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+				require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+				require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+			},
+		},
+	}
+
+	for _, td := range testData {
+		t.Logf("testcase '%s'", td.name)
+
+		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
+		loader := openapi3.NewSwaggerLoader()
+		loader.IsExternalRefsAllowed = true
+		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+		require.NoError(t, err)
+		td.testFunc(t, swagger)
+	}
+}
+
+const externalResponseRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -359,17 +529,22 @@ func TestLoadFromDataWithExternalResponseRef(t *testing.T) {
     "components": {
         "responses": {
             "TestResponse": {
-                "$ref": "components.openapi.json#/components/responses/CustomTestResponse"
+                "$ref": "%s#/components/responses/CustomTestResponse"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalResponseRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalResponseRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Responses["TestResponse"].Value.Description)
+	require.Equal(t, "description", swagger.Components.Responses["TestResponse"].Value.Description)
+
 }
 
 func TestLoadRequestResponseHeaderRef(t *testing.T) {
@@ -413,8 +588,7 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
 	require.Equal(t, "testheader", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 }
 
-func TestLoadFromDataWithExternalParameterRef(t *testing.T) {
-	spec := []byte(`
+const externalParameterRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -425,21 +599,25 @@ func TestLoadFromDataWithExternalParameterRef(t *testing.T) {
     "components": {
         "parameters": {
             "TestParameter": {
-                "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+                "$ref": "%s#/components/parameters/CustomTestParameter"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalParameterRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalParameterRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Parameters["TestParameter"].Value.Name)
+	require.Equal(t, "id", swagger.Components.Parameters["TestParameter"].Value.Name)
+
 }
 
-func TestLoadFromDataWithExternalExampleRef(t *testing.T) {
-	spec := []byte(`
+const externalExampleRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -450,21 +628,25 @@ func TestLoadFromDataWithExternalExampleRef(t *testing.T) {
     "components": {
         "examples": {
             "TestExample": {
-                "$ref": "components.openapi.json#/components/examples/CustomTestExample"
+                "$ref": "%s#/components/examples/CustomTestExample"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalExampleRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalExampleRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Examples["TestExample"].Value.Description)
+	require.Equal(t, "description", swagger.Components.Examples["TestExample"].Value.Description)
+
 }
 
-func TestLoadFromDataWithExternalRequestBodyRef(t *testing.T) {
-	spec := []byte(`
+const externalRequestBodyRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -475,11 +657,14 @@ func TestLoadFromDataWithExternalRequestBodyRef(t *testing.T) {
     "components": {
         "requestBodies": {
             "TestRequestBody": {
-                "$ref": "components.openapi.json#/components/requestBodies/CustomTestRequestBody"
+                "$ref": "%s#/components/requestBodies/CustomTestRequestBody"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalRequestBodyRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalRequestBodyRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
@@ -488,8 +673,7 @@ func TestLoadFromDataWithExternalRequestBodyRef(t *testing.T) {
 	require.NotNil(t, swagger.Components.RequestBodies["TestRequestBody"].Value.Content)
 }
 
-func TestLoadFromDataWithExternalSecuritySchemeRef(t *testing.T) {
-	spec := []byte(`
+const externalSecuritySchemeRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -500,21 +684,25 @@ func TestLoadFromDataWithExternalSecuritySchemeRef(t *testing.T) {
     "components": {
         "securitySchemes": {
             "TestSecurityScheme": {
-                "$ref": "components.openapi.json#/components/securitySchemes/CustomTestSecurityScheme"
+                "$ref": "%s#/components/securitySchemes/CustomTestSecurityScheme"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalSecuritySchemeRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalSecuritySchemeRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
+	require.Equal(t, "description", swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
+
 }
 
-func TestLoadFromDataWithExternalHeaderRef(t *testing.T) {
-	spec := []byte(`
+const externalHeaderRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -525,21 +713,25 @@ func TestLoadFromDataWithExternalHeaderRef(t *testing.T) {
     "components": {
         "headers": {
             "TestHeader": {
-                "$ref": "components.openapi.json#/components/headers/CustomTestHeader"
+                "$ref": "%s#/components/headers/CustomTestHeader"
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalHeaderRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalHeaderRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Headers["TestHeader"].Value.Description)
+	require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
+
 }
 
-func TestLoadFromDataWithPathParameterRef(t *testing.T) {
-	spec := []byte(`
+const externalPathParameterRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -550,22 +742,26 @@ func TestLoadFromDataWithPathParameterRef(t *testing.T) {
         "/test/{id}": {
             "parameters": [
                 {
-                    "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+                    "$ref": "%s#/components/parameters/CustomTestParameter"
                 }
             ]
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathParameterRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathParameterRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/test/{id}"].Parameters[0].Value)
+	require.NotNil(t, swagger.Paths["/test/{id}"].Parameters[0].Value.Name)
+	require.Equal(t, "id", swagger.Paths["/test/{id}"].Parameters[0].Value.Name)
+
 }
 
-func TestLoadFromDataWithPathOperationParameterRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationParameterRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -578,23 +774,28 @@ func TestLoadFromDataWithPathOperationParameterRef(t *testing.T) {
                 "responses": {},
                 "parameters": [
                     {
-                        "$ref": "components.openapi.json#/components/parameters/CustomTestParameter"
+                        "$ref": "%s#/components/parameters/CustomTestParameter"
                     }
                 ]
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationParameterRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationParameterRefTemplate, "components.openapi.json"))
+
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value)
+	require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
+
 }
 
-func TestLoadFromDataWithPathOperationReqestBodyRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationRequestBodyRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -606,22 +807,26 @@ func TestLoadFromDataWithPathOperationReqestBodyRef(t *testing.T) {
             "post": {
                 "responses": {},
                 "requestBody": {
-                    "$ref": "components.openapi.json#/components/requestBodies/CustomTestRequestBody"
+                    "$ref": "%s#/components/requestBodies/CustomTestRequestBody"
                 }
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationReqestBodyRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationRequestBodyRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value)
+	require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content)
+
 }
 
-func TestLoadFromDataWithPathOperationResponseRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationResponseRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -633,23 +838,28 @@ func TestLoadFromDataWithPathOperationResponseRef(t *testing.T) {
             "post": {
                 "responses": {
                     "default": {
-                        "$ref": "components.openapi.json#/components/responses/CustomTestResponse"
+                        "$ref": "%s#/components/responses/CustomTestResponse"
                     }
                 }
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationResponseRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationResponseRefTemplate, "components.openapi.json"))
+
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
+	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+
 }
 
-func TestLoadFromDataWithPathOperationParameterSchemaRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationParameterSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -674,23 +884,27 @@ func TestLoadFromDataWithPathOperationParameterSchemaRef(t *testing.T) {
                 "name": "id",
                 "in": "header",
                 "schema": {
-                    "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                    "$ref": "%s#/components/schemas/CustomTestSchema"
                 }
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationParameterSchemaRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationParameterSchemaRefTemplate, "components.openapi.json"))
+
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
+	require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value)
 	require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
 	require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
 }
 
-func TestLoadFromDataWithPathOperationReqestBodyContentExampleRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationRequestBodyExampleRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -714,7 +928,7 @@ func TestLoadFromDataWithPathOperationReqestBodyContentExampleRef(t *testing.T) 
                     "application/json": {
                         "examples": {
                             "application/json": {
-                                "$ref": "components.openapi.json#/components/examples/CustomTestExample"
+                                "$ref": "%s#/components/examples/CustomTestExample"
                             }
                         }
                     }
@@ -722,17 +936,20 @@ func TestLoadFromDataWithPathOperationReqestBodyContentExampleRef(t *testing.T) 
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationReqestBodyContentExampleRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationRequestBodyExampleRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
+	require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value)
 	require.Equal(t, "description", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
 }
 
-func TestLoadFromDataWithPathOperationReqestBodyContentSchemaRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationReqestBodyContentSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -755,24 +972,27 @@ func TestLoadFromDataWithPathOperationReqestBodyContentSchemaRef(t *testing.T) {
                 "content": {
                     "application/json": {
                         "schema": {
-                            "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                            "$ref": "%s#/components/schemas/CustomTestSchema"
                         }
                     }
                 }
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationReqestBodyContentSchemaRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationReqestBodyContentSchemaRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
+	require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value)
 	require.Equal(t, "string", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
 }
 
-func TestLoadFromDataWithPathOperationResponseExampleRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationResponseExampleRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -798,7 +1018,7 @@ func TestLoadFromDataWithPathOperationResponseExampleRef(t *testing.T) {
                     "application/json": {
                         "examples": {
                             "application/json": {
-                                "$ref": "components.openapi.json#/components/examples/CustomTestExample"
+                                "$ref": "%s#/components/examples/CustomTestExample"
                             }
                         }
                     }
@@ -806,18 +1026,21 @@ func TestLoadFromDataWithPathOperationResponseExampleRef(t *testing.T) {
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationResponseExampleRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationResponseExampleRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
 	require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
 	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Examples["application/json"].Value.Description)
 }
 
-func TestLoadFromDataWithPathOperationResponseSchemaRef(t *testing.T) {
-	spec := []byte(`
+const externalPathOperationResponseSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -842,25 +1065,28 @@ func TestLoadFromDataWithPathOperationResponseSchemaRef(t *testing.T) {
                 "content": {
                     "application/json": {
                         "schema": {
-                            "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                            "$ref": "%s#/components/schemas/CustomTestSchema"
                         }
                     }
                 }
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithPathOperationResponseSchemaRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalPathOperationResponseSchemaRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
 	require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
 	require.Equal(t, "string", swagger.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Schema.Value.Type)
 }
 
-func TestLoadFromDataWithComponentHeaderSchemaRef(t *testing.T) {
-	spec := []byte(`
+const externalComponentHeaderSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -877,22 +1103,25 @@ func TestLoadFromDataWithComponentHeaderSchemaRef(t *testing.T) {
                 "name": "X-TEST-HEADER",
                 "in": "header",
                 "schema": {
-                    "$ref": "components.openapi.json#/components/schemas/CustomTestSchema"
+                    "$ref": "%s#/components/schemas/CustomTestSchema"
                 }
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithComponentHeaderSchemaRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalComponentHeaderSchemaRefTemplate, "components.openapi.json"))
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
+	require.NotNil(t, swagger.Components.Headers["TestHeader"].Value)
 	require.Equal(t, "string", swagger.Components.Headers["TestHeader"].Value.Schema.Value.Type)
 }
 
-func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
-	spec := []byte(`
+const externalRequestResponseHeaderRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -907,7 +1136,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
                         "description": "test",
                         "headers": {
                             "X-TEST-HEADER": {
-                                "$ref": "components.openapi.json#/components/headers/CustomTestHeader"
+                                "$ref": "%s#/components/headers/CustomTestHeader"
                             }
                         }
                     }
@@ -915,7 +1144,10 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
             }
         }
     }
-}`)
+}`
+
+func TestLoadFromDataWithExternalRequestResponseHeaderRef(t *testing.T) {
+	spec := []byte(fmt.Sprintf(externalRequestResponseHeaderRefTemplate, "components.openapi.json"))
 
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
