@@ -8,37 +8,37 @@
     "components": {
         "schemas": {
             "CustomTestSchema": {
-                "$ref": "nestedcomponents.openapi.json#/components/schemas/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/schemas/Name"
             }
         },
         "responses": {
             "CustomTestResponse": {
-                "$ref": "nestedcomponents.openapi.json#/components/responses/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/responses/Name"
             }
         },
         "parameters": {
             "CustomTestParameter": {
-                "$ref": "nestedcomponents.openapi.json#/components/parameters/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/parameters/Name"
             }
         },
         "examples": {
             "CustomTestExample": {
-                "$ref": "nestedcomponents.openapi.json#/components/examples/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/examples/Name"
             }
         },
         "requestBodies": {
             "CustomTestRequestBody": {
-                "$ref": "nestedcomponents.openapi.json#/components/requestBodies/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/requestBodies/Name"
             }
         },
         "headers": {
             "CustomTestHeader": {
-                "$ref": "nestedcomponents.openapi.json#/components/headers/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/headers/Name"
             }
         },
         "securitySchemes": {
             "CustomTestSecurityScheme": {
-                "$ref": "nestedcomponents.openapi.json#/components/securitySchemes/Name"
+                "$ref": "nestedcomponentsref.openapi.json#/components/securitySchemes/Name"
             }
         }
     }

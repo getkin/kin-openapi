@@ -45,7 +45,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 	if err != nil {
 		return nil, err
 	}
-	return swaggerLoader.LoadSwaggerFromData(data)
+	return swaggerLoader.LoadSwaggerFromDataWithPath(data, location)
 }
 
 func readUrl(location *url.URL) ([]byte, error) {
@@ -184,50 +184,67 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	return
 }
 
-func join(basePath *url.URL, rest *url.URL) *url.URL {
+func copyURL(basePath *url.URL) (*url.URL, error) {
+	return url.Parse(basePath.String())
+}
+
+func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
 	if basePath == nil {
-		return rest
+		return relativePath, nil
 	}
-	newPath := &*basePath
-	newPath.Path = path.Join(path.Dir(newPath.Path), rest.Path)
-	return newPath
+	newPath, err := copyURL(basePath)
+	if err != nil {
+		return nil, fmt.Errorf("Can't copy path: '%s'", basePath.String())
+	}
+	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
+	return newPath, nil
+}
+
+func resolvePath(basePath *url.URL, componentPath *url.URL) (*url.URL, error) {
+	if componentPath.Scheme == "" && componentPath.Host == "" {
+		return join(basePath, componentPath)
+	}
+	return componentPath, nil
 }
 
 func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, prefix string, path *url.URL) (
 	components *Components,
 	id string,
+	componentPath *url.URL,
 	err error,
 ) {
+	componentPath = path
 	if !strings.HasPrefix(ref, "#") {
 		if !swaggerLoader.IsExternalRefsAllowed {
-			return nil, "", fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
+			return nil, "", nil, fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
 		}
 		parsedURL, err := url.Parse(ref)
 		if err != nil {
-			return nil, "", fmt.Errorf("Can't parse reference: '%s': %v", ref, parsedURL)
+			return nil, "", nil, fmt.Errorf("Can't parse reference: '%s': %v", ref, parsedURL)
 		}
 		fragment := parsedURL.Fragment
 		parsedURL.Fragment = ""
 
-		fullURL := parsedURL
-		if fullURL.Scheme == "" && fullURL.Host == "" {
-			fullURL = join(path, parsedURL)
+		resolvedPath, err := resolvePath(path, parsedURL)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("Error while resolving path: %v", err)
 		}
 
-		if swagger, err = swaggerLoader.LoadSwaggerFromURI(fullURL); err != nil {
-			return nil, "", fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
+		if swagger, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
+			return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
 		ref = fmt.Sprintf("#%s", fragment)
+		componentPath = resolvedPath
 	}
 	if !strings.HasPrefix(ref, prefix) {
 		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
-		return nil, "", err
+		return nil, "", nil, err
 	}
 	id = ref[len(prefix):]
 	if strings.IndexByte(id, '/') >= 0 {
-		return nil, "", failedToResolveRefFragmentPart(ref, id)
+		return nil, "", nil, failedToResolveRefFragmentPart(ref, id)
 	}
-	return &swagger.Components, id, nil
+	return &swagger.Components, id, componentPath, nil
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
@@ -241,7 +258,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	// Resolve ref
 	const prefix = "#/components/headers/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -253,7 +270,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		if resolved == nil {
 			return failedToResolveRefFragment(ref)
 		}
-		if err := swaggerLoader.resolveHeaderRef(swagger, resolved, path); err != nil {
+		if err := swaggerLoader.resolveHeaderRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -281,7 +298,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	// Resolve ref
 	const prefix = "#/components/parameters/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -293,7 +310,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveParameterRef(swagger, resolved, path); err != nil {
+		if err := swaggerLoader.resolveParameterRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -321,7 +338,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	// Resolve ref
 	const prefix = "#/components/requestBodies/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -333,7 +350,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved, path); err != nil {
+		if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -369,7 +386,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	// Resolve ref
 	const prefix = "#/components/responses/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -381,7 +398,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveResponseRef(swagger, resolved, path); err != nil {
+		if err := swaggerLoader.resolveResponseRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -426,7 +443,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 	// Resolve ref
 	const prefix = "#/components/schemas/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -438,7 +455,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveSchemaRef(swagger, resolved, path); err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -499,7 +516,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	// Resolve ref
 	const prefix = "#/components/securitySchemes/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -511,7 +528,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved, path); err != nil {
+		if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value
@@ -529,7 +546,7 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 
 	const prefix = "#/components/examples/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
 		if err != nil {
 			return err
 		}
@@ -541,7 +558,7 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		if resolved == nil {
 			return failedToResolveRefFragmentPart(ref, id)
 		}
-		if err := swaggerLoader.resolveExampleRef(swagger, resolved, path); err != nil {
+		if err := swaggerLoader.resolveExampleRef(swagger, resolved, componentPath); err != nil {
 			return err
 		}
 		component.Value = resolved.Value

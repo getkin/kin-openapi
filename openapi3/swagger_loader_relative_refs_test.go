@@ -182,7 +182,7 @@ func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 	for _, td := range refTestDataEntries {
 		t.Logf("testcase '%s'", td.name)
 
-		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/components.openapi.json"))
+		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
 		loader := openapi3.NewSwaggerLoader()
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
