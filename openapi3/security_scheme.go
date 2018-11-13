@@ -106,7 +106,7 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	// Validate "in" and "name"
 	if hasIn {
 		switch ss.In {
-		case "query", "header":
+		case "query", "header", "cookie":
 		default:
 			return fmt.Errorf("Security scheme of type 'apiKey' should have 'in'. It can be 'query' or 'header', not '%s'", ss.In)
 		}
