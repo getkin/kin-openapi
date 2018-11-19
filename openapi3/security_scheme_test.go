@@ -146,4 +146,15 @@ var securitySchemeExamples = []securitySchemeExample{
 `),
 		valid: false,
 	},
+	{
+		title: "Apikey Cookie",
+		raw: []byte(`
+{
+  "type": "apiKey",
+	"in": "cookie",
+	"name": "somecookie"
+}
+`),
+		valid: true,
+	},
 }
