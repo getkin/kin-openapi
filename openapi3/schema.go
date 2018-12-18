@@ -96,7 +96,7 @@ type Schema struct {
 	MinProps             uint64                `json:"minProperties,omitempty"`
 	MaxProps             *uint64               `json:"maxProperties,omitempty"`
 	AdditionalProperties *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty"`
-	Discriminator        string                `json:"discriminator,omitempty"`
+	Discriminator        *Discriminator        `json:"discriminator,omitempty"`
 
 	PatternProperties         string `json:"patternProperties,omitempty"`
 	compiledPatternProperties *compiledPattern
