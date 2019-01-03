@@ -1,5 +1,12 @@
 language: go
-go_import_path: github.com/getkin/kin-openapi
 go:
-- 1.10.x
-- 1.8.x
+- 1.11.x
+env:
+  global:
+  - GO111MODULE: 'on'
+  - CGO_ENABLED: '0'
+after_success:
+- go mod tidy && git --no-pager diff && [[ 0 -eq $(git status --porcelain | wc -l) ]]
+notifications:
+  email:
+    on_success: never
