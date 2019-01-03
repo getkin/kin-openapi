@@ -1,9 +1,14 @@
 language: go
-go_import_path: github.com/getkin/kin-openapi
 go:
 - 1.11.x
+env:
+  global:
+  - GO111MODULE: 'on'
 after_success:
 - go mod tidy
 - |
   git --no-pager diff
   [[ 0 -eq $(git --no-pager diff --name-only | wc -l) ]]
+notifications:
+  email:
+    on_success: never
