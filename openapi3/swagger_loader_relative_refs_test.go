@@ -113,6 +113,17 @@ var refTestDataEntries = []refTestDataEntry{
 			require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
 		},
 	},
+
+	{
+		name:            "PathOperationParameterRefWithContentInQuery",
+		contentTemplate: externalPathOperationParameterWithContentInQueryTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			fmt.Print(swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema.Ref)
+			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema.Value)
+			require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema.Value.Type)
+		},
+	},
+
 	{
 		name:            "PathOperationRequestBodyExampleRef",
 		contentTemplate: externalPathOperationRequestBodyExampleRefTemplate,
@@ -414,6 +425,40 @@ const externalPathOperationParameterSchemaRefTemplate = `
                 "in": "header",
                 "schema": {
                     "$ref": "%s#/components/schemas/CustomTestSchema"
+                }
+            }
+        }
+    }
+}`
+
+const externalPathOperationParameterWithContentInQueryTemplate = `
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+        "/test/{id}": {
+            "get": {
+                "responses": {},
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/CustomTestParameter"
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "CustomTestParameter": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "%s#/components/schemas/CustomTestSchema"
+                        }
+                    }
                 }
             }
         }

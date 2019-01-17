@@ -319,6 +319,13 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	if value == nil {
 		return nil
 	}
+	for _, contentType := range value.Content {
+		if schema := contentType.Schema; schema != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
+				return err
+			}
+		}
+	}
 	if schema := value.Schema; schema != nil {
 		if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
 			return err
