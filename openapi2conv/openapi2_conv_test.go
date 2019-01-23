@@ -37,7 +37,7 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 const exampleV2 = `
 {
   "info": {},
-  "schemas": ["https"],
+  "schemes": ["https"],
   "host": "test.example.com",
   "basePath": "/v2",
   "paths": {
