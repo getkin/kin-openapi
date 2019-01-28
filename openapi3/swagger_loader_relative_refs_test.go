@@ -16,6 +16,13 @@ type refTestDataEntry struct {
 	testFunc        func(t *testing.T, swagger *openapi3.Swagger)
 }
 
+type refTestDataEntryWithErrorMessage struct {
+	name            string
+	contentTemplate string
+	errorMessage    *string
+	testFunc        func(t *testing.T, swagger *openapi3.Swagger)
+}
+
 var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SchemaRef",
@@ -118,9 +125,9 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "PathOperationParameterRefWithContentInQuery",
 		contentTemplate: externalPathOperationParameterWithContentInQueryTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
-			fmt.Print(swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema.Ref)
-			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema.Value)
-			require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema.Value.Type)
+			schemaRef := swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema
+			require.NotNil(t, schemaRef.Value)
+			require.Equal(t, "string", schemaRef.Value.Type)
 		},
 	},
 
@@ -176,6 +183,16 @@ var refTestDataEntries = []refTestDataEntry{
 	},
 }
 
+var refTestDataEntriesResponseError = []refTestDataEntryWithErrorMessage{
+	{
+		name:            "CannotContainBothSchemaAndContentInAParameter",
+		contentTemplate: externalCannotContainBothSchemaAndContentInAParameter,
+		errorMessage:    &(&struct{ x string }{"Cannot contain both schema and content in a parameter"}).x,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		},
+	},
+}
+
 func TestLoadFromDataWithExternalRef(t *testing.T) {
 	for _, td := range refTestDataEntries {
 		t.Logf("testcase '%s'", td.name)
@@ -185,6 +202,19 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
+		td.testFunc(t, swagger)
+	}
+}
+
+func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
+	for _, td := range refTestDataEntriesResponseError {
+		t.Logf("testcase '%s'", td.name)
+
+		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
+		loader := openapi3.NewSwaggerLoader()
+		loader.IsExternalRefsAllowed = true
+		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+		require.EqualError(t, err, *td.errorMessage)
 		td.testFunc(t, swagger)
 	}
 }
@@ -459,6 +489,43 @@ const externalPathOperationParameterWithContentInQueryTemplate = `
                             "$ref": "%s#/components/schemas/CustomTestSchema"
                         }
                     }
+                }
+            }
+        }
+    }
+}`
+
+const externalCannotContainBothSchemaAndContentInAParameter = `
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "version": "1"
+    },
+    "paths": {
+        "/test/{id}": {
+            "get": {
+                "responses": {},
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/CustomTestParameter"
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "CustomTestParameter": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "%s#/components/schemas/CustomTestSchema"
+                        }
+                    }
+                },
+                "schema": {
+                    "$ref": "%s#/components/schemas/CustomTestSchema"
                 }
             }
         }
