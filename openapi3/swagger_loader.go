@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -318,6 +319,16 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	value := component.Value
 	if value == nil {
 		return nil
+	}
+	if value.Content != nil && value.Schema != nil {
+		return errors.New("Cannot contain both schema and content in a parameter")
+	}
+	for _, contentType := range value.Content {
+		if schema := contentType.Schema; schema != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
+				return err
+			}
+		}
 	}
 	if schema := value.Schema; schema != nil {
 		if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {

@@ -144,6 +144,10 @@ func (parameter *Parameter) Validate(c context.Context) error {
 	default:
 		return fmt.Errorf("Parameter can't have 'in' value '%s'", parameter.In)
 	}
+	if parameter.Schema != nil && parameter.Content != nil {
+		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
+			errors.New("Cannot contain both schema and content in a parameter"))
+	}
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)
