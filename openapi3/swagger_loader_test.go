@@ -406,8 +406,17 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 func TestLoadYamlFile(t *testing.T) {
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromYAMLFile("testdata/test.openapi.yml")
+	swagger, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
 	require.NoError(t, err)
 
 	require.Equal(t, "OAI Specification in YAML", swagger.Info.Title)
+}
+
+func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
