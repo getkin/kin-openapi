@@ -88,6 +88,20 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 	})
 }
 
+func (swaggerLoader *SwaggerLoader) LoadSwaggerFromYAMLFile(path string) (*Swagger, error) {
+	f := swaggerLoader.LoadSwaggerFromURIFunc
+	if f != nil {
+		return f(swaggerLoader, &url.URL{
+			Path: path,
+		})
+	}
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return swaggerLoader.LoadSwaggerFromYAMLData(data)
+}
+
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swagger := &Swagger{}
 	if err := json.Unmarshal(data, swagger); err != nil {
