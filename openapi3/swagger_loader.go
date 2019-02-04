@@ -118,14 +118,6 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromYAMLData(data []byte) (*Swagg
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
 }
 
-func (swaggerLoader *SwaggerLoader) LoadSwaggerFromYAMLDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
-	swagger := &Swagger{}
-	if err := yaml.Unmarshal(data, swagger); err != nil {
-		return nil, err
-	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
-}
-
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
 	swaggerLoader.visited = make(map[interface{}]struct{})
 
