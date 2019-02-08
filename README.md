@@ -61,26 +61,60 @@ func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
 
 ## Validating HTTP requests/responses
 ```go
-import (
-  "net/http"
+package main
 
-  "github.com/getkin/kin-openapi/openapi3"
-  "github.com/getkin/kin-openapi/openapi3filter"
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"log"
+	"net/http"
+
+	"github.com/getkin/kin-openapi/openapi3filter"
 )
 
-var router = openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
+func main() {
+	router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
+	ctx := context.TODO()
+	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
-func ValidateRequest(req *http.Request) {
-  openapi3filter.ValidateRequest(nil, &openapi3filter.ValidateRequestInput {
-    Request: req,
-    Router:  router,
-  })
+	// Find route
+	route, pathParams, _ := router.FindRoute(httpReq.Method, httpReq.URL)
 
-  // Get response
+	// Validate request
+	requestValidationInput := &openapi3filter.RequestValidationInput{
+		Request:    httpReq,
+		PathParams: pathParams,
+		Route:      route,
+	}
+	if err := openapi3filter.ValidateRequest(ctx, requestValidationInput); err != nil {
+		panic(err)
+	}
 
-  openapi3filter.ValidateResponse(nil, &openapi3filter.ValidateResponseInput {
-    // ...
-  })
+	var (
+		respStatus      = 200
+		respContentType = "application/json"
+		respBody        = bytes.NewBufferString(`{}`)
+	)
+
+	log.Println("Response:", respStatus)
+	responseValidationInput := &openapi3filter.ResponseValidationInput{
+		RequestValidationInput: requestValidationInput,
+		Status:                 respStatus,
+		Header: http.Header{
+			"Content-Type": []string{
+				respContentType,
+			},
+		},
+	}
+	if respBody != nil {
+		data, _ := json.Marshal(respBody)
+		responseValidationInput.SetBodyBytes(data)
+	}
+
+	// Get response
+	if err := openapi3filter.ValidateResponse(ctx, responseValidationInput); err != nil {
+		panic(err)
+	}
 }
-
 ```
