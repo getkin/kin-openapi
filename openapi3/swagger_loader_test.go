@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const addr = "localhost:7965"
+
 func TestLoadYAML(t *testing.T) {
 	spec := []byte(`
 openapi: 3.0.0
@@ -288,23 +290,24 @@ paths:
 	require.NotNil(t, swagger.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
 }
 
-func createTestServer(address string, handler http.Handler) *httptest.Server {
+func createTestServer(handler http.Handler) *httptest.Server {
 	ts := httptest.NewUnstartedServer(handler)
-	l, _ := net.Listen("tcp", address)
+	l, _ := net.Listen("tcp", addr)
 	ts.Listener.Close()
 	ts.Listener = l
 	return ts
 }
+
 func TestLoadFromRemoteURL(t *testing.T) {
 
 	fs := http.FileServer(http.Dir("testdata"))
-	ts := createTestServer("localhost:3000", fs)
+	ts := createTestServer(fs)
 	ts.Start()
 	defer ts.Close()
 
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	url, err := url.Parse("http://localhost:3000/test.openapi.json")
+	url, err := url.Parse("http://" + addr + "/test.openapi.json")
 	require.NoError(t, err)
 
 	swagger, err := loader.LoadSwaggerFromURI(url)
@@ -379,7 +382,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
                         "description": "test",
                         "headers": {
                             "X-TEST-HEADER": {
-                                "$ref": "http://localhost:3000/components.openapi.json#/components/headers/CustomTestHeader"
+                                "$ref": "http://` + addr + `/components.openapi.json#/components/headers/CustomTestHeader"
                             }
                         }
                     }
@@ -390,7 +393,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 }`)
 
 	fs := http.FileServer(http.Dir("testdata"))
-	ts := createTestServer("localhost:3000", fs)
+	ts := createTestServer(fs)
 	ts.Start()
 	defer ts.Close()
 
