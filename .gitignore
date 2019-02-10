@@ -12,3 +12,10 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+ # Macos file system
+.DS_Store
+
+ # IntelliJ / GoLand
+.idea
+
