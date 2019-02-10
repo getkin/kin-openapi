@@ -56,7 +56,7 @@ paths:
 `)
 
 	loader := openapi3.NewSwaggerLoader()
-	doc, err := loader.LoadSwaggerFromYAMLData(spec)
+	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
@@ -123,7 +123,7 @@ paths:
                 test:
                   $ref: '#/components/examples/test'`)
 	loader := openapi3.NewSwaggerLoader()
-	doc, err := loader.LoadSwaggerFromYAMLData(source)
+	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
@@ -224,7 +224,7 @@ paths:
 `)
 
 	loader := openapi3.NewSwaggerLoader()
-	_, err := loader.LoadSwaggerFromYAMLData(spec)
+	_, err := loader.LoadSwaggerFromData(spec)
 	require.Error(t, err)
 }
 
@@ -252,7 +252,7 @@ paths:
 `)
 
 	loader := openapi3.NewSwaggerLoader()
-	swagger, err := loader.LoadSwaggerFromYAMLData(spec)
+	swagger, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/"].Parameters[0].Value)
@@ -284,7 +284,7 @@ paths:
 `)
 
 	loader := openapi3.NewSwaggerLoader()
-	swagger, err := loader.LoadSwaggerFromYAMLData(spec)
+	swagger, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
@@ -404,4 +404,22 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+}
+
+func TestLoadYamlFile(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
+	require.NoError(t, err)
+
+	require.Equal(t, "OAI Specification in YAML", swagger.Info.Title)
+}
+
+func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }

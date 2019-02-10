@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -90,7 +89,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swagger := &Swagger{}
-	if err := json.Unmarshal(data, swagger); err != nil {
+	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
@@ -98,18 +97,10 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
 	swagger := &Swagger{}
-	if err := json.Unmarshal(data, swagger); err != nil {
-		return nil, err
-	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
-}
-
-func (swaggerLoader *SwaggerLoader) LoadSwaggerFromYAMLData(data []byte) (*Swagger, error) {
-	swagger := &Swagger{}
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
+	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
 }
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
