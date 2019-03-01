@@ -73,7 +73,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 			if contentType == nil {
 				return &ResponseError{
 					Input:  input,
-					Reason: "input header 'Content-type' has unexpected value",
+					Reason: fmt.Sprintf("input header 'Content-Type' has unexpected value: %q", inputMIME),
 				}
 			}
 			schemaRef := contentType.Schema
