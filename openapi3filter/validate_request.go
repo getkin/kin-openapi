@@ -148,7 +148,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 			return &RequestError{
 				Input:       input,
 				RequestBody: requestBody,
-				Reason:      "header 'Content-type' has unexpected value",
+				Reason:      fmt.Sprintf("header 'Content-Type' has unexpected value: %q", inputMIME),
 			}
 		}
 		schemaRef := contentType.Schema
