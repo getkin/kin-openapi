@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"sort"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -68,51 +67,13 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 }
 
 func ValidateParameter(c context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
-	req := input.Request
-	name := parameter.Name
-	var value string
-	var found bool
-	switch parameter.In {
-	case openapi3.ParameterInPath:
-		pathParams := input.PathParams
-		if pathParams != nil {
-			value, found = pathParams[name]
-		}
-	case openapi3.ParameterInQuery:
-		values := input.GetQueryParams()[name]
-		if len(values) > 0 {
-			value = values[0]
-			found = true
-		}
-	case openapi3.ParameterInHeader:
-		var values []string
-		values, found = req.Header[http.CanonicalHeaderKey(name)]
-		if len(values) > 0 {
-			value = values[0]
-		}
-	case openapi3.ParameterInCookie:
-		cookie, err := req.Cookie(name)
-		if err == nil {
-			value = cookie.Value
-			found = true
-		} else {
-			if err != http.ErrNoCookie {
-				return &RequestError{
-					Input:     input,
-					Parameter: parameter,
-					Reason:    "parsing failed",
-					Err:       err,
-				}
-			}
-		}
-	default:
-		return &RequestError{
-			Input:     input,
-			Parameter: parameter,
-			Reason:    "unsupported 'in'",
-		}
+	value, err := decodeParameter(parameter, input)
+	if err != nil {
+		return err
 	}
-	if !found {
+
+	// Validate a parameter's value.
+	if value == nil {
 		if parameter.Required {
 			return &RequestError{
 				Input:     input,
@@ -125,12 +86,8 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		// Only check schema if no transformation is needed
 		if schema := schemaRef.Value; schema.Type == "string" {
-			if err := schema.VisitJSONString(value); err != nil {
-				return &RequestError{
-					Input:     input,
-					Parameter: parameter,
-					Err:       err,
-				}
+			if err = schema.VisitJSON(value); err != nil {
+				return &RequestError{Input: input, Parameter: parameter, Err: err}
 			}
 		}
 	}

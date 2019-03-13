@@ -55,6 +55,7 @@ type Parameter struct {
 	In              string                 `json:"in,omitempty"`
 	Description     string                 `json:"description,omitempty"`
 	Style           string                 `json:"style,omitempty"`
+	Explode         *bool                  `json:"explode,omitempty"`
 	AllowEmptyValue bool                   `json:"allowEmptyValue,omitempty"`
 	AllowReserved   bool                   `json:"allowReserved,omitempty"`
 	Deprecated      bool                   `json:"deprecated,omitempty"`
@@ -70,6 +71,16 @@ const (
 	ParameterInQuery  = "query"
 	ParameterInHeader = "header"
 	ParameterInCookie = "cookie"
+)
+
+const (
+	SerializationSimple         = "simple"
+	SerializationLabel          = "label"
+	SerializationMatrix         = "matrix"
+	SerializationForm           = "form"
+	SerializationSpaceDelimited = "spaceDelimited"
+	SerializationPipeDelimited  = "pipeDelimited"
+	SerializationDeepObject     = "deepObject"
 )
 
 func NewPathParameter(name string) *Parameter {
@@ -130,6 +141,39 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
 
+type SerializationMethod struct {
+	Style   string
+	Explode bool
+}
+
+var supportedSerializationMethods = map[string][]SerializationMethod{
+	ParameterInPath: []SerializationMethod{
+		{SerializationSimple, false},
+		{SerializationSimple, true},
+		{SerializationLabel, false},
+		{SerializationLabel, true},
+		{SerializationMatrix, false},
+		{SerializationMatrix, true},
+	},
+	ParameterInQuery: []SerializationMethod{
+		{SerializationForm, true},
+		{SerializationForm, false},
+		{SerializationSpaceDelimited, true},
+		{SerializationSpaceDelimited, false},
+		{SerializationPipeDelimited, true},
+		{SerializationPipeDelimited, false},
+		{SerializationDeepObject, true},
+	},
+	ParameterInHeader: []SerializationMethod{
+		{SerializationSimple, false},
+		{SerializationSimple, true},
+	},
+	ParameterInCookie: []SerializationMethod{
+		{SerializationForm, false},
+		{SerializationForm, true},
+	},
+}
+
 func (parameter *Parameter) Validate(c context.Context) error {
 	if parameter.Name == "" {
 		return errors.New("Parameter name can't be blank")
@@ -144,6 +188,21 @@ func (parameter *Parameter) Validate(c context.Context) error {
 	default:
 		return fmt.Errorf("Parameter can't have 'in' value '%s'", parameter.In)
 	}
+
+	// Validate a parameter's serialization method.
+	sm := parameter.SerializationMethod()
+	supported := false
+	for _, v := range supportedSerializationMethods[in] {
+		if v.Style == sm.Style && v.Explode == sm.Explode {
+			supported = true
+			break
+		}
+	}
+	if !supported {
+		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
+			fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in))
+	}
+
 	if parameter.Schema != nil && parameter.Content != nil {
 		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
 			errors.New("Cannot contain both schema and content in a parameter"))
@@ -159,4 +218,34 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		}
 	}
 	return nil
+}
+
+// SerializationMethod returns a parameter's serialization method.
+// When a parameter's serialization method is not defined the method returns
+// the default serialization method corresponding to a parameter's location.
+func (parameter *Parameter) SerializationMethod() SerializationMethod {
+	switch parameter.In {
+	case ParameterInPath, ParameterInHeader:
+		style := parameter.Style
+		if style == "" {
+			style = SerializationSimple
+		}
+		explode := false
+		if parameter.Explode != nil {
+			explode = *parameter.Explode
+		}
+		return SerializationMethod{Style: style, Explode: explode}
+	case ParameterInQuery, ParameterInCookie:
+		style := parameter.Style
+		if style == "" {
+			style = SerializationForm
+		}
+		explode := true
+		if parameter.Explode != nil {
+			explode = *parameter.Explode
+		}
+		return SerializationMethod{Style: style, Explode: explode}
+	default:
+		panic(fmt.Sprintf("unexpected parameter's 'in': %q", parameter.In))
+	}
 }
