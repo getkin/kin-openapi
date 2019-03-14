@@ -535,9 +535,7 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 		return nil, nil
 	}
 	switch schema.Value.Type {
-	case "integer":
-		return strconv.Atoi(raw)
-	case "number":
+	case "integer", "number":
 		return strconv.ParseFloat(raw, 64)
 	case "boolean":
 		return strconv.ParseBool(raw)
