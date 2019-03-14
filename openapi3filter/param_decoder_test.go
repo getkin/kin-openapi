@@ -144,7 +144,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
 					path:  "/1",
-					want:  1,
+					want:  float64(1),
 				},
 				{
 					name:  "integer invalid",
@@ -438,7 +438,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
 					query: "param=1",
-					want:  1,
+					want:  float64(1),
 				},
 				{
 					name:  "integer invalid",
@@ -642,7 +642,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:   "integer",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
 					header: "X-Param:1",
-					want:   1,
+					want:   float64(1),
 				},
 				{
 					name:   "integer invalid",
@@ -816,7 +816,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:   "integer",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
 					cookie: "X-Param:1",
-					want:   1,
+					want:   float64(1),
 				},
 				{
 					name:   "integer invalid",
