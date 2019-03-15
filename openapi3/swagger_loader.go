@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -145,17 +146,26 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	}
 
 	// Visit all operations
-	for _, pathItem := range swagger.Paths {
+	for endpoint, pathItem := range swagger.Paths {
 		if pathItem == nil {
 			continue
 		}
-		for _, parameter := range pathItem.Parameters {
+		// Refer on documentation at Open Api Specification 3.0 at
+		// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#pathItemObject
+		// there is one property is $ref, to get the configuration at another reference object. For this time this issue
+		// will be fix, with the rules the value just come from relative path file or network file
+		if pathItem.Ref != "" {
+			if err = swaggerLoader.resolvePathItemRef(swagger, endpoint, pathItem.Ref); err != nil {
+				return
+			}
+		}
+		for _, parameter := range swagger.Paths[endpoint].Parameters {
 			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
 				return
 			}
 		}
-		for _, operation := range pathItem.Operations() {
-			for _, parameter := range operation.Parameters {
+		for method, operation := range swagger.Paths[endpoint].Operations() {
+			for _, parameter := range swagger.Paths[endpoint].Operations()[method].Parameters {
 				if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
 					return
 				}
@@ -566,4 +576,86 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		component.Value = resolved.Value
 	}
 	return nil
+}
+
+func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, endpoint string, ref string) error {
+	if !swaggerLoader.IsExternalRefsAllowed {
+		return fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
+	}
+
+	mapOfSwagger, err := parseSwaggerToMap(swagger)
+	if err != nil {
+		return foundUnresolvedRef(err.Error())
+	}
+
+	newMapOfSwagger := map[string]interface{}{}
+	if strings.HasPrefix(ref, "http") {
+		url, err := url.Parse(ref)
+		if err != nil {
+			return err
+		}
+
+		swaggerURI, err := swaggerLoader.LoadSwaggerFromURI(url)
+		if err != nil {
+			return foundUnresolvedRef(err.Error())
+		}
+
+		newMapOfSwagger, err = parseSwaggerToMap(swaggerURI)
+		if err != nil {
+			return foundUnresolvedRef(err.Error())
+		}
+	} else if !strings.HasPrefix(ref, "#") {
+		swaggerFile, err := swaggerLoader.LoadSwaggerFromFile(ref)
+		if err != nil {
+			return foundUnresolvedRef(err.Error())
+		}
+
+		newMapOfSwagger, err = parseSwaggerToMap(swaggerFile)
+		if err != nil {
+			return foundUnresolvedRef(err.Error())
+		}
+	}
+
+	// replace the endpoint value with the new value
+	if _, exists := newMapOfSwagger["components"]; exists {
+		delete(newMapOfSwagger, "components")
+	}
+	(mapOfSwagger["paths"].(map[string]interface{}))[endpoint] = newMapOfSwagger
+	newSwagger := &Swagger{}
+
+	// parse the new swagger has been changes to be swagger
+	// struct
+	if err := parseMapToSwagger(mapOfSwagger, newSwagger); err != nil {
+		return foundUnresolvedRef(err.Error())
+	}
+
+	swagger.Paths = newSwagger.Paths
+	return nil
+}
+
+func parseSwaggerToMap(swagger *Swagger) (map[string]interface{}, error) {
+	mapOfSwagger := map[string]interface{}{}
+
+	// parse struct to byte
+	rawSwagger, err := json.Marshal(swagger)
+	if err != nil {
+		return nil, err
+	}
+
+	// parse byte to map
+	err = json.Unmarshal(rawSwagger, &mapOfSwagger)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapOfSwagger, nil
+}
+
+func parseMapToSwagger(data map[string]interface{}, source *Swagger) error {
+	mapByte, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(mapByte, source)
 }
