@@ -12,6 +12,7 @@ import (
 
 const errMsgInvalidValue = "an invalid value"
 
+// ParseError describes errors which happens while parse operation's parameters.
 type ParseError struct {
 	Value  interface{}
 	Path   []interface{}
