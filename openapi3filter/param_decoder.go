@@ -12,6 +12,29 @@ import (
 
 const errMsgInvalidValue = "an invalid value"
 
+type ParseError struct {
+	Value  interface{}
+	Path   []interface{}
+	Reason string
+	Cause  error
+}
+
+func (e *ParseError) Error() string {
+	var msg []string
+	if e.Path != nil {
+		msg = append(msg, fmt.Sprintf("failed to parse value %v at path %v", e.Value, e.Path))
+	} else {
+		msg = append(msg, fmt.Sprintf("failed to parse value %v", e.Value))
+	}
+	if e.Reason != "" {
+		msg = append(msg, e.Reason)
+	}
+	if e.Cause != nil {
+		msg = append(msg, e.Cause.Error())
+	}
+	return strings.Join(msg, ": ")
+}
+
 // decodeParameter returns a value of an operation's parameter from a HTTP request.
 func decodeParameter(param *openapi3.Parameter, input *RequestValidationInput) (interface{}, error) {
 	var decoder interface {
@@ -202,7 +225,7 @@ func cutPrefix(raw, prefix string) (string, error) {
 		return raw, nil
 	}
 	if len(raw) < len(prefix) || raw[:len(prefix)] != prefix {
-		return "", fmt.Errorf("a value must be prefixed with %q", prefix)
+		return "", &ParseError{Value: raw, Reason: fmt.Sprintf("a value must be prefixed with %q", prefix)}
 	}
 	return raw[len(prefix):], nil
 }
@@ -296,7 +319,7 @@ func (d *queryParamDecoder) DecodeObject(param *openapi3.Parameter) (map[string]
 			for key, values := range params {
 				groups := regexp.MustCompile(fmt.Sprintf("%s\\[(.+?)\\]", param.Name)).FindAllStringSubmatch(key, -1)
 				if len(groups) == 0 {
-					// A name of the query parameter does not match the required format, so skip it.
+					// A query parameter's name does not match the required format, so skip it.
 					continue
 				}
 				props[groups[0][1]] = values[0]
@@ -480,7 +503,10 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 	if propDelim == valueDelim {
 		pairs := strings.Split(src, propDelim)
 		if len(pairs)%2 != 0 {
-			return nil, fmt.Errorf("a value must be a list of object's properties in format \"name%svalue\" separated by %s", valueDelim, propDelim)
+			return nil, &ParseError{
+				Value:  src,
+				Reason: fmt.Sprintf("a value must be a list of object's properties in format \"name%svalue\" separated by %s", valueDelim, propDelim),
+			}
 		}
 		for i := 0; i < len(pairs)/2; i++ {
 			props[pairs[i*2]] = pairs[i*2+1]
@@ -489,7 +515,10 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 		for _, pair := range strings.Split(src, propDelim) {
 			prop := strings.Split(pair, valueDelim)
 			if len(prop) != 2 {
-				return nil, fmt.Errorf("a value must be a list of object's properties in format \"name%svalue\" separated by %s", valueDelim, propDelim)
+				return nil, &ParseError{
+					Value:  src,
+					Reason: fmt.Sprintf("a value must be a list of object's properties in format \"name%svalue\" separated by %s", valueDelim, propDelim),
+				}
 			}
 			props[prop[0]] = prop[1]
 		}
@@ -505,7 +534,15 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	for propName, propSchema := range schema.Value.Properties {
 		value, err := parsePrimitive(props[propName], propSchema)
 		if err != nil {
-			return nil, fmt.Errorf("property %q: %s", propName, err)
+			if v, ok := err.(*ParseError); ok {
+				return nil, &ParseError{
+					Value:  v.Value,
+					Reason: v.Reason,
+					Cause:  v.Cause,
+					Path:   []interface{}{propName},
+				}
+			}
+			return nil, err
 		}
 		obj[propName] = value
 	}
@@ -520,7 +557,15 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]interface{}, err
 	for i, v := range raw {
 		item, err := parsePrimitive(v, schemaRef.Value.Items)
 		if err != nil {
-			return nil, fmt.Errorf("item %d: %s", i, err)
+			if v, ok := err.(*ParseError); ok {
+				return nil, &ParseError{
+					Value:  v.Value,
+					Reason: v.Reason,
+					Cause:  v.Cause,
+					Path:   []interface{}{i},
+				}
+			}
+			return nil, err
 		}
 		value = append(value, item)
 	}
@@ -536,9 +581,17 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 	}
 	switch schema.Value.Type {
 	case "integer", "number":
-		return strconv.ParseFloat(raw, 64)
+		v, err := strconv.ParseFloat(raw, 64)
+		if err != nil {
+			return nil, &ParseError{Value: raw, Cause: err}
+		}
+		return v, nil
 	case "boolean":
-		return strconv.ParseBool(raw)
+		v, err := strconv.ParseBool(raw)
+		if err != nil {
+			return nil, &ParseError{Value: raw, Cause: err}
+		}
+		return v, nil
 	case "string":
 		return raw, nil
 	default:
