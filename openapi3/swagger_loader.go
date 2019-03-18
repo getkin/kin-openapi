@@ -150,10 +150,6 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 		if pathItem == nil {
 			continue
 		}
-		// Refer on documentation at Open Api Specification 3.0 at
-		// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#pathItemObject
-		// there is one property is $ref, to get the configuration at another reference object. For this time this issue
-		// will be fix, with the rules the value just come from relative path file or network file
 		if pathItem.Ref != "" {
 			if err = swaggerLoader.resolvePathItemRef(swagger, endpoint, pathItem.Ref); err != nil {
 				return
