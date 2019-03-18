@@ -146,32 +146,34 @@ type SerializationMethod struct {
 	Explode bool
 }
 
-var supportedSerializationMethods = map[string][]SerializationMethod{
-	ParameterInPath: []SerializationMethod{
-		{SerializationSimple, false},
-		{SerializationSimple, true},
-		{SerializationLabel, false},
-		{SerializationLabel, true},
-		{SerializationMatrix, false},
-		{SerializationMatrix, true},
-	},
-	ParameterInQuery: []SerializationMethod{
-		{SerializationForm, true},
-		{SerializationForm, false},
-		{SerializationSpaceDelimited, true},
-		{SerializationSpaceDelimited, false},
-		{SerializationPipeDelimited, true},
-		{SerializationPipeDelimited, false},
-		{SerializationDeepObject, true},
-	},
-	ParameterInHeader: []SerializationMethod{
-		{SerializationSimple, false},
-		{SerializationSimple, true},
-	},
-	ParameterInCookie: []SerializationMethod{
-		{SerializationForm, false},
-		{SerializationForm, true},
-	},
+// SerializationMethod returns a parameter's serialization method.
+// When a parameter's serialization method is not defined the method returns
+// the default serialization method corresponding to a parameter's location.
+func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) {
+	switch parameter.In {
+	case ParameterInPath, ParameterInHeader:
+		style := parameter.Style
+		if style == "" {
+			style = SerializationSimple
+		}
+		explode := false
+		if parameter.Explode != nil {
+			explode = *parameter.Explode
+		}
+		return &SerializationMethod{Style: style, Explode: explode}, nil
+	case ParameterInQuery, ParameterInCookie:
+		style := parameter.Style
+		if style == "" {
+			style = SerializationForm
+		}
+		explode := true
+		if parameter.Explode != nil {
+			explode = *parameter.Explode
+		}
+		return &SerializationMethod{Style: style, Explode: explode}, nil
+	default:
+		return nil, fmt.Errorf("unexpected parameter's 'in': %q", parameter.In)
+	}
 }
 
 func (parameter *Parameter) Validate(c context.Context) error {
@@ -190,15 +192,35 @@ func (parameter *Parameter) Validate(c context.Context) error {
 	}
 
 	// Validate a parameter's serialization method.
-	sm := parameter.SerializationMethod()
-	supported := false
-	for _, v := range supportedSerializationMethods[in] {
-		if v.Style == sm.Style && v.Explode == sm.Explode {
-			supported = true
-			break
-		}
+	sm, err := parameter.SerializationMethod()
+	if err != nil {
+		return err
 	}
-	if !supported {
+	var smSupported bool
+	switch {
+	case parameter.In == ParameterInPath && sm.Style == SerializationSimple && !sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationSimple && sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationLabel && !sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationLabel && sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationMatrix && !sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationMatrix && sm.Explode,
+
+		parameter.In == ParameterInQuery && sm.Style == SerializationForm && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationForm && !sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && !sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && !sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationDeepObject && sm.Explode,
+
+		parameter.In == ParameterInHeader && sm.Style == SerializationSimple && !sm.Explode,
+		parameter.In == ParameterInHeader && sm.Style == SerializationSimple && sm.Explode,
+
+		parameter.In == ParameterInCookie && sm.Style == SerializationForm && !sm.Explode,
+		parameter.In == ParameterInCookie && sm.Style == SerializationForm && sm.Explode:
+		smSupported = true
+	}
+	if !smSupported {
 		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
 			fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in))
 	}
@@ -218,34 +240,4 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		}
 	}
 	return nil
-}
-
-// SerializationMethod returns a parameter's serialization method.
-// When a parameter's serialization method is not defined the method returns
-// the default serialization method corresponding to a parameter's location.
-func (parameter *Parameter) SerializationMethod() SerializationMethod {
-	switch parameter.In {
-	case ParameterInPath, ParameterInHeader:
-		style := parameter.Style
-		if style == "" {
-			style = SerializationSimple
-		}
-		explode := false
-		if parameter.Explode != nil {
-			explode = *parameter.Explode
-		}
-		return SerializationMethod{Style: style, Explode: explode}
-	case ParameterInQuery, ParameterInCookie:
-		style := parameter.Style
-		if style == "" {
-			style = SerializationForm
-		}
-		explode := true
-		if parameter.Explode != nil {
-			explode = *parameter.Explode
-		}
-		return SerializationMethod{Style: style, Explode: explode}
-	default:
-		panic(fmt.Sprintf("unexpected parameter's 'in': %q", parameter.In))
-	}
 }
