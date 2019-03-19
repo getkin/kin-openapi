@@ -1,0 +1,1029 @@
+package openapi3filter
+
+import (
+	"net/http"
+	"reflect"
+	"strings"
+	"testing"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDecodeParameter(t *testing.T) {
+	var (
+		boolPtr   = func(b bool) *bool { return &b }
+		explode   = boolPtr(true)
+		noExplode = boolPtr(false)
+		arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
+			return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "array", Items: items}}
+		}
+		objectOf = func(args ...interface{}) *openapi3.SchemaRef {
+			s := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", Properties: make(map[string]*openapi3.SchemaRef)}}
+			if len(args)%2 != 0 {
+				panic("invalid arguments. must be an odd number of arguments")
+			}
+			for i := 0; i < len(args)/2; i++ {
+				propName := args[i*2].(string)
+				propSchema := args[i*2+1].(*openapi3.SchemaRef)
+				s.Value.Properties[propName] = propSchema
+			}
+			return s
+		}
+
+		integerSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "integer"}}
+		numberSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "number"}}
+		booleanSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "boolean"}}
+		stringSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "string"}}
+		arraySchema   = arrayOf(stringSchema)
+		objectSchema  = objectOf("id", stringSchema, "name", stringSchema)
+	)
+
+	type testCase struct {
+		name   string
+		param  *openapi3.Parameter
+		path   string
+		query  string
+		header string
+		cookie string
+		want   interface{}
+		err    error
+	}
+
+	testGroups := []struct {
+		name      string
+		testCases []testCase
+	}{
+		{
+			name: "path primitive",
+			testCases: []testCase{
+				{
+					name:  "simple",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: stringSchema},
+					path:  "/foo",
+					want:  "foo",
+				},
+				{
+					name:  "simple explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: stringSchema},
+					path:  "/foo",
+					want:  "foo",
+				},
+				{
+					name:  "label",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringSchema},
+					path:  "/.foo",
+					want:  "foo",
+				},
+				{
+					name:  "label invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "label explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringSchema},
+					path:  "/.foo",
+					want:  "foo",
+				},
+				{
+					name:  "label explode invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "matrix",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringSchema},
+					path:  "/;param=foo",
+					want:  "foo",
+				},
+				{
+					name:  "matrix invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "matrix explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringSchema},
+					path:  "/;param=foo",
+					want:  "foo",
+				},
+				{
+					name:  "matrix explode invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "default",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: stringSchema},
+					path:  "/foo",
+					want:  "foo",
+				},
+				{
+					name:  "string",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: stringSchema},
+					path:  "/foo",
+					want:  "foo",
+				},
+				{
+					name:  "integer",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
+					path:  "/1",
+					want:  float64(1),
+				},
+				{
+					name:  "integer invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "number",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: numberSchema},
+					path:  "/1.1",
+					want:  1.1,
+				},
+				{
+					name:  "number invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: numberSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: numberSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "boolean",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: booleanSchema},
+					path:  "/true",
+					want:  true,
+				},
+				{
+					name:  "boolean invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: booleanSchema},
+					path:  "/foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: booleanSchema},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "path array",
+			testCases: []testCase{
+				{
+					name:  "simple",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: arraySchema},
+					path:  "/foo,bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "simple explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: arraySchema},
+					path:  "/foo,bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "label",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
+					path:  "/.foo,bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "label invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
+					path:  "/foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "label explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
+					path:  "/.foo.bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "label explode invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
+					path:  "/foo.bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "matrix",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
+					path:  "/;param=foo,bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "matrix invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
+					path:  "/foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "matrix explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
+					path:  "/;param=foo;param=bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "matrix explode invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
+					path:  "/foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "default",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arraySchema},
+					path:  "/foo,bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "invalid integer items",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(integerSchema)},
+					path:  "/1,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid number items",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(numberSchema)},
+					path:  "/1.1,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid boolean items",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(booleanSchema)},
+					path:  "/true,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "path object",
+			testCases: []testCase{
+				{
+					name:  "simple",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: objectSchema},
+					path:  "/id,foo,name,bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "simple explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: objectSchema},
+					path:  "/id=foo,name=bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "label",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: objectSchema},
+					path:  "/.id,foo,name,bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "label invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: objectSchema},
+					path:  "/id,foo,name,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: objectSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "label explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: objectSchema},
+					path:  "/.id=foo.name=bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "label explode invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: objectSchema},
+					path:  "/id=foo.name=bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: objectSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "matrix",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: objectSchema},
+					path:  "/;param=id,foo,name,bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "matrix invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: objectSchema},
+					path:  "/id,foo,name,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: objectSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "matrix explode",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: objectSchema},
+					path:  "/;id=foo;name=bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "matrix explode invalid",
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: objectSchema},
+					path:  "/id=foo;name=bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: objectSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "default",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectSchema},
+					path:  "/id,foo,name,bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "invalid integer prop",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", integerSchema)},
+					path:  "/foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid number prop",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", numberSchema)},
+					path:  "/foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid boolean prop",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", booleanSchema)},
+					path:  "/foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "query primitive",
+			testCases: []testCase{
+				{
+					name:  "form",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: stringSchema},
+					query: "param=foo",
+					want:  "foo",
+				},
+				{
+					name:  "form explode",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: stringSchema},
+					query: "param=foo",
+					want:  "foo",
+				},
+				{
+					name:  "default",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringSchema},
+					query: "param=foo",
+					want:  "foo",
+				},
+				{
+					name:  "string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringSchema},
+					query: "param=foo",
+					want:  "foo",
+				},
+				{
+					name:  "integer",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=1",
+					want:  float64(1),
+				},
+				{
+					name:  "integer invalid",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "number",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=1.1",
+					want:  1.1,
+				},
+				{
+					name:  "number invalid",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "boolean",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
+					query: "param=true",
+					want:  true,
+				},
+				{
+					name:  "boolean invalid",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
+					query: "param=foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "query array",
+			testCases: []testCase{
+				{
+					name:  "form",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: arraySchema},
+					query: "param=foo,bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "form explode",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: arraySchema},
+					query: "param=foo&param=bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "spaceDelimited",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: arraySchema},
+					query: "param=foo bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "spaceDelimited explode",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: explode, Schema: arraySchema},
+					query: "param=foo&param=bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "pipeDelimited",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: arraySchema},
+					query: "param=foo|bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "pipeDelimited explode",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: explode, Schema: arraySchema},
+					query: "param=foo&param=bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "default",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arraySchema},
+					query: "param=foo&param=bar",
+					want:  []interface{}{"foo", "bar"},
+				},
+				{
+					name:  "invalid integer items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(integerSchema)},
+					query: "param=1&param=foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid number items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(numberSchema)},
+					query: "param=1.1&param=foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid boolean items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(booleanSchema)},
+					query: "param=true&param=foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "query object",
+			testCases: []testCase{
+				{
+					name:  "form",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: objectSchema},
+					query: "param=id,foo,name,bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "form explode",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: objectSchema},
+					query: "id=foo&name=bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "deepObject explode",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectSchema},
+					query: "param[id]=foo&param[name]=bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "default",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},
+					query: "id=foo&name=bar",
+					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:  "invalid integer prop",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", integerSchema)},
+					query: "foo=bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid number prop",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", numberSchema)},
+					query: "foo=bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:  "invalid boolean prop",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", booleanSchema)},
+					query: "foo=bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "header primitive",
+			testCases: []testCase{
+				{
+					name:   "simple",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: stringSchema},
+					header: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "simple explode",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: stringSchema},
+					header: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "default",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: stringSchema},
+					header: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "string",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: stringSchema},
+					header: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "integer",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
+					header: "X-Param:1",
+					want:   float64(1),
+				},
+				{
+					name:   "integer invalid",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
+					header: "X-Param:foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "number",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: numberSchema},
+					header: "X-Param:1.1",
+					want:   1.1,
+				},
+				{
+					name:   "number invalid",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: numberSchema},
+					header: "X-Param:foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: numberSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "boolean",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: booleanSchema},
+					header: "X-Param:true",
+					want:   true,
+				},
+				{
+					name:   "boolean invalid",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: booleanSchema},
+					header: "X-Param:foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: booleanSchema},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "header array",
+			testCases: []testCase{
+				{
+					name:   "simple",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: arraySchema},
+					header: "X-Param:foo,bar",
+					want:   []interface{}{"foo", "bar"},
+				},
+				{
+					name:   "simple explode",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: arraySchema},
+					header: "X-Param:foo,bar",
+					want:   []interface{}{"foo", "bar"},
+				},
+				{
+					name:   "default",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arraySchema},
+					header: "X-Param:foo,bar",
+					want:   []interface{}{"foo", "bar"},
+				},
+				{
+					name:   "invalid integer items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(integerSchema)},
+					header: "X-Param:1,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid number items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(numberSchema)},
+					header: "X-Param:1.1,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid boolean items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(booleanSchema)},
+					header: "X-Param:true,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "header object",
+			testCases: []testCase{
+				{
+					name:   "simple",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: objectSchema},
+					header: "X-Param:id,foo,name,bar",
+					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:   "simple explode",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: objectSchema},
+					header: "X-Param:id=foo,name=bar",
+					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:   "default",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectSchema},
+					header: "X-Param:id,foo,name,bar",
+					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:   "invalid integer prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", integerSchema)},
+					header: "X-Param:foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid number prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", numberSchema)},
+					header: "X-Param:foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid boolean prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", booleanSchema)},
+					header: "X-Param:foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "cookie primitive",
+			testCases: []testCase{
+				{
+					name:   "form",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: stringSchema},
+					cookie: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "form explode",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: explode, Schema: stringSchema},
+					cookie: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "default",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: stringSchema},
+					cookie: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "string",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: stringSchema},
+					cookie: "X-Param:foo",
+					want:   "foo",
+				},
+				{
+					name:   "integer",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
+					cookie: "X-Param:1",
+					want:   float64(1),
+				},
+				{
+					name:   "integer invalid",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
+					cookie: "X-Param:foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "number",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: numberSchema},
+					cookie: "X-Param:1.1",
+					want:   1.1,
+				},
+				{
+					name:   "number invalid",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: numberSchema},
+					cookie: "X-Param:foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: numberSchema},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "boolean",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: booleanSchema},
+					cookie: "X-Param:true",
+					want:   true,
+				},
+				{
+					name:   "boolean invalid",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: booleanSchema},
+					cookie: "X-Param:foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: booleanSchema},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "cookie array",
+			testCases: []testCase{
+				{
+					name:   "form",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arraySchema},
+					cookie: "X-Param:foo,bar",
+					want:   []interface{}{"foo", "bar"},
+				},
+				{
+					name:   "invalid integer items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(integerSchema)},
+					cookie: "X-Param:1,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid number items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(numberSchema)},
+					cookie: "X-Param:1.1,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid boolean items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(booleanSchema)},
+					cookie: "X-Param:true,foo",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+		{
+			name: "cookie object",
+			testCases: []testCase{
+				{
+					name:   "form",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectSchema},
+					cookie: "X-Param:id,foo,name,bar",
+					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+				},
+				{
+					name:   "invalid integer prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", integerSchema)},
+					cookie: "X-Param:foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", integerSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid number prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", numberSchema)},
+					cookie: "X-Param:foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", numberSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+				{
+					name:   "invalid boolean prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", booleanSchema)},
+					cookie: "X-Param:foo,bar",
+					err: &RequestError{
+						Parameter: &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", booleanSchema)},
+						Reason:    "an invalid value",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tg := range testGroups {
+		t.Run(tg.name, func(t *testing.T) {
+			for _, tc := range tg.testCases {
+				t.Run(tc.name, func(t *testing.T) {
+					req, err := http.NewRequest(http.MethodGet, "http://test.org/test"+tc.path, nil)
+					require.NoError(t, err, "failed to create a test request")
+
+					if tc.query != "" {
+						query := req.URL.Query()
+						for _, param := range strings.Split(tc.query, "&") {
+							v := strings.Split(param, "=")
+							query.Add(v[0], v[1])
+						}
+						req.URL.RawQuery = query.Encode()
+					}
+
+					if tc.header != "" {
+						v := strings.Split(tc.header, ":")
+						req.Header.Add(v[0], v[1])
+					}
+
+					if tc.cookie != "" {
+						v := strings.Split(tc.cookie, ":")
+						req.AddCookie(&http.Cookie{Name: v[0], Value: v[1]})
+					}
+
+					var path string
+					if tc.path != "" {
+						switch tc.param.Style {
+						case "label":
+							path = "." + tc.param.Name
+						case "matrix":
+							path = ";" + tc.param.Name
+						default:
+							path = tc.param.Name
+						}
+						if tc.param.Explode != nil && *tc.param.Explode {
+							path += "*"
+						}
+						path = "/{" + path + "}"
+					}
+
+					spec := &openapi3.Swagger{}
+					op := &openapi3.Operation{OperationID: "test", Parameters: []*openapi3.ParameterRef{{Value: tc.param}}}
+					spec.AddOperation("/test"+path, http.MethodGet, op)
+					router := NewRouter()
+					require.NoError(t, router.AddSwagger(spec), "failed to create a router")
+
+					route, pathParams, err := router.FindRoute(req.Method, req.URL)
+					require.NoError(t, err, "failed to find a route")
+
+					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
+					got, err := decodeParameter(tc.param, input)
+
+					if tc.err != nil {
+						require.Error(t, err)
+						require.Truef(t, matchParamError(err, tc.err), "got error %v, want error %v", err, tc.err)
+						return
+					}
+
+					require.NoError(t, err)
+					require.Truef(t, reflect.DeepEqual(got, tc.want), "got %v, want %v", got, tc.want)
+				})
+			}
+		})
+	}
+}
+
+func matchParamError(got, want error) bool {
+	wErr, ok := want.(*RequestError)
+	if !ok {
+		return false
+	}
+	gErr, ok := got.(*RequestError)
+	if !ok {
+		return false
+	}
+
+	if !reflect.DeepEqual(wErr.Parameter, gErr.Parameter) {
+		return false
+	}
+	if wErr.Status != gErr.Status {
+		return false
+	}
+	if wErr.Reason != gErr.Reason {
+		return false
+	}
+	return true
+}
