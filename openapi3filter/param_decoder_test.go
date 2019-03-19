@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeParameter(t *testing.T) {
@@ -942,9 +943,7 @@ func TestDecodeParameter(t *testing.T) {
 			for _, tc := range tg.testCases {
 				t.Run(tc.name, func(t *testing.T) {
 					req, err := http.NewRequest(http.MethodGet, "http://test.org/test"+tc.path, nil)
-					if err != nil {
-						t.Fatal("failed to create test request:", err)
-					}
+					require.NoError(t, err, "failed to create a test request")
 
 					if tc.query != "" {
 						query := req.URL.Query()
@@ -985,33 +984,22 @@ func TestDecodeParameter(t *testing.T) {
 					op := &openapi3.Operation{OperationID: "test", Parameters: []*openapi3.ParameterRef{{Value: tc.param}}}
 					spec.AddOperation("/test"+path, http.MethodGet, op)
 					router := NewRouter()
-					if err = router.AddSwagger(spec); err != nil {
-						t.Fatal("failed to create router:", err)
-					}
+					require.NoError(t, router.AddSwagger(spec), "failed to create a router")
 
 					route, pathParams, err := router.FindRoute(req.Method, req.URL)
-					if err != nil {
-						t.Fatal("failed to find route:", err)
-					}
+					require.NoError(t, err, "failed to find a route")
 
 					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
 					got, err := decodeParameter(tc.param, input)
 
 					if tc.err != nil {
-						if err == nil {
-							t.Fatalf("got no errors, want error %v", tc.err)
-						}
-						if !matchParamError(err, tc.err) {
-							t.Fatalf("got error %v, want error %v", err, tc.err)
-						}
+						require.Error(t, err)
+						require.Truef(t, matchParamError(err, tc.err), "got error %v, want error %v", err, tc.err)
 						return
 					}
-					if err != nil {
-						t.Fatalf("got error %v, want %v", err, tc.want)
-					}
-					if !reflect.DeepEqual(got, tc.want) {
-						t.Fatalf("got %v, want %v", got, tc.want)
-					}
+
+					require.NoError(t, err)
+					require.Truef(t, reflect.DeepEqual(got, tc.want), "got %v, want %v", got, tc.want)
 				})
 			}
 		})
