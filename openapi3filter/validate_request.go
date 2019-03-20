@@ -12,6 +12,9 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+// ErrInvalidRequired is an error that happens when a required value of a parameter is not defined.
+var ErrInvalidRequired = fmt.Errorf("must have a value")
+
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	options := input.Options
 	if options == nil {
@@ -66,30 +69,30 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	return nil
 }
 
+// ValidateParameter validates a parameter's value by JSON schema.
+// The function returns RequestError with a ParseError cause when unable to parse a value.
+// The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
+// The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
 func ValidateParameter(c context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
 	value, err := decodeParameter(parameter, input)
 	if err != nil {
-		return err
+		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
 
 	// Validate a parameter's value.
 	if value == nil {
 		if parameter.Required {
-			return &RequestError{
-				Input:     input,
-				Parameter: parameter,
-				Reason:    "must have a value",
-			}
+			return &RequestError{Input: input, Parameter: parameter, Reason: "must have a value", Err: ErrInvalidRequired}
 		}
 		return nil
 	}
-	if schemaRef := parameter.Schema; schemaRef != nil {
-		// Only check schema if no transformation is needed
-		if schema := schemaRef.Value; schema.Type == "string" {
-			if err = schema.VisitJSON(value); err != nil {
-				return &RequestError{Input: input, Parameter: parameter, Err: err}
-			}
-		}
+	schema := parameter.Schema.Value
+	if schema == nil {
+		// A parameter's schema is not defined so skip validation of a parameter's value.
+		return nil
+	}
+	if err = schema.VisitJSON(value); err != nil {
+		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
 	return nil
 }
