@@ -7,6 +7,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -171,4 +174,106 @@ func marshalReader(value interface{}) io.ReadCloser {
 		panic(err)
 	}
 	return ioutil.NopCloser(bytes.NewReader(data))
+}
+
+func TestValidateRequestBody(t *testing.T) {
+	requiredReqBody := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithJSONSchema(openapi3.NewStringSchema())).
+		WithRequired(true)
+
+	testCases := []struct {
+		name    string
+		body    *openapi3.RequestBody
+		mime    string
+		data    io.Reader
+		wantErr error
+	}{
+		{
+			name: "non required empty",
+			body: openapi3.NewRequestBody().
+				WithContent(openapi3.NewContentWithJSONSchema(openapi3.NewStringSchema())),
+		},
+		{
+			name: "non required not empty",
+			body: openapi3.NewRequestBody().
+				WithContent(openapi3.NewContentWithJSONSchema(openapi3.NewStringSchema())),
+			mime: "application/json",
+			data: toJSON("foo"),
+		},
+		{
+			name:    "required empty",
+			body:    requiredReqBody,
+			wantErr: &openapi3filter.RequestError{RequestBody: requiredReqBody, Err: openapi3filter.ErrInvalidRequired},
+		},
+		{
+			name: "required not empty",
+			body: requiredReqBody,
+			mime: "application/json",
+			data: toJSON("foo"),
+		},
+		{
+			name: "not JSON data",
+			body: requiredReqBody,
+			mime: "plain/text",
+			data: strings.NewReader("foo"),
+		},
+		{
+			name: "not declared content",
+			body: openapi3.NewRequestBody().WithRequired(true),
+			mime: "application/json",
+			data: toJSON("foo"),
+		},
+		{
+			name: "not declared schema",
+			body: openapi3.NewRequestBody().WithJSONSchemaRef(nil),
+			mime: "application/json",
+			data: toJSON("foo"),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/test", tc.data)
+			if tc.mime != "" {
+				req.Header.Set(http.CanonicalHeaderKey("Content-Type"), tc.mime)
+			}
+			inp := &openapi3filter.RequestValidationInput{Request: req}
+			err := openapi3filter.ValidateRequestBody(context.Background(), inp, tc.body)
+
+			if tc.wantErr == nil {
+				require.NoError(t, err)
+				return
+			}
+
+			require.True(t, matchReqBodyError(tc.wantErr, err), "got error:\n%s\nwant error\n%s", err, tc.wantErr)
+		})
+	}
+}
+
+func matchReqBodyError(want, got error) bool {
+	if want == got {
+		return true
+	}
+	wErr, ok := want.(*openapi3filter.RequestError)
+	if !ok {
+		return false
+	}
+	gErr, ok := got.(*openapi3filter.RequestError)
+	if !ok {
+		return false
+	}
+	if !reflect.DeepEqual(wErr.RequestBody, gErr.RequestBody) {
+		return false
+	}
+	if wErr.Err != nil {
+		return matchReqBodyError(wErr.Err, gErr.Err)
+	}
+	return false
+}
+
+func toJSON(v interface{}) io.Reader {
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return bytes.NewReader(data)
 }
