@@ -3,7 +3,6 @@ package openapi3filter
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -99,8 +98,7 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 }
 
 // ValidateRequestBody validates data of a request's body.
-// The function validates JSON data only.
-// The function returns nil when data is not JSON data.
+//
 // The function returns RequestError with ErrInvalidRequired cause when a value is required but not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
 func ValidateRequestBody(c context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
@@ -139,9 +137,12 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 
 	inputMIME := req.Header.Get("Content-Type")
 	mediaType := parseMediaType(inputMIME)
-	if !isMediaTypeJSON(mediaType) {
-		// We support validation of JSON data only.
-		return nil
+	if mediaType == "" {
+		return &RequestError{
+			Input:       input,
+			RequestBody: requestBody,
+			Reason:      "a content type of the request's body is missed",
+		}
 	}
 
 	contentType := requestBody.Content[mediaType]
@@ -159,13 +160,12 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		return nil
 	}
 
-	// Decode JSON
-	var value interface{}
-	if err := json.Unmarshal(data, &value); err != nil {
+	value, err := decodeBody(data, mediaType)
+	if err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "decoding JSON failed",
+			Reason:      "failed to decode the request's body",
 			Err:         err,
 		}
 	}
@@ -175,7 +175,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "doesn't input the schema",
+			Reason:      "doesn't match the schema",
 			Err:         err,
 		}
 	}

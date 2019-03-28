@@ -1,6 +1,7 @@
 package openapi3filter
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -30,7 +31,7 @@ const (
 	KindInvalidBool
 )
 
-// ParseError describes errors which happens while parse operation's parameters.
+// ParseError describes errors which happens while parse operation's parameters, requestBody, or response.
 type ParseError struct {
 	Kind   ParseErrorKind
 	Path   []interface{}
@@ -594,4 +595,48 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 	default:
 		panic(fmt.Sprintf("schema has non primitive type %q", schema.Value.Type))
 	}
+}
+
+// BodyDecoder is an interface to decode a body of a request or response.
+// An implementation must return a value that is a primitive, []interface{}, or map[string]interface{}.
+type BodyDecoder func(data []byte) (interface{}, error)
+
+// bodyDecoders contains decoders for supported content types of a body.
+// By default, there is content type "application/json" is supported only.
+var bodyDecoders = map[string]BodyDecoder{
+	"plain/text": func(body []byte) (interface{}, error) {
+		return string(body), nil
+	},
+	"application/json": func(body []byte) (interface{}, error) {
+		var value interface{}
+		if err := json.Unmarshal(body, &value); err != nil {
+			return nil, err
+		}
+		return value, nil
+	},
+}
+
+// RegisterBodyDecoder registers a request body's decoder for a content types.
+//
+// If a decoder for the specified content type is already exists, the function replaces
+// it with the specified decoder.
+func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
+	bodyDecoders[contentType] = decoder
+}
+
+// decodeBody returns a decoded body.
+// The function returns ParseError when a body is invalid.
+func decodeBody(body []byte, contentType string) (interface{}, error) {
+	decoder, ok := bodyDecoders[contentType]
+	if !ok {
+		return nil, &ParseError{
+			Kind:   KindInvalidFormat,
+			Reason: fmt.Sprintf("an unsupported content type %q", contentType),
+		}
+	}
+	value, err := decoder(body)
+	if err != nil {
+		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
+	}
+	return value, nil
 }

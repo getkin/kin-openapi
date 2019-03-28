@@ -112,9 +112,45 @@ func main() {
 		responseValidationInput.SetBodyBytes(data)
 	}
 
-	// Get response
+	// Validate response.
 	if err := openapi3filter.ValidateResponse(ctx, responseValidationInput); err != nil {
 		panic(err)
 	}
+}
+```
+
+## Custom content type for body of HTTP request/response
+
+By default, the library parses a body of HTTP request and response
+if it has one of the next content types: "plain/text" or "application/json".
+To support other content types you must register decoders for them:
+
+```go
+func main() {
+	// ...
+
+	// Register a body's decoder for content type "application/xml".
+	openapi3filter.RegisterBodyDecoder("application/xml", xmlBodyDecoder)
+
+	// Now you can validate HTTP request that contains a body with content type "application/xml".
+	requestValidationInput := &openapi3filter.RequestValidationInput{
+		Request:    httpReq,
+		PathParams: pathParams,
+		Route:      route,
+	}
+	if err := openapi3filter.ValidateRequest(ctx, requestValidationInput); err != nil {
+		panic(err)
+	}
+
+	// ...
+
+	// And you can validate HTTP response that contains a body with content type "application/xml".
+	if err := openapi3filter.ValidateResponse(ctx, responseValidationInput); err != nil {
+		panic(err)
+	}
+}
+
+func xmlBodyDecoder(body []byte) (interface{}, error) {
+	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
 }
 ```

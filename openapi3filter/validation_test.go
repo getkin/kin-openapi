@@ -181,6 +181,9 @@ func TestValidateRequestBody(t *testing.T) {
 		WithContent(openapi3.NewContentWithJSONSchema(openapi3.NewStringSchema())).
 		WithRequired(true)
 
+	plainTextContent := openapi3.NewContent()
+	plainTextContent["plain/text"] = openapi3.NewMediaType().WithSchema(openapi3.NewStringSchema())
+
 	testCases := []struct {
 		name    string
 		body    *openapi3.RequestBody
@@ -213,7 +216,7 @@ func TestValidateRequestBody(t *testing.T) {
 		},
 		{
 			name: "not JSON data",
-			body: requiredReqBody,
+			body: openapi3.NewRequestBody().WithContent(plainTextContent).WithRequired(true),
 			mime: "plain/text",
 			data: strings.NewReader("foo"),
 		},
