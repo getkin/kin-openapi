@@ -141,7 +141,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "a content type of the request's body is missed",
+			Reason:      "content type of request body is missed",
 		}
 	}
 
@@ -165,7 +165,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "failed to decode the request's body",
+			Reason:      "failed to decode request body",
 			Err:         err,
 		}
 	}

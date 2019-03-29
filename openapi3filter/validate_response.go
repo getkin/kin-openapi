@@ -76,7 +76,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	if mediaType == "" {
 		return &ResponseError{
 			Input:  input,
-			Reason: "a content type of the response's body is missed",
+			Reason: "content type of response body is missed",
 		}
 	}
 
@@ -110,7 +110,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: "failed to read the response's body",
+			Reason: "failed to read response body",
 			Err:    err,
 		}
 	}
@@ -122,7 +122,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: "failed to decode the response's body",
+			Reason: "failed to decode response body",
 			Err:    err,
 		}
 	}
@@ -131,7 +131,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	if err := schema.Value.VisitJSON(value); err != nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: "the response's body doesn't match the schema",
+			Reason: "response body doesn't match the schema",
 			Err:    err,
 		}
 	}

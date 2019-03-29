@@ -616,11 +616,17 @@ var bodyDecoders = map[string]BodyDecoder{
 	},
 }
 
-// RegisterBodyDecoder registers a request body's decoder for a content types.
+// RegisterBodyDecoder registers a request body's decoder for a content type.
 //
-// If a decoder for the specified content type is already exists, the function replaces
+// If a decoder for the specified content type already exists, the function replaces
 // it with the specified decoder.
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
+	if contentType == "" {
+		panic("contentType is empty")
+	}
+	if decoder == nil {
+		panic("decoder is not defined")
+	}
 	bodyDecoders[contentType] = decoder
 }
 
