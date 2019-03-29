@@ -862,6 +862,76 @@ func TestDecodeParameter(t *testing.T) {
 	}
 }
 
+func TestDecodeBody(t *testing.T) {
+	testCases := []struct {
+		name    string
+		mime    string
+		body    []byte
+		want    interface{}
+		wantErr error
+	}{
+		{
+			name:    "unsupported content type",
+			mime:    "application/xml",
+			wantErr: &ParseError{Kind: KindUnsupportedFormat},
+		},
+		{
+			name:    "invalid body data",
+			mime:    "application/json",
+			body:    []byte("invalid"),
+			wantErr: &ParseError{Kind: KindInvalidFormat},
+		},
+		{
+			name: "valid body data",
+			mime: "application/json",
+			body: []byte("\"foo\""),
+			want: "foo",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := decodeBody(tc.body, tc.mime)
+
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Truef(t, matchParseError(err, tc.wantErr), "got error:\n%v\nwant error:\n%v", err, tc.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Truef(t, reflect.DeepEqual(got, tc.want), "got %v, want %v", got, tc.want)
+		})
+	}
+}
+
+func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
+	var (
+		contentType = "text/csv"
+		decoder     = func(body []byte) (interface{}, error) {
+			var vv []interface{}
+			for _, v := range strings.Split(string(body), ",") {
+				vv = append(vv, v)
+			}
+			return vv, nil
+		}
+		body    = []byte("foo,bar")
+		want    = []interface{}{"foo", "bar"}
+		wantErr = &ParseError{Kind: KindUnsupportedFormat}
+	)
+
+	RegisterBodyDecoder(contentType, decoder)
+	got, err := decodeBody(body, contentType)
+
+	require.NoError(t, err)
+	require.Truef(t, reflect.DeepEqual(got, want), "got %v, want %v", got, want)
+
+	UnregisterBodyDecoder(contentType)
+	_, err = decodeBody(body, contentType)
+
+	require.Error(t, err)
+	require.Truef(t, matchParseError(err, wantErr), "got error:\n%v\nwant error:\n%v", err, wantErr)
+}
+
 func matchParseError(got, want error) bool {
 	wErr, ok := want.(*ParseError)
 	if !ok {

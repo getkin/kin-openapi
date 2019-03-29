@@ -3,16 +3,16 @@ package openapi3filter
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"sort"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// ErrInvalidRequired is an error that happens when a required value of a parameter is not defined.
+// ErrInvalidRequired is an error that happens when a required value of a parameter or request's body is not defined.
 var ErrInvalidRequired = fmt.Errorf("must have a value")
 
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
@@ -97,58 +97,86 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	return nil
 }
 
+// ValidateRequestBody validates data of a request's body.
+//
+// The function returns RequestError with ErrInvalidRequired cause when a value is required but not defined.
+// The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
 func ValidateRequestBody(c context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
-	req := input.Request
-	content := requestBody.Content
-	if content != nil && len(content) > 0 {
-		inputMIME := req.Header.Get("Content-Type")
-		mediaType := parseMediaType(inputMIME)
-		contentType := requestBody.Content[mediaType]
-		if contentType == nil {
+	var (
+		req  = input.Request
+		data []byte
+	)
+
+	if req.Body != http.NoBody {
+		defer req.Body.Close()
+		var err error
+		if data, err = ioutil.ReadAll(req.Body); err != nil {
 			return &RequestError{
 				Input:       input,
 				RequestBody: requestBody,
-				Reason:      fmt.Sprintf("header 'Content-Type' has unexpected value: %q", inputMIME),
+				Reason:      "reading failed",
+				Err:         err,
 			}
 		}
-		schemaRef := contentType.Schema
-		if schemaRef != nil && isMediaTypeJSON(mediaType) {
-			schema := schemaRef.Value
-			body := req.Body
-			defer body.Close()
-			data, err := ioutil.ReadAll(body)
-			if err != nil {
-				return &RequestError{
-					Input:       input,
-					RequestBody: requestBody,
-					Reason:      "reading failed",
-					Err:         err,
-				}
-			}
+		// Put the data back into the input
+		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+	}
 
-			// Put the data back into the input
-			req.Body = ioutil.NopCloser(bytes.NewReader(data))
+	if len(data) == 0 {
+		if requestBody.Required {
+			return &RequestError{Input: input, RequestBody: requestBody, Err: ErrInvalidRequired}
+		}
+		return nil
+	}
 
-			// Decode JSON
-			var value interface{}
-			if err := json.Unmarshal(data, &value); err != nil {
-				return &RequestError{
-					Input:       input,
-					RequestBody: requestBody,
-					Reason:      "decoding JSON failed",
-					Err:         err,
-				}
-			}
+	content := requestBody.Content
+	if len(content) == 0 {
+		// A request's body does not have declared content, so skip validation.
+		return nil
+	}
 
-			// Validate JSON with the schema
-			if err := schema.VisitJSON(value); err != nil {
-				return &RequestError{
-					Input:       input,
-					RequestBody: requestBody,
-					Reason:      "doesn't input the schema",
-					Err:         err,
-				}
-			}
+	inputMIME := req.Header.Get("Content-Type")
+	mediaType := parseMediaType(inputMIME)
+	if mediaType == "" {
+		return &RequestError{
+			Input:       input,
+			RequestBody: requestBody,
+			Reason:      "content type of request body is missed",
+		}
+	}
+
+	contentType := requestBody.Content[mediaType]
+	if contentType == nil {
+		return &RequestError{
+			Input:       input,
+			RequestBody: requestBody,
+			Reason:      fmt.Sprintf("header 'Content-Type' has unexpected value: %q", inputMIME),
+		}
+	}
+
+	schemaRef := contentType.Schema
+	if schemaRef == nil {
+		// A JSON schema that describes the received data is not declared, so skip validation.
+		return nil
+	}
+
+	value, err := decodeBody(data, mediaType)
+	if err != nil {
+		return &RequestError{
+			Input:       input,
+			RequestBody: requestBody,
+			Reason:      "failed to decode request body",
+			Err:         err,
+		}
+	}
+
+	// Validate JSON with the schema
+	if err := schemaRef.Value.VisitJSON(value); err != nil {
+		return &RequestError{
+			Input:       input,
+			RequestBody: requestBody,
+			Reason:      "doesn't match the schema",
+			Err:         err,
 		}
 	}
 	return nil
