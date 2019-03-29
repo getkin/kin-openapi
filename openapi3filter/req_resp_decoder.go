@@ -20,6 +20,8 @@ type ParseErrorKind int
 const (
 	// KindOther describes an untyped parsing error.
 	KindOther ParseErrorKind = iota
+	// KindUnsupportedFormat describes an error that happens when a value has an unsupported format.
+	KindUnsupportedFormat
 	// KindInvalidFormat describes an error that happens when a value does not conform a format
 	// that is required by a serialization method.
 	KindInvalidFormat
@@ -630,13 +632,23 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 	bodyDecoders[contentType] = decoder
 }
 
+// UnregisterBodyDecoder dissociates a body decoder from a content type.
+//
+// Decoding this content type will result in an error.
+func UnregisterBodyDecoder(contentType string) {
+	if contentType == "" {
+		panic("contentType is empty")
+	}
+	delete(bodyDecoders, contentType)
+}
+
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
 func decodeBody(body []byte, contentType string) (interface{}, error) {
 	decoder, ok := bodyDecoders[contentType]
 	if !ok {
 		return nil, &ParseError{
-			Kind:   KindInvalidFormat,
+			Kind:   KindUnsupportedFormat,
 			Reason: fmt.Sprintf("an unsupported content type %q", contentType),
 		}
 	}

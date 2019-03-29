@@ -866,7 +866,6 @@ func TestDecodeBody(t *testing.T) {
 	testCases := []struct {
 		name    string
 		mime    string
-		decoder BodyDecoder
 		body    []byte
 		want    interface{}
 		wantErr error
@@ -874,7 +873,7 @@ func TestDecodeBody(t *testing.T) {
 		{
 			name:    "unsupported content type",
 			mime:    "application/xml",
-			wantErr: &ParseError{Kind: KindInvalidFormat},
+			wantErr: &ParseError{Kind: KindUnsupportedFormat},
 		},
 		{
 			name:    "invalid body data",
@@ -888,25 +887,9 @@ func TestDecodeBody(t *testing.T) {
 			body: []byte("\"foo\""),
 			want: "foo",
 		},
-		{
-			name: "custom content type",
-			mime: "text/csv",
-			decoder: func(body []byte) (interface{}, error) {
-				var vv []interface{}
-				for _, v := range strings.Split(string(body), ",") {
-					vv = append(vv, v)
-				}
-				return vv, nil
-			},
-			body: []byte("foo,bar"),
-			want: []interface{}{"foo", "bar"},
-		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.decoder != nil {
-				RegisterBodyDecoder(tc.mime, tc.decoder)
-			}
 			got, err := decodeBody(tc.body, tc.mime)
 
 			if tc.wantErr != nil {
@@ -919,6 +902,34 @@ func TestDecodeBody(t *testing.T) {
 			require.Truef(t, reflect.DeepEqual(got, tc.want), "got %v, want %v", got, tc.want)
 		})
 	}
+}
+
+func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
+	var (
+		contentType = "text/csv"
+		decoder     = func(body []byte) (interface{}, error) {
+			var vv []interface{}
+			for _, v := range strings.Split(string(body), ",") {
+				vv = append(vv, v)
+			}
+			return vv, nil
+		}
+		body    = []byte("foo,bar")
+		want    = []interface{}{"foo", "bar"}
+		wantErr = &ParseError{Kind: KindUnsupportedFormat}
+	)
+
+	RegisterBodyDecoder(contentType, decoder)
+	got, err := decodeBody(body, contentType)
+
+	require.NoError(t, err)
+	require.Truef(t, reflect.DeepEqual(got, want), "got %v, want %v", got, want)
+
+	UnregisterBodyDecoder(contentType)
+	_, err = decodeBody(body, contentType)
+
+	require.Error(t, err)
+	require.Truef(t, matchParseError(err, wantErr), "got error:\n%v\nwant error:\n%v", err, wantErr)
 }
 
 func matchParseError(got, want error) bool {
