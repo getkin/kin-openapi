@@ -141,7 +141,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "content type of request body is missed",
+			Reason:      "content type is missed",
 		}
 	}
 
@@ -154,13 +154,13 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		}
 	}
 
-	schemaRef := contentType.Schema
-	if schemaRef == nil {
+	if contentType.Schema == nil {
 		// A JSON schema that describes the received data is not declared, so skip validation.
 		return nil
 	}
 
-	value, err := decodeBody(data, mediaType)
+	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
+	value, err := decodeBody(bytes.NewReader(data), req.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &RequestError{
 			Input:       input,
@@ -171,7 +171,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	}
 
 	// Validate JSON with the schema
-	if err := schemaRef.Value.VisitJSON(value); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value); err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
