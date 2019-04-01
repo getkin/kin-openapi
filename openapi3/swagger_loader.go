@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -46,6 +47,38 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 		return nil, err
 	}
 	return swaggerLoader.LoadSwaggerFromDataWithPath(data, location)
+}
+
+// loadSingleElementFromURI read the data from ref and unmarshal to JSON to the
+// passed element.
+func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.URL, element json.Unmarshaler) error {
+	if !swaggerLoader.IsExternalRefsAllowed {
+		return fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
+	}
+
+	parsedURL, err := url.Parse(ref)
+	if err != nil {
+		return err
+	}
+
+	if parsedURL.Fragment != "" {
+		panic("DO NOT CALL this function with files which contains more than one element definition")
+	}
+
+	resolvedPath, err := resolvePath(rootPath, parsedURL)
+	if err != nil {
+		return fmt.Errorf("Error while resolving path: %v", err)
+	}
+
+	data, err := readUrl(resolvedPath)
+	if err != nil {
+		return err
+	}
+	if err := yaml.Unmarshal(data, element); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func readUrl(location *url.URL) ([]byte, error) {
@@ -197,6 +230,10 @@ func resolvePath(basePath *url.URL, componentPath *url.URL) (*url.URL, error) {
 		return join(basePath, componentPath)
 	}
 	return componentPath, nil
+}
+
+func isSingleRefElement(ref string) bool {
+	return !strings.Contains(ref, "#")
 }
 
 func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, prefix string, path *url.URL) (
@@ -388,22 +425,32 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	// Resolve ref
 	const prefix = "#/components/responses/"
 	if ref := component.Ref; len(ref) > 0 {
-		components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
-		if err != nil {
-			return err
+
+		if isSingleRefElement(ref) {
+			var resp Response
+			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &resp); err != nil {
+				return err
+			}
+
+			component.Value = &resp
+		} else {
+			components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+			if err != nil {
+				return err
+			}
+			definitions := components.Responses
+			if definitions == nil {
+				return failedToResolveRefFragmentPart(ref, "responses")
+			}
+			resolved := definitions[id]
+			if resolved == nil {
+				return failedToResolveRefFragmentPart(ref, id)
+			}
+			if err := swaggerLoader.resolveResponseRef(swagger, resolved, componentPath); err != nil {
+				return err
+			}
+			component.Value = resolved.Value
 		}
-		definitions := components.Responses
-		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "responses")
-		}
-		resolved := definitions[id]
-		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
-		}
-		if err := swaggerLoader.resolveResponseRef(swagger, resolved, componentPath); err != nil {
-			return err
-		}
-		component.Value = resolved.Value
 	}
 	value := component.Value
 	if value == nil {
