@@ -3,6 +3,7 @@ package openapi3_test
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -38,13 +39,14 @@ var encodingJSON = []byte(`
   "headers": {
     "someHeader": {}
   },
-  "style": "simple",
+  "style": "form",
   "explode": true,
   "allowReserved": true
 }
 `)
 
 func encoding() *openapi3.Encoding {
+	explode := true
 	return &openapi3.Encoding{
 		ContentType: "application/json",
 		Headers: map[string]*openapi3.HeaderRef{
@@ -52,8 +54,48 @@ func encoding() *openapi3.Encoding {
 				Value: &openapi3.Header{},
 			},
 		},
-		Style:         "simple",
-		Explode:       true,
+		Style:         "form",
+		Explode:       &explode,
 		AllowReserved: true,
+	}
+}
+
+func TestEncodingSerializationMethod(t *testing.T) {
+	boolPtr := func(b bool) *bool { return &b }
+	testCases := []struct {
+		name string
+		enc  *openapi3.Encoding
+		want *openapi3.SerializationMethod
+	}{
+		{
+			name: "default",
+			want: &openapi3.SerializationMethod{Style: openapi3.SerializationForm, Explode: true},
+		},
+		{
+			name: "encoding with style",
+			enc:  &openapi3.Encoding{Style: openapi3.SerializationSpaceDelimited},
+			want: &openapi3.SerializationMethod{Style: openapi3.SerializationSpaceDelimited, Explode: true},
+		},
+		{
+			name: "encoding with explode",
+			enc:  &openapi3.Encoding{Explode: boolPtr(true)},
+			want: &openapi3.SerializationMethod{Style: openapi3.SerializationForm, Explode: true},
+		},
+		{
+			name: "encoding with no explode",
+			enc:  &openapi3.Encoding{Explode: boolPtr(false)},
+			want: &openapi3.SerializationMethod{Style: openapi3.SerializationForm, Explode: false},
+		},
+		{
+			name: "encoding with style and explode ",
+			enc:  &openapi3.Encoding{Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
+			want: &openapi3.SerializationMethod{Style: openapi3.SerializationSpaceDelimited, Explode: false},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.enc.SerializationMethod()
+			require.True(t, reflect.DeepEqual(got, tc.want), "got %#v, want %#v", got, tc.want)
+		})
 	}
 }

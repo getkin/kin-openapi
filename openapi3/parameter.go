@@ -73,16 +73,6 @@ const (
 	ParameterInCookie = "cookie"
 )
 
-const (
-	SerializationSimple         = "simple"
-	SerializationLabel          = "label"
-	SerializationMatrix         = "matrix"
-	SerializationForm           = "form"
-	SerializationSpaceDelimited = "spaceDelimited"
-	SerializationPipeDelimited  = "pipeDelimited"
-	SerializationDeepObject     = "deepObject"
-)
-
 func NewPathParameter(name string) *Parameter {
 	return &Parameter{
 		Name:     name,
@@ -139,11 +129,6 @@ func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
-}
-
-type SerializationMethod struct {
-	Style   string
-	Explode bool
 }
 
 // SerializationMethod returns a parameter's serialization method.

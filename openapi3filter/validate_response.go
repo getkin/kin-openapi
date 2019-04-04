@@ -2,10 +2,13 @@
 package openapi3filter
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
@@ -88,8 +91,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		}
 	}
 
-	schema := contentType.Schema
-	if schema == nil {
+	if contentType.Schema == nil {
 		// An operation does not contains a validation schema for responses with this status code.
 		return nil
 	}
@@ -118,7 +120,8 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	// Put the data back into the response.
 	input.SetBodyBytes(data)
 
-	value, err := decodeBody(data, mediaType)
+	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
+	value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
@@ -128,7 +131,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	}
 
 	// Validate data with the schema.
-	if err := schema.Value.VisitJSON(value); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value); err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: "response body doesn't match the schema",
