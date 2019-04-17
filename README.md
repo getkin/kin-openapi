@@ -122,7 +122,7 @@ func main() {
 ## Custom content type for body of HTTP request/response
 
 By default, the library parses a body of HTTP request and response
-if it has one of the next content types: `"plain/text"` or `"application/json"`.
+if it has one of the next content types: `"text/plain"` or `"application/json"`.
 To support other content types you must register decoders for them:
 
 ```go

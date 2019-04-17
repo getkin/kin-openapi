@@ -892,10 +892,10 @@ func TestDecodeBody(t *testing.T) {
 	d, err := json.Marshal(map[string]interface{}{"d1": "d1"})
 	require.NoError(t, err)
 	multipartForm, multipartFormMime, err := newTestMultipartForm([]*testFormPart{
-		{name: "a", contentType: "plain/text", data: strings.NewReader("a1")},
+		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "b", contentType: "application/json", data: strings.NewReader("10")},
-		{name: "c", contentType: "plain/text", data: strings.NewReader("c1")},
-		{name: "c", contentType: "plain/text", data: strings.NewReader("c2")},
+		{name: "c", contentType: "text/plain", data: strings.NewReader("c1")},
+		{name: "c", contentType: "text/plain", data: strings.NewReader("c2")},
 		{name: "d", contentType: "application/json", data: bytes.NewReader(d)},
 		{name: "f", contentType: "application/octet-stream", data: strings.NewReader("foo"), filename: "f1"},
 	})
@@ -923,7 +923,7 @@ func TestDecodeBody(t *testing.T) {
 		},
 		{
 			name: "plain text",
-			mime: "plain/text",
+			mime: "text/plain",
 			body: strings.NewReader("text"),
 			want: "text",
 		},
