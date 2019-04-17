@@ -74,11 +74,30 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
 func ValidateParameter(c context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
-	value, err := decodeParameter(parameter, input)
-	if err != nil {
-		return &RequestError{Input: input, Parameter: parameter, Err: err}
+	if parameter.Schema == nil && parameter.Content == nil {
+		// We have no schema for the parameter. Assume that everything passes
+		// a schema-less check, but this could also be an error. The Swagger
+		// validation allows this to happen.
+		return nil
 	}
 
+	var value interface{}
+	var err error
+	var schema *openapi3.Schema
+
+	// Validation will ensure that we either have content or schema.
+	if parameter.Content != nil {
+		value, schema, err = decodeContentParameter(parameter, input)
+		if err != nil {
+			return err
+		}
+	} else {
+		value, err = decodeStyledParameter(parameter, input)
+		if err != nil {
+			return &RequestError{Input: input, Parameter: parameter, Err: err}
+		}
+		schema = parameter.Schema.Value
+	}
 	// Validate a parameter's value.
 	if value == nil {
 		if parameter.Required {
@@ -86,7 +105,6 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		}
 		return nil
 	}
-	schema := parameter.Schema.Value
 	if schema == nil {
 		// A parameter's schema is not defined so skip validation of a parameter's value.
 		return nil
