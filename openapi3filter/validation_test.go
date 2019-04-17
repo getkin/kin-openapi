@@ -56,6 +56,15 @@ func TestFilter(t *testing.T) {
 								Schema: openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
 							},
 						},
+						{
+							Value: &openapi3.Parameter{
+								In:     "query",
+								Name:   "contentArg",
+								//Schema: openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
+								Content:openapi3.NewContentWithJSONSchema(
+									openapi3.NewStringSchema().WithMaxLength(2)),
+							},
+						},
 					},
 				},
 			},
@@ -162,6 +171,15 @@ func TestFilter(t *testing.T) {
 	}
 	err = expect(req, resp)
 	// require.IsType(t, &openapi3filter.ResponseError{}, err)
+	require.NoError(t, err)
+
+	// Content arguments are currently not validated, so they should be
+	// accepted. Make sure this code path is handled.
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?contentArg=EXCEEDS_MAX_LENGTH",
+	}
+	err = expect(req, resp)
 	require.NoError(t, err)
 }
 
