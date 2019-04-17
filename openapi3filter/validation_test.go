@@ -31,6 +31,12 @@ type ExampleResponse struct {
 }
 
 func TestFilter(t *testing.T) {
+	// Declare a schema for an object with name and id properties
+	complexArgSchema := openapi3.NewObjectSchema().
+		WithProperty("name", openapi3.NewStringSchema()).
+		WithProperty("id", openapi3.NewStringSchema().WithMaxLength(2))
+	complexArgSchema.Required = []string{"name", "id"}
+
 	// Declare router
 	swagger := &openapi3.Swagger{
 		Servers: openapi3.Servers{
@@ -56,6 +62,22 @@ func TestFilter(t *testing.T) {
 								Schema: openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
 							},
 						},
+						{
+							Value: &openapi3.Parameter{
+								In:   "query",
+								Name: "contentArg",
+								Content: openapi3.NewContentWithJSONSchema(complexArgSchema),
+							},
+						},
+						{
+							Value: &openapi3.Parameter{
+								In:   "query",
+								Name: "contentArg2",
+								Content: openapi3.Content{
+									"application/something_funny": openapi3.NewMediaType().WithSchema(complexArgSchema),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -63,7 +85,7 @@ func TestFilter(t *testing.T) {
 	}
 
 	router := openapi3filter.NewRouter().WithSwagger(swagger)
-	expect := func(req ExampleRequest, resp ExampleResponse) error {
+	expectWithDecoder := func(req ExampleRequest, resp ExampleResponse, decoder openapi3filter.ContentParameterDecoder) error {
 		t.Logf("Request: %s %s", req.Method, req.URL)
 		httpReq, _ := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
 		httpReq.Header.Set("Content-Type", req.ContentType)
@@ -77,6 +99,7 @@ func TestFilter(t *testing.T) {
 			Request:    httpReq,
 			PathParams: pathParams,
 			Route:      route,
+			ParamDecoder: decoder,
 		}
 		if err := openapi3filter.ValidateRequest(context.TODO(), requestValidationInput); err != nil {
 			return err
@@ -100,6 +123,10 @@ func TestFilter(t *testing.T) {
 		require.NoError(t, err)
 		return err
 	}
+	expect := func(req ExampleRequest, resp ExampleResponse) error {
+		return expectWithDecoder(req, resp, nil)
+	}
+
 	var err error
 	var req ExampleRequest
 	var resp ExampleResponse
@@ -163,6 +190,45 @@ func TestFilter(t *testing.T) {
 	err = expect(req, resp)
 	// require.IsType(t, &openapi3filter.ResponseError{}, err)
 	require.NoError(t, err)
+
+	// Check that content validation works. This should pass, as ID is short
+	// enough.
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?contentArg={\"name\":\"bob\", \"id\":\"a\"}",
+	}
+	err = expect(req, resp)
+	require.NoError(t, err)
+
+	// Now it should fail due the ID being too long
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?contentArg={\"name\":\"bob\", \"id\":\"EXCEEDS_MAX_LENGTH\"}",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
+
+	// Now, repeat the above two test cases using a custom parameter decoder.
+	customDecoder := func(param *openapi3.Parameter, values []string) (interface{}, string, error) {
+		var value interface{}
+		err := json.Unmarshal([]byte(values[0]), &value)
+		return value, "application/something_funny", err
+	}
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?contentArg2={\"name\":\"bob\", \"id\":\"a\"}",
+	}
+	err = expectWithDecoder(req, resp, customDecoder)
+	require.NoError(t, err)
+
+	// Now it should fail due the ID being too long
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?contentArg2={\"name\":\"bob\", \"id\":\"EXCEEDS_MAX_LENGTH\"}",
+	}
+	err = expectWithDecoder(req, resp, customDecoder)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
 }
 
 func marshalReader(value interface{}) io.ReadCloser {

@@ -854,7 +854,7 @@ func TestDecodeParameter(t *testing.T) {
 					require.NoError(t, err, "failed to find a route")
 
 					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
-					got, err := decodeParameter(tc.param, input)
+					got, err := decodeStyledParameter(tc.param, input)
 
 					if tc.err != nil {
 						require.Error(t, err)

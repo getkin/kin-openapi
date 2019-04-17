@@ -98,15 +98,118 @@ func invalidSerializationMethodErr(sm *openapi3.SerializationMethod) error {
 	return fmt.Errorf("invalid serialization method: style=%q, explode=%v", sm.Style, sm.Explode)
 }
 
+// Decodes a parameter defined via the content property as an object. It uses
+// the user specified decoder, or our build-in decoder for application/json
+func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationInput) (
+	value interface{}, schemaRef *openapi3.SchemaRef, err error) {
+
+	paramValues := make([]string, 1)
+	var found bool
+	switch param.In {
+	case openapi3.ParameterInPath:
+		paramValues[0], found = input.PathParams[param.Name]
+	case openapi3.ParameterInQuery:
+		paramValues, found = input.GetQueryParams()[param.Name]
+	case openapi3.ParameterInHeader:
+		paramValues[0] = input.Request.Header.Get(http.CanonicalHeaderKey(param.Name))
+		found = paramValues[0] != ""
+	case openapi3.ParameterInCookie:
+		var cookie *http.Cookie
+		cookie, err = input.Request.Cookie(param.Name)
+		if err == http.ErrNoCookie {
+			found = false
+		} else if err != nil {
+			return
+		} else {
+			paramValues[0] = cookie.Value
+			found = true
+		}
+	default:
+		err = fmt.Errorf("unsupported parameter's 'in': %s", param.In)
+		return
+	}
+
+	if !found {
+		if param.Required {
+			err = fmt.Errorf("parameter '%s' is required, but missing", param.Name)
+		}
+		return
+	}
+
+	decoder := input.ParamDecoder
+	if decoder == nil {
+		decoder = defaultContentParameterDecoder
+	}
+
+	var contentType string
+	value, contentType, err = decoder(param, paramValues)
+
+	mt := param.Content.Get(contentType)
+	if mt == nil {
+		err = fmt.Errorf("parameter '%s' decoded media type is '%s', which isn't in the schema",
+			param.Name, contentType)
+		return
+	}
+
+	schemaRef = param.Content.Get(contentType).Schema
+	return
+}
+
+func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) (
+	outValue interface{}, contentType string, err error) {
+	// Only query parameters can have multiple values.
+	if len(values) > 1 && param.In != "query" {
+		err = fmt.Errorf("%s parameter '%s' can't have multiple values", param.In, param.Name)
+		return
+	}
+
+	content := param.Content
+	if content == nil {
+		err = fmt.Errorf("parameter '%s' expected to have content", param.Name)
+		return
+	}
+
+	// We only know how to decode a parameter if it has one content, application/json
+	if len(content) != 1 {
+		err = fmt.Errorf("multiple content types for parameter '%s'",
+			param.Name)
+		return
+	}
+
+	contentType = "application/json"
+	mt := content.Get(contentType)
+	if mt == nil {
+		err = fmt.Errorf("parameter '%s' has no json content schema", param.Name)
+		return
+	}
+
+	if len(values) == 1 {
+		err = json.Unmarshal([]byte(values[0]), &outValue)
+		if err != nil {
+			err = fmt.Errorf("error unmarshaling parameter '%s' as json", param.Name)
+			return
+		}
+	} else {
+		outArray := make([]interface{}, len(values))
+		for i, v := range values {
+			err = json.Unmarshal([]byte(v), &outArray[i])
+			err = fmt.Errorf("error unmarshaling parameter '%s' as json", param.Name)
+		}
+		outValue = outArray
+	}
+	return
+}
+
 type valueDecoder interface {
 	DecodePrimitive(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error)
 	DecodeArray(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) ([]interface{}, error)
 	DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, error)
 }
 
-// decodeParameter returns a value of an operation's parameter from HTTP request.
+// decodeStyledParameter returns a value of an operation's parameter from HTTP request for
+// parameters defined using the style format.
 // The function returns ParseError when HTTP request contains an invalid value of a parameter.
-func decodeParameter(param *openapi3.Parameter, input *RequestValidationInput) (interface{}, error) {
+func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationInput) (interface{}, error) {
 	sm, err := param.SerializationMethod()
 	if err != nil {
 		return nil, err
