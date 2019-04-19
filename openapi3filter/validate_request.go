@@ -87,13 +87,9 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 
 	// Validation will ensure that we either have content or schema.
 	if parameter.Content != nil {
-		var schemaRef *openapi3.SchemaRef
-		value, schemaRef, err = decodeContentParameter(parameter, input)
+		value, schema, err = decodeContentParameter(parameter, input)
 		if err != nil {
 			return err
-		}
-		if schemaRef != nil {
-			schema = schemaRef.Value
 		}
 	} else {
 		value, err = decodeStyledParameter(parameter, input)

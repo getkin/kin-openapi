@@ -101,7 +101,7 @@ func invalidSerializationMethodErr(sm *openapi3.SerializationMethod) error {
 // Decodes a parameter defined via the content property as an object. It uses
 // the user specified decoder, or our build-in decoder for application/json
 func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationInput) (
-	value interface{}, schemaRef *openapi3.SchemaRef, err error) {
+	value interface{}, schema *openapi3.Schema, err error) {
 
 	paramValues := make([]string, 1)
 	var found bool
@@ -141,22 +141,12 @@ func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationI
 		decoder = defaultContentParameterDecoder
 	}
 
-	var contentType string
-	value, contentType, err = decoder(param, paramValues)
-
-	mt := param.Content.Get(contentType)
-	if mt == nil {
-		err = fmt.Errorf("parameter '%s' decoded media type is '%s', which isn't in the schema",
-			param.Name, contentType)
-		return
-	}
-
-	schemaRef = param.Content.Get(contentType).Schema
+	value, schema, err = decoder(param, paramValues)
 	return
 }
 
 func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) (
-	outValue interface{}, contentType string, err error) {
+	outValue interface{}, outSchema *openapi3.Schema, err error) {
 	// Only query parameters can have multiple values.
 	if len(values) > 1 && param.In != "query" {
 		err = fmt.Errorf("%s parameter '%s' can't have multiple values", param.In, param.Name)
@@ -176,12 +166,12 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 		return
 	}
 
-	contentType = "application/json"
-	mt := content.Get(contentType)
+	mt := content.Get("application/json")
 	if mt == nil {
 		err = fmt.Errorf("parameter '%s' has no json content schema", param.Name)
 		return
 	}
+	outSchema = mt.Schema.Value
 
 	if len(values) == 1 {
 		err = json.Unmarshal([]byte(values[0]), &outValue)

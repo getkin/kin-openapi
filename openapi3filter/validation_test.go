@@ -209,10 +209,11 @@ func TestFilter(t *testing.T) {
 	require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	// Now, repeat the above two test cases using a custom parameter decoder.
-	customDecoder := func(param *openapi3.Parameter, values []string) (interface{}, string, error) {
+	customDecoder := func(param *openapi3.Parameter, values []string) (interface{}, *openapi3.Schema, error) {
 		var value interface{}
 		err := json.Unmarshal([]byte(values[0]), &value)
-		return value, "application/something_funny", err
+		schema := param.Content.Get("application/something_funny").Schema.Value
+		return value, schema, err
 	}
 
 	req = ExampleRequest{
