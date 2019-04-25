@@ -89,7 +89,7 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	if parameter.Content != nil {
 		value, schema, err = decodeContentParameter(parameter, input)
 		if err != nil {
-			return err
+			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 	} else {
 		value, err = decodeStyledParameter(parameter, input)
