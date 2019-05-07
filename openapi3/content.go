@@ -24,14 +24,35 @@ func NewContentWithJSONSchemaRef(schema *SchemaRef) Content {
 }
 
 func (content Content) Get(mime string) *MediaType {
+	// Start by making the most specific match possible
+	// by using the mime type in full.
 	if v := content[mime]; v != nil {
 		return v
 	}
+	// If an exact match is not found then we strip all
+	// metadata from the mime type and only use the x/y
+	// portion.
 	i := strings.IndexByte(mime, ';')
 	if i < 0 {
-		return nil
+		return content["*/*"]
 	}
-	return content[mime[:i]]
+	mime = mime[:i]
+	if v := content[mime]; v != nil {
+		return v
+	}
+	// If the x/y pattern has no specific match then we
+	// try the x/* pattern.
+	i = strings.IndexByte(mime, '/')
+	if i < 0 {
+		return content["*/*"]
+	}
+	mime = mime[:i] + "/*"
+	if v := content[mime]; v != nil {
+		return v
+	}
+	// Finally, the most generic match of */* is returned
+	// as a catch-all.
+	return content["*/*"]
 }
 
 func (content Content) Validate(c context.Context) error {
