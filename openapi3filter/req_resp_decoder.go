@@ -148,7 +148,7 @@ func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationI
 func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) (
 	outValue interface{}, outSchema *openapi3.Schema, err error) {
 	// Only query parameters can have multiple values.
-	if len(values) > 1 && param.In != "query" {
+	if len(values) > 1 && param.In != openapi3.ParameterInQuery {
 		err = fmt.Errorf("%s parameter '%s' can't have multiple values", param.In, param.Name)
 		return
 	}
