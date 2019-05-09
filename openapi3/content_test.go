@@ -57,6 +57,42 @@ func TestContent_Get(t *testing.T) {
 			mime:    "text/plain;encoding=utf-16",
 			want:    fallback,
 		},
+		{
+			name:    "invalid mime type",
+			content: content,
+			mime:    "text;encoding=utf16",
+			want:    nil,
+		},
+		{
+			name:    "missing no encoding",
+			content: contentWithoutWildcards,
+			mime:    "text/plain",
+			want:    nil,
+		},
+		{
+			name:    "stripped match no encoding",
+			content: content,
+			mime:    "application/json",
+			want:    stripped,
+		},
+		{
+			name:    "wildcard match no encoding",
+			content: content,
+			mime:    "application/yaml",
+			want:    wildcard,
+		},
+		{
+			name:    "fallback match no encoding",
+			content: content,
+			mime:    "text/plain",
+			want:    fallback,
+		},
+		{
+			name:    "invalid mime type no encoding",
+			content: content,
+			mime:    "text",
+			want:    nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

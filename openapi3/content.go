@@ -34,7 +34,9 @@ func (content Content) Get(mime string) *MediaType {
 	// portion.
 	i := strings.IndexByte(mime, ';')
 	if i < 0 {
-		return content["*/*"]
+		// If there is no metadata then preserve the full mime type
+		// string for later wildcard searches.
+		i = len(mime)
 	}
 	mime = mime[:i]
 	if v := content[mime]; v != nil {
@@ -44,7 +46,10 @@ func (content Content) Get(mime string) *MediaType {
 	// try the x/* pattern.
 	i = strings.IndexByte(mime, '/')
 	if i < 0 {
-		return content["*/*"]
+		// In the case that the given mime type is not valid because it is
+		// missing the subtype we return nil so that this does not accidentally
+		// resolve with the wildcard.
+		return nil
 	}
 	mime = mime[:i] + "/*"
 	if v := content[mime]; v != nil {
