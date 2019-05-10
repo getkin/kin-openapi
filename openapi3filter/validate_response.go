@@ -75,15 +75,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	}
 
 	inputMIME := input.Header.Get("Content-Type")
-	mediaType := parseMediaType(inputMIME)
-	if mediaType == "" {
-		return &ResponseError{
-			Input:  input,
-			Reason: "content type of response body is missed",
-		}
-	}
-
-	contentType := content[mediaType]
+	contentType := content.Get(inputMIME)
 	if contentType == nil {
 		return &ResponseError{
 			Input:  input,

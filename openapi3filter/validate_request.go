@@ -154,16 +154,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	}
 
 	inputMIME := req.Header.Get("Content-Type")
-	mediaType := parseMediaType(inputMIME)
-	if mediaType == "" {
-		return &RequestError{
-			Input:       input,
-			RequestBody: requestBody,
-			Reason:      "content type is missed",
-		}
-	}
-
-	contentType := requestBody.Content[mediaType]
+	contentType := requestBody.Content.Get(inputMIME)
 	if contentType == nil {
 		return &RequestError{
 			Input:       input,
