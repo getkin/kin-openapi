@@ -93,6 +93,12 @@ func TestContent_Get(t *testing.T) {
 			mime:    "text",
 			want:    nil,
 		},
+		{
+			name:    "missing mime type",
+			content: content,
+			mime:    "",
+			want:    fallback,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
