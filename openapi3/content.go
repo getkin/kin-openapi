@@ -24,6 +24,12 @@ func NewContentWithJSONSchemaRef(schema *SchemaRef) Content {
 }
 
 func (content Content) Get(mime string) *MediaType {
+	// If the mime is empty then short-circuit to the wildcard.
+	// We do this here so that we catch only the specific case of
+	// and empty mime rather than a present, but invalid, mime type.
+	if mime == "" {
+		return content["*/*"]
+	}
 	// Start by making the most specific match possible
 	// by using the mime type in full.
 	if v := content[mime]; v != nil {
