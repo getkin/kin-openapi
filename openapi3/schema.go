@@ -195,6 +195,13 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
+func NewUuidSchema() *Schema {
+	return &Schema{
+		Type:   "string",
+		Format: "uuid",
+	}
+}
+
 func NewBytesSchema() *Schema {
 	return &Schema{
 		Type:   "string",

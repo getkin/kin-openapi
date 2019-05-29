@@ -237,6 +237,23 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title:  "STRING: format 'uuid'",
+		Schema: openapi3.NewUuidSchema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "uuid",
+		},
+		AllValid: []interface{}{
+			"dd7d8481-81a3-407f-95f0-a2f1cb382a4b",
+		},
+		AllInvalid: []interface{}{
+			nil,
+			"g39840b1-d0ef-446d-e555-48fcca50a90a",
+			"4cf3i040-ea14-4daa-b0b5-ea9329473519",
+		},
+	},
+
+	{
 		Title:  "STRING: format 'date-time'",
 		Schema: openapi3.NewDateTimeSchema(),
 		Serialization: map[string]interface{}{
