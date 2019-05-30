@@ -7,15 +7,10 @@ import (
 
 const (
 	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
-	FormatOfStringForUUIDOfRFC4122 = "uuid"
+	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
 )
 
-var (
-	optionalStringFormats = map[string]string{
-		FormatOfStringForUUIDOfRFC4122: `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`,
-	}
-	SchemaStringFormats = make(map[string]*regexp.Regexp, 8)
-)
+var SchemaStringFormats = make(map[string]*regexp.Regexp, 8)
 
 func DefineStringFormat(name string, pattern string) {
 	re, err := regexp.Compile(pattern)
@@ -24,15 +19,6 @@ func DefineStringFormat(name string, pattern string) {
 		panic(err)
 	}
 	SchemaStringFormats[name] = re
-}
-
-// UseStringFormat allows for using predefined but optional string formats such as "uuid"
-func UseStringFormat(name string) {
-	if pattern, ok := optionalStringFormats[name]; ok {
-		DefineStringFormat(name, pattern)
-		return
-	}
-	panic(fmt.Errorf("Invalid predefined format name '%v'", name))
 }
 
 func init() {

@@ -21,7 +21,7 @@ type schemaExample struct {
 }
 
 func TestSchemas(t *testing.T) {
-	openapi3.UseStringFormat(openapi3.FormatOfStringForUUIDOfRFC4122)
+	openapi3.DefineStringFormat("uuid", openapi3.FormatOfStringForUUIDOfRFC4122)
 	for _, example := range schemaExamples {
 		t.Run(example.Title, testSchema(t, example))
 	}
@@ -242,7 +242,7 @@ var schemaExamples = []schemaExample{
 		Schema: openapi3.NewUuidSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
-			"format": openapi3.FormatOfStringForUUIDOfRFC4122,
+			"format": "uuid",
 		},
 		AllValid: []interface{}{
 			"dd7d8481-81a3-407f-95f0-a2f1cb382a4b",
