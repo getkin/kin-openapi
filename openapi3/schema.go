@@ -195,6 +195,13 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
+func NewUuidSchema() *Schema {
+	return &Schema{
+		Type:   "string",
+		Format: "uuid",
+	}
+}
+
 func NewBytesSchema() *Schema {
 	return &Schema{
 		Type:   "string",
@@ -509,7 +516,10 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
 			case "json-pointer", "relative-json-pointer":
 			default:
-				return unsupportedFormat(format)
+				// Try to check for custom defined formats
+				if _, ok := SchemaStringFormats[format]; !ok {
+					return unsupportedFormat(format)
+				}
 			}
 		}
 	case "array":

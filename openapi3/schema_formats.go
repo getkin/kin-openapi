@@ -5,6 +5,11 @@ import (
 	"regexp"
 )
 
+const (
+	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
+	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
+)
+
 var SchemaStringFormats = make(map[string]*regexp.Regexp, 8)
 
 func DefineStringFormat(name string, pattern string) {
