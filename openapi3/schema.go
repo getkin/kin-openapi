@@ -516,7 +516,10 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
 			case "json-pointer", "relative-json-pointer":
 			default:
-				return unsupportedFormat(format)
+				// Try to check for custom defined formats
+				if _, ok := SchemaStringFormats[format]; !ok {
+					return unsupportedFormat(format)
+				}
 			}
 		}
 	case "array":
