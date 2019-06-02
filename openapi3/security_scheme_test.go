@@ -59,12 +59,24 @@ var securitySchemeExamples = []securitySchemeExample{
 		valid: true,
 	},
 	{
-		title: "JWT Bearer Sample",
+		title: "apiKey with bearerFormat",
+		raw: []byte(`
+{
+  "type": "apiKey",
+	"in": "header",
+	"name": "X-API-KEY",
+  "bearerFormat": "Arbitrary text"
+}
+`),
+		valid: false,
+	},
+	{
+		title: "Bearer Sample with arbitrary format",
 		raw: []byte(`
 {
   "type": "http",
   "scheme": "bearer",
-  "bearerFormat": "JWT"
+  "bearerFormat": "Arbitrary text"
 }
 `),
 		valid: true,

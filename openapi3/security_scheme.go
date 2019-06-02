@@ -85,7 +85,6 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	switch ss.Type {
 	case "apiKey":
 		hasIn = true
-		hasBearerFormat = true
 	case "http":
 		scheme := ss.Scheme
 		switch scheme {
@@ -120,14 +119,9 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	}
 
 	// Validate "format"
-	if hasBearerFormat {
-		switch ss.BearerFormat {
-		case "", "JWT":
-		default:
-			return fmt.Errorf("Security scheme has unsupported 'bearerFormat' value '%s'", ss.BearerFormat)
-		}
-	} else if len(ss.BearerFormat) > 0 {
-		return errors.New("Security scheme of type 'apiKey' can't have 'bearerFormat'")
+	// "bearerFormat" is an arbitrary string so we only check if the scheme supports it
+	if !hasBearerFormat && len(ss.BearerFormat) > 0 {
+		return fmt.Errorf("Security scheme of type '%v' can't have 'bearerFormat'", ss.Type)
 	}
 
 	// Validate "flow"
