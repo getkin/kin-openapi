@@ -61,6 +61,14 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 
 	// Security
 	security := operation.Security
+	// If there aren't any security requirements for the operation
+	if security == nil {
+		if input.Route.Swagger == nil {
+			return errRouteMissingSwagger
+		}
+		// Use the global security requirements.
+		security = &input.Route.Swagger.Security
+	}
 	if security != nil {
 		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
 			return err
