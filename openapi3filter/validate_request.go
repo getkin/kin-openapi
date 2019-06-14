@@ -276,8 +276,8 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 		return ErrAuthenticationServiceMissing
 	}
 
-	if len(names) > 0 {
-		name := names[0]
+	// For each scheme for the requirement
+	for _, name := range names {
 		var securityScheme *openapi3.SecurityScheme
 		if securitySchemes != nil {
 			if ref := securitySchemes[name]; ref != nil {
@@ -291,12 +291,15 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 			}
 		}
 		scopes := securityRequirement[name]
-		return f(c, &AuthenticationInput{
+		err := f(c, &AuthenticationInput{
 			RequestValidationInput: input,
 			SecuritySchemeName:     name,
 			SecurityScheme:         securityScheme,
 			Scopes:                 scopes,
 		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
