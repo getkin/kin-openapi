@@ -291,13 +291,12 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 			}
 		}
 		scopes := securityRequirement[name]
-		err := f(c, &AuthenticationInput{
+		if err := f(c, &AuthenticationInput{
 			RequestValidationInput: input,
 			SecuritySchemeName:     name,
 			SecurityScheme:         securityScheme,
 			Scopes:                 scopes,
-		})
-		if err != nil {
+		}); err != nil {
 			return err
 		}
 	}
