@@ -155,6 +155,7 @@ type Parameter struct {
 	MinLength    uint64              `json:"minLength,omitempty"`
 	MaxLength    *uint64             `json:"maxLength,omitempty"`
 	Pattern      string              `json:"pattern,omitempty"`
+	Default      string              `json:"default,omitempty"`
 }
 
 type Response struct {
