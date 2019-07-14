@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -28,6 +30,11 @@ type ExampleResponse struct {
 	Status      int
 	ContentType string
 	Body        interface{}
+}
+
+type ExampleSecurityScheme struct {
+	Name   string
+	Scheme *openapi3.SecurityScheme
 }
 
 func TestFilter(t *testing.T) {
@@ -346,4 +353,370 @@ func toJSON(v interface{}) io.Reader {
 		panic(err)
 	}
 	return bytes.NewReader(data)
+}
+
+// TestOperationOrSwaggerSecurity asserts that the swagger's SecurityRequirements are used if no SecurityRequirements are provided for an operation.
+func TestOperationOrSwaggerSecurity(t *testing.T) {
+	// Create the security schemes
+	securitySchemes := []ExampleSecurityScheme{
+		{
+			Name: "apikey",
+			Scheme: &openapi3.SecurityScheme{
+				Type: "apiKey",
+				Name: "apikey",
+				In:   "cookie",
+			},
+		},
+		{
+			Name: "http-basic",
+			Scheme: &openapi3.SecurityScheme{
+				Type:   "http",
+				Scheme: "basic",
+			},
+		},
+	}
+
+	// Create the test cases
+	tc := []struct {
+		name            string
+		schemes         *[]ExampleSecurityScheme
+		expectedSchemes *[]ExampleSecurityScheme
+	}{
+		{
+			name:    "/inherited-security",
+			schemes: nil,
+			expectedSchemes: &[]ExampleSecurityScheme{
+				securitySchemes[1],
+			},
+		},
+		{
+			name:            "/overwrite-without-security",
+			schemes:         &[]ExampleSecurityScheme{},
+			expectedSchemes: &[]ExampleSecurityScheme{},
+		},
+		{
+			name: "/overwrite-with-security",
+			schemes: &[]ExampleSecurityScheme{
+				securitySchemes[0],
+			},
+			expectedSchemes: &[]ExampleSecurityScheme{
+				securitySchemes[0],
+			},
+		},
+	}
+
+	// Create the swagger
+	swagger := &openapi3.Swagger{
+		Paths: map[string]*openapi3.PathItem{},
+		Security: openapi3.SecurityRequirements{
+			{
+				securitySchemes[1].Name: {},
+			},
+		},
+		Components: openapi3.Components{
+			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
+		},
+	}
+
+	// Add the security schemes to the components
+	for _, scheme := range securitySchemes {
+		swagger.Components.SecuritySchemes[scheme.Name] = &openapi3.SecuritySchemeRef{
+			Value: scheme.Scheme,
+		}
+	}
+
+	// Add the paths from the test cases to the swagger's paths
+	for _, tc := range tc {
+		var securityRequirements *openapi3.SecurityRequirements = nil
+		if tc.schemes != nil {
+			tempS := make(openapi3.SecurityRequirements, 0)
+			for _, scheme := range *tc.schemes {
+				tempS = append(
+					tempS,
+					openapi3.SecurityRequirement{
+						scheme.Name: {},
+					},
+				)
+			}
+			securityRequirements = &tempS
+		}
+		swagger.Paths[tc.name] = &openapi3.PathItem{
+			Get: &openapi3.Operation{
+				Security: securityRequirements,
+			},
+		}
+	}
+
+	// Declare the router
+	router := openapi3filter.NewRouter().WithSwagger(swagger)
+
+	// Test each case
+	for _, path := range tc {
+		// Make a map of the schemes and whether they're
+		var schemesValidated *map[*openapi3.SecurityScheme]bool = nil
+		if path.expectedSchemes != nil {
+			temp := make(map[*openapi3.SecurityScheme]bool)
+			schemesValidated = &temp
+			for _, scheme := range *path.expectedSchemes {
+				(*schemesValidated)[scheme.Scheme] = false
+			}
+		}
+
+		// Create the request
+		emptyBody := bytes.NewReader(make([]byte, 0))
+		pathUrl, err := url.Parse(path.name)
+		require.NoError(t, err)
+		route, _, err := router.FindRoute(http.MethodGet, pathUrl)
+		require.NoError(t, err)
+		req := openapi3filter.RequestValidationInput{
+			Request: httptest.NewRequest(http.MethodGet, path.name, emptyBody),
+			Route:   route,
+			Options: &openapi3filter.Options{
+				AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
+					if schemesValidated != nil {
+						if validated, ok := (*schemesValidated)[input.SecurityScheme]; ok {
+							if validated {
+								t.Fatalf("The path \"%s\" had the schemes %v named \"%s\" validated more than once",
+									path.name, input.SecurityScheme, input.SecuritySchemeName)
+							}
+							(*schemesValidated)[input.SecurityScheme] = true
+							return nil
+						}
+					}
+
+					t.Fatalf("The path \"%s\" had the schemes %v named \"%s\"",
+						path.name, input.SecurityScheme, input.SecuritySchemeName)
+
+					return nil
+				},
+			},
+		}
+
+		// Validate the request
+		err = openapi3filter.ValidateRequest(nil, &req)
+		require.NoError(t, err)
+
+		for securityRequirement, validated := range *schemesValidated {
+			if !validated {
+				t.Fatalf("The security requirement %v was exepected to be validated but wasn't",
+					securityRequirement)
+			}
+		}
+	}
+}
+
+// TestAlternateRequirementMet asserts that ValidateSecurityRequirements succeeds if any SecurityRequirement is met and otherwise doesn't.
+func TestAnySecurityRequirementMet(t *testing.T) {
+	// Create of a map of scheme names and whether they are valid
+	schemes := map[string]bool{
+		"a": true,
+		"b": true,
+		"c": false,
+		"d": false,
+	}
+
+	// Create the test cases
+	tc := []struct {
+		name    string
+		schemes []string
+		error   bool
+	}{
+		{
+			name:    "/ok1",
+			schemes: []string{"a", "b"},
+			error:   false,
+		},
+		{
+			name:    "/ok2",
+			schemes: []string{"a", "c"},
+			error:   false,
+		},
+		{
+			name:    "/error",
+			schemes: []string{"c", "d"},
+			error:   true,
+		},
+	}
+
+	// Create the swagger
+	swagger := openapi3.Swagger{
+		Paths: map[string]*openapi3.PathItem{},
+		Components: openapi3.Components{
+			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
+		},
+	}
+
+	// Add the security schemes to the swagger's components
+	for schemeName := range schemes {
+		swagger.Components.SecuritySchemes[schemeName] = &openapi3.SecuritySchemeRef{
+			Value: &openapi3.SecurityScheme{
+				Type:   "http",
+				Scheme: "basic",
+			},
+		}
+	}
+
+	// Add the paths to the swagger
+	for _, tc := range tc {
+		// Create the security requirements from the test cases's schemes
+		securityRequirements := make(openapi3.SecurityRequirements, len(tc.schemes))
+		for i, scheme := range tc.schemes {
+			securityRequirements[i] = openapi3.SecurityRequirement{
+				scheme: {},
+			}
+		}
+
+		// Create the path with the security requirements
+		swagger.Paths[tc.name] = &openapi3.PathItem{
+			Get: &openapi3.Operation{
+				Security: &securityRequirements,
+			},
+		}
+	}
+
+	// Create the router
+	router := openapi3filter.NewRouter().WithSwagger(&swagger)
+
+	// Create the authentication function
+	authFunc := makeAuthFunc(schemes)
+
+	for _, tc := range tc {
+		// Create the request input for the path
+		tcUrl, err := url.Parse(tc.name)
+		require.NoError(t, err)
+		route, _, err := router.FindRoute(http.MethodGet, tcUrl)
+		require.NoError(t, err)
+		req := openapi3filter.RequestValidationInput{
+			Route: route,
+			Options: &openapi3filter.Options{
+				AuthenticationFunc: authFunc,
+			},
+		}
+
+		// Validate the security requirements
+		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
+
+		// If there should have been an error
+		if tc.error {
+			require.Errorf(t, err, "an error is expected for path \"%s\"", tc.name)
+		} else {
+			require.NoErrorf(t, err, "an error wasn't expected for path \"%s\"", tc.name)
+		}
+	}
+}
+
+// TestAllSchemesMet asserts that ValidateSecurityRequirement succeeds if all the SecuritySchemes of a SecurityRequirement are met and otherwise doesn't.
+func TestAllSchemesMet(t *testing.T) {
+	// Create of a map of scheme names and whether they are met
+	schemes := map[string]bool{
+		"a": true,
+		"b": true,
+		"c": false,
+	}
+
+	// Create the test cases
+	tc := []struct {
+		name  string
+		error bool
+	}{
+		{
+			name:  "/ok",
+			error: false,
+		},
+		{
+			name:  "/error",
+			error: true,
+		},
+	}
+
+	// Create the swagger
+	swagger := openapi3.Swagger{
+		Paths: map[string]*openapi3.PathItem{},
+		Components: openapi3.Components{
+			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
+		},
+	}
+
+	// Add the security schemes to the swagger's components
+	for schemeName := range schemes {
+		swagger.Components.SecuritySchemes[schemeName] = &openapi3.SecuritySchemeRef{
+			Value: &openapi3.SecurityScheme{
+				Type:   "http",
+				Scheme: "basic",
+			},
+		}
+	}
+
+	// Add the paths to the swagger
+	for _, tc := range tc {
+		// Create the security requirement for the path
+		securityRequirement := openapi3.SecurityRequirement{}
+		for scheme, valid := range schemes {
+			// If the scheme is valid or the test case is meant to return an error
+			if valid || tc.error {
+				// Add the scheme to the security requirement
+				securityRequirement[scheme] = []string{}
+			}
+		}
+
+		swagger.Paths[tc.name] = &openapi3.PathItem{
+			Get: &openapi3.Operation{
+				Security: &openapi3.SecurityRequirements{
+					securityRequirement,
+				},
+			},
+		}
+	}
+
+	// Create the router from the swagger
+	router := openapi3filter.NewRouter().WithSwagger(&swagger)
+
+	// Create the authentication function
+	authFunc := makeAuthFunc(schemes)
+
+	for _, tc := range tc {
+		// Create the request input for the path
+		tcUrl, err := url.Parse(tc.name)
+		require.NoError(t, err)
+		route, _, err := router.FindRoute(http.MethodGet, tcUrl)
+		require.NoError(t, err)
+		req := openapi3filter.RequestValidationInput{
+			Route: route,
+			Options: &openapi3filter.Options{
+				AuthenticationFunc: authFunc,
+			},
+		}
+
+		// Validate the security requirements
+		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
+
+		// If there should have been an error
+		if tc.error {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+	}
+}
+
+// makeAuthFunc creates an authentication function that accepts the given valid schemes.
+// If an invalid or unknown scheme is encountered, an error is returned by the returned function.
+// Otherwise the return value of the returned function is nil.
+func makeAuthFunc(schemes map[string]bool) func(c context.Context, input *openapi3filter.AuthenticationInput) error {
+	return func(c context.Context, input *openapi3filter.AuthenticationInput) error {
+		// If the scheme is valid and present in the schemes
+		valid, present := schemes[input.SecuritySchemeName]
+		if valid && present {
+			return nil
+		}
+
+		// If the scheme is present in che schemes
+		if present {
+			// Return an unmet scheme error
+			return fmt.Errorf("security scheme for \"%s\" wasn't met", input.SecuritySchemeName)
+		} else {
+			// Return an unknown scheme error
+			return fmt.Errorf("security scheme for \"%s\" is unknown", input.SecuritySchemeName)
+		}
+	}
 }
