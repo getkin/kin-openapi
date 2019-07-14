@@ -242,7 +242,6 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 	for i := 0; i < len(srs); i++ {
 		ok := <-doneChan
 		if ok {
-			close(doneChan)
 			return nil
 		}
 	}
