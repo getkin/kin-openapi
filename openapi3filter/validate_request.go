@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -209,14 +210,18 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 		return nil
 	}
 
-	doneChan := make(chan bool, len(srs))
+	var wg sync.WaitGroup
 	errs := make([]error, len(srs))
 
-	// For each alternative
+	// For each alternative security requirement
 	for i, securityRequirement := range srs {
 		// Capture index from iteration variable
 		currentIndex := i
 		currentSecurityRequirement := securityRequirement
+
+		// Add a work item
+		wg.Add(1)
+
 		go func() {
 			defer func() {
 				v := recover()
@@ -226,22 +231,25 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 					} else {
 						errs[currentIndex] = errors.New("Panicked")
 					}
-					doneChan <- false
 				}
+
+				// Remove a work item
+				wg.Done()
 			}()
-			if err := validateSecurityRequirement(c, input, currentSecurityRequirement); err == nil {
-				doneChan <- true
-			} else {
+
+			if err := validateSecurityRequirement(c, input, currentSecurityRequirement); err != nil {
 				errs[currentIndex] = err
-				doneChan <- false
 			}
 		}()
 	}
 
 	// Wait for all
-	for i := 0; i < len(srs); i++ {
-		ok := <-doneChan
-		if ok {
+	wg.Wait()
+
+	// If any security requirement was met
+	for _, err := range errs {
+		if err == nil {
+			// Return no error
 			return nil
 		}
 	}
