@@ -135,7 +135,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		data []byte
 	)
 
-	if req.Body != http.NoBody {
+	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
 		var err error
 		if data, err = ioutil.ReadAll(req.Body); err != nil {
