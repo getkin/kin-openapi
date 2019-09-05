@@ -52,11 +52,6 @@ func (swagger *Swagger) Validate(c context.Context) error {
 			return err
 		}
 	}
-	if paths := swagger.Paths; paths != nil {
-		if err := paths.Validate(c); err != nil {
-			return err
-		}
-	}
 	if v := swagger.Servers; v != nil {
 		if err := v.Validate(c); err != nil {
 			return err
