@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -45,21 +46,21 @@ func (swagger *Swagger) AddServer(server *Server) {
 
 func (swagger *Swagger) Validate(c context.Context) error {
 	if err := swagger.Components.Validate(c); err != nil {
-		return err
+		return fmt.Errorf("Error when validating Components: %s", err.Error())
 	}
 	if v := swagger.Security; v != nil {
 		if err := v.Validate(c); err != nil {
-			return err
+			return fmt.Errorf("Error when validating Security: %s", err.Error())
 		}
 	}
 	if v := swagger.Servers; v != nil {
 		if err := v.Validate(c); err != nil {
-			return err
+			return fmt.Errorf("Error when validating Servers: %s", err.Error())
 		}
 	}
 	if v := swagger.Paths; v != nil {
 		if err := v.Validate(c); err != nil {
-			return err
+			return fmt.Errorf("Error when validating Paths: %s", err.Error())
 		}
 	}
 	if v := swagger.Info; true {
