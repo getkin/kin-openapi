@@ -36,12 +36,16 @@ func (value *Info) Validate(c context.Context) error {
 		return errors.New("Variable 'version' must be a non-empty JSON string")
 	}
 
-	if err := value.Contact.Validate(c); err != nil {
-		return fmt.Errorf("Error when validating Contact: %s", err.Error())
+	if contact := value.Contact; contact != nil {
+		if err := contact.Validate(c); err != nil {
+			return fmt.Errorf("Error when validating Contact: %s", err.Error())
+		}
 	}
 
-	if err := value.License.Validate(c); err != nil {
-		return fmt.Errorf("Error when validating License: %s", err.Error())
+	if license := value.License; license != nil {
+		if err := license.Validate(c); err != nil {
+			return fmt.Errorf("Error when validating License: %s", err.Error())
+		}
 	}
 
 	return nil
