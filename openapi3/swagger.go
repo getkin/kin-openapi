@@ -45,6 +45,9 @@ func (swagger *Swagger) AddServer(server *Server) {
 }
 
 func (swagger *Swagger) Validate(c context.Context) error {
+	if swagger.OpenAPI == "" {
+		return fmt.Errorf("Variable 'openapi' must be a non-empty JSON string")
+	}
 	if err := swagger.Components.Validate(c); err != nil {
 		return fmt.Errorf("Error when validating Components: %s", err.Error())
 	}
