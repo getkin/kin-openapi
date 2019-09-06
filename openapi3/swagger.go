@@ -62,5 +62,10 @@ func (swagger *Swagger) Validate(c context.Context) error {
 			return err
 		}
 	}
+	if v := swagger.Info; true {
+		if err := v.Validate(c); err != nil {
+			return fmt.Errorf("Error when validating Info: %s", err.Error())
+		}
+	}
 	return nil
 }
