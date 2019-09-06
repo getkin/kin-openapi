@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -36,11 +37,11 @@ func (value *Info) Validate(c context.Context) error {
 	}
 
 	if err := value.Contact.Validate(c); err != nil {
-		return err
+		return fmt.Errorf("Error when validating Contact: %s", err.Error())
 	}
 
 	if err := value.License.Validate(c); err != nil {
-		return err
+		return fmt.Errorf("Error when validating License: %s", err.Error())
 	}
 
 	return nil
