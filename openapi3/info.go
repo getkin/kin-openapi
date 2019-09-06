@@ -15,7 +15,7 @@ type Info struct {
 	Description    string   `json:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty"`
 	Contact        *Contact `json:"contact,omitempty"`
-	License        *License `json:"license"` // Required
+	License        *License `json:"license,omitempty"`
 	Version        string   `json:"version"` // Required
 }
 
