@@ -11,12 +11,12 @@ import (
 // Info is specified by OpenAPI/Swagger standard version 3.0.
 type Info struct {
 	ExtensionProps
-	Title          string   `json:"title"` // Required
+	Title          string   `json:"title,omitempty"`
 	Description    string   `json:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty"`
 	Contact        *Contact `json:"contact,omitempty"`
 	License        *License `json:"license,omitempty"`
-	Version        string   `json:"version"` // Required
+	Version        string   `json:"version,omitempty"`
 }
 
 func (value *Info) MarshalJSON() ([]byte, error) {
@@ -28,14 +28,6 @@ func (value *Info) UnmarshalJSON(data []byte) error {
 }
 
 func (value *Info) Validate(c context.Context) error {
-	if value.Title == "" {
-		return errors.New("Variable 'title' must be a non-empty JSON string")
-	}
-
-	if value.Version == "" {
-		return errors.New("Variable 'version' must be a non-empty JSON string")
-	}
-
 	if contact := value.Contact; contact != nil {
 		if err := contact.Validate(c); err != nil {
 			return fmt.Errorf("Error when validating Contact: %s", err.Error())

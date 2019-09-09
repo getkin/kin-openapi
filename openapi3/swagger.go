@@ -10,7 +10,7 @@ import (
 type Swagger struct {
 	ExtensionProps
 	OpenAPI      string               `json:"openapi"` // Required
-	Info         Info                 `json:"info"`    // Required
+	Info         Info                 `json:"info,omitempty"`
 	Servers      Servers              `json:"servers,omitempty"`
 	Paths        Paths                `json:"paths,omitempty"`
 	Components   Components           `json:"components,omitempty"`
