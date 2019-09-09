@@ -844,7 +844,7 @@ func TestDecodeParameter(t *testing.T) {
 						path = "/{" + path + "}"
 					}
 
-					spec := &openapi3.Swagger{}
+					spec := &openapi3.Swagger{OpenAPI: "3.0.0"}
 					op := &openapi3.Operation{OperationID: "test", Parameters: []*openapi3.ParameterRef{{Value: tc.param}}}
 					spec.AddOperation("/test"+path, http.MethodGet, op)
 					router := NewRouter()
