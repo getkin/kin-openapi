@@ -12,7 +12,7 @@ type Swagger struct {
 	OpenAPI      string               `json:"openapi"` // Required
 	Info         Info                 `json:"info"`    // Required
 	Servers      Servers              `json:"servers,omitempty"`
-	Paths        Paths                `json:"paths,omitempty"`
+	Paths        Paths                `json:"paths"` // Required
 	Components   Components           `json:"components,omitempty"`
 	Security     SecurityRequirements `json:"security,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty"`
@@ -65,6 +65,8 @@ func (swagger *Swagger) Validate(c context.Context) error {
 		if err := v.Validate(c); err != nil {
 			return fmt.Errorf("Error when validating Paths: %s", err.Error())
 		}
+	} else {
+		return fmt.Errorf("Variable 'paths' must be a JSON object")
 	}
 	if v := swagger.Info; true {
 		if err := v.Validate(c); err != nil {
