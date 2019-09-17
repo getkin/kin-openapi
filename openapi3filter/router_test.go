@@ -23,6 +23,10 @@ func TestRouter(t *testing.T) {
 	paramsGET := &openapi3.Operation{}
 	swagger := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
 				Connect: helloCONNECT,

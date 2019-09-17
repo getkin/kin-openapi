@@ -47,6 +47,10 @@ func TestFilter(t *testing.T) {
 	// Declare router
 	swagger := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
 		Servers: openapi3.Servers{
 			{
 				URL: "http://example.com/api/",
@@ -409,7 +413,11 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 	// Create the swagger
 	swagger := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
-		Paths:   map[string]*openapi3.PathItem{},
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
+		Paths: map[string]*openapi3.PathItem{},
 		Security: openapi3.SecurityRequirements{
 			{
 				securitySchemes[1].Name: {},
@@ -543,7 +551,11 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 	// Create the swagger
 	swagger := openapi3.Swagger{
 		OpenAPI: "3.0.0",
-		Paths:   map[string]*openapi3.PathItem{},
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
+		Paths: map[string]*openapi3.PathItem{},
 		Components: openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
@@ -635,7 +647,11 @@ func TestAllSchemesMet(t *testing.T) {
 	// Create the swagger
 	swagger := openapi3.Swagger{
 		OpenAPI: "3.0.0",
-		Paths:   map[string]*openapi3.PathItem{},
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
+		Paths: map[string]*openapi3.PathItem{},
 		Components: openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
