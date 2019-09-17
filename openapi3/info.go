@@ -11,12 +11,12 @@ import (
 // Info is specified by OpenAPI/Swagger standard version 3.0.
 type Info struct {
 	ExtensionProps
-	Title          string   `json:"title,omitempty"`
+	Title          string   `json:"title"` // Required
 	Description    string   `json:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty"`
 	Contact        *Contact `json:"contact,omitempty"`
 	License        *License `json:"license,omitempty"`
-	Version        string   `json:"version,omitempty"`
+	Version        string   `json:"version"` // Required
 }
 
 func (value *Info) MarshalJSON() ([]byte, error) {
@@ -38,6 +38,10 @@ func (value *Info) Validate(c context.Context) error {
 		if err := license.Validate(c); err != nil {
 			return fmt.Errorf("Error when validating License: %s", err.Error())
 		}
+	}
+
+	if value.Version == "" {
+		return fmt.Errorf("Variable 'version' must be a non-empty JSON string")
 	}
 
 	return nil
@@ -66,7 +70,7 @@ func (value *Contact) Validate(c context.Context) error {
 // License is specified by OpenAPI/Swagger standard version 3.0.
 type License struct {
 	ExtensionProps
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"` // Required
 	URL  string `json:"url,omitempty"`
 }
 
