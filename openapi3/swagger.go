@@ -10,7 +10,7 @@ import (
 type Swagger struct {
 	ExtensionProps
 	OpenAPI      string               `json:"openapi"` // Required
-	Info         Info                 `json:"info"`    // Required
+	Info         *Info                `json:"info"`    // Required
 	Servers      Servers              `json:"servers,omitempty"`
 	Paths        Paths                `json:"paths"` // Required
 	Components   Components           `json:"components,omitempty"`
@@ -68,10 +68,12 @@ func (swagger *Swagger) Validate(c context.Context) error {
 	} else {
 		return fmt.Errorf("Variable 'paths' must be a JSON object")
 	}
-	if v := swagger.Info; true {
+	if v := swagger.Info; v != nil {
 		if err := v.Validate(c); err != nil {
 			return fmt.Errorf("Error when validating Info: %s", err.Error())
 		}
+	} else {
+		return fmt.Errorf("Variable 'info' must be a JSON object")
 	}
 	return nil
 }

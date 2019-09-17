@@ -257,7 +257,7 @@ func spec() *openapi3.Swagger {
 	example := map[string]string{"name": "Some example"}
 	return &openapi3.Swagger{
 		OpenAPI: "3.0",
-		Info: openapi3.Info{
+		Info: &openapi3.Info{
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
