@@ -96,7 +96,9 @@ func eqYAML(t *testing.T, expected, actual []byte) {
 
 var specYAML = []byte(`
 openapi: '3.0'
-info: {}
+info:
+  title: MyAPI
+  version: '0.1'
 paths:
   "/hello":
     parameters:
@@ -149,7 +151,10 @@ components:
 var specJSON = []byte(`
 {
   "openapi": "3.0",
-  "info": {},
+  "info": {
+    "title": "MyAPI",
+    "version": "0.1"
+  },
   "paths": {
     "/hello": {
       "parameters": [
@@ -252,6 +257,10 @@ func spec() *openapi3.Swagger {
 	example := map[string]string{"name": "Some example"}
 	return &openapi3.Swagger{
 		OpenAPI: "3.0",
+		Info: openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
 				Post: &openapi3.Operation{
