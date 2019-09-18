@@ -43,7 +43,15 @@ const exampleV2 = `
   "paths": {
     "/example": {
       "delete": {
-        "description": "example delete"
+        "description": "example delete",
+        "responses": {
+          "default": {
+            "description": "default response"
+          },
+          "404": {
+            "description": "404 response"
+          }
+        }
       },
       "get": {
         "operationId": "example-get",
@@ -79,19 +87,24 @@ const exampleV2 = `
         ]
       },
       "head": {
-        "description": "example head"
+        "description": "example head",
+        "responses": {}
       },
       "patch": {
-        "description": "example patch"
+        "description": "example patch",
+        "responses": {}
       },
       "post": {
-        "description": "example post"
+        "description": "example post",
+        "responses": {}
       },
       "put": {
-        "description": "example put"
+        "description": "example put",
+        "responses": {}
       },
       "options": {
-        "description": "example options"
+        "description": "example options",
+        "responses": {}
       }
     }
   },
@@ -120,7 +133,15 @@ const exampleV3 = `
   "paths": {
     "/example": {
       "delete": {
-        "description": "example delete"
+        "description": "example delete",
+        "responses": {
+          "default": {
+            "description": "default response"
+          },
+          "404": {
+            "description": "404 response"
+          }
+        }
       },
       "get": {
         "operationId": "example-get",
@@ -158,19 +179,24 @@ const exampleV3 = `
         ]
       },
       "head": {
-        "description": "example head"
+        "description": "example head",
+        "responses": {}
       },
       "options": {
-        "description": "example options"
+        "description": "example options",
+        "responses": {}
       },
       "patch": {
-        "description": "example patch"
+        "description": "example patch",
+        "responses": {}
       },
       "post": {
-        "description": "example post"
+        "description": "example post",
+        "responses": {}
       },
       "put": {
-        "description": "example put"
+        "description": "example put",
+        "responses": {}
       }
     }
   },

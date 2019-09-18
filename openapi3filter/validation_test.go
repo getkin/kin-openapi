@@ -91,6 +91,7 @@ func TestFilter(t *testing.T) {
 							},
 						},
 					},
+					Responses: make(openapi3.Responses),
 				},
 			},
 		},
@@ -452,7 +453,8 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		}
 		swagger.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
-				Security: securityRequirements,
+				Security:  securityRequirements,
+				Responses: make(openapi3.Responses),
 			},
 		}
 	}
@@ -584,7 +586,8 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		// Create the path with the security requirements
 		swagger.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
-				Security: &securityRequirements,
+				Security:  &securityRequirements,
+				Responses: make(openapi3.Responses),
 			},
 		}
 	}
@@ -684,6 +687,7 @@ func TestAllSchemesMet(t *testing.T) {
 				Security: &openapi3.SecurityRequirements{
 					securityRequirement,
 				},
+				Responses: make(openapi3.Responses),
 			},
 		}
 	}
