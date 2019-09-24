@@ -184,10 +184,10 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 			},
 		},
 	}
-	loader := &openapi3.SwaggerLoader{
-		IsExternalRefsAllowed:  true,
-		LoadSwaggerFromURIFunc: multipleSourceLoader.LoadSwaggerFromURI,
-	}
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.LoadSwaggerFromURIFunc = multipleSourceLoader.LoadSwaggerFromURI
+
 	doc, err := loader.LoadSwaggerFromURI(rootLocation)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
@@ -452,5 +452,5 @@ func TestRemoteURLCaching(t *testing.T) {
 
 	require.Contains(t, sfs.hits, "/test.refcache.openapi.yml")
 	require.Contains(t, sfs.hits, "/components.openapi.yml")
-	require.Equal(t, 1, sfs.hits["http://localhost:7965/components.openapi.yml"], "expcting 1 load of referenced schema")
+	require.Equal(t, 1, sfs.hits["/components.openapi.yml"], "expcting 1 load of referenced schema")
 }
