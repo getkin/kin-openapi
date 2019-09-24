@@ -34,10 +34,11 @@ type SwaggerLoader struct {
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
 	visited                map[interface{}]struct{}
 	visitedFiles           map[string]struct{}
+	loadedRemoteSchemas    map[url.URL]*Swagger
 }
 
 func NewSwaggerLoader() *SwaggerLoader {
-	return &SwaggerLoader{}
+	return &SwaggerLoader{loadedRemoteSchemas: map[url.URL]*Swagger{}}
 }
 
 func (swaggerLoader *SwaggerLoader) reset() {
@@ -352,6 +353,14 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 		if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
 			return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
+
+		if swg2, ok := swaggerLoader.loadedRemoteSchemas[*parsedURL]; !ok {
+			if swg2, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
+				return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
+			}
+			swaggerLoader.loadedRemoteSchemas[*parsedURL] = swg2
+		}
+		swagger = swaggerLoader.loadedRemoteSchemas[*parsedURL]
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
