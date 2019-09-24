@@ -11,17 +11,22 @@ import (
 
 func TestRouter(t *testing.T) {
 	// Build swagger
-	helloCONNECT := &openapi3.Operation{}
-	helloDELETE := &openapi3.Operation{}
-	helloGET := &openapi3.Operation{}
-	helloHEAD := &openapi3.Operation{}
-	helloOPTIONS := &openapi3.Operation{}
-	helloPATCH := &openapi3.Operation{}
-	helloPOST := &openapi3.Operation{}
-	helloPUT := &openapi3.Operation{}
-	helloTRACE := &openapi3.Operation{}
-	paramsGET := &openapi3.Operation{}
+	helloCONNECT := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloDELETE := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloHEAD := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloOPTIONS := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloPATCH := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloPOST := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloPUT := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloTRACE := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	paramsGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
 	swagger := &openapi3.Swagger{
+		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
 				Connect: helloCONNECT,

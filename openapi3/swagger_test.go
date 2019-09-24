@@ -1,7 +1,9 @@
 package openapi3_test
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -96,7 +98,9 @@ func eqYAML(t *testing.T, expected, actual []byte) {
 
 var specYAML = []byte(`
 openapi: '3.0'
-info: {}
+info:
+  title: MyAPI
+  version: '0.1'
 paths:
   "/hello":
     parameters:
@@ -149,7 +153,10 @@ components:
 var specJSON = []byte(`
 {
   "openapi": "3.0",
-  "info": {},
+  "info": {
+    "title": "MyAPI",
+    "version": "0.1"
+  },
   "paths": {
     "/hello": {
       "parameters": [
@@ -252,6 +259,10 @@ func spec() *openapi3.Swagger {
 	example := map[string]string{"name": "Some example"}
 	return &openapi3.Swagger{
 		OpenAPI: "3.0",
+		Info: &openapi3.Info{
+			Title:   "MyAPI",
+			Version: "0.1",
+		},
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
 				Post: &openapi3.Operation{
@@ -331,5 +342,168 @@ func spec() *openapi3.Swagger {
 				},
 			},
 		},
+	}
+}
+
+// TestValidation tests validation of properties in the root of the OpenAPI
+// file.
+func TestValidation(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         []byte
+		expectedError error
+	}{
+		{
+			"when no OpenAPI property is supplied",
+			[]byte(`
+info:
+  title: "Hello World REST APIs"
+  version: "1.0"
+paths:
+  "/api/v2/greetings.json":
+    get:
+      operationId: listGreetings
+      responses:
+        200:
+          description: "List different greetings"
+  "/api/v2/greetings/{id}.json":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: "greeting"
+    get:
+      operationId: showGreeting
+      responses:
+        200:
+          description: "Get a single greeting object"
+`),
+			fmt.Errorf("Variable 'openapi' must be a non-empty JSON string"),
+		},
+		{
+			"when an empty OpenAPI property is supplied",
+			[]byte(`
+openapi: ''
+info:
+  title: "Hello World REST APIs"
+  version: "1.0"
+paths:
+  "/api/v2/greetings.json":
+    get:
+      operationId: listGreetings
+      responses:
+        200:
+          description: "List different greetings"
+  "/api/v2/greetings/{id}.json":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: "greeting"
+    get:
+      operationId: showGreeting
+      responses:
+        200:
+          description: "Get a single greeting object"
+`),
+			fmt.Errorf("Variable 'openapi' must be a non-empty JSON string"),
+		},
+		{
+			"when the Info property is not supplied",
+			[]byte(`
+openapi: '1.0'
+paths:
+  "/api/v2/greetings.json":
+    get:
+      operationId: listGreetings
+      responses:
+        200:
+          description: "List different greetings"
+  "/api/v2/greetings/{id}.json":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: "greeting"
+    get:
+      operationId: showGreeting
+      responses:
+        200:
+          description: "Get a single greeting object"
+`),
+			fmt.Errorf("Variable 'info' must be a JSON object"),
+		},
+		{
+			"when the Paths property is not supplied",
+			[]byte(`
+openapi: '1.0'
+info:
+  title: "Hello World REST APIs"
+  version: "1.0"
+`),
+			fmt.Errorf("Variable 'paths' must be a JSON object"),
+		},
+		{
+			"when a valid spec is supplied",
+			[]byte(`
+openapi: 3.0.2
+info:
+  title: "Hello World REST APIs"
+  version: "1.0"
+paths:
+  "/api/v2/greetings.json":
+    get:
+      operationId: listGreetings
+      responses:
+        200:
+          description: "List different greetings"
+  "/api/v2/greetings/{id}.json":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: "greeting"
+    get:
+      operationId: showGreeting
+      responses:
+        200:
+          description: "Get a single greeting object"
+components:
+  schemas:
+    GreetingObject:
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          default: "greeting"
+        attributes:
+          properties:
+            description:
+              type: string
+`),
+			nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			doc := &openapi3.Swagger{}
+			err := yaml.Unmarshal(test.input, &doc)
+			require.NoError(t, err)
+
+			c := context.Background()
+			validationErr := doc.Validate(c)
+
+			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
+		})
 	}
 }

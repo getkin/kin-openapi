@@ -1,18 +1,22 @@
 package openapi3
 
 import (
+	"context"
+	"errors"
+	"fmt"
+
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Info is specified by OpenAPI/Swagger standard version 3.0.
 type Info struct {
 	ExtensionProps
-	Title          string   `json:"title,omitempty"`
+	Title          string   `json:"title"` // Required
 	Description    string   `json:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty"`
 	Contact        *Contact `json:"contact,omitempty"`
 	License        *License `json:"license,omitempty"`
-	Version        string   `json:"version,omitempty"`
+	Version        string   `json:"version"` // Required
 }
 
 func (value *Info) MarshalJSON() ([]byte, error) {
@@ -21,6 +25,30 @@ func (value *Info) MarshalJSON() ([]byte, error) {
 
 func (value *Info) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
+}
+
+func (value *Info) Validate(c context.Context) error {
+	if contact := value.Contact; contact != nil {
+		if err := contact.Validate(c); err != nil {
+			return fmt.Errorf("Error when validating Contact: %s", err.Error())
+		}
+	}
+
+	if license := value.License; license != nil {
+		if err := license.Validate(c); err != nil {
+			return fmt.Errorf("Error when validating License: %s", err.Error())
+		}
+	}
+
+	if value.Version == "" {
+		return fmt.Errorf("Variable 'version' must be a non-empty JSON string")
+	}
+
+	if value.Title == "" {
+		return fmt.Errorf("Variable 'title' must be a non-empty JSON string")
+	}
+
+	return nil
 }
 
 // Contact is specified by OpenAPI/Swagger standard version 3.0.
@@ -39,10 +67,14 @@ func (value *Contact) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+func (value *Contact) Validate(c context.Context) error {
+	return nil
+}
+
 // License is specified by OpenAPI/Swagger standard version 3.0.
 type License struct {
 	ExtensionProps
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"` // Required
 	URL  string `json:"url,omitempty"`
 }
 
@@ -52,4 +84,11 @@ func (value *License) MarshalJSON() ([]byte, error) {
 
 func (value *License) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
+}
+
+func (value *License) Validate(c context.Context) error {
+	if value.Name == "" {
+		return errors.New("Variable 'name' must be a non-empty JSON string")
+	}
+	return nil
 }
