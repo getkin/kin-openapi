@@ -1,6 +1,7 @@
 package openapi3_test
 
 import (
+	"fmt"
 	"encoding/json"
 	"testing"
 
@@ -10,7 +11,8 @@ import (
 )
 
 func TestRefsJSON(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader1 := openapi3.NewSwaggerLoader()
+	loader2 := openapi3.NewSwaggerLoader()
 
 	t.Log("Marshal *openapi3.Swagger to JSON")
 	data, err := json.Marshal(spec())
@@ -23,18 +25,18 @@ func TestRefsJSON(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
-	err = loader.ResolveRefsIn(docA, nil)
+	fmt.Println("Resolve refs in unmarshalled *openapi3.Swagger")
+	err = loader1.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
-	t.Log("Resolve refs in marshalled *openapi3.Swagger")
-	docB, err := loader.LoadSwaggerFromData(data)
+	fmt.Println("Resolve refs in marshalled *openapi3.Swagger")
+	docB, err := loader2.LoadSwaggerFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
-	t.Log("Validate *openapi3.Swagger")
-	err = docA.Validate(loader.Context)
+	fmt.Println("Validate *openapi3.Swagger")
+	err = docA.Validate(loader1.Context)
 	require.NoError(t, err)
-	err = docB.Validate(loader.Context)
+	err = docB.Validate(loader2.Context)
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")
