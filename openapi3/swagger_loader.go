@@ -24,8 +24,8 @@ func failedToResolveRefFragment(value string) error {
 	return fmt.Errorf("Failed to resolve fragment in URI: '%s'", value)
 }
 
-func failedToResolveRefFragmentPart(value string, what string) error {
-	return fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s'", what, value)
+func failedToResolveRefFragmentPart(value string, what string, reason string) error {
+	return fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s' because: %s", what, value, reason)
 }
 
 type SwaggerLoader struct {
@@ -38,7 +38,7 @@ type SwaggerLoader struct {
 }
 
 func NewSwaggerLoader() *SwaggerLoader {
-	return &SwaggerLoader{loadedRemoteSchemas: map[url.URL]*Swagger{}}
+	return &SwaggerLoader{loadedRemoteSchemas: map[string]*Swagger{}}
 }
 
 func (swaggerLoader *SwaggerLoader) reset() {
@@ -220,6 +220,33 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 		if err = swaggerLoader.resolvePathItemRef(swagger, entrypoint, pathItem, path); err != nil {
 			return
 		}
+		for i, parameter := range pathItem.Parameters {
+			fmt.Printf("before path param: %#v\n", parameter)
+			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
+				return
+			}
+			fmt.Printf("after path param: %#v\n", pathItem.Parameters[i])
+		}
+		for _, operation := range pathItem.Operations() {
+			for i, parameter := range operation.Parameters {
+				fmt.Printf("before path op param: %#v\n", parameter)
+				if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
+					return
+				}
+				fmt.Printf("after path op param: %#v\n", operation.Parameters[i])
+
+			}
+			if requestBody := operation.RequestBody; requestBody != nil {
+				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
+					return
+				}
+			}
+			for _, response := range operation.Responses {
+				if err = swaggerLoader.resolveResponseRef(swagger, response, path); err != nil {
+					return
+				}
+			}
+		}
 	}
 
 	return
@@ -358,21 +385,27 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 			if swg2, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
 				return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 			}
-			swaggerLoader.loadedRemoteSchemas[*parsedURL] = swg2
+			swaggerLoader.loadedRemoteSchemas[parsedURL.String()] = swg2
 		}
-		swagger = swaggerLoader.loadedRemoteSchemas[*parsedURL]
+		swagger = swaggerLoader.loadedRemoteSchemas[parsedURL.String()]
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
+	if !strings.HasPrefix(ref, prefix) {
+		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
+		return nil, "", nil, err
+	}
+	id = ref[len(prefix):]
+	if strings.IndexByte(id, '/') >= 0 {
+		return nil, "", nil, failedToResolveRefFragmentPart(ref, id, "failed to strip local path")
+	}
 	return swagger, ref, componentPath, nil
 }
-
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/headers/"
 	if component == nil {
@@ -692,10 +725,10 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 
 func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
 	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
+	if _, isVisited := visited[component.String()]; isVisited {
 		return nil
 	}
-	visited[component] = struct{}{}
+	visited[component.String()] = struct{}{}
 
 	const prefix = "#/components/securitySchemes/"
 	if component == nil {
@@ -729,10 +762,10 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, path *url.URL) error {
 	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
+	if _, isVisited := visited[component.String()]; isVisited {
 		return nil
 	}
-	visited[component] = struct{}{}
+	visited[component.String()] = struct{}{}
 
 	const prefix = "#/components/examples/"
 	if component == nil {

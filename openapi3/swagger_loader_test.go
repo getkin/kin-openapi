@@ -372,7 +372,11 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
 	loader := openapi3.NewSwaggerLoader()
 	swagger, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
-
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"])
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers)
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"])
+	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value)
 	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 	require.Equal(t, "testheader", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 }
