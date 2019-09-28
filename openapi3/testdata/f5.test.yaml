@@ -1,0 +1,231 @@
+openapi: 3.0.0
+servers:
+  - description: API server base 
+    url: https://api-server/api/v1    
+info:
+  title: Apps API
+  description: API to manage the Apps resource
+  version: 'v1'
+  contact:
+    name: F5 Networks Inc
+    email: support@f5.com
+    url: https://www.f5.com/services/support
+  license:
+    name: TODO
+    url: TODO
+paths:
+  /services/environments/{environmentName}/apps:
+    get:
+      summary: List all Apps
+      description: |
+        Returns an array of all Apps. An empty array is returned if none
+        present.
+      operationId: ListApps
+      responses:
+        '200':
+          description: List of all Apps.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppList'
+        '400':
+          description: Bad request. Invalid URI.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+    post:
+      summary: Create an App
+      description: Create a new App. If one already exists an error is returned.
+      operationId: CreateApp
+      requestBody:
+        description: An App
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/App'
+      responses:
+        '200':
+          description: App created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          description: Bad request. Invalid URI or request body.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+        '409':
+          description: App already exists
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+    parameters:
+      - name: environmentName
+        description: Environment name
+        in: path
+        required: true
+        schema:
+          $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/service-common.yaml#/components/schemas/EnvironmentName'
+  /services/environments/{environmentName}/apps/{appName}:
+    get:
+      summary: Get App info.
+      description: |
+        Get the info for a specific App. An error is returned if the App does
+        not exist.
+      operationId: GetApp
+      responses:
+        '200':
+          description: An App
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          description: Bad request. Invalid URI.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+        '404':
+          description: App not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+    put:
+      summary: Upsert an App
+      description: |
+        Create/Update a specific App. If the App doesn't exist, it will
+        be created.
+      operationId: UpdateApp
+      requestBody:
+        description: App patched successfully.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/App'
+      responses:
+        '200':
+          description: An App
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          description: Bad request. Invalid URI or request body.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+    patch:
+      summary: Patch an App
+      description: |
+        Patch a specific App. If App doesn't exist, an error is returned.
+      operationId: PatchApp
+      requestBody:
+        description: An App
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/App'
+      responses:
+        '200':
+          description: App patched successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          description: Bad request. Invalid URI or request body.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+        '404':
+          description: App not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'    
+    delete:
+      summary: Delete a specific App
+      operationId: DeleteApp
+      responses:
+        '202':
+          description: |
+            App marked for deletion. The resource will be deleted when
+            the resources under it are deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          description: Bad request. Invalid URI or request body.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+        '412':
+          description: |
+            Deletion failed. App holds references to other objects
+            and cannot be deleted. Delete the child objects first and try
+            again.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'
+        '404':
+          description: App not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ErrorModel'    
+    parameters:
+      - name: environmentName
+        description: Environment name
+        in: path
+        required: true
+        schema:
+          $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/service-common.yaml#/components/schemas/EnvironmentName'
+      - name: appName
+        description: App name
+        in: path
+        required: true
+        schema:
+          $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/service-common.yaml#/components/schemas/AppName'
+components:
+  schemas:
+    AppList:
+      type: object
+      properties:
+        metadata:
+          $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ResourceMeta'
+        items:
+          type: array
+          items:
+              $ref: '#/components/schemas/App'    
+    App:
+      type: object
+      description: A collection of Components
+      properties:
+        metadata:
+          $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ResourceMeta'
+        desiredState:
+          type: object
+        currentStatus:
+          $ref: '#/components/schemas/AppCurrentStatus'
+    AppCurrentStatus:
+      type: object
+      properties:
+        state:
+          $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ConfigState'
+        componentRefs:
+          type: array
+          items:
+            $ref: 'https://gitswarm.f5net.com/indigo/public/controller-api-common/raw/master/schema/resource-common.yaml#/components/schemas/ResourceRef'

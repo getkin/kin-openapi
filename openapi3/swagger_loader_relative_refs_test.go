@@ -193,7 +193,7 @@ var refTestDataEntries = []refTestDataEntry{
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"])
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers)
-            require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"])
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"])
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value)
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 			require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
@@ -219,7 +219,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 		loader := openapi3.NewSwaggerLoader()
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
-        require.NoError(t, err)
+		require.NoError(t, err)
 		td.testFunc(t, swagger)
 	}
 }

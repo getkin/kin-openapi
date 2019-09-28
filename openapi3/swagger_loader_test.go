@@ -1,7 +1,9 @@
 package openapi3_test
 
 import (
+	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -584,4 +586,41 @@ func TestRemoteURLCaching(t *testing.T) {
 	require.Contains(t, sfs.hits, "/test.refcache.openapi.yml")
 	require.Contains(t, sfs.hits, "/components.openapi.yml")
 	require.Equal(t, 1, sfs.hits["/components.openapi.yml"], "expcting 1 load of referenced schema")
+}
+
+func insecureReadUrl(sl *openapi3.SwaggerLoader, location *url.URL) (*openapi3.Swagger, error) {
+	if location.Scheme != "" && location.Host != "" {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		cl := &http.Client{Transport: tr}
+		resp, err := cl.Get(location.String())
+		if err != nil {
+			return nil, err
+		}
+		data, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+		return sl.LoadSwaggerFromDataWithPath(data, location)
+	}
+	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
+		return nil, fmt.Errorf("Unsupported URI: '%s'", location.String())
+	}
+	data, err := ioutil.ReadFile(location.Path)
+	if err != nil {
+		return nil, err
+	}
+	return sl.LoadSwaggerFromDataWithPath(data, location)
+}
+
+func TestF5Case(t *testing.T) {
+	sl := openapi3.NewSwaggerLoader()
+	sl.LoadSwaggerFromURIFunc = insecureReadUrl
+	sl.IsExternalRefsAllowed = true
+	data, err := ioutil.ReadFile("testdata/f5.test.yaml")
+	require.Nil(t, err)
+	_, err = sl.LoadSwaggerFromData(data)
+	require.Nil(t, err)
 }
