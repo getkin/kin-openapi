@@ -1,8 +1,8 @@
 package openapi3_test
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
