@@ -252,13 +252,15 @@ func copyURL(basePath *url.URL) (*url.URL, error) {
 	return url.Parse(basePath.String())
 }
 
-func mergeComponents(c1, c2 Components) (cm Components, err error) {
+func mergeComponents(c1, c2 Components) Components {
 	if c2.Schemas != nil && c1.Schemas == nil {
 		c1.Schemas = c2.Schemas
 	} else {
 		for k, v := range c2.Schemas {
-			if v1, ok := c1.Schemas[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple schemas %s", k)
+			if v1, ok := c1.Schemas[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Schemas[k] = v
 		}
@@ -267,8 +269,10 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.Parameters = c2.Parameters
 	} else {
 		for k, v := range c2.Parameters {
-			if v1, ok := c1.Parameters[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple parameters %s", k)
+			if v1, ok := c1.Parameters[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Parameters[k] = v
 		}
@@ -277,8 +281,10 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.Headers = c2.Headers
 	} else {
 		for k, v := range c2.Headers {
-			if v1, ok := c1.Headers[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple Headers %s", k)
+			if v1, ok := c1.Headers[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Headers[k] = v
 		}
@@ -287,8 +293,10 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.RequestBodies = c2.RequestBodies
 	} else {
 		for k, v := range c2.RequestBodies {
-			if v1, ok := c1.RequestBodies[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple RequestBodies %s", k)
+			if v1, ok := c1.RequestBodies[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.RequestBodies[k] = v
 		}
@@ -297,8 +305,10 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.Responses = c2.Responses
 	} else {
 		for k, v := range c2.Responses {
-			if v1, ok := c1.Responses[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple Responses %s", k)
+			if v1, ok := c1.Responses[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Responses[k] = v
 		}
@@ -307,8 +317,10 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.SecuritySchemes = c2.SecuritySchemes
 	} else {
 		for k, v := range c2.SecuritySchemes {
-			if v1, ok := c1.SecuritySchemes[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple SecuritySchemes %s", k)
+			if v1, ok := c1.SecuritySchemes[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.SecuritySchemes[k] = v
 		}
@@ -317,14 +329,18 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.Examples = c2.Examples
 	} else {
 		for k, v := range c2.Examples {
-			if v1, ok := c1.Examples[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple Examples %s", k)
+			if v1, ok := c1.Examples[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Examples[k] = v
 		}
 		for k, v := range c2.Links {
-			if v1, ok := c1.Links[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple Links %s", k)
+			if v1, ok := c1.Links[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Links[k] = v
 		}
@@ -333,8 +349,10 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 		c1.Callbacks = c2.Callbacks
 	} else {
 		for k, v := range c2.Callbacks {
-			if v1, ok := c1.Callbacks[k]; ok && v != v1 {
-				return c1, fmt.Errorf("Duplicate key in multiple Callbacks %s", k)
+			if v1, ok := c1.Callbacks[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
 			}
 			c1.Callbacks[k] = v
 		}
@@ -352,7 +370,7 @@ func mergeComponents(c1, c2 Components) (cm Components, err error) {
 			c1.Tags = append(c1.Tags, c2.Tags[i])
 		}
 	}
-	return c1, err
+	return c1
 }
 
 func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
@@ -486,10 +504,8 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 			}
 			swaggerLoader.loadedRemoteSchemas[parsedURL.String()] = swg2
 		}
-		swagger.Components, err = mergeComponents(swagger.Components, swaggerLoader.loadedRemoteSchemas[parsedURL.String()].Components)
-		if err != nil {
-			return nil, "", nil, err
-		}
+		swagger.Components = mergeComponents(swagger.Components, swaggerLoader.loadedRemoteSchemas[parsedURL.String()].Components)
+
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
