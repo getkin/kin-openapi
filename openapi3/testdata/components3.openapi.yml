@@ -1,0 +1,13 @@
+---
+openapi: 3.0.0
+info:
+  title: ''
+  version: '1'
+paths: {}
+components:
+  schemas:
+    NestedRefToComp2Schema:
+      type: object
+      properties:
+        nestedRefToComp2:
+          "$ref": http://localhost:7965/components2.openapi.yml#/components/schemas/NestedRefToComp1Schema

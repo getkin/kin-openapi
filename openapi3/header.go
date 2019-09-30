@@ -5,6 +5,7 @@ import (
 )
 
 type Header struct {
+	Metadata
 	ExtensionProps
 
 	// Optional description. Should use CommonMark syntax.

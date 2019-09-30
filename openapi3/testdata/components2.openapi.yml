@@ -8,3 +8,9 @@ components:
   schemas:
     AnotherName:
       type: string
+
+    NestedRefToComp1Schema:
+      type: object
+      properties:
+        nestedRef1:
+          "$ref": http://localhost:7965/components.openapi.yml#/components/schemas/CustomTestSchema

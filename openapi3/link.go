@@ -8,6 +8,7 @@ import (
 
 // Link is specified by OpenAPI/Swagger standard version 3.0.
 type Link struct {
+	Metadata
 	ExtensionProps
 	Description string                 `json:"description,omitempty"`
 	Href        string                 `json:"href,omitempty"`

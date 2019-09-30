@@ -47,6 +47,7 @@ func Uint64Ptr(value uint64) *uint64 {
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 type Schema struct {
+	Metadata
 	ExtensionProps
 
 	OneOf        []*SchemaRef  `json:"oneOf,omitempty"`
