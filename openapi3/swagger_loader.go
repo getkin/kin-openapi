@@ -37,7 +37,16 @@ func NewSwaggerLoader() *SwaggerLoader {
 	return &SwaggerLoader{}
 }
 
+func (swaggerLoader *SwaggerLoader) reset() {
+	swaggerLoader.visitedFiles = make(map[string]struct{})
+}
+
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromURIInternal(location)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
 	f := swaggerLoader.LoadSwaggerFromURIFunc
 	if f != nil {
 		return f(swaggerLoader, location)
@@ -46,7 +55,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 	if err != nil {
 		return nil, err
 	}
-	return swaggerLoader.LoadSwaggerFromDataWithPath(data, location)
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, location)
 }
 
 func readUrl(location *url.URL) ([]byte, error) {
@@ -73,6 +82,11 @@ func readUrl(location *url.URL) ([]byte, error) {
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromFileInternal(path)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*Swagger, error) {
 	f := swaggerLoader.LoadSwaggerFromURIFunc
 	if f != nil {
 		return f(swaggerLoader, &url.URL{
@@ -83,12 +97,17 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 	if err != nil {
 		return nil, err
 	}
-	return swaggerLoader.LoadSwaggerFromDataWithPath(data, &url.URL{
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, &url.URL{
 		Path: path,
 	})
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromDataInternal(data)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataInternal(data []byte) (*Swagger, error) {
 	swagger := &Swagger{}
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
@@ -97,6 +116,11 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, path)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, path *url.URL) (*Swagger, error) {
 	swagger := &Swagger{}
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
@@ -223,7 +247,7 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 			return nil, "", nil, fmt.Errorf("Error while resolving path: %v", err)
 		}
 
-		if swagger, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
+		if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
 			return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
 		ref = fmt.Sprintf("#%s", fragment)
