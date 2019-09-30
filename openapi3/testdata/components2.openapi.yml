@@ -1,0 +1,10 @@
+---
+openapi: 3.0.0
+info:
+  title: ''
+  version: '1'
+paths: {}
+components:
+  schemas:
+    AnotherName:
+      type: string

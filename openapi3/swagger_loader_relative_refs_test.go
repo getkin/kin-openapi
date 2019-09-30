@@ -115,6 +115,12 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "PathOperationParameterSchemaRef",
 		contentTemplate: externalPathOperationParameterSchemaRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Paths["/test/{id}"])
+			require.NotNil(t, swagger.Paths["/test/{id}"].Get)
+			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters)
+			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0])
+			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value)
+			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema)
 			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value)
 			require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
 			require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
@@ -177,6 +183,15 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "RequestResponseHeaderRef",
 		contentTemplate: externalRequestResponseHeaderRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Paths)
+			require.NotNil(t, swagger.Paths["/test"])
+			require.NotNil(t, swagger.Paths["/test"].Post)
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses)
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"])
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers)
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"])
+			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value)
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 			require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 		},

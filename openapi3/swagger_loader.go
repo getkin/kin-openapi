@@ -21,20 +21,19 @@ func failedToResolveRefFragment(value string) error {
 	return fmt.Errorf("Failed to resolve fragment in URI: '%s'", value)
 }
 
-func failedToResolveRefFragmentPart(value string, what string) error {
-	return fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s'", what, value)
+func failedToResolveRefFragmentPart(value string, what string, reason string) error {
+	return fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s' because: %s", what, value, reason)
 }
 
 type SwaggerLoader struct {
 	IsExternalRefsAllowed  bool
 	Context                context.Context
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
-	visited                map[interface{}]struct{}
-	loadedRemoteSchemas    map[url.URL]*Swagger
+	loadedRemoteSchemas    map[string]*Swagger
 }
 
 func NewSwaggerLoader() *SwaggerLoader {
-	return &SwaggerLoader{loadedRemoteSchemas: map[url.URL]*Swagger{}}
+	return &SwaggerLoader{loadedRemoteSchemas: map[string]*Swagger{}}
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
@@ -105,7 +104,6 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, pat
 }
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
-	swaggerLoader.visited = make(map[interface{}]struct{})
 
 	// Visit all components
 	components := swagger.Components
@@ -181,6 +179,127 @@ func copyURL(basePath *url.URL) (*url.URL, error) {
 	return url.Parse(basePath.String())
 }
 
+func mergeComponents(c1, c2 Components) Components {
+	if c2.Schemas != nil && c1.Schemas == nil {
+		c1.Schemas = c2.Schemas
+	} else {
+		for k, v := range c2.Schemas {
+			if v1, ok := c1.Schemas[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Schemas[k] = v
+		}
+	}
+	if c2.Parameters != nil && c1.Parameters == nil {
+		c1.Parameters = c2.Parameters
+	} else {
+		for k, v := range c2.Parameters {
+			if v1, ok := c1.Parameters[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Parameters[k] = v
+		}
+	}
+	if c2.Headers != nil && c1.Headers == nil {
+		c1.Headers = c2.Headers
+	} else {
+		for k, v := range c2.Headers {
+			if v1, ok := c1.Headers[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Headers[k] = v
+		}
+	}
+	if c2.RequestBodies != nil && c1.RequestBodies == nil {
+		c1.RequestBodies = c2.RequestBodies
+	} else {
+		for k, v := range c2.RequestBodies {
+			if v1, ok := c1.RequestBodies[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.RequestBodies[k] = v
+		}
+	}
+	if c2.Responses != nil && c1.Responses == nil {
+		c1.Responses = c2.Responses
+	} else {
+		for k, v := range c2.Responses {
+			if v1, ok := c1.Responses[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Responses[k] = v
+		}
+	}
+	if c2.SecuritySchemes != nil && c1.SecuritySchemes == nil {
+		c1.SecuritySchemes = c2.SecuritySchemes
+	} else {
+		for k, v := range c2.SecuritySchemes {
+			if v1, ok := c1.SecuritySchemes[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.SecuritySchemes[k] = v
+		}
+	}
+	if c2.Examples != nil && c1.Examples == nil {
+		c1.Examples = c2.Examples
+	} else {
+		for k, v := range c2.Examples {
+			if v1, ok := c1.Examples[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Examples[k] = v
+		}
+		for k, v := range c2.Links {
+			if v1, ok := c1.Links[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Links[k] = v
+		}
+	}
+	if c2.Callbacks != nil && c1.Callbacks == nil {
+		c1.Callbacks = c2.Callbacks
+	} else {
+		for k, v := range c2.Callbacks {
+			if v1, ok := c1.Callbacks[k]; ok {
+				if v1.Ref == "" && v.Ref != "" {
+					continue // keep the resolved ones
+				}
+			}
+			c1.Callbacks[k] = v
+		}
+	}
+	if c2.Tags != nil && c1.Tags == nil {
+		c1.Tags = c2.Tags
+	} else {
+	outer:
+		for i, v := range c2.Tags {
+			for _, x := range c1.Tags {
+				if v == x {
+					continue outer
+				}
+			}
+			c1.Tags = append(c1.Tags, c2.Tags[i])
+		}
+	}
+	return c1
+}
+
 func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
 	if basePath == nil {
 		return relativePath, nil
@@ -223,13 +342,14 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 			return nil, "", nil, fmt.Errorf("Error while resolving path: %v", err)
 		}
 
-		if swg2, ok := swaggerLoader.loadedRemoteSchemas[*parsedURL]; !ok {
+		if swg2, ok := swaggerLoader.loadedRemoteSchemas[parsedURL.String()]; !ok {
 			if swg2, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
 				return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 			}
-			swaggerLoader.loadedRemoteSchemas[*parsedURL] = swg2
+			swaggerLoader.loadedRemoteSchemas[parsedURL.String()] = swg2
 		}
-		swagger = swaggerLoader.loadedRemoteSchemas[*parsedURL]
+		swagger.Components = mergeComponents(swagger.Components, swaggerLoader.loadedRemoteSchemas[parsedURL.String()].Components)
+
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
@@ -239,19 +359,12 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	}
 	id = ref[len(prefix):]
 	if strings.IndexByte(id, '/') >= 0 {
-		return nil, "", nil, failedToResolveRefFragmentPart(ref, id)
+		return nil, "", nil, failedToResolveRefFragmentPart(ref, id, "failed to strip local path")
 	}
 	return &swagger.Components, id, componentPath, nil
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
-
 	// Resolve ref
 	const prefix = "#/components/headers/"
 	if ref := component.Ref; len(ref) > 0 {
@@ -267,8 +380,10 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		if resolved == nil {
 			return failedToResolveRefFragment(ref)
 		}
-		if err := swaggerLoader.resolveHeaderRef(swagger, resolved, componentPath); err != nil {
-			return err
+		if resolved.Ref != "" {
+			if err := swaggerLoader.resolveHeaderRef(swagger, resolved, componentPath); err != nil {
+				return err
+			}
 		}
 		component.Value = resolved.Value
 	}
@@ -285,13 +400,6 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
-
 	// Resolve ref
 	const prefix = "#/components/parameters/"
 	if ref := component.Ref; len(ref) > 0 {
@@ -301,11 +409,11 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		}
 		definitions := components.Parameters
 		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "parameters")
+			return failedToResolveRefFragmentPart(ref, "parameters", "no parameters")
 		}
 		resolved := definitions[id]
 		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
+			return failedToResolveRefFragmentPart(ref, id, "cannot find parameter")
 		}
 		if err := swaggerLoader.resolveParameterRef(swagger, resolved, componentPath); err != nil {
 			return err
@@ -335,12 +443,6 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
 
 	// Resolve ref
 	const prefix = "#/components/requestBodies/"
@@ -351,11 +453,11 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		}
 		definitions := components.RequestBodies
 		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "requestBodies")
+			return failedToResolveRefFragmentPart(ref, "requestBodies", "no request bodies")
 		}
 		resolved := definitions[id]
 		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
+			return failedToResolveRefFragmentPart(ref, id, "cannot find request body")
 		}
 		if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved, componentPath); err != nil {
 			return err
@@ -383,12 +485,6 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 }
 
 func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *ResponseRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
 
 	// Resolve ref
 	const prefix = "#/components/responses/"
@@ -399,11 +495,11 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		}
 		definitions := components.Responses
 		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "responses")
+			return failedToResolveRefFragmentPart(ref, "responses", "no responses")
 		}
 		resolved := definitions[id]
 		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
+			return failedToResolveRefFragmentPart(ref, id, "cannot find response")
 		}
 		if err := swaggerLoader.resolveResponseRef(swagger, resolved, componentPath); err != nil {
 			return err
@@ -440,12 +536,6 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component *SchemaRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
 
 	// Resolve ref
 	const prefix = "#/components/schemas/"
@@ -456,11 +546,11 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		}
 		definitions := components.Schemas
 		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "schemas")
+			return failedToResolveRefFragmentPart(ref, "schemas", "no schemas")
 		}
 		resolved := definitions[id]
 		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
+			return failedToResolveRefFragmentPart(ref, id, fmt.Sprintf("failed to find schema in %#v for %#v", definitions, component))
 		}
 		if err := swaggerLoader.resolveSchemaRef(swagger, resolved, componentPath); err != nil {
 			return err
@@ -513,12 +603,6 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
 
 	// Resolve ref
 	const prefix = "#/components/securitySchemes/"
@@ -529,11 +613,11 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 		}
 		definitions := components.SecuritySchemes
 		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "securitySchemes")
+			return failedToResolveRefFragmentPart(ref, "securitySchemes", "no security schemas")
 		}
 		resolved := definitions[id]
 		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
+			return failedToResolveRefFragmentPart(ref, id, "failed to find security schema")
 		}
 		if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved, componentPath); err != nil {
 			return err
@@ -544,12 +628,6 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 }
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, path *url.URL) error {
-	// Prevent infinite recursion
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/examples/"
 	if ref := component.Ref; len(ref) > 0 {
@@ -559,11 +637,11 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		}
 		definitions := components.Examples
 		if definitions == nil {
-			return failedToResolveRefFragmentPart(ref, "examples")
+			return failedToResolveRefFragmentPart(ref, "examples", "no examples")
 		}
 		resolved := definitions[id]
 		if resolved == nil {
-			return failedToResolveRefFragmentPart(ref, id)
+			return failedToResolveRefFragmentPart(ref, id, "failed to find example")
 		}
 		if err := swaggerLoader.resolveExampleRef(swagger, resolved, componentPath); err != nil {
 			return err

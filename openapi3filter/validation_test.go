@@ -71,8 +71,8 @@ func TestFilter(t *testing.T) {
 						},
 						{
 							Value: &openapi3.Parameter{
-								In:   "query",
-								Name: "contentArg",
+								In:      "query",
+								Name:    "contentArg",
 								Content: openapi3.NewContentWithJSONSchema(complexArgSchema),
 							},
 						},
@@ -103,9 +103,9 @@ func TestFilter(t *testing.T) {
 
 		// Validate request
 		requestValidationInput := &openapi3filter.RequestValidationInput{
-			Request:    httpReq,
-			PathParams: pathParams,
-			Route:      route,
+			Request:      httpReq,
+			PathParams:   pathParams,
+			Route:        route,
 			ParamDecoder: decoder,
 		}
 		if err := openapi3filter.ValidateRequest(context.TODO(), requestValidationInput); err != nil {
