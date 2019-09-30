@@ -6,6 +6,7 @@ import (
 
 // Example is specified by OpenAPI/Swagger 3.0 standard.
 type Example struct {
+	Metadata
 	ExtensionProps
 
 	Summary       string      `json:"summary,omitempty" yaml:"summary,omitempty"`

@@ -10,6 +10,7 @@ import (
 
 // Link is specified by OpenAPI/Swagger standard version 3.0.
 type Link struct {
+	Metadata
 	ExtensionProps
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
 	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`

@@ -9,6 +9,7 @@ import (
 )
 
 type Swagger struct {
+	Metadata `json:"-"`
 	ExtensionProps
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`

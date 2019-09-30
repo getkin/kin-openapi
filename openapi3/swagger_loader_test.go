@@ -578,10 +578,13 @@ func TestRemoteURLCaching(t *testing.T) {
 	remote, err := url.Parse("http://" + addr + "/test.refcache.openapi.yml")
 	require.NoError(t, err)
 
-	_, err = loader.LoadSwaggerFromURI(remote)
+	doc, err := loader.LoadSwaggerFromURI(remote)
 	require.NoError(t, err)
 
 	require.Contains(t, sfs.hits, "/test.refcache.openapi.yml")
 	require.Contains(t, sfs.hits, "/components.openapi.yml")
-	require.Equal(t, 1, sfs.hits["/components.openapi.yml"], "expcting 1 load of referenced schema")
+	require.Equal(t, 1, sfs.hits["/components.openapi.yml"], "expecting 1 load of referenced schema")
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
 }

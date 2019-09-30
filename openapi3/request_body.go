@@ -8,6 +8,7 @@ import (
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
 type RequestBody struct {
+	Metadata
 	ExtensionProps
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`

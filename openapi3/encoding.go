@@ -9,6 +9,7 @@ import (
 
 // Encoding is specified by OpenAPI/Swagger 3.0 standard.
 type Encoding struct {
+	Metadata
 	ExtensionProps
 
 	ContentType   string                `json:"contentType,omitempty" yaml:"contentType,omitempty"`
