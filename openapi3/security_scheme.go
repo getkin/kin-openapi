@@ -9,6 +9,7 @@ import (
 )
 
 type SecurityScheme struct {
+	Metadata
 	ExtensionProps
 
 	Type         string      `json:"type,omitempty"`
@@ -140,6 +141,7 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 }
 
 type OAuthFlows struct {
+	Metadata
 	ExtensionProps
 	Implicit          *OAuthFlow `json:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty"`
@@ -181,6 +183,7 @@ func (flows *OAuthFlows) Validate(c context.Context) error {
 }
 
 type OAuthFlow struct {
+	Metadata
 	ExtensionProps
 	AuthorizationURL string            `json:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty"`

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"reflect"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -29,6 +30,7 @@ type SwaggerLoader struct {
 	IsExternalRefsAllowed  bool
 	Context                context.Context
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
+	visited                map[string]struct{}
 	loadedRemoteSchemas    map[string]*Swagger
 }
 
@@ -104,6 +106,12 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, pat
 }
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
+	swaggerLoader.visited = make(map[string]struct{})
+
+	// first pass - mark each resource with its id and path
+	if err = swaggerLoader.fixMetadata(swagger, path); err != nil {
+		return
+	}
 
 	// Visit all components
 	components := swagger.Components
@@ -158,6 +166,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 				if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
 					return
 				}
+
 			}
 			if requestBody := operation.RequestBody; requestBody != nil {
 				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
@@ -175,129 +184,96 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	return
 }
 
-func copyURL(basePath *url.URL) (*url.URL, error) {
-	return url.Parse(basePath.String())
+func (swaggerLoader *SwaggerLoader) fixMetadata(swagger *Swagger, path *url.URL) (err error) {
+	comps := reflect.ValueOf(swagger.Components)
+	const compPfx = "/components"
+	var p url.URL
+
+	if path != nil {
+		p = *path
+	}
+
+	swagger.Metadata.ID = p.Path
+	swagger.Metadata.Path = p
+
+	for i := 0; i < comps.NumField(); i++ {
+
+		fn := comps.Type().Field(i).Name
+		f := comps.Field(i)
+		if f.Kind() != reflect.Map {
+			continue
+		}
+
+		p.Fragment = strings.ToLower(fmt.Sprintf("%s/%s", compPfx, fn))
+
+		if err := swaggerLoader.fixComponentMetadata(f, swagger, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func mergeComponents(c1, c2 Components) Components {
-	if c2.Schemas != nil && c1.Schemas == nil {
-		c1.Schemas = c2.Schemas
-	} else {
-		for k, v := range c2.Schemas {
-			if v1, ok := c1.Schemas[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Schemas[k] = v
-		}
+func (swaggerLoader *SwaggerLoader) fixComponentMetadata(comp reflect.Value, swagger *Swagger, p url.URL) error {
+	if comp.Kind() != reflect.Map {
+		return fmt.Errorf("expecting collection to be a map: %v", comp)
 	}
-	if c2.Parameters != nil && c1.Parameters == nil {
-		c1.Parameters = c2.Parameters
-	} else {
-		for k, v := range c2.Parameters {
-			if v1, ok := c1.Parameters[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Parameters[k] = v
+
+	mi := comp.MapRange()
+	for mi.Next() {
+		k := mi.Key()
+		v := mi.Value()
+
+		if k.Kind() != reflect.String {
+			return fmt.Errorf("expecting collection to be a map with string k: %v", k)
 		}
+
+		if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+			return fmt.Errorf("expecting collection to be a map with value that is a pointer to struct: (k: %s) %v", k, v)
+		}
+
+		// get `Ref` , Value` fields
+		rf := v.Elem().FieldByName("Ref")
+		v = v.Elem().FieldByName("Value")
+
+		if !v.IsValid() {
+			return fmt.Errorf("expecting collection to be a map value to be a pointer to Ref type with a `Value` field: (k: %s) %v", k, v)
+		}
+
+		// if this is a reference, value is nil. Ensure reference is not empty
+		if v.IsNil() {
+			if !rf.IsValid() || rf.Type().Kind() != reflect.String || rf.String() == "" {
+				return fmt.Errorf("reference entry is either empty or not string: (k: %s) %v", k, rf)
+			}
+
+			continue
+		}
+
+		if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+			return fmt.Errorf("expecting collection element Value field to point to a struct: (k: %s) %v", k, v)
+		}
+
+		v = v.Elem().FieldByName("Metadata")
+		if !v.IsValid() {
+			return fmt.Errorf("expecting collection element `Value` field to point to a struct with `Metadata` field: (k: %s) %v", k, v)
+		}
+
+		_, ok := v.Interface().(Metadata)
+		if !ok {
+			return fmt.Errorf("expecting `Metadata` field to be of type Metadata: (k: %s) %v", k, v)
+		}
+
+		pp := p
+		pp.Fragment = fmt.Sprintf("%s/%s", p.Fragment, k.String())
+		v.FieldByName("ID").Set(k)
+		v.FieldByName("Path").Set(reflect.ValueOf(pp))
 	}
-	if c2.Headers != nil && c1.Headers == nil {
-		c1.Headers = c2.Headers
-	} else {
-		for k, v := range c2.Headers {
-			if v1, ok := c1.Headers[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Headers[k] = v
-		}
-	}
-	if c2.RequestBodies != nil && c1.RequestBodies == nil {
-		c1.RequestBodies = c2.RequestBodies
-	} else {
-		for k, v := range c2.RequestBodies {
-			if v1, ok := c1.RequestBodies[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.RequestBodies[k] = v
-		}
-	}
-	if c2.Responses != nil && c1.Responses == nil {
-		c1.Responses = c2.Responses
-	} else {
-		for k, v := range c2.Responses {
-			if v1, ok := c1.Responses[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Responses[k] = v
-		}
-	}
-	if c2.SecuritySchemes != nil && c1.SecuritySchemes == nil {
-		c1.SecuritySchemes = c2.SecuritySchemes
-	} else {
-		for k, v := range c2.SecuritySchemes {
-			if v1, ok := c1.SecuritySchemes[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.SecuritySchemes[k] = v
-		}
-	}
-	if c2.Examples != nil && c1.Examples == nil {
-		c1.Examples = c2.Examples
-	} else {
-		for k, v := range c2.Examples {
-			if v1, ok := c1.Examples[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Examples[k] = v
-		}
-		for k, v := range c2.Links {
-			if v1, ok := c1.Links[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Links[k] = v
-		}
-	}
-	if c2.Callbacks != nil && c1.Callbacks == nil {
-		c1.Callbacks = c2.Callbacks
-	} else {
-		for k, v := range c2.Callbacks {
-			if v1, ok := c1.Callbacks[k]; ok {
-				if v1.Ref == "" && v.Ref != "" {
-					continue // keep the resolved ones
-				}
-			}
-			c1.Callbacks[k] = v
-		}
-	}
-	if c2.Tags != nil && c1.Tags == nil {
-		c1.Tags = c2.Tags
-	} else {
-	outer:
-		for i, v := range c2.Tags {
-			for _, x := range c1.Tags {
-				if v == x {
-					continue outer
-				}
-			}
-			c1.Tags = append(c1.Tags, c2.Tags[i])
-		}
-	}
-	return c1
+
+	return nil
+}
+
+func copyURL(basePath *url.URL) (*url.URL, error) {
+	return url.Parse(basePath.String())
 }
 
 func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
@@ -342,14 +318,15 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 			return nil, "", nil, fmt.Errorf("Error while resolving path: %v", err)
 		}
 
-		if swg2, ok := swaggerLoader.loadedRemoteSchemas[parsedURL.String()]; !ok {
+		key := parsedURL.String()
+		if swg2, ok := swaggerLoader.loadedRemoteSchemas[key]; !ok {
 			if swg2, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
 				return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 			}
-			swaggerLoader.loadedRemoteSchemas[parsedURL.String()] = swg2
+			swaggerLoader.loadedRemoteSchemas[key] = swg2
 		}
-		swagger.Components = mergeComponents(swagger.Components, swaggerLoader.loadedRemoteSchemas[parsedURL.String()].Components)
 
+		swagger = swaggerLoader.loadedRemoteSchemas[key]
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
@@ -363,8 +340,26 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	}
 	return &swagger.Components, id, componentPath, nil
 }
+func (swaggerLoader *SwaggerLoader) resolved(md Metadata) bool {
+	_, ok := swaggerLoader.visited[md.Path.String()]
+	return ok
+}
+
+func (swaggerLoader *SwaggerLoader) setResolved(md Metadata) {
+	if k := md.Path.String(); k != "" {
+		swaggerLoader.visited[k] = struct{}{}
+	}
+}
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
+
 	// Resolve ref
 	const prefix = "#/components/headers/"
 	if ref := component.Ref; len(ref) > 0 {
@@ -387,6 +382,9 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		}
 		component.Value = resolved.Value
 	}
+
+	swaggerLoader.setResolved(component.Value.Metadata)
+
 	value := component.Value
 	if value == nil {
 		return nil
@@ -400,6 +398,14 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
+
 	// Resolve ref
 	const prefix = "#/components/parameters/"
 	if ref := component.Ref; len(ref) > 0 {
@@ -420,6 +426,9 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		}
 		component.Value = resolved.Value
 	}
+
+	swaggerLoader.setResolved(component.Value.Metadata)
+
 	value := component.Value
 	if value == nil {
 		return nil
@@ -443,6 +452,13 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
 
 	// Resolve ref
 	const prefix = "#/components/requestBodies/"
@@ -464,6 +480,9 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		}
 		component.Value = resolved.Value
 	}
+
+	swaggerLoader.setResolved(component.Value.Metadata)
+
 	value := component.Value
 	if value == nil {
 		return nil
@@ -485,6 +504,13 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 }
 
 func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *ResponseRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
 
 	// Resolve ref
 	const prefix = "#/components/responses/"
@@ -506,6 +532,9 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		}
 		component.Value = resolved.Value
 	}
+
+	swaggerLoader.setResolved(component.Value.Metadata)
+
 	value := component.Value
 	if value == nil {
 		return nil
@@ -536,6 +565,13 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component *SchemaRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
 
 	// Resolve ref
 	const prefix = "#/components/schemas/"
@@ -557,6 +593,9 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		}
 		component.Value = resolved.Value
 	}
+
+	swaggerLoader.setResolved(component.Value.Metadata)
+
 	value := component.Value
 	if value == nil {
 		return nil
@@ -603,6 +642,13 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
 
 	// Resolve ref
 	const prefix = "#/components/securitySchemes/"
@@ -628,6 +674,13 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 }
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, path *url.URL) error {
+	// Prevent infinite recursion
+	if !component.IsValid() || component.Resolved() {
+		return nil
+	}
+	if component.IsValue() && swaggerLoader.resolved(component.Value.Metadata) {
+		return nil
+	}
 
 	const prefix = "#/components/examples/"
 	if ref := component.Ref; len(ref) > 0 {
