@@ -2,7 +2,6 @@ package openapi3_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -25,15 +24,15 @@ func TestRefsJSON(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	fmt.Println("Resolve refs in unmarshalled *openapi3.Swagger")
+	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
 	err = loader1.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
-	fmt.Println("Resolve refs in marshalled *openapi3.Swagger")
+	t.Log("Resolve refs in marshalled *openapi3.Swagger")
 	docB, err := loader2.LoadSwaggerFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
-	fmt.Println("Validate *openapi3.Swagger")
+	t.Log("Validate *openapi3.Swagger")
 	err = docA.Validate(loader1.Context)
 	require.NoError(t, err)
 	err = docB.Validate(loader2.Context)
