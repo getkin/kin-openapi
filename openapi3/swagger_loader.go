@@ -205,7 +205,23 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	componentPath *url.URL,
 	err error,
 ) {
-	componentPath = path
+	swagger, ref, componentPath, err = swaggerLoader.resolveRefSwagger(swagger, ref, path)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	if !strings.HasPrefix(ref, prefix) {
+		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
+		return nil, "", nil, err
+	}
+	id = ref[len(prefix):]
+	if strings.IndexByte(id, '/') >= 0 {
+		return nil, "", nil, failedToResolveRefFragmentPart(ref, id)
+	}
+	return &swagger.Components, id, componentPath, nil
+}
+
+func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {
+	componentPath := path
 	if !strings.HasPrefix(ref, "#") {
 		if !swaggerLoader.IsExternalRefsAllowed {
 			return nil, "", nil, fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
@@ -228,15 +244,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
-	if !strings.HasPrefix(ref, prefix) {
-		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
-		return nil, "", nil, err
-	}
-	id = ref[len(prefix):]
-	if strings.IndexByte(id, '/') >= 0 {
-		return nil, "", nil, failedToResolveRefFragmentPart(ref, id)
-	}
-	return &swagger.Components, id, componentPath, nil
+	return swagger, ref, componentPath, nil
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
