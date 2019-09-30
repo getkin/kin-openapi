@@ -651,5 +651,5 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 }
 
 func unescapeRefString(ref string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(ref, "~1", "/"), "~0", "~")
+	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
