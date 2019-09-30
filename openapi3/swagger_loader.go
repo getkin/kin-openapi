@@ -30,6 +30,7 @@ type SwaggerLoader struct {
 	Context                context.Context
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
 	visited                map[interface{}]struct{}
+	visitedFiles           map[string]struct{}
 }
 
 func NewSwaggerLoader() *SwaggerLoader {
@@ -105,6 +106,9 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, pat
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
 	swaggerLoader.visited = make(map[interface{}]struct{})
+	if swaggerLoader.visitedFiles == nil {
+		swaggerLoader.visitedFiles = make(map[string]struct{})
+	}
 
 	// Visit all components
 	components := swagger.Components
@@ -145,31 +149,12 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	}
 
 	// Visit all operations
-	for _, pathItem := range swagger.Paths {
+	for entrypoint, pathItem := range swagger.Paths {
 		if pathItem == nil {
 			continue
 		}
-		for _, parameter := range pathItem.Parameters {
-			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
-				return
-			}
-		}
-		for _, operation := range pathItem.Operations() {
-			for _, parameter := range operation.Parameters {
-				if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
-					return
-				}
-			}
-			if requestBody := operation.RequestBody; requestBody != nil {
-				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
-					return
-				}
-			}
-			for _, response := range operation.Responses {
-				if err = swaggerLoader.resolveResponseRef(swagger, response, path); err != nil {
-					return
-				}
-			}
+		if err = swaggerLoader.resolvePathItemRef(swagger, entrypoint, pathItem, path); err != nil {
+			return
 		}
 	}
 
@@ -574,4 +559,73 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		component.Value = resolved.Value
 	}
 	return nil
+}
+
+func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypoint string, pathItem *PathItem, path *url.URL) (err error) {
+	// Prevent infinite recursion
+	visited := swaggerLoader.visitedFiles
+	key := "_"
+	if path != nil {
+		key = path.EscapedPath()
+	}
+	key += entrypoint
+	if _, isVisited := visited[key]; isVisited {
+		return nil
+	}
+	visited[key] = struct{}{}
+
+	ref := pathItem.Ref
+	if ref != "" {
+		swagger, ref, path, err = swaggerLoader.resolveRefSwagger(swagger, ref, path)
+		if err != nil {
+			return
+		}
+
+		prefix := "#/paths/"
+		if !strings.HasPrefix(ref, prefix) {
+			err = fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
+			return
+		}
+		id := unescapeRefString(ref[len(prefix):])
+
+		definitions := swagger.Paths
+		if definitions == nil {
+			return failedToResolveRefFragmentPart(ref, "paths")
+		}
+		resolved := definitions[id]
+		if resolved == nil {
+			return failedToResolveRefFragmentPart(ref, id)
+		}
+
+		*pathItem = *resolved
+	}
+
+	for _, parameter := range pathItem.Parameters {
+		if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
+			return
+		}
+	}
+	for _, operation := range pathItem.Operations() {
+		for _, parameter := range operation.Parameters {
+			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
+				return
+			}
+		}
+		if requestBody := operation.RequestBody; requestBody != nil {
+			if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
+				return
+			}
+		}
+		for _, response := range operation.Responses {
+			if err = swaggerLoader.resolveResponseRef(swagger, response, path); err != nil {
+				return
+			}
+		}
+	}
+
+	return nil
+}
+
+func unescapeRefString(ref string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(ref, "~1", "/"), "~0", "~")
 }

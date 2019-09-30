@@ -423,3 +423,13 @@ func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 
 	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
+
+func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testdata/pathref.openapi.yml")
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+	require.Equal(t, "string", swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+}
