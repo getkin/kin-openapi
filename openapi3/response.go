@@ -34,10 +34,10 @@ func (responses Responses) Validate(c context.Context) error {
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 type Response struct {
 	ExtensionProps
-	Description string                `json:"description,omitempty"`
-	Headers     map[string]*HeaderRef `json:"headers,omitempty"`
-	Content     Content               `json:"content,omitempty"`
-	Links       map[string]*LinkRef   `json:"links,omitempty"`
+	Description string                `json:"description,omitempty" yaml:"description,omitempty"`
+	Headers     map[string]*HeaderRef `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Content     Content               `json:"content,omitempty" yaml:"content,omitempty"`
+	Links       map[string]*LinkRef   `json:"links,omitempty" yaml:"links,omitempty"`
 }
 
 func NewResponse() *Response {

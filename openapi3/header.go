@@ -8,10 +8,10 @@ type Header struct {
 	ExtensionProps
 
 	// Optional description. Should use CommonMark syntax.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	// Optional schema
-	Schema *SchemaRef `json:"schema,omitempty"`
+	Schema *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
 }
 
 func (value *Header) Validate(c context.Context) error {

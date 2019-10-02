@@ -9,13 +9,13 @@ import (
 
 type Swagger struct {
 	ExtensionProps
-	OpenAPI      string               `json:"openapi"` // Required
-	Info         *Info                `json:"info"`    // Required
-	Servers      Servers              `json:"servers,omitempty"`
-	Paths        Paths                `json:"paths"` // Required
-	Components   Components           `json:"components,omitempty"`
-	Security     SecurityRequirements `json:"security,omitempty"`
-	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty"`
+	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
+	Info         *Info                `json:"info" yaml:"info"`       // Required
+	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Paths        Paths                `json:"paths" yaml:"paths"` // Required
+	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
+	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
 func (swagger *Swagger) MarshalJSON() ([]byte, error) {
