@@ -22,6 +22,7 @@ type PathItem struct {
 	Trace       *Operation `json:"trace,omitempty"`
 	Servers     Servers    `json:"servers,omitempty"`
 	Parameters  Parameters `json:"parameters,omitempty"`
+	Ref         string     `json:"$ref,omitempty"`
 }
 
 func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
