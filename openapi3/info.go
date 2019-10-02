@@ -41,11 +41,11 @@ func (value *Info) Validate(c context.Context) error {
 	}
 
 	if value.Version == "" {
-		return fmt.Errorf("Variable 'version' must be a non-empty JSON string")
+		return errors.New("Variable 'version' must be a non-empty JSON string")
 	}
 
 	if value.Title == "" {
-		return fmt.Errorf("Variable 'title' must be a non-empty JSON string")
+		return errors.New("Variable 'title' must be a non-empty JSON string")
 	}
 
 	return nil

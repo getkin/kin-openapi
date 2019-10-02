@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"strings"
 )
@@ -102,7 +101,7 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 
 func (server *Server) Validate(c context.Context) (err error) {
 	if server.URL == "" {
-		return fmt.Errorf("Variable 'URL' must be a non-empty JSON string")
+		return errors.New("Variable 'URL' must be a non-empty JSON string")
 	}
 	for _, v := range server.Variables {
 		if err = v.Validate(c); err != nil {

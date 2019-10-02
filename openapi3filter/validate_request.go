@@ -14,7 +14,7 @@ import (
 )
 
 // ErrInvalidRequired is an error that happens when a required value of a parameter or request's body is not defined.
-var ErrInvalidRequired = fmt.Errorf("must have a value")
+var ErrInvalidRequired = errors.New("must have a value")
 
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	options := input.Options
@@ -97,13 +97,11 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 
 	// Validation will ensure that we either have content or schema.
 	if parameter.Content != nil {
-		value, schema, err = decodeContentParameter(parameter, input)
-		if err != nil {
+		if value, schema, err = decodeContentParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 	} else {
-		value, err = decodeStyledParameter(parameter, input)
-		if err != nil {
+		if value, err = decodeStyledParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 		schema = parameter.Schema.Value

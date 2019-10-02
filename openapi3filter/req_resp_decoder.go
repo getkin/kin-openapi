@@ -2,6 +2,7 @@ package openapi3filter
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -115,8 +116,7 @@ func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationI
 		found = paramValues[0] != ""
 	case openapi3.ParameterInCookie:
 		var cookie *http.Cookie
-		cookie, err = input.Request.Cookie(param.Name)
-		if err == http.ErrNoCookie {
+		if cookie, err = input.Request.Cookie(param.Name); err == http.ErrNoCookie {
 			found = false
 		} else if err != nil {
 			return
@@ -161,8 +161,7 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 
 	// We only know how to decode a parameter if it has one content, application/json
 	if len(content) != 1 {
-		err = fmt.Errorf("multiple content types for parameter '%s'",
-			param.Name)
+		err = fmt.Errorf("multiple content types for parameter '%s'", param.Name)
 		return
 	}
 
@@ -174,16 +173,14 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 	outSchema = mt.Schema.Value
 
 	if len(values) == 1 {
-		err = json.Unmarshal([]byte(values[0]), &outValue)
-		if err != nil {
+		if err = json.Unmarshal([]byte(values[0]), &outValue); err != nil {
 			err = fmt.Errorf("error unmarshaling parameter '%s' as json", param.Name)
 			return
 		}
 	} else {
 		outArray := make([]interface{}, len(values))
 		for i, v := range values {
-			err = json.Unmarshal([]byte(v), &outArray[i])
-			if err != nil {
+			if err = json.Unmarshal([]byte(v), &outArray[i]); err != nil {
 				err = fmt.Errorf("error unmarshaling parameter '%s' as json", param.Name)
 				return
 			}
@@ -786,7 +783,7 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	// By the OpenAPI 3 specification request body's schema must have type "object".
 	// Properties of the schema describes individual parts of request body.
 	if schema.Value.Type != "object" {
-		return nil, fmt.Errorf("unsupported JSON schema of request body")
+		return nil, errors.New("unsupported JSON schema of request body")
 	}
 	for propName, propSchema := range schema.Value.Properties {
 		switch propSchema.Value.Type {
@@ -834,7 +831,7 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 
 func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	if schema.Value.Type != "object" {
-		return nil, fmt.Errorf("unsupported JSON schema of request body")
+		return nil, errors.New("unsupported JSON schema of request body")
 	}
 
 	// Parse form.

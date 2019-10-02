@@ -3,7 +3,7 @@ package openapi3_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -380,7 +380,7 @@ paths:
         200:
           description: "Get a single greeting object"
 `),
-			fmt.Errorf("Variable 'openapi' must be a non-empty JSON string"),
+			errors.New("Variable 'openapi' must be a non-empty JSON string"),
 		},
 		{
 			"when an empty OpenAPI property is supplied",
@@ -410,7 +410,7 @@ paths:
         200:
           description: "Get a single greeting object"
 `),
-			fmt.Errorf("Variable 'openapi' must be a non-empty JSON string"),
+			errors.New("Variable 'openapi' must be a non-empty JSON string"),
 		},
 		{
 			"when the Info property is not supplied",
@@ -437,7 +437,7 @@ paths:
         200:
           description: "Get a single greeting object"
 `),
-			fmt.Errorf("Variable 'info' must be a JSON object"),
+			errors.New("Variable 'info' must be a JSON object"),
 		},
 		{
 			"when the Paths property is not supplied",
@@ -447,7 +447,7 @@ info:
   title: "Hello World REST APIs"
   version: "1.0"
 `),
-			fmt.Errorf("Variable 'paths' must be a JSON object"),
+			errors.New("Variable 'paths' must be a JSON object"),
 		},
 		{
 			"when a valid spec is supplied",

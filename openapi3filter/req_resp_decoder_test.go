@@ -956,7 +956,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": &openapi3.Encoding{Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
 		},
@@ -969,7 +969,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": &openapi3.Encoding{Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
 		},
@@ -1035,9 +1035,9 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 	for _, p := range parts {
 		var disp string
 		if p.filename == "" {
-			disp = fmt.Sprintf(`form-data; name="%s"`, p.name)
+			disp = fmt.Sprintf("form-data; name=%q", p.name)
 		} else {
-			disp = fmt.Sprintf(`form-data; name="%s"; filename="%s"`, p.name, p.filename)
+			disp = fmt.Sprintf("form-data; name=%q; filename=%q", p.name, p.filename)
 		}
 
 		h := make(textproto.MIMEHeader)
@@ -1047,8 +1047,7 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		_, err = io.Copy(pw, p.data)
-		if err != nil {
+		if _, err = io.Copy(pw, p.data); err != nil {
 			return nil, "", err
 		}
 	}

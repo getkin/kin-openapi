@@ -2,7 +2,7 @@ package openapi3_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -65,7 +65,7 @@ func TestServerValidation(t *testing.T) {
 		{
 			"when no URL is provided",
 			invalidServer(),
-			fmt.Errorf("Variable 'URL' must be a non-empty JSON string"),
+			errors.New("Variable 'URL' must be a non-empty JSON string"),
 		},
 		{
 			"when a URL is provided",
