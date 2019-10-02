@@ -30,13 +30,23 @@ type SwaggerLoader struct {
 	Context                context.Context
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
 	visited                map[interface{}]struct{}
+	visitedFiles           map[string]struct{}
 }
 
 func NewSwaggerLoader() *SwaggerLoader {
 	return &SwaggerLoader{}
 }
 
+func (swaggerLoader *SwaggerLoader) reset() {
+	swaggerLoader.visitedFiles = make(map[string]struct{})
+}
+
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromURIInternal(location)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
 	f := swaggerLoader.LoadSwaggerFromURIFunc
 	if f != nil {
 		return f(swaggerLoader, location)
@@ -45,7 +55,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 	if err != nil {
 		return nil, err
 	}
-	return swaggerLoader.LoadSwaggerFromDataWithPath(data, location)
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, location)
 }
 
 func readUrl(location *url.URL) ([]byte, error) {
@@ -72,6 +82,11 @@ func readUrl(location *url.URL) ([]byte, error) {
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromFileInternal(path)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*Swagger, error) {
 	f := swaggerLoader.LoadSwaggerFromURIFunc
 	if f != nil {
 		return f(swaggerLoader, &url.URL{
@@ -82,12 +97,17 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 	if err != nil {
 		return nil, err
 	}
-	return swaggerLoader.LoadSwaggerFromDataWithPath(data, &url.URL{
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, &url.URL{
 		Path: path,
 	})
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromDataInternal(data)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataInternal(data []byte) (*Swagger, error) {
 	swagger := &Swagger{}
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
@@ -96,6 +116,11 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
+	swaggerLoader.reset()
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, path)
+}
+
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, path *url.URL) (*Swagger, error) {
 	swagger := &Swagger{}
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
@@ -105,6 +130,9 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, pat
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
 	swaggerLoader.visited = make(map[interface{}]struct{})
+	if swaggerLoader.visitedFiles == nil {
+		swaggerLoader.visitedFiles = make(map[string]struct{})
+	}
 
 	// Visit all components
 	components := swagger.Components
@@ -145,31 +173,12 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	}
 
 	// Visit all operations
-	for _, pathItem := range swagger.Paths {
+	for entrypoint, pathItem := range swagger.Paths {
 		if pathItem == nil {
 			continue
 		}
-		for _, parameter := range pathItem.Parameters {
-			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
-				return
-			}
-		}
-		for _, operation := range pathItem.Operations() {
-			for _, parameter := range operation.Parameters {
-				if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
-					return
-				}
-			}
-			if requestBody := operation.RequestBody; requestBody != nil {
-				if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
-					return
-				}
-			}
-			for _, response := range operation.Responses {
-				if err = swaggerLoader.resolveResponseRef(swagger, response, path); err != nil {
-					return
-				}
-			}
+		if err = swaggerLoader.resolvePathItemRef(swagger, entrypoint, pathItem, path); err != nil {
+			return
 		}
 	}
 
@@ -205,7 +214,23 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	componentPath *url.URL,
 	err error,
 ) {
-	componentPath = path
+	swagger, ref, componentPath, err = swaggerLoader.resolveRefSwagger(swagger, ref, path)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	if !strings.HasPrefix(ref, prefix) {
+		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
+		return nil, "", nil, err
+	}
+	id = ref[len(prefix):]
+	if strings.IndexByte(id, '/') >= 0 {
+		return nil, "", nil, failedToResolveRefFragmentPart(ref, id)
+	}
+	return &swagger.Components, id, componentPath, nil
+}
+
+func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {
+	componentPath := path
 	if !strings.HasPrefix(ref, "#") {
 		if !swaggerLoader.IsExternalRefsAllowed {
 			return nil, "", nil, fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
@@ -222,21 +247,13 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 			return nil, "", nil, fmt.Errorf("Error while resolving path: %v", err)
 		}
 
-		if swagger, err = swaggerLoader.LoadSwaggerFromURI(resolvedPath); err != nil {
+		if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
 			return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 		}
 		ref = fmt.Sprintf("#%s", fragment)
 		componentPath = resolvedPath
 	}
-	if !strings.HasPrefix(ref, prefix) {
-		err := fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
-		return nil, "", nil, err
-	}
-	id = ref[len(prefix):]
-	if strings.IndexByte(id, '/') >= 0 {
-		return nil, "", nil, failedToResolveRefFragmentPart(ref, id)
-	}
-	return &swagger.Components, id, componentPath, nil
+	return swagger, ref, componentPath, nil
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
@@ -566,4 +583,73 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		component.Value = resolved.Value
 	}
 	return nil
+}
+
+func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypoint string, pathItem *PathItem, path *url.URL) (err error) {
+	// Prevent infinite recursion
+	visited := swaggerLoader.visitedFiles
+	key := "_"
+	if path != nil {
+		key = path.EscapedPath()
+	}
+	key += entrypoint
+	if _, isVisited := visited[key]; isVisited {
+		return nil
+	}
+	visited[key] = struct{}{}
+
+	ref := pathItem.Ref
+	if ref != "" {
+		swagger, ref, path, err = swaggerLoader.resolveRefSwagger(swagger, ref, path)
+		if err != nil {
+			return
+		}
+
+		prefix := "#/paths/"
+		if !strings.HasPrefix(ref, prefix) {
+			err = fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
+			return
+		}
+		id := unescapeRefString(ref[len(prefix):])
+
+		definitions := swagger.Paths
+		if definitions == nil {
+			return failedToResolveRefFragmentPart(ref, "paths")
+		}
+		resolved := definitions[id]
+		if resolved == nil {
+			return failedToResolveRefFragmentPart(ref, id)
+		}
+
+		*pathItem = *resolved
+	}
+
+	for _, parameter := range pathItem.Parameters {
+		if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
+			return
+		}
+	}
+	for _, operation := range pathItem.Operations() {
+		for _, parameter := range operation.Parameters {
+			if err = swaggerLoader.resolveParameterRef(swagger, parameter, path); err != nil {
+				return
+			}
+		}
+		if requestBody := operation.RequestBody; requestBody != nil {
+			if err = swaggerLoader.resolveRequestBodyRef(swagger, requestBody, path); err != nil {
+				return
+			}
+		}
+		for _, response := range operation.Responses {
+			if err = swaggerLoader.resolveResponseRef(swagger, response, path); err != nil {
+				return
+			}
+		}
+	}
+
+	return nil
+}
+
+func unescapeRefString(ref string) string {
+	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }

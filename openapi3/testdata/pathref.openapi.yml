@@ -1,0 +1,12 @@
+---
+openapi: 3.0.0
+info:
+  title: 'OAI Specification in YAML'
+  version: 0.0.1
+paths:
+  /test:
+    $ref: 'circularref.openapi.yml#/paths/~1test'
+components:
+  schemas:
+    TestSchema:
+      type: string
