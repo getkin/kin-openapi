@@ -36,9 +36,9 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 
 // Server is specified by OpenAPI/Swagger standard version 3.0.
 type Server struct {
-	URL         string                     `json:"url"`
-	Description string                     `json:"description,omitempty"`
-	Variables   map[string]*ServerVariable `json:"variables,omitempty"`
+	URL         string                     `json:"url" yaml:"url"`
+	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
 func (server Server) ParameterNames() ([]string, error) {
@@ -114,9 +114,9 @@ func (server *Server) Validate(c context.Context) (err error) {
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.0.
 type ServerVariable struct {
-	Enum        []interface{} `json:"enum,omitempty"`
-	Default     interface{}   `json:"default,omitempty"`
-	Description string        `json:"description,omitempty"`
+	Enum        []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default     interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
+	Description string        `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 func (serverVariable *ServerVariable) Validate(c context.Context) error {
