@@ -1035,9 +1035,9 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 	for _, p := range parts {
 		var disp string
 		if p.filename == "" {
-			disp = fmt.Sprintf(`form-data; name="%s"`, p.name)
+			disp = fmt.Sprintf("form-data; name=%q", p.name)
 		} else {
-			disp = fmt.Sprintf(`form-data; name="%s"; filename="%s"`, p.name, p.filename)
+			disp = fmt.Sprintf("form-data; name=%q; filename=%q", p.name, p.filename)
 		}
 
 		h := make(textproto.MIMEHeader)
