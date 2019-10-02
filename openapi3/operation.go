@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -96,7 +96,7 @@ func (operation *Operation) Validate(c context.Context) error {
 			return err
 		}
 	} else {
-		return fmt.Errorf("Variable 'Responses' must be a JSON object")
+		return errors.New("Variable 'Responses' must be a JSON object")
 	}
 	return nil
 }

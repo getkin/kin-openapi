@@ -737,10 +737,10 @@ func makeAuthFunc(schemes map[string]bool) func(c context.Context, input *openap
 		// If the scheme is present in che schemes
 		if present {
 			// Return an unmet scheme error
-			return fmt.Errorf("security scheme for \"%s\" wasn't met", input.SecuritySchemeName)
+			return fmt.Errorf("security scheme for %q wasn't met", input.SecuritySchemeName)
 		} else {
 			// Return an unknown scheme error
-			return fmt.Errorf("security scheme for \"%s\" is unknown", input.SecuritySchemeName)
+			return fmt.Errorf("security scheme for %q is unknown", input.SecuritySchemeName)
 		}
 	}
 }

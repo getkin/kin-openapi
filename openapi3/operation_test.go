@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -53,7 +53,7 @@ func TestOperationValidation(t *testing.T) {
 		{
 			"when no Responses object is provided",
 			operationWithoutResponses(),
-			fmt.Errorf("Variable 'Responses' must be a JSON object"),
+			errors.New("Variable 'Responses' must be a JSON object"),
 		},
 		{
 			"when a Responses object is provided",
