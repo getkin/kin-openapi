@@ -206,8 +206,8 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		smSupported = true
 	}
 	if !smSupported {
-		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
-			fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in))
+		e := fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
+		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, e)
 	}
 
 	if parameter.Schema != nil && parameter.Content != nil {
