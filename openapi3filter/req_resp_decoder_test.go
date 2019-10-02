@@ -1047,8 +1047,7 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		_, err = io.Copy(pw, p.data)
-		if err != nil {
+		if _, err = io.Copy(pw, p.data); err != nil {
 			return nil, "", err
 		}
 	}

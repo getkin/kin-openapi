@@ -97,13 +97,11 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 
 	// Validation will ensure that we either have content or schema.
 	if parameter.Content != nil {
-		value, schema, err = decodeContentParameter(parameter, input)
-		if err != nil {
+		if value, schema, err = decodeContentParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 	} else {
-		value, err = decodeStyledParameter(parameter, input)
-		if err != nil {
+		if value, err = decodeStyledParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 		schema = parameter.Schema.Value

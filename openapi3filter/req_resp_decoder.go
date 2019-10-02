@@ -116,8 +116,7 @@ func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationI
 		found = paramValues[0] != ""
 	case openapi3.ParameterInCookie:
 		var cookie *http.Cookie
-		cookie, err = input.Request.Cookie(param.Name)
-		if err == http.ErrNoCookie {
+		if cookie, err = input.Request.Cookie(param.Name); err == http.ErrNoCookie {
 			found = false
 		} else if err != nil {
 			return
@@ -174,16 +173,14 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 	outSchema = mt.Schema.Value
 
 	if len(values) == 1 {
-		err = json.Unmarshal([]byte(values[0]), &outValue)
-		if err != nil {
+		if err = json.Unmarshal([]byte(values[0]), &outValue); err != nil {
 			err = fmt.Errorf("error unmarshaling parameter '%s' as json", param.Name)
 			return
 		}
 	} else {
 		outArray := make([]interface{}, len(values))
 		for i, v := range values {
-			err = json.Unmarshal([]byte(v), &outArray[i])
-			if err != nil {
+			if err = json.Unmarshal([]byte(v), &outArray[i]); err != nil {
 				err = fmt.Errorf("error unmarshaling parameter '%s' as json", param.Name)
 				return
 			}

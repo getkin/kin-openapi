@@ -214,8 +214,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	componentPath *url.URL,
 	err error,
 ) {
-	swagger, ref, componentPath, err = swaggerLoader.resolveRefSwagger(swagger, ref, path)
-	if err != nil {
+	if swagger, ref, componentPath, err = swaggerLoader.resolveRefSwagger(swagger, ref, path); err != nil {
 		return nil, "", nil, err
 	}
 	if !strings.HasPrefix(ref, prefix) {
@@ -600,8 +599,7 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 
 	ref := pathItem.Ref
 	if ref != "" {
-		swagger, ref, path, err = swaggerLoader.resolveRefSwagger(swagger, ref, path)
-		if err != nil {
+		if swagger, ref, path, err = swaggerLoader.resolveRefSwagger(swagger, ref, path); err != nil {
 			return
 		}
 
