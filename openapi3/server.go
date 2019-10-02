@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -35,7 +36,7 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 
 // Server is specified by OpenAPI/Swagger standard version 3.0.
 type Server struct {
-	URL         string                     `json:"url,omitempty"`
+	URL         string                     `json:"url"`
 	Description string                     `json:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty"`
 }
@@ -100,6 +101,9 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 }
 
 func (server *Server) Validate(c context.Context) (err error) {
+	if server.URL == "" {
+		return fmt.Errorf("Variable 'URL' must be a non-empty JSON string")
+	}
 	for _, v := range server.Variables {
 		if err = v.Validate(c); err != nil {
 			return

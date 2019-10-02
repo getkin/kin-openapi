@@ -129,7 +129,7 @@ type Operation struct {
 	Tags         []string               `json:"tags,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty"`
 	Parameters   Parameters             `json:"parameters,omitempty"`
-	Responses    map[string]*Response   `json:"responses,omitempty"`
+	Responses    map[string]*Response   `json:"responses"`
 	Consumes     []string               `json:"consumes,omitempty"`
 	Produces     []string               `json:"produces,omitempty"`
 	Security     *SecurityRequirements  `json:"security,omitempty"`

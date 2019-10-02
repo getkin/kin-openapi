@@ -1,6 +1,8 @@
 package openapi3_test
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -41,6 +43,44 @@ func TestServerParamValuesNoPath(t *testing.T) {
 		"https://domain0.domain1.example.com/": newServerMatch("/", "domain0", "domain1"),
 	} {
 		t.Run(input, testServerParamValues(t, server, input, expected))
+	}
+}
+
+func validServer() *openapi3.Server {
+	return &openapi3.Server{
+		URL: "http://my.cool.website",
+	}
+}
+
+func invalidServer() *openapi3.Server {
+	return &openapi3.Server{}
+}
+
+func TestServerValidation(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         *openapi3.Server
+		expectedError error
+	}{
+		{
+			"when no URL is provided",
+			invalidServer(),
+			fmt.Errorf("Variable 'URL' must be a non-empty JSON string"),
+		},
+		{
+			"when a URL is provided",
+			validServer(),
+			nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := context.Background()
+			validationErr := test.input.Validate(c)
+
+			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
+		})
 	}
 }
 

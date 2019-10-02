@@ -79,7 +79,7 @@ func ExampleSwaggerLoader() {
 }
 
 func TestResolveSchemaRef(t *testing.T) {
-	source := []byte(`{"info":{"description":"An API"},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
+	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1",description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
 	loader := openapi3.NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
@@ -92,12 +92,12 @@ func TestResolveSchemaRef(t *testing.T) {
 }
 
 func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
-	source := []byte(`{"info":{"description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
+	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
 	loader := openapi3.NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
-	require.EqualError(t, err, "Found unresolved ref: ''")
+	require.EqualError(t, err, "Error when validating Paths: Found unresolved ref: ''")
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {
@@ -168,10 +168,10 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	rootLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "spec.json"}
 	externalLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "external.json"}
 	rootSpec := []byte(fmt.Sprintf(
-		`{"info":{"description":"An API"},"components":{"schemas":{"Root":{"allOf":[{"$ref":"%s#/components/schemas/External"}]}}}}`,
+		`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{},"components":{"schemas":{"Root":{"allOf":[{"$ref":"%s#/components/schemas/External"}]}}}}`,
 		externalLocation.String(),
 	))
-	externalSpec := []byte(`{"info":{"description":"External Spec"},"components":{"schemas":{"External":{"type":"string"}}}}`)
+	externalSpec := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"External Spec"},"paths":{},"components":{"schemas":{"External":{"type":"string"}}}}`)
 	multipleSourceLoader := &multipleSourceSwaggerLoaderExample{
 		Sources: []*sourceExample{
 			{

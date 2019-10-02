@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -29,8 +30,8 @@ type Operation struct {
 	// Optional body parameter.
 	RequestBody *RequestBodyRef `json:"requestBody,omitempty"`
 
-	// Optional responses.
-	Responses Responses `json:"responses,omitempty"`
+	// Responses.
+	Responses Responses `json:"responses"` // Required
 
 	// Optional callbacks
 	Callbacks map[string]*CallbackRef `json:"callbacks,omitempty"`
@@ -94,6 +95,8 @@ func (operation *Operation) Validate(c context.Context) error {
 		if err := v.Validate(c); err != nil {
 			return err
 		}
+	} else {
+		return fmt.Errorf("Variable 'Responses' must be a JSON object")
 	}
 	return nil
 }
