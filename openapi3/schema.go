@@ -1139,10 +1139,10 @@ func (schema *Schema) expectedType(typ string, fast bool) error {
 		return errSchema
 	}
 	return &SchemaError{
-		Value:       schema.Type,
+		Value:       typ,
 		Schema:      schema,
 		SchemaField: "type",
-		Reason:      "Field must be set to " + typ + " or not be present",
+		Reason:      "Field must be set to " + schema.Type + " or not be present",
 	}
 }
 
