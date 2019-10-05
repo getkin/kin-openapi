@@ -77,8 +77,12 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 			pattern = pattern[i+1:]
 
 			// Find next matching pattern character or next '/' whichever comes first
-			np := strings.IndexByte(input, pattern[0])
+			np := -1
+			if len(pattern) > 0 {
+				np = strings.IndexByte(input, pattern[0])
+			}
 			ns := strings.IndexByte(input, '/')
+
 			if np < 0 {
 				i = ns
 			} else if ns < 0 {
