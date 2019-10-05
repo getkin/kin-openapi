@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"math"
 	"net/url"
 	"strings"
 )
@@ -75,8 +76,16 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 			}
 			pattern = pattern[i+1:]
 
-			// Find next '.' or '/'
-			i = strings.IndexAny(input, "./")
+			// Find next matching pattern character or next '/' whichever comes first
+			np := strings.IndexByte(input, pattern[0])
+			ns := strings.IndexByte(input, '/')
+			if np < 0 {
+				i = ns
+			} else if ns < 0 {
+				i = np
+			} else {
+				i = int(math.Min(float64(np), float64(ns)))
+			}
 			if i < 0 {
 				i = len(input)
 			}
