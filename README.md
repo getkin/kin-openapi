@@ -50,8 +50,8 @@ func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
   router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
 
   // Find route
-  route, _, err := router.FindRoute("GET", req.URL.String())
-  if err!=nil {
+  route, _, err := router.FindRoute("GET", req.URL)
+  if err != nil {
     return nil, err
   }
 
