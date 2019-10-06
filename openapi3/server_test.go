@@ -20,16 +20,21 @@ func TestServerParamNames(t *testing.T) {
 
 func TestServerParamValuesWithPath(t *testing.T) {
 	server := &openapi3.Server{
-		URL: "http://{arg0}.{arg1}.example.com/a/b",
+		URL: "http://{arg0}.{arg1}.example.com/a/{arg3}-version/{arg4}c{arg5}",
 	}
 	for input, expected := range map[string]*serverMatch{
-		"http://x.example.com/a/b":                 nil,
-		"http://x.y.example.com/":                  nil,
-		"http://x.y.example.com/a/":                nil,
-		"http://x.y.example.com/a/b":               newServerMatch("/", "x", "y"),
-		"http://x.y.example.com/a/b/":              newServerMatch("/", "x", "y"),
-		"http://x.y.example.com/a/b/c":             newServerMatch("/c", "x", "y"),
-		"http://domain0.domain1.example.com/a/b/c": newServerMatch("/c", "domain0", "domain1"),
+		"http://x.example.com/a/b":                                    nil,
+		"http://x.y.example.com/":                                     nil,
+		"http://x.y.example.com/a/":                                   nil,
+		"http://x.y.example.com/a/c":                                  nil,
+		"http://baddomain.com/.example.com/a/1.0.0-version/c/d":       nil,
+		"http://baddomain.com/.example.com/a/1.0.0/2/2.0.0-version/c": nil,
+		"http://x.y.example.com/a/b-version/prefixedc":                newServerMatch("/", "x", "y", "b", "prefixed", ""),
+		"http://x.y.example.com/a/b-version/c":                        newServerMatch("/", "x", "y", "b", "", ""),
+		"http://x.y.example.com/a/b-version/c/":                       newServerMatch("/", "x", "y", "b", "", ""),
+		"http://x.y.example.com/a/b-version/c/d":                      newServerMatch("/d", "x", "y", "b", "", ""),
+		"http://domain0.domain1.example.com/a/b-version/c/d":          newServerMatch("/d", "domain0", "domain1", "b", "", ""),
+		"http://domain0.domain1.example.com/a/1.0.0-version/c/d":      newServerMatch("/d", "domain0", "domain1", "1.0.0", "", ""),
 	} {
 		t.Run(input, testServerParamValues(t, server, input, expected))
 	}
