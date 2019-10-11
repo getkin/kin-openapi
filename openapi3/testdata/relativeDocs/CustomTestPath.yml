@@ -1,0 +1,14 @@
+get:
+  operationId: findAllDefinitions
+  responses:
+    "200":
+      content:
+        application/json:
+          schema:
+            properties:
+              pets:
+                items:
+                  type: array
+                  properties:
+                    repository:
+                      name: string

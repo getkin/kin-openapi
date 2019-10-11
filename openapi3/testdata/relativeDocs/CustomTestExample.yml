@@ -1,0 +1,5 @@
+summary: An example
+value: |
+        {
+          "example": "hello"
+        }
