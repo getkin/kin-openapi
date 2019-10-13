@@ -163,6 +163,12 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
+
+	// mark each resource with its id and path
+	if err := swaggerLoader.fixMetadata(swagger, path); err != nil {
+		return nil, err
+	}
+
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
 }
 
