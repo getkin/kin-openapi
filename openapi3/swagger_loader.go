@@ -90,11 +90,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
-	swagger := &Swagger{}
-	if err := yaml.Unmarshal(data, swagger); err != nil {
-		return nil, err
-	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
+	return swaggerLoader.LoadSwaggerFromDataWithPath(data, nil)
 }
 
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
@@ -102,16 +98,17 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, pat
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
+
+	// mark each resource with its id and path
+	if err := swaggerLoader.fixMetadata(swagger, path); err != nil {
+		return nil, err
+	}
+
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
 }
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
 	swaggerLoader.visited = make(map[string]struct{})
-
-	// first pass - mark each resource with its id and path
-	if err = swaggerLoader.fixMetadata(swagger, path); err != nil {
-		return
-	}
 
 	// Visit all components
 	components := swagger.Components
