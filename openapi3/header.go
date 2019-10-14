@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 type Header struct {
@@ -12,6 +13,10 @@ type Header struct {
 
 	// Optional schema
 	Schema *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+}
+
+func (value *Header) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (value *Header) Validate(c context.Context) error {

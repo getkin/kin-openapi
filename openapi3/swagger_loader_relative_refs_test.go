@@ -716,3 +716,191 @@ const externalRequestResponseHeaderRefTemplate = `
         }
     }
 }`
+
+// Relative Schema Documents Tests
+var relativeDocRefsTestDataEntries = []refTestDataEntry{
+	{
+		name:            "SchemaRef",
+		contentTemplate: relativeSchemaDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
+			require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
+		},
+	},
+	{
+		name:            "ResponseRef",
+		contentTemplate: relativeResponseDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Components.Responses["TestResponse"].Value.Description)
+			require.Equal(t, "description", swagger.Components.Responses["TestResponse"].Value.Description)
+		},
+	},
+	{
+		name:            "ParameterRef",
+		contentTemplate: relativeParameterDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Components.Parameters["TestParameter"].Value.Name)
+			require.Equal(t, "param", swagger.Components.Parameters["TestParameter"].Value.Name)
+			require.Equal(t, true, swagger.Components.Parameters["TestParameter"].Value.Required)
+		},
+	},
+	{
+		name:            "ExampleRef",
+		contentTemplate: relativeExampleDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, "param", swagger.Components.Examples["TestExample"].Value.Summary)
+			require.NotNil(t, "param", swagger.Components.Examples["TestExample"].Value.Value)
+			require.Equal(t, "An example", swagger.Components.Examples["TestExample"].Value.Summary)
+		},
+	},
+	{
+		name:            "RequestRef",
+		contentTemplate: relativeRequestDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, "param", swagger.Components.RequestBodies["TestRequestBody"].Value.Description)
+			require.Equal(t, "example request", swagger.Components.RequestBodies["TestRequestBody"].Value.Description)
+		},
+	},
+	{
+		name:            "HeaderRef",
+		contentTemplate: relativeHeaderDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, "param", swagger.Components.Headers["TestHeader"].Value.Description)
+			require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
+		},
+	},
+	{
+		name:            "HeaderRef",
+		contentTemplate: relativeHeaderDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, "param", swagger.Components.Headers["TestHeader"].Value.Description)
+			require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
+		},
+	},
+	{
+		name:            "SecuritySchemeRef",
+		contentTemplate: relativeSecuritySchemeDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Type)
+			require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Scheme)
+			require.Equal(t, "http", swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Type)
+			require.Equal(t, "basic", swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Scheme)
+		},
+	},
+	{
+		name:            "PathRef",
+		contentTemplate: relativePathDocsRefTemplate,
+		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+			require.NotNil(t, swagger.Paths["/pets"])
+			require.NotNil(t, swagger.Paths["/pets"].Get.Responses["200"])
+			require.NotNil(t, swagger.Paths["/pets"].Get.Responses["200"].Value.Content["application/json"])
+		},
+	},
+}
+
+func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
+	for _, td := range relativeDocRefsTestDataEntries {
+		t.Logf("testcase '%s'", td.name)
+
+		spec := []byte(td.contentTemplate)
+		loader := openapi3.NewSwaggerLoader()
+		loader.IsExternalRefsAllowed = true
+		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/"})
+		require.NoError(t, err)
+		td.testFunc(t, swagger)
+	}
+}
+
+const relativeSchemaDocsRefTemplate = `
+openapi: 3.0.0
+info: 
+  title: ""
+  version: "1.0"
+paths: {}
+components: 
+  schemas: 
+    TestSchema: 
+      $ref: relativeDocs/CustomTestSchema.yml
+`
+
+const relativeResponseDocsRefTemplate = `
+openapi: 3.0.0
+info: 
+  title: ""
+  version: "1.0"
+paths: {}
+components: 
+  responses: 
+    TestResponse: 
+      $ref: relativeDocs/CustomTestResponse.yml
+`
+
+const relativeParameterDocsRefTemplate = `
+openapi: 3.0.0
+info:
+  title: ""
+  version: "1.0"
+paths: {}
+components:
+  parameters:
+    TestParameter: 
+      $ref: relativeDocs/CustomTestParameter.yml
+`
+
+const relativeExampleDocsRefTemplate = `
+openapi: 3.0.0
+info:
+  title: ""
+  version: "1.0"
+paths: {}
+components:
+  examples:
+    TestExample:
+      $ref: relativeDocs/CustomTestExample.yml
+`
+
+const relativeRequestDocsRefTemplate = `
+openapi: 3.0.0
+info:
+  title: ""
+  version: "1.0"
+paths: {}
+components:
+  requestBodies:
+    TestRequestBody:
+      $ref: relativeDocs/CustomTestRequestBody.yml
+`
+
+const relativeHeaderDocsRefTemplate = `
+openapi: 3.0.0
+info:
+  title: ""
+  version: "1.0"
+paths: {}
+components:
+  headers:
+    TestHeader:
+      $ref: relativeDocs/CustomTestHeader.yml
+`
+
+const relativeSecuritySchemeDocsRefTemplate = `
+openapi: 3.0.0
+info:
+  title: ""
+  version: "1.0"
+paths: {}
+components:
+  securitySchemes:
+    TestSecurityScheme:
+      $ref: relativeDocs/CustomTestSecurityScheme.yml
+`
+const relativePathDocsRefTemplate = `
+openapi: 3.0.0
+info:
+  title: ""
+  version: "2.0"
+paths:
+  /pets:
+    $ref: relativeDocs/CustomTestPath.yml
+`
+
