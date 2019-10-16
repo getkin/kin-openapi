@@ -3,30 +3,9 @@ package openapi3
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
-
-type RefOrValue interface {
-	Resolved() bool
-	ResetRef()
-	GetRef() string
-	IsRef() bool
-	IsValue() bool
-	IsValid() bool
-	EmptyRef() bool
-}
-
-func IsExternalRef(rr RefOrValue) bool {
-	return strings.Index(rr.GetRef(), "#") >= 0
-}
-
-func resetResolvedExternalRef(rr RefOrValue) {
-	if rr.IsRef() && IsExternalRef(rr) && rr.Resolved() {
-		rr.ResetRef()
-	}
-}
 
 type CallbackRef struct {
 	Ref   string
@@ -68,7 +47,7 @@ func (value ExampleRef) IsValue() bool  { return value.Ref == "" && value.Value 
 func (value ExampleRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value ExampleRef) EmptyRef() bool { return value.Ref == "" }
 func (value ExampleRef) GetRef() string { return value.Ref }
-func (value *ExampleRef) ResetRef()     { value.Ref = "" }
+func (value *ExampleRef) ClearRef()     { value.Ref = "" }
 
 func (value *ExampleRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -97,7 +76,7 @@ func (value HeaderRef) IsValue() bool  { return value.Ref == "" && value.Value !
 func (value HeaderRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value HeaderRef) EmptyRef() bool { return value.Ref == "" }
 func (value HeaderRef) GetRef() string { return value.Ref }
-func (value *HeaderRef) ResetRef()     { value.Ref = "" }
+func (value *HeaderRef) ClearRef()     { value.Ref = "" }
 
 func (value *HeaderRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -130,7 +109,7 @@ func (value LinkRef) IsValue() bool  { return value.Ref == "" && value.Value != 
 func (value LinkRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value LinkRef) EmptyRef() bool { return value.Ref == "" }
 func (value LinkRef) GetRef() string { return value.Ref }
-func (value *LinkRef) ResetRef()     { value.Ref = "" }
+func (value *LinkRef) ClearRef()     { value.Ref = "" }
 
 func (value *LinkRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -163,7 +142,7 @@ func (value ParameterRef) IsValue() bool  { return value.Ref == "" && value.Valu
 func (value ParameterRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value ParameterRef) EmptyRef() bool { return value.Ref == "" }
 func (value ParameterRef) GetRef() string { return value.Ref }
-func (value *ParameterRef) ResetRef()     { value.Ref = "" }
+func (value *ParameterRef) ClearRef()     { value.Ref = "" }
 
 func (value *ParameterRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -196,7 +175,7 @@ func (value ResponseRef) IsValue() bool  { return value.Ref == "" && value.Value
 func (value ResponseRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value ResponseRef) EmptyRef() bool { return value.Ref == "" }
 func (value ResponseRef) GetRef() string { return value.Ref }
-func (value *ResponseRef) ResetRef()     { value.Ref = "" }
+func (value *ResponseRef) ClearRef()     { value.Ref = "" }
 
 func (value *ResponseRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -229,7 +208,7 @@ func (value RequestBodyRef) IsValue() bool  { return value.Ref == "" && value.Va
 func (value RequestBodyRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value RequestBodyRef) EmptyRef() bool { return value.Ref == "" }
 func (value RequestBodyRef) GetRef() string { return value.Ref }
-func (value *RequestBodyRef) ResetRef()     { value.Ref = "" }
+func (value *RequestBodyRef) ClearRef()     { value.Ref = "" }
 
 func (value *RequestBodyRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -262,7 +241,7 @@ func (value SchemaRef) IsValue() bool  { return value.Ref == "" && value.Value !
 func (value SchemaRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value SchemaRef) EmptyRef() bool { return value.Ref == "" }
 func (value SchemaRef) GetRef() string { return value.Ref }
-func (value *SchemaRef) ResetRef()     { value.Ref = "" }
+func (value *SchemaRef) ClearRef()     { value.Ref = "" }
 
 func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 	return &SchemaRef{
@@ -302,7 +281,7 @@ func (value SecuritySchemeRef) IsValue() bool  { return value.Ref == "" && value
 func (value SecuritySchemeRef) IsValid() bool  { return value.Ref != "" || value.Value != nil }
 func (value SecuritySchemeRef) EmptyRef() bool { return value.Ref == "" }
 func (value SecuritySchemeRef) GetRef() string { return value.Ref }
-func (value *SecuritySchemeRef) ResetRef()     { value.Ref = "" }
+func (value *SecuritySchemeRef) ClearRef()     { value.Ref = "" }
 
 func (value *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)

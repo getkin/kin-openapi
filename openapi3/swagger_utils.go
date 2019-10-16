@@ -1,6 +1,26 @@
 package openapi3
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
+
+type RefOrValue interface {
+	Resolved() bool
+	ClearRef()
+	GetRef() string
+	IsRef() bool
+}
+
+func IsExternalRef(rr RefOrValue) bool {
+	return strings.Index(rr.GetRef(), "#") >= 0
+}
+
+func clearResolvedExternalRef(rr RefOrValue) {
+	if rr.IsRef() && IsExternalRef(rr) && rr.Resolved() {
+		rr.ClearRef()
+	}
+}
 
 // ResetResolvedExternalRefs Recursively iterate over the swagger structure, resetting <Type>Ref structs where
 // the reference is remote and was resolved
@@ -16,7 +36,7 @@ func resetExternalRef(c reflect.Value) {
 		if c.CanAddr() {
 			rov, ok := c.Addr().Interface().(RefOrValue)
 			if ok {
-				resetResolvedExternalRef(rov)
+				clearResolvedExternalRef(rov)
 			}
 		}
 		for i := 0; i < c.NumField(); i += 1 {
