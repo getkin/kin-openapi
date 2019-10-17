@@ -298,12 +298,17 @@ func createTestServer(handler http.Handler) *httptest.Server {
 	return ts
 }
 
-func TestLoadFromRemoteURL(t *testing.T) {
-
-	fs := http.FileServer(http.Dir("testdata"))
+func startTestServer(system http.FileSystem) func() {
+	fs := http.FileServer(system)
 	ts := createTestServer(fs)
 	ts.Start()
-	defer ts.Close()
+	return ts.Close
+}
+
+func TestLoadFromRemoteURL(t *testing.T) {
+
+	cs := startTestServer(http.Dir("testdata"))
+	defer cs()
 
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
@@ -370,7 +375,7 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
 	require.Equal(t, "testheader", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 }
 
-func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
+func TestLoadFromDataWithExternalRequestResponseHeaderExternalRef(t *testing.T) {
 	spec := []byte(`
 {
     "openapi": "3.0.0",
@@ -396,10 +401,8 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
     }
 }`)
 
-	fs := http.FileServer(http.Dir("testdata"))
-	ts := createTestServer(fs)
-	ts.Start()
-	defer ts.Close()
+	cs := startTestServer(http.Dir("testdata"))
+	defer cs()
 
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
@@ -441,10 +444,8 @@ func (fs hitCntFS) Open(fn string) (http.File, error) {
 func TestRemoteURLCaching(t *testing.T) {
 
 	sfs := hitCntFS{fs: "testdata", hits: map[string]int{}}
-	fs := http.FileServer(sfs)
-	ts := createTestServer(fs)
-	ts.Start()
-	defer ts.Close()
+	cs := startTestServer(sfs)
+	defer cs()
 
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
