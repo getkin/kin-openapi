@@ -325,6 +325,16 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
 
+func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testdata/testrefsinglecomponent.openapi.json")
+	require.NoError(t, err)
+
+	require.NotNil(t, swagger.Components.Responses["SomeResponse"])
+	require.Equal(t, "this is a single response definition", swagger.Components.Responses["SomeResponse"].Value.Description)
+}
+
 func TestLoadRequestResponseHeaderRef(t *testing.T) {
 	spec := []byte(`
 {
