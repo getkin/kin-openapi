@@ -443,4 +443,3 @@ func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
 	require.NotNil(t, swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 	require.Equal(t, "string", swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 }
-

@@ -903,4 +903,3 @@ paths:
   /pets:
     $ref: relativeDocs/CustomTestPath.yml
 `
-
