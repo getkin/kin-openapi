@@ -184,8 +184,7 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 			},
 		},
 	}
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	loader.LoadSwaggerFromURIFunc = multipleSourceLoader.LoadSwaggerFromURI
 
 	doc, err := loader.LoadSwaggerFromURI(rootLocation)
@@ -310,8 +309,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 	cs := startTestServer(http.Dir("testdata"))
 	defer cs()
 
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	remote, err := url.Parse("http://" + addr + "/test.openapi.json")
 	require.NoError(t, err)
 
@@ -322,8 +320,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
 
@@ -415,8 +412,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderExternalRef(t *testing.T) 
 	cs := startTestServer(http.Dir("testdata"))
 	defer cs()
 
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
@@ -425,8 +421,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderExternalRef(t *testing.T) 
 }
 
 func TestLoadYamlFile(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	swagger, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
 	require.NoError(t, err)
 
@@ -434,8 +429,7 @@ func TestLoadYamlFile(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
 	require.NoError(t, err)
 
@@ -574,8 +568,7 @@ func TestRemoteURLCaching(t *testing.T) {
 	cs := startTestServer(sfs)
 	defer cs()
 
-	loader := openapi3.NewSwaggerLoader()
-	loader.IsExternalRefsAllowed = true
+	loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 	remote, err := url.Parse("http://" + addr + "/test.refcache.openapi.yml")
 	require.NoError(t, err)
 
@@ -588,4 +581,29 @@ func TestRemoteURLCaching(t *testing.T) {
 
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+}
+
+func TestLoaderOptions(t *testing.T) {
+	sl := openapi3.NewSwaggerLoader()
+	require.Nil(t, sl.LoadSwaggerFromURIFunc)
+	require.False(t, sl.IsExternalRefsAllowed)
+	require.False(t, sl.ClearResolvedRefs)
+	require.True(t, sl.SetMetadata) // default is true
+
+	vc := false
+	v := func(loader *openapi3.SwaggerLoader, location *url.URL) (*openapi3.Swagger, error) {
+		vc = true
+		return nil, nil
+	}
+
+	sl = openapi3.NewSwaggerLoader(openapi3.WithClearResolvedRefs(true),
+		openapi3.WithSetMetadata(false), openapi3.WithAllowExternalRefs(true),
+		openapi3.WithURILoader(v))
+	require.NotNil(t, sl.LoadSwaggerFromURIFunc)
+	require.True(t, sl.IsExternalRefsAllowed)
+	require.True(t, sl.ClearResolvedRefs)
+	require.False(t, sl.SetMetadata)
+
+	_, _ = sl.LoadSwaggerFromURIFunc(nil, nil)
+	require.True(t, vc)
 }

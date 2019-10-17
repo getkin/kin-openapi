@@ -216,8 +216,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
-		loader := openapi3.NewSwaggerLoader()
-		loader.IsExternalRefsAllowed = true
+		loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
 		td.testFunc(t, swagger)
@@ -229,8 +228,7 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
-		loader := openapi3.NewSwaggerLoader()
-		loader.IsExternalRefsAllowed = true
+		loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.EqualError(t, err, *td.errorMessage)
 		td.testFunc(t, swagger)
@@ -242,8 +240,7 @@ func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
-		loader := openapi3.NewSwaggerLoader()
-		loader.IsExternalRefsAllowed = true
+		loader := openapi3.NewSwaggerLoader(openapi3.WithAllowExternalRefs(true))
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
 		td.testFunc(t, swagger)

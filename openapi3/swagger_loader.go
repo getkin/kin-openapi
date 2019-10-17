@@ -30,6 +30,8 @@ func failedToResolveRefFragmentPart(value string, what string, reason string) er
 
 type SwaggerLoader struct {
 	IsExternalRefsAllowed  bool
+	ClearResolvedRefs      bool
+	SetMetadata            bool
 	Context                context.Context
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
 	visited                map[interface{}]struct{}
@@ -37,8 +39,36 @@ type SwaggerLoader struct {
 	loadedRemoteSchemas    map[url.URL]*Swagger
 }
 
-func NewSwaggerLoader() *SwaggerLoader {
-	return &SwaggerLoader{loadedRemoteSchemas: map[string]*Swagger{}}
+func WithAllowExternalRefs(allow bool) func(sl *SwaggerLoader) {
+	return func(sl *SwaggerLoader) {
+		sl.IsExternalRefsAllowed = allow
+	}
+}
+
+func WithClearResolvedRefs(clear bool) func(sl *SwaggerLoader) {
+	return func(sl *SwaggerLoader) {
+		sl.ClearResolvedRefs = clear
+	}
+}
+
+func WithSetMetadata(setMD bool) func(sl *SwaggerLoader) {
+	return func(sl *SwaggerLoader) {
+		sl.SetMetadata = setMD
+	}
+}
+
+func WithURILoader(l func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)) func(sl *SwaggerLoader) {
+	return func(sl *SwaggerLoader) {
+		sl.LoadSwaggerFromURIFunc = l
+	}
+}
+
+func NewSwaggerLoader(options ...func(*SwaggerLoader)) *SwaggerLoader {
+	sl := &SwaggerLoader{loadedRemoteSchemas: map[string]*Swagger{}, SetMetadata: true}
+	for _, o := range options {
+		o(sl)
+	}
+	return sl
 }
 
 func (swaggerLoader *SwaggerLoader) reset() {
@@ -164,12 +194,22 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 		return nil, err
 	}
 
-	// mark each resource with its id and path
-	if err := swaggerLoader.fixMetadata(swagger, path); err != nil {
+	if swaggerLoader.SetMetadata {
+		// mark each resource with its id and path
+		if err := swaggerLoader.fixMetadata(swagger, path); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := swaggerLoader.ResolveRefsIn(swagger, path); err != nil {
 		return nil, err
 	}
 
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
+	if swaggerLoader.ClearResolvedRefs {
+		ClearResolvedExternalRefs(swagger)
+	}
+
+	return swagger, nil
 }
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
