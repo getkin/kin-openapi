@@ -22,9 +22,9 @@ func clearResolvedExternalRef(rr RefOrValue) {
 	}
 }
 
-// ResetResolvedExternalRefs Recursively iterate over the swagger structure, resetting <Type>Ref structs where
+// ClearResolvedExternalRefs Recursively iterate over the swagger structure, resetting <Type>Ref structs where
 // the reference is remote and was resolved
-func ResetResolvedExternalRefs(swagger *Swagger) {
+func ClearResolvedExternalRefs(swagger *Swagger) {
 	resetExternalRef(reflect.ValueOf(swagger))
 }
 
