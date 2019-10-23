@@ -169,4 +169,34 @@ var securitySchemeExamples = []securitySchemeExample{
 `),
 		valid: true,
 	},
+
+	{
+		title: "OAuth Flow Object with no scopes",
+		raw: []byte(`
+{
+  "type": "oauth2",
+  "flows": {
+    "password": {
+      "tokenUrl": "https://example.com/api/oauth/token"
+    }
+  }
+}
+`),
+		valid: false,
+	},
+	{
+		title: "OAuth Flow Object with empty scopes",
+		raw: []byte(`
+{
+  "type": "oauth2",
+  "flows": {
+    "password": {
+			"tokenUrl": "https://example.com/api/oauth/token",
+			"scopes": {}
+    }
+  }
+}
+`),
+		valid: true,
+	},
 }
