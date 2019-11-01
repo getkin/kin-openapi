@@ -12,11 +12,10 @@ import (
 
 func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 	result := &openapi3.Swagger{
-		OpenAPI: "3.0",
-		Info:    &swagger.Info,
-		Components: openapi3.Components{
-			Tags: swagger.Tags,
-		},
+		OpenAPI:    "3.0",
+		Info:       &swagger.Info,
+		Components: openapi3.Components{},
+		Tags:       swagger.Tags,
 	}
 	host := swagger.Host
 	if len(host) > 0 {
@@ -273,7 +272,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	result := &openapi2.Swagger{
 		Info: *swagger.Info,
-		Tags: swagger.Components.Tags,
+		Tags: swagger.Tags,
 	}
 	isHTTPS := false
 	isHTTP := false

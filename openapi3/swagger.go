@@ -15,6 +15,7 @@ type Swagger struct {
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Paths        Paths                `json:"paths" yaml:"paths"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
+	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }

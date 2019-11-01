@@ -40,6 +40,12 @@ const exampleV2 = `
   "schemes": ["https"],
   "host": "test.example.com",
   "basePath": "/v2",
+  "tags": [
+    {
+      "name": "Example",
+      "description": "An example tag."
+    }
+  ],
   "paths": {
     "/example": {
       "delete": {
@@ -57,6 +63,9 @@ const exampleV2 = `
         "operationId": "example-get",
         "summary": "example get",
         "description": "example get",
+        "tags": [
+          "Example"
+        ],
         "parameters": [
           {
             "in": "query",
@@ -125,6 +134,12 @@ const exampleV3 = `
   "openapi": "3.0",
   "info": {"title":"MyAPI","version":"0.1"},
   "components": {},
+  "tags": [
+    {
+      "name": "Example",
+      "description": "An example tag."
+    }
+  ],
   "servers": [
     {
       "url": "https://test.example.com/v2"
@@ -147,6 +162,9 @@ const exampleV3 = `
         "operationId": "example-get",
         "summary": "example get",
         "description": "example get",
+        "tags": [
+          "Example"
+        ],
         "parameters": [
           {
             "in": "query",
