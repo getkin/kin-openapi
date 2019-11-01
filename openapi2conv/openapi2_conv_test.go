@@ -63,6 +63,15 @@ const exampleV2 = `
             "name": "x"
           },
           {
+            "in": "query",
+            "name": "y",
+            "description": "The y parameter",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000,
+            "default": 250
+          },
+          {
             "in": "body",
             "name": "body",
             "schema": {}
@@ -151,6 +160,17 @@ const exampleV3 = `
           {
             "in": "query",
             "name": "x"
+          },
+          {
+            "description": "The y parameter",
+            "in": "query",
+            "name": "y",
+            "schema": {
+              "default": 250,
+              "maximum": 10000,
+              "minimum": 1,
+              "type": "integer"
+            }
           }
         ],
         "requestBody": {
