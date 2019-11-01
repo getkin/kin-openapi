@@ -12,7 +12,7 @@ import (
 
 func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 	result := &openapi3.Swagger{
-		OpenAPI:    "3.0",
+		OpenAPI:    "3.0.2",
 		Info:       &swagger.Info,
 		Components: openapi3.Components{},
 		Tags:       swagger.Tags,
