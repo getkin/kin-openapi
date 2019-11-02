@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -200,18 +201,46 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
 	if ref := response.Ref; len(ref) > 0 {
 		return &openapi3.ResponseRef{
-			Ref: ref,
+			Ref: ToV3Ref(ref),
 		}, nil
 	}
 	result := &openapi3.Response{
 		Description: response.Description,
 	}
 	if schemaRef := response.Schema; schemaRef != nil {
+		if ref := schemaRef.Ref; len(ref) > 0 {
+			schemaRef = &openapi3.SchemaRef{
+				Ref: ToV3Ref(ref),
+			}
+		}
 		result.WithJSONSchemaRef(schemaRef)
 	}
 	return &openapi3.ResponseRef{
 		Value: result,
 	}, nil
+}
+
+var ref2To3 = map[string]string{
+	"#/definitions/": "#/components/schemas/",
+	"#/responses/":   "#/components/responses/",
+}
+
+func ToV3Ref(ref string) string {
+	for old, new := range ref2To3 {
+		if strings.HasPrefix(ref, old) {
+			ref = strings.Replace(ref, old, new, 1)
+		}
+	}
+	return ref
+}
+
+func FromV3Ref(ref string) string {
+	for new, old := range ref2To3 {
+		if strings.HasPrefix(ref, old) {
+			ref = strings.Replace(ref, old, new, 1)
+		}
+	}
+	return ref
 }
 
 func ToV3SecurityRequirements(requirements openapi2.SecurityRequirements) openapi3.SecurityRequirements {
@@ -265,15 +294,21 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 		}
 	}
 	return &openapi3.SecuritySchemeRef{
-		Ref:   securityScheme.Ref,
+		Ref:   ToV3Ref(securityScheme.Ref),
 		Value: result,
 	}, nil
 }
 
 func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
+	resultResponses, err := FromV3Responses(swagger.Components.Responses)
+	if err != nil {
+		return nil, err
+	}
 	result := &openapi2.Swagger{
-		Info: *swagger.Info,
-		Tags: swagger.Tags,
+		Info:        *swagger.Info,
+		Definitions: FromV3Schemas(swagger.Components.Schemas),
+		Responses:   resultResponses,
+		Tags:        swagger.Tags,
 	}
 	isHTTPS := false
 	isHTTP := false
@@ -328,6 +363,23 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	}
 	result.Security = FromV3SecurityRequirements(swagger.Security)
 	return result, nil
+}
+
+func FromV3Schemas(schemas map[string]*openapi3.SchemaRef) map[string]*openapi3.SchemaRef {
+	v2Defs := make(map[string]*openapi3.SchemaRef, len(schemas))
+	for name, schema := range schemas {
+		v2Defs[name] = FromV3SchemaRef(schema)
+	}
+	return v2Defs
+}
+
+func FromV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
+	if ref := schema.Ref; len(ref) > 0 {
+		return &openapi3.SchemaRef{
+			Ref: FromV3Ref(ref),
+		}
+	}
+	return schema
 }
 
 func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) openapi2.SecurityRequirements {
@@ -403,15 +455,11 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 		result.Parameters = append(result.Parameters, r)
 	}
 	if responses := operation.Responses; responses != nil {
-		resultResponses := make(map[string]*openapi2.Response, len(responses))
-		result.Responses = resultResponses
-		for k, response := range responses {
-			r, err := FromV3Response(response)
-			if err != nil {
-				return nil, err
-			}
-			resultResponses[k] = r
+		resultResponses, err := FromV3Responses(responses)
+		if err != nil {
+			return nil, err
 		}
+		result.Responses = resultResponses
 	}
 	return result, nil
 }
@@ -419,7 +467,7 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation, requestBodyRef *openapi3.RequestBodyRef) (*openapi2.Parameter, error) {
 	if ref := requestBodyRef.Ref; len(ref) > 0 {
 		return &openapi2.Parameter{
-			Ref: ref,
+			Ref: FromV3Ref(ref),
 		}, nil
 	}
 	requestBody := requestBodyRef.Value
@@ -449,7 +497,7 @@ func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation,
 func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
 	if v := ref.Ref; len(v) > 0 {
 		return &openapi2.Parameter{
-			Ref: v,
+			Ref: FromV3Ref(v),
 		}, nil
 	}
 	parameter := ref.Value
@@ -479,7 +527,25 @@ func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
 	return result, nil
 }
 
+func FromV3Responses(responses map[string]*openapi3.ResponseRef) (map[string]*openapi2.Response, error) {
+	v2Responses := make(map[string]*openapi2.Response, len(responses))
+	for k, response := range responses {
+		r, err := FromV3Response(response)
+		if err != nil {
+			return nil, err
+		}
+		v2Responses[k] = r
+	}
+	return v2Responses, nil
+}
+
 func FromV3Response(ref *openapi3.ResponseRef) (*openapi2.Response, error) {
+	if v := ref.Ref; len(v) > 0 {
+		return &openapi2.Response{
+			Ref: FromV3Ref(v),
+		}, nil
+	}
+
 	response := ref.Value
 	if response == nil {
 		return nil, nil
@@ -489,7 +555,7 @@ func FromV3Response(ref *openapi3.ResponseRef) (*openapi2.Response, error) {
 	}
 	if content := response.Content; content != nil {
 		if ct := content["application/json"]; ct != nil {
-			result.Schema = ct.Schema
+			result.Schema = FromV3SchemaRef(ct.Schema)
 		}
 	}
 	return result, nil
@@ -501,7 +567,7 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 		return nil, nil
 	}
 	result := &openapi2.SecurityScheme{
-		Ref:         ref.Ref,
+		Ref:         FromV3Ref(ref.Ref),
 		Description: securityScheme.Description,
 	}
 	switch securityScheme.Type {

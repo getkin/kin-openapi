@@ -54,6 +54,9 @@ const exampleV2 = `
           "default": {
             "description": "default response"
           },
+          "403": {
+            "$ref": "#/responses/ForbiddenError"
+          },
           "404": {
             "description": "404 response"
           }
@@ -126,6 +129,28 @@ const exampleV2 = `
       }
     }
   },
+  "responses": {
+    "ForbiddenError": {
+      "description": "Insufficient permission to perform the requested action.",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    }
+  },
+  "definitions": {
+    "Error": {
+      "description": "Error response.",
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  },
   "security": [
     {
       "default_security_0": [
@@ -142,7 +167,34 @@ const exampleV3 = `
 {
   "openapi": "3.0",
   "info": {"title":"MyAPI","version":"0.1"},
-  "components": {},
+  "components": {
+    "responses": {
+      "ForbiddenError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Insufficient permission to perform the requested action."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "description": "Error response.",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      }
+    }
+  },
   "tags": [
     {
       "name": "Example",
@@ -161,6 +213,9 @@ const exampleV3 = `
         "responses": {
           "default": {
             "description": "default response"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
             "description": "404 response"
