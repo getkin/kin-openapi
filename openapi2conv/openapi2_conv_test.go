@@ -54,6 +54,9 @@ const exampleV2 = `
           "default": {
             "description": "default response"
           },
+          "403": {
+            "$ref": "#/responses/ForbiddenError"
+          },
           "404": {
             "description": "404 response"
           }
@@ -81,12 +84,32 @@ const exampleV2 = `
             "default": 250
           },
           {
+            "in": "query",
+            "name": "bbox",
+            "description": "Only return results that intersect the provided bounding box.",
+            "maxItems": 4,
+            "minItems": 4,
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          {
             "in": "body",
             "name": "body",
             "schema": {}
           }
         ],
         "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Item"
+              }
+            }
+          },
           "default": {
             "description": "default response"
           },
@@ -126,6 +149,36 @@ const exampleV2 = `
       }
     }
   },
+  "responses": {
+    "ForbiddenError": {
+      "description": "Insufficient permission to perform the requested action.",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    }
+  },
+  "definitions": {
+    "Item": {
+      "type": "object",
+      "properties": {
+        "foo": {
+          "type": "string"
+        }
+      }
+    },
+    "Error": {
+      "description": "Error response.",
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  },
   "security": [
     {
       "default_security_0": [
@@ -142,7 +195,42 @@ const exampleV3 = `
 {
   "openapi": "3.0.2",
   "info": {"title":"MyAPI","version":"0.1"},
-  "components": {},
+  "components": {
+    "responses": {
+      "ForbiddenError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Insufficient permission to perform the requested action."
+      }
+    },
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "properties": {
+          "foo": {
+            "type": "string"
+          }
+        }
+      },
+      "Error": {
+        "description": "Error response.",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      }
+    }
+  },
   "tags": [
     {
       "name": "Example",
@@ -161,6 +249,9 @@ const exampleV3 = `
         "responses": {
           "default": {
             "description": "default response"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
             "description": "404 response"
@@ -189,6 +280,19 @@ const exampleV3 = `
               "minimum": 1,
               "type": "integer"
             }
+          },
+          {
+            "description": "Only return results that intersect the provided bounding box.",
+            "in": "query",
+            "name": "bbox",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
           }
         ],
         "requestBody": {
@@ -199,6 +303,19 @@ const exampleV3 = `
           }
         },
         "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
           "default": {
             "description": "default response"
           },
