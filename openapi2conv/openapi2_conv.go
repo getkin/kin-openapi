@@ -208,16 +208,23 @@ func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
 		Description: response.Description,
 	}
 	if schemaRef := response.Schema; schemaRef != nil {
-		if ref := schemaRef.Ref; len(ref) > 0 {
-			schemaRef = &openapi3.SchemaRef{
-				Ref: ToV3Ref(ref),
-			}
-		}
-		result.WithJSONSchemaRef(schemaRef)
+		result.WithJSONSchemaRef(ToV3SchemaRef(schemaRef))
 	}
 	return &openapi3.ResponseRef{
 		Value: result,
 	}, nil
+}
+
+func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
+	if ref := schema.Ref; len(ref) > 0 {
+		return &openapi3.SchemaRef{
+			Ref: ToV3Ref(ref),
+		}
+	}
+	if schema.Value != nil && schema.Value.Items != nil {
+		schema.Value.Items = ToV3SchemaRef(schema.Value.Items)
+	}
+	return schema
 }
 
 var ref2To3 = map[string]string{
@@ -378,6 +385,9 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{
 			Ref: FromV3Ref(ref),
 		}
+	}
+	if schema.Value != nil && schema.Value.Items != nil {
+		schema.Value.Items = FromV3SchemaRef((schema.Value.Items))
 	}
 	return schema
 }

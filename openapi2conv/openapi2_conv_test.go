@@ -90,6 +90,15 @@ const exampleV2 = `
           }
         ],
         "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Item"
+              }
+            }
+          },
           "default": {
             "description": "default response"
           },
@@ -138,6 +147,14 @@ const exampleV2 = `
     }
   },
   "definitions": {
+    "Item": {
+      "type": "object",
+      "properties": {
+        "foo": {
+          "type": "string"
+        }
+      }
+    },
     "Error": {
       "description": "Error response.",
       "type": "object",
@@ -181,6 +198,14 @@ const exampleV3 = `
       }
     },
     "schemas": {
+      "Item": {
+        "type": "object",
+        "properties": {
+          "foo": {
+            "type": "string"
+          }
+        }
+      },
       "Error": {
         "description": "Error response.",
         "properties": {
@@ -254,6 +279,19 @@ const exampleV3 = `
           }
         },
         "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
           "default": {
             "description": "default response"
           },
