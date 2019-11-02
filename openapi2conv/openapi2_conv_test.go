@@ -84,6 +84,17 @@ const exampleV2 = `
             "default": 250
           },
           {
+            "in": "query",
+            "name": "bbox",
+            "description": "Only return results that intersect the provided bounding box.",
+            "maxItems": 4,
+            "minItems": 4,
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          {
             "in": "body",
             "name": "body",
             "schema": {}
@@ -268,6 +279,19 @@ const exampleV3 = `
               "maximum": 10000,
               "minimum": 1,
               "type": "integer"
+            }
+          },
+          {
+            "description": "Only return results that intersect the provided bounding box.",
+            "in": "query",
+            "name": "bbox",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
             }
           }
         ],

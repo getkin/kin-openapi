@@ -75,7 +75,7 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 			result.Components.Responses[k] = r
 		}
 	}
-	result.Components.Schemas = swagger.Definitions
+	result.Components.Schemas = ToV3Schemas(swagger.Definitions)
 	if m := swagger.SecurityDefinitions; m != nil {
 		resultSecuritySchemes := make(map[string]*openapi3.SecuritySchemeRef)
 		for k, v := range m {
@@ -164,7 +164,7 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 		}
 		if schemaRef := parameter.Schema; schemaRef != nil {
 			// Assume it's JSON
-			result.WithJSONSchemaRef(schemaRef)
+			result.WithJSONSchemaRef(ToV3SchemaRef(schemaRef))
 		}
 		return nil, &openapi3.RequestBodyRef{
 			Value: result,
@@ -175,10 +175,10 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 		Name:        parameter.Name,
 		Description: parameter.Description,
 		Required:    parameter.Required,
-		Schema:      parameter.Schema,
 	}
+
 	if parameter.Type != "" {
-		result.Schema = &openapi3.SchemaRef{
+		schema := &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
 				Type:         parameter.Type,
 				Format:       parameter.Format,
@@ -190,8 +190,12 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 				MinLength:    parameter.MinLength,
 				MaxLength:    parameter.MaxLength,
 				Default:      parameter.Default,
+				Items:        parameter.Items,
+				MinItems:     parameter.MinItems,
+				MaxItems:     parameter.MaxItems,
 			},
 		}
+		result.Schema = ToV3SchemaRef(schema)
 	}
 	return &openapi3.ParameterRef{
 		Value: result,
@@ -215,14 +219,28 @@ func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
 	}, nil
 }
 
+func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.SchemaRef {
+	schemas := make(map[string]*openapi3.SchemaRef, len(defs))
+	for name, schema := range defs {
+		schemas[name] = ToV3SchemaRef(schema)
+	}
+	return schemas
+}
+
 func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	if ref := schema.Ref; len(ref) > 0 {
 		return &openapi3.SchemaRef{
 			Ref: ToV3Ref(ref),
 		}
 	}
-	if schema.Value != nil && schema.Value.Items != nil {
+	if schema.Value == nil {
+		return schema
+	}
+	if schema.Value.Items != nil {
 		schema.Value.Items = ToV3SchemaRef(schema.Value.Items)
+	}
+	for k, v := range schema.Value.Properties {
+		schema.Value.Properties[k] = ToV3SchemaRef(v)
 	}
 	return schema
 }
@@ -386,8 +404,14 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 			Ref: FromV3Ref(ref),
 		}
 	}
-	if schema.Value != nil && schema.Value.Items != nil {
+	if schema.Value == nil {
+		return schema
+	}
+	if schema.Value.Items != nil {
 		schema.Value.Items = FromV3SchemaRef((schema.Value.Items))
+	}
+	for k, v := range schema.Value.Properties {
+		schema.Value.Properties[k] = FromV3SchemaRef(v)
 	}
 	return schema
 }
@@ -521,6 +545,7 @@ func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
 		Required:    parameter.Required,
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
+		schemaRef = FromV3SchemaRef(schemaRef)
 		schema := schemaRef.Value
 		result.Type = schema.Type
 		result.Format = schema.Format
@@ -533,6 +558,9 @@ func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
 		result.MaxLength = schema.MaxLength
 		result.Pattern = schema.Pattern
 		result.Default = schema.Default
+		result.Items = schema.Items
+		result.MinItems = schema.MinItems
+		result.MaxItems = schema.MaxItems
 	}
 	return result, nil
 }
