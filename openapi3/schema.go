@@ -3,6 +3,7 @@ package openapi3
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,10 +11,13 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"time"
 	"unicode/utf16"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
+
+type defaultValidator func(s *Schema) error
 
 var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
@@ -23,6 +27,24 @@ var (
 
 	ErrSchemaInputNaN = errors.New("NaN is not allowed")
 	ErrSchemaInputInf = errors.New("Inf is not allowed")
+
+	defaultValidators = map[string]defaultValidator{
+		"boolean":       validateBooleanDefault,
+		"number":        validateNumberDefault,
+		"number-float":  validateFloatDefault,
+		"number-double": validateDoubleDefault,
+		"integer":       validateIntegerDefault,
+		"integer-int32": validateInt32Default,
+		"integer-int64": validateInt64Default,
+		"string":        validateStringDefault,
+		"string-byte":   validateStringByteDefault,
+		// "string-binary": this can really be anything
+		"string-date":      validateStringDateDefault,
+		"string-date-time": validateStringDateTimeDefault,
+		"string-time":      validateStringTimeDefault,
+		"string-password":  validateStringDefault,
+		"string-regex":     validateStringRegexDefault,
+	}
 )
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
@@ -259,6 +281,11 @@ func (schema *Schema) WithEnum(values ...interface{}) *Schema {
 
 func (schema *Schema) WithFormat(value string) *Schema {
 	schema.Format = value
+	return schema
+}
+
+func (schema *Schema) WithDefault(value interface{}) *Schema {
+	schema.Default = value
 	return schema
 }
 
@@ -530,6 +557,21 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	case "object":
 	default:
 		return fmt.Errorf("Unsupported 'type' value '%s'", schemaType)
+	}
+
+	if schema.Default != nil {
+		sfx := schema.Format
+		if schema.Type == "string" && sfx == "" && schema.Pattern != "" {
+			sfx = "regex"
+		}
+		if sfx != "" {
+			schemaType = schemaType + "-" + sfx
+		}
+		if v, ok := defaultValidators[schemaType]; ok {
+			if err := v(schema); err != nil {
+				return err
+			}
+		}
 	}
 
 	if ref := schema.Items; ref != nil {
@@ -1230,4 +1272,114 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 
 func unsupportedFormat(format string) error {
 	return fmt.Errorf("Unsupported 'format' value '%s'", format)
+}
+
+func invalidDefaultValue(s *Schema, err error) error {
+	return fmt.Errorf("default value error when validating schema %s (default: %v, error: %s)", "*name*", s.Default, err.Error())
+}
+
+func validateDefaultProperty(s *Schema, f func(s *Schema) error) error {
+	if s.Default == nil {
+		return nil
+	}
+	if err := f(s); err != nil {
+		return invalidDefaultValue(s, err)
+	}
+	return nil
+}
+
+func validateStringDefaultProperty(s *Schema, f func(s *Schema) error) error {
+	if s.Default == nil {
+		return nil
+	}
+	_, ok := s.Default.(string)
+	if !ok {
+		return invalidDefaultValue(s, errors.New("not a string"))
+	}
+	if err := f(s); err != nil {
+		return invalidDefaultValue(s, err)
+	}
+	return nil
+}
+
+func validateNumberDefaultProperty(s *Schema, f func(s *Schema) error) error {
+	if s.Default == nil {
+		return nil
+	}
+	_, ok := s.Default.(float64)
+	if !ok {
+		return invalidDefaultValue(s, errors.New("not a number"))
+	}
+	if err := f(s); err != nil {
+		return invalidDefaultValue(s, err)
+	}
+	return nil
+}
+
+func dfltStr(s *Schema) string { return fmt.Sprintf("%v", s.Default) }
+
+func validateBooleanDefault(s *Schema) (err error) {
+	return validateDefaultProperty(s, func(s *Schema) (err error) { _, err = strconv.ParseBool(dfltStr(s)); return err })
+}
+
+func validateNumberDefault(s *Schema) (err error) {
+	return validateNumberDefaultProperty(s, func(s *Schema) (err error) { _, err = strconv.ParseFloat(dfltStr(s), 64); return err })
+}
+
+func validateFloatDefault(s *Schema) error {
+	return validateNumberDefaultProperty(s, func(s *Schema) (err error) { _, err = strconv.ParseFloat(dfltStr(s), 32); return err })
+}
+
+func validateDoubleDefault(s *Schema) error {
+	return validateNumberDefaultProperty(s, func(s *Schema) (err error) { return nil })
+}
+
+func validateIntegerDefault(s *Schema) error {
+	return validateInt64Default(s)
+}
+
+func validateInt32Default(s *Schema) error {
+	return validateNumberDefaultProperty(s, func(s *Schema) (err error) {
+		f := s.Default.(float64)
+		if f != float64(int32(f)) || math.MinInt32 > f || math.MaxInt32 < f {
+			return errors.New("number not an int or out of range (int32)")
+		}
+		return nil
+	})
+}
+
+func validateInt64Default(s *Schema) error {
+	return validateNumberDefaultProperty(s, func(s *Schema) (err error) {
+		f := s.Default.(float64)
+		if f != float64(int64(f)) || math.MinInt64 > f || math.MaxInt64 < f {
+			return errors.New("number out of range (int64)")
+		}
+		return nil
+	})
+}
+
+func validateStringDefault(s *Schema) error {
+	return validateStringDefaultProperty(s, func(s *Schema) (err error) { return nil })
+}
+
+func validateStringByteDefault(s *Schema) error {
+	return validateStringDefaultProperty(s, func(s *Schema) (err error) {
+		if _, err := base64.StdEncoding.DecodeString(s.Default.(string)); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func validateStringDateDefault(s *Schema) error {
+	return validateStringDefaultProperty(s, func(s *Schema) (err error) { _, err = time.Parse("2006-01-02", dfltStr(s)); return err })
+}
+func validateStringDateTimeDefault(s *Schema) error {
+	return validateStringDefaultProperty(s, func(s *Schema) (err error) { _, err = time.Parse(time.RFC3339, dfltStr(s)); return err })
+}
+func validateStringTimeDefault(s *Schema) error {
+	return validateStringDefaultProperty(s, func(s *Schema) (err error) { _, err = time.Parse("00:00:00", dfltStr(s)); return err })
+}
+func validateStringRegexDefault(s *Schema) error {
+	return validateStringDefaultProperty(s, func(s *Schema) (err error) { _, err = regexp.Compile(dfltStr(s)); return err })
 }

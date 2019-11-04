@@ -727,3 +727,129 @@ var schemaErrorExamples = []schemaErrorExample{
 		Want: "NEST",
 	},
 }
+
+func TestSchemaDefaultValues(t *testing.T) {
+	for _, example := range defaultExamples {
+		t.Run(example.Title, testDefaultValue(t, example))
+	}
+}
+
+func testDefaultValue(t *testing.T, example schemaDefaultExample) func(*testing.T) {
+	return func(t *testing.T) {
+		baseSchema := example.Schema
+		for _, typ := range example.AllValid {
+			schema := baseSchema.WithDefault(typ.dflt)
+			s, f := typ.fmt, schema.WithFormat
+			if typ.pat != "" {
+				s, f = typ.pat, schema.WithPattern
+			}
+			schema = f(s)
+
+			err := schema.Validate(context.TODO())
+			require.NoError(t, err, typ)
+		}
+		for _, typ := range example.AllInvalid {
+			schema := baseSchema.WithDefault(typ.dflt)
+			s, f := typ.fmt, schema.WithFormat
+			if typ.pat != "" {
+				s, f = typ.pat, schema.WithPattern
+			}
+			schema = f(s)
+
+			err := schema.Validate(context.TODO())
+			require.Error(t, err, typ)
+		}
+	}
+}
+
+type fmtDflt struct {
+	fmt  string
+	pat  string
+	dflt interface{}
+}
+type schemaDefaultExample struct {
+	Title      string
+	Schema     *openapi3.Schema
+	AllValid   []fmtDflt
+	AllInvalid []fmtDflt
+}
+
+var defaultExamples = []schemaDefaultExample{
+	{
+		Title:  "STRING",
+		Schema: openapi3.NewStringSchema(),
+		AllValid: []fmtDflt{
+			{fmt: "byte", pat: "", dflt: "aGVsbG8sIHdvcmxk"},
+			{fmt: "date", pat: "", dflt: "2019-10-01"},
+			{fmt: "date-time", pat: "", dflt: "2019-10-01T00:11:22Z"},
+			{fmt: "password", pat: "", dflt: "top-secret"}, // <-- this is not really validated other than it's a string
+			{fmt: "", pat: "^1.+2$", dflt: "111112"},
+			{fmt: "", pat: "^1.+2$", dflt: "1abc2"},
+		},
+		AllInvalid: []fmtDflt{
+			{fmt: "byte", pat: "", dflt: "\r\t\n"},
+			{fmt: "byte", pat: "", dflt: 123},
+			{fmt: "date", pat: "", dflt: "19-10-01"},
+			{fmt: "date", pat: "", dflt: "abcd"},
+			{fmt: "date", pat: "", dflt: 123},
+			{fmt: "date-time", pat: "", dflt: "66:11:22"},
+			{fmt: "date-time", pat: "", dflt: "66:11:2"},
+			{fmt: "date-time", pat: "", dflt: 123},
+			{fmt: "password", pat: "", dflt: 123},
+			{fmt: "", pat: "^1.+2$", dflt: 123},
+		},
+	},
+
+	{
+		Title:  "NUMBER",
+		Schema: openapi3.NewFloat64Schema(),
+		AllValid: []fmtDflt{
+			{fmt: "", pat: "", dflt: 3.14159},
+			{fmt: "float", pat: "", dflt: 3.14159},
+			{fmt: "double", pat: "", dflt: 3.123123123123123123123},
+		},
+		AllInvalid: []fmtDflt{
+			{fmt: "", pat: "", dflt: "abc"},
+			{fmt: "float", pat: "", dflt: "abc"},
+			{fmt: "float", pat: "", dflt: math.MaxFloat64},
+			{fmt: "double", pat: "", dflt: "abc"},
+			//{ fmt: "double", pat: "", dflt: 1E1200 },  // compiler catches that....
+		},
+	},
+
+	{
+		Title:  "INTEGER",
+		Schema: openapi3.NewIntegerSchema(),
+		AllValid: []fmtDflt{
+			{fmt: "", pat: "", dflt: float64(12345)},
+			{fmt: "int32", pat: "", dflt: float64(math.MinInt32)},
+			{fmt: "int32", pat: "", dflt: float64(math.MaxInt32)},
+			{fmt: "int64", pat: "", dflt: float64(-int64(1 << 53))},
+			{fmt: "int64", pat: "", dflt: float64(int64(1 << 53))},
+		},
+		AllInvalid: []fmtDflt{
+			{fmt: "", pat: "", dflt: "1233"},
+			{fmt: "int32", pat: "", dflt: math.MinInt64},
+			{fmt: "int32", pat: "", dflt: 3.14159},
+			{fmt: "int64", pat: "", dflt: 3.14159},
+			{fmt: "int64", pat: "", dflt: float64(math.MaxInt64)},
+		},
+	},
+	{
+		Title:  "BOOL",
+		Schema: openapi3.NewBoolSchema(),
+		AllValid: []fmtDflt{
+			{fmt: "", pat: "", dflt: "t"},
+			{fmt: "", pat: "", dflt: "f"},
+			{fmt: "", pat: "", dflt: "TRUE"},
+			{fmt: "", pat: "", dflt: "true"},
+			{fmt: "", pat: "", dflt: "FALSE"},
+			{fmt: "", pat: "", dflt: "false"},
+		},
+		AllInvalid: []fmtDflt{
+			{fmt: "", pat: "", dflt: "abc"},
+			{fmt: "", pat: "", dflt: 12},
+			{fmt: "", pat: "", dflt: 1.2},
+		},
+	},
+}
