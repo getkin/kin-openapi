@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"regexp"
 	"strconv"
 	"unicode/utf16"
@@ -1222,6 +1223,19 @@ func (err *SchemaError) Error() string {
 func isSliceOfUniqueItems(xs []interface{}) bool {
 	s := len(xs)
 	m := make(map[interface{}]struct{}, s)
+	xsKind := reflect.TypeOf(xs[0]).Kind()
+	if xsKind == reflect.Map ||
+		xsKind == reflect.Slice {
+		for i := 0; i < s; i++ {
+			m[fmt.Sprintf("%v", xs[i])] = struct{}{}
+		}
+		return s == len(m)
+	}
+
+	//  - reflect.Float64
+	//  - reflect.Bool
+	//  - reflect.String
+
 	for _, x := range xs {
 		m[x] = struct{}{}
 	}
