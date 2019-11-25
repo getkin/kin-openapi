@@ -16,6 +16,12 @@ import (
 // ErrInvalidRequired is an error that happens when a required value of a parameter or request's body is not defined.
 var ErrInvalidRequired = errors.New("must have a value")
 
+// ValidateRequest is used to validate the given input according to previous
+// loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec, a
+// non-nil error will be returned.
+//
+// Note: One can tune the behavior of uniqueItems: true verification
+// by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	options := input.Options
 	if options == nil {

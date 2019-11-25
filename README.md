@@ -156,3 +156,41 @@ func xmlBodyDecoder(body []byte) (interface{}, error) {
 	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
 }
 ```
+
+## Custom function for check uniqueness of JSON array
+
+By defaut, the library check unique items by below predefined function
+
+```go
+func isSliceOfUniqueItems(xs []interface{}) bool {
+	s := len(xs)
+	m := make(map[string]struct{}, s)
+	for _, x := range xs {
+		// The input slice is coverted from a JSON string, there shall
+		// have no error when covert it back.
+		key, _ := json.Marshal(&x)
+		m[string(key)] = struct{}{}
+	}
+	return s == len(m)
+}
+```
+
+In the predefined function using `json.Marshal` to generate a string can
+be used as a map key which is to support check the uniqueness of an array
+when the array items are JSON objects or JSON arraies. You can register
+you own function according to your input data to get better performance:
+
+```go
+func main() {
+	// ...
+
+	// Register a customized function used to check uniqueness of array.
+	openapi3.RegisterArrayUniqueItemsChecker(arrayUniqueItemsChecker)
+
+	// ... other validate codes
+}
+
+func arrayUniqueItemsChecker(items []interface{}) bool {
+	// Check the uniqueness of the input slice(array in JSON)
+}
+```
