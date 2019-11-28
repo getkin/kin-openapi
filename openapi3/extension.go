@@ -30,14 +30,10 @@ func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value i
 		return err
 	}
 	source := decoder.DecodeExtensionMap()
-	if len(source) > 0 {
-		result := make(map[string]interface{}, len(source))
-		for k, v := range source {
-			result[k] = v
-		}
-		props.Extensions = result
-	} else {
-		props.Extensions = map[string]interface{}{}
+	result := make(map[string]interface{}, len(source))
+	for k, v := range source {
+		result[k] = v
 	}
+	props.Extensions = result
 	return nil
 }
