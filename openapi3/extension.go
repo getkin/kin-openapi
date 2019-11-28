@@ -36,6 +36,8 @@ func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value i
 			result[k] = v
 		}
 		props.Extensions = result
+	} else {
+		props.Extensions = map[string]interface{}{}
 	}
 	return nil
 }
