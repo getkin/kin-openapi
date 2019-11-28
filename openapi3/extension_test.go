@@ -8,9 +8,8 @@ import (
 )
 
 func TestExtensionProps_EncodeWith(t *testing.T) {
-	encoder := jsoninfo.NewObjectEncoder()
-
 	t.Run("successfully encoded", func(t *testing.T) {
+		encoder := jsoninfo.NewObjectEncoder()
 		var extensionProps = openapi3.ExtensionProps{
 			Extensions: map[string]interface{}{
 				"field1": "value1",
@@ -34,9 +33,9 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 		"field2": "field2"
 	}
 `)
-	decoder, err := jsoninfo.NewObjectDecoder(data)
-	assert.Nil(t, err)
 	t.Run("successfully decode all the fields", func(t *testing.T) {
+		decoder, err := jsoninfo.NewObjectDecoder(data)
+		assert.Nil(t, err)
 		var extensionProps = &openapi3.ExtensionProps{
 			Extensions: map[string]interface{}{
 				"field1": "value1",
@@ -49,12 +48,14 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 			Field2 string `json:"field2"`
 		}{}
 
-		err := extensionProps.DecodeWith(decoder, value)
+		err = extensionProps.DecodeWith(decoder, value)
 		assert.Nil(t, err)
 		assert.Equal(t, 0, len(extensionProps.Extensions))
 	})
 
 	t.Run("successfully decode some of the fields", func(t *testing.T) {
+		decoder, err := jsoninfo.NewObjectDecoder(data)
+		assert.Nil(t, err)
 		var extensionProps = &openapi3.ExtensionProps{
 			Extensions: map[string]interface{}{
 				"field1": "value1",
@@ -66,12 +67,15 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 			Field1 string `json:"field1"`
 		}{}
 
-		err := extensionProps.DecodeWith(decoder, value)
+		err = extensionProps.DecodeWith(decoder, value)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, len(extensionProps.Extensions))
 	})
 
 	t.Run("successfully decode none of the fields", func(t *testing.T) {
+		decoder, err := jsoninfo.NewObjectDecoder(data)
+		assert.Nil(t, err)
+
 		var extensionProps = &openapi3.ExtensionProps{
 			Extensions: map[string]interface{}{
 				"field1": "value1",
@@ -84,7 +88,7 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 			Field4 string `json:"field4"`
 		}{}
 
-		err := extensionProps.DecodeWith(decoder, value)
+		err = extensionProps.DecodeWith(decoder, value)
 		assert.Nil(t, err)
 		assert.Equal(t, 2, len(extensionProps.Extensions))
 	})
