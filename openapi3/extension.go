@@ -25,6 +25,7 @@ func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value i
 
 // DecodeWith will be invoked by package "jsoninfo"
 func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
+	err := decoder.DecodeStructFieldsAndExtensions(value)
 	source := decoder.DecodeExtensionMap()
 	if len(source) > 0 {
 		result := make(map[string]interface{}, len(source))
@@ -33,5 +34,5 @@ func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value i
 		}
 		props.Extensions = result
 	}
-	return decoder.DecodeStructFieldsAndExtensions(value)
+	return err
 }
