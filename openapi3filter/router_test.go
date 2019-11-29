@@ -110,7 +110,8 @@ func TestRouter(t *testing.T) {
 	swagger.Servers = append(swagger.Servers, &openapi3.Server{
 		URL: "https://www.example.com/api/v1/",
 	}, &openapi3.Server{
-		URL: "https://{d0}.{d1}.com/api/v1/",
+		URL:                "https://{d0}.{d1}.com/api/v1/",
+		VariableNamesInURL: []string{"d0", "d1"},
 	})
 	expect("GET", "/hello", nil, nil)
 	expect("GET", "/api/v1/hello", nil, nil)

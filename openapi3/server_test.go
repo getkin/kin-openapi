@@ -9,15 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServerParamNames(t *testing.T) {
-	server := &openapi3.Server{
-		URL: "http://{x}.{y}.example.com",
-	}
-	values, err := server.ParameterNames()
-	require.NoError(t, err)
-	require.Exactly(t, []string{"x", "y"}, values)
-}
-
 func TestServerParamValuesWithPath(t *testing.T) {
 	server := &openapi3.Server{
 		URL: "http://{arg0}.{arg1}.example.com/a/{arg3}-version/{arg4}c{arg5}",
@@ -51,30 +42,57 @@ func TestServerParamValuesNoPath(t *testing.T) {
 	}
 }
 
-func validServer() *openapi3.Server {
+func validServerWithParameterInURL() *openapi3.Server {
+	return &openapi3.Server{
+		URL: "http://{Param1}.my.cool.{Param2}.website",
+	}
+}
+
+func validServerWithoutParameterInURL() *openapi3.Server {
 	return &openapi3.Server{
 		URL: "http://my.cool.website",
 	}
 }
 
-func invalidServer() *openapi3.Server {
+func invalidServerWithoutUrl() *openapi3.Server {
 	return &openapi3.Server{}
+}
+
+func invalidServerWithErrorParameterDefinedInUrl() *openapi3.Server {
+	return &openapi3.Server{
+		URL: "http://{my.cool.website",
+	}
 }
 
 func TestServerValidation(t *testing.T) {
 	tests := []struct {
-		name          string
-		input         *openapi3.Server
-		expectedError error
+		name                       string
+		input                      *openapi3.Server
+		expectedError              error
+		expectedVariableNamesInURL []string
 	}{
 		{
 			"when no URL is provided",
-			invalidServer(),
+			invalidServerWithoutUrl(),
 			errors.New("Variable 'URL' must be a non-empty JSON string"),
+			nil,
 		},
 		{
-			"when a URL is provided",
-			validServer(),
+			"when URL is provided with error parameter definition",
+			invalidServerWithErrorParameterDefinedInUrl(),
+			errors.New("URL 'http://{my.cool.website' Missing '}'"),
+			nil,
+		},
+		{
+			"when a URL is provided with parameter in 'url'",
+			validServerWithParameterInURL(),
+			nil,
+			[]string{"Param1", "Param2"},
+		},
+		{
+			"when a URL is provided without parameter in 'url'",
+			validServerWithoutParameterInURL(),
+			nil,
 			nil,
 		},
 	}
@@ -85,6 +103,7 @@ func TestServerValidation(t *testing.T) {
 			validationErr := test.input.Validate(c)
 
 			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
+			require.Equal(t, test.expectedVariableNamesInURL, test.input.VariableNamesInURL)
 		})
 	}
 }

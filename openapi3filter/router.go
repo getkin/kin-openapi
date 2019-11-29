@@ -162,11 +162,14 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 				Reason: "Does not match any server",
 			}
 		}
-		pathParams = make(map[string]string, 8)
-		paramNames, _ := server.ParameterNames()
-		for i, value := range paramValues {
-			name := paramNames[i]
-			pathParams[name] = value
+		paramNames := server.VariableNamesInURL
+		s := len(paramNames)
+		if s > 0 {
+			pathParams = make(map[string]string, s)
+			for i, value := range paramValues {
+				name := paramNames[i]
+				pathParams[name] = value
+			}
 		}
 	}
 

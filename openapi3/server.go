@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net/url"
 	"strings"
@@ -39,9 +40,13 @@ type Server struct {
 	URL         string                     `json:"url" yaml:"url"`
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+
+	// Parameters in URL, parse it when validate servers definition to
+	// avoid parse it each time we need it
+	VariableNamesInURL []string `json:"-" yaml:"-"`
 }
 
-func (server Server) ParameterNames() ([]string, error) {
+func (server Server) parameterNames() ([]string, error) {
 	pattern := server.URL
 	var params []string
 	for len(pattern) > 0 {
@@ -52,7 +57,7 @@ func (server Server) ParameterNames() ([]string, error) {
 		pattern = pattern[i+1:]
 		i = strings.IndexByte(pattern, '}')
 		if i < 0 {
-			return nil, errors.New("Missing '}'")
+			return nil, fmt.Errorf("URL '%s' Missing '}'", server.URL)
 		}
 		params = append(params, strings.TrimSpace(pattern[:i]))
 		pattern = pattern[i+1:]
@@ -116,6 +121,11 @@ func (server *Server) Validate(c context.Context) (err error) {
 	if server.URL == "" {
 		return errors.New("Variable 'URL' must be a non-empty JSON string")
 	}
+	paramNames, err := server.parameterNames()
+	if err != nil {
+		return err
+	}
+	server.VariableNamesInURL = paramNames
 	for _, v := range server.Variables {
 		if err = v.Validate(c); err != nil {
 			return
