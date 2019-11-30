@@ -224,20 +224,62 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 
 func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
 	var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error)
-	switch schema.Value.Type {
-	case "array":
-		decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
-			return dec.DecodeArray(param, sm, schema)
+	if len(schema.Value.AnyOf) > 0 {
+		for _, sr := range schema.Value.AnyOf {
+			value, err := decodeValue(dec, param, sm, sr)
+			if value == nil && err == nil {
+				continue
+			}
+			return value, err
 		}
-	case "object":
-		decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
-			return dec.DecodeObject(param, sm, schema)
-		}
-	default:
-		decodeFn = dec.DecodePrimitive
+		return nil, nil
 	}
+	if len(schema.Value.AllOf) > 0 {
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.AllOf {
+			value, err = decodeValue(dec, param, sm, sr)
+			if value == nil || err != nil {
+				break
+			}
+		}
+		return value, err
+	}
+	if len(schema.Value.OneOf) > 0 {
+		isMatched := 0
+		var value interface{}
+		for _, sr := range schema.Value.OneOf {
+			value, err := decodeValue(dec, param, sm, sr)
+			if err != nil {
+				return nil, err
+			}
+			if value != nil {
+				isMatched++
+			}
+		}
+		if isMatched == 1 {
+			return value, nil
+		}
+		return nil, nil
+	}
+	// TODO: if schema.Value.Not isn't nil , how to deal with it?
 
-	return decodeFn(param, sm, schema)
+	if schema.Value.Type != "" {
+		switch schema.Value.Type {
+		case "array":
+			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
+				return dec.DecodeArray(param, sm, schema)
+			}
+		case "object":
+			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
+				return dec.DecodeObject(param, sm, schema)
+			}
+		default:
+			decodeFn = dec.DecodePrimitive
+		}
+		return decodeFn(param, sm, schema)
+	}
+	return nil, nil
 }
 
 // pathParamDecoder decodes values of path parameters.

@@ -76,6 +76,36 @@ func TestFilter(t *testing.T) {
 						},
 						{
 							Value: &openapi3.Parameter{
+								In:   "query",
+								Name: "queryArgAnyOf",
+								Schema: openapi3.NewAnyOfSchema(
+									openapi3.NewStringSchema().WithMaxLength(2),
+									openapi3.NewDateTimeSchema(),
+								).NewRef(),
+							},
+						},
+						{
+							Value: &openapi3.Parameter{
+								In:   "query",
+								Name: "queryArgOneOf",
+								Schema: openapi3.NewOneOfSchema(
+									openapi3.NewStringSchema().WithMaxLength(2),
+									openapi3.NewDateTimeSchema(),
+								).NewRef(),
+							},
+						},
+						{
+							Value: &openapi3.Parameter{
+								In:   "query",
+								Name: "queryArgAllOf",
+								Schema: openapi3.NewAllOfSchema(
+									openapi3.NewDateTimeSchema(),
+									openapi3.NewStringSchema(),
+								).NewRef(),
+							},
+						},
+						{
+							Value: &openapi3.Parameter{
 								In:      "query",
 								Name:    "contentArg",
 								Content: openapi3.NewContentWithJSONSchema(complexArgSchema),
@@ -143,15 +173,16 @@ func TestFilter(t *testing.T) {
 	var err error
 	var req ExampleRequest
 	var resp ExampleResponse
-
+	resp = ExampleResponse{
+		Status: 200,
+	}
 	// Test paths
+
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix",
 	}
-	resp = ExampleResponse{
-		Status: 200,
-	}
+
 	err = expect(req, resp)
 	require.NoError(t, err)
 
@@ -185,6 +216,48 @@ func TestFilter(t *testing.T) {
 	}
 	err = expect(req, resp)
 	require.NoError(t, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=ae",
+	}
+	err = expect(req, resp)
+	require.NoError(t, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=2017-12-31T11:59:59",
+	}
+	err = expect(req, resp)
+	require.NoError(t, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=123",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=ae",
+	}
+	err = expect(req, resp)
+	require.NoError(t, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAllOf=2017-12-31T11:59:59",
+	}
+	err = expect(req, resp)
+	require.NoError(t, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAllOf=abdfg",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	req = ExampleRequest{
 		Method: "POST",
