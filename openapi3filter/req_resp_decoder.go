@@ -260,7 +260,11 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		if isMatched == 1 {
 			return value, nil
 		}
-		return nil, nil
+		if len(schema.Value.Required) == 0 {
+			return nil, nil
+		} else {
+			return nil, errors.New("decode Oneof failed")
+		}
 	}
 	// TODO: if schema.Value.Not isn't nil , how to deal with it?
 
