@@ -196,7 +196,7 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
-func NewUuidSchema() *Schema {
+func NewUUIDSchema() *Schema {
 	return &Schema{
 		Type:   "string",
 		Format: "uuid",

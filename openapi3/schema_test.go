@@ -239,7 +239,7 @@ var schemaExamples = []schemaExample{
 
 	{
 		Title:  "STRING: optional format 'uuid'",
-		Schema: openapi3.NewUuidSchema(),
+		Schema: openapi3.NewUUIDSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
 			"format": "uuid",

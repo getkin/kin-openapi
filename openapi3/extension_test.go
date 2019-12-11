@@ -94,7 +94,7 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 		err = extensionProps.DecodeWith(decoder, &value)
 		assert.Nil(t, err)
 		assert.Equal(t, 2, len(extensionProps.Extensions))
-		assert.Empty(t,  value.Field3)
-		assert.Empty(t,  value.Field4)
+		assert.Empty(t, value.Field3)
+		assert.Empty(t, value.Field4)
 	})
 }
