@@ -94,6 +94,22 @@ func TestFilter(t *testing.T) {
 					Responses: make(openapi3.Responses),
 				},
 			},
+
+			"/issue151": &openapi3.PathItem{
+				Get: &openapi3.Operation{
+					Responses: make(openapi3.Responses),
+				},
+				Parameters: openapi3.Parameters{
+					{
+						Value: &openapi3.Parameter{
+							In:       "query",
+							Name:     "par1",
+							Required: true,
+							Schema:   openapi3.NewIntegerSchema().NewRef(),
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -174,6 +190,13 @@ func TestFilter(t *testing.T) {
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArg=EXCEEDS_MAX_LENGTH",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
+
+	req = ExampleRequest{
+		Method: "GET",
+		URL:    "http://example.com/api/issue151?par2=par1_is_missing",
 	}
 	err = expect(req, resp)
 	require.IsType(t, &openapi3filter.RequestError{}, err)

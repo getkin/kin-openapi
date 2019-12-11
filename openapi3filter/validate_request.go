@@ -45,9 +45,9 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 			if override := operationParameters.GetByInAndName(parameter.In, parameter.Name); override != nil {
 				continue
 			}
-			if err := ValidateParameter(c, input, parameter); err != nil {
-				return err
-			}
+		}
+		if err := ValidateParameter(c, input, parameter); err != nil {
+			return err
 		}
 	}
 
