@@ -528,7 +528,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		}
 
 		// Validate the request
-		err = openapi3filter.ValidateRequest(nil, &req)
+		err = openapi3filter.ValidateRequest(context.TODO(), &req)
 		require.NoError(t, err)
 
 		for securityRequirement, validated := range *schemesValidated {
@@ -635,7 +635,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
+		err = openapi3filter.ValidateSecurityRequirements(context.TODO(), &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {
@@ -735,7 +735,7 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
+		err = openapi3filter.ValidateSecurityRequirements(context.TODO(), &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {

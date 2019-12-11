@@ -52,7 +52,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 	if f != nil {
 		return f(swaggerLoader, location)
 	}
-	data, err := readUrl(location)
+	data, err := readURL(location)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 		return fmt.Errorf("could not resolve path: %v", err)
 	}
 
-	data, err := readUrl(resolvedPath)
+	data, err := readURL(resolvedPath)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 	return nil
 }
 
-func readUrl(location *url.URL) ([]byte, error) {
+func readURL(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" && location.Host != "" {
 		resp, err := http.Get(location.String())
 		if err != nil {

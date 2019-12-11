@@ -1,10 +1,11 @@
 package jsoninfo_test
 
 import (
-	"fmt"
+	"errors"
+	"testing"
+
 	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewObjectDecoder(t *testing.T) {
@@ -68,7 +69,7 @@ func TestUnmarshalStrictStruct(t *testing.T) {
 			},
 			DecodeWithFn: func(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
 				decodeWithFnCalled++
-				return fmt.Errorf("unable to decode the value")
+				return errors.New("unable to decode the value")
 			},
 		}
 		err := jsoninfo.UnmarshalStrictStruct(data, mockStruct)
