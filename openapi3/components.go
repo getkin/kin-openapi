@@ -18,7 +18,6 @@ type Components struct {
 	Responses       map[string]*ResponseRef       `json:"responses,omitempty" yaml:"responses,omitempty"`
 	SecuritySchemes map[string]*SecuritySchemeRef `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
 	Examples        map[string]*ExampleRef        `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Tags            Tags                          `json:"tags,omitempty" yaml:"tags,omitempty"`
 	Links           map[string]*LinkRef           `json:"links,omitempty" yaml:"links,omitempty"`
 	Callbacks       map[string]*CallbackRef       `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
 }

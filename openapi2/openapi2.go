@@ -155,7 +155,10 @@ type Parameter struct {
 	MinLength    uint64              `json:"minLength,omitempty"`
 	MaxLength    *uint64             `json:"maxLength,omitempty"`
 	Pattern      string              `json:"pattern,omitempty"`
-	Default      string              `json:"default,omitempty"`
+	Items        *openapi3.SchemaRef `json:"items,omitempty"`
+	MinItems     uint64              `json:"minItems,omitempty"`
+	MaxItems     *uint64             `json:"maxItems,omitempty"`
+	Default      interface{}         `json:"default,omitempty"`
 }
 
 type Response struct {
