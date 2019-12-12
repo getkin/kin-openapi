@@ -52,7 +52,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 	if f != nil {
 		return f(swaggerLoader, location)
 	}
-	data, err := readUrl(location)
+	data, err := readURL(location)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 // passed element.
 func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.URL, element json.Unmarshaler) error {
 	if !swaggerLoader.IsExternalRefsAllowed {
-		return fmt.Errorf("Encountered non-allowed external reference: '%s'", ref)
+		return fmt.Errorf("encountered non-allowed external reference: '%s'", ref)
 	}
 
 	parsedURL, err := url.Parse(ref)
@@ -72,15 +72,15 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 	}
 
 	if parsedURL.Fragment != "" {
-		panic("References to files which contains more than one element definition are not supported")
+		return errors.New("references to files which contain more than one element definition are not supported")
 	}
 
 	resolvedPath, err := resolvePath(rootPath, parsedURL)
 	if err != nil {
-		return fmt.Errorf("Error while resolving path: %v", err)
+		return fmt.Errorf("could not resolve path: %v", err)
 	}
 
-	data, err := readUrl(resolvedPath)
+	data, err := readURL(resolvedPath)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 	return nil
 }
 
-func readUrl(location *url.URL) ([]byte, error) {
+func readURL(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" && location.Host != "" {
 		resp, err := http.Get(location.String())
 		if err != nil {

@@ -239,7 +239,7 @@ var schemaExamples = []schemaExample{
 
 	{
 		Title:  "STRING: optional format 'uuid'",
-		Schema: openapi3.NewUuidSchema(),
+		Schema: openapi3.NewUUIDSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
 			"format": "uuid",
@@ -352,6 +352,296 @@ var schemaExamples = []schemaExample{
 			},
 			[]interface{}{
 				1, 2, 3, 4,
+			},
+		},
+	},
+	{
+		Title: "ARRAY : items format 'object'",
+		Schema: &openapi3.Schema{
+			Type:        "array",
+			UniqueItems: true,
+			Items: (&openapi3.Schema{
+				Type: "object",
+				Properties: map[string]*openapi3.SchemaRef{
+					"key1": openapi3.NewFloat64Schema().NewRef(),
+				},
+			}).NewRef(),
+		},
+		Serialization: map[string]interface{}{
+			"type":        "array",
+			"uniqueItems": true,
+			"items": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"key1": map[string]interface{}{
+						"type": "number",
+					},
+				},
+				"type": "object",
+			},
+		},
+		AllValid: []interface{}{
+			[]interface{}{
+				map[string]interface{}{
+					"key1": 1,
+					"key2": 1,
+					// Additioanl properties will make object different
+					// By default additionalProperties is true
+				},
+				map[string]interface{}{
+					"key1": 1,
+				},
+			},
+			[]interface{}{
+				map[string]interface{}{
+					"key1": 1,
+				},
+				map[string]interface{}{
+					"key1": 2,
+				},
+			},
+		},
+		AllInvalid: []interface{}{
+			[]interface{}{
+				map[string]interface{}{
+					"key1": 1,
+				},
+				map[string]interface{}{
+					"key1": 1,
+				},
+			},
+		},
+	},
+
+	{
+		Title: "ARRAY : items format 'object' and object with a property of array type ",
+		Schema: &openapi3.Schema{
+			Type:        "array",
+			UniqueItems: true,
+			Items: (&openapi3.Schema{
+				Type: "object",
+				Properties: map[string]*openapi3.SchemaRef{
+					"key1": (&openapi3.Schema{
+						Type:        "array",
+						UniqueItems: true,
+						Items:       openapi3.NewFloat64Schema().NewRef(),
+					}).NewRef(),
+				},
+			}).NewRef(),
+		},
+		Serialization: map[string]interface{}{
+			"type":        "array",
+			"uniqueItems": true,
+			"items": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"key1": map[string]interface{}{
+						"type":        "array",
+						"uniqueItems": true,
+						"items": map[string]interface{}{
+							"type": "number",
+						},
+					},
+				},
+				"type": "object",
+			},
+		},
+		AllValid: []interface{}{
+			[]interface{}{
+				map[string]interface{}{
+					"key1": []interface{}{
+						1, 2,
+					},
+				},
+				map[string]interface{}{
+					"key1": []interface{}{
+						3, 4,
+					},
+				},
+			},
+			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
+				map[string]interface{}{
+					"key1": []interface{}{
+						10, 9,
+					},
+				},
+				map[string]interface{}{
+					"key1": []interface{}{
+						9, 10,
+					},
+				},
+			},
+		},
+		AllInvalid: []interface{}{
+			[]interface{}{ // Violate outer array uniqueItems: true
+				map[string]interface{}{
+					"key1": []interface{}{
+						9, 9,
+					},
+				},
+				map[string]interface{}{
+					"key1": []interface{}{
+						9, 9,
+					},
+				},
+			},
+			[]interface{}{ // Violate inner(array in object) array uniqueItems: true
+				map[string]interface{}{
+					"key1": []interface{}{
+						9, 9,
+					},
+				},
+				map[string]interface{}{
+					"key1": []interface{}{
+						8, 8,
+					},
+				},
+			},
+		},
+	},
+
+	{
+		Title: "ARRAY : items format 'array'",
+		Schema: &openapi3.Schema{
+			Type:        "array",
+			UniqueItems: true,
+			Items: (&openapi3.Schema{
+				Type:        "array",
+				UniqueItems: true,
+				Items:       openapi3.NewFloat64Schema().NewRef(),
+			}).NewRef(),
+		},
+		Serialization: map[string]interface{}{
+			"type":        "array",
+			"uniqueItems": true,
+			"items": map[string]interface{}{
+				"items": map[string]interface{}{
+					"type": "number",
+				},
+				"uniqueItems": true,
+				"type":        "array",
+			},
+		},
+		AllValid: []interface{}{
+			[]interface{}{
+				[]interface{}{1, 2},
+				[]interface{}{3, 4},
+			},
+			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
+				[]interface{}{1, 2},
+				[]interface{}{2, 1},
+			},
+		},
+		AllInvalid: []interface{}{
+			[]interface{}{ // Violate outer array uniqueItems: true
+				[]interface{}{8, 9},
+				[]interface{}{8, 9},
+			},
+			[]interface{}{ // Violate inner array uniqueItems: true
+				[]interface{}{9, 9},
+				[]interface{}{8, 8},
+			},
+		},
+	},
+
+	{
+		Title: "ARRAY : items format 'array' and array with object type items",
+		Schema: &openapi3.Schema{
+			Type:        "array",
+			UniqueItems: true,
+			Items: (&openapi3.Schema{
+				Type:        "array",
+				UniqueItems: true,
+				Items: (&openapi3.Schema{
+					Type: "object",
+					Properties: map[string]*openapi3.SchemaRef{
+						"key1": openapi3.NewFloat64Schema().NewRef(),
+					},
+				}).NewRef(),
+			}).NewRef(),
+		},
+		Serialization: map[string]interface{}{
+			"type":        "array",
+			"uniqueItems": true,
+			"items": map[string]interface{}{
+				"items": map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"key1": map[string]interface{}{
+							"type": "number",
+						},
+					},
+				},
+				"uniqueItems": true,
+				"type":        "array",
+			},
+		},
+		AllValid: []interface{}{
+			[]interface{}{
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+				},
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 2,
+					},
+				},
+			},
+			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+					map[string]interface{}{
+						"key1": 2,
+					},
+				},
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 2,
+					},
+					map[string]interface{}{
+						"key1": 1,
+					},
+				},
+			},
+		},
+		AllInvalid: []interface{}{
+			[]interface{}{ // Violate outer array uniqueItems: true
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+					map[string]interface{}{
+						"key1": 2,
+					},
+				},
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+					map[string]interface{}{
+						"key1": 2,
+					},
+				},
+			},
+			[]interface{}{ // Violate inner array uniqueItems: true
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+					map[string]interface{}{
+						"key1": 1,
+					},
+				},
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 2,
+					},
+					map[string]interface{}{
+						"key1": 2,
+					},
+				},
 			},
 		},
 	},
@@ -726,4 +1016,32 @@ var schemaErrorExamples = []schemaErrorExample{
 		},
 		Want: "NEST",
 	},
+}
+
+func TestRegisterArrayUniqueItemsChecker(t *testing.T) {
+	var (
+		checker = func(items []interface{}) bool {
+			return false
+		}
+		scheme = openapi3.Schema{
+			Type:        "array",
+			UniqueItems: true,
+			Items:       openapi3.NewStringSchema().NewRef(),
+		}
+		val = []interface{}{"1", "2", "3"}
+		err error
+	)
+
+	// Fist checked by predefined function
+	err = scheme.VisitJSON(val)
+	require.NoError(t, err)
+
+	// Register a function will always return false when check if a
+	// slice has unique items, then use a slice indeed has unique
+	// items to verify that check unique items will failed.
+	openapi3.RegisterArrayUniqueItemsChecker(checker)
+
+	err = scheme.VisitJSON(val)
+	require.Error(t, err)
+	require.True(t, strings.HasPrefix(err.Error(), "Duplicate items found"))
 }

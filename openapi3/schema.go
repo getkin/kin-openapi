@@ -54,6 +54,7 @@ type Schema struct {
 	AllOf        []*SchemaRef  `json:"allOf,omitempty" yaml:"allOf,omitempty"`
 	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
 	Type         string        `json:"type,omitempty" yaml:"type,omitempty"`
+	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
 	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
 	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
@@ -195,7 +196,7 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
-func NewUuidSchema() *Schema {
+func NewUUIDSchema() *Schema {
 	return &Schema{
 		Type:   "string",
 		Format: "uuid",
@@ -981,7 +982,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) (err error)
 	}
 
 	// "uniqueItems"
-	if v := schema.UniqueItems; v && !isSliceOfUniqueItems(value) {
+	if v := schema.UniqueItems; v && !sliceUniqueItemsChecker(value) {
 		if fast {
 			return errSchema
 		}
@@ -1220,11 +1221,29 @@ func (err *SchemaError) Error() string {
 
 func isSliceOfUniqueItems(xs []interface{}) bool {
 	s := len(xs)
-	m := make(map[interface{}]struct{}, s)
+	m := make(map[string]struct{}, s)
 	for _, x := range xs {
-		m[x] = struct{}{}
+		// The input slice is coverted from a JSON string, there shall
+		// have no error when covert it back.
+		key, _ := json.Marshal(&x)
+		m[string(key)] = struct{}{}
 	}
 	return s == len(m)
+}
+
+// SliceUniqueItemsChecker is an function used to check if an given slice
+// have unique items.
+type SliceUniqueItemsChecker func(items []interface{}) bool
+
+// By default using predefined func isSliceOfUniqueItems which make use of
+// json.Marshal to generate a key for map used to check if a given slice
+// have unique items.
+var sliceUniqueItemsChecker SliceUniqueItemsChecker = isSliceOfUniqueItems
+
+// RegisterArrayUniqueItemsChecker is used to register a customized function
+// used to check if JSON array have unique items.
+func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker) {
+	sliceUniqueItemsChecker = fn
 }
 
 func unsupportedFormat(format string) error {

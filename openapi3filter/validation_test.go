@@ -94,6 +94,22 @@ func TestFilter(t *testing.T) {
 					Responses: make(openapi3.Responses),
 				},
 			},
+
+			"/issue151": &openapi3.PathItem{
+				Get: &openapi3.Operation{
+					Responses: make(openapi3.Responses),
+				},
+				Parameters: openapi3.Parameters{
+					{
+						Value: &openapi3.Parameter{
+							In:       "query",
+							Name:     "par1",
+							Required: true,
+							Schema:   openapi3.NewIntegerSchema().NewRef(),
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -174,6 +190,13 @@ func TestFilter(t *testing.T) {
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArg=EXCEEDS_MAX_LENGTH",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
+
+	req = ExampleRequest{
+		Method: "GET",
+		URL:    "http://example.com/api/issue151?par2=par1_is_missing",
 	}
 	err = expect(req, resp)
 	require.IsType(t, &openapi3filter.RequestError{}, err)
@@ -505,7 +528,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		}
 
 		// Validate the request
-		err = openapi3filter.ValidateRequest(nil, &req)
+		err = openapi3filter.ValidateRequest(context.TODO(), &req)
 		require.NoError(t, err)
 
 		for securityRequirement, validated := range *schemesValidated {
@@ -612,7 +635,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
+		err = openapi3filter.ValidateSecurityRequirements(context.TODO(), &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {
@@ -712,7 +735,7 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
+		err = openapi3filter.ValidateSecurityRequirements(context.TODO(), &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {

@@ -207,7 +207,7 @@ func (flow *OAuthFlow) Validate(c context.Context, typ oAuthFlowType) error {
 			return errors.New("An OAuth flow is missing 'tokenUrl in not implicit'")
 		}
 	}
-	if v := flow.Scopes; len(v) == 0 {
+	if v := flow.Scopes; v == nil {
 		return errors.New("An OAuth flow is missing 'scopes'")
 	}
 	return nil

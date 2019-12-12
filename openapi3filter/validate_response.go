@@ -11,6 +11,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+// ValidateResponse is used to validate the given input according to previous
+// loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec, a
+// non-nil error will be returned.
+//
+// Note: One can tune the behavior of uniqueItems: true verification
+// by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
 func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	req := input.RequestValidationInput.Request
 	switch req.Method {
