@@ -903,3 +903,46 @@ paths:
   /pets:
     $ref: relativeDocs/CustomTestPath.yml
 `
+
+func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
+	loader := openapi3.NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadSwaggerFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
+
+	require.NoError(t, err)
+
+	// path in nested directory
+	// check parameter
+	nestedDirPath := swagger.Paths["/pets/{id}"]
+	require.Equal(t, "param", nestedDirPath.Patch.Parameters[0].Value.Name)
+	require.Equal(t, "path", nestedDirPath.Patch.Parameters[0].Value.In)
+	require.Equal(t, true, nestedDirPath.Patch.Parameters[0].Value.Required)
+
+	// check header
+	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+
+	// check request body
+	require.Equal(t, "example request", nestedDirPath.Patch.RequestBody.Value.Description)
+
+	// check response schema and example
+	require.Equal(t, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Schema.Value.Type, "string")
+	expectedExample := "hello"
+	require.Equal(t,  expectedExample, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
+
+	// path in more nested directory
+	// check parameter
+	moreNestedDirPath := swagger.Paths["/pets/{id}/{city}"]
+	require.Equal(t, "param", moreNestedDirPath.Patch.Parameters[0].Value.Name, )
+	require.Equal(t, "path", moreNestedDirPath.Patch.Parameters[0].Value.In)
+	require.Equal(t, true, moreNestedDirPath.Patch.Parameters[0].Value.Required)
+
+	// check header
+	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+
+	// check request body
+	require.Equal(t, "example request", moreNestedDirPath.Patch.RequestBody.Value.Description)
+
+	// check response schema and example
+	require.Equal(t, "string", moreNestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+	require.Equal(t, moreNestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Examples["CustomTestExample"].Value.Value, expectedExample)
+}
