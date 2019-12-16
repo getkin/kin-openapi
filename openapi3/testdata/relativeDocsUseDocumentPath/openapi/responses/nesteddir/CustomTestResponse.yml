@@ -1,0 +1,10 @@
+description: description
+content:
+  application/json:
+    schema:
+      $ref: "../../../CustomTestSchema.yml"
+    example:
+      $ref: "../../../CustomTestExample.yml"
+    headers:
+      X-Rate-Limit-Reset:
+        $ref: "../../../CustomTestHeader.yml"

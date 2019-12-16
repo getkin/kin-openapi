@@ -1,0 +1,5 @@
+description: description
+content:
+  application/json:
+    schema:
+      $ref: "../../../CustomTestSchema.yml"
