@@ -385,7 +385,10 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		return nil
 	}
 
-	refDocumentPath := referencedDocumentPath(documentPath, ref)
+	refDocumentPath, err := referencedDocumentPath(documentPath, ref)
+	if err != nil {
+		return err
+	}
 
 	if value.Content != nil && value.Schema != nil {
 		return errors.New("Cannot contain both schema and content in a parameter")
@@ -501,7 +504,10 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 			component.Value = resolved.Value
 		}
 	}
-	refDocumentPath := referencedDocumentPath(documentPath, ref)
+	refDocumentPath, err := referencedDocumentPath(documentPath, ref)
+	if err != nil {
+		return err
+	}
 
 	value := component.Value
 	if value == nil {
@@ -570,7 +576,10 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		}
 	}
 
-	refDocumentPath := referencedDocumentPath(documentPath, ref)
+	refDocumentPath, err := referencedDocumentPath(documentPath, ref)
+	if err != nil {
+		return err
+	}
 
 	value := component.Value
 	if value == nil {
@@ -742,7 +751,10 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 		}
 	}
 
-	refDocumentPath := referencedDocumentPath(documentPath, ref)
+	refDocumentPath, err := referencedDocumentPath(documentPath, ref)
+	if err != nil {
+		return err
+	}
 
 	for _, parameter := range pathItem.Parameters {
 		if err = swaggerLoader.resolveParameterRef(swagger, parameter, refDocumentPath); err != nil {
@@ -774,12 +786,18 @@ func unescapeRefString(ref string) string {
 	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
 
-func referencedDocumentPath(documentPath *url.URL, ref string) *url.URL {
+func referencedDocumentPath(documentPath *url.URL, ref string) (*url.URL, error) {
 	newDocumentPath := documentPath
 	if documentPath != nil {
-		refDirectory, _ := url.Parse(path.Dir(ref))
+		refDirectory, err := url.Parse(path.Dir(ref))
+		if err != nil {
+			return nil, err
+		}
 		joinedDirectory := path.Join(path.Dir(documentPath.String()), refDirectory.String())
-		newDocumentPath, _ = url.Parse(joinedDirectory + "/")
+		newDocumentPath, err = url.Parse(joinedDirectory + "/")
+		if err != nil {
+			return nil, err
+		}
 	}
-	return newDocumentPath
+	return newDocumentPath, nil
 }
