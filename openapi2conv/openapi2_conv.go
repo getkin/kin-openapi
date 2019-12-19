@@ -156,6 +156,11 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 	if parameter == nil {
 		return nil, nil, nil
 	}
+	if ref := parameter.Ref; len(ref) > 0 {
+		return &openapi3.ParameterRef{
+			Ref: ToV3Ref(ref),
+		}, nil, nil
+	}
 	in := parameter.In
 	if in == "body" {
 		result := &openapi3.RequestBody{
@@ -248,6 +253,7 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 var ref2To3 = map[string]string{
 	"#/definitions/": "#/components/schemas/",
 	"#/responses/":   "#/components/responses/",
+	"#/parameters/":  "#/components/parameters/",
 }
 
 func ToV3Ref(ref string) string {
@@ -364,6 +370,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 		if pathItem == nil {
 			continue
 		}
+		result.AddOperation(path, "GET", nil)
 		for method, operation := range pathItem.Operations() {
 			if operation == nil {
 				continue
@@ -373,6 +380,22 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 				return nil, err
 			}
 			result.AddOperation(path, method, resultOperation)
+		}
+		params := openapi2.Parameters{}
+		for _, param := range pathItem.Parameters {
+			p, err := FromV3Parameter(param)
+			if err != nil {
+				return nil, err
+			}
+			params = append(params, p)
+		}
+		result.Paths[path].Parameters = params
+	}
+	result.Parameters = map[string]*openapi2.Parameter{}
+	for name, param := range swagger.Components.Parameters {
+		result.Parameters[name], err = FromV3Parameter(param)
+		if err != nil {
+			return nil, err
 		}
 	}
 	if m := swagger.Components.SecuritySchemes; m != nil {
