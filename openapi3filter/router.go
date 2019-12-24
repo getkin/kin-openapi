@@ -170,6 +170,23 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 		}
 	}
 
+	// Get operation
+	for path, item := range swagger.Paths {
+		if path == remainingPath {
+			pathItem := item
+			operation := pathItem.GetOperation(method)
+			if operation == nil {
+				return nil, nil, &RouteError{
+					Route: Route{
+						Swagger: swagger,
+						Server:  server,
+					},
+					Reason: "Path doesn't support the HTTP method",
+				}
+			}
+		}
+	}
+
 	// Get PathItem
 	root := router.node()
 	var route *Route
@@ -187,18 +204,6 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 		}
 	}
 
-	// Get operation
-	pathItem := route.PathItem
-	operation := pathItem.GetOperation(method)
-	if operation == nil {
-		return nil, nil, &RouteError{
-			Route: Route{
-				Swagger: swagger,
-				Server:  server,
-			},
-			Reason: "Path doesn't support the HTTP method",
-		}
-	}
 	if pathParams == nil {
 		pathParams = make(map[string]string, len(paramValues))
 	}
