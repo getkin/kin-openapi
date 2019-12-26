@@ -7,6 +7,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRouter(t *testing.T) {
@@ -39,6 +40,9 @@ func TestRouter(t *testing.T) {
 				Put:     helloPUT,
 				Trace:   helloTRACE,
 			},
+			"/onlyGET": &openapi3.PathItem{
+				Get: helloGET,
+			},
 			"/params/{x}/{y}/{z*}": &openapi3.PathItem{
 				Get: paramsGET,
 			},
@@ -51,9 +55,7 @@ func TestRouter(t *testing.T) {
 	// Declare a helper function
 	expect := func(method string, uri string, operation *openapi3.Operation, params map[string]string) {
 		req, err := http.NewRequest(method, uri, nil)
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 		route, pathParams, err := router.FindRoute(req.Method, req.URL)
 		if err != nil {
 			if operation == nil {
@@ -122,4 +124,17 @@ func TestRouter(t *testing.T) {
 		"d0": "domain0",
 		"d1": "domain1",
 	})
+
+	{
+		uri := "https://www.example.com/api/v1/onlyGET"
+		expect(http.MethodGet, uri, helloGET, nil)
+		req, err := http.NewRequest(http.MethodDelete, uri, nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		route, pathParams, err := router.FindRoute(req.Method, req.URL)
+		require.Error(t, err)
+		require.Equal(t, err.(*openapi3filter.RouteError).Reason, "Path doesn't support the HTTP method")
+		require.Nil(t, route)
+		require.Nil(t, pathParams)
+	}
 }
