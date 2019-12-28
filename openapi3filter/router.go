@@ -178,10 +178,19 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 		route, _ = node.Value.(*Route)
 	}
 	if route == nil {
+		pathItem := swagger.Paths[remainingPath]
+		if pathItem == nil {
+			return nil, nil, &RouteError{
+				Route: Route{
+					Swagger: swagger,
+					Server:  server,
+				},
+				Reason: "Path was not found",
+			}
+		}
 
 		// Get operation
-		pathItem := swagger.Paths[remainingPath]
-		if pathItem == nil || pathItem.GetOperation(method) == nil {
+		if pathItem.GetOperation(method) == nil {
 			return nil, nil, &RouteError{
 				Route: Route{
 					Swagger: swagger,
@@ -191,13 +200,6 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 			}
 		}
 
-		return nil, nil, &RouteError{
-			Route: Route{
-				Swagger: swagger,
-				Server:  server,
-			},
-			Reason: "Path was not found",
-		}
 	}
 
 	if pathParams == nil {
