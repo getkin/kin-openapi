@@ -60,7 +60,7 @@ type Schema struct {
 	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default      interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
 	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
-	ExternalDocs interface{}   `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	// Object-related, here for struct compactness
 	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`

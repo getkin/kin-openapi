@@ -43,6 +43,8 @@ type Operation struct {
 
 	// Optional servers that overrides top-level servers.
 	Servers *Servers `json:"servers,omitempty" yaml:"servers,omitempty"`
+
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
 func NewOperation() *Operation {
