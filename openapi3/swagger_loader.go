@@ -794,8 +794,7 @@ func referencedDocumentPath(documentPath *url.URL, ref string) (*url.URL, error)
 			return nil, err
 		}
 		joinedDirectory := path.Join(path.Dir(documentPath.String()), refDirectory.String())
-		newDocumentPath, err = url.Parse(joinedDirectory + "/")
-		if err != nil {
+		if newDocumentPath, err = url.Parse(joinedDirectory + "/"); err != nil {
 			return nil, err
 		}
 	}

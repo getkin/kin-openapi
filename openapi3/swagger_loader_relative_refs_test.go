@@ -927,12 +927,12 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 	// check response schema and example
 	require.Equal(t, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Schema.Value.Type, "string")
 	expectedExample := "hello"
-	require.Equal(t,  expectedExample, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
+	require.Equal(t, expectedExample, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
 
 	// path in more nested directory
 	// check parameter
 	moreNestedDirPath := swagger.Paths["/pets/{id}/{city}"]
-	require.Equal(t, "param", moreNestedDirPath.Patch.Parameters[0].Value.Name, )
+	require.Equal(t, "param", moreNestedDirPath.Patch.Parameters[0].Value.Name)
 	require.Equal(t, "path", moreNestedDirPath.Patch.Parameters[0].Value.In)
 	require.Equal(t, true, moreNestedDirPath.Patch.Parameters[0].Value.Required)
 
