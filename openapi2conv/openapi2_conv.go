@@ -242,6 +242,9 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	for k, v := range schema.Value.Properties {
 		schema.Value.Properties[k] = ToV3SchemaRef(v)
 	}
+	if schema.Value.AdditionalProperties != nil {
+		schema.Value.AdditionalProperties = ToV3SchemaRef(schema.Value.AdditionalProperties)
+	}
 	return schema
 }
 
@@ -412,6 +415,9 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	}
 	for k, v := range schema.Value.Properties {
 		schema.Value.Properties[k] = FromV3SchemaRef(v)
+	}
+	if schema.Value.AdditionalProperties != nil {
+		schema.Value.AdditionalProperties = FromV3SchemaRef(schema.Value.AdditionalProperties)
 	}
 	return schema
 }
