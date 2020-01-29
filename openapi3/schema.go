@@ -595,6 +595,8 @@ func (schema *Schema) VisitJSON(value interface{}) error {
 
 func (schema *Schema) visitJSON(value interface{}, fast bool) (err error) {
 	switch value := value.(type) {
+	case nil:
+		return schema.visitJSONNull(fast)
 	case float64:
 		if math.IsNaN(value) {
 			return ErrSchemaInputNaN
