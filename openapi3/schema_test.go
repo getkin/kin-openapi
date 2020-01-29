@@ -135,6 +135,32 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "NULLABLE ANYOF",
+		Schema: openapi3.NewAnyOfSchema(
+			openapi3.NewIntegerSchema(),
+			openapi3.NewFloat64Schema(),
+		).WithNullable(),
+		Serialization: map[string]interface{}{
+			"nullable": true,
+			"anyOf": []interface{}{
+				map[string]interface{}{"type": "integer"},
+				map[string]interface{}{"type": "number"},
+			},
+		},
+		AllValid: []interface{}{
+			nil,
+			42,
+			4.2,
+		},
+		AllInvalid: []interface{}{
+			true,
+			[]interface{}{42},
+			"bla",
+			map[string]interface{}{},
+		},
+	},
+
+	{
 		Title:  "BOOLEAN",
 		Schema: openapi3.NewBoolSchema(),
 		Serialization: map[string]interface{}{
