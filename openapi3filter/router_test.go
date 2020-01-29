@@ -12,8 +12,8 @@ import (
 
 func TestRouter(t *testing.T) {
 	var (
-		pathNotFound = "Path was not found"
-		methodNotAllowed = "Path doesn't support the HTTP method"
+		pathNotFound          = "Path was not found"
+		methodNotAllowed      = "Path doesn't support the HTTP method"
 		doesNotMatchAnyServer = "Does not match any server"
 	)
 
