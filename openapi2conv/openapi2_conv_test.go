@@ -164,7 +164,13 @@ const exampleV2 = `
         "foo": {
           "type": "string"
         }
+      },
+	  "additionalProperties": {
+        "$ref": "#/definitions/ItemExtension"
       }
+    },
+    "ItemExtension": {
+        "description": "It could be anything."
     },
     "Error": {
       "description": "Error response.",
@@ -215,8 +221,14 @@ const exampleV3 = `
           "foo": {
             "type": "string"
           }
-        }
+        },
+	    "additionalProperties": {
+          "$ref": "#/components/schemas/ItemExtension"
+	    }
       },
+	  "ItemExtension": {
+		"description": "It could be anything."
+	  },
       "Error": {
         "description": "Error response.",
         "properties": {
