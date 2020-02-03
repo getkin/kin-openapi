@@ -516,6 +516,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			case "hostname", "idn-hostname", "ipv4", "ipv6":
 			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
 			case "json-pointer", "relative-json-pointer":
+			case "uuid":
 			default:
 				// Try to check for custom defined formats
 				if _, ok := SchemaStringFormats[format]; !ok {
