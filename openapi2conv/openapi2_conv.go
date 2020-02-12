@@ -302,8 +302,8 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 		flows := &openapi3.OAuthFlows{}
 		result.Flows = flows
 		scopesMap := make(map[string]string)
-		for _, scope := range securityScheme.Scopes {
-			scopesMap[scope] = ""
+		for scope, desc := range securityScheme.Scopes {
+			scopesMap[scope] = desc
 		}
 		flow := &openapi3.OAuthFlow{
 			AuthorizationURL: securityScheme.AuthorizationURL,
