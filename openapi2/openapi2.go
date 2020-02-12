@@ -178,14 +178,14 @@ type Header struct {
 type SecurityRequirements []map[string][]string
 
 type SecurityScheme struct {
-	Ref              string        `json:"$ref,omitempty"`
-	Description      string        `json:"description,omitempty"`
-	Type             string        `json:"type,omitempty"`
-	In               string        `json:"in,omitempty"`
-	Name             string        `json:"name,omitempty"`
-	Flow             string        `json:"flow,omitempty"`
-	AuthorizationURL string        `json:"authorizationUrl,omitempty"`
-	TokenURL         string        `json:"tokenUrl,omitempty"`
-	Scopes           []string      `json:"scopes,omitempty"`
-	Tags             openapi3.Tags `json:"tags,omitempty"`
+	Ref              string            `json:"$ref,omitempty"`
+	Description      string            `json:"description,omitempty"`
+	Type             string            `json:"type,omitempty"`
+	In               string            `json:"in,omitempty"`
+	Name             string            `json:"name,omitempty"`
+	Flow             string            `json:"flow,omitempty"`
+	AuthorizationURL string            `json:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes,omitempty"`
+	Tags             openapi3.Tags     `json:"tags,omitempty"`
 }

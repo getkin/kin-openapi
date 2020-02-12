@@ -643,8 +643,8 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 			} else {
 				return nil, nil
 			}
-			for scope := range flow.Scopes {
-				result.Scopes = append(result.Scopes, scope)
+			for scope, desc := range flow.Scopes {
+				result.Scopes[scope] = desc
 			}
 		}
 	default:
