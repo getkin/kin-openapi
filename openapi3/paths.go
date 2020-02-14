@@ -19,9 +19,6 @@ func (paths Paths) Validate(c context.Context) error {
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("Path '%v' does not start with '/'", path)
 		}
-		if strings.Contains(path, "//") {
-			return fmt.Errorf("Path '%v' contains '//'", path)
-		}
 		normalizedPaths[path] = path
 		if err := pathItem.Validate(c); err != nil {
 			return err
