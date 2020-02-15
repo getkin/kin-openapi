@@ -90,7 +90,7 @@ func TestFilter(t *testing.T) {
 								Name: "queryArgOneOf",
 								Schema: openapi3.NewOneOfSchema(
 									openapi3.NewStringSchema().WithMaxLength(2),
-									openapi3.NewDateTimeSchema(),
+									openapi3.NewInt32Schema(),
 								).NewRef(),
 							},
 						},
@@ -244,6 +244,20 @@ func TestFilter(t *testing.T) {
 	}
 	err = expect(req, resp)
 	require.NoError(t, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=567",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
+
+	req = ExampleRequest{
+		Method: "POST",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=2017-12-31T11:59:59",
+	}
+	err = expect(req, resp)
+	require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	req = ExampleRequest{
 		Method: "POST",
