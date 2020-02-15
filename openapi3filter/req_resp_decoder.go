@@ -280,6 +280,19 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		}
 	}
 	// TODO: if schema.Value.Not isn't nil , how to deal with it?
+	if schema.Value.Not != nil {
+		v, err := decodeValue(dec, param, sm, schema.Value.Not, required)
+		if v != nil {
+			return nil, fmt.Errorf("decode Not failed")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("Currently the 3pp can't decode Not type")
+		}
+		if required == true {
+			return nil, fmt.Errorf("Currently the 3pp can't decode Not type")
+		}
+		return nil, nil
+	}
 
 	if schema.Value.Type != "" {
 		switch schema.Value.Type {
