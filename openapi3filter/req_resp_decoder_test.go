@@ -43,8 +43,26 @@ func TestDecodeParameter(t *testing.T) {
 		numberSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "number"}}
 		booleanSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "boolean"}}
 		stringSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "string"}}
-		arraySchema   = arrayOf(stringSchema)
-		objectSchema  = objectOf("id", stringSchema, "name", stringSchema)
+		allofSchema   = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				AllOf: []*openapi3.SchemaRef{
+					integerSchema,
+					numberSchema,
+				}}}
+		anyofSchema = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				AnyOf: []*openapi3.SchemaRef{
+					integerSchema,
+					stringSchema,
+				}}}
+		oneofSchema = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				OneOf: []*openapi3.SchemaRef{
+					booleanSchema,
+					integerSchema,
+				}}}
+		arraySchema  = arrayOf(stringSchema)
+		objectSchema = objectOf("id", stringSchema, "name", stringSchema)
 	)
 
 	type testCase struct {
@@ -415,6 +433,63 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
 					query: "param=foo",
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
+				},
+			},
+		},
+		{
+			name: "query Allof",
+			testCases: []testCase{
+				{
+					name:  "allofSchema integer and number",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: allofSchema},
+					query: "param=1",
+					want:  float64(1),
+				},
+				{
+					name:  "allofSchema string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: allofSchema},
+					query: "param=abdf",
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "abdf"},
+				},
+			},
+		},
+		{
+			name: "query Anyof",
+			testCases: []testCase{
+				{
+					name:  "anyofSchema integer",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
+					query: "param=1",
+					want:  float64(1),
+				},
+				{
+					name:  "anyofSchema string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
+					query: "param=abdf",
+					want:  "abdf",
+				},
+			},
+		},
+		{
+			name: "query Oneof",
+			testCases: []testCase{
+				{
+					name:  "oneofSchema boolean",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
+					query: "param=true",
+					want:  true,
+				},
+				{
+					name:  "oneofSchema int",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
+					query: "param=1122",
+					want:  float64(1122),
+				},
+				{
+					name:  "oneofSchema string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
+					query: "param=abcd",
+					want:  nil,
 				},
 			},
 		},

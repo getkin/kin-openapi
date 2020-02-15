@@ -208,8 +208,14 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 	var dec valueDecoder
 	switch param.In {
 	case openapi3.ParameterInPath:
+		if input.PathParams == nil {
+			return nil, nil
+		}
 		dec = &pathParamDecoder{pathParams: input.PathParams}
 	case openapi3.ParameterInQuery:
+		if len(input.GetQueryParams()) == 0 {
+			return nil, nil
+		}
 		dec = &urlValuesDecoder{values: input.GetQueryParams()}
 	case openapi3.ParameterInHeader:
 		dec = &headerParamDecoder{header: input.Request.Header}
@@ -219,25 +225,91 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 		return nil, fmt.Errorf("unsupported parameter's 'in': %s", param.In)
 	}
 
-	return decodeValue(dec, param.Name, sm, param.Schema)
+	return decodeValue(dec, param.Name, sm, param.Schema, param.Required)
 }
 
-func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
+func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef, required bool) (interface{}, error) {
 	var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error)
-	switch schema.Value.Type {
-	case "array":
-		decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
-			return dec.DecodeArray(param, sm, schema)
+
+	if len(schema.Value.AllOf) > 0 {
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.AllOf {
+			value, err = decodeValue(dec, param, sm, sr, required)
+			if value == nil || err != nil {
+				break
+			}
 		}
-	case "object":
-		decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
-			return dec.DecodeObject(param, sm, schema)
-		}
-	default:
-		decodeFn = dec.DecodePrimitive
+		return value, err
 	}
 
-	return decodeFn(param, sm, schema)
+	if len(schema.Value.AnyOf) > 0 {
+		for _, sr := range schema.Value.AnyOf {
+			value, _ := decodeValue(dec, param, sm, sr, required)
+			if value != nil {
+				return value, nil
+			}
+		}
+		if required == true {
+			return nil, fmt.Errorf("decode AnyOf failed " + param)
+		} else {
+			return nil, nil
+		}
+
+	}
+
+	if len(schema.Value.OneOf) > 0 {
+		isMatched := 0
+		var value interface{}
+		for _, sr := range schema.Value.OneOf {
+			v, _ := decodeValue(dec, param, sm, sr, required)
+			if v != nil {
+				value = v
+				isMatched++
+			}
+		}
+		if isMatched == 1 {
+			return value, nil
+		} else if isMatched > 1 {
+			return nil, fmt.Errorf("decode Oneof failed, matched times:%d", isMatched)
+		}
+		if required == true {
+			return nil, fmt.Errorf("decode Oneof failed, " + param + "is required")
+		} else {
+			return nil, nil
+		}
+	}
+	// TODO: if schema.Value.Not isn't nil , how to deal with it?
+	if schema.Value.Not != nil {
+		v, err := decodeValue(dec, param, sm, schema.Value.Not, required)
+		if v != nil {
+			return nil, fmt.Errorf("decode Not failed")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("Currently the 3pp can't decode Not type")
+		}
+		if required == true {
+			return nil, fmt.Errorf("Currently the 3pp can't decode Not type")
+		}
+		return nil, nil
+	}
+
+	if schema.Value.Type != "" {
+		switch schema.Value.Type {
+		case "array":
+			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
+				return dec.DecodeArray(param, sm, schema)
+			}
+		case "object":
+			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {
+				return dec.DecodeObject(param, sm, schema)
+			}
+		default:
+			decodeFn = dec.DecodePrimitive
+		}
+		return decodeFn(param, sm, schema)
+	}
+	return nil, nil
 }
 
 // pathParamDecoder decodes values of path parameters.
@@ -820,7 +892,7 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 		}
 		sm := enc.SerializationMethod()
 
-		if value, err = decodeValue(dec, name, sm, prop); err != nil {
+		if value, err = decodeValue(dec, name, sm, prop, false); err != nil {
 			return nil, err
 		}
 		obj[name] = value
