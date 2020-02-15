@@ -1,0 +1,19 @@
+patch:
+  description: "Modify a pet"
+  parameters:
+    - $ref: "../../../CustomTestParameter.yml"
+  requestBody:
+    $ref: "../../../CustomTestRequestBody.yml"
+  responses:
+    200:
+      description: "success"
+      headers:
+        X-Rate-Limit-Reset:
+          $ref: "../../../CustomTestHeader.yml"
+      content:
+        application/json:
+          schema:
+            $ref: "../../../CustomTestSchema.yml"
+          examples:
+            CustomTestExample:
+              $ref: "../../../CustomTestExample.yml"

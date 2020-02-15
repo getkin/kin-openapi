@@ -214,6 +214,10 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
 			errors.New("Cannot contain both schema and content in a parameter"))
 	}
+	if parameter.Schema == nil && parameter.Content == nil {
+		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
+			errors.New("A parameter MUST contain either a schema property, or a content property"))
+	}
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
 			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)

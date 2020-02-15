@@ -60,7 +60,7 @@ type Schema struct {
 	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default      interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
 	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
-	ExternalDocs interface{}   `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	// Object-related, here for struct compactness
 	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`
@@ -196,7 +196,7 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
-func NewUuidSchema() *Schema {
+func NewUUIDSchema() *Schema {
 	return &Schema{
 		Type:   "string",
 		Format: "uuid",
@@ -595,6 +595,8 @@ func (schema *Schema) VisitJSON(value interface{}) error {
 
 func (schema *Schema) visitJSON(value interface{}, fast bool) (err error) {
 	switch value := value.(type) {
+	case nil:
+		return schema.visitJSONNull(fast)
 	case float64:
 		if math.IsNaN(value) {
 			return ErrSchemaInputNaN

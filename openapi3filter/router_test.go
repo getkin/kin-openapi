@@ -7,9 +7,16 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRouter(t *testing.T) {
+	var (
+		pathNotFound          = "Path was not found"
+		methodNotAllowed      = "Path doesn't support the HTTP method"
+		doesNotMatchAnyServer = "Does not match any server"
+	)
+
 	// Build swagger
 	helloCONNECT := &openapi3.Operation{Responses: make(openapi3.Responses)}
 	helloDELETE := &openapi3.Operation{Responses: make(openapi3.Responses)}
@@ -21,6 +28,7 @@ func TestRouter(t *testing.T) {
 	helloPUT := &openapi3.Operation{Responses: make(openapi3.Responses)}
 	helloTRACE := &openapi3.Operation{Responses: make(openapi3.Responses)}
 	paramsGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	partialGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
 	swagger := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
@@ -39,8 +47,14 @@ func TestRouter(t *testing.T) {
 				Put:     helloPUT,
 				Trace:   helloTRACE,
 			},
+			"/onlyGET": &openapi3.PathItem{
+				Get: helloGET,
+			},
 			"/params/{x}/{y}/{z*}": &openapi3.PathItem{
 				Get: paramsGET,
+			},
+			"/partial": &openapi3.PathItem{
+				Get: partialGET,
 			},
 		},
 	}
@@ -51,20 +65,39 @@ func TestRouter(t *testing.T) {
 	// Declare a helper function
 	expect := func(method string, uri string, operation *openapi3.Operation, params map[string]string) {
 		req, err := http.NewRequest(method, uri, nil)
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 		route, pathParams, err := router.FindRoute(req.Method, req.URL)
 		if err != nil {
 			if operation == nil {
-				return
+				if err.Error() == doesNotMatchAnyServer {
+					return
+				}
+
+				pathItem := swagger.Paths[uri]
+				if pathItem == nil {
+					if err.Error() != pathNotFound {
+						t.Fatalf("'%s %s': should have returned '%s', but it returned an error: %v",
+							method, uri, pathNotFound, err)
+					}
+					return
+				}
+				if pathItem.GetOperation(method) == nil {
+					if err.Error() != methodNotAllowed {
+						t.Fatalf("'%s %s': should have returned '%s', but it returned an error: %v",
+							method, uri, methodNotAllowed, err)
+					}
+				}
+			} else {
+				t.Fatalf("'%s %s': should have returned an operation, but it returned an error: %v",
+					method, uri, err)
 			}
-			t.Fatalf("'%s %s': should have returned an operation, but it returned an error: %v",
-				method, uri, err)
 		}
-		if operation == nil {
+		if operation == nil && err == nil {
 			t.Fatalf("'%s %s': should have returned an error, but didn't",
 				method, uri)
+		}
+		if route == nil {
+			return
 		}
 		if route.Operation != operation {
 			t.Fatalf("'%s %s': Returned wrong operation (%v)",
@@ -107,6 +140,7 @@ func TestRouter(t *testing.T) {
 		"y": "b",
 		"z": "c/d",
 	})
+	expect("POST", "/partial", nil, nil)
 	swagger.Servers = append(swagger.Servers, &openapi3.Server{
 		URL: "https://www.example.com/api/v1/",
 	}, &openapi3.Server{
@@ -122,4 +156,17 @@ func TestRouter(t *testing.T) {
 		"d0": "domain0",
 		"d1": "domain1",
 	})
+
+	{
+		uri := "https://www.example.com/api/v1/onlyGET"
+		expect(http.MethodGet, uri, helloGET, nil)
+		req, err := http.NewRequest(http.MethodDelete, uri, nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		route, pathParams, err := router.FindRoute(req.Method, req.URL)
+		require.Error(t, err)
+		require.Equal(t, err.(*openapi3filter.RouteError).Reason, "Path doesn't support the HTTP method")
+		require.Nil(t, route)
+		require.Nil(t, pathParams)
+	}
 }

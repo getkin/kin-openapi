@@ -351,16 +351,16 @@ func (d *pathParamDecoder) DecodeArray(param string, sm *openapi3.SerializationM
 	switch {
 	case sm.Style == "simple":
 		delim = ","
-	case sm.Style == "label" && sm.Explode == false:
+	case sm.Style == "label" && !sm.Explode:
 		prefix = "."
 		delim = ","
-	case sm.Style == "label" && sm.Explode == true:
+	case sm.Style == "label" && sm.Explode:
 		prefix = "."
 		delim = "."
-	case sm.Style == "matrix" && sm.Explode == false:
+	case sm.Style == "matrix" && !sm.Explode:
 		prefix = ";" + param + "="
 		delim = ","
-	case sm.Style == "matrix" && sm.Explode == true:
+	case sm.Style == "matrix" && sm.Explode:
 		prefix = ";" + param + "="
 		delim = ";" + param + "="
 	default:
