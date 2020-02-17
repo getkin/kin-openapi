@@ -128,31 +128,31 @@ func TestRouter(t *testing.T) {
 			}
 		}
 	}
-	expect("GET", "/not_existing", nil, nil)
-	expect("DELETE", "/hello", helloDELETE, nil)
-	expect("GET", "/hello", helloGET, nil)
-	expect("HEAD", "/hello", helloHEAD, nil)
-	expect("PATCH", "/hello", helloPATCH, nil)
-	expect("POST", "/hello", helloPOST, nil)
-	expect("PUT", "/hello", helloPUT, nil)
-	expect("GET", "/params/a/b/c/d", paramsGET, map[string]string{
+	expect(http.MethodGet, "/not_existing", nil, nil)
+	expect(http.MethodDelete, "/hello", helloDELETE, nil)
+	expect(http.MethodGet, "/hello", helloGET, nil)
+	expect(http.MethodHead, "/hello", helloHEAD, nil)
+	expect(http.MethodPatch, "/hello", helloPATCH, nil)
+	expect(http.MethodPost, "/hello", helloPOST, nil)
+	expect(http.MethodPut, "/hello", helloPUT, nil)
+	expect(http.MethodGet, "/params/a/b/c/d", paramsGET, map[string]string{
 		"x": "a",
 		"y": "b",
 		"z": "c/d",
 	})
-	expect("POST", "/partial", nil, nil)
+	expect(http.MethodPost, "/partial", nil, nil)
 	swagger.Servers = append(swagger.Servers, &openapi3.Server{
 		URL: "https://www.example.com/api/v1/",
 	}, &openapi3.Server{
 		URL: "https://{d0}.{d1}.com/api/v1/",
 	})
-	expect("GET", "/hello", nil, nil)
-	expect("GET", "/api/v1/hello", nil, nil)
-	expect("GET", "www.example.com/api/v1/hello", nil, nil)
-	expect("GET", "https:///api/v1/hello", nil, nil)
-	expect("GET", "https://www.example.com/hello", nil, nil)
-	expect("GET", "https://www.example.com/api/v1/hello", helloGET, map[string]string{})
-	expect("GET", "https://domain0.domain1.com/api/v1/hello", helloGET, map[string]string{
+	expect(http.MethodGet, "/hello", nil, nil)
+	expect(http.MethodGet, "/api/v1/hello", nil, nil)
+	expect(http.MethodGet, "www.example.com/api/v1/hello", nil, nil)
+	expect(http.MethodGet, "https:///api/v1/hello", nil, nil)
+	expect(http.MethodGet, "https://www.example.com/hello", nil, nil)
+	expect(http.MethodGet, "https://www.example.com/api/v1/hello", helloGET, map[string]string{})
+	expect(http.MethodGet, "https://domain0.domain1.com/api/v1/hello", helloGET, map[string]string{
 		"d0": "domain0",
 		"d1": "domain1",
 	})

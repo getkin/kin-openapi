@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -36,54 +37,54 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 func (pathItem *PathItem) Operations() map[string]*Operation {
 	operations := make(map[string]*Operation, 4)
 	if v := pathItem.Connect; v != nil {
-		operations["CONNECT"] = v
+		operations[http.MethodConnect] = v
 	}
 	if v := pathItem.Delete; v != nil {
-		operations["DELETE"] = v
+		operations[http.MethodDelete] = v
 	}
 	if v := pathItem.Get; v != nil {
-		operations["GET"] = v
+		operations[http.MethodGet] = v
 	}
 	if v := pathItem.Head; v != nil {
-		operations["HEAD"] = v
+		operations[http.MethodHead] = v
 	}
 	if v := pathItem.Options; v != nil {
-		operations["OPTIONS"] = v
+		operations[http.MethodOptions] = v
 	}
 	if v := pathItem.Patch; v != nil {
-		operations["PATCH"] = v
+		operations[http.MethodPatch] = v
 	}
 	if v := pathItem.Post; v != nil {
-		operations["POST"] = v
+		operations[http.MethodPost] = v
 	}
 	if v := pathItem.Put; v != nil {
-		operations["PUT"] = v
+		operations[http.MethodPut] = v
 	}
 	if v := pathItem.Trace; v != nil {
-		operations["TRACE"] = v
+		operations[http.MethodTrace] = v
 	}
 	return operations
 }
 
 func (pathItem *PathItem) GetOperation(method string) *Operation {
 	switch method {
-	case "CONNECT":
+	case http.MethodConnect:
 		return pathItem.Connect
-	case "DELETE":
+	case http.MethodDelete:
 		return pathItem.Delete
-	case "GET":
+	case http.MethodGet:
 		return pathItem.Get
-	case "HEAD":
+	case http.MethodHead:
 		return pathItem.Head
-	case "OPTIONS":
+	case http.MethodOptions:
 		return pathItem.Options
-	case "PATCH":
+	case http.MethodPatch:
 		return pathItem.Patch
-	case "POST":
+	case http.MethodPost:
 		return pathItem.Post
-	case "PUT":
+	case http.MethodPut:
 		return pathItem.Put
-	case "TRACE":
+	case http.MethodTrace:
 		return pathItem.Trace
 	default:
 		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
@@ -92,23 +93,23 @@ func (pathItem *PathItem) GetOperation(method string) *Operation {
 
 func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	switch method {
-	case "CONNECT":
+	case http.MethodConnect:
 		pathItem.Connect = operation
-	case "DELETE":
+	case http.MethodDelete:
 		pathItem.Delete = operation
-	case "GET":
+	case http.MethodGet:
 		pathItem.Get = operation
-	case "HEAD":
+	case http.MethodHead:
 		pathItem.Head = operation
-	case "OPTIONS":
+	case http.MethodOptions:
 		pathItem.Options = operation
-	case "PATCH":
+	case http.MethodPatch:
 		pathItem.Patch = operation
-	case "POST":
+	case http.MethodPost:
 		pathItem.Post = operation
-	case "PUT":
+	case http.MethodPut:
 		pathItem.Put = operation
-	case "TRACE":
+	case http.MethodTrace:
 		pathItem.Trace = operation
 	default:
 		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
