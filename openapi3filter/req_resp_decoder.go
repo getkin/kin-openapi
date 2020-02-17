@@ -208,7 +208,7 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 	var dec valueDecoder
 	switch param.In {
 	case openapi3.ParameterInPath:
-		if input.PathParams == nil {
+		if len(input.PathParams) == 0 {
 			return nil, nil
 		}
 		dec = &pathParamDecoder{pathParams: input.PathParams}
@@ -251,7 +251,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 			}
 		}
 		if required == true {
-			return nil, fmt.Errorf("decode AnyOf failed " + param)
+			return nil, fmt.Errorf("decoding anyOf for parameter %q failed", param)
 		} else {
 			return nil, nil
 		}
@@ -271,27 +271,17 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		if isMatched == 1 {
 			return value, nil
 		} else if isMatched > 1 {
-			return nil, fmt.Errorf("decode Oneof failed, matched times:%d", isMatched)
+			return nil, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
 		}
 		if required == true {
-			return nil, fmt.Errorf("decode Oneof failed, " + param + "is required")
+			return nil, fmt.Errorf("decoding oneOf failed: %q is required", param)
 		} else {
 			return nil, nil
 		}
 	}
-	// TODO: if schema.Value.Not isn't nil , how to deal with it?
 	if schema.Value.Not != nil {
-		v, err := decodeValue(dec, param, sm, schema.Value.Not, required)
-		if v != nil {
-			return nil, fmt.Errorf("decode Not failed")
-		}
-		if err != nil {
-			return nil, fmt.Errorf("Currently the 3pp can't decode Not type")
-		}
-		if required == true {
-			return nil, fmt.Errorf("Currently the 3pp can't decode Not type")
-		}
-		return nil, nil
+		// TODO(decode not): handle decoding "not" JSON Schema
+		return nil, errors.New("not implemented: decoding 'not'")
 	}
 
 	if schema.Value.Type != "" {
@@ -621,7 +611,7 @@ func (d *cookieParamDecoder) DecodePrimitive(param string, sm *openapi3.Serializ
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("decode param %q: %s", param, err)
+		return nil, fmt.Errorf("decoding param %q: %s", param, err)
 	}
 	return parsePrimitive(cookie.Value, schema)
 }
@@ -637,7 +627,7 @@ func (d *cookieParamDecoder) DecodeArray(param string, sm *openapi3.Serializatio
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("decode param %q: %s", param, err)
+		return nil, fmt.Errorf("decoding param %q: %s", param, err)
 	}
 	return parseArray(strings.Split(cookie.Value, ","), schema)
 }
@@ -653,7 +643,7 @@ func (d *cookieParamDecoder) DecodeObject(param string, sm *openapi3.Serializati
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("decode param %q: %s", param, err)
+		return nil, fmt.Errorf("decoding param %q: %s", param, err)
 	}
 	props, err := propsFromString(cookie.Value, ",", ",")
 	if err != nil {
