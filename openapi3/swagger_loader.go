@@ -535,6 +535,11 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 			contentType.Schema = schema
 		}
 	}
+	for _, link := range value.Links {
+		if err := swaggerLoader.resolveLinkRef(swagger, link, refDocumentPath); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -697,6 +702,45 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 				return failedToResolveRefFragmentPart(ref, id)
 			}
 			if err := swaggerLoader.resolveExampleRef(swagger, resolved, componentPath); err != nil {
+				return err
+			}
+			component.Value = resolved.Value
+		}
+	}
+	return nil
+}
+
+func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, path *url.URL) error {
+	// Prevent infinite recursion
+	visited := swaggerLoader.visited
+	if _, isVisited := visited[component]; isVisited {
+		return nil
+	}
+	visited[component] = struct{}{}
+
+	const prefix = "#/components/links/"
+	if ref := component.Ref; len(ref) > 0 {
+		if isSingleRefElement(ref) {
+			var link Link
+			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &link); err != nil {
+				return err
+			}
+
+			component.Value = &link
+		} else {
+			components, id, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, prefix, path)
+			if err != nil {
+				return err
+			}
+			definitions := components.Links
+			if definitions == nil {
+				return failedToResolveRefFragmentPart(ref, "links")
+			}
+			resolved := definitions[id]
+			if resolved == nil {
+				return failedToResolveRefFragmentPart(ref, id)
+			}
+			if err := swaggerLoader.resolveLinkRef(swagger, resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
