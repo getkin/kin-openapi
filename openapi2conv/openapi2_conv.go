@@ -302,8 +302,8 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 		flows := &openapi3.OAuthFlows{}
 		result.Flows = flows
 		scopesMap := make(map[string]string)
-		for _, scope := range securityScheme.Scopes {
-			scopesMap[scope] = ""
+		for scope, desc := range securityScheme.Scopes {
+			scopesMap[scope] = desc
 		}
 		flow := &openapi3.OAuthFlow{
 			AuthorizationURL: securityScheme.AuthorizationURL,
@@ -643,8 +643,8 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 			} else {
 				return nil, nil
 			}
-			for scope := range flow.Scopes {
-				result.Scopes = append(result.Scopes, scope)
+			for scope, desc := range flow.Scopes {
+				result.Scopes[scope] = desc
 			}
 		}
 	default:
