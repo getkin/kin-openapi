@@ -443,3 +443,48 @@ func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
 	require.NotNil(t, swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 	require.Equal(t, "string", swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 }
+
+func TestResolveResponseLinkRef(t *testing.T) {
+	source := []byte(`
+openapi: 3.0.1
+info:
+  title: My API
+  version: 1.0.0
+components:
+  links:
+    Father:
+        description: link to to the father
+        operationId: getUserById
+        parameters:
+          "id": "$response.body#/fatherId"
+paths:
+  /users/{id}:
+    get:
+      operationId: getUserById,
+      parameters:
+        - name: id,
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: A test response
+          content:
+            application/json:
+          links:
+            father:
+              $ref: '#/components/links/Father'
+`)
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromData(source)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	response := doc.Paths[`/users/{id}`].Get.Responses.Get(200).Value
+	link := response.Links[`father`].Value
+	require.NotNil(t, link)
+	require.Equal(t, "getUserById", link.OperationID)
+	require.Equal(t, "link to to the father", link.Description)
+}
