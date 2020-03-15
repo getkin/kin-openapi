@@ -13,7 +13,7 @@ type Link struct {
 	Href        string                 `json:"href,omitempty" yaml:"href,omitempty"`
 	OperationID string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
 	Parameters  map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Headers     map[string]*Schema     `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Headers     map[string]*HeaderRef  `json:"headers,omitempty" yaml:"headers,omitempty"`
 }
 
 func (value *Link) MarshalJSON() ([]byte, error) {
