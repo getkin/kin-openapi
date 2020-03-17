@@ -98,9 +98,6 @@ type Schema struct {
 	MaxProps             *uint64               `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`
 	Discriminator        *Discriminator        `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
-
-	PatternProperties         string `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	compiledPatternProperties *compiledPattern
 }
 
 func NewSchema() *Schema {
@@ -1055,24 +1052,6 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 		}
 	}
 
-	// "patternProperties"
-	var cp *compiledPattern
-	patternProperties := schema.PatternProperties
-	if len(patternProperties) > 0 {
-		cp = schema.compiledPatternProperties
-		if cp == nil {
-			re, err := regexp.Compile(patternProperties)
-			if err != nil {
-				return fmt.Errorf("Error while compiling regular expression '%s': %v", patternProperties, err)
-			}
-			cp = &compiledPattern{
-				Regexp:    re,
-				ErrReason: "JSON property doesn't match the regular expression '" + patternProperties + "'",
-			}
-			schema.compiledPatternProperties = cp
-		}
-	}
-
 	// "additionalProperties"
 	var additionalProperties *Schema
 	if ref := schema.AdditionalProperties; ref != nil {
@@ -1097,15 +1076,6 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 		}
 		allowed := schema.AdditionalPropertiesAllowed
 		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
-			if cp != nil {
-				if !cp.Regexp.MatchString(k) {
-					return &SchemaError{
-						Schema:      schema,
-						SchemaField: "patternProperties",
-						Reason:      cp.ErrReason,
-					}
-				}
-			}
 			if additionalProperties != nil {
 				if err := additionalProperties.VisitJSON(v); err != nil {
 					if fast {
