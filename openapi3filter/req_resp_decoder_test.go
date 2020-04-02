@@ -986,6 +986,13 @@ func TestDecodeBody(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	multipartAdditionalProps, multipartMimeAdditionalProps, err := newTestMultipartForm([]*testFormPart{
+		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
+		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
+		{name: "y", contentType: "application/json", data: bytes.NewReader(d)},
+	})
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name     string
 		mime     string
@@ -1071,6 +1078,16 @@ func TestDecodeBody(t *testing.T) {
 			mime: multipartFormMimeExtraPart,
 			body: multipartFormExtraPart,
 			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()),
+			want:    map[string]interface{}{"a": "a1"},
+			wantErr: &ParseError{Kind: KindOther},
+		},
+		{
+			name: "multipartAdditionalProperties",
+			mime: multipartMimeAdditionalProps,
+			body: multipartAdditionalProps,
+			schema: openapi3.NewObjectSchema().
+				WithAnyAdditionalProperties().
 				WithProperty("a", openapi3.NewStringSchema()),
 			want: map[string]interface{}{"a": "a1"},
 		},

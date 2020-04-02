@@ -925,8 +925,11 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		// Every such part has a type that is defined by an items schema in the property's schema.
 		valueSchema, exists := schema.Value.Properties[name]
 		if !exists {
-			// ignore extra properties
-			continue
+			additionalProperties := schema.Value.AdditionalPropertiesAllowed
+			if additionalProperties != nil && *additionalProperties {
+				continue
+			}
+			return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 		}
 		if valueSchema.Value.Type == "array" {
 			valueSchema = valueSchema.Value.Items
