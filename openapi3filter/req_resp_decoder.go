@@ -923,7 +923,29 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		subEncFn := func(string) *openapi3.Encoding { return enc }
 		// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
 		// Every such part has a type that is defined by an items schema in the property's schema.
-		valueSchema := schema.Value.Properties[name]
+		var valueSchema *openapi3.SchemaRef
+		var exists bool
+		valueSchema, exists = schema.Value.Properties[name]
+		if !exists {
+			anyProperties := schema.Value.AdditionalPropertiesAllowed
+			if anyProperties != nil {
+				switch *anyProperties {
+				case true:
+					//additionalProperties: true
+					continue
+				default:
+					//additionalProperties: false
+					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+				}
+			}
+			if schema.Value.AdditionalProperties == nil {
+				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+			}
+			valueSchema, exists = schema.Value.AdditionalProperties.Value.Properties[name]
+			if !exists {
+				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+			}
+		}
 		if valueSchema.Value.Type == "array" {
 			valueSchema = valueSchema.Value.Items
 		}
@@ -938,9 +960,18 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		values[name] = append(values[name], value)
 	}
 
+	allTheProperties := make(map[string]*openapi3.SchemaRef)
+	for k, v := range schema.Value.Properties {
+		allTheProperties[k] = v
+	}
+	if schema.Value.AdditionalProperties != nil {
+		for k, v := range schema.Value.AdditionalProperties.Value.Properties {
+			allTheProperties[k] = v
+		}
+	}
 	// Make an object value from form values.
 	obj := make(map[string]interface{})
-	for name, prop := range schema.Value.Properties {
+	for name, prop := range allTheProperties {
 		vv := values[name]
 		if len(vv) == 0 {
 			continue
