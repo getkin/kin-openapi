@@ -953,7 +953,10 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		values[name] = append(values[name], value)
 	}
 
-	allTheProperties := schema.Value.Properties
+	allTheProperties := make(map[string]*openapi3.SchemaRef)
+	for k, v := range schema.Value.Properties {
+		allTheProperties[k] = v
+	}
 	if schema.Value.AdditionalProperties != nil {
 		for k, v := range schema.Value.AdditionalProperties.Value.Properties {
 			allTheProperties[k] = v
