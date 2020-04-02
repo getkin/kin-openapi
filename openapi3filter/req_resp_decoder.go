@@ -928,8 +928,15 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		valueSchema, exists = schema.Value.Properties[name]
 		if !exists {
 			anyProperties := schema.Value.AdditionalPropertiesAllowed
-			if anyProperties != nil && *anyProperties {
-				continue
+			if anyProperties != nil {
+				switch *anyProperties {
+				case true:
+					//additionalProperties: true
+					continue
+				default:
+					//additionalProperties: false
+					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+				}
 			}
 			if schema.Value.AdditionalProperties == nil {
 				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
