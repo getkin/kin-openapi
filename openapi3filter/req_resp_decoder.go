@@ -923,7 +923,11 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		subEncFn := func(string) *openapi3.Encoding { return enc }
 		// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
 		// Every such part has a type that is defined by an items schema in the property's schema.
-		valueSchema := schema.Value.Properties[name]
+		valueSchema, exists := schema.Value.Properties[name]
+		if !exists {
+			// ignore extra properties
+			continue
+		}
 		if valueSchema.Value.Type == "array" {
 			valueSchema = valueSchema.Value.Items
 		}
