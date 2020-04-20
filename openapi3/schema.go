@@ -19,6 +19,9 @@ var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
 	SchemaErrorDetailsDisabled = false
 
+	//SchemaFormatValidationDisabled disables validation of schema type formats.
+	SchemaFormatValidationDisabled = false
+
 	errSchema = errors.New("Input does not match the schema")
 
 	ErrSchemaInputNaN = errors.New("NaN is not allowed")
@@ -496,7 +499,9 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			switch format {
 			case "float", "double":
 			default:
-				return unsupportedFormat(format)
+				if !SchemaFormatValidationDisabled {
+					return unsupportedFormat(format)
+				}
 			}
 		}
 	case "integer":
@@ -504,7 +509,9 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			switch format {
 			case "int32", "int64":
 			default:
-				return unsupportedFormat(format)
+				if !SchemaFormatValidationDisabled {
+					return unsupportedFormat(format)
+				}
 			}
 		}
 	case "string":
@@ -520,7 +527,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 			case "json-pointer", "relative-json-pointer":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok {
+				if _, ok := SchemaStringFormats[format]; !ok && !SchemaFormatValidationDisabled {
 					return unsupportedFormat(format)
 				}
 			}
