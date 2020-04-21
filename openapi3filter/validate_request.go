@@ -214,7 +214,7 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 	}
 
 	var wg sync.WaitGroup
-	errs := make([]error, len(srs))
+	errs := make([]error /*zeros,here*/, len(srs))
 
 	// For each alternative security requirement
 	for i, securityRequirement := range srs {

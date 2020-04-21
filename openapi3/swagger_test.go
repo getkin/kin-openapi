@@ -250,8 +250,9 @@ func spec() *openapi3.Swagger {
 	requestBody := &openapi3.RequestBody{
 		Description: "Some request body",
 	}
+	responseDescription := "Some response"
 	response := &openapi3.Response{
-		Description: "Some response",
+		Description: &responseDescription,
 	}
 	schema := &openapi3.Schema{
 		Description: "Some schema",

@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -34,7 +35,7 @@ func (responses Responses) Validate(c context.Context) error {
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 type Response struct {
 	ExtensionProps
-	Description string                `json:"description" yaml:"description"`
+	Description *string               `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     map[string]*HeaderRef `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Content     Content               `json:"content,omitempty" yaml:"content,omitempty"`
 	Links       map[string]*LinkRef   `json:"links,omitempty" yaml:"links,omitempty"`
@@ -45,7 +46,7 @@ func NewResponse() *Response {
 }
 
 func (response *Response) WithDescription(value string) *Response {
-	response.Description = value
+	response.Description = &value
 	return response
 }
 
@@ -73,6 +74,10 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 func (response *Response) Validate(c context.Context) error {
+	if response.Description == nil {
+		return errors.New("A short description of the response is required")
+	}
+
 	if content := response.Content; content != nil {
 		if err := content.Validate(c); err != nil {
 			return err

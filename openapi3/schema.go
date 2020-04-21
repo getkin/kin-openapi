@@ -122,9 +122,9 @@ func (schema *Schema) NewRef() *SchemaRef {
 }
 
 func NewOneOfSchema(schemas ...*Schema) *Schema {
-	refs := make([]*SchemaRef, len(schemas))
-	for i, schema := range schemas {
-		refs[i] = &SchemaRef{Value: schema}
+	refs := make([]*SchemaRef, 0, len(schemas))
+	for _, schema := range schemas {
+		refs = append(refs, &SchemaRef{Value: schema})
 	}
 	return &Schema{
 		OneOf: refs,
@@ -132,9 +132,9 @@ func NewOneOfSchema(schemas ...*Schema) *Schema {
 }
 
 func NewAnyOfSchema(schemas ...*Schema) *Schema {
-	refs := make([]*SchemaRef, len(schemas))
-	for i, schema := range schemas {
-		refs[i] = &SchemaRef{Value: schema}
+	refs := make([]*SchemaRef, 0, len(schemas))
+	for _, schema := range schemas {
+		refs = append(refs, &SchemaRef{Value: schema})
 	}
 	return &Schema{
 		AnyOf: refs,
@@ -142,9 +142,9 @@ func NewAnyOfSchema(schemas ...*Schema) *Schema {
 }
 
 func NewAllOfSchema(schemas ...*Schema) *Schema {
-	refs := make([]*SchemaRef, len(schemas))
-	for i, schema := range schemas {
-		refs[i] = &SchemaRef{Value: schema}
+	refs := make([]*SchemaRef, 0, len(schemas))
+	for _, schema := range schemas {
+		refs = append(refs, &SchemaRef{Value: schema})
 	}
 	return &Schema{
 		AllOf: refs,
@@ -439,7 +439,7 @@ func (schema *Schema) IsEmpty() bool {
 }
 
 func (schema *Schema) Validate(c context.Context) error {
-	return schema.validate(c, make([]*Schema, 2))
+	return schema.validate(c, []*Schema{})
 }
 
 func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
@@ -1158,9 +1158,9 @@ func markSchemaErrorIndex(err error, index int) error {
 
 func (err *SchemaError) JSONPointer() []string {
 	reversePath := err.reversePath
-	path := make([]string, len(reversePath))
-	for i := range path {
-		path[i] = reversePath[len(path)-1-i]
+	path := append([]string(nil), reversePath...)
+	for left, right := 0, len(path)-1; left < right; left, right = left+1, right-1 {
+		path[left], path[right] = path[right], path[left]
 	}
 	return path
 }

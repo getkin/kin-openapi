@@ -36,8 +36,8 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "ResponseRef",
 		contentTemplate: externalResponseRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
-			require.NotNil(t, swagger.Components.Responses["TestResponse"].Value.Description)
-			require.Equal(t, "description", swagger.Components.Responses["TestResponse"].Value.Description)
+			desc := "description"
+			require.Equal(t, &desc, swagger.Components.Responses["TestResponse"].Value.Description)
 		},
 	},
 	{
@@ -108,7 +108,8 @@ var refTestDataEntries = []refTestDataEntry{
 		contentTemplate: externalPathOperationResponseRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
-			require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+			desc := "description"
+			require.Equal(t, &desc, swagger.Paths["/test"].Post.Responses["default"].Value.Description)
 		},
 	},
 	{
@@ -152,7 +153,8 @@ var refTestDataEntries = []refTestDataEntry{
 		contentTemplate: externalPathOperationResponseExampleRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
-			require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+			desc := "testdescription"
+			require.Equal(t, &desc, swagger.Paths["/test"].Post.Responses["default"].Value.Description)
 			require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Examples["application/json"].Value.Description)
 		},
 	},
@@ -161,7 +163,8 @@ var refTestDataEntries = []refTestDataEntry{
 		contentTemplate: externalPathOperationResponseSchemaRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
-			require.Equal(t, "testdescription", swagger.Paths["/test"].Post.Responses["default"].Value.Description)
+			desc := "testdescription"
+			require.Equal(t, &desc, swagger.Paths["/test"].Post.Responses["default"].Value.Description)
 			require.Equal(t, "string", swagger.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Schema.Value.Type)
 		},
 	},
@@ -731,8 +734,8 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 		name:            "ResponseRef",
 		contentTemplate: relativeResponseDocsRefTemplate,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
-			require.NotNil(t, swagger.Components.Responses["TestResponse"].Value.Description)
-			require.Equal(t, "description", swagger.Components.Responses["TestResponse"].Value.Description)
+			desc := "description"
+			require.Equal(t, &desc, swagger.Components.Responses["TestResponse"].Value.Description)
 		},
 	},
 	{

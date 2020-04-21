@@ -60,9 +60,9 @@ func GetTypeInfo(t reflect.Type) *TypeInfo {
 // FieldNames returns all field names
 func (typeInfo *TypeInfo) FieldNames() []string {
 	fields := typeInfo.Fields
-	names := make([]string, len(fields))
-	for i, field := range fields {
-		names[i] = field.JSONName
+	names := make([]string, 0, len(fields))
+	for _, field := range fields {
+		names = append(names, field.JSONName)
 	}
 	return names
 }

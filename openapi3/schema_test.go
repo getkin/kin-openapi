@@ -319,16 +319,16 @@ var schemaExamples = []schemaExample{
 		AllValid: []interface{}{
 			"",
 			base64.StdEncoding.EncodeToString(func() []byte {
-				data := make([]byte, 1024)
-				for i := range data {
-					data[i] = byte(i)
+				data := make([]byte, 0, 1024)
+				for i := 0; i < cap(data); i++ {
+					data = append(data, byte(i))
 				}
 				return data
 			}()),
 			base64.URLEncoding.EncodeToString(func() []byte {
-				data := make([]byte, 1024)
-				for i := range data {
-					data[i] = byte(i)
+				data := make([]byte, 0, 1024)
+				for i := 0; i < cap(data); i++ {
+					data = append(data, byte(i))
 				}
 				return data
 			}()),
