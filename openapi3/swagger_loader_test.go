@@ -62,7 +62,8 @@ paths:
 	require.Equal(t, 2, len(doc.Components.Schemas))
 	require.Equal(t, 1, len(doc.Paths))
 	def := doc.Paths["/items"].Put.Responses.Default().Value
-	require.Equal(t, "unexpected error", def.Description)
+	desc := "unexpected error"
+	require.Equal(t, &desc, def.Description)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 }
@@ -332,7 +333,8 @@ func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, swagger.Components.Responses["SomeResponse"])
-	require.Equal(t, "this is a single response definition", swagger.Components.Responses["SomeResponse"].Value.Description)
+	desc := "this is a single response definition"
+	require.Equal(t, &desc, swagger.Components.Responses["SomeResponse"].Value.Description)
 }
 
 func TestLoadRequestResponseHeaderRef(t *testing.T) {

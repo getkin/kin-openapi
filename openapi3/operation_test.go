@@ -40,7 +40,7 @@ func operationWithoutResponses() *Operation {
 
 func operationWithResponses() *Operation {
 	initOperation()
-	operation.AddResponse(200, NewResponse())
+	operation.AddResponse(200, NewResponse().WithDescription("some response"))
 	return operation
 }
 
