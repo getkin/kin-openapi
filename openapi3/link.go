@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -28,7 +29,7 @@ func (value *Link) UnmarshalJSON(data []byte) error {
 
 func (value *Link) Validate(c context.Context) error {
 	if value.OperationID == "" && value.OperationRef == "" {
-		return fmt.Errorf("missing operationId or operationRef on link")
+		return errors.New("missing operationId or operationRef on link")
 	}
 	if value.OperationID != "" && value.OperationRef != "" {
 		return fmt.Errorf("operationId '%s' and operationRef '%s' are mutually exclusive", value.OperationID, value.OperationRef)
