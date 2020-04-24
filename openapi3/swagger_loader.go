@@ -270,12 +270,12 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 	cursor = swagger
 	for _, pathPart := range strings.Split(fragment[1:], "/") {
 
-		pathPart = strings.ReplaceAll(pathPart, "~1", "/")
-		pathPart = strings.ReplaceAll(pathPart, "~0", "~")
+		pathPart = strings.Replace(pathPart, "~1", "/", -1)
+		pathPart = strings.Replace(pathPart, "~0", "~", -1)
 
 		cursor, err = drillIntoSwaggerField(cursor, pathPart)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s': %w", ref, pathPart, err)
+			return nil, nil, fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s': %v", ref, pathPart, err.Error())
 		}
 		if cursor == nil {
 			return nil, nil, failedToResolveRefFragmentPart(ref, pathPart)
