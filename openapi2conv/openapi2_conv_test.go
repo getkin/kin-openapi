@@ -1,11 +1,10 @@
-package openapi2conv_test
+package openapi2conv
 
 import (
 	"encoding/json"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi2"
-	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +14,7 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 	err := json.Unmarshal([]byte(exampleV3), &swagger3)
 	require.NoError(t, err)
 
-	actualV2, err := openapi2conv.FromV3Swagger(&swagger3)
+	actualV2, err := FromV3Swagger(&swagger3)
 	require.NoError(t, err)
 	data, err := json.Marshal(actualV2)
 	require.NoError(t, err)
@@ -27,7 +26,7 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 	err := json.Unmarshal([]byte(exampleV2), &swagger2)
 	require.NoError(t, err)
 
-	actualV3, err := openapi2conv.ToV3Swagger(&swagger2)
+	actualV3, err := ToV3Swagger(&swagger2)
 	require.NoError(t, err)
 	data, err := json.Marshal(actualV3)
 	require.NoError(t, err)
@@ -47,6 +46,19 @@ const exampleV2 = `
     }
   ],
   "paths": {
+    "/another/{banana}/{id}": {
+        "parameters": [
+		  {
+            "$ref": "#/parameters/banana"
+          },
+          {
+            "in": "path",
+            "name": "id",
+			"type": "integer",
+			"required": true
+          }
+		]
+    },
     "/example": {
       "delete": {
         "description": "example delete",
@@ -185,6 +197,12 @@ const exampleV2 = `
       }
     }
   },
+  "parameters": {
+    "banana": {
+	  "in": "path",
+      "type": "string"
+    }
+  },
   "security": [
     {
       "default_security_0": [
@@ -212,6 +230,14 @@ const exampleV3 = `
           }
         },
         "description": "Insufficient permission to perform the requested action."
+      }
+    },
+    "parameters": {
+      "banana": {
+	    "in": "path",
+        "schema": {
+          "type": "string"
+        }
       }
     },
     "schemas": {
@@ -255,6 +281,21 @@ const exampleV3 = `
     }
   ],
   "paths": {
+    "/another/{banana}/{id}": {
+        "parameters": [
+		  {
+            "$ref": "#/components/parameters/banana"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+			"required": true
+          }
+		]
+    },
     "/example": {
       "delete": {
         "description": "example delete",
