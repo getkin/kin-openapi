@@ -273,8 +273,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 		pathPart = strings.Replace(pathPart, "~1", "/", -1)
 		pathPart = strings.Replace(pathPart, "~0", "~", -1)
 
-		cursor, err = drillIntoSwaggerField(cursor, pathPart)
-		if err != nil {
+		if cursor, err = drillIntoSwaggerField(cursor, pathPart); err != nil {
 			return nil, nil, fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s': %v", ref, pathPart, err.Error())
 		}
 		if cursor == nil {
@@ -313,7 +312,7 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 		// give up
 		return nil, fmt.Errorf("Struct field not found: %v", fieldName)
 	}
-	return nil, fmt.Errorf("Not a map or struct")
+	return nil, errors.New("Not a map or struct")
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {
