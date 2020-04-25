@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-
 	"net/url"
 	"testing"
 
@@ -490,6 +489,7 @@ paths:
 	require.Equal(t, "getUserById", link.OperationID)
 	require.Equal(t, "link to to the father", link.Description)
 }
+
 func TestResolveNonComponentsRef(t *testing.T) {
 	spec := []byte(`
 openapi: 3.0.0

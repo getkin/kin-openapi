@@ -593,9 +593,9 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 
 		// Create the request
 		emptyBody := bytes.NewReader(make([]byte, 0))
-		pathUrl, err := url.Parse(path.name)
+		pathURL, err := url.Parse(path.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, pathUrl)
+		route, _, err := router.FindRoute(http.MethodGet, pathURL)
 		require.NoError(t, err)
 		req := openapi3filter.RequestValidationInput{
 			Request: httptest.NewRequest(http.MethodGet, path.name, emptyBody),
@@ -605,7 +605,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 					if schemesValidated != nil {
 						if validated, ok := (*schemesValidated)[input.SecurityScheme]; ok {
 							if validated {
-								t.Fatalf("The path \"%s\" had the schemes %v named \"%s\" validated more than once",
+								t.Fatalf("The path %q had the schemes %v named %q validated more than once",
 									path.name, input.SecurityScheme, input.SecuritySchemeName)
 							}
 							(*schemesValidated)[input.SecurityScheme] = true
@@ -613,7 +613,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 						}
 					}
 
-					t.Fatalf("The path \"%s\" had the schemes %v named \"%s\"",
+					t.Fatalf("The path %q had the schemes %v named %q",
 						path.name, input.SecurityScheme, input.SecuritySchemeName)
 
 					return nil
@@ -717,9 +717,9 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 	for _, tc := range tc {
 		// Create the request input for the path
-		tcUrl, err := url.Parse(tc.name)
+		tcURL, err := url.Parse(tc.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, tcUrl)
+		route, _, err := router.FindRoute(http.MethodGet, tcURL)
 		require.NoError(t, err)
 		req := openapi3filter.RequestValidationInput{
 			Route: route,
@@ -733,9 +733,9 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 		// If there should have been an error
 		if tc.error {
-			require.Errorf(t, err, "an error is expected for path \"%s\"", tc.name)
+			require.Errorf(t, err, "an error is expected for path %q", tc.name)
 		} else {
-			require.NoErrorf(t, err, "an error wasn't expected for path \"%s\"", tc.name)
+			require.NoErrorf(t, err, "an error wasn't expected for path %q", tc.name)
 		}
 	}
 }
@@ -817,9 +817,9 @@ func TestAllSchemesMet(t *testing.T) {
 
 	for _, tc := range tc {
 		// Create the request input for the path
-		tcUrl, err := url.Parse(tc.name)
+		tcURL, err := url.Parse(tc.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, tcUrl)
+		route, _, err := router.FindRoute(http.MethodGet, tcURL)
 		require.NoError(t, err)
 		req := openapi3filter.RequestValidationInput{
 			Route: route,
@@ -855,9 +855,8 @@ func makeAuthFunc(schemes map[string]bool) func(c context.Context, input *openap
 		if present {
 			// Return an unmet scheme error
 			return fmt.Errorf("security scheme for %q wasn't met", input.SecuritySchemeName)
-		} else {
-			// Return an unknown scheme error
-			return fmt.Errorf("security scheme for %q is unknown", input.SecuritySchemeName)
 		}
+		// Return an unknown scheme error
+		return fmt.Errorf("security scheme for %q is unknown", input.SecuritySchemeName)
 	}
 }
