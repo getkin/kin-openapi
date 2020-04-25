@@ -210,9 +210,12 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 	if len(srs) == 0 {
 		return nil
 	}
-	errs := make([]error, 0, len(srs))
+	var errs []error
 	for _, sr := range srs {
 		if err := validateSecurityRequirement(c, input, sr); err != nil {
+			if len(errs) == 0 {
+				errs = make([]error, 0, len(srs))
+			}
 			errs = append(errs, err)
 			continue
 		}
