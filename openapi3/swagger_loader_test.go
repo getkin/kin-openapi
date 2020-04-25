@@ -490,3 +490,64 @@ paths:
 	require.Equal(t, "getUserById", link.OperationID)
 	require.Equal(t, "link to to the father", link.Description)
 }
+func TestResolveNonComponentsRef(t *testing.T) {
+	spec := []byte(`
+openapi: 3.0.0
+info:
+  title: An API
+  version: v1
+
+components:
+  schemas:
+    NewItem:
+      required: [name]
+      properties:
+        name: {type: string}
+        tag: {type: string}
+    ErrorModel:
+      type: object
+      required: [code, message]
+      properties:
+        code: {type: integer}
+        message: {type: string}
+
+paths:
+  /items:
+    put:
+      description: ''
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewItem'
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+    post:
+      description: ''
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/paths/~1items/put/requestBody/content/application~1json/schema'
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+`)
+
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromData(spec)
+	require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+}
