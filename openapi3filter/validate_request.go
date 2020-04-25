@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
-	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -204,57 +203,23 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	return nil
 }
 
-// ValidateSecurityRequirements validates a multiple OpenAPI 3 security requirements.
-// Returns nil if one of them inputed.
-// Otherwise returns an error describing the security failures.
+// ValidateSecurityRequirements goes through multiple OpenAPI 3 security
+// requirements in order and returns nil on the first valid requirement.
+// If no requirement is met, errors are returned in order.
 func ValidateSecurityRequirements(c context.Context, input *RequestValidationInput, srs openapi3.SecurityRequirements) error {
-	// Alternative requirements
 	if len(srs) == 0 {
 		return nil
 	}
-
-	var wg sync.WaitGroup
-	errs := make([]error /*zeros,here*/, len(srs))
-
-	// For each alternative security requirement
-	for i, securityRequirement := range srs {
-		// Capture index from iteration variable
-		currentIndex := i
-		currentSecurityRequirement := securityRequirement
-
-		// Add a work item
-		wg.Add(1)
-
-		go func() {
-			defer func() {
-				v := recover()
-				if v != nil {
-					if err, ok := v.(error); ok {
-						errs[currentIndex] = err
-					} else {
-						errs[currentIndex] = errors.New("Panicked")
-					}
-				}
-
-				// Remove a work item
-				wg.Done()
-			}()
-
-			if err := validateSecurityRequirement(c, input, currentSecurityRequirement); err != nil {
-				errs[currentIndex] = err
+	var errs []error
+	for _, sr := range srs {
+		if err := validateSecurityRequirement(c, input, sr); err != nil {
+			if len(errs) == 0 {
+				errs = make([]error, 0, len(srs))
 			}
-		}()
-	}
-
-	// Wait for all
-	wg.Wait()
-
-	// If any security requirement was met
-	for _, err := range errs {
-		if err == nil {
-			// Return no error
-			return nil
+			errs = append(errs, err)
+			continue
 		}
+		return nil
 	}
 	return &SecurityRequirementsError{
 		SecurityRequirements: srs,
