@@ -29,7 +29,7 @@ Here's some projects that depend on _kin-openapi_:
   * _openapi2conv_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2conv))
     * Converts OpenAPI 2 files into OpenAPI 3 files.
   * _openapi3_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3))
-    * Support for OpenAPI 3 files, including serialization, deserialization, and validation.
+    * Support for OpenAPI 3 files, including serialization,f deserialization, and validation.
   * _openapi3filter_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3filter))
     * Validates HTTP requests and responses
   * _openapi3gen_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3gen))
