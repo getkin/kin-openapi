@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -285,15 +286,24 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 }
 
 func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, error) {
-	val := reflect.Indirect(reflect.ValueOf(cursor))
-
-	switch val.Kind() {
+	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 	case reflect.Map:
 		elementValue := val.MapIndex(reflect.ValueOf(fieldName))
 		if !elementValue.IsValid() {
 			return nil, fmt.Errorf("Map key not found: %v", fieldName)
 		}
 		return elementValue.Interface(), nil
+
+	case reflect.Slice:
+		i, err := strconv.ParseUint(fieldName, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		index := int(i)
+		if index >= val.Len() {
+			return nil, errors.New("slice index out of bounds")
+		}
+		return val.Index(index).Interface(), nil
 
 	case reflect.Struct:
 		for i := 0; i < val.NumField(); i++ {
@@ -311,8 +321,10 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 		}
 		// give up
 		return nil, fmt.Errorf("Struct field not found: %v", fieldName)
+
+	default:
+		return nil, errors.New("not a map, slice nor struct")
 	}
-	return nil, errors.New("Not a map or struct")
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {

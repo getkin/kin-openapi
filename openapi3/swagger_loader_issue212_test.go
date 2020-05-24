@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         type:
           type: string
         name:
@@ -63,7 +63,6 @@ components:
               properties:
                 id:
                   type: string
-                  format: uuid
                 uri:
                   type: string
             - type: object
@@ -78,15 +77,19 @@ components:
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
-	require.Equal(t,
-		doc.Components.Schemas["AvailableProduct"].Value.Properties["media"].Value.Properties["documents"].Value.Items.Value.AllOf[0].Value,
-		&Schema{
-			Type:     "object",
-			Required: []string{"id", "uri"},
-			Properties: map[string]*SchemaRef{
-				"id":  {Value: &Schema{Type: "string", Format: "uuid"}},
-				"uri": {Value: &Schema{Type: "string"}},
-			},
+
+	expected, err := json.Marshal(&Schema{
+		Type:     "object",
+		Required: []string{"id", "uri"},
+		Properties: map[string]*SchemaRef{
+			"id":  {Value: &Schema{Type: "string"}},
+			"uri": {Value: &Schema{Type: "string"}},
 		},
+	},
 	)
+	require.NoError(t, err)
+	got, err := json.Marshal(doc.Components.Schemas["AvailableProduct"].Value.Properties["media"].Value.Properties["documents"].Value.Items.Value.AllOf[0].Value)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, got)
 }
