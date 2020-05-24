@@ -11,6 +11,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+// ToV3Swagger converts an OpenAPIv2 spec to an OpenAPIv3 spec
 func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 	result := &openapi3.Swagger{
 		OpenAPI:    "3.0.2",
@@ -396,8 +397,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	}
 	result.Parameters = map[string]*openapi2.Parameter{}
 	for name, param := range swagger.Components.Parameters {
-		result.Parameters[name], err = FromV3Parameter(param)
-		if err != nil {
+		if result.Parameters[name], err = FromV3Parameter(param); err != nil {
 			return nil, err
 		}
 	}
