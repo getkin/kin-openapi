@@ -135,6 +135,11 @@ var propertyMissingNameRE = regexp.MustCompile(`Property '(?P<name>[^']*)' is mi
 func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *ValidationError {
 	cErr := &ValidationError{Title: innerErr.Reason}
 
+	// Handle "Origin" error
+	if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
+		cErr = convertSchemaError(e, originErr)
+	}
+
 	// Add http status code
 	if e.Parameter != nil {
 		cErr.Status = http.StatusBadRequest

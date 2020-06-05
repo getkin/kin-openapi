@@ -34,21 +34,24 @@ type validationArgs struct {
 	r *http.Request
 }
 type validationTest struct {
-	name                string
-	fields              validationFields
-	args                validationArgs
-	wantErr             bool
-	wantErrBody         string
-	wantErrReason       string
-	wantErrSchemaReason string
-	wantErrSchemaPath   string
-	wantErrSchemaValue  interface{}
-	wantErrParam        string
-	wantErrParamIn      string
-	wantErrParseKind    ParseErrorKind
-	wantErrParseValue   interface{}
-	wantErrParseReason  string
-	wantErrResponse     *ValidationError
+	name                      string
+	fields                    validationFields
+	args                      validationArgs
+	wantErr                   bool
+	wantErrBody               string
+	wantErrReason             string
+	wantErrSchemaReason       string
+	wantErrSchemaPath         string
+	wantErrSchemaValue        interface{}
+	wantErrSchemaOriginReason string
+	wantErrSchemaOriginPath   string
+	wantErrSchemaOriginValue  interface{}
+	wantErrParam              string
+	wantErrParamIn            string
+	wantErrParseKind          ParseErrorKind
+	wantErrParseValue         interface{}
+	wantErrParseReason        string
+	wantErrResponse           *ValidationError
 }
 
 func getValidationTests(t *testing.T) []*validationTest {
@@ -239,9 +242,9 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "watdis",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "JSON value is not one of the allowed values",
+				Title:  "JSON value is not one of the allowed values",
 				Detail: "Value 'watdis' at /1 must be one of: available, pending, sold",
-				Source:  &ValidationErrorSource{Parameter: "status"}},
+				Source: &ValidationErrorSource{Parameter: "status"}},
 		},
 		{
 			name: "error - invalid enum value, allowing commas (without 'perhaps you intended' recommendation)",
@@ -255,9 +258,9 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "fish,with,commas",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "JSON value is not one of the allowed values",
+				Title:  "JSON value is not one of the allowed values",
 				Detail: "Value 'fish,with,commas' at /1 must be one of: dog, cat, turtle, bird,with,commas",
-					// No 'perhaps you intended' because its the right serialization format
+				// No 'perhaps you intended' because its the right serialization format
 				Source: &ValidationErrorSource{Parameter: "kind"}},
 		},
 		{
@@ -281,8 +284,8 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaValue:  map[string]string{"name": "Bahama"},
 			wantErrSchemaPath:   "/photoUrls",
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title: "Property 'photoUrls' is missing",
-				Source:  &ValidationErrorSource{Pointer: "/photoUrls"}},
+				Title:  "Property 'photoUrls' is missing",
+				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
 		},
 		{
 			name: "error - missing required nested object attribute",
@@ -295,8 +298,8 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaValue:  map[string]string{},
 			wantErrSchemaPath:   "/category/name",
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title: "Property 'name' is missing",
-				Source:  &ValidationErrorSource{Pointer: "/category/name"}},
+				Title:  "Property 'name' is missing",
+				Source: &ValidationErrorSource{Pointer: "/category/name"}},
 		},
 		{
 			name: "error - missing required deeply nested object attribute",
@@ -309,8 +312,8 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaValue:  map[string]string{},
 			wantErrSchemaPath:   "/category/tags/0/name",
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title: "Property 'name' is missing",
-				Source:  &ValidationErrorSource{Pointer: "/category/tags/0/name"}},
+				Title:  "Property 'name' is missing",
+				Source: &ValidationErrorSource{Pointer: "/category/tags/0/name"}},
 		},
 		{
 			// TODO: Add support for validating readonly properties to upstream validator.
@@ -334,8 +337,23 @@ func getValidationTests(t *testing.T) []*validationTest {
 			// TODO: this shouldn't say "or not be present", but this requires recursively resolving
 			//  innerErr.JSONPointer() against e.RequestBody.Content["application/json"].Schema.Value (.Required, .Properties)
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title: "Field must be set to array or not be present",
-				Source:  &ValidationErrorSource{Pointer: "/photoUrls"}},
+				Title:  "Field must be set to array or not be present",
+				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
+		},
+		{
+			name: "error - missing required object attribute from allOf required overlay",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodPost, "/pet2", bytes.NewBufferString(`{"name":"Bahama"}`)),
+			},
+			wantErrReason:             "doesn't match the schema",
+			wantErrSchemaPath:         "/",
+			wantErrSchemaValue:        map[string]string{"name": "Bahama"},
+			wantErrSchemaOriginReason: "Property 'photoUrls' is missing",
+			wantErrSchemaOriginValue:  map[string]string{"name": "Bahama"},
+			wantErrSchemaOriginPath:   "/photoUrls",
+			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+				Title:  "Property 'photoUrls' is missing",
+				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
 		},
 		{
 			name: "success - ignores unknown object attribute",
@@ -429,9 +447,18 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 					pointer := toJSONPointer(innerErr.JSONPointer())
 					req.Equal(tt.wantErrSchemaPath, pointer)
 					req.Equal(fmt.Sprintf("%v", tt.wantErrSchemaValue), fmt.Sprintf("%v", innerErr.Value))
+
+					if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
+						req.Equal(tt.wantErrSchemaOriginReason, originErr.Reason)
+						pointer := toJSONPointer(originErr.JSONPointer())
+						req.Equal(tt.wantErrSchemaOriginPath, pointer)
+						req.Equal(fmt.Sprintf("%v", tt.wantErrSchemaOriginValue), fmt.Sprintf("%v", originErr.Value))
+					}
 				} else {
 					req.False(tt.wantErrSchemaReason != "" || tt.wantErrSchemaPath != "",
 						"error = %v, not a SchemaError -- %#v", e.Err, e.Err)
+					req.False(tt.wantErrSchemaOriginReason != "" || tt.wantErrSchemaOriginPath != "",
+						"error = %v, not a SchemaError with Origin -- %#v", e.Err, e.Err)
 				}
 
 				if innerErr, ok := e.Err.(*ParseError); ok {
