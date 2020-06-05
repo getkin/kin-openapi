@@ -1108,12 +1108,12 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 			if fast {
 				return errSchema
 			}
-			return &SchemaError{
+			return markSchemaErrorKey(&SchemaError{
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "required",
 				Reason:      fmt.Sprintf("Property '%s' is missing", k),
-			}
+			}, k)
 		}
 	}
 	return
