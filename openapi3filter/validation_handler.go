@@ -42,13 +42,31 @@ func (h *ValidationHandler) Load() error {
 }
 
 func (h *ValidationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := h.validateRequest(r)
-	if err != nil {
-		h.ErrorEncoder(r.Context(), err, w)
+	if handled := h.before(w, r); handled {
 		return
 	}
 	// TODO: validateResponse
 	h.Handler.ServeHTTP(w, r)
+}
+
+// Middleware implements gorilla/mux MiddlewareFunc
+func (h *ValidationHandler) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if handled := h.before(w, r); handled {
+			return
+		}
+		// TODO: validateResponse
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (h *ValidationHandler) before(w http.ResponseWriter, r *http.Request) (handled bool) {
+	err := h.validateRequest(r)
+	if err != nil {
+		h.ErrorEncoder(r.Context(), err, w)
+		return true
+	}
+	return false
 }
 
 func (h *ValidationHandler) validateRequest(r *http.Request) error {
