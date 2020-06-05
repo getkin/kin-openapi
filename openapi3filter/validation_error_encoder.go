@@ -152,16 +152,6 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 	} else if innerErr.JSONPointer() != nil {
 		pointer := innerErr.JSONPointer()
 
-		// JSONPointer is rarely what you expect.
-		// 1. for "property is missing" errors, its an empty array
-		// 2. for nested attributes, it leaves off the last element from the JSONPointer
-		matches := propertyMissingNameRE.FindStringSubmatch(innerErr.Reason)
-		if matches != nil && len(matches) > 1 {
-			if len(pointer) == 0 || matches[1] != pointer[0] {
-				pointer = append(pointer, matches[1])
-			}
-		}
-
 		cErr.Source = &ValidationErrorSource{
 			Pointer: toJSONPointer(pointer),
 		}
