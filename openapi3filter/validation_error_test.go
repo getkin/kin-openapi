@@ -369,6 +369,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 					bytes.NewBufferString(`{"name":"Bahama","photoUrls":[]}`)),
 			},
 		},
+		{
+			name: "success - required properties are not required on PATCH if required overlaid using allOf elsewhere",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodPatch, "/pet", bytes.NewBufferString(`{}`)),
+			},
+		},
 
 		//
 		// Path params
