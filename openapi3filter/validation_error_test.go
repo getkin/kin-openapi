@@ -567,4 +567,26 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 		require.Equal(t, "[422][][] Field must be set to array or not be present [source pointer=/photoUrls]", string(body))
 	})
+
+	t.Run("ignores requests not matching openapi servers if requested", func(t *testing.T) {
+		r := newPetstoreRequest(t, http.MethodGet, "/pet/findByStatus?status=sold", nil)
+		r.URL.Host = "notaserver"
+
+		handler := &testHandler{}
+		encoder := &mockErrorEncoder{}
+
+		h := &ValidationHandler{
+			Handler:      handler,
+			ErrorEncoder: encoder.Encode,
+			SwaggerFile:  "fixtures/petstore.json",
+			IgnoreServerErrors: true,
+		}
+		err := h.Load()
+		require.NoError(t, err)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+
+		require.True(t, handler.Called)
+		require.False(t, encoder.Called)
+	})
 }
