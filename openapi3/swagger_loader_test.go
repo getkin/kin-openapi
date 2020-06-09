@@ -97,7 +97,7 @@ func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
-	require.EqualError(t, err, "invalid paths: Found unresolved ref: ''")
+	require.EqualError(t, err, `invalid paths: found unresolved ref: ""`)
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {

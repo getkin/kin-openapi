@@ -190,7 +190,7 @@ var refTestDataEntriesResponseError = []refTestDataEntryWithErrorMessage{
 	{
 		name:            "CannotContainBothSchemaAndContentInAParameter",
 		contentTemplate: externalCannotContainBothSchemaAndContentInAParameter,
-		errorMessage:    &(&struct{ x string }{"Cannot contain both schema and content in a parameter"}).x,
+		errorMessage:    &(&struct{ x string }{"cannot contain both schema and content in a parameter"}).x,
 		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
 		},
 	},
