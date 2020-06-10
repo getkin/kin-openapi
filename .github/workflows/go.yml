@@ -10,7 +10,7 @@ jobs:
       GO111MODULE: 'on'
       CGO_ENABLED: '0'
     strategy:
-      fail-fast: yes
+      fail-fast: true
       matrix:
         # Locked at https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
         os:
