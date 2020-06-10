@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  Build and test:
+  build-and-test:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GO111MODULE: 'on'
