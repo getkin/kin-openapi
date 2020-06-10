@@ -1,0 +1,35 @@
+name: go
+on:
+  pull_request:
+  push:
+
+jobs:
+  build-and-test:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GO111MODULE: 'on'
+      CGO_ENABLED: '0'
+    strategy:
+      fail-fast: true
+      matrix:
+        # Locked at https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+        os:
+        - ubuntu-18.04
+        - windows-2019
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: 1.x
+    - run: go version
+
+    - run: go get ./...
+    - run: go test ./...
+    - run: go vet ./...
+    - run: go fmt ./...
+    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+      shell: bash
+    - run: go get -u -a -v ./... && go mod tidy && go mod verify
+    - run: git --no-pager diff
