@@ -22,8 +22,7 @@ type ValidationHandler struct {
 func (h *ValidationHandler) Load() error {
 	h.router = NewRouter()
 
-	err := h.router.AddSwaggerFromFile(h.SwaggerFile)
-	if err != nil {
+	if err := h.router.AddSwaggerFromFile(h.SwaggerFile); err != nil {
 		return err
 	}
 
@@ -42,8 +41,7 @@ func (h *ValidationHandler) Load() error {
 }
 
 func (h *ValidationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := h.validateRequest(r)
-	if err != nil {
+	if err := h.validateRequest(r); err != nil {
 		h.ErrorEncoder(r.Context(), err, w)
 		return
 	}
@@ -69,8 +67,7 @@ func (h *ValidationHandler) validateRequest(r *http.Request) error {
 		Route:      route,
 		Options:    options,
 	}
-	err = ValidateRequest(r.Context(), requestValidationInput)
-	if err != nil {
+	if err = ValidateRequest(r.Context(), requestValidationInput); err != nil {
 		return err
 	}
 

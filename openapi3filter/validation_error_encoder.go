@@ -176,7 +176,7 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 			(e.Parameter.Style == "" || e.Parameter.Style == "form") &&
 			strings.Contains(value, ",") {
 			parts := strings.Split(value, ",")
-			cErr.Detail = cErr.Detail+"; "+ fmt.Sprintf("perhaps you intended '?%s=%s'",
+			cErr.Detail = cErr.Detail + "; " + fmt.Sprintf("perhaps you intended '?%s=%s'",
 				e.Parameter.Name, strings.Join(parts, "&"+e.Parameter.Name+"="))
 		}
 	}
