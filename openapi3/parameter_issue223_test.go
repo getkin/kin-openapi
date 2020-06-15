@@ -1,14 +1,14 @@
 package openapi3
 
 import (
-  "context"
-  "testing"
+	"context"
+	"testing"
 
-  "github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPathParametersMatchPath(t *testing.T) {
-  spec := `
+	spec := `
 openapi: "3.0.0"
 info:
   version: 1.0.0
@@ -109,8 +109,8 @@ components:
           type: string
 `
 
-  doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
-  require.NoError(t, err)
-  err = doc.Validate(context.Background())
-  require.EqualError(t, err, `invalid paths: operation GET /pets/{petId} must define exactly all path parameters`)
+	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
+	require.NoError(t, err)
+	err = doc.Validate(context.Background())
+	require.EqualError(t, err, `invalid paths: operation GET /pets/{petId} must define exactly all path parameters`)
 }

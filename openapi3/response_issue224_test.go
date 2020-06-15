@@ -1,14 +1,14 @@
 package openapi3
 
 import (
-    "context"
-    "testing"
+	"context"
+	"testing"
 
-    "github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEmptyResponsesAreInvalid(t *testing.T) {
-    spec := `{
+	spec := `{
     "openapi": "3.0.0",
     "servers": [
         {
@@ -453,8 +453,8 @@ func TestEmptyResponsesAreInvalid(t *testing.T) {
 }
 `
 
-    doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
-    require.NoError(t, err)
-    err = doc.Validate(context.Background())
-    require.EqualError(t, err, `invalid paths: the responses object MUST contain at least one response code`)
+	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
+	require.NoError(t, err)
+	err = doc.Validate(context.Background())
+	require.EqualError(t, err, `invalid paths: the responses object MUST contain at least one response code`)
 }
