@@ -1,21 +1,21 @@
 package openapi3_test
 
 import (
-	"fmt"
-	"net"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"testing"
+  "fmt"
+  "net"
+  "net/http"
+  "net/http/httptest"
+  "net/url"
+  "testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/stretchr/testify/require"
+  "github.com/getkin/kin-openapi/openapi3"
+  "github.com/stretchr/testify/require"
 )
 
 const addr = "localhost:7965"
 
 func TestLoadYAML(t *testing.T) {
-	spec := []byte(`
+  spec := []byte(`
 openapi: 3.0.0
 info:
   title: An API

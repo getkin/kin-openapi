@@ -112,5 +112,5 @@ components:
   doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
   require.NoError(t, err)
   err = doc.Validate(context.Background())
-  require.Error(t, err)
+  require.EqualError(t, err, `invalid paths: operation GET /pets/{petId} must define exactly all path parameters`)
 }

@@ -24,7 +24,7 @@ paths:
 `
 
 	for path, expectedErr := range map[string]string{
-		"foo/bar":  "Error when validating Paths: Path 'foo/bar' does not start with '/'",
+		"foo/bar":  "invalid paths: path \"foo/bar\" does not start with a forward slash (/)",
 		"/foo/bar": "",
 	} {
 		loader := openapi3.NewSwaggerLoader()

@@ -52,6 +52,11 @@ func TestRouter(t *testing.T) {
 			},
 			"/params/{x}/{y}/{z*}": &openapi3.PathItem{
 				Get: paramsGET,
+				Parameters: openapi3.Parameters{
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("y")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("z")},
+				},
 			},
 			"/partial": &openapi3.PathItem{
 				Get: partialGET,
