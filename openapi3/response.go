@@ -12,7 +12,9 @@ import (
 type Responses map[string]*ResponseRef
 
 func NewResponses() Responses {
-	return make(Responses, 8)
+	r := make(Responses)
+	r["default"] = &ResponseRef{Value: NewResponse().WithDescription("")}
+	return r
 }
 
 func (responses Responses) Default() *ResponseRef {
@@ -24,6 +26,9 @@ func (responses Responses) Get(status int) *ResponseRef {
 }
 
 func (responses Responses) Validate(c context.Context) error {
+	if len(responses) == 0 {
+		return errors.New("The Responses Object MUST contain at least one response code")
+	}
 	for _, v := range responses {
 		if err := v.Validate(c); err != nil {
 			return err

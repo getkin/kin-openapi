@@ -71,14 +71,12 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 		responses = NewResponses()
 		operation.Responses = responses
 	}
-	if status == 0 {
-		responses["default"] = &ResponseRef{
-			Value: response,
-		}
-	} else {
-		responses[strconv.FormatInt(int64(status), 10)] = &ResponseRef{
-			Value: response,
-		}
+	code := "default"
+	if status != 0 {
+		code = strconv.FormatInt(int64(status), 10)
+	}
+	responses[code] = &ResponseRef{
+		Value: response,
 	}
 }
 
