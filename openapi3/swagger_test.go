@@ -21,7 +21,7 @@ func TestRefsJSON(t *testing.T) {
 
 	t.Log("Unmarshal *openapi3.Swagger from JSON")
 	docA := &openapi3.Swagger{}
-	err = json.Unmarshal(specJSON, &docA)
+	err = json.Unmarshal([]byte(specJSON), &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
@@ -44,7 +44,7 @@ func TestRefsJSON(t *testing.T) {
 	require.NoError(t, err)
 	dataB, err := json.Marshal(docB)
 	require.NoError(t, err)
-	require.JSONEq(t, string(data), string(specJSON))
+	require.JSONEq(t, string(data), specJSON)
 	require.JSONEq(t, string(data), string(dataA))
 	require.JSONEq(t, string(data), string(dataB))
 }
@@ -59,7 +59,7 @@ func TestRefsYAML(t *testing.T) {
 
 	t.Log("Unmarshal *openapi3.Swagger from YAML")
 	docA := &openapi3.Swagger{}
-	err = yaml.Unmarshal(specYAML, &docA)
+	err = yaml.Unmarshal([]byte(specYAML), &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
@@ -82,7 +82,7 @@ func TestRefsYAML(t *testing.T) {
 	require.NoError(t, err)
 	dataB, err := yaml.Marshal(docB)
 	require.NoError(t, err)
-	eqYAML(t, data, specYAML)
+	eqYAML(t, data, []byte(specYAML))
 	eqYAML(t, data, dataA)
 	eqYAML(t, data, dataB)
 }
@@ -96,7 +96,7 @@ func eqYAML(t *testing.T, expected, actual []byte) {
 	require.Equal(t, e, a)
 }
 
-var specYAML = []byte(`
+var specYAML = `
 openapi: '3.0'
 info:
   title: MyAPI
@@ -148,9 +148,9 @@ components:
       name: token
     someSecurityScheme:
       "$ref": "#/components/securitySchemes/otherSecurityScheme"
-`)
+`
 
-var specJSON = []byte(`
+var specJSON = `
 {
   "openapi": "3.0",
   "info": {
@@ -236,7 +236,7 @@ var specJSON = []byte(`
     }
   }
 }
-`)
+`
 
 func spec() *openapi3.Swagger {
 	parameter := &openapi3.Parameter{
@@ -351,12 +351,12 @@ func spec() *openapi3.Swagger {
 func TestValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		input         []byte
+		input         string
 		expectedError error
 	}{
 		{
 			"when no OpenAPI property is supplied",
-			[]byte(`
+			`
 info:
   title: "Hello World REST APIs"
   version: "1.0"
@@ -380,12 +380,12 @@ paths:
       responses:
         200:
           description: "Get a single greeting object"
-`),
-			errors.New("Variable 'openapi' must be a non-empty JSON string"),
+`,
+			errors.New("value of openapi must be a non-empty JSON string"),
 		},
 		{
 			"when an empty OpenAPI property is supplied",
-			[]byte(`
+			`
 openapi: ''
 info:
   title: "Hello World REST APIs"
@@ -410,12 +410,12 @@ paths:
       responses:
         200:
           description: "Get a single greeting object"
-`),
-			errors.New("Variable 'openapi' must be a non-empty JSON string"),
+`,
+			errors.New("value of openapi must be a non-empty JSON string"),
 		},
 		{
 			"when the Info property is not supplied",
-			[]byte(`
+			`
 openapi: '1.0'
 paths:
   "/api/v2/greetings.json":
@@ -437,22 +437,22 @@ paths:
       responses:
         200:
           description: "Get a single greeting object"
-`),
-			errors.New("Variable 'info' must be a JSON object"),
+`,
+			errors.New("invalid info: must be a JSON object"),
 		},
 		{
 			"when the Paths property is not supplied",
-			[]byte(`
+			`
 openapi: '1.0'
 info:
   title: "Hello World REST APIs"
   version: "1.0"
-`),
-			errors.New("Variable 'paths' must be a JSON object"),
+`,
+			errors.New("invalid paths: must be a JSON object"),
 		},
 		{
 			"when a valid spec is supplied",
-			[]byte(`
+			`
 openapi: 3.0.2
 info:
   title: "Hello World REST APIs"
@@ -490,7 +490,7 @@ components:
           properties:
             description:
               type: string
-`),
+`,
 			nil,
 		},
 	}
@@ -498,7 +498,7 @@ components:
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			doc := &openapi3.Swagger{}
-			err := yaml.Unmarshal(test.input, &doc)
+			err := yaml.Unmarshal([]byte(test.input), &doc)
 			require.NoError(t, err)
 
 			c := context.Background()

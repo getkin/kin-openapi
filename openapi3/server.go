@@ -114,7 +114,7 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 
 func (server *Server) Validate(c context.Context) (err error) {
 	if server.URL == "" {
-		return errors.New("Variable 'URL' must be a non-empty JSON string")
+		return errors.New("value of url must be a non-empty JSON string")
 	}
 	for _, v := range server.Variables {
 		if err = v.Validate(c); err != nil {
@@ -135,7 +135,7 @@ func (serverVariable *ServerVariable) Validate(c context.Context) error {
 	switch serverVariable.Default.(type) {
 	case float64, string:
 	default:
-		return errors.New("Variable 'default' must be either JSON number or JSON string")
+		return errors.New("value of default must be either JSON number or JSON string")
 	}
 	for _, item := range serverVariable.Enum {
 		switch item.(type) {

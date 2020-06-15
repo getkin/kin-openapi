@@ -456,5 +456,5 @@ func TestEmptyResponsesAreInvalid(t *testing.T) {
 	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(context.Background())
-	require.Error(t, err)
+	require.EqualError(t, err, `invalid paths: the responses object MUST contain at least one response code`)
 }
