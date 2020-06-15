@@ -60,8 +60,7 @@ func (h *ValidationHandler) Middleware(next http.Handler) http.Handler {
 }
 
 func (h *ValidationHandler) before(w http.ResponseWriter, r *http.Request) (handled bool) {
-	err := h.validateRequest(r)
-	if err != nil {
+	if err := h.validateRequest(r); err != nil {
 		h.ErrorEncoder(r.Context(), err, w)
 		return true
 	}
