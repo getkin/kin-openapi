@@ -133,13 +133,13 @@ func TestFilter(t *testing.T) {
 							},
 						},
 					},
-					Responses: make(openapi3.Responses),
+					Responses: openapi3.NewResponses(),
 				},
 			},
 
 			"/issue151": &openapi3.PathItem{
 				Get: &openapi3.Operation{
-					Responses: make(openapi3.Responses),
+					Responses: openapi3.NewResponses(),
 				},
 				Parameters: openapi3.Parameters{
 					{
@@ -557,21 +557,16 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 	for _, tc := range tc {
 		var securityRequirements *openapi3.SecurityRequirements = nil
 		if tc.schemes != nil {
-			tempS := make(openapi3.SecurityRequirements, 0)
+			tempS := openapi3.NewSecurityRequirements()
 			for _, scheme := range *tc.schemes {
-				tempS = append(
-					tempS,
-					openapi3.SecurityRequirement{
-						scheme.Name: {},
-					},
-				)
+				tempS.With(openapi3.SecurityRequirement{scheme.Name: {}})
 			}
-			securityRequirements = &tempS
+			securityRequirements = tempS
 		}
 		swagger.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
-				Responses: make(openapi3.Responses),
+				Responses: openapi3.NewResponses(),
 			},
 		}
 	}
@@ -693,18 +688,16 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 	// Add the paths to the swagger
 	for _, tc := range tc {
 		// Create the security requirements from the test cases's schemes
-		securityRequirements := make(openapi3.SecurityRequirements, len(tc.schemes))
-		for i, scheme := range tc.schemes {
-			securityRequirements[i] = openapi3.SecurityRequirement{
-				scheme: {},
-			}
+		securityRequirements := openapi3.NewSecurityRequirements()
+		for _, scheme := range tc.schemes {
+			securityRequirements.With(openapi3.SecurityRequirement{scheme: {}})
 		}
 
 		// Create the path with the security requirements
 		swagger.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
-				Security:  &securityRequirements,
-				Responses: make(openapi3.Responses),
+				Security:  securityRequirements,
+				Responses: openapi3.NewResponses(),
 			},
 		}
 	}
@@ -804,7 +797,7 @@ func TestAllSchemesMet(t *testing.T) {
 				Security: &openapi3.SecurityRequirements{
 					securityRequirement,
 				},
-				Responses: make(openapi3.Responses),
+				Responses: openapi3.NewResponses(),
 			},
 		}
 	}

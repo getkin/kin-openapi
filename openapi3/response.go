@@ -12,7 +12,9 @@ import (
 type Responses map[string]*ResponseRef
 
 func NewResponses() Responses {
-	return make(Responses, 8)
+	r := make(Responses)
+	r["default"] = &ResponseRef{Value: NewResponse().WithDescription("")}
+	return r
 }
 
 func (responses Responses) Default() *ResponseRef {
