@@ -12,14 +12,38 @@ type Paths map[string]*PathItem
 func (paths Paths) Validate(c context.Context) error {
 	normalizedPaths := make(map[string]string)
 	for path, pathItem := range paths {
-		normalizedPath := normalizePathKey(path)
-		if oldPath, exists := normalizedPaths[normalizedPath]; exists {
-			return fmt.Errorf("Conflicting paths '%v' and '%v'", path, oldPath)
-		}
 		if path == "" || path[0] != '/' {
-			return fmt.Errorf("Path '%v' does not start with '/'", path)
+			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
+		}
+
+		normalizedPath, pathParamsCount := normalizeTemplatedPath(path)
+		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
+			return fmt.Errorf("conflicting paths %q and %q", path, oldPath)
 		}
 		normalizedPaths[path] = path
+
+		var globalCount uint
+		for _, parameterRef := range pathItem.Parameters {
+			if parameterRef != nil {
+				if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
+					globalCount++
+				}
+			}
+		}
+		for method, operation := range pathItem.Operations() {
+			var count uint
+			for _, parameterRef := range operation.Parameters {
+				if parameterRef != nil {
+					if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
+						count++
+					}
+				}
+			}
+			if count+globalCount != pathParamsCount {
+				return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
+			}
+		}
+
 		if err := pathItem.Validate(c); err != nil {
 			return err
 		}
@@ -46,37 +70,37 @@ func (paths Paths) Find(key string) *PathItem {
 		return pathItem
 	}
 
-	// Use normalized keys
-	normalizedSearchedPath := normalizePathKey(key)
+	normalizedPath, expected := normalizeTemplatedPath(key)
 	for path, pathItem := range paths {
-		normalizedPath := normalizePathKey(path)
-		if normalizedPath == normalizedSearchedPath {
+		pathNormalized, got := normalizeTemplatedPath(path)
+		if got == expected && pathNormalized == normalizedPath {
 			return pathItem
 		}
 	}
 	return nil
 }
 
-func normalizePathKey(key string) string {
-	// If the argument has no path variables, return the argument
-	if strings.IndexByte(key, '{') < 0 {
-		return key
+func normalizeTemplatedPath(path string) (string, uint) {
+	if strings.IndexByte(path, '{') < 0 {
+		return path, 0
 	}
 
-	// Allocate buffer
-	buf := make([]byte, 0, len(key))
+	var buf strings.Builder
+	buf.Grow(len(path))
 
-	// Visit each byte
-	isVariable := false
-	for i := 0; i < len(key); i++ {
-		c := key[i]
+	var (
+		cc         rune
+		count      uint
+		isVariable bool
+	)
+	for i, c := range path {
 		if isVariable {
 			if c == '}' {
 				// End path variables
 				// First append possible '*' before this character
 				// The character '}' will be appended
-				if i > 0 && key[i-1] == '*' {
-					buf = append(buf, '*')
+				if i > 0 && cc == '*' {
+					buf.WriteRune(cc)
 				}
 				isVariable = false
 			} else {
@@ -87,10 +111,12 @@ func normalizePathKey(key string) string {
 			// Begin path variable
 			// The character '{' will be appended
 			isVariable = true
+			count++
 		}
 
 		// Append the character
-		buf = append(buf, c)
+		buf.WriteRune(c)
+		cc = c
 	}
-	return string(buf)
+	return buf.String(), count
 }
