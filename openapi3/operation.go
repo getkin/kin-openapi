@@ -96,7 +96,7 @@ func (operation *Operation) Validate(c context.Context) error {
 			return err
 		}
 	} else {
-		return errors.New("Variable 'Responses' must be a JSON object")
+		return errors.New("value of responses must be a JSON object")
 	}
 	return nil
 }
