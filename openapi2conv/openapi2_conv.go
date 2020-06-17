@@ -13,11 +13,14 @@ import (
 
 // ToV3Swagger converts an OpenAPIv2 spec to an OpenAPIv3 spec
 func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
+	stripNonCustomExtensions(swagger.Extensions)
+
 	result := &openapi3.Swagger{
-		OpenAPI:    "3.0.2",
-		Info:       &swagger.Info,
-		Components: openapi3.Components{},
-		Tags:       swagger.Tags,
+		OpenAPI:        "3.0.2",
+		Info:           &swagger.Info,
+		Components:     openapi3.Components{},
+		Tags:           swagger.Tags,
+		ExtensionProps: swagger.ExtensionProps,
 	}
 	host := swagger.Host
 	if len(host) > 0 {
@@ -93,7 +96,10 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 }
 
 func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*openapi3.PathItem, error) {
-	result := &openapi3.PathItem{}
+	stripNonCustomExtensions(pathItem.Extensions)
+	result := &openapi3.PathItem{
+		ExtensionProps: pathItem.ExtensionProps,
+	}
 	for method, operation := range pathItem.Operations() {
 		resultOperation, err := ToV3Operation(swagger, pathItem, operation)
 		if err != nil {
@@ -118,11 +124,13 @@ func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, opera
 	if operation == nil {
 		return nil, nil
 	}
+	stripNonCustomExtensions(operation.Extensions)
 	result := &openapi3.Operation{
-		OperationID: operation.OperationID,
-		Summary:     operation.Summary,
-		Description: operation.Description,
-		Tags:        operation.Tags,
+		OperationID:    operation.OperationID,
+		Summary:        operation.Summary,
+		Description:    operation.Description,
+		Tags:           operation.Tags,
+		ExtensionProps: operation.ExtensionProps,
 	}
 	if v := operation.Security; v != nil {
 		resultSecurity := ToV3SecurityRequirements(*v)
@@ -162,11 +170,13 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 			Ref: ToV3Ref(ref),
 		}, nil, nil
 	}
+	stripNonCustomExtensions(parameter.Extensions)
 	in := parameter.In
 	if in == "body" {
 		result := &openapi3.RequestBody{
-			Description: parameter.Description,
-			Required:    parameter.Required,
+			Description:    parameter.Description,
+			Required:       parameter.Required,
+			ExtensionProps: parameter.ExtensionProps,
 		}
 		if schemaRef := parameter.Schema; schemaRef != nil {
 			// Assume it's JSON
@@ -177,10 +187,11 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 		}, nil
 	}
 	result := &openapi3.Parameter{
-		In:          in,
-		Name:        parameter.Name,
-		Description: parameter.Description,
-		Required:    parameter.Required,
+		In:             in,
+		Name:           parameter.Name,
+		Description:    parameter.Description,
+		Required:       parameter.Required,
+		ExtensionProps: parameter.ExtensionProps,
 	}
 
 	if parameter.Type != "" {
@@ -214,8 +225,10 @@ func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
 			Ref: ToV3Ref(ref),
 		}, nil
 	}
+	stripNonCustomExtensions(response.Extensions)
 	result := &openapi3.Response{
-		Description: &response.Description,
+		Description:    &response.Description,
+		ExtensionProps: response.ExtensionProps,
 	}
 	if schemaRef := response.Schema; schemaRef != nil {
 		result.WithJSONSchemaRef(ToV3SchemaRef(schemaRef))
@@ -293,8 +306,10 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 	if securityScheme == nil {
 		return nil, nil
 	}
+	stripNonCustomExtensions(securityScheme.Extensions)
 	result := &openapi3.SecurityScheme{
-		Description: securityScheme.Description,
+		Description:    securityScheme.Description,
+		ExtensionProps: securityScheme.ExtensionProps,
 	}
 	switch securityScheme.Type {
 	case "basic":
@@ -339,12 +354,16 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	if err != nil {
 		return nil, err
 	}
+	stripNonCustomExtensions(swagger.Extensions)
+
 	result := &openapi2.Swagger{
-		Info:        *swagger.Info,
-		Definitions: FromV3Schemas(swagger.Components.Schemas),
-		Responses:   resultResponses,
-		Tags:        swagger.Tags,
+		Info:           *swagger.Info,
+		Definitions:    FromV3Schemas(swagger.Components.Schemas),
+		Responses:      resultResponses,
+		Tags:           swagger.Tags,
+		ExtensionProps: swagger.ExtensionProps,
 	}
+
 	isHTTPS := false
 	isHTTP := false
 	servers := swagger.Servers
@@ -375,6 +394,8 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 			continue
 		}
 		result.AddOperation(path, "GET", nil)
+		stripNonCustomExtensions(pathItem.Extensions)
+		addPathExtensions(result, path, pathItem.ExtensionProps)
 		for method, operation := range pathItem.Operations() {
 			if operation == nil {
 				continue
@@ -457,7 +478,10 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 }
 
 func FromV3PathItem(swagger *openapi3.Swagger, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
-	result := &openapi2.PathItem{}
+	stripNonCustomExtensions(pathItem.Extensions)
+	result := &openapi2.PathItem{
+		ExtensionProps: pathItem.ExtensionProps,
+	}
 	for method, operation := range pathItem.Operations() {
 		r, err := FromV3Operation(swagger, operation)
 		if err != nil {
@@ -493,11 +517,13 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 	if operation == nil {
 		return nil, nil
 	}
+	stripNonCustomExtensions(operation.Extensions)
 	result := &openapi2.Operation{
-		OperationID: operation.OperationID,
-		Summary:     operation.Summary,
-		Description: operation.Description,
-		Tags:        operation.Tags,
+		OperationID:    operation.OperationID,
+		Summary:        operation.Summary,
+		Description:    operation.Description,
+		Tags:           operation.Tags,
+		ExtensionProps: operation.ExtensionProps,
 	}
 	if v := operation.Security; v != nil {
 		resultSecurity := FromV3SecurityRequirements(*v)
@@ -542,11 +568,13 @@ func FromV3RequestBody(swagger *openapi3.Swagger, operation *openapi3.Operation,
 	if name == "" {
 		return nil, errors.New("Could not find a name for request body")
 	}
+	stripNonCustomExtensions(requestBody.Extensions)
 	result := &openapi2.Parameter{
-		In:          "body",
-		Name:        name,
-		Description: requestBody.Description,
-		Required:    requestBody.Required,
+		In:             "body",
+		Name:           name,
+		Description:    requestBody.Description,
+		Required:       requestBody.Required,
+		ExtensionProps: requestBody.ExtensionProps,
 	}
 
 	// Add JSON schema
@@ -567,11 +595,13 @@ func FromV3Parameter(ref *openapi3.ParameterRef) (*openapi2.Parameter, error) {
 	if parameter == nil {
 		return nil, nil
 	}
+	stripNonCustomExtensions(parameter.Extensions)
 	result := &openapi2.Parameter{
-		Description: parameter.Description,
-		In:          parameter.In,
-		Name:        parameter.Name,
-		Required:    parameter.Required,
+		Description:    parameter.Description,
+		In:             parameter.In,
+		Name:           parameter.Name,
+		Required:       parameter.Required,
+		ExtensionProps: parameter.ExtensionProps,
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRef = FromV3SchemaRef(schemaRef)
@@ -621,8 +651,10 @@ func FromV3Response(ref *openapi3.ResponseRef) (*openapi2.Response, error) {
 	if desc := response.Description; desc != nil {
 		description = *desc
 	}
+	stripNonCustomExtensions(response.Extensions)
 	result := &openapi2.Response{
-		Description: description,
+		Description:    description,
+		ExtensionProps: response.ExtensionProps,
 	}
 	if content := response.Content; content != nil {
 		if ct := content["application/json"]; ct != nil {
@@ -637,9 +669,11 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 	if securityScheme == nil {
 		return nil, nil
 	}
+	stripNonCustomExtensions(securityScheme.Extensions)
 	result := &openapi2.SecurityScheme{
-		Ref:         FromV3Ref(ref.Ref),
-		Description: securityScheme.Description,
+		Ref:            FromV3Ref(ref.Ref),
+		Description:    securityScheme.Description,
+		ExtensionProps: securityScheme.ExtensionProps,
 	}
 	switch securityScheme.Type {
 	case "http":
@@ -683,4 +717,26 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 var attemptedBodyParameterNames = []string{
 	"body",
 	"requestBody",
+}
+
+func stripNonCustomExtensions(extensions map[string]interface{}) {
+	for extName, _ := range extensions {
+		if !strings.HasPrefix(extName, "x-") {
+			delete(extensions, extName)
+		}
+	}
+}
+
+func addPathExtensions(swagger *openapi2.Swagger, path string, extensionProps openapi3.ExtensionProps) {
+	paths := swagger.Paths
+	if paths == nil {
+		paths = make(map[string]*openapi2.PathItem, 8)
+		swagger.Paths = paths
+	}
+	pathItem := paths[path]
+	if pathItem == nil {
+		pathItem = &openapi2.PathItem{}
+		paths[path] = pathItem
+	}
+	pathItem.ExtensionProps = extensionProps
 }
