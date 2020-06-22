@@ -70,7 +70,7 @@ func TestServerValidation(t *testing.T) {
 		{
 			"when no URL is provided",
 			invalidServer(),
-			errors.New("Variable 'URL' must be a non-empty JSON string"),
+			errors.New("value of url must be a non-empty JSON string"),
 		},
 		{
 			"when a URL is provided",

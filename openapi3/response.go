@@ -12,7 +12,9 @@ import (
 type Responses map[string]*ResponseRef
 
 func NewResponses() Responses {
-	return make(Responses, 8)
+	r := make(Responses)
+	r["default"] = &ResponseRef{Value: NewResponse().WithDescription("")}
+	return r
 }
 
 func (responses Responses) Default() *ResponseRef {
@@ -24,6 +26,9 @@ func (responses Responses) Get(status int) *ResponseRef {
 }
 
 func (responses Responses) Validate(c context.Context) error {
+	if len(responses) == 0 {
+		return errors.New("the responses object MUST contain at least one response code")
+	}
 	for _, v := range responses {
 		if err := v.Validate(c); err != nil {
 			return err
@@ -75,7 +80,7 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 
 func (response *Response) Validate(c context.Context) error {
 	if response.Description == nil {
-		return errors.New("A short description of the response is required")
+		return errors.New("a short description of the response is required")
 	}
 
 	if content := response.Content; content != nil {

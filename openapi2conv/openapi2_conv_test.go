@@ -35,7 +35,9 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 
 const exampleV2 = `
 {
-  "info": {"title":"MyAPI","version":"0.1"},
+  "x-root": "root extension 1",
+  "x-root2": "root extension 2",
+  "info": {"title":"MyAPI","version":"0.1","x-info":"info extension"},
   "schemes": ["https"],
   "host": "test.example.com",
   "basePath": "/v2",
@@ -60,7 +62,10 @@ const exampleV2 = `
 		]
     },
     "/example": {
+      "x-path": "path extension 1",
+      "x-path2": "path extension 2",
       "delete": {
+        "x-operation": "operation extension 1",
         "description": "example delete",
         "responses": {
           "default": {
@@ -83,6 +88,7 @@ const exampleV2 = `
         ],
         "parameters": [
           {
+            "x-parameter": "parameter extension 1",
             "in": "query",
             "name": "x"
           },
@@ -108,6 +114,7 @@ const exampleV2 = `
           },
           {
             "in": "body",
+            "x-requestBody": "requestbody extension 1",
             "name": "body",
             "schema": {}
           }
@@ -123,6 +130,7 @@ const exampleV2 = `
             }
           },
           "default": {
+            "x-response": "response extension 1",
             "description": "default response"
           },
           "404": {
@@ -217,8 +225,10 @@ const exampleV2 = `
 
 const exampleV3 = `
 {
+  "x-root": "root extension 1",
+  "x-root2": "root extension 2",
   "openapi": "3.0.2",
-  "info": {"title":"MyAPI","version":"0.1"},
+  "info": {"title":"MyAPI","version":"0.1","x-info":"info extension"},
   "components": {
     "responses": {
       "ForbiddenError": {
@@ -297,7 +307,10 @@ const exampleV3 = `
 		]
     },
     "/example": {
+      "x-path": "path extension 1",
+      "x-path2": "path extension 2",
       "delete": {
+        "x-operation": "operation extension 1",
         "description": "example delete",
         "responses": {
           "default": {
@@ -320,6 +333,7 @@ const exampleV3 = `
         ],
         "parameters": [
           {
+            "x-parameter": "parameter extension 1",
             "in": "query",
             "name": "x"
           },
@@ -349,6 +363,7 @@ const exampleV3 = `
           }
         ],
         "requestBody": {
+          "x-requestBody": "requestbody extension 1",
           "content": {
             "application/json": {
               "schema": {}
@@ -370,6 +385,7 @@ const exampleV3 = `
             }
           },
           "default": {
+            "x-response": "response extension 1",
             "description": "default response"
           },
           "404": {

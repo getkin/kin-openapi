@@ -135,6 +135,11 @@ var propertyMissingNameRE = regexp.MustCompile(`Property '(?P<name>[^']*)' is mi
 func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *ValidationError {
 	cErr := &ValidationError{Title: innerErr.Reason}
 
+	// Handle "Origin" error
+	if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
+		cErr = convertSchemaError(e, originErr)
+	}
+
 	// Add http status code
 	if e.Parameter != nil {
 		cErr.Status = http.StatusBadRequest
@@ -151,16 +156,6 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 		}
 	} else if innerErr.JSONPointer() != nil {
 		pointer := innerErr.JSONPointer()
-
-		// JSONPointer is rarely what you expect.
-		// 1. for "property is missing" errors, its an empty array
-		// 2. for nested attributes, it leaves off the last element from the JSONPointer
-		matches := propertyMissingNameRE.FindStringSubmatch(innerErr.Reason)
-		if matches != nil && len(matches) > 1 {
-			if len(pointer) == 0 || matches[1] != pointer[0] {
-				pointer = append(pointer, matches[1])
-			}
-		}
 
 		cErr.Source = &ValidationErrorSource{
 			Pointer: toJSONPointer(pointer),
@@ -181,7 +176,7 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 			(e.Parameter.Style == "" || e.Parameter.Style == "form") &&
 			strings.Contains(value, ",") {
 			parts := strings.Split(value, ",")
-			cErr.Detail = cErr.Detail+"; "+ fmt.Sprintf("perhaps you intended '?%s=%s'",
+			cErr.Detail = cErr.Detail + "; " + fmt.Sprintf("perhaps you intended '?%s=%s'",
 				e.Parameter.Name, strings.Join(parts, "&"+e.Parameter.Name+"="))
 		}
 	}

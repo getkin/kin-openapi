@@ -924,7 +924,11 @@ func TestDecodeParameter(t *testing.T) {
 						Version: "0.1",
 					}
 					spec := &openapi3.Swagger{OpenAPI: "3.0.0", Info: info}
-					op := &openapi3.Operation{OperationID: "test", Parameters: []*openapi3.ParameterRef{{Value: tc.param}}, Responses: make(openapi3.Responses)}
+					op := &openapi3.Operation{
+						OperationID: "test",
+						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
+						Responses:   openapi3.NewResponses(),
+					}
 					spec.AddOperation("/test"+path, http.MethodGet, op)
 					router := NewRouter()
 					require.NoError(t, router.AddSwagger(spec), "failed to create a router")

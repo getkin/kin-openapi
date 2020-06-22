@@ -18,17 +18,17 @@ func TestRouter(t *testing.T) {
 	)
 
 	// Build swagger
-	helloCONNECT := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloDELETE := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloHEAD := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloOPTIONS := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloPATCH := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloPOST := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloPUT := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	helloTRACE := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	paramsGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
-	partialGET := &openapi3.Operation{Responses: make(openapi3.Responses)}
+	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloHEAD := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloOPTIONS := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloPATCH := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloPOST := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloPUT := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloTRACE := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	paramsGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	partialGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	swagger := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
@@ -52,6 +52,11 @@ func TestRouter(t *testing.T) {
 			},
 			"/params/{x}/{y}/{z*}": &openapi3.PathItem{
 				Get: paramsGET,
+				Parameters: openapi3.Parameters{
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("y")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("z")},
+				},
 			},
 			"/partial": &openapi3.PathItem{
 				Get: partialGET,
