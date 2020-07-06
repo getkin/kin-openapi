@@ -21,6 +21,7 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 		Components:     openapi3.Components{},
 		Tags:           swagger.Tags,
 		ExtensionProps: swagger.ExtensionProps,
+		ExternalDocs:   swagger.ExternalDocs,
 	}
 	host := swagger.Host
 	if len(host) > 0 {
@@ -362,6 +363,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 		Responses:      resultResponses,
 		Tags:           swagger.Tags,
 		ExtensionProps: swagger.ExtensionProps,
+		ExternalDocs:   swagger.ExternalDocs,
 	}
 
 	isHTTPS := false
