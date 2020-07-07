@@ -41,6 +41,10 @@ const exampleV2 = `
   "schemes": ["https"],
   "host": "test.example.com",
   "basePath": "/v2",
+  "externalDocs": {
+    "url": "https://example/doc/",
+    "description": "Example Documentation"
+  },
   "tags": [
     {
       "name": "Example",
@@ -229,6 +233,10 @@ const exampleV3 = `
   "x-root2": "root extension 2",
   "openapi": "3.0.2",
   "info": {"title":"MyAPI","version":"0.1","x-info":"info extension"},
+  "externalDocs": {
+    "url": "https://example/doc/",
+    "description": "Example Documentation"
+  },
   "components": {
     "responses": {
       "ForbiddenError": {
