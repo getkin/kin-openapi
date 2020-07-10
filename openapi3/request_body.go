@@ -43,6 +43,16 @@ func (requestBody *RequestBody) WithJSONSchema(value *Schema) *RequestBody {
 	return requestBody
 }
 
+func (requestBody *RequestBody) WithFormDataSchemaRef(value *SchemaRef) *RequestBody {
+	requestBody.Content = NewContentWithFormDataSchemaRef(value)
+	return requestBody
+}
+
+func (requestBody *RequestBody) WithFormDataSchema(value *Schema) *RequestBody {
+	requestBody.Content = NewContentWithFormDataSchema(value)
+	return requestBody
+}
+
 func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType {
 	m := requestBody.Content
 	if m == nil {

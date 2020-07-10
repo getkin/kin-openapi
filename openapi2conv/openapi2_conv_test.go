@@ -161,7 +161,22 @@ const exampleV2 = `
       },
       "post": {
         "description": "example post",
-        "responses": {}
+        "responses": {},
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "fileUpload",
+            "type": "file",
+            "description": "param description",
+            "x-mimetype": "text/plain"
+          },
+          {
+            "in": "formData",
+            "name":"note",
+            "type": "integer",
+            "description": "Description of file contents"
+          }
+        ]
       },
       "put": {
         "description": "example put",
@@ -424,7 +439,28 @@ const exampleV3 = `
       },
       "post": {
         "description": "example post",
-        "responses": {}
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "fileUpload": {
+                    "description": "param description",
+                    "format": "binary",
+                    "type": "string",
+                    "x-mimetype": "text/plain"
+                  },
+                  "note":{
+                    "type": "integer",
+                    "description": "Description of file contents"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        }
       },
       "put": {
         "description": "example put",
