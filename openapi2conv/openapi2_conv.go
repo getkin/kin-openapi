@@ -121,6 +121,51 @@ func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*open
 	return result, nil
 }
 
+func ToV3RequestBodyFormData(parameters []*openapi2.Parameter) *openapi3.RequestBodyRef {
+	if len(parameters) == 0 || parameters[0].In != "formData" {
+		return nil
+	}
+	schema := &openapi3.Schema{
+		Type:       "object",
+		Properties: make(map[string]*openapi3.SchemaRef, len(parameters)),
+	}
+	for _, parameter := range parameters {
+		if parameter.In != "formData" || parameter.Name == "" {
+			continue
+		}
+		format := parameter.Format
+		typ := parameter.Type
+		if parameter.Type == "file" {
+			format = "binary"
+			typ = "string"
+		}
+		pschema := &openapi3.Schema{
+			Description:    parameter.Description,
+			Type:           typ,
+			ExtensionProps: parameter.ExtensionProps,
+			Format:         format,
+			Enum:           parameter.Enum,
+			Min:            parameter.Minimum,
+			Max:            parameter.Maximum,
+			ExclusiveMin:   parameter.ExclusiveMin,
+			ExclusiveMax:   parameter.ExclusiveMax,
+			MinLength:      parameter.MinLength,
+			MaxLength:      parameter.MaxLength,
+			Default:        parameter.Default,
+			Items:          parameter.Items,
+			MinItems:       parameter.MinItems,
+			MaxItems:       parameter.MaxItems,
+		}
+		schemaRef := openapi3.SchemaRef{
+			Value: pschema,
+		}
+		schema.Properties[parameter.Name] = &schemaRef
+	}
+	return &openapi3.RequestBodyRef{
+		Value: openapi3.NewRequestBody().WithFormDataSchema(schema),
+	}
+}
+
 func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, operation *openapi2.Operation) (*openapi3.Operation, error) {
 	if operation == nil {
 		return nil, nil
@@ -137,15 +182,21 @@ func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, opera
 		resultSecurity := ToV3SecurityRequirements(*v)
 		result.Security = &resultSecurity
 	}
-	for _, parameter := range operation.Parameters {
-		v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
-		if err != nil {
-			return nil, err
-		}
-		if v3RequestBody != nil {
-			result.RequestBody = v3RequestBody
-		} else if v3Parameter != nil {
-			result.Parameters = append(result.Parameters, v3Parameter)
+
+	requestBodyRef := ToV3RequestBodyFormData(operation.Parameters)
+	if requestBodyRef != nil {
+		result.RequestBody = requestBodyRef
+	} else {
+		for _, parameter := range operation.Parameters {
+			v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
+			if err != nil {
+				return nil, err
+			}
+			if v3RequestBody != nil {
+				result.RequestBody = v3RequestBody
+			} else if v3Parameter != nil {
+				result.Parameters = append(result.Parameters, v3Parameter)
+			}
 		}
 	}
 	if responses := operation.Responses; responses != nil {
@@ -515,6 +566,42 @@ nameSearch:
 	return ""
 }
 
+func FromV3RequestBodyFormData(requestBodyRef *openapi3.RequestBodyRef) openapi2.Parameters {
+	mediaType := requestBodyRef.Value.GetMediaType("multipart/form-data")
+	if mediaType == nil {
+		return nil
+	}
+	parameters := openapi2.Parameters{}
+	for prop, schemaRef := range mediaType.Schema.Value.Properties {
+		val := schemaRef.Value
+		typ := val.Type
+		if val.Format == "binary" {
+			typ = "file"
+		}
+		parameter := &openapi2.Parameter{
+			Name:           prop,
+			Description:    val.Description,
+			Type:           typ,
+			In:             "formData",
+			ExtensionProps: val.ExtensionProps,
+			Enum:           val.Enum,
+			ExclusiveMin:   val.ExclusiveMin,
+			ExclusiveMax:   val.ExclusiveMax,
+			MinLength:      val.MinLength,
+			MaxLength:      val.MaxLength,
+			Default:        val.Default,
+			Items:          val.Items,
+			MinItems:       val.MinItems,
+			MaxItems:       val.MaxItems,
+			Maximum:        val.Max,
+			Minimum:        val.Min,
+			Pattern:        val.Pattern,
+		}
+		parameters = append(parameters, parameter)
+	}
+	return parameters
+}
+
 func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (*openapi2.Operation, error) {
 	if operation == nil {
 		return nil, nil
@@ -539,11 +626,16 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 		result.Parameters = append(result.Parameters, r)
 	}
 	if v := operation.RequestBody; v != nil {
-		r, err := FromV3RequestBody(swagger, operation, v)
-		if err != nil {
-			return nil, err
+		parameters := FromV3RequestBodyFormData(operation.RequestBody)
+		if len(parameters) > 0 {
+			result.Parameters = append(result.Parameters, parameters...)
+		} else {
+			r, err := FromV3RequestBody(swagger, operation, v)
+			if err != nil {
+				return nil, err
+			}
+			result.Parameters = append(result.Parameters, r)
 		}
-		result.Parameters = append(result.Parameters, r)
 	}
 	if responses := operation.Responses; responses != nil {
 		resultResponses, err := FromV3Responses(responses)
