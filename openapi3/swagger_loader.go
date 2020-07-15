@@ -166,9 +166,11 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 }
 
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
-	swaggerLoader.visited = make(map[interface{}]struct{})
+	if swaggerLoader.visited == nil {
+		swaggerLoader.visited = make(map[interface{}]struct{})
+	}
 	if swaggerLoader.visitedFiles == nil {
-		swaggerLoader.visitedFiles = make(map[string]struct{})
+		swaggerLoader.reset()
 	}
 
 	// Visit all components
@@ -232,7 +234,7 @@ func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
 	}
 	newPath, err := copyURL(basePath)
 	if err != nil {
-		return nil, fmt.Errorf("Can't copy path: '%s'", basePath.String())
+		return nil, fmt.Errorf("cannot copy path: %q", basePath.String())
 	}
 	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
 	return newPath, nil
@@ -274,9 +276,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 
 	cursor = swagger
 	for _, pathPart := range strings.Split(fragment[1:], "/") {
-
-		pathPart = strings.Replace(pathPart, "~1", "/", -1)
-		pathPart = strings.Replace(pathPart, "~0", "~", -1)
+		pathPart = unescapeRefString(pathPart)
 
 		if cursor, err = drillIntoSwaggerField(cursor, pathPart); err != nil {
 			return nil, nil, fmt.Errorf("Failed to resolve '%s' in fragment in URI: '%s': %v", ref, pathPart, err.Error())
@@ -369,7 +369,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	if component == nil {
 		return errors.New("invalid header: value MUST be a JSON object")
 	}
-	if ref := component.Ref; len(ref) > 0 {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var header Header
 			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &header); err != nil {
@@ -416,7 +416,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		return errors.New("invalid parameter: value MUST be a JSON object")
 	}
 	ref := component.Ref
-	if len(ref) > 0 {
+	if ref != "" {
 		if isSingleRefElement(ref) {
 			var param Parameter
 			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
@@ -477,7 +477,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	if component == nil {
 		return errors.New("invalid requestBody: value MUST be a JSON object")
 	}
-	if ref := component.Ref; len(ref) > 0 {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
 			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &requestBody); err != nil {
@@ -532,7 +532,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		return errors.New("invalid response: value MUST be a JSON object")
 	}
 	ref := component.Ref
-	if len(ref) > 0 {
+	if ref != "" {
 
 		if isSingleRefElement(ref) {
 			var resp Response
@@ -607,7 +607,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		return errors.New("invalid schema: value MUST be a JSON object")
 	}
 	ref := component.Ref
-	if len(ref) > 0 {
+	if ref != "" {
 		if isSingleRefElement(ref) {
 			var schema Schema
 			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
@@ -692,7 +692,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	if component == nil {
 		return errors.New("invalid securityScheme: value MUST be a JSON object")
 	}
-	if ref := component.Ref; len(ref) > 0 {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
 			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &scheme); err != nil {
@@ -729,7 +729,7 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	if component == nil {
 		return errors.New("invalid example: value MUST be a JSON object")
 	}
-	if ref := component.Ref; len(ref) > 0 {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var example Example
 			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &example); err != nil {
@@ -766,7 +766,7 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 	if component == nil {
 		return errors.New("invalid link: value MUST be a JSON object")
 	}
-	if ref := component.Ref; len(ref) > 0 {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var link Link
 			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &link); err != nil {
