@@ -21,4 +21,4 @@ components:
       type: object
       properties:
         object_b:
-          $ref: 'issue235.spec1.yml#/components/schemas/ObjectD'
+          $ref: 'issue235.spec0-typo.yml#/components/schemas/ObjectD'
