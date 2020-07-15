@@ -240,6 +240,10 @@ func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
 
 func resolvePath(basePath *url.URL, componentPath *url.URL) (*url.URL, error) {
 	if componentPath.Scheme == "" && componentPath.Host == "" {
+		// support absolute paths
+		if componentPath.Path[0] == '/' {
+			return componentPath, nil
+		}
 		return join(basePath, componentPath)
 	}
 	return componentPath, nil
