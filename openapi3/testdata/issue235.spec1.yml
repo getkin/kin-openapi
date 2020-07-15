@@ -1,0 +1,12 @@
+components:
+  schemas:
+    ObjectD:
+      type: object
+      properties:
+        result:
+          $ref: '#/components/schemas/ObjectE'
+
+    ObjectE:
+      properties:
+        name:
+          $ref: issue235.spec2.yml#/components/schemas/ObjectX

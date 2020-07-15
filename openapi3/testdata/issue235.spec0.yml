@@ -1,0 +1,7 @@
+components:
+  schemas:
+    ObjectA:
+      type: object
+      properties:
+        object_b:
+          $ref: 'issue235.spec0.yml#/components/schemas/ObjectD'
