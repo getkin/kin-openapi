@@ -92,7 +92,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 	return
 }
 
-const identifierPattern = `^[a-zA-Z0-9.\-_]+$`
+const identifierPattern = `^[a-zA-Z0-9._-]+$`
 
 var identifierRegExp = regexp.MustCompile(identifierPattern)
 
@@ -100,5 +100,5 @@ func ValidateIdentifier(value string) error {
 	if identifierRegExp.MatchString(value) {
 		return nil
 	}
-	return fmt.Errorf("Identifier '%s' is not supported by OpenAPI version 3 standard (regexp: '%s')", value, identifierPattern)
+	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (regexp: %q)", value, identifierPattern)
 }
