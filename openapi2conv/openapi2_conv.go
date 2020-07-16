@@ -23,13 +23,11 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 		ExtensionProps: swagger.ExtensionProps,
 		ExternalDocs:   swagger.ExternalDocs,
 	}
-	host := swagger.Host
-	if len(host) > 0 {
+
+	if host := swagger.Host; len(host) > 0 {
 		schemes := swagger.Schemes
 		if len(schemes) == 0 {
-			schemes = []string{
-				"https://",
-			}
+			schemes = []string{"https://"}
 		}
 		basePath := swagger.BasePath
 		for _, scheme := range schemes {
@@ -38,11 +36,10 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 				Host:   host,
 				Path:   basePath,
 			}
-			result.AddServer(&openapi3.Server{
-				URL: u.String(),
-			})
+			result.AddServer(&openapi3.Server{URL: u.String()})
 		}
 	}
+
 	if paths := swagger.Paths; paths != nil {
 		resultPaths := make(map[string]*openapi3.PathItem, len(paths))
 		for path, pathItem := range paths {
@@ -54,6 +51,7 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 		}
 		result.Paths = resultPaths
 	}
+
 	if parameters := swagger.Parameters; parameters != nil {
 		result.Components.Parameters = make(map[string]*openapi3.ParameterRef)
 		result.Components.RequestBodies = make(map[string]*openapi3.RequestBodyRef)
@@ -70,6 +68,7 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 			}
 		}
 	}
+
 	if responses := swagger.Responses; responses != nil {
 		result.Components.Responses = make(map[string]*openapi3.ResponseRef, len(responses))
 		for k, response := range responses {
@@ -80,7 +79,9 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 			result.Components.Responses[k] = r
 		}
 	}
+
 	result.Components.Schemas = ToV3Schemas(swagger.Definitions)
+
 	if m := swagger.SecurityDefinitions; m != nil {
 		resultSecuritySchemes := make(map[string]*openapi3.SecuritySchemeRef)
 		for k, v := range m {
@@ -92,6 +93,7 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 		}
 		result.Components.SecuritySchemes = resultSecuritySchemes
 	}
+
 	result.Security = ToV3SecurityRequirements(swagger.Security)
 	return result, nil
 }
@@ -508,7 +510,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 		return schema
 	}
 	if schema.Value.Items != nil {
-		schema.Value.Items = FromV3SchemaRef((schema.Value.Items))
+		schema.Value.Items = FromV3SchemaRef(schema.Value.Items)
 	}
 	for k, v := range schema.Value.Properties {
 		schema.Value.Properties[k] = FromV3SchemaRef(v)
@@ -814,7 +816,7 @@ var attemptedBodyParameterNames = []string{
 }
 
 func stripNonCustomExtensions(extensions map[string]interface{}) {
-	for extName, _ := range extensions {
+	for extName := range extensions {
 		if !strings.HasPrefix(extName, "x-") {
 			delete(extensions, extName)
 		}
