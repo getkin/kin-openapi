@@ -95,6 +95,13 @@ func ToV3Swagger(swagger *openapi2.Swagger) (*openapi3.Swagger, error) {
 	}
 
 	result.Security = ToV3SecurityRequirements(swagger.Security)
+
+	{
+		sl := openapi3.NewSwaggerLoader()
+		if err := sl.ResolveRefsIn(result, nil); err != nil {
+			return nil, err
+		}
+	}
 	return result, nil
 }
 
