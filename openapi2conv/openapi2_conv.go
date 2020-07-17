@@ -233,11 +233,15 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 		return nil, reqBodyRef, nil
 
 	default:
+		required := parameter.Required
+		if parameter.In == openapi3.ParameterInPath {
+			required = true
+		}
 		result := &openapi3.Parameter{
 			In:             parameter.In,
 			Name:           parameter.Name,
 			Description:    parameter.Description,
-			Required:       parameter.Required,
+			Required:       required,
 			ExtensionProps: parameter.ExtensionProps,
 			Schema: ToV3SchemaRef(&openapi3.SchemaRef{Value: &openapi3.Schema{
 				Type:            parameter.Type,
@@ -658,7 +662,7 @@ func FromV3RequestBodyFormData(requestBodyRef *openapi3.RequestBodyRef) openapi2
 			Minimum:        val.Min,
 			Pattern:        val.Pattern,
 			// CollectionFormat: val.CollectionFormat,
-			Format:          val.Format,
+			// Format:          val.Format,
 			AllowEmptyValue: val.AllowEmptyValue,
 			Required:        required,
 			UniqueItems:     val.UniqueItems,

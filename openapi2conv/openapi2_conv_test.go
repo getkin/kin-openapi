@@ -40,110 +40,133 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 
 const exampleV2 = `
 {
-  "x-root": "root extension 1",
-  "x-root2": "root extension 2",
-  "info": {"title":"MyAPI","version":"0.1","x-info":"info extension"},
-  "schemes": ["https"],
-  "host": "test.example.com",
+  "swagger": "2.0",
   "basePath": "/v2",
-  "externalDocs": {
-    "url": "https://example/doc/",
-    "description": "Example Documentation"
-  },
-  "tags": [
-    {
-      "name": "Example",
-      "description": "An example tag."
+  "definitions": {
+    "Error": {
+      "description": "Error response.",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "Item": {
+      "additionalProperties": true,
+      "properties": {
+        "foo": {
+          "type": "string"
+        },
+        "quux": {
+          "$ref": "#/definitions/ItemExtension"
+        }
+      },
+      "type": "object"
+    },
+    "ItemExtension": {
+      "description": "It could be anything.",
+      "type": "boolean"
     }
-  ],
+  },
+  "externalDocs": {
+    "description": "Example Documentation",
+    "url": "https://example/doc/"
+  },
+  "host": "test.example.com",
+  "info": {
+    "title": "MyAPI",
+    "version": "0.1",
+    "x-info": "info extension"
+  },
+  "parameters": {
+    "banana": {
+      "in": "path",
+      "name": "banana",
+      "required": true,
+      "type": "string"
+    }
+  },
   "paths": {
     "/another/{banana}/{id}": {
-        "parameters": [
-      {
-            "$ref": "#/parameters/banana"
-          },
-          {
-            "in": "path",
-            "name": "id",
-      "type": "integer",
-      "required": true
-          }
-    ]
+      "parameters": [
+        {
+          "$ref": "#/parameters/banana"
+        },
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "type": "integer"
+        }
+      ]
     },
     "/example": {
-      "x-path": "path extension 1",
-      "x-path2": "path extension 2",
-      "delete": {
-        "x-operation": "operation extension 1",
-        "description": "example delete",
+      "get": {
+        "description": "example get",
         "responses": {
-          "default": {
-            "description": "default response"
-          },
           "403": {
             "$ref": "#/responses/ForbiddenError"
           },
           "404": {
             "description": "404 response"
+          },
+          "default": {
+            "description": "default response"
           }
-        }
+        },
+        "x-operation": "operation extension 1"
       },
-      "get": {
-        "operationId": "example-get",
-        "summary": "example get",
-        "description": "example get",
-        "tags": [
-          "Example"
-        ],
+      "delete": {
+        "description": "example delete",
+        "operationId": "example-delete",
         "parameters": [
           {
-            "x-parameter": "parameter extension 1",
             "in": "query",
-            "name": "x"
+            "name": "x",
+            "type": "string",
+            "x-parameter": "parameter extension 1"
           },
           {
-            "in": "query",
-            "name": "y",
+            "default": 250,
             "description": "The y parameter",
-            "type": "integer",
-            "minimum": 1,
+            "in": "query",
             "maximum": 10000,
-            "default": 250
+            "minimum": 1,
+            "name": "y",
+            "type": "integer"
           },
           {
-            "in": "query",
-            "name": "bbox",
             "description": "Only return results that intersect the provided bounding box.",
-            "maxItems": 4,
-            "minItems": 4,
-            "type": "array",
+            "in": "query",
             "items": {
               "type": "number"
-            }
-          },
-          {
-            "in": "body",
-            "x-requestBody": "requestbody extension 1",
-            "name": "body",
-            "schema": {}
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "name": "bbox",
+            "type": "array"
           }
         ],
         "responses": {
           "200": {
             "description": "ok",
             "schema": {
-              "type": "array",
               "items": {
                 "$ref": "#/definitions/Item"
-              }
+              },
+              "type": "array"
             }
-          },
-          "default": {
-            "x-response": "response extension 1",
-            "description": "default response"
           },
           "404": {
             "description": "404 response"
+          },
+          "default": {
+            "description": "default response",
+            "x-response": "response extension 1"
           }
         },
         "security": [
@@ -154,49 +177,86 @@ const exampleV2 = `
             ],
             "get_security_1": []
           }
+        ],
+        "summary": "example get",
+        "tags": [
+          "Example"
         ]
       },
       "head": {
         "description": "example head",
-        "responses": {"default": { "description": "default response" }}
-      },
-      "patch": {
-        "description": "example patch",
-        "responses": {"default": { "description": "default response" }}
-      },
-      "post": {
-        "description": "example post",
-        "responses": {"default": { "description": "default response" }},
-        "parameters": [
-          {
-            "in": "query",
-            "name":"id",
-            "type": "integer",
-            "description": "File Id"
-          },
-          {
-            "in": "formData",
-            "name": "fileUpload",
-            "type": "file",
-            "description": "param description",
-            "x-mimetype": "text/plain"
-          },
-          {
-            "in": "formData",
-            "name":"note",
-            "type": "integer",
-            "description": "Description of file contents"
+        "responses": {
+          "default": {
+            "description": "default response"
           }
-        ]
-      },
-      "put": {
-        "description": "example put",
-        "responses": {"default": { "description": "default response" }}
+        }
       },
       "options": {
         "description": "example options",
-        "responses": {"default": { "description": "default response" }}
-      }
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
+      },
+      "patch": {
+        "description": "example patch",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "allOf": [{"$ref": "#/definitions/Item"}]
+            },
+            "x-requestBody": "requestbody extension 1"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
+      },
+      "post": {
+        "consumes": ["multipart/form-data"],
+        "description": "example post",
+        "parameters": [
+          {
+            "description": "File Id",
+            "in": "query",
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "description": "param description",
+            "in": "formData",
+            "name": "fileUpload",
+            "type": "file",
+            "x-mimetype": "text/plain"
+          },
+          {
+            "description": "Description of file contents",
+            "in": "formData",
+            "name": "note",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
+      },
+      "put": {
+        "description": "example put",
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
+      },
+      "x-path": "path extension 1",
+      "x-path2": "path extension 2"
     }
   },
   "responses": {
@@ -207,41 +267,9 @@ const exampleV2 = `
       }
     }
   },
-  "definitions": {
-    "Item": {
-      "type": "object",
-      "properties": {
-        "foo": {
-          "type": "string"
-        }
-      },
-    "additionalProperties": {
-        "$ref": "#/definitions/ItemExtension"
-      }
-    },
-    "ItemExtension": {
-        "description": "It could be anything."
-    },
-    "Error": {
-      "description": "Error response.",
-      "type": "object",
-      "required": [
-        "message"
-      ],
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "parameters": {
-    "banana": {
-    "in": "path",
-    "name": "bnn",
-      "type": "string"
-    }
-  },
+  "schemes": [
+    "https"
+  ],
   "security": [
     {
       "default_security_0": [
@@ -250,21 +278,31 @@ const exampleV2 = `
       ],
       "default_security_1": []
     }
-  ]
+  ],
+  "tags": [
+    {
+      "description": "An example tag.",
+      "name": "Example"
+    }
+  ],
+  "x-root": "root extension 1",
+  "x-root2": "root extension 2"
 }
 `
 
 const exampleV3 = `
 {
-  "x-root": "root extension 1",
-  "x-root2": "root extension 2",
-  "openapi": "3.0.3",
-  "info": {"title":"MyAPI","version":"0.1","x-info":"info extension"},
-  "externalDocs": {
-    "url": "https://example/doc/",
-    "description": "Example Documentation"
-  },
   "components": {
+    "parameters": {
+      "banana": {
+        "in": "path",
+        "name": "banana",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
     "responses": {
       "ForbiddenError": {
         "content": {
@@ -277,30 +315,7 @@ const exampleV3 = `
         "description": "Insufficient permission to perform the requested action."
       }
     },
-    "parameters": {
-      "banana": {
-      "in": "path",
-      "name": "bnn",
-        "schema": {
-          "type": "string"
-        }
-      }
-    },
     "schemas": {
-      "Item": {
-        "type": "object",
-        "properties": {
-          "foo": {
-            "type": "string"
-          }
-        },
-      "additionalProperties": {
-          "$ref": "#/components/schemas/ItemExtension"
-      }
-      },
-    "ItemExtension": {
-    "description": "It could be anything."
-    },
       "Error": {
         "description": "Error response.",
         "properties": {
@@ -312,67 +327,76 @@ const exampleV3 = `
           "message"
         ],
         "type": "object"
+      },
+      "Item": {
+        "additionalProperties": true,
+        "properties": {
+          "foo": {
+            "type": "string"
+          },
+          "quux": {
+            "$ref": "#/components/schemas/ItemExtension"
+          }
+        },
+        "type": "object"
+      },
+      "ItemExtension": {
+        "type": "boolean",
+        "description": "It could be anything."
       }
     }
   },
-  "tags": [
-    {
-      "name": "Example",
-      "description": "An example tag."
-    }
-  ],
-  "servers": [
-    {
-      "url": "https://test.example.com/v2"
-    }
-  ],
+  "externalDocs": {
+    "description": "Example Documentation",
+    "url": "https://example/doc/"
+  },
+  "info": {
+    "title": "MyAPI",
+    "version": "0.1",
+    "x-info": "info extension"
+  },
+  "openapi": "3.0.3",
   "paths": {
     "/another/{banana}/{id}": {
-        "parameters": [
-      {
-            "$ref": "#/components/parameters/banana"
-          },
-          {
-            "in": "path",
-            "name": "id",
-            "schema": {
-              "type": "integer"
-            },
-      "required": true
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/banana"
+        },
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "type": "integer"
           }
-    ]
+        }
+      ]
     },
     "/example": {
-      "x-path": "path extension 1",
-      "x-path2": "path extension 2",
-      "delete": {
-        "x-operation": "operation extension 1",
-        "description": "example delete",
+      "get": {
+        "description": "example get",
         "responses": {
-          "default": {
-            "description": "default response"
-          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
             "description": "404 response"
+          },
+          "default": {
+            "description": "default response"
           }
-        }
+        },
+        "x-operation": "operation extension 1"
       },
-      "get": {
-        "operationId": "example-get",
-        "summary": "example get",
-        "description": "example get",
-        "tags": [
-          "Example"
-        ],
+      "delete": {
+        "description": "example delete",
+        "operationId": "example-delete",
         "parameters": [
           {
-            "x-parameter": "parameter extension 1",
             "in": "query",
             "name": "x",
-            "schema": {}
+            "schema": {"type": "string"},
+            "x-parameter": "parameter extension 1"
           },
           {
             "description": "The y parameter",
@@ -390,26 +414,17 @@ const exampleV3 = `
             "in": "query",
             "name": "bbox",
             "schema": {
-              "type": "array",
               "items": {
                 "type": "number"
               },
+              "maxItems": 4,
               "minItems": 4,
-              "maxItems": 4
+              "type": "array"
             }
           }
         ],
-        "requestBody": {
-          "x-requestBody": "requestbody extension 1",
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "ok",
             "content": {
               "application/json": {
                 "schema": {
@@ -419,14 +434,15 @@ const exampleV3 = `
                   "type": "array"
                 }
               }
-            }
-          },
-          "default": {
-            "x-response": "response extension 1",
-            "description": "default response"
+            },
+            "description": "ok"
           },
           "404": {
             "description": "404 response"
+          },
+          "default": {
+            "description": "default response",
+            "x-response": "response extension 1"
           }
         },
         "security": [
@@ -437,23 +453,58 @@ const exampleV3 = `
             ],
             "get_security_1": []
           }
+        ],
+        "summary": "example get",
+        "tags": [
+          "Example"
         ]
       },
       "head": {
         "description": "example head",
-        "responses": {"default": { "description": "default response" }}
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
       },
       "options": {
         "description": "example options",
-        "responses": {"default": { "description": "default response" }}
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
       },
       "patch": {
         "description": "example patch",
-        "responses": {"default": { "description": "default response" }}
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [{"$ref": "#/components/schemas/Item"}]
+              }
+            }
+          },
+          "x-requestBody": "requestbody extension 1"
+        },
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
       },
       "post": {
         "description": "example post",
-        "responses": {"default": { "description": "default response" }},
+        "parameters": [
+          {
+            "description": "File Id",
+            "in": "query",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -461,13 +512,13 @@ const exampleV3 = `
                 "properties": {
                   "fileUpload": {
                     "description": "param description",
-                    "format": "binary",
                     "type": "string",
+                    "format": "binary",
                     "x-mimetype": "text/plain"
                   },
-                  "note":{
-                    "type": "integer",
-                    "description": "Description of file contents"
+                  "note": {
+                    "description": "Description of file contents",
+                    "type": "integer"
                   }
                 },
                 "type": "object"
@@ -475,21 +526,22 @@ const exampleV3 = `
             }
           }
         },
-        "parameters": [
-          {
-            "in": "query",
-            "name":"id",
-            "description": "File Id",
-            "schema": {
-              "type": "integer"
-            }
+        "responses": {
+          "default": {
+            "description": "default response"
           }
-        ]
+        }
       },
       "put": {
         "description": "example put",
-        "responses": {"default": { "description": "default response" }}
-      }
+        "responses": {
+          "default": {
+            "description": "default response"
+          }
+        }
+      },
+      "x-path": "path extension 1",
+      "x-path2": "path extension 2"
     }
   },
   "security": [
@@ -500,6 +552,19 @@ const exampleV3 = `
       ],
       "default_security_1": []
     }
-  ]
+  ],
+  "servers": [
+    {
+      "url": "https://test.example.com/v2"
+    }
+  ],
+  "tags": [
+    {
+      "description": "An example tag.",
+      "name": "Example"
+    }
+  ],
+  "x-root": "root extension 1",
+  "x-root2": "root extension 2"
 }
 `
