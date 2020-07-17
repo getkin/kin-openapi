@@ -164,6 +164,12 @@ const exampleV2 = `
         "responses": {},
         "parameters": [
           {
+            "in": "path",
+            "name":"id",
+            "type": "integer",
+            "description": "File Id"
+          },
+          {
             "in": "formData",
             "name": "fileUpload",
             "type": "file",
@@ -460,7 +466,17 @@ const exampleV3 = `
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name":"id",
+            "description": "File Id",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
       },
       "put": {
         "description": "example put",

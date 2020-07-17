@@ -130,49 +130,63 @@ func ToV3PathItem(swagger *openapi2.Swagger, pathItem *openapi2.PathItem) (*open
 	return result, nil
 }
 
-func ToV3RequestBodyFormData(parameters []*openapi2.Parameter) *openapi3.RequestBodyRef {
-	if len(parameters) == 0 || parameters[0].In != "formData" {
-		return nil
+func ToV3RequestBodyFormData(parameters []*openapi2.Parameter) (*openapi3.RequestBodyRef, openapi3.Parameters) {
+	if len(parameters) == 0 {
+		return nil, nil
 	}
 	schema := &openapi3.Schema{
 		Type:       "object",
 		Properties: make(map[string]*openapi3.SchemaRef, len(parameters)),
 	}
+	rParameters := openapi3.Parameters{}
+	//at least one parameter should be `formData`
+	isFormData := false
 	for _, parameter := range parameters {
-		if parameter.In != "formData" || parameter.Name == "" {
+		if parameter.Name == "" {
 			continue
 		}
-		format := parameter.Format
-		typ := parameter.Type
-		if parameter.Type == "file" {
-			format = "binary"
-			typ = "string"
+		if parameter.In == "formData" {
+			isFormData = true
+			format := parameter.Format
+			typ := parameter.Type
+			if parameter.Type == "file" {
+				format = "binary"
+				typ = "string"
+			}
+			pschema := &openapi3.Schema{
+				Description:    parameter.Description,
+				Type:           typ,
+				ExtensionProps: parameter.ExtensionProps,
+				Format:         format,
+				Enum:           parameter.Enum,
+				Min:            parameter.Minimum,
+				Max:            parameter.Maximum,
+				ExclusiveMin:   parameter.ExclusiveMin,
+				ExclusiveMax:   parameter.ExclusiveMax,
+				MinLength:      parameter.MinLength,
+				MaxLength:      parameter.MaxLength,
+				Default:        parameter.Default,
+				Items:          parameter.Items,
+				MinItems:       parameter.MinItems,
+				MaxItems:       parameter.MaxItems,
+			}
+			schemaRef := openapi3.SchemaRef{
+				Value: pschema,
+			}
+			schema.Properties[parameter.Name] = &schemaRef
+		} else {
+			v3param := toV3ParamaterRef(parameter)
+			if v3param != nil {
+				rParameters = append(rParameters, v3param)
+			}
 		}
-		pschema := &openapi3.Schema{
-			Description:    parameter.Description,
-			Type:           typ,
-			ExtensionProps: parameter.ExtensionProps,
-			Format:         format,
-			Enum:           parameter.Enum,
-			Min:            parameter.Minimum,
-			Max:            parameter.Maximum,
-			ExclusiveMin:   parameter.ExclusiveMin,
-			ExclusiveMax:   parameter.ExclusiveMax,
-			MinLength:      parameter.MinLength,
-			MaxLength:      parameter.MaxLength,
-			Default:        parameter.Default,
-			Items:          parameter.Items,
-			MinItems:       parameter.MinItems,
-			MaxItems:       parameter.MaxItems,
-		}
-		schemaRef := openapi3.SchemaRef{
-			Value: pschema,
-		}
-		schema.Properties[parameter.Name] = &schemaRef
 	}
-	return &openapi3.RequestBodyRef{
-		Value: openapi3.NewRequestBody().WithFormDataSchema(schema),
+	if isFormData {
+		return &openapi3.RequestBodyRef{
+			Value: openapi3.NewRequestBody().WithFormDataSchema(schema),
+		}, rParameters
 	}
+	return nil, nil
 }
 
 func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, operation *openapi2.Operation) (*openapi3.Operation, error) {
@@ -192,9 +206,12 @@ func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, opera
 		result.Security = &resultSecurity
 	}
 
-	requestBodyRef := ToV3RequestBodyFormData(operation.Parameters)
+	requestBodyRef, parameters := ToV3RequestBodyFormData(operation.Parameters)
 	if requestBodyRef != nil {
 		result.RequestBody = requestBodyRef
+		if len(parameters) > 0 {
+			result.Parameters = append(result.Parameters, parameters...)
+		}
 	} else {
 		for _, parameter := range operation.Parameters {
 			v3Parameter, v3RequestBody, err := ToV3Parameter(parameter)
@@ -222,6 +239,42 @@ func ToV3Operation(swagger *openapi2.Swagger, pathItem *openapi2.PathItem, opera
 	return result, nil
 }
 
+func toV3ParamaterRef(parameter *openapi2.Parameter) *openapi3.ParameterRef {
+	if parameter.In == "body" {
+		return nil
+	}
+	result := &openapi3.Parameter{
+		In:             parameter.In,
+		Name:           parameter.Name,
+		Description:    parameter.Description,
+		Required:       parameter.Required,
+		ExtensionProps: parameter.ExtensionProps,
+	}
+	if parameter.Type != "" {
+		schema := &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				Type:         parameter.Type,
+				Format:       parameter.Format,
+				Enum:         parameter.Enum,
+				Min:          parameter.Minimum,
+				Max:          parameter.Maximum,
+				ExclusiveMin: parameter.ExclusiveMin,
+				ExclusiveMax: parameter.ExclusiveMax,
+				MinLength:    parameter.MinLength,
+				MaxLength:    parameter.MaxLength,
+				Default:      parameter.Default,
+				Items:        parameter.Items,
+				MinItems:     parameter.MinItems,
+				MaxItems:     parameter.MaxItems,
+			},
+		}
+		result.Schema = ToV3SchemaRef(schema)
+	}
+	return &openapi3.ParameterRef{
+		Value: result,
+	}
+}
+
 func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *openapi3.RequestBodyRef, error) {
 	if parameter == nil {
 		return nil, nil, nil
@@ -247,37 +300,7 @@ func ToV3Parameter(parameter *openapi2.Parameter) (*openapi3.ParameterRef, *open
 			Value: result,
 		}, nil
 	}
-	result := &openapi3.Parameter{
-		In:             in,
-		Name:           parameter.Name,
-		Description:    parameter.Description,
-		Required:       parameter.Required,
-		ExtensionProps: parameter.ExtensionProps,
-	}
-
-	if parameter.Type != "" {
-		schema := &openapi3.SchemaRef{
-			Value: &openapi3.Schema{
-				Type:         parameter.Type,
-				Format:       parameter.Format,
-				Enum:         parameter.Enum,
-				Min:          parameter.Minimum,
-				Max:          parameter.Maximum,
-				ExclusiveMin: parameter.ExclusiveMin,
-				ExclusiveMax: parameter.ExclusiveMax,
-				MinLength:    parameter.MinLength,
-				MaxLength:    parameter.MaxLength,
-				Default:      parameter.Default,
-				Items:        parameter.Items,
-				MinItems:     parameter.MinItems,
-				MaxItems:     parameter.MaxItems,
-			},
-		}
-		result.Schema = ToV3SchemaRef(schema)
-	}
-	return &openapi3.ParameterRef{
-		Value: result,
-	}, nil, nil
+	return toV3ParamaterRef(parameter), nil, nil
 }
 
 func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
