@@ -17,6 +17,7 @@ import (
 
 type Swagger struct {
 	openapi3.ExtensionProps
+	Swagger             string                         `json:"swagger"`
 	Info                openapi3.Info                  `json:"info"`
 	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty"`
 	Schemes             []string                       `json:"schemes,omitempty"`
@@ -168,27 +169,30 @@ type Parameters []*Parameter
 
 type Parameter struct {
 	openapi3.ExtensionProps
-	Ref          string              `json:"$ref,omitempty"`
-	In           string              `json:"in,omitempty"`
-	Name         string              `json:"name,omitempty"`
-	Description  string              `json:"description,omitempty"`
-	Required     bool                `json:"required,omitempty"`
-	UniqueItems  bool                `json:"uniqueItems,omitempty"`
-	ExclusiveMin bool                `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMax bool                `json:"exclusiveMaximum,omitempty"`
-	Schema       *openapi3.SchemaRef `json:"schema,omitempty"`
-	Type         string              `json:"type,omitempty"`
-	Format       string              `json:"format,omitempty"`
-	Enum         []interface{}       `json:"enum,omitempty"`
-	Minimum      *float64            `json:"minimum,omitempty"`
-	Maximum      *float64            `json:"maximum,omitempty"`
-	MinLength    uint64              `json:"minLength,omitempty"`
-	MaxLength    *uint64             `json:"maxLength,omitempty"`
-	Pattern      string              `json:"pattern,omitempty"`
-	Items        *openapi3.SchemaRef `json:"items,omitempty"`
-	MinItems     uint64              `json:"minItems,omitempty"`
-	MaxItems     *uint64             `json:"maxItems,omitempty"`
-	Default      interface{}         `json:"default,omitempty"`
+	Ref              string              `json:"$ref,omitempty"`
+	In               string              `json:"in,omitempty"`
+	Name             string              `json:"name,omitempty"`
+	Description      string              `json:"description,omitempty"`
+	CollectionFormat string              `json:"collectionFormat,omitempty"`
+	Type             string              `json:"type,omitempty"`
+	Format           string              `json:"format,omitempty"`
+	Pattern          string              `json:"pattern,omitempty"`
+	AllowEmptyValue  bool                `json:"allowEmptyValue,omitempty"`
+	Required         bool                `json:"required,omitempty"`
+	UniqueItems      bool                `json:"uniqueItems,omitempty"`
+	ExclusiveMin     bool                `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool                `json:"exclusiveMaximum,omitempty"`
+	Schema           *openapi3.SchemaRef `json:"schema,omitempty"`
+	Items            *openapi3.SchemaRef `json:"items,omitempty"`
+	Enum             []interface{}       `json:"enum,omitempty"`
+	MultipleOf       *float64            `json:"multipleOf,omitempty"`
+	Minimum          *float64            `json:"minimum,omitempty"`
+	Maximum          *float64            `json:"maximum,omitempty"`
+	MaxLength        *uint64             `json:"maxLength,omitempty"`
+	MaxItems         *uint64             `json:"maxItems,omitempty"`
+	MinLength        uint64              `json:"minLength,omitempty"`
+	MinItems         uint64              `json:"minItems,omitempty"`
+	Default          interface{}         `json:"default,omitempty"`
 }
 
 func (parameter *Parameter) MarshalJSON() ([]byte, error) {
