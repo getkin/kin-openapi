@@ -1,6 +1,7 @@
 package openapi2conv
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 func TestConvOpenAPIV3ToV2(t *testing.T) {
 	var swagger3 openapi3.Swagger
 	err := json.Unmarshal([]byte(exampleV3), &swagger3)
+	require.NoError(t, err)
+	err = swagger3.Validate(context.Background())
 	require.NoError(t, err)
 
 	actualV2, err := FromV3Swagger(&swagger3)
@@ -27,6 +30,8 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 	require.NoError(t, err)
 
 	actualV3, err := ToV3Swagger(&swagger2)
+	require.NoError(t, err)
+	err = actualV3.Validate(context.Background())
 	require.NoError(t, err)
 	data, err := json.Marshal(actualV3)
 	require.NoError(t, err)
@@ -153,18 +158,18 @@ const exampleV2 = `
       },
       "head": {
         "description": "example head",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       },
       "patch": {
         "description": "example patch",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       },
       "post": {
         "description": "example post",
-        "responses": {},
+        "responses": {"default": { "description": "default response" }},
         "parameters": [
           {
-            "in": "path",
+            "in": "query",
             "name":"id",
             "type": "integer",
             "description": "File Id"
@@ -186,11 +191,11 @@ const exampleV2 = `
       },
       "put": {
         "description": "example put",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       },
       "options": {
         "description": "example options",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       }
     }
   },
@@ -233,6 +238,7 @@ const exampleV2 = `
   "parameters": {
     "banana": {
     "in": "path",
+    "name": "bnn",
       "type": "string"
     }
   },
@@ -274,6 +280,7 @@ const exampleV3 = `
     "parameters": {
       "banana": {
       "in": "path",
+      "name": "bnn",
         "schema": {
           "type": "string"
         }
@@ -364,7 +371,8 @@ const exampleV3 = `
           {
             "x-parameter": "parameter extension 1",
             "in": "query",
-            "name": "x"
+            "name": "x",
+            "schema": {}
           },
           {
             "description": "The y parameter",
@@ -433,19 +441,19 @@ const exampleV3 = `
       },
       "head": {
         "description": "example head",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       },
       "options": {
         "description": "example options",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       },
       "patch": {
         "description": "example patch",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       },
       "post": {
         "description": "example post",
-        "responses": {},
+        "responses": {"default": { "description": "default response" }},
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -469,7 +477,7 @@ const exampleV3 = `
         },
         "parameters": [
           {
-            "in": "path",
+            "in": "query",
             "name":"id",
             "description": "File Id",
             "schema": {
@@ -480,7 +488,7 @@ const exampleV3 = `
       },
       "put": {
         "description": "example put",
-        "responses": {}
+        "responses": {"default": { "description": "default response" }}
       }
     }
   },
