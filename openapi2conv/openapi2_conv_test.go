@@ -11,29 +11,35 @@ import (
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
-	var swagger3 openapi3.Swagger
-	err := json.Unmarshal([]byte(exampleV3), &swagger3)
+	var doc3 openapi3.Swagger
+	err := json.Unmarshal([]byte(exampleV3), &doc3)
 	require.NoError(t, err)
-	err = swagger3.Validate(context.Background())
-	require.NoError(t, err)
+	{
+		// Refs need resolving before we can Validate
+		sl := openapi3.NewSwaggerLoader()
+		err = sl.ResolveRefsIn(&doc3, nil)
+		require.NoError(t, err)
+		err = doc3.Validate(context.Background())
+		require.NoError(t, err)
+	}
 
-	actualV2, err := FromV3Swagger(&swagger3)
+	spec2, err := FromV3Swagger(&doc3)
 	require.NoError(t, err)
-	data, err := json.Marshal(actualV2)
+	data, err := json.Marshal(spec2)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV2, string(data))
 }
 
 func TestConvOpenAPIV2ToV3(t *testing.T) {
-	var swagger2 openapi2.Swagger
-	err := json.Unmarshal([]byte(exampleV2), &swagger2)
+	var doc2 openapi2.Swagger
+	err := json.Unmarshal([]byte(exampleV2), &doc2)
 	require.NoError(t, err)
 
-	actualV3, err := ToV3Swagger(&swagger2)
+	spec3, err := ToV3Swagger(&doc2)
 	require.NoError(t, err)
-	err = actualV3.Validate(context.Background())
+	err = spec3.Validate(context.Background())
 	require.NoError(t, err)
-	data, err := json.Marshal(actualV3)
+	data, err := json.Marshal(spec3)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV3, string(data))
 }

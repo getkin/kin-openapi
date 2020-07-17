@@ -458,6 +458,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 	}, nil
 }
 
+// FromV3Swagger converts an OpenAPIv3 spec to an OpenAPIv2 spec
 func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	resultResponses, err := FromV3Responses(swagger.Components.Responses)
 	if err != nil {
@@ -466,6 +467,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	stripNonCustomExtensions(swagger.Extensions)
 
 	result := &openapi2.Swagger{
+		Swagger:        "2.0",
 		Info:           *swagger.Info,
 		Definitions:    FromV3Schemas(swagger.Components.Schemas),
 		Responses:      resultResponses,
@@ -706,6 +708,11 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 				return nil, err
 			}
 			result.Parameters = append(result.Parameters, r)
+		}
+	}
+	for _, param := range result.Parameters {
+		if param.Type == "file" {
+			result.Consumes = append(result.Consumes, "multipart/form-data")
 		}
 	}
 	if responses := operation.Responses; responses != nil {

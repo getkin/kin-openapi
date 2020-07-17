@@ -17,6 +17,7 @@ import (
 
 type Swagger struct {
 	openapi3.ExtensionProps
+	Swagger             string                         `json:"swagger"`
 	Info                openapi3.Info                  `json:"info"`
 	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty"`
 	Schemes             []string                       `json:"schemes,omitempty"`
