@@ -24,9 +24,7 @@ func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType {
 	if schema == nil {
 		mediaType.Schema = nil
 	} else {
-		mediaType.Schema = &SchemaRef{
-			Value: schema,
-		}
+		mediaType.Schema = &SchemaRef{Value: schema}
 	}
 	return mediaType
 }

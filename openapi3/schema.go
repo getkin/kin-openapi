@@ -73,10 +73,11 @@ type Schema struct {
 	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
 	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
 	// Properties
-	Nullable  bool        `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	ReadOnly  bool        `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	WriteOnly bool        `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	XML       interface{} `json:"xml,omitempty" yaml:"xml,omitempty"`
+	Nullable        bool        `json:"nullable,omitempty" yaml:"nullable,omitempty"`
+	ReadOnly        bool        `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
+	WriteOnly       bool        `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	XML             interface{} `json:"xml,omitempty" yaml:"xml,omitempty"`
 
 	// Number
 	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`

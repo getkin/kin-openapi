@@ -54,16 +54,16 @@ const exampleV2 = `
   "paths": {
     "/another/{banana}/{id}": {
         "parameters": [
-		  {
+      {
             "$ref": "#/parameters/banana"
           },
           {
             "in": "path",
             "name": "id",
-			"type": "integer",
-			"required": true
+      "type": "integer",
+      "required": true
           }
-		]
+    ]
     },
     "/example": {
       "x-path": "path extension 1",
@@ -164,6 +164,12 @@ const exampleV2 = `
         "responses": {},
         "parameters": [
           {
+            "in": "path",
+            "name":"id",
+            "type": "integer",
+            "description": "File Id"
+          },
+          {
             "in": "formData",
             "name": "fileUpload",
             "type": "file",
@@ -204,7 +210,7 @@ const exampleV2 = `
           "type": "string"
         }
       },
-	  "additionalProperties": {
+    "additionalProperties": {
         "$ref": "#/definitions/ItemExtension"
       }
     },
@@ -226,7 +232,7 @@ const exampleV2 = `
   },
   "parameters": {
     "banana": {
-	  "in": "path",
+    "in": "path",
       "type": "string"
     }
   },
@@ -246,7 +252,7 @@ const exampleV3 = `
 {
   "x-root": "root extension 1",
   "x-root2": "root extension 2",
-  "openapi": "3.0.2",
+  "openapi": "3.0.3",
   "info": {"title":"MyAPI","version":"0.1","x-info":"info extension"},
   "externalDocs": {
     "url": "https://example/doc/",
@@ -267,7 +273,7 @@ const exampleV3 = `
     },
     "parameters": {
       "banana": {
-	    "in": "path",
+      "in": "path",
         "schema": {
           "type": "string"
         }
@@ -281,13 +287,13 @@ const exampleV3 = `
             "type": "string"
           }
         },
-	    "additionalProperties": {
+      "additionalProperties": {
           "$ref": "#/components/schemas/ItemExtension"
-	    }
+      }
       },
-	  "ItemExtension": {
-		"description": "It could be anything."
-	  },
+    "ItemExtension": {
+    "description": "It could be anything."
+    },
       "Error": {
         "description": "Error response.",
         "properties": {
@@ -316,7 +322,7 @@ const exampleV3 = `
   "paths": {
     "/another/{banana}/{id}": {
         "parameters": [
-		  {
+      {
             "$ref": "#/components/parameters/banana"
           },
           {
@@ -325,9 +331,9 @@ const exampleV3 = `
             "schema": {
               "type": "integer"
             },
-			"required": true
+      "required": true
           }
-		]
+    ]
     },
     "/example": {
       "x-path": "path extension 1",
@@ -460,7 +466,17 @@ const exampleV3 = `
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name":"id",
+            "description": "File Id",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
       },
       "put": {
         "description": "example put",
