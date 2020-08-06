@@ -78,6 +78,7 @@ type Schema struct {
 	WriteOnly       bool        `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
 	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
 	XML             interface{} `json:"xml,omitempty" yaml:"xml,omitempty"`
+	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 
 	// Number
 	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
