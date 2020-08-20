@@ -552,6 +552,7 @@ paths:
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 }
+
 type hitCntFS struct {
 	fs   http.Dir
 	hits map[string]int

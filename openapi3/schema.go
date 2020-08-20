@@ -284,11 +284,6 @@ func (schema *Schema) WithEnum(values ...interface{}) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithDefault(defaultValue interface{}) *Schema {
-	schema.Default = defaultValue
-	return schema
-}
-
 func (schema *Schema) WithFormat(value string) *Schema {
 	schema.Format = value
 	return schema

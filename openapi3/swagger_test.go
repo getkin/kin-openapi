@@ -2,7 +2,6 @@ package openapi3_test
 
 import (
 	"context"
-	"fmt"
 	"encoding/json"
 	"errors"
 	"testing"
