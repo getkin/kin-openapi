@@ -10,10 +10,10 @@ import (
 type MediaType struct {
 	ExtensionProps
 
-	Schema   *SchemaRef             `json:"schema,omitempty"`
-	Example  interface{}            `json:"example,omitempty"`
-	Examples map[string]*ExampleRef `json:"examples,omitempty"`
-	Encoding map[string]*Encoding   `json:"encoding,omitempty"`
+	Schema   *SchemaRef             `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example  interface{}            `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples map[string]*ExampleRef `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding map[string]*Encoding   `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
 
 func NewMediaType() *MediaType {
@@ -24,9 +24,7 @@ func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType {
 	if schema == nil {
 		mediaType.Schema = nil
 	} else {
-		mediaType.Schema = &SchemaRef{
-			Value: schema,
-		}
+		mediaType.Schema = &SchemaRef{Value: schema}
 	}
 	return mediaType
 }

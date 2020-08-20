@@ -9,8 +9,8 @@ import (
 // Discriminator is specified by OpenAPI/Swagger standard version 3.0.
 type Discriminator struct {
 	ExtensionProps
-	PropertyName string            `json:"propertyName"`
-	Mapping      map[string]string `json:"mapping,omitempty"`
+	PropertyName string            `json:"propertyName" yaml:"propertyName"`
+	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
 func (value *Discriminator) MarshalJSON() ([]byte, error) {

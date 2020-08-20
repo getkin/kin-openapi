@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/getkin/kin-openapi.svg?branch=master)](https://travis-ci.com/getkin/kin-openapi)
+[![CI](https://github.com/getkin/kin-openapi/workflows/go/badge.svg)](https://github.com/getkin/kin-openapi/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/getkin/kin-openapi)](https://goreportcard.com/report/github.com/getkin/kin-openapi)
 [![GoDoc](https://godoc.org/github.com/getkin/kin-openapi?status.svg)](https://godoc.org/github.com/getkin/kin-openapi)
 [![Join Gitter Chat Channel -](https://badges.gitter.im/getkin/kin.svg)](https://gitter.im/getkin/kin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -15,6 +15,8 @@ Here's some projects that depend on _kin-openapi_:
   * [github.com/getkin/kin](https://github.com/getkin/kin) - "A configurable backend"
   * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
   * [github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen) - Generate Go server boilerplate from an OpenAPI 3 spec
+  * [github.com/dunglas/vulcain](https://github.com/dunglas/vulcain) - "Use HTTP/2 Server Push to create fast and idiomatic client-driven REST APIs"
+  * [github.com/danielgtaylor/restish](https://github.com/danielgtaylor/restish) - "...a CLI for interacting with REST-ish HTTP APIs with some nice features built-in"
   * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
 ## Alternative projects
@@ -50,8 +52,8 @@ func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
   router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
 
   // Find route
-  route, _, err := router.FindRoute("GET", req.URL.String())
-  if err!=nil {
+  route, _, err := router.FindRoute("GET", req.URL)
+  if err != nil {
     return nil, err
   }
 
@@ -153,5 +155,43 @@ func main() {
 
 func xmlBodyDecoder(body []byte) (interface{}, error) {
 	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
+}
+```
+
+## Custom function for check uniqueness of JSON array
+
+By defaut, the library check unique items by below predefined function
+
+```go
+func isSliceOfUniqueItems(xs []interface{}) bool {
+	s := len(xs)
+	m := make(map[string]struct{}, s)
+	for _, x := range xs {
+		// The input slice is coverted from a JSON string, there shall
+		// have no error when covert it back.
+		key, _ := json.Marshal(&x)
+		m[string(key)] = struct{}{}
+	}
+	return s == len(m)
+}
+```
+
+In the predefined function using `json.Marshal` to generate a string can
+be used as a map key which is to support check the uniqueness of an array
+when the array items are JSON objects or JSON arraies. You can register
+you own function according to your input data to get better performance:
+
+```go
+func main() {
+	// ...
+
+	// Register a customized function used to check uniqueness of array.
+	openapi3.RegisterArrayUniqueItemsChecker(arrayUniqueItemsChecker)
+
+	// ... other validate codes
+}
+
+func arrayUniqueItemsChecker(items []interface{}) bool {
+	// Check the uniqueness of the input slice(array in JSON)
 }
 ```

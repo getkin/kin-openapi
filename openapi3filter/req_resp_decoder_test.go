@@ -43,8 +43,26 @@ func TestDecodeParameter(t *testing.T) {
 		numberSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "number"}}
 		booleanSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "boolean"}}
 		stringSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "string"}}
-		arraySchema   = arrayOf(stringSchema)
-		objectSchema  = objectOf("id", stringSchema, "name", stringSchema)
+		allofSchema   = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				AllOf: []*openapi3.SchemaRef{
+					integerSchema,
+					numberSchema,
+				}}}
+		anyofSchema = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				AnyOf: []*openapi3.SchemaRef{
+					integerSchema,
+					stringSchema,
+				}}}
+		oneofSchema = &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				OneOf: []*openapi3.SchemaRef{
+					booleanSchema,
+					integerSchema,
+				}}}
+		arraySchema  = arrayOf(stringSchema)
+		objectSchema = objectOf("id", stringSchema, "name", stringSchema)
 	)
 
 	type testCase struct {
@@ -415,6 +433,63 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
 					query: "param=foo",
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
+				},
+			},
+		},
+		{
+			name: "query Allof",
+			testCases: []testCase{
+				{
+					name:  "allofSchema integer and number",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: allofSchema},
+					query: "param=1",
+					want:  float64(1),
+				},
+				{
+					name:  "allofSchema string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: allofSchema},
+					query: "param=abdf",
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "abdf"},
+				},
+			},
+		},
+		{
+			name: "query Anyof",
+			testCases: []testCase{
+				{
+					name:  "anyofSchema integer",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
+					query: "param=1",
+					want:  float64(1),
+				},
+				{
+					name:  "anyofSchema string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
+					query: "param=abdf",
+					want:  "abdf",
+				},
+			},
+		},
+		{
+			name: "query Oneof",
+			testCases: []testCase{
+				{
+					name:  "oneofSchema boolean",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
+					query: "param=true",
+					want:  true,
+				},
+				{
+					name:  "oneofSchema int",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
+					query: "param=1122",
+					want:  float64(1122),
+				},
+				{
+					name:  "oneofSchema string",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
+					query: "param=abcd",
+					want:  nil,
 				},
 			},
 		},
@@ -844,8 +919,16 @@ func TestDecodeParameter(t *testing.T) {
 						path = "/{" + path + "}"
 					}
 
-					spec := &openapi3.Swagger{}
-					op := &openapi3.Operation{OperationID: "test", Parameters: []*openapi3.ParameterRef{{Value: tc.param}}}
+					info := &openapi3.Info{
+						Title:   "MyAPI",
+						Version: "0.1",
+					}
+					spec := &openapi3.Swagger{OpenAPI: "3.0.0", Info: info}
+					op := &openapi3.Operation{
+						OperationID: "test",
+						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
+						Responses:   openapi3.NewResponses(),
+					}
 					spec.AddOperation("/test"+path, http.MethodGet, op)
 					router := NewRouter()
 					require.NoError(t, router.AddSwagger(spec), "failed to create a router")
@@ -901,6 +984,27 @@ func TestDecodeBody(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	multipartFormExtraPart, multipartFormMimeExtraPart, err := newTestMultipartForm([]*testFormPart{
+		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
+		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
+	})
+	require.NoError(t, err)
+
+	multipartAnyAdditionalProps, multipartMimeAnyAdditionalProps, err := newTestMultipartForm([]*testFormPart{
+		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
+		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
+	})
+	multipartAdditionalProps, multipartMimeAdditionalProps, err := newTestMultipartForm([]*testFormPart{
+		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
+		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
+	})
+	multipartAdditionalPropsErr, multipartMimeAdditionalPropsErr, err := newTestMultipartForm([]*testFormPart{
+		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
+		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
+		{name: "y", contentType: "text/plain", data: strings.NewReader("y1")},
+	})
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name     string
 		mime     string
@@ -952,7 +1056,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": &openapi3.Encoding{Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
 		},
@@ -965,7 +1069,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": &openapi3.Encoding{Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
 		},
@@ -980,6 +1084,45 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("d", openapi3.NewObjectSchema().WithProperty("d1", openapi3.NewStringSchema())).
 				WithProperty("f", openapi3.NewStringSchema().WithFormat("binary")),
 			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo"},
+		},
+		{
+			name: "multipartExtraPart",
+			mime: multipartFormMimeExtraPart,
+			body: multipartFormExtraPart,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()),
+			want:    map[string]interface{}{"a": "a1"},
+			wantErr: &ParseError{Kind: KindOther},
+		},
+		{
+			name: "multipartAnyAdditionalProperties",
+			mime: multipartMimeAnyAdditionalProps,
+			body: multipartAnyAdditionalProps,
+			schema: openapi3.NewObjectSchema().
+				WithAnyAdditionalProperties().
+				WithProperty("a", openapi3.NewStringSchema()),
+			want: map[string]interface{}{"a": "a1"},
+		},
+		{
+			name: "multipartWithAdditionalProperties",
+			mime: multipartMimeAdditionalProps,
+			body: multipartAdditionalProps,
+			schema: openapi3.NewObjectSchema().
+				WithAdditionalProperties(openapi3.NewObjectSchema().
+					WithProperty("x", openapi3.NewStringSchema())).
+				WithProperty("a", openapi3.NewStringSchema()),
+			want: map[string]interface{}{"a": "a1", "x": "x1"},
+		},
+		{
+			name: "multipartWithAdditionalPropertiesError",
+			mime: multipartMimeAdditionalPropsErr,
+			body: multipartAdditionalPropsErr,
+			schema: openapi3.NewObjectSchema().
+				WithAdditionalProperties(openapi3.NewObjectSchema().
+					WithProperty("x", openapi3.NewStringSchema())).
+				WithProperty("a", openapi3.NewStringSchema()),
+			want:    map[string]interface{}{"a": "a1", "x": "x1"},
+			wantErr: &ParseError{Kind: KindOther},
 		},
 		{
 			name: "file",
@@ -1031,9 +1174,9 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 	for _, p := range parts {
 		var disp string
 		if p.filename == "" {
-			disp = fmt.Sprintf(`form-data; name="%s"`, p.name)
+			disp = fmt.Sprintf("form-data; name=%q", p.name)
 		} else {
-			disp = fmt.Sprintf(`form-data; name="%s"; filename="%s"`, p.name, p.filename)
+			disp = fmt.Sprintf("form-data; name=%q; filename=%q", p.name, p.filename)
 		}
 
 		h := make(textproto.MIMEHeader)
@@ -1043,8 +1186,7 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		_, err = io.Copy(pw, p.data)
-		if err != nil {
+		if _, err = io.Copy(pw, p.data); err != nil {
 			return nil, "", err
 		}
 	}

@@ -8,14 +8,19 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
-	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // ErrInvalidRequired is an error that happens when a required value of a parameter or request's body is not defined.
-var ErrInvalidRequired = fmt.Errorf("must have a value")
+var ErrInvalidRequired = errors.New("must have a value")
 
+// ValidateRequest is used to validate the given input according to previous
+// loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec, a
+// non-nil error will be returned.
+//
+// Note: One can tune the behavior of uniqueItems: true verification
+// by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	options := input.Options
 	if options == nil {
@@ -39,9 +44,9 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 			if override := operationParameters.GetByInAndName(parameter.In, parameter.Name); override != nil {
 				continue
 			}
-			if err := ValidateParameter(c, input, parameter); err != nil {
-				return err
-			}
+		}
+		if err := ValidateParameter(c, input, parameter); err != nil {
+			return err
 		}
 	}
 
@@ -66,10 +71,9 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	if security == nil {
 		if route.Swagger == nil {
 			return errRouteMissingSwagger
-		} else {
-			// Use the global security requirements.
-			security = &route.Swagger.Security
 		}
+		// Use the global security requirements.
+		security = &route.Swagger.Security
 	}
 	if security != nil {
 		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
@@ -97,13 +101,11 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 
 	// Validation will ensure that we either have content or schema.
 	if parameter.Content != nil {
-		value, schema, err = decodeContentParameter(parameter, input)
-		if err != nil {
+		if value, schema, err = decodeContentParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 	} else {
-		value, err = decodeStyledParameter(parameter, input)
-		if err != nil {
+		if value, err = decodeStyledParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 		schema = parameter.Schema.Value
@@ -201,57 +203,23 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	return nil
 }
 
-// ValidateSecurityRequirements validates a multiple OpenAPI 3 security requirements.
-// Returns nil if one of them inputed.
-// Otherwise returns an error describing the security failures.
+// ValidateSecurityRequirements goes through multiple OpenAPI 3 security
+// requirements in order and returns nil on the first valid requirement.
+// If no requirement is met, errors are returned in order.
 func ValidateSecurityRequirements(c context.Context, input *RequestValidationInput, srs openapi3.SecurityRequirements) error {
-	// Alternative requirements
 	if len(srs) == 0 {
 		return nil
 	}
-
-	var wg sync.WaitGroup
-	errs := make([]error, len(srs))
-
-	// For each alternative security requirement
-	for i, securityRequirement := range srs {
-		// Capture index from iteration variable
-		currentIndex := i
-		currentSecurityRequirement := securityRequirement
-
-		// Add a work item
-		wg.Add(1)
-
-		go func() {
-			defer func() {
-				v := recover()
-				if v != nil {
-					if err, ok := v.(error); ok {
-						errs[currentIndex] = err
-					} else {
-						errs[currentIndex] = errors.New("Panicked")
-					}
-				}
-
-				// Remove a work item
-				wg.Done()
-			}()
-
-			if err := validateSecurityRequirement(c, input, currentSecurityRequirement); err != nil {
-				errs[currentIndex] = err
+	var errs []error
+	for _, sr := range srs {
+		if err := validateSecurityRequirement(c, input, sr); err != nil {
+			if len(errs) == 0 {
+				errs = make([]error, 0, len(srs))
 			}
-		}()
-	}
-
-	// Wait for all
-	wg.Wait()
-
-	// If any security requirement was met
-	for _, err := range errs {
-		if err == nil {
-			// Return no error
-			return nil
+			errs = append(errs, err)
+			continue
 		}
+		return nil
 	}
 	return &SecurityRequirementsError{
 		SecurityRequirements: srs,

@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -11,7 +12,9 @@ import (
 type Responses map[string]*ResponseRef
 
 func NewResponses() Responses {
-	return make(Responses, 8)
+	r := make(Responses)
+	r["default"] = &ResponseRef{Value: NewResponse().WithDescription("")}
+	return r
 }
 
 func (responses Responses) Default() *ResponseRef {
@@ -23,6 +26,9 @@ func (responses Responses) Get(status int) *ResponseRef {
 }
 
 func (responses Responses) Validate(c context.Context) error {
+	if len(responses) == 0 {
+		return errors.New("the responses object MUST contain at least one response code")
+	}
 	for _, v := range responses {
 		if err := v.Validate(c); err != nil {
 			return err
@@ -35,10 +41,10 @@ func (responses Responses) Validate(c context.Context) error {
 type Response struct {
 	Metadata
 	ExtensionProps
-	Description string                `json:"description,omitempty"`
-	Headers     map[string]*HeaderRef `json:"headers,omitempty"`
-	Content     Content               `json:"content,omitempty"`
-	Links       map[string]*LinkRef   `json:"links,omitempty"`
+	Description *string               `json:"description,omitempty" yaml:"description,omitempty"`
+	Headers     map[string]*HeaderRef `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Content     Content               `json:"content,omitempty" yaml:"content,omitempty"`
+	Links       map[string]*LinkRef   `json:"links,omitempty" yaml:"links,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -46,7 +52,7 @@ func NewResponse() *Response {
 }
 
 func (response *Response) WithDescription(value string) *Response {
-	response.Description = value
+	response.Description = &value
 	return response
 }
 
@@ -74,6 +80,10 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 func (response *Response) Validate(c context.Context) error {
+	if response.Description == nil {
+		return errors.New("a short description of the response is required")
+	}
+
 	if content := response.Content; content != nil {
 		if err := content.Validate(c); err != nil {
 			return err

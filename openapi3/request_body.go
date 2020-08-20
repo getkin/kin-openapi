@@ -10,9 +10,9 @@ import (
 type RequestBody struct {
 	Metadata
 	ExtensionProps
-	Description string  `json:"description,omitempty"`
-	Required    bool    `json:"required,omitempty"`
-	Content     Content `json:"content,omitempty"`
+	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
+	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
+	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
 }
 
 func NewRequestBody() *RequestBody {
@@ -41,6 +41,16 @@ func (requestBody *RequestBody) WithJSONSchemaRef(value *SchemaRef) *RequestBody
 
 func (requestBody *RequestBody) WithJSONSchema(value *Schema) *RequestBody {
 	requestBody.Content = NewContentWithJSONSchema(value)
+	return requestBody
+}
+
+func (requestBody *RequestBody) WithFormDataSchemaRef(value *SchemaRef) *RequestBody {
+	requestBody.Content = NewContentWithFormDataSchemaRef(value)
+	return requestBody
+}
+
+func (requestBody *RequestBody) WithFormDataSchema(value *Schema) *RequestBody {
+	requestBody.Content = NewContentWithFormDataSchema(value)
 	return requestBody
 }
 

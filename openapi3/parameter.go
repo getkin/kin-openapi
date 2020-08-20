@@ -27,22 +27,18 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 }
 
 func (parameters Parameters) Validate(c context.Context) error {
-	m := make(map[string]struct{})
+	dupes := make(map[string]struct{})
 	for _, item := range parameters {
+		if v := item.Value; v != nil {
+			key := v.In + ":" + v.Name
+			if _, ok := dupes[key]; ok {
+				return fmt.Errorf("more than one %q parameter has name %q", v.In, v.Name)
+			}
+			dupes[key] = struct{}{}
+		}
+
 		if err := item.Validate(c); err != nil {
 			return err
-		}
-		if v := item.Value; v != nil {
-			in := v.In
-			name := v.Name
-			key := in + ":" + name
-			if _, exists := m[key]; exists {
-				return fmt.Errorf("More than one '%s' parameter has name '%s'", in, name)
-			}
-			m[key] = struct{}{}
-			if err := item.Validate(c); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
@@ -52,19 +48,19 @@ func (parameters Parameters) Validate(c context.Context) error {
 type Parameter struct {
 	Metadata
 	ExtensionProps
-	Name            string                 `json:"name,omitempty"`
-	In              string                 `json:"in,omitempty"`
-	Description     string                 `json:"description,omitempty"`
-	Style           string                 `json:"style,omitempty"`
-	Explode         *bool                  `json:"explode,omitempty"`
-	AllowEmptyValue bool                   `json:"allowEmptyValue,omitempty"`
-	AllowReserved   bool                   `json:"allowReserved,omitempty"`
-	Deprecated      bool                   `json:"deprecated,omitempty"`
-	Required        bool                   `json:"required,omitempty"`
-	Schema          *SchemaRef             `json:"schema,omitempty"`
-	Example         interface{}            `json:"example,omitempty"`
-	Examples        map[string]*ExampleRef `json:"examples,omitempty"`
-	Content         Content                `json:"content,omitempty"`
+	Name            string                 `json:"name,omitempty" yaml:"name,omitempty"`
+	In              string                 `json:"in,omitempty" yaml:"in,omitempty"`
+	Description     string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Style           string                 `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode         *bool                  `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowEmptyValue bool                   `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool                   `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	Deprecated      bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Required        bool                   `json:"required,omitempty" yaml:"required,omitempty"`
+	Schema          *SchemaRef             `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example         interface{}            `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples        map[string]*ExampleRef `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Content         Content                `json:"content,omitempty" yaml:"content,omitempty"`
 }
 
 const (
@@ -164,7 +160,7 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 
 func (parameter *Parameter) Validate(c context.Context) error {
 	if parameter.Name == "" {
-		return errors.New("Parameter name can't be blank")
+		return errors.New("parameter name can't be blank")
 	}
 	in := parameter.In
 	switch in {
@@ -174,7 +170,7 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		ParameterInHeader,
 		ParameterInCookie:
 	default:
-		return fmt.Errorf("Parameter can't have 'in' value '%s'", parameter.In)
+		return fmt.Errorf("parameter can't have 'in' value %q", parameter.In)
 	}
 
 	// Validate a parameter's serialization method.
@@ -207,22 +203,22 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		smSupported = true
 	}
 	if !smSupported {
-		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
-			fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in))
+		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
+		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
 	}
 
-	if parameter.Schema != nil && parameter.Content != nil {
-		return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name,
-			errors.New("Cannot contain both schema and content in a parameter"))
+	if (parameter.Schema == nil) == (parameter.Content == nil) {
+		e := errors.New("parameter must contain exactly one of content and schema")
+		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
 	}
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(c); err != nil {
-			return fmt.Errorf("Parameter '%v' schema is invalid: %v", parameter.Name, err)
+			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
 		}
 	}
 	if content := parameter.Content; content != nil {
 		if err := content.Validate(c); err != nil {
-			return fmt.Errorf("Parameter content is invalid: %v", err)
+			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
 		}
 	}
 	return nil

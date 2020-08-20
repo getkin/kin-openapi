@@ -23,6 +23,18 @@ func NewContentWithJSONSchemaRef(schema *SchemaRef) Content {
 	}
 }
 
+func NewContentWithFormDataSchema(schema *Schema) Content {
+	return Content{
+		"multipart/form-data": NewMediaType().WithSchema(schema),
+	}
+}
+
+func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content {
+	return Content{
+		"multipart/form-data": NewMediaType().WithSchemaRef(schema),
+	}
+}
+
 func (content Content) Get(mime string) *MediaType {
 	// If the mime is empty then short-circuit to the wildcard.
 	// We do this here so that we catch only the specific case of

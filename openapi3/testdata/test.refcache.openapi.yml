@@ -25,3 +25,6 @@ components:
           "$ref": http://localhost:7965/components3.openapi.yml#/components/schemas/NestedRefToComp2Schema
         ref8:
           "$ref": http://localhost:7965/components.openapi.yml#/components/schemas/CustomTestSchema
+        ref9:
+          "$ref": http://localhost:7965/components.openapi.yml#/components/schemas/GraphTestSchema
+

@@ -12,13 +12,13 @@ type SecurityScheme struct {
 	Metadata
 	ExtensionProps
 
-	Type         string      `json:"type,omitempty"`
-	Description  string      `json:"description,omitempty"`
-	Name         string      `json:"name,omitempty"`
-	In           string      `json:"in,omitempty"`
-	Scheme       string      `json:"scheme,omitempty"`
-	BearerFormat string      `json:"bearerFormat,omitempty"`
-	Flows        *OAuthFlows `json:"flows,omitempty"`
+	Type         string      `json:"type,omitempty" yaml:"type,omitempty"`
+	Description  string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Name         string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In           string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Scheme       string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
+	BearerFormat string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
+	Flows        *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
 }
 
 func NewSecurityScheme() *SecurityScheme {
@@ -143,10 +143,10 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 type OAuthFlows struct {
 	Metadata
 	ExtensionProps
-	Implicit          *OAuthFlow `json:"implicit,omitempty"`
-	Password          *OAuthFlow `json:"password,omitempty"`
-	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty"`
-	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty"`
+	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
+	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
+	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
+	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty" yaml:"authorizationCode,omitempty"`
 }
 
 type oAuthFlowType int
@@ -185,10 +185,10 @@ func (flows *OAuthFlows) Validate(c context.Context) error {
 type OAuthFlow struct {
 	Metadata
 	ExtensionProps
-	AuthorizationURL string            `json:"authorizationUrl,omitempty"`
-	TokenURL         string            `json:"tokenUrl,omitempty"`
-	RefreshURL       string            `json:"refreshUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes"`
+	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"`
 }
 
 func (flow *OAuthFlow) MarshalJSON() ([]byte, error) {
@@ -210,7 +210,7 @@ func (flow *OAuthFlow) Validate(c context.Context, typ oAuthFlowType) error {
 			return errors.New("An OAuth flow is missing 'tokenUrl in not implicit'")
 		}
 	}
-	if v := flow.Scopes; len(v) == 0 {
+	if v := flow.Scopes; v == nil {
 		return errors.New("An OAuth flow is missing 'scopes'")
 	}
 	return nil

@@ -31,6 +31,9 @@ func NewSecurityRequirement() SecurityRequirement {
 }
 
 func (security SecurityRequirement) Authenticate(provider string, scopes ...string) SecurityRequirement {
+	if len(scopes) == 0 {
+		scopes = []string{} // Forces the variable to be encoded as an array instead of null
+	}
 	security[provider] = scopes
 	return security
 }

@@ -10,6 +10,12 @@ components:
       type: string
     CustomTestSchema:
       "$ref": "#/components/schemas/Name"
+    GraphTestSchema:
+      properties:
+        children:
+          type: array
+          items: 
+            "$ref": "#/components/schemas/GraphTestSchema"
   responses:
     Name:
       description: description
