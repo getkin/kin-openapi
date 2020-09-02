@@ -397,7 +397,7 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 func (schema *Schema) IsEmpty() bool {
 	if schema.Type != "" || schema.Format != "" || len(schema.Enum) != 0 ||
 		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
-		schema.Nullable ||
+		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
 		schema.MinItems != 0 || schema.MaxItems != nil ||
@@ -451,6 +451,10 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 		}
 	}
 	stack = append(stack, schema)
+
+	if schema.ReadOnly && schema.WriteOnly {
+		return errors.New("A property MUST NOT be marked as both readOnly and writeOnly being true")
+	}
 
 	for _, item := range schema.OneOf {
 		v := item.Value
@@ -1127,8 +1131,16 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			Reason:      fmt.Sprintf("Property '%s' is unsupported", k),
 		}
 	}
+
+	// "required"
 	for _, k := range schema.Required {
 		if _, ok := value[k]; !ok {
+			if s := schema.Properties[k]; s != nil && s.Value.ReadOnly && settings.asreq {
+				continue
+			}
+			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asrep {
+				continue
+			}
 			if settings.failfast {
 				return errSchema
 			}

@@ -31,6 +31,7 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": ["_id"],
                 "properties": {
                   "_id": {
                     "type": "string",
@@ -83,5 +84,5 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 		PathParams: pathParams,
 		Route:      route,
 	})
-	require.Error(t, err)
+	require.NoError(t, err)
 }
