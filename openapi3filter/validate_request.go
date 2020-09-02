@@ -192,7 +192,7 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	}
 
 	// Validate JSON with the schema
-	if err := contentType.Schema.Value.VisitJSON(value); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, openapi3.VisitAsRequest()); err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
