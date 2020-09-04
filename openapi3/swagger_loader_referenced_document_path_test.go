@@ -9,13 +9,11 @@ import (
 
 func TestReferencedDocumentPath(t *testing.T) {
 	httpURL, err := url.Parse("http://example.com/path/to/schemas/test1.yaml")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
+
 	fileURL, err := url.Parse("path/to/schemas/test1.yaml")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
+
 	refEmpty := ""
 	refNoComponent := "moreschemas/test2.yaml"
 	refWithComponent := "moreschemas/test2.yaml#/components/schemas/someobject"
@@ -56,8 +54,7 @@ func TestReferencedDocumentPath(t *testing.T) {
 		},
 	} {
 		result, err := referencedDocumentPath(test.path, test.ref)
-		require.NotNil(t, result)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, test.expected, result.String())
 	}
 }
