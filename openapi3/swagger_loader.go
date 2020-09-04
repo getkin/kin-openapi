@@ -876,16 +876,19 @@ func unescapeRefString(ref string) string {
 }
 
 func referencedDocumentPath(documentPath *url.URL, ref string) (*url.URL, error) {
-	newDocumentPath := documentPath
-	if documentPath != nil {
-		refDirectory, err := url.Parse(path.Dir(ref))
-		if err != nil {
-			return nil, err
-		}
-		joinedDirectory := path.Join(path.Dir(documentPath.String()), refDirectory.String())
-		if newDocumentPath, err = url.Parse(joinedDirectory + "/"); err != nil {
-			return nil, err
-		}
+	if documentPath == nil {
+		return nil, nil
 	}
+
+	newDocumentPath, err := copyURL(documentPath)
+	if err != nil {
+		return nil, err
+	}
+	refPath, err := url.Parse(ref)
+	if err != nil {
+		return nil, err
+	}
+	newDocumentPath.Path = path.Join(path.Dir(newDocumentPath.Path), path.Dir(refPath.Path)) + "/"
+
 	return newDocumentPath, nil
 }
