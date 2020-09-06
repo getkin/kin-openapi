@@ -1,10 +1,9 @@
-package jsoninfo_test
+package jsoninfo
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ func TestNewObjectDecoder(t *testing.T) {
 	}
 `)
 	t.Run("test new object decoder", func(t *testing.T) {
-		decoder, err := jsoninfo.NewObjectDecoder(data)
+		decoder, err := NewObjectDecoder(data)
 		assert.Nil(t, err)
 		assert.NotNil(t, decoder)
 		assert.Equal(t, data, decoder.Data)
@@ -25,15 +24,15 @@ func TestNewObjectDecoder(t *testing.T) {
 }
 
 type mockStrictStruct struct {
-	EncodeWithFn func(encoder *jsoninfo.ObjectEncoder, value interface{}) error
-	DecodeWithFn func(decoder *jsoninfo.ObjectDecoder, value interface{}) error
+	EncodeWithFn func(encoder *ObjectEncoder, value interface{}) error
+	DecodeWithFn func(decoder *ObjectDecoder, value interface{}) error
 }
 
-func (m *mockStrictStruct) EncodeWith(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
+func (m *mockStrictStruct) EncodeWith(encoder *ObjectEncoder, value interface{}) error {
 	return m.EncodeWithFn(encoder, value)
 }
 
-func (m *mockStrictStruct) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
+func (m *mockStrictStruct) DecodeWith(decoder *ObjectDecoder, value interface{}) error {
 	return m.DecodeWithFn(decoder, value)
 }
 
@@ -48,15 +47,15 @@ func TestUnmarshalStrictStruct(t *testing.T) {
 	t.Run("test unmarshal with StrictStruct without err", func(t *testing.T) {
 		decodeWithFnCalled := 0
 		mockStruct := &mockStrictStruct{
-			EncodeWithFn: func(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
+			EncodeWithFn: func(encoder *ObjectEncoder, value interface{}) error {
 				return nil
 			},
-			DecodeWithFn: func(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
+			DecodeWithFn: func(decoder *ObjectDecoder, value interface{}) error {
 				decodeWithFnCalled++
 				return nil
 			},
 		}
-		err := jsoninfo.UnmarshalStrictStruct(data, mockStruct)
+		err := UnmarshalStrictStruct(data, mockStruct)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, decodeWithFnCalled)
 	})
@@ -64,15 +63,15 @@ func TestUnmarshalStrictStruct(t *testing.T) {
 	t.Run("test unmarshal with StrictStruct with err", func(t *testing.T) {
 		decodeWithFnCalled := 0
 		mockStruct := &mockStrictStruct{
-			EncodeWithFn: func(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
+			EncodeWithFn: func(encoder *ObjectEncoder, value interface{}) error {
 				return nil
 			},
-			DecodeWithFn: func(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
+			DecodeWithFn: func(decoder *ObjectDecoder, value interface{}) error {
 				decodeWithFnCalled++
 				return errors.New("unable to decode the value")
 			},
 		}
-		err := jsoninfo.UnmarshalStrictStruct(data, mockStruct)
+		err := UnmarshalStrictStruct(data, mockStruct)
 		assert.NotNil(t, err)
 		assert.Equal(t, 1, decodeWithFnCalled)
 	})
@@ -85,7 +84,7 @@ func TestDecodeStructFieldsAndExtensions(t *testing.T) {
 		"field2": "field2"
 	}
 `)
-	decoder, err := jsoninfo.NewObjectDecoder(data)
+	decoder, err := NewObjectDecoder(data)
 	assert.Nil(t, err)
 	assert.NotNil(t, decoder)
 
@@ -111,7 +110,7 @@ func TestDecodeStructFieldsAndExtensions(t *testing.T) {
 	})
 
 	t.Run("successfully decoded with all fields", func(t *testing.T) {
-		d, err := jsoninfo.NewObjectDecoder(data)
+		d, err := NewObjectDecoder(data)
 		assert.Nil(t, err)
 		assert.NotNil(t, d)
 
@@ -127,7 +126,7 @@ func TestDecodeStructFieldsAndExtensions(t *testing.T) {
 	})
 
 	t.Run("successfully decoded with renaming field", func(t *testing.T) {
-		d, err := jsoninfo.NewObjectDecoder(data)
+		d, err := NewObjectDecoder(data)
 		assert.Nil(t, err)
 		assert.NotNil(t, d)
 
@@ -141,7 +140,7 @@ func TestDecodeStructFieldsAndExtensions(t *testing.T) {
 	})
 
 	t.Run("un-successfully decoded due to data mismatch", func(t *testing.T) {
-		d, err := jsoninfo.NewObjectDecoder(data)
+		d, err := NewObjectDecoder(data)
 		assert.Nil(t, err)
 		assert.NotNil(t, d)
 

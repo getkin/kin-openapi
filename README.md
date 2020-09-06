@@ -78,7 +78,7 @@ import (
 
 func main() {
 	router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
-	ctx := context.TODO()
+	ctx := context.Background()
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
 	// Find route
@@ -105,9 +105,7 @@ func main() {
 		RequestValidationInput: requestValidationInput,
 		Status:                 respStatus,
 		Header: http.Header{
-			"Content-Type": []string{
-				respContentType,
-			},
+			"Content-Type": []string{respContentType},
 		},
 	}
 	if respBody != nil {
