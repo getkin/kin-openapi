@@ -1,11 +1,10 @@
-package openapi3_test
+package openapi3
 
 import (
 	"encoding/json"
 	"strings"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +33,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 
 	{
 		spec := []byte(spec)
-		loader := openapi3.NewSwaggerLoader()
+		loader := NewSwaggerLoader()
 		doc, err := loader.LoadSwaggerFromData(spec)
 		require.NoError(t, err)
 		got := doc.Paths["/path1"].Get.Responses["200"].Value.Description
@@ -47,7 +46,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 
 	{
 		spec := []byte(strings.Replace(spec, `"description": ""`, `"description": "My response"`, 1))
-		loader := openapi3.NewSwaggerLoader()
+		loader := NewSwaggerLoader()
 		doc, err := loader.LoadSwaggerFromData(spec)
 		require.NoError(t, err)
 		got := doc.Paths["/path1"].Get.Responses["200"].Value.Description
@@ -58,8 +57,8 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	noDescriptionIsInvalid := func(data []byte) *openapi3.Swagger {
-		loader := openapi3.NewSwaggerLoader()
+	noDescriptionIsInvalid := func(data []byte) *Swagger {
+		loader := NewSwaggerLoader()
 		doc, err := loader.LoadSwaggerFromData(data)
 		require.NoError(t, err)
 		got := doc.Paths["/path1"].Get.Responses["200"].Value.Description
@@ -70,7 +69,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		return doc
 	}
 
-	var docWithNoResponseDescription *openapi3.Swagger
+	var docWithNoResponseDescription *Swagger
 	{
 		spec := []byte(strings.Replace(spec, `"description": ""`, ``, 1))
 		docWithNoResponseDescription = noDescriptionIsInvalid(spec)

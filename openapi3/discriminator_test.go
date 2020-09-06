@@ -1,9 +1,8 @@
-package openapi3_test
+package openapi3
 
 import (
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +36,7 @@ var jsonSpecWithDiscriminator = []byte(`
 `)
 
 func TestParsingDiscriminator(t *testing.T) {
-	loader, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonSpecWithDiscriminator)
+	loader, err := NewSwaggerLoader().LoadSwaggerFromData(jsonSpecWithDiscriminator)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(loader.Components.Schemas["MyResponseType"].Value.OneOf))
 }

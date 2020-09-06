@@ -995,6 +995,9 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool) (err error)
 	}
 
 	// "uniqueItems"
+	if sliceUniqueItemsChecker == nil {
+		sliceUniqueItemsChecker = isSliceOfUniqueItems
+	}
 	if v := schema.UniqueItems; v && !sliceUniqueItemsChecker(value) {
 		if fast {
 			return errSchema
