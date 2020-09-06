@@ -1,4 +1,4 @@
-package openapi3_test
+package openapi3
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,7 +53,7 @@ paths:
                 $ref: '#/components/schemas/ErrorModel'
 `)
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
@@ -69,7 +68,7 @@ paths:
 
 func ExampleSwaggerLoader() {
 	source := `{"info":{"description":"An API"}}`
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
+	swagger, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +79,7 @@ func ExampleSwaggerLoader() {
 
 func TestResolveSchemaRef(t *testing.T) {
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1",description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
@@ -93,7 +92,7 @@ func TestResolveSchemaRef(t *testing.T) {
 
 func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
@@ -122,7 +121,7 @@ paths:
               examples:
                 test:
                   $ref: '#/components/examples/test'`)
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 
@@ -144,9 +143,9 @@ type multipleSourceSwaggerLoaderExample struct {
 }
 
 func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
-	loader *openapi3.SwaggerLoader,
+	loader *SwaggerLoader,
 	location *url.URL,
-) (*openapi3.Swagger, error) {
+) (*Swagger, error) {
 	source := l.resolveSourceFromURI(location)
 	if source == nil {
 		return nil, fmt.Errorf("Unsupported URI: '%s'", location.String())
@@ -184,7 +183,7 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 			},
 		},
 	}
-	loader := &openapi3.SwaggerLoader{
+	loader := &SwaggerLoader{
 		IsExternalRefsAllowed:  true,
 		LoadSwaggerFromURIFunc: multipleSourceLoader.LoadSwaggerFromURI,
 	}
@@ -223,7 +222,7 @@ paths:
                 $ref: '#/components/schemas/Thing'
 `)
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	_, err := loader.LoadSwaggerFromData(spec)
 	require.Error(t, err)
 }
@@ -251,7 +250,7 @@ paths:
           description: Test call.
 `)
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	swagger, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
@@ -283,7 +282,7 @@ paths:
           description: Test call.
 `)
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	swagger, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
@@ -305,7 +304,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 	ts.Start()
 	defer ts.Close()
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	url, err := url.Parse("http://" + addr + "/test.openapi.json")
 	require.NoError(t, err)
@@ -317,7 +316,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
@@ -326,7 +325,7 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/testrefsinglecomponent.openapi.json")
 	require.NoError(t, err)
@@ -369,7 +368,7 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
     }
 }`)
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	swagger, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
@@ -408,7 +407,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 	ts.Start()
 	defer ts.Close()
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
@@ -418,7 +417,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 }
 
 func TestLoadYamlFile(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
 	require.NoError(t, err)
@@ -427,7 +426,7 @@ func TestLoadYamlFile(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
 	require.NoError(t, err)
@@ -436,7 +435,7 @@ func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/pathref.openapi.yml")
 	require.NoError(t, err)
@@ -476,7 +475,7 @@ paths:
             father:
               $ref: '#/components/links/Father'
 `)
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 
@@ -545,7 +544,7 @@ paths:
                 $ref: '#/components/schemas/ErrorModel'
 `)
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)

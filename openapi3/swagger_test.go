@@ -1,39 +1,38 @@
-package openapi3_test
+package openapi3
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"strings"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRefsJSON(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 
-	t.Log("Marshal *openapi3.Swagger to JSON")
+	t.Log("Marshal *Swagger to JSON")
 	data, err := json.Marshal(spec())
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Unmarshal *openapi3.Swagger from JSON")
-	docA := &openapi3.Swagger{}
-	err = json.Unmarshal([]byte(specJSON), &docA)
+	t.Log("Unmarshal *Swagger from JSON")
+	docA := &Swagger{}
+	err = json.Unmarshal(specJSON, &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
+	t.Log("Resolve refs in unmarshalled *Swagger")
 	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
-	t.Log("Resolve refs in marshalled *openapi3.Swagger")
+	t.Log("Resolve refs in marshalled *Swagger")
 	docB, err := loader.LoadSwaggerFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
-	t.Log("Validate *openapi3.Swagger")
+	t.Log("Validate *Swagger")
 	err = docA.Validate(loader.Context)
 	require.NoError(t, err)
 	err = docB.Validate(loader.Context)
@@ -44,34 +43,34 @@ func TestRefsJSON(t *testing.T) {
 	require.NoError(t, err)
 	dataB, err := json.Marshal(docB)
 	require.NoError(t, err)
-	require.JSONEq(t, string(data), specJSON)
+	require.JSONEq(t, string(data), string(specJSON))
 	require.JSONEq(t, string(data), string(dataA))
 	require.JSONEq(t, string(data), string(dataB))
 }
 
 func TestRefsYAML(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 
-	t.Log("Marshal *openapi3.Swagger to YAML")
+	t.Log("Marshal *Swagger to YAML")
 	data, err := yaml.Marshal(spec())
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Unmarshal *openapi3.Swagger from YAML")
-	docA := &openapi3.Swagger{}
-	err = yaml.Unmarshal([]byte(specYAML), &docA)
+	t.Log("Unmarshal *Swagger from YAML")
+	docA := &Swagger{}
+	err = yaml.Unmarshal(specYAML, &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Resolve refs in unmarshalled *openapi3.Swagger")
+	t.Log("Resolve refs in unmarshalled *Swagger")
 	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
-	t.Log("Resolve refs in marshalled *openapi3.Swagger")
+	t.Log("Resolve refs in marshalled *Swagger")
 	docB, err := loader.LoadSwaggerFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
-	t.Log("Validate *openapi3.Swagger")
+	t.Log("Validate *Swagger")
 	err = docA.Validate(loader.Context)
 	require.NoError(t, err)
 	err = docB.Validate(loader.Context)
@@ -82,7 +81,7 @@ func TestRefsYAML(t *testing.T) {
 	require.NoError(t, err)
 	dataB, err := yaml.Marshal(docB)
 	require.NoError(t, err)
-	eqYAML(t, data, []byte(specYAML))
+	eqYAML(t, data, specYAML)
 	eqYAML(t, data, dataA)
 	eqYAML(t, data, dataB)
 }
@@ -96,7 +95,7 @@ func eqYAML(t *testing.T, expected, actual []byte) {
 	require.Equal(t, e, a)
 }
 
-var specYAML = `
+var specYAML = []byte(`
 openapi: '3.0'
 info:
   title: MyAPI
@@ -148,9 +147,9 @@ components:
       name: token
     someSecurityScheme:
       "$ref": "#/components/securitySchemes/otherSecurityScheme"
-`
+`)
 
-var specJSON = `
+var specJSON = []byte(`
 {
   "openapi": "3.0",
   "info": {
@@ -236,55 +235,55 @@ var specJSON = `
     }
   }
 }
-`
+`)
 
-func spec() *openapi3.Swagger {
-	parameter := &openapi3.Parameter{
+func spec() *Swagger {
+	parameter := &Parameter{
 		Description: "Some parameter",
 		Name:        "example",
 		In:          "query",
-		Schema: &openapi3.SchemaRef{
+		Schema: &SchemaRef{
 			Ref: "#/components/schemas/someSchema",
 		},
 	}
-	requestBody := &openapi3.RequestBody{
+	requestBody := &RequestBody{
 		Description: "Some request body",
 	}
 	responseDescription := "Some response"
-	response := &openapi3.Response{
+	response := &Response{
 		Description: &responseDescription,
 	}
-	schema := &openapi3.Schema{
+	schema := &Schema{
 		Description: "Some schema",
 	}
 	example := map[string]string{"name": "Some example"}
-	return &openapi3.Swagger{
+	return &Swagger{
 		OpenAPI: "3.0",
-		Info: &openapi3.Info{
+		Info: &Info{
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-		Paths: openapi3.Paths{
-			"/hello": &openapi3.PathItem{
-				Post: &openapi3.Operation{
-					Parameters: openapi3.Parameters{
+		Paths: Paths{
+			"/hello": &PathItem{
+				Post: &Operation{
+					Parameters: Parameters{
 						{
 							Ref:   "#/components/parameters/someParameter",
 							Value: parameter,
 						},
 					},
-					RequestBody: &openapi3.RequestBodyRef{
+					RequestBody: &RequestBodyRef{
 						Ref:   "#/components/requestBodies/someRequestBody",
 						Value: requestBody,
 					},
-					Responses: openapi3.Responses{
-						"200": &openapi3.ResponseRef{
+					Responses: Responses{
+						"200": &ResponseRef{
 							Ref:   "#/components/responses/someResponse",
 							Value: response,
 						},
 					},
 				},
-				Parameters: openapi3.Parameters{
+				Parameters: Parameters{
 					{
 						Ref:   "#/components/parameters/someParameter",
 						Value: parameter,
@@ -292,49 +291,49 @@ func spec() *openapi3.Swagger {
 				},
 			},
 		},
-		Components: openapi3.Components{
-			Parameters: map[string]*openapi3.ParameterRef{
+		Components: Components{
+			Parameters: map[string]*ParameterRef{
 				"someParameter": {
 					Value: parameter,
 				},
 			},
-			RequestBodies: map[string]*openapi3.RequestBodyRef{
+			RequestBodies: map[string]*RequestBodyRef{
 				"someRequestBody": {
 					Value: requestBody,
 				},
 			},
-			Responses: map[string]*openapi3.ResponseRef{
+			Responses: map[string]*ResponseRef{
 				"someResponse": {
 					Value: response,
 				},
 			},
-			Schemas: map[string]*openapi3.SchemaRef{
+			Schemas: map[string]*SchemaRef{
 				"someSchema": {
 					Value: schema,
 				},
 			},
-			Headers: map[string]*openapi3.HeaderRef{
+			Headers: map[string]*HeaderRef{
 				"someHeader": {
 					Ref: "#/components/headers/otherHeader",
 				},
 				"otherHeader": {
-					Value: &openapi3.Header{},
+					Value: &Header{},
 				},
 			},
-			Examples: map[string]*openapi3.ExampleRef{
+			Examples: map[string]*ExampleRef{
 				"someExample": {
 					Ref: "#/components/examples/otherExample",
 				},
 				"otherExample": {
-					Value: openapi3.NewExample(example),
+					Value: NewExample(example),
 				},
 			},
-			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{
+			SecuritySchemes: map[string]*SecuritySchemeRef{
 				"someSecurityScheme": {
 					Ref: "#/components/securitySchemes/otherSecurityScheme",
 				},
 				"otherSecurityScheme": {
-					Value: &openapi3.SecurityScheme{
+					Value: &SecurityScheme{
 						Description: "Some security scheme",
 						Type:        "apiKey",
 						In:          "query",
@@ -346,20 +345,13 @@ func spec() *openapi3.Swagger {
 	}
 }
 
-// TestValidation tests validation of properties in the root of the OpenAPI
-// file.
 func TestValidation(t *testing.T) {
-	tests := []struct {
-		name          string
-		input         string
-		expectedError error
-	}{
-		{
-			"when no OpenAPI property is supplied",
-			`
+	info := `
 info:
   title: "Hello World REST APIs"
   version: "1.0"
+`
+	paths := `
 paths:
   "/api/v2/greetings.json":
     get:
@@ -380,103 +372,10 @@ paths:
       responses:
         200:
           description: "Get a single greeting object"
-`,
-			errors.New("value of openapi must be a non-empty JSON string"),
-		},
-		{
-			"when an empty OpenAPI property is supplied",
-			`
-openapi: ''
-info:
-  title: "Hello World REST APIs"
-  version: "1.0"
-paths:
-  "/api/v2/greetings.json":
-    get:
-      operationId: listGreetings
-      responses:
-        200:
-          description: "List different greetings"
-  "/api/v2/greetings/{id}.json":
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          example: "greeting"
-    get:
-      operationId: showGreeting
-      responses:
-        200:
-          description: "Get a single greeting object"
-`,
-			errors.New("value of openapi must be a non-empty JSON string"),
-		},
-		{
-			"when the Info property is not supplied",
-			`
-openapi: '1.0'
-paths:
-  "/api/v2/greetings.json":
-    get:
-      operationId: listGreetings
-      responses:
-        200:
-          description: "List different greetings"
-  "/api/v2/greetings/{id}.json":
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          example: "greeting"
-    get:
-      operationId: showGreeting
-      responses:
-        200:
-          description: "Get a single greeting object"
-`,
-			errors.New("invalid info: must be a JSON object"),
-		},
-		{
-			"when the Paths property is not supplied",
-			`
-openapi: '1.0'
-info:
-  title: "Hello World REST APIs"
-  version: "1.0"
-`,
-			errors.New("invalid paths: must be a JSON object"),
-		},
-		{
-			"when a valid spec is supplied",
-			`
+`
+	spec := `
 openapi: 3.0.2
-info:
-  title: "Hello World REST APIs"
-  version: "1.0"
-paths:
-  "/api/v2/greetings.json":
-    get:
-      operationId: listGreetings
-      responses:
-        200:
-          description: "List different greetings"
-  "/api/v2/greetings/{id}.json":
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          example: "greeting"
-    get:
-      operationId: showGreeting
-      responses:
-        200:
-          description: "Get a single greeting object"
+` + info + paths + `
 components:
   schemas:
     GreetingObject:
@@ -490,21 +389,28 @@ components:
           properties:
             description:
               type: string
-`,
-			nil,
-		},
+`
+
+	tests := map[string]string{
+		spec: "",
+		strings.Replace(spec, `openapi: 3.0.2`, ``, 1):            "value of openapi must be a non-empty JSON string",
+		strings.Replace(spec, `openapi: 3.0.2`, `openapi: ''`, 1): "value of openapi must be a non-empty JSON string",
+		strings.Replace(spec, info, ``, 1):                        "invalid info: must be a JSON object",
+		strings.Replace(spec, paths, ``, 1):                       "invalid paths: must be a JSON object",
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			doc := &openapi3.Swagger{}
-			err := yaml.Unmarshal([]byte(test.input), &doc)
+	for spec, expectedErr := range tests {
+		t.Run(expectedErr, func(t *testing.T) {
+			doc := &Swagger{}
+			err := yaml.Unmarshal([]byte(spec), &doc)
 			require.NoError(t, err)
 
-			c := context.Background()
-			validationErr := doc.Validate(c)
-
-			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
+			err = doc.Validate(context.Background())
+			if expectedErr != "" {
+				require.EqualError(t, err, expectedErr)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

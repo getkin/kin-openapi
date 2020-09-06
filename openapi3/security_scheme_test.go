@@ -1,10 +1,9 @@
-package openapi3_test
+package openapi3
 
 import (
 	"context"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,10 +22,10 @@ func TestSecuritySchemaExample(t *testing.T) {
 func testSecuritySchemaExample(t *testing.T, e securitySchemeExample) func(*testing.T) {
 	return func(t *testing.T) {
 		var err error
-		ss := &openapi3.SecurityScheme{}
+		ss := &SecurityScheme{}
 		err = ss.UnmarshalJSON(e.raw)
 		require.NoError(t, err)
-		err = ss.Validate(context.TODO())
+		err = ss.Validate(context.Background())
 		if e.valid {
 			require.NoError(t, err)
 		} else {

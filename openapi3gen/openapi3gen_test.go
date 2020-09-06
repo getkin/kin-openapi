@@ -1,11 +1,10 @@
-package openapi3gen_test
+package openapi3gen
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ type CyclicType1 struct {
 }
 
 func TestCyclic(t *testing.T) {
-	schema, refsMap, err := openapi3gen.NewSchemaRefForValue(&CyclicType0{})
-	require.IsType(t, &openapi3gen.CycleError{}, err)
+	schema, refsMap, err := NewSchemaRefForValue(&CyclicType0{})
+	require.IsType(t, &CycleError{}, err)
 	require.Nil(t, schema)
 	require.Empty(t, refsMap)
 }
@@ -45,7 +44,7 @@ func TestSimple(t *testing.T) {
 		Ptr *ExampleChild `json:"ptr"`
 	}
 
-	schema, refsMap, err := openapi3gen.NewSchemaRefForValue(&Example{})
+	schema, refsMap, err := NewSchemaRefForValue(&Example{})
 	require.NoError(t, err)
 	require.Len(t, refsMap, 14)
 	data, err := json.Marshal(schema)

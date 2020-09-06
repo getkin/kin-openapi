@@ -1,33 +1,31 @@
-package openapi3_test
+package openapi3
 
 import (
 	"fmt"
-
 	"net/url"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
 type refTestDataEntry struct {
 	name            string
 	contentTemplate string
-	testFunc        func(t *testing.T, swagger *openapi3.Swagger)
+	testFunc        func(t *testing.T, swagger *Swagger)
 }
 
 type refTestDataEntryWithErrorMessage struct {
 	name            string
 	contentTemplate string
 	errorMessage    *string
-	testFunc        func(t *testing.T, swagger *openapi3.Swagger)
+	testFunc        func(t *testing.T, swagger *Swagger)
 }
 
 var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SchemaRef",
 		contentTemplate: externalSchemaRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
 			require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
 		},
@@ -35,7 +33,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ResponseRef",
 		contentTemplate: externalResponseRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			desc := "description"
 			require.Equal(t, &desc, swagger.Components.Responses["TestResponse"].Value.Description)
 		},
@@ -43,7 +41,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ParameterRef",
 		contentTemplate: externalParameterRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Parameters["TestParameter"].Value.Name)
 			require.Equal(t, "id", swagger.Components.Parameters["TestParameter"].Value.Name)
 		},
@@ -51,7 +49,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ExampleRef",
 		contentTemplate: externalExampleRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Examples["TestExample"].Value.Description)
 			require.Equal(t, "description", swagger.Components.Examples["TestExample"].Value.Description)
 		},
@@ -59,14 +57,14 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "RequestBodyRef",
 		contentTemplate: externalRequestBodyRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.RequestBodies["TestRequestBody"].Value.Content)
 		},
 	},
 	{
 		name:            "SecuritySchemeRef",
 		contentTemplate: externalSecuritySchemeRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
 			require.Equal(t, "description", swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
 		},
@@ -74,7 +72,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ExternalHeaderRef",
 		contentTemplate: externalHeaderRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Headers["TestHeader"].Value.Description)
 			require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
 		},
@@ -82,7 +80,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathParameterRef",
 		contentTemplate: externalPathParameterRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test/{id}"].Parameters[0].Value.Name)
 			require.Equal(t, "id", swagger.Paths["/test/{id}"].Parameters[0].Value.Name)
 		},
@@ -90,7 +88,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationParameterRef",
 		contentTemplate: externalPathOperationParameterRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value)
 			require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
 		},
@@ -98,7 +96,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationRequestBodyRef",
 		contentTemplate: externalPathOperationRequestBodyRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value)
 			require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content)
 		},
@@ -106,7 +104,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationResponseRef",
 		contentTemplate: externalPathOperationResponseRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
 			desc := "description"
 			require.Equal(t, &desc, swagger.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -115,7 +113,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationParameterSchemaRef",
 		contentTemplate: externalPathOperationParameterSchemaRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value)
 			require.Equal(t, "string", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
 			require.Equal(t, "id", swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
@@ -125,7 +123,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationParameterRefWithContentInQuery",
 		contentTemplate: externalPathOperationParameterWithContentInQueryTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			schemaRef := swagger.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema
 			require.NotNil(t, schemaRef.Value)
 			require.Equal(t, "string", schemaRef.Value.Type)
@@ -135,7 +133,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationRequestBodyExampleRef",
 		contentTemplate: externalPathOperationRequestBodyExampleRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value)
 			require.Equal(t, "description", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
 		},
@@ -143,7 +141,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationReqestBodyContentSchemaRef",
 		contentTemplate: externalPathOperationReqestBodyContentSchemaRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value)
 			require.Equal(t, "string", swagger.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
 		},
@@ -151,7 +149,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationResponseExampleRef",
 		contentTemplate: externalPathOperationResponseExampleRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
 			desc := "testdescription"
 			require.Equal(t, &desc, swagger.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -161,7 +159,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationResponseSchemaRef",
 		contentTemplate: externalPathOperationResponseSchemaRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value)
 			desc := "testdescription"
 			require.Equal(t, &desc, swagger.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -171,7 +169,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ComponentHeaderSchemaRef",
 		contentTemplate: externalComponentHeaderSchemaRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Headers["TestHeader"].Value)
 			require.Equal(t, "string", swagger.Components.Headers["TestHeader"].Value.Schema.Value.Type)
 		},
@@ -179,7 +177,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "RequestResponseHeaderRef",
 		contentTemplate: externalRequestResponseHeaderRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 			require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 		},
@@ -191,7 +189,7 @@ var refTestDataEntriesResponseError = []refTestDataEntryWithErrorMessage{
 		name:            "CannotContainBothSchemaAndContentInAParameter",
 		contentTemplate: externalCannotContainBothSchemaAndContentInAParameter,
 		errorMessage:    &(&struct{ x string }{"cannot contain both schema and content in a parameter"}).x,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 		},
 	},
 }
@@ -201,7 +199,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
-		loader := openapi3.NewSwaggerLoader()
+		loader := NewSwaggerLoader()
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
@@ -214,7 +212,7 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
-		loader := openapi3.NewSwaggerLoader()
+		loader := NewSwaggerLoader()
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.EqualError(t, err, *td.errorMessage)
@@ -227,7 +225,7 @@ func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
-		loader := openapi3.NewSwaggerLoader()
+		loader := NewSwaggerLoader()
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
@@ -725,7 +723,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SchemaRef",
 		contentTemplate: relativeSchemaDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Schemas["TestSchema"].Value.Type)
 			require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
 		},
@@ -733,7 +731,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ResponseRef",
 		contentTemplate: relativeResponseDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			desc := "description"
 			require.Equal(t, &desc, swagger.Components.Responses["TestResponse"].Value.Description)
 		},
@@ -741,7 +739,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ParameterRef",
 		contentTemplate: relativeParameterDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.Parameters["TestParameter"].Value.Name)
 			require.Equal(t, "param", swagger.Components.Parameters["TestParameter"].Value.Name)
 			require.Equal(t, true, swagger.Components.Parameters["TestParameter"].Value.Required)
@@ -750,7 +748,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ExampleRef",
 		contentTemplate: relativeExampleDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, "param", swagger.Components.Examples["TestExample"].Value.Summary)
 			require.NotNil(t, "param", swagger.Components.Examples["TestExample"].Value.Value)
 			require.Equal(t, "An example", swagger.Components.Examples["TestExample"].Value.Summary)
@@ -759,7 +757,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "RequestRef",
 		contentTemplate: relativeRequestDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, "param", swagger.Components.RequestBodies["TestRequestBody"].Value.Description)
 			require.Equal(t, "example request", swagger.Components.RequestBodies["TestRequestBody"].Value.Description)
 		},
@@ -767,7 +765,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "HeaderRef",
 		contentTemplate: relativeHeaderDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, "param", swagger.Components.Headers["TestHeader"].Value.Description)
 			require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
 		},
@@ -775,7 +773,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "HeaderRef",
 		contentTemplate: relativeHeaderDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, "param", swagger.Components.Headers["TestHeader"].Value.Description)
 			require.Equal(t, "description", swagger.Components.Headers["TestHeader"].Value.Description)
 		},
@@ -783,7 +781,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SecuritySchemeRef",
 		contentTemplate: relativeSecuritySchemeDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Type)
 			require.NotNil(t, swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Scheme)
 			require.Equal(t, "http", swagger.Components.SecuritySchemes["TestSecurityScheme"].Value.Type)
@@ -793,7 +791,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathRef",
 		contentTemplate: relativePathDocsRefTemplate,
-		testFunc: func(t *testing.T, swagger *openapi3.Swagger) {
+		testFunc: func(t *testing.T, swagger *Swagger) {
 			require.NotNil(t, swagger.Paths["/pets"])
 			require.NotNil(t, swagger.Paths["/pets"].Get.Responses["200"])
 			require.NotNil(t, swagger.Paths["/pets"].Get.Responses["200"].Value.Content["application/json"])
@@ -806,7 +804,7 @@ func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 		t.Logf("testcase '%s'", td.name)
 
 		spec := []byte(td.contentTemplate)
-		loader := openapi3.NewSwaggerLoader()
+		loader := NewSwaggerLoader()
 		loader.IsExternalRefsAllowed = true
 		swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/"})
 		require.NoError(t, err)
@@ -908,7 +906,7 @@ paths:
 `
 
 func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
-	loader := openapi3.NewSwaggerLoader()
+	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
 
