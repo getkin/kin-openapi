@@ -1,8 +1,27 @@
 package openapi3
 
 import (
+	"fmt"
+
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
+
+type Examples map[string]*ExampleRef
+
+var _ jsonpointer.JSONPointable = (*Examples)(nil)
+
+func (e Examples) JSONLookup(token string) (interface{}, error) {
+	ref, ok := e[token]
+	if ref == nil || ok == false {
+		return nil, fmt.Errorf("object has no field %q", token)
+	}
+
+	if ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
 
 // Example is specified by OpenAPI/Swagger 3.0 standard.
 type Example struct {

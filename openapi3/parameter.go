@@ -4,12 +4,50 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
+
+type ParametersMap map[string]*ParameterRef
+
+var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
+
+func (p ParametersMap) JSONLookup(token string) (interface{}, error) {
+	ref, ok := p[token]
+	if ref == nil || ok == false {
+		return nil, fmt.Errorf("object has no field %q", token)
+	}
+
+	if ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
 
 // Parameters is specified by OpenAPI/Swagger 3.0 standard.
 type Parameters []*ParameterRef
+
+var _ jsonpointer.JSONPointable = (*Parameters)(nil)
+
+func (p Parameters) JSONLookup(token string) (interface{}, error) {
+	index, err := strconv.Atoi(token)
+	if err != nil {
+		return nil, err
+	}
+
+	if index < 0 || index >= len(p) {
+		return nil, fmt.Errorf("index out of bounds array[0,%d] index '%d'", len(p), index)
+	}
+
+	ref := p[index]
+
+	if ref != nil && ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
 
 func NewParameters() Parameters {
 	return make(Parameters, 0, 4)
@@ -47,20 +85,22 @@ func (parameters Parameters) Validate(c context.Context) error {
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
 type Parameter struct {
 	ExtensionProps
-	Name            string                 `json:"name,omitempty" yaml:"name,omitempty"`
-	In              string                 `json:"in,omitempty" yaml:"in,omitempty"`
-	Description     string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Style           string                 `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode         *bool                  `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowEmptyValue bool                   `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	AllowReserved   bool                   `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
-	Deprecated      bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required        bool                   `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema          *SchemaRef             `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         interface{}            `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples        map[string]*ExampleRef `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content         Content                `json:"content,omitempty" yaml:"content,omitempty"`
+	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Style           string      `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode         *bool       `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool        `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Required        bool        `json:"required,omitempty" yaml:"required,omitempty"`
+	Schema          *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example         interface{} `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples        Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Content         Content     `json:"content,omitempty" yaml:"content,omitempty"`
 }
+
+var _ jsonpointer.JSONPointable = (*Parameter)(nil)
 
 const (
 	ParameterInPath   = "path"
@@ -125,6 +165,45 @@ func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
+}
+
+func (parameter Parameter) JSONLookup(token string) (interface{}, error) {
+	switch token {
+	case "schema":
+		if parameter.Schema != nil {
+			if parameter.Schema.Ref != "" {
+				return &Ref{Ref: parameter.Schema.Ref}, nil
+			}
+			return parameter.Schema.Value, nil
+		}
+	case "name":
+		return parameter.Name, nil
+	case "in":
+		return parameter.In, nil
+	case "description":
+		return parameter.Description, nil
+	case "style":
+		return parameter.Style, nil
+	case "explode":
+		return parameter.Explode, nil
+	case "allowEmptyValue":
+		return parameter.AllowEmptyValue, nil
+	case "allowReserved":
+		return parameter.AllowReserved, nil
+	case "deprecated":
+		return parameter.Deprecated, nil
+	case "required":
+		return parameter.Required, nil
+	case "example":
+		return parameter.Example, nil
+	case "examples":
+		return parameter.Examples, nil
+	case "content":
+		return parameter.Content, nil
+	}
+
+	v, _, err := jsonpointer.GetForToken(parameter.ExtensionProps, token)
+	return v, err
 }
 
 // SerializationMethod returns a parameter's serialization method.

@@ -2,9 +2,27 @@ package openapi3
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
+
+type RequestBodies map[string]*RequestBodyRef
+
+var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
+
+func (r RequestBodies) JSONLookup(token string) (interface{}, error) {
+	ref, ok := r[token]
+	if ok == false {
+		return nil, fmt.Errorf("object has no field %q", token)
+	}
+
+	if ref != nil && ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
 type RequestBody struct {
