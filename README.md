@@ -22,7 +22,7 @@ Here's some projects that depend on _kin-openapi_:
 ## Alternative projects
   * [go-openapi](https://github.com/go-openapi)
     * Supports OpenAPI version 2.
-  * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
+  * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md).
 
 # Structure
   * _openapi2_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2))
