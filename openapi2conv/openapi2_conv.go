@@ -444,7 +444,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 		switch securityScheme.Flow {
 		case "implicit":
 			flows.Implicit = flow
-		case "accesscode":
+		case "accessCode":
 			flows.AuthorizationCode = flow
 		case "password":
 			flows.Password = flow
@@ -868,7 +868,7 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 			if flow = flows.Implicit; flow != nil {
 				result.Flow = "implicit"
 			} else if flow = flows.AuthorizationCode; flow != nil {
-				result.Flow = "accesscode"
+				result.Flow = "accessCode"
 			} else if flow = flows.Password; flow != nil {
 				result.Flow = "password"
 			} else {
