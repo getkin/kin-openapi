@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 )
 
@@ -10,29 +11,107 @@ const (
 	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
 )
 
-var SchemaStringFormats = make(map[string]*regexp.Regexp, 8)
+// FormatType is the type of format validation used
+type FormatType string
 
-func DefineStringFormat(name string, pattern string) {
+// FormatTypeRe is regexp based validation
+const FormatTypeRe = "re"
+
+// FormatTypeCallback is callback based validation
+const FormatTypeCallback = "callback"
+
+type FormatCallback func(Val string) error
+
+//Format is the format type context fo validate the format
+type Format struct {
+	Type     FormatType
+	Regexp   *regexp.Regexp
+	Callback FormatCallback
+}
+
+//SchemaStringFormats allows for validating strings format
+var SchemaStringFormats = make(map[string]Format, 8)
+
+//DefineStringReFormat Defines a new regexp pattern for a given format
+func DefineStringReFormat(name string, pattern string) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		err := fmt.Errorf("Format '%v' has invalid pattern '%v': %v", name, pattern, err)
 		panic(err)
 	}
-	SchemaStringFormats[name] = re
+	f := Format{
+		Type:     FormatTypeRe,
+		Regexp:   re,
+		Callback: nil}
+	SchemaStringFormats[name] = f
+}
+
+// DefineStringCallbackFormat define callback based type callback validation
+func DefineStringCallbackFormat(name string, callback FormatCallback) {
+
+	f := Format{
+		Type:     FormatTypeCallback,
+		Regexp:   nil,
+		Callback: callback}
+	SchemaStringFormats[name] = f
+}
+
+func validateIP(ip string) (*net.IP, error) {
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return nil, &SchemaError{
+			Value:  ip,
+			Reason: "Not an IP address",
+		}
+	}
+	return &parsed, nil
+}
+
+func validateIPv4(ip string) error {
+	parsed, err := validateIP(ip)
+	if err != nil {
+		return err
+	}
+
+	if parsed.To4() == nil {
+		return &SchemaError{
+			Value:  ip,
+			Reason: "Not an IPv4 address (it's IPv6)",
+		}
+	}
+	return nil
+}
+func validateIPv6(ip string) error {
+	parsed, err := validateIP(ip)
+	if err != nil {
+		return err
+	}
+
+	if parsed.To4() != nil {
+		return &SchemaError{
+			Value:  ip,
+			Reason: "Not an IPv6 address (it's IPv4)",
+		}
+	}
+	return nil
 }
 
 func init() {
 	// This pattern catches only some suspiciously wrong-looking email addresses.
-	// Use DefineStringFormat(...) if you need something stricter.
-	DefineStringFormat("email", `^[^@]+@[^@<>",\s]+$`)
+	// Use DefineStringReFormat(...) if you need something stricter.
+	DefineStringReFormat("email", `^[^@]+@[^@<>",\s]+$`)
 
 	// Base64
 	// The pattern supports base64 and b./ase64url. Padding ('=') is supported.
-	DefineStringFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
+	DefineStringReFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
 
 	// date
-	DefineStringFormat("date", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`)
+	DefineStringReFormat("date", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`)
 
 	// date-time
-	DefineStringFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
+	DefineStringReFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
+
+	DefineStringCallbackFormat("ipv4", validateIPv4)
+	DefineStringCallbackFormat("ipv6", validateIPv6)
+
 }
