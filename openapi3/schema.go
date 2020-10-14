@@ -1029,10 +1029,12 @@ func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
 	return schema.visitJSONObject(value, false)
 }
 
-func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (err error) {
+func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) error {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "object" {
 		return schema.expectedType("object", fast)
 	}
+
+	var me MultiError
 
 	// "properties"
 	properties := schema.Properties
@@ -1043,12 +1045,12 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 		if fast {
 			return errSchema
 		}
-		return &SchemaError{
+		me = append(me, &SchemaError{
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "minProperties",
 			Reason:      fmt.Sprintf("There must be at least %d properties", v),
-		}
+		})
 	}
 
 	// "maxProperties"
@@ -1056,12 +1058,12 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 		if fast {
 			return errSchema
 		}
-		return &SchemaError{
+		me = append(me, &SchemaError{
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "maxProperties",
 			Reason:      fmt.Sprintf("There must be at most %d properties", *v),
-		}
+		})
 	}
 
 	// "additionalProperties"
@@ -1081,7 +1083,12 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 					if fast {
 						return errSchema
 					}
-					return markSchemaErrorKey(err, k)
+					err = markSchemaErrorKey(err, k)
+					if v, ok := err.(MultiError); ok {
+						me = append(me, v...)
+						continue
+					}
+					me = append(me, err)
 				}
 				continue
 			}
@@ -1093,7 +1100,12 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 					if fast {
 						return errSchema
 					}
-					return markSchemaErrorKey(err, k)
+					err = markSchemaErrorKey(err, k)
+					if v, ok := err.(MultiError); ok {
+						me = append(me, v...)
+						continue
+					}
+					me = append(me, err)
 				}
 			}
 			continue
@@ -1101,27 +1113,32 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool) (
 		if fast {
 			return errSchema
 		}
-		return &SchemaError{
+		me = append(me, &SchemaError{
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "properties",
 			Reason:      fmt.Sprintf("Property '%s' is unsupported", k),
-		}
+		})
 	}
 	for _, k := range schema.Required {
 		if _, ok := value[k]; !ok {
 			if fast {
 				return errSchema
 			}
-			return markSchemaErrorKey(&SchemaError{
+			me = append(me, markSchemaErrorKey(&SchemaError{
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "required",
 				Reason:      fmt.Sprintf("Property '%s' is missing", k),
-			}, k)
+			}, k))
 		}
 	}
-	return
+
+	if len(me) > 0 {
+		return me
+	}
+
+	return nil
 }
 
 func (schema *Schema) expectedType(typ string, fast bool) error {
@@ -1148,6 +1165,12 @@ type SchemaError struct {
 func markSchemaErrorKey(err error, key string) error {
 	if v, ok := err.(*SchemaError); ok {
 		v.reversePath = append(v.reversePath, key)
+		return v
+	}
+	if v, ok := err.(MultiError); ok {
+		for _, e := range v {
+			_ = markSchemaErrorKey(e, key)
+		}
 		return v
 	}
 	return err

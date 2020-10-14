@@ -37,6 +37,8 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	operationParameters := operation.Parameters
 	pathItemParameters := route.PathItem.Parameters
 
+	var me openapi3.MultiError
+
 	// For each parameter of the PathItem
 	for _, parameterRef := range pathItemParameters {
 		parameter := parameterRef.Value
@@ -46,14 +48,14 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 			}
 		}
 		if err := ValidateParameter(c, input, parameter); err != nil {
-			return err
+			me = append(me, err)
 		}
 	}
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
 		if err := ValidateParameter(c, input, parameter.Value); err != nil {
-			return err
+			me = append(me, err)
 		}
 	}
 
@@ -61,7 +63,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
 		if err := ValidateRequestBody(c, input, requestBody.Value); err != nil {
-			return err
+			me = append(me, err)
 		}
 	}
 
@@ -77,9 +79,14 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 	if security != nil {
 		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
-			return err
+			me = append(me, err)
 		}
 	}
+
+	if len(me) > 0 {
+		return me
+	}
+
 	return nil
 }
 
