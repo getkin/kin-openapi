@@ -32,8 +32,8 @@ type Format struct {
 //SchemaStringFormats allows for validating strings format
 var SchemaStringFormats = make(map[string]Format, 8)
 
-//DefineStringReFormat Defines a new regexp pattern for a given format
-func DefineStringReFormat(name string, pattern string) {
+//DefineStringFormat Defines a new regexp pattern for a given format
+func DefineStringFormat(name string, pattern string) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		err := fmt.Errorf("Format '%v' has invalid pattern '%v': %v", name, pattern, err)
@@ -98,18 +98,18 @@ func validateIPv6(ip string) error {
 
 func init() {
 	// This pattern catches only some suspiciously wrong-looking email addresses.
-	// Use DefineStringReFormat(...) if you need something stricter.
-	DefineStringReFormat("email", `^[^@]+@[^@<>",\s]+$`)
+	// Use DefineStringFormat(...) if you need something stricter.
+	DefineStringFormat("email", `^[^@]+@[^@<>",\s]+$`)
 
 	// Base64
 	// The pattern supports base64 and b./ase64url. Padding ('=') is supported.
-	DefineStringReFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
+	DefineStringFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
 
 	// date
-	DefineStringReFormat("date", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`)
+	DefineStringFormat("date", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`)
 
 	// date-time
-	DefineStringReFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
+	DefineStringFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
 
 	DefineStringCallbackFormat("ipv4", validateIPv4)
 	DefineStringCallbackFormat("ipv6", validateIPv6)
