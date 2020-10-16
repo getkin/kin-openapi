@@ -94,6 +94,24 @@ const exampleV2 = `
       "name": "banana",
       "required": true,
       "type": "string"
+    },
+    "put_body": {
+      "in": "body",
+      "name": "banana",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "x-originalParamName":"banana"
+    },
+    "post_form_ref": {
+      "required": true,
+      "description": "param description",
+      "in": "formData",
+      "name": "fileUpload2",
+      "type": "file",
+      "x-formData-name":"fileUpload2",
+      "x-mimetype": "text/plain"
     }
   },
   "paths": {
@@ -214,6 +232,7 @@ const exampleV2 = `
             "schema": {
               "allOf": [{"$ref": "#/definitions/Item"}]
             },
+            "x-originalParamName":"body",
             "x-requestBody": "requestbody extension 1"
           }
         ],
@@ -238,13 +257,18 @@ const exampleV2 = `
             "in": "formData",
             "name": "fileUpload",
             "type": "file",
+            "x-formData-name":"fileUpload", 
             "x-mimetype": "text/plain"
           },
           {
             "description": "Description of file contents",
             "in": "formData",
             "name": "note",
-            "type": "integer"
+            "type": "integer",
+            "x-formData-name":"note" 
+          },
+          {
+            "$ref": "#/parameters/post_form_ref"
           }
         ],
         "responses": {
@@ -255,6 +279,11 @@ const exampleV2 = `
       },
       "put": {
         "description": "example put",
+        "parameters": [
+          { 
+            "$ref": "#/parameters/put_body"
+          }
+        ],
         "responses": {
           "default": {
             "description": "default response"
@@ -309,6 +338,19 @@ const exampleV3 = `
         }
       }
     },
+    "requestBodies": {
+      "put_body": {
+        "content":{ 
+          "application/json": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "required": true,
+        "x-originalParamName":"banana"
+      }
+    },
     "responses": {
       "ForbiddenError": {
         "content": {
@@ -349,6 +391,14 @@ const exampleV3 = `
       "ItemExtension": {
         "type": "boolean",
         "description": "It could be anything."
+      },
+      "post_form_ref": {
+        "description": "param description",
+        "format": "binary",
+        "required": ["fileUpload2"],
+        "type": "string",
+        "x-formData-name": "fileUpload2",
+        "x-mimetype":"text/plain"
       }
     }
   },
@@ -491,6 +541,7 @@ const exampleV3 = `
               }
             }
           },
+          "x-originalParamName":"body",
           "x-requestBody": "requestbody extension 1"
         },
         "responses": {
@@ -520,13 +571,19 @@ const exampleV3 = `
                     "description": "param description",
                     "type": "string",
                     "format": "binary",
+                    "x-formData-name":"fileUpload",
                     "x-mimetype": "text/plain"
                   },
                   "note": {
                     "description": "Description of file contents",
-                    "type": "integer"
+                    "type": "integer",
+                    "x-formData-name": "note"
+                  }, 
+                  "fileUpload2": {
+                    "$ref": "#/components/schemas/post_form_ref"
                   }
                 },
+                "required": ["fileUpload2"],
                 "type": "object"
               }
             }
@@ -540,6 +597,9 @@ const exampleV3 = `
       },
       "put": {
         "description": "example put",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/put_body"
+        },
         "responses": {
           "default": {
             "description": "default response"
