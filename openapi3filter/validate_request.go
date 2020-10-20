@@ -22,6 +22,8 @@ var ErrInvalidRequired = errors.New("must have a value")
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
+	var err error
+
 	options := input.Options
 	if options == nil {
 		options = DefaultOptions
@@ -47,14 +49,22 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 				continue
 			}
 		}
-		if err := ValidateParameter(c, input, parameter); err != nil {
+		if err = ValidateParameter(c, input, parameter); err != nil && input.Options.FailFast {
+			return err
+		}
+
+		if err != nil {
 			me = append(me, err)
 		}
 	}
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
-		if err := ValidateParameter(c, input, parameter.Value); err != nil {
+		if err = ValidateParameter(c, input, parameter.Value); err != nil && input.Options.FailFast {
+			return err
+		}
+
+		if err != nil {
 			me = append(me, err)
 		}
 	}
@@ -62,7 +72,11 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// RequestBody
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
-		if err := ValidateRequestBody(c, input, requestBody.Value); err != nil {
+		if err = ValidateRequestBody(c, input, requestBody.Value); err != nil && input.Options.FailFast {
+			return err
+		}
+
+		if err != nil {
 			me = append(me, err)
 		}
 	}
@@ -78,7 +92,11 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 		security = &route.Swagger.Security
 	}
 	if security != nil {
-		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
+		if err = ValidateSecurityRequirements(c, input, *security); err != nil && input.Options.FailFast {
+			return err
+		}
+
+		if err != nil {
 			me = append(me, err)
 		}
 	}
@@ -199,7 +217,11 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	}
 
 	// Validate JSON with the schema
-	if err := contentType.Schema.Value.VisitJSON(value); err != nil {
+	visitFn := contentType.Schema.Value.VisitJSON
+	if !input.Options.FailFast {
+		visitFn = contentType.Schema.Value.VisitAllJSON
+	}
+	if err := visitFn(value); err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
