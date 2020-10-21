@@ -129,7 +129,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	}
 
 	// Validate data with the schema.
-	if err := contentType.Schema.Value.VisitJSON(value); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, openapi3.VisitAsResponse()); err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: "response body doesn't match the schema",
