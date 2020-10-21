@@ -11,6 +11,7 @@ import (
 // Servers is specified by OpenAPI/Swagger standard version 3.0.
 type Servers []*Server
 
+// Validate ensures servers are per the OpenAPIv3 specification.
 func (servers Servers) Validate(c context.Context) error {
 	for _, v := range servers {
 		if err := v.Validate(c); err != nil {
@@ -141,7 +142,7 @@ func (serverVariable *ServerVariable) Validate(c context.Context) error {
 		switch item.(type) {
 		case float64, string:
 		default:
-			return errors.New("Every variable 'enum' item must be number of string")
+			return errors.New("All 'enum' items must be either a number or a string")
 		}
 	}
 	return nil

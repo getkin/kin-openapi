@@ -1,16 +1,15 @@
-package openapi3_test
+package openapi3
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
 func TestServerParamNames(t *testing.T) {
-	server := &openapi3.Server{
+	server := &Server{
 		URL: "http://{x}.{y}.example.com",
 	}
 	values, err := server.ParameterNames()
@@ -19,7 +18,7 @@ func TestServerParamNames(t *testing.T) {
 }
 
 func TestServerParamValuesWithPath(t *testing.T) {
-	server := &openapi3.Server{
+	server := &Server{
 		URL: "http://{arg0}.{arg1}.example.com/a/{arg3}-version/{arg4}c{arg5}",
 	}
 	for input, expected := range map[string]*serverMatch{
@@ -41,7 +40,7 @@ func TestServerParamValuesWithPath(t *testing.T) {
 }
 
 func TestServerParamValuesNoPath(t *testing.T) {
-	server := &openapi3.Server{
+	server := &Server{
 		URL: "https://{arg0}.{arg1}.example.com/",
 	}
 	for input, expected := range map[string]*serverMatch{
@@ -51,20 +50,20 @@ func TestServerParamValuesNoPath(t *testing.T) {
 	}
 }
 
-func validServer() *openapi3.Server {
-	return &openapi3.Server{
+func validServer() *Server {
+	return &Server{
 		URL: "http://my.cool.website",
 	}
 }
 
-func invalidServer() *openapi3.Server {
-	return &openapi3.Server{}
+func invalidServer() *Server {
+	return &Server{}
 }
 
 func TestServerValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		input         *openapi3.Server
+		input         *Server
 		expectedError error
 	}{
 		{
@@ -89,7 +88,7 @@ func TestServerValidation(t *testing.T) {
 	}
 }
 
-func testServerParamValues(t *testing.T, server *openapi3.Server, input string, expected *serverMatch) func(*testing.T) {
+func testServerParamValues(t *testing.T, server *Server, input string, expected *serverMatch) func(*testing.T) {
 	return func(t *testing.T) {
 		args, remaining, ok := server.MatchRawURL(input)
 		if expected == nil {

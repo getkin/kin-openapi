@@ -1020,6 +1020,9 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 	}
 
 	// "uniqueItems"
+	if sliceUniqueItemsChecker == nil {
+		sliceUniqueItemsChecker = isSliceOfUniqueItems
+	}
 	if v := schema.UniqueItems; v && !sliceUniqueItemsChecker(value) {
 		if settings.failfast {
 			return errSchema

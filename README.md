@@ -22,7 +22,7 @@ Here's some projects that depend on _kin-openapi_:
 ## Alternative projects
   * [go-openapi](https://github.com/go-openapi)
     * Supports OpenAPI version 2.
-  * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/IMPLEMENTATIONS.md).
+  * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md).
 
 # Structure
   * _openapi2_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2))
@@ -78,7 +78,7 @@ import (
 
 func main() {
 	router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
-	ctx := context.TODO()
+	ctx := context.Background()
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
 	// Find route
@@ -105,9 +105,7 @@ func main() {
 		RequestValidationInput: requestValidationInput,
 		Status:                 respStatus,
 		Header: http.Header{
-			"Content-Type": []string{
-				respContentType,
-			},
+			"Content-Type": []string{respContentType},
 		},
 	}
 	if respBody != nil {
