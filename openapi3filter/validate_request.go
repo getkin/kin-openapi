@@ -217,11 +217,15 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 	}
 
 	// Validate JSON with the schema
+<<<<<<< HEAD
 	visitFn := contentType.Schema.Value.VisitJSON
 	if !input.Options.FailFast {
 		visitFn = contentType.Schema.Value.VisitAllJSON
 	}
 	if err := visitFn(value); err != nil {
+=======
+	if err := contentType.Schema.Value.VisitJSON(value, openapi3.VisitAsRequest()); err != nil {
+>>>>>>> 5c863afc9e9f66c2d7974413c1a15cd08cbd5739
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,

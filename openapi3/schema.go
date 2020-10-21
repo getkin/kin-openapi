@@ -397,7 +397,7 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 func (schema *Schema) IsEmpty() bool {
 	if schema.Type != "" || schema.Format != "" || len(schema.Enum) != 0 ||
 		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
-		schema.Nullable ||
+		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
 		schema.MinItems != 0 || schema.MaxItems != nil ||
@@ -451,6 +451,10 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 		}
 	}
 	stack = append(stack, schema)
+
+	if schema.ReadOnly && schema.WriteOnly {
+		return errors.New("A property MUST NOT be marked as both readOnly and writeOnly being true")
+	}
 
 	for _, item := range schema.OneOf {
 		v := item.Value
@@ -577,41 +581,44 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 }
 
 func (schema *Schema) IsMatching(value interface{}) bool {
-	return schema.visitJSON(value, true, true) == nil
+	settings := newSchemaValidationSettings(FailFast())
+	return schema.visitJSON(settings, value) == nil
 }
 
 func (schema *Schema) IsMatchingJSONBoolean(value bool) bool {
-	return schema.visitJSON(value, true, true) == nil
+	settings := newSchemaValidationSettings(FailFast())
+	return schema.visitJSON(settings, value) == nil
 }
 
 func (schema *Schema) IsMatchingJSONNumber(value float64) bool {
-	return schema.visitJSON(value, true, true) == nil
+	settings := newSchemaValidationSettings(FailFast())
+	return schema.visitJSON(settings, value) == nil
 }
 
 func (schema *Schema) IsMatchingJSONString(value string) bool {
-	return schema.visitJSON(value, true, true) == nil
+	settings := newSchemaValidationSettings(FailFast())
+	return schema.visitJSON(settings, value) == nil
 }
 
 func (schema *Schema) IsMatchingJSONArray(value []interface{}) bool {
-	return schema.visitJSON(value, true, true) == nil
+	settings := newSchemaValidationSettings(FailFast())
+	return schema.visitJSON(settings, value) == nil
 }
 
 func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool {
-	return schema.visitJSON(value, true, true) == nil
+	settings := newSchemaValidationSettings(FailFast())
+	return schema.visitJSON(settings, value) == nil
 }
 
-func (schema *Schema) VisitJSON(value interface{}) error {
-	return schema.visitJSON(value, false, true)
+func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOption) error {
+	settings := newSchemaValidationSettings(opts...)
+	return schema.visitJSON(settings, value)
 }
 
-func (schema *Schema) VisitAllJSON(value interface{}) error {
-	return schema.visitJSON(value, false, false)
-}
-
-func (schema *Schema) visitJSON(value interface{}, fast bool, failFast bool) (err error) {
+func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interface{}) (err error) {
 	switch value := value.(type) {
 	case nil:
-		return schema.visitJSONNull(fast, failFast)
+		return schema.visitJSONNull(settings)
 	case float64:
 		if math.IsNaN(value) {
 			return ErrSchemaInputNaN
@@ -624,23 +631,23 @@ func (schema *Schema) visitJSON(value interface{}, fast bool, failFast bool) (er
 	if schema.IsEmpty() {
 		return
 	}
-	if err = schema.visitSetOperations(value, fast, failFast); err != nil {
+	if err = schema.visitSetOperations(settings, value); err != nil {
 		return
 	}
 
 	switch value := value.(type) {
 	case nil:
-		return schema.visitJSONNull(fast, failFast)
+		return schema.visitJSONNull(settings)
 	case bool:
-		return schema.visitJSONBoolean(value, fast)
+		return schema.visitJSONBoolean(settings, value)
 	case float64:
-		return schema.visitJSONNumber(value, fast, failFast)
+		return schema.visitJSONNumber(settings, value)
 	case string:
-		return schema.visitJSONString(value, fast, failFast)
+		return schema.visitJSONString(settings, value)
 	case []interface{}:
-		return schema.visitJSONArray(value, fast, failFast)
+		return schema.visitJSONArray(settings, value)
 	case map[string]interface{}:
-		return schema.visitJSONObject(value, fast, failFast)
+		return schema.visitJSONObject(settings, value)
 	default:
 		return &SchemaError{
 			Value:       value,
@@ -651,14 +658,16 @@ func (schema *Schema) visitJSON(value interface{}, fast bool, failFast bool) (er
 	}
 }
 
-func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast bool) (err error) {
+func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
+	var oldfailfast bool
+
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
 			if value == v {
 				return
 			}
 		}
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -674,8 +683,9 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast 
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.visitJSON(value, true, failFast); err == nil {
-			if fast {
+		oldfailfast, settings.failfast = settings.failfast, true
+		if err := v.visitJSON(settings, value); err == nil {
+			if oldfailfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -684,6 +694,7 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast 
 				SchemaField: "not",
 			}
 		}
+		settings.failfast = oldfailfast
 	}
 
 	if v := schema.OneOf; len(v) > 0 {
@@ -693,12 +704,14 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast 
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			if err := v.visitJSON(value, true, failFast); err == nil {
+			oldfailfast, settings.failfast = settings.failfast, true
+			if err := v.visitJSON(settings, value); err == nil {
 				ok++
 			}
+			settings.failfast = oldfailfast
 		}
 		if ok != 1 {
-			if fast {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -716,13 +729,15 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast 
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			if err := v.visitJSON(value, true, failFast); err == nil {
+			oldfailfast, settings.failfast = settings.failfast, true
+			if err := v.visitJSON(settings, value); err == nil {
 				ok = true
 				break
 			}
+			settings.failfast = oldfailfast
 		}
 		if !ok {
-			if fast {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -738,8 +753,9 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast 
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err := v.visitJSON(value, false, failFast); err != nil {
-			if fast {
+		oldfailfast, settings.failfast = settings.failfast, false
+		if err := v.visitJSON(settings, value); err != nil {
+			if oldfailfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -749,15 +765,16 @@ func (schema *Schema) visitSetOperations(value interface{}, fast bool, failFast 
 				Origin:      err,
 			}
 		}
+		settings.failfast = oldfailfast
 	}
 	return
 }
 
-func (schema *Schema) visitJSONNull(fast bool, failFast bool) (err error) {
+func (schema *Schema) visitJSONNull(settings *schemaValidationSettings) (err error) {
 	if schema.Nullable {
 		return
 	}
-	if fast {
+	if settings.failfast {
 		return errSchema
 	}
 	return &SchemaError{
@@ -769,25 +786,27 @@ func (schema *Schema) visitJSONNull(fast bool, failFast bool) (err error) {
 }
 
 func (schema *Schema) VisitJSONBoolean(value bool) error {
-	return schema.visitJSONBoolean(value, false)
+	settings := newSchemaValidationSettings()
+	return schema.visitJSONBoolean(settings, value)
 }
 
-func (schema *Schema) visitJSONBoolean(value bool, fast bool) (err error) {
+func (schema *Schema) visitJSONBoolean(settings *schemaValidationSettings, value bool) (err error) {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "boolean" {
-		return schema.expectedType("boolean", fast)
+		return schema.expectedType(settings, "boolean")
 	}
 	return
 }
 
 func (schema *Schema) VisitJSONNumber(value float64) error {
-	return schema.visitJSONNumber(value, false, true)
+	settings := newSchemaValidationSettings()
+	return schema.visitJSONNumber(settings, value)
 }
 
-func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (err error) {
+func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value float64) (err error) {
 	schemaType := schema.Type
 	if schemaType == "integer" {
 		if bigFloat := big.NewFloat(value); !bigFloat.IsInt() {
-			if fast {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -798,12 +817,12 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (
 			}
 		}
 	} else if schemaType != "" && schemaType != "number" {
-		return schema.expectedType("number, integer", fast)
+		return schema.expectedType(settings, "number, integer")
 	}
 
 	// "exclusiveMinimum"
 	if v := schema.ExclusiveMin; v && !(*schema.Min < value) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -816,7 +835,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (
 
 	// "exclusiveMaximum"
 	if v := schema.ExclusiveMax; v && !(*schema.Max > value) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -829,7 +848,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (
 
 	// "minimum"
 	if v := schema.Min; v != nil && !(*v <= value) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -842,7 +861,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (
 
 	// "maximum"
 	if v := schema.Max; v != nil && !(*v >= value) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -858,7 +877,7 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (
 		// "A numeric instance is valid only if division by this keyword's
 		//    value results in an integer."
 		if bigFloat := big.NewFloat(value / *v); !bigFloat.IsInt() {
-			if fast {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -872,12 +891,13 @@ func (schema *Schema) visitJSONNumber(value float64, fast bool, failFast bool) (
 }
 
 func (schema *Schema) VisitJSONString(value string) error {
-	return schema.visitJSONString(value, false, true)
+	settings := newSchemaValidationSettings()
+	return schema.visitJSONString(settings, value)
 }
 
-func (schema *Schema) visitJSONString(value string, fast bool, failFast bool) (err error) {
+func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value string) (err error) {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "string" {
-		return schema.expectedType("string", fast)
+		return schema.expectedType(settings, "string")
 	}
 
 	// "minLength" and "maxLength"
@@ -894,7 +914,7 @@ func (schema *Schema) visitJSONString(value string, fast bool, failFast bool) (e
 			}
 		}
 		if minLength != 0 && length < int64(minLength) {
-			if fast {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -905,7 +925,7 @@ func (schema *Schema) visitJSONString(value string, fast bool, failFast bool) (e
 			}
 		}
 		if maxLength != nil && length > int64(*maxLength) {
-			if fast {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -962,19 +982,20 @@ func (schema *Schema) visitJSONString(value string, fast bool, failFast bool) (e
 }
 
 func (schema *Schema) VisitJSONArray(value []interface{}) error {
-	return schema.visitJSONArray(value, false, true)
+	settings := newSchemaValidationSettings()
+	return schema.visitJSONArray(settings, value)
 }
 
-func (schema *Schema) visitJSONArray(value []interface{}, fast bool, failFast bool) (err error) {
+func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value []interface{}) (err error) {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "array" {
-		return schema.expectedType("array", fast)
+		return schema.expectedType(settings, "array")
 	}
 
 	lenValue := int64(len(value))
 
 	// "minItems"
 	if v := schema.MinItems; v != 0 && lenValue < int64(v) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -987,7 +1008,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool, failFast bo
 
 	// "maxItems"
 	if v := schema.MaxItems; v != nil && lenValue > int64(*v) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -1003,7 +1024,7 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool, failFast bo
 		sliceUniqueItemsChecker = isSliceOfUniqueItems
 	}
 	if v := schema.UniqueItems; v && !sliceUniqueItemsChecker(value) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		return &SchemaError{
@@ -1030,12 +1051,13 @@ func (schema *Schema) visitJSONArray(value []interface{}, fast bool, failFast bo
 }
 
 func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
-	return schema.visitJSONObject(value, false, true)
+	settings := newSchemaValidationSettings()
+	return schema.visitJSONObject(settings, value)
 }
 
-func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, failFast bool) error {
+func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]interface{}) (err error) {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "object" {
-		return schema.expectedType("object", fast)
+		return schema.expectedType(settings, "object")
 	}
 
 	var me MultiError
@@ -1046,7 +1068,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 
 	// "minProperties"
 	if v := schema.MinProps; v != 0 && lenValue < int64(v) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		me = append(me, &SchemaError{
@@ -1059,7 +1081,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 
 	// "maxProperties"
 	if v := schema.MaxProps; v != nil && lenValue > int64(*v) {
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		me = append(me, &SchemaError{
@@ -1084,7 +1106,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 					return foundUnresolvedRef(propertyRef.Ref)
 				}
 				if err := p.VisitJSON(v); err != nil {
-					if fast {
+					if settings.failfast {
 						return errSchema
 					}
 					err = markSchemaErrorKey(err, k)
@@ -1101,7 +1123,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
 			if additionalProperties != nil {
 				if err := additionalProperties.VisitJSON(v); err != nil {
-					if fast {
+					if settings.failfast {
 						return errSchema
 					}
 					err = markSchemaErrorKey(err, k)
@@ -1114,7 +1136,7 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 			}
 			continue
 		}
-		if fast {
+		if settings.failfast {
 			return errSchema
 		}
 		me = append(me, &SchemaError{
@@ -1124,9 +1146,17 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 			Reason:      fmt.Sprintf("Property '%s' is unsupported", k),
 		})
 	}
+
+	// "required"
 	for _, k := range schema.Required {
 		if _, ok := value[k]; !ok {
-			if fast {
+			if s := schema.Properties[k]; s != nil && s.Value.ReadOnly && settings.asreq {
+				continue
+			}
+			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asrep {
+				continue
+			}
+			if settings.failfast {
 				return errSchema
 			}
 			me = append(me, markSchemaErrorKey(&SchemaError{
@@ -1145,8 +1175,8 @@ func (schema *Schema) visitJSONObject(value map[string]interface{}, fast bool, f
 	return nil
 }
 
-func (schema *Schema) expectedType(typ string, fast bool) error {
-	if fast {
+func (schema *Schema) expectedType(settings *schemaValidationSettings, typ string) error {
+	if settings.failfast {
 		return errSchema
 	}
 	return &SchemaError{
