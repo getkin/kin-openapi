@@ -22,6 +22,11 @@ var ErrInvalidRequired = errors.New("must have a value")
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
+	var (
+		err error
+		me  openapi3.MultiError
+	)
+
 	options := input.Options
 	if options == nil {
 		options = DefaultOptions
@@ -45,23 +50,36 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 				continue
 			}
 		}
-		if err := ValidateParameter(c, input, parameter); err != nil {
+
+		if err = ValidateParameter(c, input, parameter); err != nil && !options.MultiError {
 			return err
+		}
+
+		if err != nil {
+			me = append(me, err)
 		}
 	}
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
-		if err := ValidateParameter(c, input, parameter.Value); err != nil {
+		if err = ValidateParameter(c, input, parameter.Value); err != nil && !options.MultiError {
 			return err
+		}
+
+		if err != nil {
+			me = append(me, err)
 		}
 	}
 
 	// RequestBody
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
-		if err := ValidateRequestBody(c, input, requestBody.Value); err != nil {
+		if err = ValidateRequestBody(c, input, requestBody.Value); err != nil && !options.MultiError {
 			return err
+		}
+
+		if err != nil {
+			me = append(me, err)
 		}
 	}
 
@@ -76,10 +94,19 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 		security = &route.Swagger.Security
 	}
 	if security != nil {
-		if err := ValidateSecurityRequirements(c, input, *security); err != nil {
+		if err = ValidateSecurityRequirements(c, input, *security); err != nil && !options.MultiError {
 			return err
 		}
+
+		if err != nil {
+			me = append(me, err)
+		}
 	}
+
+	if len(me) > 0 {
+		return me
+	}
+
 	return nil
 }
 
@@ -93,6 +120,11 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		// a schema-less check, but this could also be an error. The Swagger
 		// validation allows this to happen.
 		return nil
+	}
+
+	options := input.Options
+	if options == nil {
+		options = DefaultOptions
 	}
 
 	var value interface{}
@@ -121,7 +153,13 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		// A parameter's schema is not defined so skip validation of a parameter's value.
 		return nil
 	}
-	if err = schema.VisitJSON(value); err != nil {
+
+	var opts []openapi3.SchemaValidationOption
+	if options.MultiError {
+		opts = make([]openapi3.SchemaValidationOption, 0, 1)
+		opts = append(opts, openapi3.MultiErrors())
+	}
+	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
 	return nil
@@ -136,6 +174,11 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		req  = input.Request
 		data []byte
 	)
+
+	options := input.Options
+	if options == nil {
+		options = DefaultOptions
+	}
 
 	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
@@ -191,8 +234,14 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		}
 	}
 
+	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
+	opts = append(opts, openapi3.VisitAsRequest())
+	if options.MultiError {
+		opts = append(opts, openapi3.MultiErrors())
+	}
+
 	// Validate JSON with the schema
-	if err := contentType.Schema.Value.VisitJSON(value, openapi3.VisitAsRequest()); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,

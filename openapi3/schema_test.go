@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -59,13 +61,13 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 	}
 }
 
-func validateSchema(t *testing.T, schema *Schema, value interface{}) error {
+func validateSchema(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error {
 	data, err := json.Marshal(value)
 	require.NoError(t, err)
 	var val interface{}
 	err = json.Unmarshal(data, &val)
 	require.NoError(t, err)
-	return schema.VisitJSON(val)
+	return schema.VisitJSON(val, opts...)
 }
 
 var schemaExamples = []schemaExample{
@@ -1040,5 +1042,153 @@ var schemaErrorExamples = []schemaErrorExample{
 			},
 		},
 		Want: "NEST",
+	},
+}
+
+type schemaMultiErrorExample struct {
+	Title          string
+	Schema         *Schema
+	Values         []interface{}
+	ExpectedErrors []MultiError
+}
+
+func TestSchemasMultiError(t *testing.T) {
+	for _, example := range schemaMultiErrorExamples {
+		t.Run(example.Title, testSchemaMultiError(t, example))
+	}
+}
+
+func testSchemaMultiError(t *testing.T, example schemaMultiErrorExample) func(*testing.T) {
+	return func(t *testing.T) {
+		schema := example.Schema
+		for i, value := range example.Values {
+			err := validateSchema(t, schema, value, MultiErrors())
+			require.Error(t, err)
+			require.IsType(t, MultiError{}, err)
+
+			merr, _ := err.(MultiError)
+			expected := example.ExpectedErrors[i]
+			require.True(t, len(merr) > 0)
+			require.Len(t, merr, len(expected))
+			for _, e := range merr {
+				require.IsType(t, &SchemaError{}, e)
+				var found bool
+				scherr, _ := e.(*SchemaError)
+				for _, expectedErr := range expected {
+					expectedScherr, _ := expectedErr.(*SchemaError)
+					if reflect.DeepEqual(expectedScherr.reversePath, scherr.reversePath) &&
+						expectedScherr.SchemaField == scherr.SchemaField {
+						found = true
+						break
+					}
+				}
+				require.True(t, found, fmt.Sprintf("Missing %s error on %s", scherr.SchemaField, strings.Join(scherr.JSONPointer(), ".")))
+			}
+		}
+	}
+}
+
+var schemaMultiErrorExamples = []schemaMultiErrorExample{
+	{
+		Title: "STRING",
+		Schema: NewStringSchema().
+			WithMinLength(2).
+			WithMaxLength(3).
+			WithPattern("^[abc]+$"),
+		Values: []interface{}{
+			"f",
+			"foobar",
+		},
+		ExpectedErrors: []MultiError{
+			{&SchemaError{SchemaField: "minLength"}, &SchemaError{SchemaField: "pattern"}},
+			{&SchemaError{SchemaField: "maxLength"}, &SchemaError{SchemaField: "pattern"}},
+		},
+	},
+	{
+		Title: "NUMBER",
+		Schema: NewIntegerSchema().
+			WithMin(1).
+			WithMax(10),
+		Values: []interface{}{
+			0.5,
+			10.1,
+		},
+		ExpectedErrors: []MultiError{
+			{&SchemaError{SchemaField: "type"}, &SchemaError{SchemaField: "minimum"}},
+			{&SchemaError{SchemaField: "type"}, &SchemaError{SchemaField: "maximum"}},
+		},
+	},
+	{
+		Title: "ARRAY: simple",
+		Schema: NewArraySchema().
+			WithMinItems(2).
+			WithMaxItems(2).
+			WithItems(NewStringSchema().
+				WithPattern("^[abc]+$")),
+		Values: []interface{}{
+			[]interface{}{"foo"},
+			[]interface{}{"foo", "bar", "fizz"},
+		},
+		ExpectedErrors: []MultiError{
+			{
+				&SchemaError{SchemaField: "minItems"},
+				&SchemaError{SchemaField: "pattern", reversePath: []string{"0"}},
+			},
+			{
+				&SchemaError{SchemaField: "maxItems"},
+				&SchemaError{SchemaField: "pattern", reversePath: []string{"0"}},
+				&SchemaError{SchemaField: "pattern", reversePath: []string{"1"}},
+				&SchemaError{SchemaField: "pattern", reversePath: []string{"2"}},
+			},
+		},
+	},
+	{
+		Title: "ARRAY: object",
+		Schema: NewArraySchema().
+			WithItems(NewObjectSchema().
+				WithProperties(map[string]*Schema{
+					"key1": NewStringSchema(),
+					"key2": NewIntegerSchema(),
+				}),
+			),
+		Values: []interface{}{
+			[]interface{}{
+				map[string]interface{}{
+					"key1": 100, // not a string
+					"key2": "not an integer",
+				},
+			},
+		},
+		ExpectedErrors: []MultiError{
+			{
+				&SchemaError{SchemaField: "type", reversePath: []string{"key1", "0"}},
+				&SchemaError{SchemaField: "type", reversePath: []string{"key2", "0"}},
+			},
+		},
+	},
+	{
+		Title: "OBJECT",
+		Schema: NewObjectSchema().
+			WithProperties(map[string]*Schema{
+				"key1": NewStringSchema(),
+				"key2": NewIntegerSchema(),
+				"key3": NewArraySchema().
+					WithItems(NewStringSchema().
+						WithPattern("^[abc]+$")),
+			}),
+		Values: []interface{}{
+			map[string]interface{}{
+				"key1": 100, // not a string
+				"key2": "not an integer",
+				"key3": []interface{}{"abc", "def"},
+			},
+		},
+		ExpectedErrors: []MultiError{
+			{
+				&SchemaError{SchemaField: "type", reversePath: []string{"key1"}},
+				&SchemaError{SchemaField: "type", reversePath: []string{"key2"}},
+				&SchemaError{SchemaField: "pattern", reversePath: []string{"1", "key3"}},
+			},
+		},
 	},
 }
