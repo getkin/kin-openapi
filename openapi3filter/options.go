@@ -4,14 +4,12 @@ import (
 	"context"
 )
 
-var DefaultOptions = &Options{
-	FailFast: true,
-}
+var DefaultOptions = &Options{}
 
 type Options struct {
 	ExcludeRequestBody    bool
 	ExcludeResponseBody   bool
 	IncludeResponseStatus bool
-	FailFast              bool
+	MultiError            bool
 	AuthenticationFunc    func(c context.Context, input *AuthenticationInput) error
 }

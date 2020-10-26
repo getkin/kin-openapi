@@ -49,7 +49,8 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 				continue
 			}
 		}
-		if err = ValidateParameter(c, input, parameter); err != nil && input.Options.FailFast {
+
+		if err = ValidateParameter(c, input, parameter); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -60,7 +61,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
-		if err = ValidateParameter(c, input, parameter.Value); err != nil && input.Options.FailFast {
+		if err = ValidateParameter(c, input, parameter.Value); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -72,7 +73,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// RequestBody
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
-		if err = ValidateRequestBody(c, input, requestBody.Value); err != nil && input.Options.FailFast {
+		if err = ValidateRequestBody(c, input, requestBody.Value); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -92,7 +93,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 		security = &route.Swagger.Security
 	}
 	if security != nil {
-		if err = ValidateSecurityRequirements(c, input, *security); err != nil && input.Options.FailFast {
+		if err = ValidateSecurityRequirements(c, input, *security); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -118,6 +119,11 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		// a schema-less check, but this could also be an error. The Swagger
 		// validation allows this to happen.
 		return nil
+	}
+
+	options := input.Options
+	if options == nil {
+		options = DefaultOptions
 	}
 
 	var value interface{}
@@ -146,7 +152,12 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		// A parameter's schema is not defined so skip validation of a parameter's value.
 		return nil
 	}
-	if err = schema.VisitJSON(value); err != nil {
+
+	opts := make([]openapi3.SchemaValidationOption, 0, 1)
+	if options.MultiError {
+		opts = append(opts, openapi3.MultiErrors())
+	}
+	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
 	return nil
@@ -161,6 +172,11 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		req  = input.Request
 		data []byte
 	)
+
+	options := input.Options
+	if options == nil {
+		options = DefaultOptions
+	}
 
 	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
@@ -216,16 +232,14 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		}
 	}
 
-	// Validate JSON with the schema
-<<<<<<< HEAD
-	visitFn := contentType.Schema.Value.VisitJSON
-	if !input.Options.FailFast {
-		visitFn = contentType.Schema.Value.VisitAllJSON
+	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
+	opts = append(opts, openapi3.VisitAsRequest())
+	if options.MultiError {
+		opts = append(opts, openapi3.MultiErrors())
 	}
-	if err := visitFn(value); err != nil {
-=======
-	if err := contentType.Schema.Value.VisitJSON(value, openapi3.VisitAsRequest()); err != nil {
->>>>>>> 5c863afc9e9f66c2d7974413c1a15cd08cbd5739
+
+	// Validate JSON with the schema
+	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,

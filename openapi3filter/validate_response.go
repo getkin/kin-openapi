@@ -128,8 +128,14 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		}
 	}
 
+	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
+	opts = append(opts, openapi3.VisitAsRequest())
+	if options.MultiError {
+		opts = append(opts, openapi3.MultiErrors())
+	}
+
 	// Validate data with the schema.
-	if err := contentType.Schema.Value.VisitJSON(value, openapi3.VisitAsResponse()); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: "response body doesn't match the schema",
