@@ -22,7 +22,10 @@ var ErrInvalidRequired = errors.New("must have a value")
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
 func ValidateRequest(c context.Context, input *RequestValidationInput) error {
-	var err error
+	var (
+		err error
+		me  openapi3.MultiError
+	)
 
 	options := input.Options
 	if options == nil {
@@ -38,8 +41,6 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	}
 	operationParameters := operation.Parameters
 	pathItemParameters := route.PathItem.Parameters
-
-	var me openapi3.MultiError
 
 	// For each parameter of the PathItem
 	for _, parameterRef := range pathItemParameters {
@@ -153,8 +154,9 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 		return nil
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 1)
+	var opts []openapi3.SchemaValidationOption
 	if options.MultiError {
+		opts = make([]openapi3.SchemaValidationOption, 0, 1)
 		opts = append(opts, openapi3.MultiErrors())
 	}
 	if err = schema.VisitJSON(value, opts...); err != nil {

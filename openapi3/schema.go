@@ -1313,7 +1313,7 @@ func markSchemaErrorIndex(err error, index int) error {
 		v.reversePath = append(v.reversePath, strconv.FormatInt(int64(index), 10))
 		return v
 	}
-	if v, ok := err.(MultiError); ok { // TODO: this might need to be an indexed for loop
+	if v, ok := err.(MultiError); ok {
 		for _, e := range v {
 			_ = markSchemaErrorIndex(e, index)
 		}
