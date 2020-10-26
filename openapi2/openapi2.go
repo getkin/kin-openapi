@@ -21,6 +21,7 @@ type Swagger struct {
 	Info                openapi3.Info                  `json:"info"`
 	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty"`
 	Schemes             []string                       `json:"schemes,omitempty"`
+	Consumes            []string                       `json:"consumes,omitempty"`
 	Host                string                         `json:"host,omitempty"`
 	BasePath            string                         `json:"basePath,omitempty"`
 	Paths               map[string]*PathItem           `json:"paths,omitempty"`
