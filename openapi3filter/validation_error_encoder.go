@@ -148,7 +148,7 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 	}
 
 	// Add error source
-	if e.Parameter != nil && e.Parameter.In == "query" {
+	if e.Parameter != nil {
 		// We have a JSONPointer in the query param too so need to
 		// make sure 'Parameter' check takes priority over 'Pointer'
 		cErr.Source = &ValidationErrorSource{

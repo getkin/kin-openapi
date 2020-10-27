@@ -74,6 +74,9 @@ func getValidationTests(t *testing.T) []*validationTest {
 	unsupportedContentType := newPetstoreRequest(t, http.MethodPost, "/pet", bytes.NewBufferString(`{}`))
 	unsupportedContentType.Header.Set("Content-Type", "text/plain")
 
+	unsupportedHeaderValue := newPetstoreRequest(t, http.MethodPost, "/pet", bytes.NewBufferString(`{}`))
+	unsupportedHeaderValue.Header.Set("x-environment", "watdis")
+
 	return []*validationTest{
 		//
 		// Basics
@@ -271,9 +274,42 @@ func getValidationTests(t *testing.T) []*validationTest {
 		},
 
 		//
+		// Request header params
+		//
+		{
+			name: "error - invalid enum value for header string parameter",
+			args: validationArgs{
+				r: unsupportedHeaderValue,
+			},
+			wantErrParam:        "x-environment",
+			wantErrParamIn:      "header",
+			wantErrSchemaReason: "JSON value is not one of the allowed values",
+			wantErrSchemaPath:   "/",
+			wantErrSchemaValue:  "watdis",
+			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
+				Title:  "JSON value is not one of the allowed values",
+				Detail: "Value 'watdis' at / must be one of: demo, prod",
+				Source: &ValidationErrorSource{Parameter: "x-environment"}},
+		},
+
+		//
 		// Request bodies
 		//
 
+		{
+			name: "error - invalid enum value for header object attribute",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodPost, "/pet", bytes.NewBufferString(`{"status":"watdis"}`)),
+			},
+			wantErrReason:       "doesn't match the schema",
+			wantErrSchemaReason: "JSON value is not one of the allowed values",
+			wantErrSchemaValue:  "watdis",
+			wantErrSchemaPath:   "/status",
+			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+				Title:  "JSON value is not one of the allowed values",
+				Detail: "Value 'watdis' at /status must be one of: available, pending, sold",
+				Source: &ValidationErrorSource{Pointer: "/status"}},
+		},
 		{
 			name: "error - missing required object attribute",
 			args: validationArgs{
