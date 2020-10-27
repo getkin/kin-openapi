@@ -45,7 +45,7 @@ func DefineStringFormat(name string, pattern string) {
 	SchemaStringFormats[name] = f
 }
 
-// DefineStringCallbackFormat define callback based type callback validation
+// DefineStringFormatCallback ads a validation function for a specific schema format entry
 func DefineStringFormatCallback(name string, callback FormatCallback) {
 	f := Format{
 		regexp:   nil,
