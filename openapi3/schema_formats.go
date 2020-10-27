@@ -108,7 +108,14 @@ func init() {
 	// date-time
 	DefineStringFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
 
-	DefineStringCallbackFormat("ipv4", validateIPv4)
-	DefineStringCallbackFormat("ipv6", validateIPv6)
+}
 
+// DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
+func DefineIPv4Format() {
+	DefineStringCallbackFormat("ipv4", validateIPv4)
+}
+
+// DefineIPv6Format opts in ipv6 format validation on top of OAS 3 spec
+func DefineIPv6Format() {
+	DefineStringCallbackFormat("ipv6", validateIPv6)
 }
