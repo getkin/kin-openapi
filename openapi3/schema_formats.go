@@ -20,11 +20,11 @@ const FormatTypeRe = "re"
 // FormatTypeCallback is callback based validation
 const FormatTypeCallback = "callback"
 
+//FormatCallback custom check on exotic formats
 type FormatCallback func(Val string) error
 
 //Format is the format type context fo validate the format
 type Format struct {
-	Type     FormatType
 	Regexp   *regexp.Regexp
 	Callback FormatCallback
 }
@@ -40,7 +40,6 @@ func DefineStringFormat(name string, pattern string) {
 		panic(err)
 	}
 	f := Format{
-		Type:     FormatTypeRe,
 		Regexp:   re,
 		Callback: nil}
 	SchemaStringFormats[name] = f
@@ -48,9 +47,7 @@ func DefineStringFormat(name string, pattern string) {
 
 // DefineStringCallbackFormat define callback based type callback validation
 func DefineStringCallbackFormat(name string, callback FormatCallback) {
-
 	f := Format{
-		Type:     FormatTypeCallback,
 		Regexp:   nil,
 		Callback: callback}
 	SchemaStringFormats[name] = f
