@@ -931,8 +931,8 @@ func (schema *Schema) visitJSONString(value string, fast bool) (err error) {
 		} else if v := schema.Format; len(v) > 0 {
 			// No pattern, but does have a format
 			f := SchemaStringFormats[v]
-			if f.Regexp != nil {
-				re := f.Regexp
+			if f.regexp != nil {
+				re := f.regexp
 				if re != nil {
 					cp = &compiledPattern{
 						Regexp:    re,
@@ -940,8 +940,8 @@ func (schema *Schema) visitJSONString(value string, fast bool) (err error) {
 					}
 					schema.compiledPattern = cp
 				}
-			} else if f.Callback != nil {
-				return f.Callback(value)
+			} else if f.callback != nil {
+				return f.callback(value)
 			}
 		}
 	}
