@@ -46,7 +46,7 @@ func DefineStringFormat(name string, pattern string) {
 }
 
 // DefineStringCallbackFormat define callback based type callback validation
-func DefineStringCallbackFormat(name string, callback FormatCallback) {
+func DefineStringFormatCallback(name string, callback FormatCallback) {
 	f := Format{
 		regexp:   nil,
 		callback: callback}
