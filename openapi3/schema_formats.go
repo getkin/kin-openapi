@@ -117,5 +117,5 @@ func DefineIPv4Format() {
 
 // DefineIPv6Format opts in ipv6 format validation on top of OAS 3 spec
 func DefineIPv6Format() {
-	DefineStringCallbackFormat("ipv6", validateIPv6)
+	DefineStringFormatCallback("ipv6", validateIPv6)
 }
