@@ -148,7 +148,7 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 	}
 
 	// Add error source
-	if e.Parameter != nil && e.Parameter.In == "query" {
+	if e.Parameter != nil {
 		// We have a JSONPointer in the query param too so need to
 		// make sure 'Parameter' check takes priority over 'Pointer'
 		cErr.Source = &ValidationErrorSource{
@@ -172,7 +172,8 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 		cErr.Detail = fmt.Sprintf("Value '%v' at %s must be one of: %s",
 			innerErr.Value, toJSONPointer(innerErr.JSONPointer()), strings.Join(enums, ", "))
 		value := fmt.Sprintf("%v", innerErr.Value)
-		if (e.Parameter.Explode == nil || *e.Parameter.Explode == true) &&
+		if e.Parameter != nil &&
+			(e.Parameter.Explode == nil || *e.Parameter.Explode == true) &&
 			(e.Parameter.Style == "" || e.Parameter.Style == "form") &&
 			strings.Contains(value, ",") {
 			parts := strings.Split(value, ",")

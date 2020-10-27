@@ -67,7 +67,21 @@
         ],
         "requestBody": {
           "$ref": "#/components/requestBodies/PetWithRequired"
-        }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "demo",
+                "prod"
+              ]
+            },
+            "in": "header",
+            "name": "x-environment",
+            "description": "Where to send the data for processing"
+          }
+        ]
       },
       "patch": {
         "tags": [
@@ -1136,7 +1150,7 @@
           },
           "name": {
             "type": "string",
-            "example": "doggie",
+            "example": "doggie"
           },
           "photoUrls": {
             "type": "array",
@@ -1196,7 +1210,7 @@
           },
           "name": {
             "type": "string",
-            "example": "doggie",
+            "example": "doggie"
           },
           "photoUrls": {
             "type": "array",
