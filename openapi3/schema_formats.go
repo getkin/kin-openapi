@@ -39,7 +39,7 @@ func DefineStringFormat(name string, pattern string) {
 		err := fmt.Errorf("Format '%v' has invalid pattern '%v': %v", name, pattern, err)
 		panic(err)
 	}
-	f := Format{
+	SchemaStringFormats[name] = Format{regexp: re}
 		regexp:   re,
 		callback: nil}
 	SchemaStringFormats[name] = f
