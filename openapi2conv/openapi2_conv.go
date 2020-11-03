@@ -607,7 +607,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	}
 
 	for name, requestBodyRef := range swagger.Components.RequestBodies {
-		bodyOrRefParameters, formDataParameters, consumes, err := FromV3RequestBodies(name, requestBodyRef, &swagger.Components)
+		bodyOrRefParameters, formDataParameters, consumes, err := fromV3RequestBodies(name, requestBodyRef, &swagger.Components)
 		if err != nil {
 			return nil, err
 		}
@@ -650,7 +650,7 @@ func consumesToArray(consumes map[string]bool) []string {
 	return consumesArr
 }
 
-func FromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, components *openapi3.Components) (*openapi2.Parameters, *openapi2.Parameters, map[string]bool, error) {
+func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, components *openapi3.Components) (*openapi2.Parameters, *openapi2.Parameters, map[string]bool, error) {
 	formParameters := openapi2.Parameters{}
 	bodyOrRefParameters := openapi2.Parameters{}
 	if ref := requestBodyRef.Ref; ref != "" {
@@ -901,7 +901,7 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 			return nil, errors.New("could not find a name for request body")
 		}
 
-		bodyOrRefParameters, formDataParameters, consumes, err := FromV3RequestBodies(name, v, &swagger.Components)
+		bodyOrRefParameters, formDataParameters, consumes, err := fromV3RequestBodies(name, v, &swagger.Components)
 		if err != nil {
 			return nil, err
 		}
