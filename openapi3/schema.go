@@ -930,18 +930,21 @@ func (schema *Schema) visitJSONString(value string, fast bool) (err error) {
 			schema.compiledPattern = cp
 		} else if v := schema.Format; len(v) > 0 {
 			// No pattern, but does have a format
-			f := SchemaStringFormats[v]
-			if f.regexp != nil {
-				re := f.regexp
-				if re != nil {
-					cp = &compiledPattern{
-						Regexp:    re,
-						ErrReason: "JSON string doesn't match the format '" + v + " (regular expression `" + re.String() + "`)'",
+			if f, ok := SchemaStringFormats[v]; ok {
+				if f.regexp != nil && f.callback == nil {
+					re := f.regexp
+					if re != nil {
+						cp = &compiledPattern{
+							Regexp:    re,
+							ErrReason: "JSON string doesn't match the format '" + v + " (regular expression `" + re.String() + "`)'",
+						}
+						schema.compiledPattern = cp
 					}
-					schema.compiledPattern = cp
+				} else if f.regexp == nil && f.callback != nil {
+					return f.callback(value)
+				} else {
+					return fmt.Errorf("corrupted entry %q in SchemaStringFormats", v)
 				}
-			} else if f.callback != nil {
-				return f.callback(value)
 			}
 		}
 	}
