@@ -932,14 +932,11 @@ func (schema *Schema) visitJSONString(value string, fast bool) (err error) {
 			// No pattern, but does have a format
 			if f, ok := SchemaStringFormats[v]; ok {
 				if f.regexp != nil && f.callback == nil {
-					re := f.regexp
-					if re != nil {
-						cp = &compiledPattern{
-							Regexp:    re,
-							ErrReason: "JSON string doesn't match the format '" + v + " (regular expression `" + re.String() + "`)'",
-						}
-						schema.compiledPattern = cp
+					schema.compiledPattern = &compiledPattern{
+						Regexp:    f.regexp,
+						ErrReason: "JSON string doesn't match the format '" + v + " (regular expression `" + re.String() + "`)'",
 					}
+
 				} else if f.regexp == nil && f.callback != nil {
 					return f.callback(value)
 				} else {
