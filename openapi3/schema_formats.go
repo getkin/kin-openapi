@@ -42,7 +42,7 @@ func DefineStringFormat(name string, pattern string) {
 	SchemaStringFormats[name] = Format{regexp: re}
 }
 
-// DefineStringFormatCallback ads a validation function for a specific schema format entry
+// DefineStringFormatCallback adds a validation function for a specific schema format entry
 func DefineStringFormatCallback(name string, callback FormatCallback) {
 	SchemaStringFormats[name] = Format{callback: callback}
 }
