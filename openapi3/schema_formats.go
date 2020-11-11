@@ -40,17 +40,11 @@ func DefineStringFormat(name string, pattern string) {
 		panic(err)
 	}
 	SchemaStringFormats[name] = Format{regexp: re}
-		regexp:   re,
-		callback: nil}
-	SchemaStringFormats[name] = f
 }
 
 // DefineStringFormatCallback ads a validation function for a specific schema format entry
 func DefineStringFormatCallback(name string, callback FormatCallback) {
 	SchemaStringFormats[name] = Format{callback: callback}
-		regexp:   nil,
-		callback: callback}
-	SchemaStringFormats[name] = f
 }
 
 func validateIP(ip string) (*net.IP, error) {
