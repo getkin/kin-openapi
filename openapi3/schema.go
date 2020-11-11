@@ -958,13 +958,6 @@ func (schema *Schema) visitJSONString(value string, fast bool) (err error) {
 				Reason:      cp.ErrReason,
 			}
 		}
-	} else if len(schema.Format) > 0 && cp == nil {
-		return &SchemaError{
-			Value:       value,
-			Schema:      schema,
-			SchemaField: "format",
-			Reason:      "Unsupported Format",
-		}
 	}
 	return
 }
