@@ -974,43 +974,65 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 		}
 	}
 
-	// "format" and "pattern"
-	if schema.compiledPattern == nil {
-		if pattern := schema.Pattern; pattern != "" {
-			var err error
-			if schema.compiledPattern, err = regexp.Compile(pattern); err != nil {
-				return fmt.Errorf("Error while compiling regular expression %q: %v", pattern, err)
+	// "pattern"
+	if pattern := schema.Pattern; pattern != "" && schema.compiledPattern == nil {
+		var err error
+		if schema.compiledPattern, err = regexp.Compile(pattern); err != nil {
+			err = &SchemaError{
+				Value:       value,
+				Schema:      schema,
+				SchemaField: "pattern",
+				Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
 			}
-		} else if format := schema.Format; format != "" {
-			if f, ok := SchemaStringFormats[format]; ok {
-				switch {
-				case f.regexp != nil && f.callback == nil:
-					schema.compiledPattern = f.regexp
-				case f.regexp == nil && f.callback != nil:
-					return f.callback(value)
-				default:
-					return fmt.Errorf("corrupted entry %q in SchemaStringFormats", format)
-				}
+			if !settings.multiError {
+				return err
 			}
+			me = append(me, err)
 		}
 	}
 	if cp := schema.compiledPattern; cp != nil && !cp.MatchString(value) {
-		field := "format"
-		reason := fmt.Sprintf("JSON string doesn't match the format %q (regular expression %q)", schema.Format, cp.String())
-		if schema.Pattern != "" {
-			field = "pattern"
-			reason = fmt.Sprintf("JSON string doesn't match the regular expression %q", schema.Pattern)
-		}
 		err := &SchemaError{
 			Value:       value,
 			Schema:      schema,
-			SchemaField: field,
-			Reason:      reason,
+			SchemaField: "pattern",
+			Reason:      fmt.Sprintf("JSON string doesn't match the regular expression %q", schema.Pattern),
 		}
 		if !settings.multiError {
 			return err
 		}
 		me = append(me, err)
+	}
+
+	// "format"
+	var formatErr string
+	if format := schema.Format; format != "" {
+		if f, ok := SchemaStringFormats[format]; ok {
+			switch {
+			case f.regexp != nil && f.callback == nil:
+				if cp := f.regexp; !cp.MatchString(value) {
+					formatErr = fmt.Sprintf("JSON string doesn't match the format %q (regular expression %q)", format, cp.String())
+				}
+			case f.regexp == nil && f.callback != nil:
+				if err := f.callback(value); err != nil {
+					formatErr = err.Error()
+				}
+			default:
+				formatErr = fmt.Sprintf("corrupted entry %q in SchemaStringFormats", format)
+			}
+		}
+	}
+	if formatErr != "" {
+		err := &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "format",
+			Reason:      formatErr,
+		}
+		if !settings.multiError {
+			return err
+		}
+		me = append(me, err)
+
 	}
 
 	if len(me) > 0 {
