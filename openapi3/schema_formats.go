@@ -12,7 +12,6 @@ const (
 )
 
 
-
 //FormatCallback custom check on exotic formats
 type FormatCallback func(Val string) error
 
