@@ -22,30 +22,32 @@ func (paths Paths) Validate(c context.Context) error {
 		}
 		normalizedPaths[path] = path
 
-		var globalCount uint
-		for _, parameterRef := range pathItem.Parameters {
-			if parameterRef != nil {
-				if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-					globalCount++
-				}
-			}
-		}
-		for method, operation := range pathItem.Operations() {
-			var count uint
-			for _, parameterRef := range operation.Parameters {
+		if pathItem != nil {
+			var globalCount uint
+			for _, parameterRef := range pathItem.Parameters {
 				if parameterRef != nil {
 					if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-						count++
+						globalCount++
 					}
 				}
 			}
-			if count+globalCount != pathParamsCount {
-				return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
+			for method, operation := range pathItem.Operations() {
+				var count uint
+				for _, parameterRef := range operation.Parameters {
+					if parameterRef != nil {
+						if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
+							count++
+						}
+					}
+				}
+				if count+globalCount != pathParamsCount {
+					return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
+				}
 			}
-		}
 
-		if err := pathItem.Validate(c); err != nil {
-			return err
+			if err := pathItem.Validate(c); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
