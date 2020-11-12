@@ -24,7 +24,9 @@ var (
 
 	errSchema = errors.New("Input does not match the schema")
 
+	// ErrSchemaInputNaN may be returned when validating a number
 	ErrSchemaInputNaN = errors.New("NaN is not allowed")
+	// ErrSchemaInputInf may be returned when validating a number
 	ErrSchemaInputInf = errors.New("Inf is not allowed")
 )
 
@@ -89,7 +91,7 @@ type Schema struct {
 	MinLength       uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
 	MaxLength       *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
 	Pattern         string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	compiledPattern *compiledPattern
+	compiledPattern *regexp.Regexp
 
 	// Array
 	MinItems uint64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
@@ -223,11 +225,6 @@ func NewObjectSchema() *Schema {
 		Type:       "object",
 		Properties: make(map[string]*SchemaRef),
 	}
-}
-
-type compiledPattern struct {
-	Regexp    *regexp.Regexp
-	ErrReason string
 }
 
 func (schema *Schema) WithNullable() *Schema {
@@ -977,55 +974,65 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 		}
 	}
 
-	// "format" and "pattern"
-	cp := schema.compiledPattern
-	if cp == nil {
-		pattern := schema.Pattern
-		if v := schema.Pattern; len(v) > 0 {
-			// Pattern
-			re, err := regexp.Compile(v)
-			if err != nil {
-				return fmt.Errorf("Error while compiling regular expression '%s': %v", pattern, err)
-			}
-			cp = &compiledPattern{
-				Regexp:    re,
-				ErrReason: "JSON string doesn't match the regular expression '" + v + "'",
-			}
-			schema.compiledPattern = cp
-		} else if v := schema.Format; len(v) > 0 {
-			// No pattern, but does have a format
-			if f, ok := SchemaStringFormats[v]; ok {
-				if f.regexp != nil && f.callback == nil {
-					schema.compiledPattern = &compiledPattern{
-						Regexp:    f.regexp,
-						ErrReason: "JSON string doesn't match the format '" + v + " (regular expression `" + f.regexp.String() + "`)'",
-					}
-
-				} else if f.regexp == nil && f.callback != nil {
-					return f.callback(value)
-				} else {
-					return fmt.Errorf("corrupted entry %q in SchemaStringFormats", v)
-				}
-			}
-		}
-	}
-	if cp != nil {
-		if !cp.Regexp.MatchString(value) {
-			field := "format"
-			if schema.Pattern != "" {
-				field = "pattern"
-			}
-			err := &SchemaError{
+	// "pattern"
+	if pattern := schema.Pattern; pattern != "" && schema.compiledPattern == nil {
+		var err error
+		if schema.compiledPattern, err = regexp.Compile(pattern); err != nil {
+			err = &SchemaError{
 				Value:       value,
 				Schema:      schema,
-				SchemaField: field,
-				Reason:      cp.ErrReason,
+				SchemaField: "pattern",
+				Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
 			}
 			if !settings.multiError {
 				return err
 			}
 			me = append(me, err)
 		}
+	}
+	if cp := schema.compiledPattern; cp != nil && !cp.MatchString(value) {
+		err := &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "pattern",
+			Reason:      fmt.Sprintf("JSON string doesn't match the regular expression %q", schema.Pattern),
+		}
+		if !settings.multiError {
+			return err
+		}
+		me = append(me, err)
+	}
+
+	// "format"
+	var formatErr string
+	if format := schema.Format; format != "" {
+		if f, ok := SchemaStringFormats[format]; ok {
+			switch {
+			case f.regexp != nil && f.callback == nil:
+				if cp := f.regexp; !cp.MatchString(value) {
+					formatErr = fmt.Sprintf("JSON string doesn't match the format %q (regular expression %q)", format, cp.String())
+				}
+			case f.regexp == nil && f.callback != nil:
+				if err := f.callback(value); err != nil {
+					formatErr = err.Error()
+				}
+			default:
+				formatErr = fmt.Sprintf("corrupted entry %q in SchemaStringFormats", format)
+			}
+		}
+	}
+	if formatErr != "" {
+		err := &SchemaError{
+			Value:       value,
+			Schema:      schema,
+			SchemaField: "format",
+			Reason:      formatErr,
+		}
+		if !settings.multiError {
+			return err
+		}
+		me = append(me, err)
+
 	}
 
 	if len(me) > 0 {
