@@ -13,9 +13,6 @@ const (
 
 
 
-// FormatTypeCallback is callback based validation
-const FormatTypeCallback = "callback"
-
 //FormatCallback custom check on exotic formats
 type FormatCallback func(Val string) error
 
