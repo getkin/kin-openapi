@@ -11,10 +11,7 @@ const (
 	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
 )
 
-type FormatType string
 
-// FormatTypeRe is regexp based validation
-const FormatTypeRe = "re"
 
 // FormatTypeCallback is callback based validation
 const FormatTypeCallback = "callback"
@@ -22,7 +19,6 @@ const FormatTypeCallback = "callback"
 //FormatCallback custom check on exotic formats
 type FormatCallback func(Val string) error
 
-//Format is the format type context fo validate the format
 type Format struct {
 	regexp   *regexp.Regexp
 	callback FormatCallback
