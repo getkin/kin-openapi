@@ -611,12 +611,12 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 		if err != nil {
 			return nil, err
 		}
-		if len(*formDataParameters) != 0 {
-			for _, param := range *formDataParameters {
+		if len(formDataParameters) != 0 {
+			for _, param := range formDataParameters {
 				result.Parameters[param.Name] = param
 			}
-		} else if len(*bodyOrRefParameters) != 0 {
-			for _, param := range *bodyOrRefParameters {
+		} else if len(bodyOrRefParameters) != 0 {
+			for _, param := range bodyOrRefParameters {
 				result.Parameters[name] = param
 			}
 		}
@@ -641,7 +641,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 	return result, nil
 }
 
-func consumesToArray(consumes map[string]bool) []string {
+func consumesToArray(consumes map[string]struct{}) []string {
 	consumesArr := make([]string, 0, len(consumes))
 	for key := range consumes {
 		consumesArr = append(consumesArr, key)
@@ -664,6 +664,9 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 	//Only select one formData or request body for an individual requesstBody as swagger 2 does not support multiples
 	if requestBodyRef.Value != nil {
 		for contentType, mediaType := range requestBodyRef.Value.Content {
+			if consumes == nil {
+				consumes = make(map[string]struct{})
+			}
 			consumes[contentType] = struct{}{}
 			if formParams := FromV3RequestBodyFormData(mediaType); len(formParams) != 0 {
 				formParameters = formParams
@@ -905,13 +908,12 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 		if err != nil {
 			return nil, err
 		}
-		if len(*formDataParameters) != 0 {
-			result.Parameters = append(result.Parameters, *formDataParameters...)
-		} else if len(*bodyOrRefParameters) != 0 {
-			//add a single request body
-			for _, param := range *bodyOrRefParameters {
+		if len(formDataParameters) != 0 {
+			result.Parameters = append(result.Parameters, formDataParameters...)
+		} else if len(bodyOrRefParameters) != 0 {
+			for _, param := range bodyOrRefParameters {
 				result.Parameters = append(result.Parameters, param)
-				break
+				break // add a single request body
 			}
 
 		}
