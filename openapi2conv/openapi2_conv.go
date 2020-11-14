@@ -642,8 +642,8 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 }
 
 func consumesToArray(consumes map[string]bool) []string {
-	var consumesArr []string
-	for key, _ := range consumes {
+	consumesArr := make([]string, 0, len(consumes))
+	for key := range consumes {
 		consumesArr = append(consumesArr, key)
 	}
 	sort.Strings(consumesArr)
@@ -651,21 +651,19 @@ func consumesToArray(consumes map[string]bool) []string {
 }
 
 func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, components *openapi3.Components) (*openapi2.Parameters, *openapi2.Parameters, map[string]bool, error) {
-	formParameters := openapi2.Parameters{}
-	bodyOrRefParameters := openapi2.Parameters{}
+	var formParameters openapi2.Parameters
+	var bodyOrRefParameters openapi2.Parameters
 	if ref := requestBodyRef.Ref; ref != "" {
 		bodyOrRefParameters = append(bodyOrRefParameters, &openapi2.Parameter{Ref: FromV3Ref(ref)})
 		return &bodyOrRefParameters, &formParameters, nil, nil
 	}
 
 	//Only select one formData or request body for an individual requesstBody as swagger 2 does not support multiples
-	consumes := make(map[string]bool)
+	var consumes map[string]struct{}
 	if requestBodyRef.Value != nil {
 		for contentType, mediaType := range requestBodyRef.Value.Content {
-			//add each type to the consumes array
-			consumes[contentType] = true
-			formParams := FromV3RequestBodyFormData(mediaType)
-			if len(formParams) != 0 {
+			consumes[contentType] = struct{}{}
+			if formParams := FromV3RequestBodyFormData(mediaType); len(formParams) != 0 {
 				formParameters = formParams
 			} else {
 				paramName := name
@@ -758,7 +756,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		schema.Value.Items, _ = FromV3SchemaRef(v, components)
 	}
 	keys := make([]string, 0, len(schema.Value.Properties))
-	for k, _ := range schema.Value.Properties {
+	for k := range schema.Value.Properties {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -909,10 +907,9 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 			result.Parameters = append(result.Parameters, *formDataParameters...)
 		} else if len(*bodyOrRefParameters) != 0 {
 			//add a single request body
-			for i, param := range *bodyOrRefParameters {
-				if i == 0 {
-					result.Parameters = append(result.Parameters, param)
-				}
+			for _, param := range *bodyOrRefParameters {
+				result.Parameters = append(result.Parameters, param)
+				break
 			}
 
 		}
