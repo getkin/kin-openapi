@@ -650,16 +650,18 @@ func consumesToArray(consumes map[string]bool) []string {
 	return consumesArr
 }
 
-func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, components *openapi3.Components) (*openapi2.Parameters, *openapi2.Parameters, map[string]bool, error) {
-	var formParameters openapi2.Parameters
-	var bodyOrRefParameters openapi2.Parameters
+func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, components *openapi3.Components) (
+	bodyOrRefParameters openapi2.Parameters,
+	formParameters openapi2.Parameters,
+	consumes map[string]struct{},
+	err error,
+) {
 	if ref := requestBodyRef.Ref; ref != "" {
 		bodyOrRefParameters = append(bodyOrRefParameters, &openapi2.Parameter{Ref: FromV3Ref(ref)})
-		return &bodyOrRefParameters, &formParameters, nil, nil
+		return
 	}
 
 	//Only select one formData or request body for an individual requesstBody as swagger 2 does not support multiples
-	var consumes map[string]struct{}
 	if requestBodyRef.Value != nil {
 		for contentType, mediaType := range requestBodyRef.Value.Content {
 			consumes[contentType] = struct{}{}
@@ -671,15 +673,15 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 					json.Unmarshal(originalName.(json.RawMessage), &paramName)
 				}
 
-				r, err := FromV3RequestBody(paramName, requestBodyRef, mediaType, components)
-				if err != nil {
-					return &bodyOrRefParameters, &formParameters, consumes, err
+				var r *openapi2.Parameter
+				if r, err = FromV3RequestBody(paramName, requestBodyRef, mediaType, components); err != nil {
+					return
 				}
 				bodyOrRefParameters = append(bodyOrRefParameters, r)
 			}
 		}
 	}
-	return &bodyOrRefParameters, &formParameters, consumes, nil
+	return
 }
 
 func FromV3Schemas(schemas map[string]*openapi3.SchemaRef, components *openapi3.Components) (map[string]*openapi3.SchemaRef, map[string]*openapi2.Parameter) {
