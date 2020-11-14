@@ -88,6 +88,10 @@ const exampleV2 = `
     "version": "0.1",
     "x-info": "info extension"
   },
+  "consumes": [
+    "application/json",
+    "application/xml"
+  ],
   "parameters": {
     "banana": {
       "in": "path",
@@ -224,15 +228,19 @@ const exampleV2 = `
         }
       },
       "patch": {
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "description": "example patch",
         "parameters": [
           {
             "in": "body",
-            "name": "body",
+            "name": "patch_body",
             "schema": {
               "allOf": [{"$ref": "#/definitions/Item"}]
             },
-            "x-originalParamName":"body",
+            "x-originalParamName":"patch_body",
             "x-requestBody": "requestbody extension 1"
           }
         ],
@@ -342,6 +350,11 @@ const exampleV3 = `
       "put_body": {
         "content":{ 
           "application/json": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "application/xml": {
             "schema": {
               "type": "string"
             }
@@ -539,9 +552,14 @@ const exampleV3 = `
               "schema": {
                 "allOf": [{"$ref": "#/components/schemas/Item"}]
               }
+            },
+            "application/xml": {
+              "schema": {
+                "allOf": [{"$ref": "#/components/schemas/Item"}]
+              }
             }
           },
-          "x-originalParamName":"body",
+          "x-originalParamName":"patch_body",
           "x-requestBody": "requestbody extension 1"
         },
         "responses": {

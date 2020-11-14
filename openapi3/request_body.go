@@ -33,6 +33,16 @@ func (requestBody *RequestBody) WithContent(content Content) *RequestBody {
 	return requestBody
 }
 
+func (requestBody *RequestBody) WithSchemaRef(value *SchemaRef, consumes []string) *RequestBody {
+	requestBody.Content = NewContentWithSchemaRef(value, consumes)
+	return requestBody
+}
+
+func (requestBody *RequestBody) WithSchema(value *Schema, consumes []string) *RequestBody {
+	requestBody.Content = NewContentWithSchema(value, consumes)
+	return requestBody
+}
+
 func (requestBody *RequestBody) WithJSONSchemaRef(value *SchemaRef) *RequestBody {
 	requestBody.Content = NewContentWithJSONSchemaRef(value)
 	return requestBody
