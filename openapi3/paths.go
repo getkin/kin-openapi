@@ -16,38 +16,41 @@ func (paths Paths) Validate(c context.Context) error {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
 
+		if pathItem == nil {
+			paths[path] = &PathItem{}
+			pathItem = paths[path]
+		}
+
 		normalizedPath, pathParamsCount := normalizeTemplatedPath(path)
 		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
 			return fmt.Errorf("conflicting paths %q and %q", path, oldPath)
 		}
 		normalizedPaths[path] = path
 
-		if pathItem != nil {
-			var globalCount uint
-			for _, parameterRef := range pathItem.Parameters {
+		var globalCount uint
+		for _, parameterRef := range pathItem.Parameters {
+			if parameterRef != nil {
+				if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
+					globalCount++
+				}
+			}
+		}
+		for method, operation := range pathItem.Operations() {
+			var count uint
+			for _, parameterRef := range operation.Parameters {
 				if parameterRef != nil {
 					if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-						globalCount++
+						count++
 					}
 				}
 			}
-			for method, operation := range pathItem.Operations() {
-				var count uint
-				for _, parameterRef := range operation.Parameters {
-					if parameterRef != nil {
-						if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-							count++
-						}
-					}
-				}
-				if count+globalCount != pathParamsCount {
-					return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
-				}
+			if count+globalCount != pathParamsCount {
+				return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
 			}
+		}
 
-			if err := pathItem.Validate(c); err != nil {
-				return err
-			}
+		if err := pathItem.Validate(c); err != nil {
+			return err
 		}
 	}
 	return nil
