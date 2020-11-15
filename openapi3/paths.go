@@ -16,6 +16,11 @@ func (paths Paths) Validate(c context.Context) error {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
 
+		if pathItem == nil {
+			paths[path] = &PathItem{}
+			pathItem = paths[path]
+		}
+
 		normalizedPath, pathParamsCount := normalizeTemplatedPath(path)
 		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
 			return fmt.Errorf("conflicting paths %q and %q", path, oldPath)
