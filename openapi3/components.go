@@ -92,7 +92,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 	return
 }
 
-const identifierPattern = `^[a-zA-Z0-9._-]+$`
+const identifierPattern = `^[\w\[\]._-]+$`
 
 var identifierRegExp = regexp.MustCompile(identifierPattern)
 
