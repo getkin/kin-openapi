@@ -12,6 +12,32 @@ func NewContent() Content {
 	return make(map[string]*MediaType, 4)
 }
 
+func NewContentWithSchema(schema *Schema, consumes []string) Content {
+	if len(consumes) == 0 {
+		return Content{
+			"*/*": NewMediaType().WithSchema(schema),
+		}
+	}
+	content := make(map[string]*MediaType, len(consumes))
+	for _, mediaType := range consumes {
+		content[mediaType] = NewMediaType().WithSchema(schema)
+	}
+	return content
+}
+
+func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content {
+	if len(consumes) == 0 {
+		return Content{
+			"*/*": NewMediaType().WithSchemaRef(schema),
+		}
+	}
+	content := make(map[string]*MediaType, len(consumes))
+	for _, mediaType := range consumes {
+		content[mediaType] = NewMediaType().WithSchemaRef(schema)
+	}
+	return content
+}
+
 func NewContentWithJSONSchema(schema *Schema) Content {
 	return Content{
 		"application/json": NewMediaType().WithSchema(schema),
