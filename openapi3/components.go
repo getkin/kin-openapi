@@ -94,10 +94,13 @@ func (components *Components) Validate(c context.Context) (err error) {
 
 const identifierPattern = `^[a-zA-Z0-9._-]+$`
 
-var identifierRegExp = regexp.MustCompile(identifierPattern)
+// IdentifierRegExp verifies whether Component object key matches 'identifierPattern' pattern, according to OapiAPI v3.x.0.
+// Hovever, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in orde not to fail
+// converted v2-v3 validation
+var IdentifierRegExp = regexp.MustCompile(identifierPattern)
 
 func ValidateIdentifier(value string) error {
-	if identifierRegExp.MatchString(value) {
+	if IdentifierRegExp.MatchString(value) {
 		return nil
 	}
 	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (regexp: %q)", value, identifierPattern)
