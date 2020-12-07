@@ -72,12 +72,12 @@ type SchemaRefs []*SchemaRef
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
 
 func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
-	i, err := strconv.Atoi(token)
+	i, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	if i >= len(s) {
+	if i >= uint64(len(s)) {
 		return nil, fmt.Errorf("index out of range: %d", i)
 	}
 

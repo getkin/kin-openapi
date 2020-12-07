@@ -207,6 +207,12 @@ components:
           format: int32
         message:
           type: string
+    OneOfTest:
+      type: object
+      oneOf:
+        - type: string
+        - type: integer
+          format: int32
   `
 	root, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
 	require.NoError(t, err)
@@ -242,4 +248,29 @@ components:
 	require.IsType(t, &Schema{}, v)
 	assert.Equal(t, "integer", v.(*Schema).Type)
 
+	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/0")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(root)
+	assert.NoError(t, err)
+	assert.Equal(t, reflect.Ptr, kind)
+	require.IsType(t, &Schema{}, v)
+	assert.Equal(t, "string", v.(*Schema).Type)
+
+	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/1")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(root)
+	assert.NoError(t, err)
+	assert.Equal(t, reflect.Ptr, kind)
+	require.IsType(t, &Schema{}, v)
+	assert.Equal(t, "integer", v.(*Schema).Type)
+
+	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/5")
+	require.NoError(t, err)
+	_, _, err = ptr.Get(root)
+	assert.Error(t, err)
+
+	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/-1")
+	require.NoError(t, err)
+	_, _, err = ptr.Get(root)
+	assert.Error(t, err)
 }
