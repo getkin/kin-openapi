@@ -4,12 +4,20 @@ import (
 	"context"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
+
+// Ref is specified by OpenAPI/Swagger 3.0 standard.
+type Ref struct {
+	Ref string `json:"$ref" yaml:"$ref"`
+}
 
 type CallbackRef struct {
 	Ref   string
 	Value *Callback
 }
+
+var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
 func (value *CallbackRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -27,10 +35,21 @@ func (value *CallbackRef) Validate(c context.Context) error {
 	return v.Validate(c)
 }
 
+func (value CallbackRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
+}
+
 type ExampleRef struct {
 	Ref   string
 	Value *Example
 }
+
+var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
 
 func (value *ExampleRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -44,10 +63,21 @@ func (value *ExampleRef) Validate(c context.Context) error {
 	return nil
 }
 
+func (value ExampleRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
+}
+
 type HeaderRef struct {
 	Ref   string
 	Value *Header
 }
+
+var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
 func (value *HeaderRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -63,6 +93,14 @@ func (value *HeaderRef) Validate(c context.Context) error {
 		return foundUnresolvedRef(value.Ref)
 	}
 	return v.Validate(c)
+}
+func (value HeaderRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
 }
 
 type LinkRef struct {
@@ -91,6 +129,8 @@ type ParameterRef struct {
 	Value *Parameter
 }
 
+var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
+
 func (value *ParameterRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -107,10 +147,21 @@ func (value *ParameterRef) Validate(c context.Context) error {
 	return v.Validate(c)
 }
 
+func (value ParameterRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
+}
+
 type ResponseRef struct {
 	Ref   string
 	Value *Response
 }
+
+var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
 
 func (value *ResponseRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -128,10 +179,21 @@ func (value *ResponseRef) Validate(c context.Context) error {
 	return v.Validate(c)
 }
 
+func (value ResponseRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
+}
+
 type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
 }
+
+var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
 func (value *RequestBodyRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -149,10 +211,21 @@ func (value *RequestBodyRef) Validate(c context.Context) error {
 	return v.Validate(c)
 }
 
+func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
+}
+
 type SchemaRef struct {
 	Ref   string
 	Value *Schema
 }
+
+var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
 func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 	return &SchemaRef{
@@ -177,10 +250,21 @@ func (value *SchemaRef) Validate(c context.Context) error {
 	return v.Validate(c)
 }
 
+func (value SchemaRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
+}
+
 type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
 }
+
+var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
 
 func (value *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
@@ -196,4 +280,13 @@ func (value *SecuritySchemeRef) Validate(c context.Context) error {
 		return foundUnresolvedRef(value.Ref)
 	}
 	return v.Validate(c)
+}
+
+func (value SecuritySchemeRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return value.Ref, nil
+	}
+
+	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	return ptr, err
 }

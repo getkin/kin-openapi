@@ -13,6 +13,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
 
 var (
@@ -50,13 +51,51 @@ func Uint64Ptr(value uint64) *uint64 {
 	return &value
 }
 
+type Schemas map[string]*SchemaRef
+
+var _ jsonpointer.JSONPointable = (*Schemas)(nil)
+
+func (s Schemas) JSONLookup(token string) (interface{}, error) {
+	ref, ok := s[token]
+	if ref == nil || ok == false {
+		return nil, fmt.Errorf("object has no field %q", token)
+	}
+
+	if ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
+
+type SchemaRefs []*SchemaRef
+
+var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
+
+func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
+	i, err := strconv.ParseUint(token, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	if i >= uint64(len(s)) {
+		return nil, fmt.Errorf("index out of range: %d", i)
+	}
+
+	ref := s[i]
+
+	if ref == nil || ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
+
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 type Schema struct {
 	ExtensionProps
 
-	OneOf        []*SchemaRef  `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
-	AnyOf        []*SchemaRef  `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
-	AllOf        []*SchemaRef  `json:"allOf,omitempty" yaml:"allOf,omitempty"`
+	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
+	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
+	AllOf        SchemaRefs    `json:"allOf,omitempty" yaml:"allOf,omitempty"`
 	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
 	Type         string        `json:"type,omitempty" yaml:"type,omitempty"`
 	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
@@ -99,13 +138,15 @@ type Schema struct {
 	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
 
 	// Object
-	Required             []string              `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties           map[string]*SchemaRef `json:"properties,omitempty" yaml:"properties,omitempty"`
-	MinProps             uint64                `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProps             *uint64               `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	AdditionalProperties *SchemaRef            `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`
-	Discriminator        *Discriminator        `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Required             []string       `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties           Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
+	MinProps             uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProps             *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	AdditionalProperties *SchemaRef     `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`
+	Discriminator        *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
+
+var _ jsonpointer.JSONPointable = (*Schema)(nil)
 
 func NewSchema() *Schema {
 	return &Schema{}
@@ -117,6 +158,103 @@ func (schema *Schema) MarshalJSON() ([]byte, error) {
 
 func (schema *Schema) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, schema)
+}
+
+func (schema Schema) JSONLookup(token string) (interface{}, error) {
+	switch token {
+	case "additionalProperties":
+		if schema.AdditionalProperties != nil {
+			if schema.AdditionalProperties.Ref != "" {
+				return &Ref{Ref: schema.AdditionalProperties.Ref}, nil
+			}
+			return schema.AdditionalProperties.Value, nil
+		}
+	case "not":
+		if schema.Not != nil {
+			if schema.Not.Ref != "" {
+				return &Ref{Ref: schema.Not.Ref}, nil
+			}
+			return schema.Not.Value, nil
+		}
+	case "items":
+		if schema.Items != nil {
+			if schema.Items.Ref != "" {
+				return &Ref{Ref: schema.Items.Ref}, nil
+			}
+			return schema.Items.Value, nil
+		}
+	case "oneOf":
+		return schema.OneOf, nil
+	case "anyOf":
+		return schema.AnyOf, nil
+	case "allOf":
+		return schema.AllOf, nil
+	case "type":
+		return schema.Type, nil
+	case "title":
+		return schema.Title, nil
+	case "format":
+		return schema.Format, nil
+	case "description":
+		return schema.Description, nil
+	case "enum":
+		return schema.Enum, nil
+	case "default":
+		return schema.Default, nil
+	case "example":
+		return schema.Example, nil
+	case "externalDocs":
+		return schema.ExternalDocs, nil
+	case "additionalPropertiesAllowed":
+		return schema.AdditionalPropertiesAllowed, nil
+	case "uniqueItems":
+		return schema.UniqueItems, nil
+	case "exclusiveMin":
+		return schema.ExclusiveMin, nil
+	case "exclusiveMax":
+		return schema.ExclusiveMax, nil
+	case "nullable":
+		return schema.Nullable, nil
+	case "readOnly":
+		return schema.ReadOnly, nil
+	case "writeOnly":
+		return schema.WriteOnly, nil
+	case "allowEmptyValue":
+		return schema.AllowEmptyValue, nil
+	case "xml":
+		return schema.XML, nil
+	case "deprecated":
+		return schema.Deprecated, nil
+	case "min":
+		return schema.Min, nil
+	case "max":
+		return schema.Max, nil
+	case "multipleOf":
+		return schema.MultipleOf, nil
+	case "minLength":
+		return schema.MinLength, nil
+	case "maxLength":
+		return schema.MaxLength, nil
+	case "pattern":
+		return schema.Pattern, nil
+	case "minItems":
+		return schema.MinItems, nil
+	case "maxItems":
+		return schema.MaxItems, nil
+	case "required":
+		return schema.Required, nil
+	case "properties":
+		return schema.Properties, nil
+	case "minProps":
+		return schema.MinProps, nil
+	case "maxProps":
+		return schema.MaxProps, nil
+	case "discriminator":
+		return schema.Discriminator, nil
+	}
+
+	v, _, err := jsonpointer.GetForToken(schema.ExtensionProps, token)
+	return v, err
 }
 
 func (schema *Schema) NewRef() *SchemaRef {

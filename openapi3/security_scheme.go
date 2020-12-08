@@ -6,7 +6,24 @@ import (
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
+
+type SecuritySchemes map[string]*SecuritySchemeRef
+
+func (s SecuritySchemes) JSONLookup(token string) (interface{}, error) {
+	ref, ok := s[token]
+	if ref == nil || ok == false {
+		return nil, fmt.Errorf("object has no field %q", token)
+	}
+
+	if ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
+
+var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
 
 type SecurityScheme struct {
 	ExtensionProps
