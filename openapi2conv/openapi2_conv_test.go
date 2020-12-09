@@ -265,7 +265,7 @@ const exampleV2 = `
             "in": "formData",
             "name": "fileUpload",
             "type": "file",
-            "x-formData-name":"fileUpload", 
+            "x-formData-name":"fileUpload",
             "x-mimetype": "text/plain"
           },
           {
@@ -273,7 +273,7 @@ const exampleV2 = `
             "in": "formData",
             "name": "note",
             "type": "integer",
-            "x-formData-name":"note" 
+            "x-formData-name":"note"
           },
           {
             "$ref": "#/parameters/post_form_ref"
@@ -288,7 +288,7 @@ const exampleV2 = `
       "put": {
         "description": "example put",
         "parameters": [
-          { 
+          {
             "$ref": "#/parameters/put_body"
           }
         ],
@@ -348,7 +348,7 @@ const exampleV3 = `
     },
     "requestBodies": {
       "put_body": {
-        "content":{ 
+        "content":{
           "application/json": {
             "schema": {
               "type": "string"
@@ -596,7 +596,7 @@ const exampleV3 = `
                     "description": "Description of file contents",
                     "type": "integer",
                     "x-formData-name": "note"
-                  }, 
+                  },
                   "fileUpload2": {
                     "$ref": "#/components/schemas/post_form_ref"
                   }
