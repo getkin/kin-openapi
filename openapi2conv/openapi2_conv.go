@@ -597,6 +597,7 @@ func FromV3Swagger(swagger *openapi3.Swagger) (*openapi2.Swagger, error) {
 			}
 			params = append(params, p)
 		}
+		sort.Sort(params)
 		result.Paths[path].Parameters = params
 	}
 
@@ -922,6 +923,7 @@ func FromV3Operation(swagger *openapi3.Swagger, operation *openapi3.Operation) (
 			result.Consumes = consumesToArray(consumes)
 		}
 	}
+	sort.Sort(result.Parameters)
 
 	if responses := operation.Responses; responses != nil {
 		resultResponses, err := FromV3Responses(responses, &swagger.Components)
