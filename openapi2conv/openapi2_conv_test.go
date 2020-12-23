@@ -93,12 +93,6 @@ const exampleV2 = `
     "application/xml"
   ],
   "parameters": {
-    "banana": {
-      "in": "path",
-      "name": "banana",
-      "required": true,
-      "type": "string"
-    },
     "put_body": {
       "in": "body",
       "name": "banana",
@@ -116,6 +110,12 @@ const exampleV2 = `
       "type": "file",
       "x-formData-name":"fileUpload2",
       "x-mimetype": "text/plain"
+    },
+    "banana": {
+      "in": "path",
+      "name": "banana",
+      "required": true,
+      "type": "string"
     }
   },
   "paths": {
@@ -153,6 +153,17 @@ const exampleV2 = `
         "operationId": "example-delete",
         "parameters": [
           {
+            "description": "Only return results that intersect the provided bounding box.",
+            "in": "query",
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "name": "bbox",
+            "type": "array"
+          },
+          {
             "in": "query",
             "name": "x",
             "type": "string",
@@ -166,17 +177,6 @@ const exampleV2 = `
             "minimum": 1,
             "name": "y",
             "type": "integer"
-          },
-          {
-            "description": "Only return results that intersect the provided bounding box.",
-            "in": "query",
-            "items": {
-              "type": "number"
-            },
-            "maxItems": 4,
-            "minItems": 4,
-            "name": "bbox",
-            "type": "array"
           }
         ],
         "responses": {
@@ -255,10 +255,7 @@ const exampleV2 = `
         "description": "example post",
         "parameters": [
           {
-            "description": "File Id",
-            "in": "query",
-            "name": "id",
-            "type": "integer"
+            "$ref": "#/parameters/post_form_ref"
           },
           {
             "description": "param description",
@@ -269,14 +266,17 @@ const exampleV2 = `
             "x-mimetype": "text/plain"
           },
           {
+            "description": "File Id",
+            "in": "query",
+            "name": "id",
+            "type": "integer"
+          },
+          {
             "description": "Description of file contents",
             "in": "formData",
             "name": "note",
             "type": "integer",
             "x-formData-name":"note"
-          },
-          {
-            "$ref": "#/parameters/post_form_ref"
           }
         ],
         "responses": {
