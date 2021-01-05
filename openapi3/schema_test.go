@@ -1192,3 +1192,29 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 		},
 	},
 }
+
+func TestIssue283(t *testing.T) {
+	const api = `
+openapi: "3.0.1"
+components:
+  schemas:
+    Test:
+      properties:
+        name:
+          type: string
+        ownerName:
+          not:
+            type: boolean
+      type: object
+`
+	data := map[string]interface{}{
+		"name":      "kin-openapi",
+		"ownerName": true,
+	}
+	s, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(api))
+	require.NoError(t, err)
+	require.NotNil(t, s)
+	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
+	require.NotNil(t, err)
+	require.NotEqual(t, errSchema, err)
+}
