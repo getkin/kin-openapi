@@ -794,8 +794,6 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 }
 
 func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
-	var oldfailfast bool
-
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
 			if value == v {
@@ -818,9 +816,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
+		var oldfailfast bool
 		oldfailfast, settings.failfast = settings.failfast, true
-		if err := v.visitJSON(settings, value); err == nil {
-			if oldfailfast {
+		err := v.visitJSON(settings, value)
+		settings.failfast = oldfailfast
+		if err == nil {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -829,7 +830,6 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				SchemaField: "not",
 			}
 		}
-		settings.failfast = oldfailfast
 	}
 
 	if v := schema.OneOf; len(v) > 0 {
@@ -839,11 +839,13 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
+			var oldfailfast bool
 			oldfailfast, settings.failfast = settings.failfast, true
-			if err := v.visitJSON(settings, value); err == nil {
+			err := v.visitJSON(settings, value)
+			settings.failfast = oldfailfast
+			if err == nil {
 				ok++
 			}
-			settings.failfast = oldfailfast
 		}
 		if ok != 1 {
 			if settings.failfast {
@@ -864,12 +866,14 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
+			var oldfailfast bool
 			oldfailfast, settings.failfast = settings.failfast, true
-			if err := v.visitJSON(settings, value); err == nil {
+			err := v.visitJSON(settings, value)
+			settings.failfast = oldfailfast
+			if err == nil {
 				ok = true
 				break
 			}
-			settings.failfast = oldfailfast
 		}
 		if !ok {
 			if settings.failfast {
@@ -888,9 +892,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
+		var oldfailfast bool
 		oldfailfast, settings.failfast = settings.failfast, false
-		if err := v.visitJSON(settings, value); err != nil {
-			if oldfailfast {
+		err := v.visitJSON(settings, value)
+		settings.failfast = oldfailfast
+		if err != nil {
+			if settings.failfast {
 				return errSchema
 			}
 			return &SchemaError{
@@ -900,7 +907,6 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				Origin:      err,
 			}
 		}
-		settings.failfast = oldfailfast
 	}
 	return
 }
@@ -1494,7 +1500,7 @@ func (err *SchemaError) Error() string {
 			buf.WriteByte('/')
 			buf.WriteString(reversePath[i])
 		}
-		buf.WriteString(`":`)
+		buf.WriteString(`": `)
 	}
 	reason := err.Reason
 	if reason == "" {

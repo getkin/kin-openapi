@@ -1217,4 +1217,5 @@ components:
 	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
 	require.NotNil(t, err)
 	require.NotEqual(t, errSchema, err)
+	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
 }
