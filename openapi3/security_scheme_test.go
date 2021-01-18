@@ -198,4 +198,24 @@ var securitySchemeExamples = []securitySchemeExample{
 `),
 		valid: true,
 	},
+	{
+		title: "OIDC Type With URL",
+		raw: []byte(`
+{
+  "type": "openIdConnect",
+  "openIdConnectUrl": "https://example.com/.well-known/openid-configuration"
+}
+`),
+		valid: true,
+	},
+	{
+		title: "OIDC Type Without URL",
+		raw: []byte(`
+{
+  "type": "openIdConnect",
+  "openIdConnectUrl": ""
+}
+`),
+		valid: false,
+	},
 }
