@@ -28,13 +28,14 @@ var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
 type SecurityScheme struct {
 	ExtensionProps
 
-	Type         string      `json:"type,omitempty" yaml:"type,omitempty"`
-	Description  string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Name         string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In           string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Scheme       string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
-	BearerFormat string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
-	Flows        *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
+	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
+	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Name             string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In               string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Scheme           string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
+	BearerFormat     string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
+	Flows            *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
+	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty" yaml:"openIdConnectUrl,omitempty"`
 }
 
 func NewSecurityScheme() *SecurityScheme {
@@ -46,6 +47,13 @@ func NewCSRFSecurityScheme() *SecurityScheme {
 		Type: "apiKey",
 		In:   "header",
 		Name: "X-XSRF-TOKEN",
+	}
+}
+
+func NewOIDCSecurityScheme(oidcUrl string) *SecurityScheme {
+	return &SecurityScheme{
+		Type:             "openIdConnect",
+		OpenIdConnectUrl: oidcUrl,
 	}
 }
 
@@ -114,7 +122,9 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	case "oauth2":
 		hasFlow = true
 	case "openIdConnect":
-		return fmt.Errorf("Support for security schemes with type '%v' has not been implemented", ss.Type)
+		if ss.OpenIdConnectUrl == "" {
+			return fmt.Errorf("No OIDC URL found for openIdConnect security scheme %q", ss.Name)
+		}
 	default:
 		return fmt.Errorf("Security scheme 'type' can't be '%v'", ss.Type)
 	}
