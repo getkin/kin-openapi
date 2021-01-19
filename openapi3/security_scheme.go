@@ -122,7 +122,7 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	case "oauth2":
 		hasFlow = true
 	case "openIdConnect":
-		if len(ss.OpenIdConnectUrl) == 0 {
+		if ss.OpenIdConnectUrl != "" {
 			return fmt.Errorf("No OIDC URL found for openIdConnect security scheme %s", ss.Name)
 		}
 	default:
