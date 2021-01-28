@@ -115,7 +115,7 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 		switch scheme {
 		case "bearer":
 			hasBearerFormat = true
-		case "basic":
+		case "basic", "negotiate", "digest":
 		default:
 			return fmt.Errorf("Security scheme of type 'http' has invalid 'scheme' value '%s'", scheme)
 		}

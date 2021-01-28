@@ -47,6 +47,26 @@ var securitySchemeExamples = []securitySchemeExample{
 		valid: true,
 	},
 	{
+		title: "Negotiate Authentication Sample",
+		raw: []byte(`
+{
+  "type": "http",
+  "scheme": "negotiate"
+}
+`),
+		valid: true,
+	},
+	{
+		title: "Unknown http Authentication Sample",
+		raw: []byte(`
+{
+  "type": "http",
+  "scheme": "notvalid"
+}
+`),
+		valid: false,
+	},
+	{
 		title: "API Key Sample",
 		raw: []byte(`
 {
