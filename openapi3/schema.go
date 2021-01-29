@@ -25,6 +25,9 @@ var (
 
 	errSchema = errors.New("Input does not match the schema")
 
+	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
+	ErrOneOfConflict = errors.New("input matches more than one oneOf schemas")
+
 	// ErrSchemaInputNaN may be returned when validating a number
 	ErrSchemaInputNaN = errors.New("NaN is not allowed")
 	// ErrSchemaInputInf may be returned when validating a number
@@ -851,11 +854,15 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			if settings.failfast {
 				return errSchema
 			}
-			return &SchemaError{
+			e := &SchemaError{
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "oneOf",
 			}
+			if ok > 1 {
+				e.Origin = ErrOneOfConflict
+			}
+			return e
 		}
 	}
 
