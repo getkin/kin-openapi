@@ -178,7 +178,7 @@ func (ps Parameters) Less(i, j int) bool {
 		return ps[i].Name < ps[j].Name
 	}
 	if ps[i].In != ps[j].In {
-		return ps[i].In < ps[i].In
+		return ps[i].In < ps[j].In
 	}
 	return ps[i].Ref < ps[j].Ref
 }
