@@ -73,10 +73,6 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 		return err
 	}
 
-	if parsedURL.Fragment != "" {
-		return errors.New("references to files which contain more than one element definition are not supported")
-	}
-
 	resolvedPath, err := resolvePath(rootPath, parsedURL)
 	if err != nil {
 		return fmt.Errorf("could not resolve path: %v", err)
@@ -86,6 +82,34 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 	if err != nil {
 		return err
 	}
+
+	if parsedURL.Fragment != "" {
+		var obj map[string]interface{}
+		if err := yaml.Unmarshal(data, &obj); err != nil {
+			return err
+		}
+
+		cursor := obj
+		for _, pathElement := range strings.Split(parsedURL.Fragment[1:], "/") {
+			element, ok := cursor[pathElement]
+			if !ok {
+				return failedToResolveRefFragmentPart(pathElement, parsedURL.Fragment)
+			}
+			v, ok := element.(map[string]interface{})
+			if !ok {
+				return failedToResolveRefFragmentPart(pathElement, parsedURL.Fragment)
+			}
+			cursor = v
+		}
+
+		d, err := yaml.Marshal(cursor)
+		if err != nil {
+			return err
+		}
+
+		data = d
+	}
+
 	if err := yaml.Unmarshal(data, element); err != nil {
 		return err
 	}
@@ -250,7 +274,7 @@ func resolvePath(basePath *url.URL, componentPath *url.URL) (*url.URL, error) {
 }
 
 func isSingleRefElement(ref string) bool {
-	return !strings.Contains(ref, "#")
+	return !strings.Contains(ref, "#/components")
 }
 
 func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, path *url.URL) (
