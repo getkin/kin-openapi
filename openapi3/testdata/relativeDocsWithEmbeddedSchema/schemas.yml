@@ -1,0 +1,11 @@
+Foo:
+  type: object
+  properties:
+    id:
+      type: string
+      readOnly: true
+    name:
+      type: string
+      minLength: 1
+      maxLength: 150
+  required: [id, name]

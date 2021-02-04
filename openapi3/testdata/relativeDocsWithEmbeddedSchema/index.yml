@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: API Docs
+  description: Test case for relative documents with embedded schemas
+  version: 1.0.0
+paths:
+  /foo:
+    get:
+      summary: Get foo
+      responses:
+        200:
+          description: Foo is foo
+          content:
+            application/json:
+              schema:
+                $ref: schemas.yml#/Foo
