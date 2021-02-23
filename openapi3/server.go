@@ -6,6 +6,8 @@ import (
 	"math"
 	"net/url"
 	"strings"
+
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Servers is specified by OpenAPI/Swagger standard version 3.0.
@@ -37,9 +39,18 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 
 // Server is specified by OpenAPI/Swagger standard version 3.0.
 type Server struct {
+	ExtensionProps
 	URL         string                     `json:"url" yaml:"url"`
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+}
+
+func (value *Server) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(value)
+}
+
+func (value *Server) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
 func (server Server) ParameterNames() ([]string, error) {
