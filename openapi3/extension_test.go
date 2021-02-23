@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ExampleDecodingExtensionProps() {
+func ExampleExtensionProps_DecodeWith() {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	spec, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
