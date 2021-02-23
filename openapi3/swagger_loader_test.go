@@ -67,14 +67,13 @@ paths:
 }
 
 func ExampleSwaggerLoader() {
-	source := `{"info":{"description":"An API"}}`
+	const source = `{"info":{"description":"An API"}}`
 	swagger, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
 	if err != nil {
 		panic(err)
 	}
 	fmt.Print(swagger.Info.Description)
-	// Output:
-	// An API
+	// Output: An API
 }
 
 func TestResolveSchemaRef(t *testing.T) {
