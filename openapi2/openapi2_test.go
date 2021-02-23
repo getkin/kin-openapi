@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,5 +20,5 @@ func TestReadingSwagger(t *testing.T) {
 	output, err := json.Marshal(swagger)
 	require.NoError(t, err)
 
-	assert.JSONEq(t, string(input), string(output))
+	require.JSONEq(t, string(input), string(output))
 }
