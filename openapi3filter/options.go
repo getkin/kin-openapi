@@ -1,15 +1,18 @@
 package openapi3filter
 
-import (
-	"context"
-)
-
+// DefaultOptions do not set an AuthenticationFunc.
+// A spec with security schemes defined will not pass validation
+// unless an AuthenticationFunc is defined.
 var DefaultOptions = &Options{}
 
+// Options used by ValidateRequest and ValidateResponse
 type Options struct {
 	ExcludeRequestBody    bool
 	ExcludeResponseBody   bool
 	IncludeResponseStatus bool
-	MultiError            bool
-	AuthenticationFunc    func(c context.Context, input *AuthenticationInput) error
+
+	MultiError bool
+
+	// See NoopAuthenticationFunc
+	AuthenticationFunc AuthenticationFunc
 }
