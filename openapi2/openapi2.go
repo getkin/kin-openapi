@@ -237,9 +237,18 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 type Header struct {
+	openapi3.ExtensionProps
 	Ref         string `json:"$ref,omitempty"`
 	Description string `json:"description,omitempty"`
 	Type        string `json:"type,omitempty"`
+}
+
+func (header *Header) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(header)
+}
+
+func (header *Header) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, header)
 }
 
 type SecurityRequirements []map[string][]string
