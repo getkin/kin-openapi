@@ -20,7 +20,7 @@ func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
 }
 
-func failedToResolveRefFragmentPart(value string, what string) error {
+func failedToResolveRefFragmentPart(value, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
 }
 
@@ -288,7 +288,8 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(
 		pathPart = unescapeRefString(pathPart)
 
 		if cursor, err = drillIntoSwaggerField(cursor, pathPart); err != nil {
-			return nil, fmt.Errorf("failed to resolve %q in fragment in URI: %q: %v", ref, pathPart, err.Error())
+			e := failedToResolveRefFragmentPart(ref, pathPart)
+			return nil, fmt.Errorf("%s: %s", e.Error(), err.Error())
 		}
 		if cursor == nil {
 			return nil, failedToResolveRefFragmentPart(ref, pathPart)
@@ -331,7 +332,7 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 			return nil, err
 		}
 		index := int(i)
-		if index >= val.Len() {
+		if 0 > index || index >= val.Len() {
 			return nil, errors.New("slice index out of bounds")
 		}
 		return val.Index(index).Interface(), nil
