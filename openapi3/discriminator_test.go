@@ -38,5 +38,5 @@ var jsonSpecWithDiscriminator = []byte(`
 func TestParsingDiscriminator(t *testing.T) {
 	loader, err := NewSwaggerLoader().LoadSwaggerFromData(jsonSpecWithDiscriminator)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(loader.Components.Schemas["MyResponseType"].Value.OneOf))
+	require.Equal(t, 2, len(loader.Components.Schemas["MyResponseType"].Value.Discriminator.Mapping))
 }

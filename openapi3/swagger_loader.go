@@ -20,22 +20,33 @@ func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
 }
 
-func failedToResolveRefFragment(value string) error {
-	return fmt.Errorf("failed to resolve fragment in URI: %q", value)
-}
-
-func failedToResolveRefFragmentPart(value string, what string) error {
+func failedToResolveRefFragmentPart(value, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
 }
 
+// SwaggerLoader helps deserialize a Swagger object
 type SwaggerLoader struct {
-	IsExternalRefsAllowed  bool
-	Context                context.Context
+	// IsExternalRefsAllowed enables visiting other files
+	IsExternalRefsAllowed bool
+
+	// LoadSwaggerFromURIFunc allows overriding the file/URL reading func
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
-	visited                map[interface{}]struct{}
-	visitedFiles           map[string]struct{}
+
+	Context context.Context
+
+	visitedFiles map[string]struct{}
+
+	visitedHeader         map[*Header]struct{}
+	visitedParameter      map[*Parameter]struct{}
+	visitedRequestBody    map[*RequestBody]struct{}
+	visitedResponse       map[*Response]struct{}
+	visitedSchema         map[*Schema]struct{}
+	visitedSecurityScheme map[*SecurityScheme]struct{}
+	visitedExample        map[*Example]struct{}
+	visitedLink           map[*Link]struct{}
 }
 
+// NewSwaggerLoader returns an empty SwaggerLoader
 func NewSwaggerLoader() *SwaggerLoader {
 	return &SwaggerLoader{}
 }
@@ -44,6 +55,7 @@ func (swaggerLoader *SwaggerLoader) reset() {
 	swaggerLoader.visitedFiles = make(map[string]struct{})
 }
 
+// LoadSwaggerFromURI loads a spec from a remote URL
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
 	swaggerLoader.reset()
 	return swaggerLoader.loadSwaggerFromURIInternal(location)
@@ -116,6 +128,7 @@ func readURL(location *url.URL) ([]byte, error) {
 	return data, nil
 }
 
+// LoadSwaggerFromFile loads a spec from a local file path
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
 	swaggerLoader.reset()
 	return swaggerLoader.loadSwaggerFromFileInternal(path)
@@ -135,6 +148,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*S
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, pathAsURL)
 }
 
+// LoadSwaggerFromData loads a spec from a byte array
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swaggerLoader.reset()
 	return swaggerLoader.loadSwaggerFromDataInternal(data)
@@ -163,9 +177,17 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
 }
 
+// ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
-	if swaggerLoader.visited == nil {
-		swaggerLoader.visited = make(map[interface{}]struct{})
+	if swaggerLoader.visitedHeader == nil {
+		swaggerLoader.visitedHeader = make(map[*Header]struct{})
+		swaggerLoader.visitedParameter = make(map[*Parameter]struct{})
+		swaggerLoader.visitedRequestBody = make(map[*RequestBody]struct{})
+		swaggerLoader.visitedResponse = make(map[*Response]struct{})
+		swaggerLoader.visitedSchema = make(map[*Schema]struct{})
+		swaggerLoader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
+		swaggerLoader.visitedExample = make(map[*Example]struct{})
+		swaggerLoader.visitedLink = make(map[*Link]struct{})
 	}
 	if swaggerLoader.visitedFiles == nil {
 		swaggerLoader.reset()
@@ -253,38 +275,66 @@ func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
 
-func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref string, path *url.URL) (
-	cursor interface{},
+func (swaggerLoader *SwaggerLoader) resolveComponent(
+	swagger *Swagger,
+	ref string,
+	path *url.URL,
+	resolved interface{},
+) (
 	componentPath *url.URL,
 	err error,
 ) {
 	if swagger, ref, componentPath, err = swaggerLoader.resolveRefSwagger(swagger, ref, path); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	parsedURL, err := url.Parse(ref)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot parse reference: %q: %v", ref, parsedURL)
+		return nil, fmt.Errorf("cannot parse reference: %q: %v", ref, parsedURL)
 	}
 	fragment := parsedURL.Fragment
 	if !strings.HasPrefix(fragment, "/") {
-		err := fmt.Errorf("expected fragment prefix '#/' in URI %q", ref)
-		return nil, nil, err
+		return nil, fmt.Errorf("expected fragment prefix '#/' in URI %q", ref)
 	}
 
+	var cursor interface{}
 	cursor = swagger
 	for _, pathPart := range strings.Split(fragment[1:], "/") {
 		pathPart = unescapeRefString(pathPart)
 
 		if cursor, err = drillIntoSwaggerField(cursor, pathPart); err != nil {
-			return nil, nil, fmt.Errorf("failed to resolve %q in fragment in URI: %q: %v", ref, pathPart, err.Error())
+			e := failedToResolveRefFragmentPart(ref, pathPart)
+			return nil, fmt.Errorf("%s: %s", e.Error(), err.Error())
 		}
 		if cursor == nil {
-			return nil, nil, failedToResolveRefFragmentPart(ref, pathPart)
+			return nil, failedToResolveRefFragmentPart(ref, pathPart)
 		}
 	}
 
-	return cursor, componentPath, nil
+	switch {
+	case reflect.TypeOf(cursor) == reflect.TypeOf(resolved):
+		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
+		return componentPath, nil
+
+	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]interface{}{}):
+		codec := func(got, expect interface{}) error {
+			enc, err := json.Marshal(got)
+			if err != nil {
+				return err
+			}
+			if err = json.Unmarshal(enc, expect); err != nil {
+				return err
+			}
+			return nil
+		}
+		if err := codec(cursor, resolved); err != nil {
+			return nil, fmt.Errorf("bad data in %q", ref)
+		}
+		return componentPath, nil
+
+	default:
+		return nil, fmt.Errorf("bad data in %q", ref)
+	}
 }
 
 func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, error) {
@@ -302,13 +352,15 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 			return nil, err
 		}
 		index := int(i)
-		if index >= val.Len() {
+		if 0 > index || index >= val.Len() {
 			return nil, errors.New("slice index out of bounds")
 		}
 		return val.Index(index).Interface(), nil
 
 	case reflect.Struct:
+		hasFields := false
 		for i := 0; i < val.NumField(); i++ {
+			hasFields = true
 			field := val.Type().Field(i)
 			tagValue := field.Tag.Get("yaml")
 			yamlKey := strings.Split(tagValue, ",")[0]
@@ -316,12 +368,23 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 				return val.Field(i).Interface(), nil
 			}
 		}
-		// if cursor if a "ref wrapper" struct (e.g. RequestBodyRef), try digging into its Value field
-		_, ok := val.Type().FieldByName("Value")
-		if ok {
-			return drillIntoSwaggerField(val.FieldByName("Value").Interface(), fieldName) // recurse into .Value
+		// if cursor is a "ref wrapper" struct (e.g. RequestBodyRef),
+		if _, ok := val.Type().FieldByName("Value"); ok {
+			// try digging into its Value field
+			return drillIntoSwaggerField(val.FieldByName("Value").Interface(), fieldName)
 		}
-		// give up
+		if hasFields {
+			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "ExtensionProps" {
+				extensions := val.Field(0).Interface().(ExtensionProps).Extensions
+				if enc, ok := extensions[fieldName]; ok {
+					var dec interface{}
+					if err := json.Unmarshal(enc.(json.RawMessage), &dec); err != nil {
+						return nil, err
+					}
+					return dec, nil
+				}
+			}
+		}
 		return nil, fmt.Errorf("struct field %q not found", fieldName)
 
 	default:
@@ -356,12 +419,13 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 	return swagger, ref, componentPath, nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, documentPath *url.URL) error {
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedHeader[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedHeader[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/headers/"
 	if component == nil {
@@ -370,21 +434,18 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var header Header
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &header); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
 				return err
 			}
 
 			component.Value = &header
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path)
+			var resolved HeaderRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*HeaderRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveHeaderRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveHeaderRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -395,7 +456,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		return nil
 	}
 	if schema := value.Schema; schema != nil {
-		if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, schema, documentPath); err != nil {
 			return err
 		}
 	}
@@ -403,11 +464,12 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedParameter[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedParameter[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/parameters/"
 	if component == nil {
@@ -422,15 +484,12 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 			}
 			component.Value = &param
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath)
+			var resolved ParameterRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*ParameterRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveParameterRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveParameterRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -464,12 +523,13 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, path *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, documentPath *url.URL) error {
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedRequestBody[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedRequestBody[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/requestBodies/"
 	if component == nil {
@@ -478,21 +538,18 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &requestBody); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
 				return err
 			}
 
 			component.Value = &requestBody
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path)
+			var resolved RequestBodyRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*RequestBodyRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err = swaggerLoader.resolveRequestBodyRef(swagger, resolved, componentPath); err != nil {
+			if err = swaggerLoader.resolveRequestBodyRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -504,13 +561,13 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	}
 	for _, contentType := range value.Content {
 		for name, example := range contentType.Examples {
-			if err := swaggerLoader.resolveExampleRef(swagger, example, path); err != nil {
+			if err := swaggerLoader.resolveExampleRef(swagger, example, documentPath); err != nil {
 				return err
 			}
 			contentType.Examples[name] = example
 		}
 		if schema := contentType.Schema; schema != nil {
-			if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema, documentPath); err != nil {
 				return err
 			}
 		}
@@ -519,11 +576,12 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 }
 
 func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *ResponseRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedResponse[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedResponse[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/responses/"
 	if component == nil {
@@ -531,24 +589,19 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	}
 	ref := component.Ref
 	if ref != "" {
-
 		if isSingleRefElement(ref) {
 			var resp Response
 			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
 				return err
 			}
-
 			component.Value = &resp
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath)
+			var resolved ResponseRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*ResponseRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveResponseRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveResponseRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -594,11 +647,12 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component *SchemaRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedSchema[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedSchema[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/schemas/"
 	if component == nil {
@@ -613,16 +667,12 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 			}
 			component.Value = &schema
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath)
+			var resolved SchemaRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-
-			resolved, ok := untypedResolved.(*SchemaRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveSchemaRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -679,12 +729,13 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, documentPath *url.URL) error {
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedSecurityScheme[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedSecurityScheme[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/securitySchemes/"
 	if component == nil {
@@ -693,21 +744,18 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &scheme); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
 				return err
 			}
 
 			component.Value = &scheme
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path)
+			var resolved SecuritySchemeRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*SecuritySchemeRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveSecuritySchemeRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveSecuritySchemeRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -716,12 +764,13 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, path *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, documentPath *url.URL) error {
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedExample[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedExample[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/examples/"
 	if component == nil {
@@ -730,21 +779,18 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var example Example
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &example); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
 				return err
 			}
 
 			component.Value = &example
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path)
+			var resolved ExampleRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*ExampleRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveExampleRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveExampleRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -753,12 +799,13 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, path *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
+func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, documentPath *url.URL) error {
+	if component != nil && component.Value != nil {
+		if _, ok := swaggerLoader.visitedLink[component.Value]; ok {
+			return nil
+		}
+		swaggerLoader.visitedLink[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/links/"
 	if component == nil {
@@ -767,21 +814,18 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var link Link
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &link); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
 				return err
 			}
 
 			component.Value = &link
 		} else {
-			untypedResolved, componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path)
+			var resolved LinkRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			resolved, ok := untypedResolved.(*LinkRef)
-			if !ok {
-				return failedToResolveRefFragment(ref)
-			}
-			if err := swaggerLoader.resolveLinkRef(swagger, resolved, componentPath); err != nil {
+			if err := swaggerLoader.resolveLinkRef(swagger, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -791,16 +835,15 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 }
 
 func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
-	visited := swaggerLoader.visitedFiles
 	key := "_"
 	if documentPath != nil {
 		key = documentPath.EscapedPath()
 	}
 	key += entrypoint
-	if _, isVisited := visited[key]; isVisited {
+	if _, ok := swaggerLoader.visitedFiles[key]; ok {
 		return nil
 	}
-	visited[key] = struct{}{}
+	swaggerLoader.visitedFiles[key] = struct{}{}
 
 	const prefix = "#/paths/"
 	if pathItem == nil {

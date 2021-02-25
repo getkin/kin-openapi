@@ -201,7 +201,7 @@ func TestLoadErrorOnRefMisuse(t *testing.T) {
 openapi: '3.0.0'
 servers: [{url: /}]
 info:
-  title: ''
+  title: Some API
   version: '1'
 components:
   schemas:
@@ -211,6 +211,7 @@ paths:
     put:
       description: ''
       requestBody:
+        # Uses a schema ref instead of a requestBody ref.
         $ref: '#/components/schemas/Thing'
       responses:
         '201':
@@ -312,6 +313,17 @@ func TestLoadFromRemoteURL(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
+}
+
+func TestLoadWithReferenceInReference(t *testing.T) {
+	loader := NewSwaggerLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadSwaggerFromFile("testdata/refInRef/openapi.json")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
