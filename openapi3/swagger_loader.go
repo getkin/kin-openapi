@@ -868,16 +868,15 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 }
 
 func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
-	visited := swaggerLoader.visitedFiles
 	key := "_"
 	if documentPath != nil {
 		key = documentPath.EscapedPath()
 	}
 	key += entrypoint
-	if _, isVisited := visited[key]; isVisited {
+	if _, ok := swaggerLoader.visitedFiles[key]; ok {
 		return nil
 	}
-	visited[key] = struct{}{}
+	swaggerLoader.visitedFiles[key] = struct{}{}
 
 	const prefix = "#/paths/"
 	if pathItem == nil {
