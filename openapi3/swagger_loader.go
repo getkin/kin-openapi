@@ -409,6 +409,13 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*HeaderRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
+	}
 	visited[component] = struct{}{}
 
 	const prefix = "#/components/headers/"
@@ -451,6 +458,13 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
+	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*ParameterRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
 	}
 	visited[component] = struct{}{}
 
@@ -511,6 +525,13 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*RequestBodyRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
+	}
 	visited[component] = struct{}{}
 
 	const prefix = "#/components/requestBodies/"
@@ -561,6 +582,13 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
+	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*ResponseRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
 	}
 	visited[component] = struct{}{}
 
@@ -631,6 +659,13 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
+	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*SchemaRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
 	}
 	visited[component] = struct{}{}
 
@@ -714,6 +749,13 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*SecuritySchemeRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
+	}
 	visited[component] = struct{}{}
 
 	const prefix = "#/components/securitySchemes/"
@@ -748,6 +790,13 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*ExampleRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
+	}
 	visited[component] = struct{}{}
 
 	const prefix = "#/components/examples/"
@@ -781,6 +830,13 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
+	}
+	if component != nil && component.Value != nil {
+		for c := range visited {
+			if x, ok := c.(*LinkRef); ok && x.Value == component.Value {
+				return nil
+			}
+		}
 	}
 	visited[component] = struct{}{}
 
