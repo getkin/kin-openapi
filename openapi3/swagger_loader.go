@@ -24,14 +24,21 @@ func failedToResolveRefFragmentPart(value string, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
 }
 
+// SwaggerLoader helps deserialize a Swagger object
 type SwaggerLoader struct {
-	IsExternalRefsAllowed  bool
-	Context                context.Context
+	// IsExternalRefsAllowed enables visiting other files
+	IsExternalRefsAllowed bool
+
+	// LoadSwaggerFromURIFunc allows overriding the file/URL reading func
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
-	visited                map[interface{}]struct{}
-	visitedFiles           map[string]struct{}
+
+	Context context.Context
+
+	visited      map[interface{}]struct{}
+	visitedFiles map[string]struct{}
 }
 
+// NewSwaggerLoader returns an empty SwaggerLoader
 func NewSwaggerLoader() *SwaggerLoader {
 	return &SwaggerLoader{}
 }
@@ -40,6 +47,7 @@ func (swaggerLoader *SwaggerLoader) reset() {
 	swaggerLoader.visitedFiles = make(map[string]struct{})
 }
 
+// LoadSwaggerFromURI loads a spec from a remote URL
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
 	swaggerLoader.reset()
 	return swaggerLoader.loadSwaggerFromURIInternal(location)
@@ -112,6 +120,7 @@ func readURL(location *url.URL) ([]byte, error) {
 	return data, nil
 }
 
+// LoadSwaggerFromFile loads a spec from a local file path
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
 	swaggerLoader.reset()
 	return swaggerLoader.loadSwaggerFromFileInternal(path)
@@ -131,6 +140,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*S
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, pathAsURL)
 }
 
+// LoadSwaggerFromData loads a spec from a byte array
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swaggerLoader.reset()
 	return swaggerLoader.loadSwaggerFromDataInternal(data)
@@ -159,6 +169,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
 }
 
+// ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
 	if swaggerLoader.visited == nil {
 		swaggerLoader.visited = make(map[interface{}]struct{})
@@ -285,8 +296,7 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(
 	}
 
 	if reflect.TypeOf(cursor) == reflect.TypeOf(resolved) {
-		v := reflect.ValueOf(resolved).Elem()
-		v.Set(reflect.ValueOf(cursor))
+		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentPath, nil
 	}
 
@@ -295,12 +305,12 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(
 		if err != nil {
 			return err
 		}
-		if err = json.Unmarshal(enc, &expect); err != nil {
+		if err = json.Unmarshal(enc, expect); err != nil {
 			return err
 		}
 		return nil
 	}
-	if err := codec(cursor, &resolved); err != nil {
+	if err := codec(cursor, resolved); err != nil {
 		return nil, fmt.Errorf("failed to resolve fragment in URI: %q", ref)
 	}
 	return componentPath, nil
