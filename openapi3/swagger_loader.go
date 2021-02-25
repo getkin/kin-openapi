@@ -570,13 +570,11 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 	}
 	ref := component.Ref
 	if ref != "" {
-
 		if isSingleRefElement(ref) {
 			var resp Response
 			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
 				return err
 			}
-
 			component.Value = &resp
 		} else {
 			var resolved ResponseRef
