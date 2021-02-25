@@ -404,7 +404,7 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 	return swagger, ref, componentPath, nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
+func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, documentPath *url.URL) error {
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -418,14 +418,14 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var header Header
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &header); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
 				return err
 			}
 
 			component.Value = &header
 		} else {
 			var resolved HeaderRef
-			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path, &resolved)
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
@@ -440,7 +440,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		return nil
 	}
 	if schema := value.Schema; schema != nil {
-		if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
+		if err := swaggerLoader.resolveSchemaRef(swagger, schema, documentPath); err != nil {
 			return err
 		}
 	}
@@ -711,7 +711,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
+func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, documentPath *url.URL) error {
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -725,14 +725,14 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &scheme); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
 				return err
 			}
 
 			component.Value = &scheme
 		} else {
 			var resolved SecuritySchemeRef
-			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path, &resolved)
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
@@ -745,7 +745,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, path *url.URL) error {
+func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, documentPath *url.URL) error {
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -759,14 +759,14 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var example Example
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &example); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
 				return err
 			}
 
 			component.Value = &example
 		} else {
 			var resolved ExampleRef
-			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path, &resolved)
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
@@ -779,7 +779,7 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, path *url.URL) error {
+func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, documentPath *url.URL) error {
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -793,14 +793,14 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var link Link
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &link); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
 				return err
 			}
 
 			component.Value = &link
 		} else {
 			var resolved LinkRef
-			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path, &resolved)
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
