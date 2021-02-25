@@ -317,9 +317,12 @@ func TestLoadFromRemoteURL(t *testing.T) {
 func TestLoadWithReferenceInReference(t *testing.T) {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testdata/refInRef/openapi.json")
+	doc, err := loader.LoadSwaggerFromFile("testdata/refInRef/openapi.json")
 	require.NoError(t, err)
-	require.NotNil(t, swagger)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
