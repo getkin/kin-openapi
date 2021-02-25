@@ -34,8 +34,16 @@ type SwaggerLoader struct {
 
 	Context context.Context
 
-	visited      map[interface{}]struct{}
 	visitedFiles map[string]struct{}
+
+	visitedHeader         map[*Header]struct{}
+	visitedParameter      map[*Parameter]struct{}
+	visitedRequestBody    map[*RequestBody]struct{}
+	visitedResponse       map[*Response]struct{}
+	visitedSchema         map[*Schema]struct{}
+	visitedSecurityScheme map[*SecurityScheme]struct{}
+	visitedExample        map[*Example]struct{}
+	visitedLink           map[*Link]struct{}
 }
 
 // NewSwaggerLoader returns an empty SwaggerLoader
@@ -171,8 +179,15 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
-	if swaggerLoader.visited == nil {
-		swaggerLoader.visited = make(map[interface{}]struct{})
+	if swaggerLoader.visitedHeader == nil {
+		swaggerLoader.visitedHeader = make(map[*Header]struct{})
+		swaggerLoader.visitedParameter = make(map[*Parameter]struct{})
+		swaggerLoader.visitedRequestBody = make(map[*RequestBody]struct{})
+		swaggerLoader.visitedResponse = make(map[*Response]struct{})
+		swaggerLoader.visitedSchema = make(map[*Schema]struct{})
+		swaggerLoader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
+		swaggerLoader.visitedExample = make(map[*Example]struct{})
+		swaggerLoader.visitedLink = make(map[*Link]struct{})
 	}
 	if swaggerLoader.visitedFiles == nil {
 		swaggerLoader.reset()
@@ -405,18 +420,12 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*HeaderRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedHeader[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedHeader[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/headers/"
 	if component == nil {
@@ -455,18 +464,12 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*ParameterRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedParameter[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedParameter[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/parameters/"
 	if component == nil {
@@ -521,18 +524,12 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*RequestBodyRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedRequestBody[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedRequestBody[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/requestBodies/"
 	if component == nil {
@@ -579,18 +576,12 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 }
 
 func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *ResponseRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*ResponseRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedResponse[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedResponse[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/responses/"
 	if component == nil {
@@ -656,18 +647,12 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component *SchemaRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*SchemaRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedSchema[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedSchema[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/schemas/"
 	if component == nil {
@@ -745,18 +730,12 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*SecuritySchemeRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedSecurityScheme[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedSecurityScheme[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/securitySchemes/"
 	if component == nil {
@@ -786,18 +765,12 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 }
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*ExampleRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedExample[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedExample[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/examples/"
 	if component == nil {
@@ -827,18 +800,12 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 }
 
 func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, documentPath *url.URL) error {
-	visited := swaggerLoader.visited
-	if _, isVisited := visited[component]; isVisited {
-		return nil
-	}
 	if component != nil && component.Value != nil {
-		for c := range visited {
-			if x, ok := c.(*LinkRef); ok && x.Value == component.Value {
-				return nil
-			}
+		if _, ok := swaggerLoader.visitedLink[component.Value]; ok {
+			return nil
 		}
+		swaggerLoader.visitedLink[component.Value] = struct{}{}
 	}
-	visited[component] = struct{}{}
 
 	const prefix = "#/components/links/"
 	if component == nil {
