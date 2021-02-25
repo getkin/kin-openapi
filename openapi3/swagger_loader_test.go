@@ -196,7 +196,7 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	require.NotNil(t, refRootVisited.Value)
 }
 
-func TestNoLoadErrorOnRefMisuse(t *testing.T) {
+func TestLoadErrorOnRefMisuse(t *testing.T) {
 	spec := []byte(`
 openapi: '3.0.0'
 servers: [{url: /}]
@@ -212,7 +212,6 @@ paths:
       description: ''
       requestBody:
         # Uses a schema ref instead of a requestBody ref.
-        # We just end up with an empty requestBody, which is valid.
         $ref: '#/components/schemas/Thing'
       responses:
         '201':
@@ -224,11 +223,8 @@ paths:
 `)
 
 	loader := NewSwaggerLoader()
-	doc, err := loader.LoadSwaggerFromData(spec)
-	require.NoError(t, err)
-	err = doc.Validate(loader.Context)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(doc.Paths["/items"].Put.RequestBody.Value.Content))
+	_, err := loader.LoadSwaggerFromData(spec)
+	require.Error(t, err)
 }
 
 func TestLoadPathParamRef(t *testing.T) {

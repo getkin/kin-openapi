@@ -296,25 +296,30 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(
 		}
 	}
 
-	if reflect.TypeOf(cursor) == reflect.TypeOf(resolved) {
+	switch {
+	case reflect.TypeOf(cursor) == reflect.TypeOf(resolved):
 		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentPath, nil
-	}
 
-	codec := func(got, expect interface{}) error {
-		enc, err := json.Marshal(got)
-		if err != nil {
-			return err
+	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]interface{}{}):
+		codec := func(got, expect interface{}) error {
+			enc, err := json.Marshal(got)
+			if err != nil {
+				return err
+			}
+			if err = json.Unmarshal(enc, expect); err != nil {
+				return err
+			}
+			return nil
 		}
-		if err = json.Unmarshal(enc, expect); err != nil {
-			return err
+		if err := codec(cursor, resolved); err != nil {
+			return nil, fmt.Errorf("bad data in %q", ref)
 		}
-		return nil
+		return componentPath, nil
+
+	default:
+		return nil, fmt.Errorf("bad data in %q", ref)
 	}
-	if err := codec(cursor, resolved); err != nil {
-		return nil, fmt.Errorf("failed to resolve fragment in URI: %q", ref)
-	}
-	return componentPath, nil
 }
 
 func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, error) {
