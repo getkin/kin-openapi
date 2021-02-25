@@ -1,0 +1,7 @@
+{
+  "definitions": {
+    "External": {
+      "type": "string"
+    }
+  }
+}
