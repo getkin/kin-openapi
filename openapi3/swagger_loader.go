@@ -506,7 +506,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 	return nil
 }
 
-func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, path *url.URL) error {
+func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, documentPath *url.URL) error {
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -520,14 +520,14 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
-			if err := swaggerLoader.loadSingleElementFromURI(ref, path, &requestBody); err != nil {
+			if err := swaggerLoader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
 				return err
 			}
 
 			component.Value = &requestBody
 		} else {
 			var resolved RequestBodyRef
-			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, path, &resolved)
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
@@ -543,13 +543,13 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 	}
 	for _, contentType := range value.Content {
 		for name, example := range contentType.Examples {
-			if err := swaggerLoader.resolveExampleRef(swagger, example, path); err != nil {
+			if err := swaggerLoader.resolveExampleRef(swagger, example, documentPath); err != nil {
 				return err
 			}
 			contentType.Examples[name] = example
 		}
 		if schema := contentType.Schema; schema != nil {
-			if err := swaggerLoader.resolveSchemaRef(swagger, schema, path); err != nil {
+			if err := swaggerLoader.resolveSchemaRef(swagger, schema, documentPath); err != nil {
 				return err
 			}
 		}
