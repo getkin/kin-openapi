@@ -1,0 +1,13 @@
+openapi: "3.0.3"
+info:
+  title: Recursive refs example
+  version: "1.0"
+paths:
+  /foo:
+    $ref: ./paths/foo.yml
+components:
+  schemas:
+    Foo:
+      $ref: ./components/Foo.yml
+    Bar:
+      $ref: ./components/Bar.yml

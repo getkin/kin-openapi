@@ -34,7 +34,8 @@ type SwaggerLoader struct {
 
 	Context context.Context
 
-	visitedFiles map[string]struct{}
+	visitedFiles    map[string]struct{}
+	visitedSwaggers map[string]*Swagger
 
 	visitedHeader         map[*Header]struct{}
 	visitedParameter      map[*Parameter]struct{}
@@ -53,6 +54,7 @@ func NewSwaggerLoader() *SwaggerLoader {
 
 func (swaggerLoader *SwaggerLoader) reset() {
 	swaggerLoader.visitedFiles = make(map[string]struct{})
+	swaggerLoader.visitedSwaggers = make(map[string]*Swagger)
 }
 
 // LoadSwaggerFromURI loads a spec from a remote URL
@@ -170,11 +172,22 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, pat
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, path *url.URL) (*Swagger, error) {
+	visited, ok := swaggerLoader.visitedSwaggers[path.String()]
+	if ok {
+		return visited, nil
+	}
+
 	swagger := &Swagger{}
+	swaggerLoader.visitedSwaggers[path.String()] = swagger
+
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, path)
+	if err := swaggerLoader.ResolveRefsIn(swagger, path); err != nil {
+		return nil, err
+	}
+
+	return swagger, nil
 }
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
