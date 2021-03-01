@@ -1,0 +1,7 @@
+openapi: "3.0.0"
+info:
+  version: "1.0"
+  title: example
+paths:
+  /foo:
+    $ref: ./paths/foo.yml

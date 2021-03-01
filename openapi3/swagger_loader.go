@@ -45,6 +45,8 @@ type SwaggerLoader struct {
 	visitedSecurityScheme map[*SecurityScheme]struct{}
 	visitedExample        map[*Example]struct{}
 	visitedLink           map[*Link]struct{}
+
+	fileSystem http.FileSystem
 }
 
 // NewSwaggerLoader returns an empty SwaggerLoader
@@ -55,6 +57,7 @@ func NewSwaggerLoader() *SwaggerLoader {
 func (swaggerLoader *SwaggerLoader) reset() {
 	swaggerLoader.visitedFiles = make(map[string]struct{})
 	swaggerLoader.visitedSwaggers = make(map[string]*Swagger)
+	swaggerLoader.fileSystem = &osFileSystem{}
 }
 
 // LoadSwaggerFromURI loads a spec from a remote URL
@@ -68,7 +71,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 	if f != nil {
 		return f(swaggerLoader, location)
 	}
-	data, err := readURL(location)
+	data, err := swaggerLoader.readURL(location)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +99,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 		return fmt.Errorf("could not resolve path: %v", err)
 	}
 
-	data, err := readURL(resolvedPath)
+	data, err := swaggerLoader.readURL(resolvedPath)
 	if err != nil {
 		return err
 	}
@@ -107,7 +110,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 	return nil
 }
 
-func readURL(location *url.URL) ([]byte, error) {
+func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" && location.Host != "" {
 		resp, err := http.Get(location.String())
 		if err != nil {
@@ -123,7 +126,12 @@ func readURL(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
 		return nil, fmt.Errorf("unsupported URI: %q", location.String())
 	}
-	data, err := ioutil.ReadFile(location.Path)
+	file, err := swaggerLoader.fileSystem.Open(location.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +144,12 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 	return swaggerLoader.loadSwaggerFromFileInternal(path)
 }
 
+func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFileSystem(fileSystem http.FileSystem, path string) (*Swagger, error) {
+	swaggerLoader.reset()
+	swaggerLoader.fileSystem = fileSystem
+	return swaggerLoader.loadSwaggerFromFileInternal(path)
+}
+
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*Swagger, error) {
 	f := swaggerLoader.LoadSwaggerFromURIFunc
 	pathAsURL := &url.URL{Path: path}
@@ -143,7 +157,12 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*S
 		x, err := f(swaggerLoader, pathAsURL)
 		return x, err
 	}
-	data, err := ioutil.ReadFile(path)
+	file, err := swaggerLoader.fileSystem.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
