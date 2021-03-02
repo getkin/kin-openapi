@@ -37,14 +37,14 @@ type SwaggerLoader struct {
 	visitedFiles    map[string]struct{}
 	visitedSwaggers map[string]*Swagger
 
+	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
+	visitedLink           map[*Link]struct{}
 	visitedParameter      map[*Parameter]struct{}
 	visitedRequestBody    map[*RequestBody]struct{}
 	visitedResponse       map[*Response]struct{}
 	visitedSchema         map[*Schema]struct{}
 	visitedSecurityScheme map[*SecurityScheme]struct{}
-	visitedExample        map[*Example]struct{}
-	visitedLink           map[*Link]struct{}
 }
 
 // NewSwaggerLoader returns an empty SwaggerLoader
@@ -192,15 +192,29 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
+	if swaggerLoader.visitedExample == nil {
+		swaggerLoader.visitedExample = make(map[*Example]struct{})
+	}
 	if swaggerLoader.visitedHeader == nil {
 		swaggerLoader.visitedHeader = make(map[*Header]struct{})
-		swaggerLoader.visitedParameter = make(map[*Parameter]struct{})
-		swaggerLoader.visitedRequestBody = make(map[*RequestBody]struct{})
-		swaggerLoader.visitedResponse = make(map[*Response]struct{})
-		swaggerLoader.visitedSchema = make(map[*Schema]struct{})
-		swaggerLoader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
-		swaggerLoader.visitedExample = make(map[*Example]struct{})
+	}
+	if swaggerLoader.visitedLink == nil {
 		swaggerLoader.visitedLink = make(map[*Link]struct{})
+	}
+	if swaggerLoader.visitedParameter == nil {
+		swaggerLoader.visitedParameter = make(map[*Parameter]struct{})
+	}
+	if swaggerLoader.visitedRequestBody == nil {
+		swaggerLoader.visitedRequestBody = make(map[*RequestBody]struct{})
+	}
+	if swaggerLoader.visitedResponse == nil {
+		swaggerLoader.visitedResponse = make(map[*Response]struct{})
+	}
+	if swaggerLoader.visitedSchema == nil {
+		swaggerLoader.visitedSchema = make(map[*Schema]struct{})
+	}
+	if swaggerLoader.visitedSecurityScheme == nil {
+		swaggerLoader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
 	}
 	if swaggerLoader.visitedFiles == nil {
 		swaggerLoader.reset()
