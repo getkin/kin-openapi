@@ -25,14 +25,18 @@ jobs:
         go-version: 1.x
     - run: go version
 
-    - run: go mod download && go mod verify
-    - run: go test ./...
+    - run: go mod download && go mod tidy && go mod verify
+    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+      shell: bash
+
     - run: go vet ./...
+    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+      shell: bash
+
     - run: go fmt ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
       shell: bash
+
     - run: go test ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
       shell: bash
-    - run: go get -u -a -v ./... && go mod tidy && go mod verify
-    - run: git --no-pager diff
