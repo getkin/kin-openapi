@@ -20,10 +20,13 @@ Here's some projects that depend on _kin-openapi_:
   * [github.com/goadesign/goa](https://github.com/goadesign/goa) - "Goa is a framework for building micro-services and APIs in Go using a unique design-first approach."
   * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
-## Alternative projects
-  * [go-openapi](https://github.com/go-openapi)
-    * Supports OpenAPI version 2.
-  * See [this list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md).
+## Alternatives
+* [go-swagger](https://github.com/go-swagger/go-swagger) stated [*OpenAPIv3 won't be supported*](https://github.com/go-swagger/go-swagger/issues/1122#issuecomment-575968499)
+* [swaggo](https://github.com/swaggo/swag) has an [open issue on OpenAPIv3](https://github.com/swaggo/swag/issues/386)
+* [go-openapi](https://github.com/go-openapi)'s [spec3](https://github.com/go-openapi/spec3)
+	* an iteration on [spec](https://github.com/go-openapi/spec) (for OpenAPIv2)
+	* see [README](https://github.com/go-openapi/spec3/tree/3fab9faa9094e06ebd19ded7ea96d156c2283dca#oai-object-model---) for the missing parts
+* See [https://github.com/OAI](https://github.com/OAI)'s [great tooling list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md)
 
 # Structure
   * _openapi2_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2))
