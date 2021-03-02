@@ -782,9 +782,9 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 	if requirements == nil {
 		return nil
 	}
-	result := make([]map[string][]string, len(requirements))
-	for i, item := range requirements {
-		result[i] = item
+	result := make([]map[string][]string, 0, len(requirements))
+	for _, item := range requirements {
+		result = append(result, item)
 	}
 	return result
 }
