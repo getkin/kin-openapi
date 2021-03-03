@@ -197,3 +197,8 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 	// Check the uniqueness of the input slice(array in JSON)
 }
 ```
+
+## Sub-v0 breaking API changes
+
+### v0.47.0
+Field `(*openapi3.SwaggerLoader).LoadSwaggerFromURIFunc` of type `func(*openapi3.SwaggerLoader, *url.URL) (*openapi3.Swagger, error)` was removed after the addition of the field `(*openapi3.SwaggerLoader).ReadFromURIFunc` of type `func(*openapi3.SwaggerLoader, *url.URL) ([]byte, error)`.

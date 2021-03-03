@@ -29,16 +29,14 @@ type SwaggerLoader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
 
-	// LoadSwaggerFromURIFunc allows overriding the swagger file/URL reading func
-	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
-
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc func(loader *SwaggerLoader, url *url.URL) ([]byte, error)
 
 	Context context.Context
 
-	visitedFiles    map[string]struct{}
-	visitedSwaggers map[string]*Swagger
+	visitedPathItemRefs map[string]struct{}
+
+	visitedDocuments map[string]*Swagger
 
 	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
@@ -55,22 +53,17 @@ func NewSwaggerLoader() *SwaggerLoader {
 	return &SwaggerLoader{}
 }
 
-func (swaggerLoader *SwaggerLoader) reset() {
-	swaggerLoader.visitedFiles = make(map[string]struct{})
-	swaggerLoader.visitedSwaggers = make(map[string]*Swagger)
+func (swaggerLoader *SwaggerLoader) resetVisitedPathItemRefs() {
+	swaggerLoader.visitedPathItemRefs = make(map[string]struct{})
 }
 
 // LoadSwaggerFromURI loads a spec from a remote URL
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromURIInternal(location)
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
-	f := swaggerLoader.LoadSwaggerFromURIFunc
-	if f != nil {
-		return f(swaggerLoader, location)
-	}
 	data, err := swaggerLoader.readURL(location)
 	if err != nil {
 		return nil, err
@@ -111,8 +104,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 }
 
 func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
-	f := swaggerLoader.ReadFromURIFunc
-	if f != nil {
+	if f := swaggerLoader.ReadFromURIFunc; f != nil {
 		return f(swaggerLoader, location)
 	}
 
@@ -121,36 +113,23 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		data, err := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-		return data, nil
+		return ioutil.ReadAll(resp.Body)
 	}
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
 		return nil, fmt.Errorf("unsupported URI: %q", location.String())
 	}
-	data, err := ioutil.ReadFile(location.Path)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return ioutil.ReadFile(location.Path)
 }
 
 // LoadSwaggerFromFile loads a spec from a local file path
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromFileInternal(path)
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*Swagger, error) {
-	f := swaggerLoader.LoadSwaggerFromURIFunc
 	pathAsURL := &url.URL{Path: path}
-	if f != nil {
-		x, err := f(swaggerLoader, pathAsURL)
-		return x, err
-	}
 	data, err := swaggerLoader.readURL(pathAsURL)
 	if err != nil {
 		return nil, err
@@ -160,33 +139,39 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*S
 
 // LoadSwaggerFromData loads a spec from a byte array
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromDataInternal(data)
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataInternal(data []byte) (*Swagger, error) {
-	swagger := &Swagger{}
-	if err := yaml.Unmarshal(data, swagger); err != nil {
+	doc := &Swagger{}
+	if err := yaml.Unmarshal(data, doc); err != nil {
 		return nil, err
 	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
+	if err := swaggerLoader.ResolveRefsIn(doc, nil); err != nil {
+		return nil, err
+	}
+	return doc, nil
 }
 
 // LoadSwaggerFromDataWithPath takes the OpenApi spec data in bytes and a path where the resolver can find referred
 // elements and returns a *Swagger with all resolved data or an error if unable to load data or resolve refs.
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, path)
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, path *url.URL) (*Swagger, error) {
-	visited, ok := swaggerLoader.visitedSwaggers[path.String()]
-	if ok {
-		return visited, nil
+	if swaggerLoader.visitedDocuments == nil {
+		swaggerLoader.visitedDocuments = make(map[string]*Swagger)
+	}
+	uri := path.String()
+	if doc, ok := swaggerLoader.visitedDocuments[uri]; ok {
+		return doc, nil
 	}
 
 	swagger := &Swagger{}
-	swaggerLoader.visitedSwaggers[path.String()] = swagger
+	swaggerLoader.visitedDocuments[uri] = swagger
 
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
@@ -200,32 +185,8 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
-	if swaggerLoader.visitedExample == nil {
-		swaggerLoader.visitedExample = make(map[*Example]struct{})
-	}
-	if swaggerLoader.visitedHeader == nil {
-		swaggerLoader.visitedHeader = make(map[*Header]struct{})
-	}
-	if swaggerLoader.visitedLink == nil {
-		swaggerLoader.visitedLink = make(map[*Link]struct{})
-	}
-	if swaggerLoader.visitedParameter == nil {
-		swaggerLoader.visitedParameter = make(map[*Parameter]struct{})
-	}
-	if swaggerLoader.visitedRequestBody == nil {
-		swaggerLoader.visitedRequestBody = make(map[*RequestBody]struct{})
-	}
-	if swaggerLoader.visitedResponse == nil {
-		swaggerLoader.visitedResponse = make(map[*Response]struct{})
-	}
-	if swaggerLoader.visitedSchema == nil {
-		swaggerLoader.visitedSchema = make(map[*Schema]struct{})
-	}
-	if swaggerLoader.visitedSecurityScheme == nil {
-		swaggerLoader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
-	}
-	if swaggerLoader.visitedFiles == nil {
-		swaggerLoader.reset()
+	if swaggerLoader.visitedPathItemRefs == nil {
+		swaggerLoader.resetVisitedPathItemRefs()
 	}
 
 	// Visit all components
@@ -456,6 +417,9 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedHeader == nil {
+			swaggerLoader.visitedHeader = make(map[*Header]struct{})
+		}
 		if _, ok := swaggerLoader.visitedHeader[component.Value]; ok {
 			return nil
 		}
@@ -500,6 +464,9 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 
 func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedParameter == nil {
+			swaggerLoader.visitedParameter = make(map[*Parameter]struct{})
+		}
 		if _, ok := swaggerLoader.visitedParameter[component.Value]; ok {
 			return nil
 		}
@@ -560,6 +527,9 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 
 func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedRequestBody == nil {
+			swaggerLoader.visitedRequestBody = make(map[*RequestBody]struct{})
+		}
 		if _, ok := swaggerLoader.visitedRequestBody[component.Value]; ok {
 			return nil
 		}
@@ -612,6 +582,9 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 
 func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *ResponseRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedResponse == nil {
+			swaggerLoader.visitedResponse = make(map[*Response]struct{})
+		}
 		if _, ok := swaggerLoader.visitedResponse[component.Value]; ok {
 			return nil
 		}
@@ -683,6 +656,9 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 
 func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component *SchemaRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedSchema == nil {
+			swaggerLoader.visitedSchema = make(map[*Schema]struct{})
+		}
 		if _, ok := swaggerLoader.visitedSchema[component.Value]; ok {
 			return nil
 		}
@@ -766,6 +742,9 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 
 func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedSecurityScheme == nil {
+			swaggerLoader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
+		}
 		if _, ok := swaggerLoader.visitedSecurityScheme[component.Value]; ok {
 			return nil
 		}
@@ -801,6 +780,9 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedExample == nil {
+			swaggerLoader.visitedExample = make(map[*Example]struct{})
+		}
 		if _, ok := swaggerLoader.visitedExample[component.Value]; ok {
 			return nil
 		}
@@ -836,6 +818,9 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 
 func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, documentPath *url.URL) error {
 	if component != nil && component.Value != nil {
+		if swaggerLoader.visitedLink == nil {
+			swaggerLoader.visitedLink = make(map[*Link]struct{})
+		}
 		if _, ok := swaggerLoader.visitedLink[component.Value]; ok {
 			return nil
 		}
@@ -875,10 +860,10 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 		key = documentPath.EscapedPath()
 	}
 	key += entrypoint
-	if _, ok := swaggerLoader.visitedFiles[key]; ok {
+	if _, ok := swaggerLoader.visitedPathItemRefs[key]; ok {
 		return nil
 	}
-	swaggerLoader.visitedFiles[key] = struct{}{}
+	swaggerLoader.visitedPathItemRefs[key] = struct{}{}
 
 	const prefix = "#/paths/"
 	if pathItem == nil {
