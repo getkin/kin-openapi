@@ -29,8 +29,11 @@ type SwaggerLoader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
 
-	// LoadSwaggerFromURIFunc allows overriding the file/URL reading func
+	// LoadSwaggerFromURIFunc allows overriding the swagger file/URL reading func
 	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
+
+	// ReadFromURIFunc allows overriding the any file/URL reading func
+	ReadFromURIFunc func(loader *SwaggerLoader, url *url.URL) ([]byte, error)
 
 	Context context.Context
 
@@ -68,7 +71,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 	if f != nil {
 		return f(swaggerLoader, location)
 	}
-	data, err := readURL(location)
+	data, err := swaggerLoader.readURL(location)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +99,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 		return fmt.Errorf("could not resolve path: %v", err)
 	}
 
-	data, err := readURL(resolvedPath)
+	data, err := swaggerLoader.readURL(resolvedPath)
 	if err != nil {
 		return err
 	}
@@ -107,7 +110,12 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 	return nil
 }
 
-func readURL(location *url.URL) ([]byte, error) {
+func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
+	f := swaggerLoader.ReadFromURIFunc
+	if f != nil {
+		return f(swaggerLoader, location)
+	}
+
 	if location.Scheme != "" && location.Host != "" {
 		resp, err := http.Get(location.String())
 		if err != nil {
@@ -143,7 +151,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*S
 		x, err := f(swaggerLoader, pathAsURL)
 		return x, err
 	}
-	data, err := ioutil.ReadFile(path)
+	data, err := swaggerLoader.readURL(pathAsURL)
 	if err != nil {
 		return nil, err
 	}
