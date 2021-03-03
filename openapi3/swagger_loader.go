@@ -104,8 +104,7 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 }
 
 func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
-	f := swaggerLoader.ReadFromURIFunc
-	if f != nil {
+	if f := swaggerLoader.ReadFromURIFunc; f != nil {
 		return f(swaggerLoader, location)
 	}
 
@@ -114,21 +113,13 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		data, err := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-		return data, nil
+		return ioutil.ReadAll(resp.Body)
 	}
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
 		return nil, fmt.Errorf("unsupported URI: %q", location.String())
 	}
-	data, err := ioutil.ReadFile(location.Path)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return ioutil.ReadFile(location.Path)
 }
 
 // LoadSwaggerFromFile loads a spec from a local file path
@@ -153,11 +144,14 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataInternal(data []byte) (*Swagger, error) {
-	swagger := &Swagger{}
-	if err := yaml.Unmarshal(data, swagger); err != nil {
+	doc := &Swagger{}
+	if err := yaml.Unmarshal(data, doc); err != nil {
 		return nil, err
 	}
-	return swagger, swaggerLoader.ResolveRefsIn(swagger, nil)
+	if err := swaggerLoader.ResolveRefsIn(doc, nil); err != nil {
+		return nil, err
+	}
+	return doc, nil
 }
 
 // LoadSwaggerFromDataWithPath takes the OpenApi spec data in bytes and a path where the resolver can find referred
