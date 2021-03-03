@@ -34,8 +34,9 @@ type SwaggerLoader struct {
 
 	Context context.Context
 
-	visitedFiles    map[string]struct{}
-	visitedSwaggers map[string]*Swagger
+	visitedPathItemRefs map[string]struct{}
+
+	visitedDocuments map[string]*Swagger
 
 	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
@@ -52,14 +53,13 @@ func NewSwaggerLoader() *SwaggerLoader {
 	return &SwaggerLoader{}
 }
 
-func (swaggerLoader *SwaggerLoader) reset() {
-	swaggerLoader.visitedFiles = make(map[string]struct{})
-	swaggerLoader.visitedSwaggers = make(map[string]*Swagger)
+func (swaggerLoader *SwaggerLoader) resetVisitedPathItemRefs() {
+	swaggerLoader.visitedPathItemRefs = make(map[string]struct{})
 }
 
 // LoadSwaggerFromURI loads a spec from a remote URL
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromURIInternal(location)
 }
 
@@ -133,7 +133,7 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 
 // LoadSwaggerFromFile loads a spec from a local file path
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromFileInternal(path)
 }
 
@@ -148,7 +148,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*S
 
 // LoadSwaggerFromData loads a spec from a byte array
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromDataInternal(data)
 }
 
@@ -163,18 +163,21 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataInternal(data []byte) (*S
 // LoadSwaggerFromDataWithPath takes the OpenApi spec data in bytes and a path where the resolver can find referred
 // elements and returns a *Swagger with all resolved data or an error if unable to load data or resolve refs.
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
-	swaggerLoader.reset()
+	swaggerLoader.resetVisitedPathItemRefs()
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, path)
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, path *url.URL) (*Swagger, error) {
-	visited, ok := swaggerLoader.visitedSwaggers[path.String()]
-	if ok {
-		return visited, nil
+	if swaggerLoader.visitedDocuments == nil {
+		swaggerLoader.visitedDocuments = make(map[string]*Swagger)
+	}
+	uri := path.String()
+	if doc, ok := swaggerLoader.visitedDocuments[uri]; ok {
+		return doc, nil
 	}
 
 	swagger := &Swagger{}
-	swaggerLoader.visitedSwaggers[path.String()] = swagger
+	swaggerLoader.visitedDocuments[uri] = swagger
 
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
@@ -188,8 +191,8 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
-	if swaggerLoader.visitedFiles == nil {
-		swaggerLoader.reset()
+	if swaggerLoader.visitedPathItemRefs == nil {
+		swaggerLoader.resetVisitedPathItemRefs()
 	}
 
 	// Visit all components
@@ -863,10 +866,10 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 		key = documentPath.EscapedPath()
 	}
 	key += entrypoint
-	if _, ok := swaggerLoader.visitedFiles[key]; ok {
+	if _, ok := swaggerLoader.visitedPathItemRefs[key]; ok {
 		return nil
 	}
-	swaggerLoader.visitedFiles[key] = struct{}{}
+	swaggerLoader.visitedPathItemRefs[key] = struct{}{}
 
 	const prefix = "#/paths/"
 	if pathItem == nil {
