@@ -132,13 +132,8 @@ paths:
 	require.Equal(t, example.Value.Value.(map[string]interface{})["error"].(bool), false)
 }
 
-type sourceExample struct {
-	Location *url.URL
-	Spec     []byte
-}
-
 type multipleSourceSwaggerLoaderExample struct {
-	Sources []*sourceExample
+	Sources map[string][]byte
 }
 
 func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
@@ -147,19 +142,13 @@ func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
 ) (*Swagger, error) {
 	source := l.resolveSourceFromURI(location)
 	if source == nil {
-		return nil, fmt.Errorf("Unsupported URI: '%s'", location.String())
+		return nil, fmt.Errorf("Unsupported URI: %q", location.String())
 	}
-	return loader.LoadSwaggerFromData(source.Spec)
+	return loader.LoadSwaggerFromData(source)
 }
 
-func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location fmt.Stringer) *sourceExample {
-	locationString := location.String()
-	for _, v := range l.Sources {
-		if v.Location.String() == locationString {
-			return v
-		}
-	}
-	return nil
+func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location fmt.Stringer) []byte {
+	return l.Sources[location.String()]
 }
 
 func TestResolveSchemaExternalRef(t *testing.T) {
@@ -171,26 +160,22 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	))
 	externalSpec := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"External Spec"},"paths":{},"components":{"schemas":{"External":{"type":"string"}}}}`)
 	multipleSourceLoader := &multipleSourceSwaggerLoaderExample{
-		Sources: []*sourceExample{
-			{
-				Location: rootLocation,
-				Spec:     rootSpec,
-			},
-			{
-				Location: externalLocation,
-				Spec:     externalSpec,
-			},
+		Sources: map[string][]byte{
+			rootLocation.String():     rootSpec,
+			externalLocation.String(): externalSpec,
 		},
 	}
 	loader := &SwaggerLoader{
 		IsExternalRefsAllowed:  true,
 		LoadSwaggerFromURIFunc: multipleSourceLoader.LoadSwaggerFromURI,
 	}
+
 	doc, err := loader.LoadSwaggerFromURI(rootLocation)
 	require.NoError(t, err)
-	err = doc.Validate(loader.Context)
 
+	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+
 	refRootVisited := doc.Components.Schemas["Root"].Value.AllOf[0]
 	require.Equal(t, fmt.Sprintf("%s#/components/schemas/External", externalLocation.String()), refRootVisited.Ref)
 	require.NotNil(t, refRootVisited.Value)
