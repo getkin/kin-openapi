@@ -29,9 +29,6 @@ type SwaggerLoader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
 
-	// LoadSwaggerFromURIFunc allows overriding the swagger file/URL reading func
-	LoadSwaggerFromURIFunc func(loader *SwaggerLoader, url *url.URL) (*Swagger, error)
-
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc func(loader *SwaggerLoader, url *url.URL) ([]byte, error)
 
@@ -67,10 +64,6 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
-	f := swaggerLoader.LoadSwaggerFromURIFunc
-	if f != nil {
-		return f(swaggerLoader, location)
-	}
 	data, err := swaggerLoader.readURL(location)
 	if err != nil {
 		return nil, err
@@ -145,12 +138,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, 
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*Swagger, error) {
-	f := swaggerLoader.LoadSwaggerFromURIFunc
 	pathAsURL := &url.URL{Path: path}
-	if f != nil {
-		x, err := f(swaggerLoader, pathAsURL)
-		return x, err
-	}
 	data, err := swaggerLoader.readURL(pathAsURL)
 	if err != nil {
 		return nil, err

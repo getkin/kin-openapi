@@ -139,12 +139,12 @@ type multipleSourceSwaggerLoaderExample struct {
 func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
 	loader *SwaggerLoader,
 	location *url.URL,
-) (*Swagger, error) {
+) ([]byte, error) {
 	source := l.resolveSourceFromURI(location)
 	if source == nil {
 		return nil, fmt.Errorf("Unsupported URI: %q", location.String())
 	}
-	return loader.LoadSwaggerFromData(source)
+	return source, nil
 }
 
 func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location fmt.Stringer) []byte {
@@ -166,8 +166,8 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 		},
 	}
 	loader := &SwaggerLoader{
-		IsExternalRefsAllowed:  true,
-		LoadSwaggerFromURIFunc: multipleSourceLoader.LoadSwaggerFromURI,
+		IsExternalRefsAllowed: true,
+		ReadFromURIFunc:       multipleSourceLoader.LoadSwaggerFromURI,
 	}
 
 	doc, err := loader.LoadSwaggerFromURI(rootLocation)
