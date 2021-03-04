@@ -1,10 +1,9 @@
 package openapi3gen
 
 import (
-	"encoding/json"
 	"testing"
-	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,96 +15,27 @@ type CyclicType1 struct {
 }
 
 func TestCyclic(t *testing.T) {
-	schema, refsMap, err := NewSchemaRefForValue(&CyclicType0{})
+	schemaRef, refsMap, err := NewSchemaRefForValue(&CyclicType0{})
 	require.IsType(t, &CycleError{}, err)
-	require.Nil(t, schema)
+	require.Nil(t, schemaRef)
 	require.Empty(t, refsMap)
 }
 
-func TestSimple(t *testing.T) {
-	type ExampleChild string
-	type Example struct {
-		Bool    bool                     `json:"bool"`
-		Int     int                      `json:"int"`
-		Int64   int64                    `json:"int64"`
-		Float64 float64                  `json:"float64"`
-		String  string                   `json:"string"`
-		Bytes   []byte                   `json:"bytes"`
-		JSON    json.RawMessage          `json:"json"`
-		Time    time.Time                `json:"time"`
-		Slice   []*ExampleChild          `json:"slice"`
-		Map     map[string]*ExampleChild `json:"map"`
-		Struct  struct {
-			X string `json:"x"`
-		} `json:"struct"`
-		EmptyStruct struct {
-			X string
-		} `json:"structWithoutFields"`
-		Ptr *ExampleChild `json:"ptr"`
+func TestExportedNonTagged(t *testing.T) {
+	type Bla struct {
+		A          string
+		Another    string `json:"another"`
+		yetAnother string
+		EvenAYaml  string `yaml:"even_a_yaml"`
 	}
 
-	schema, refsMap, err := NewSchemaRefForValue(&Example{})
+	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields())
 	require.NoError(t, err)
-	require.Len(t, refsMap, 14)
-	data, err := json.Marshal(schema)
-	require.NoError(t, err)
-	require.JSONEq(t, expectedSimple, string(data))
+	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
+		Type: "object",
+		Properties: map[string]*openapi3.SchemaRef{
+			"A":           {Value: &openapi3.Schema{Type: "string"}},
+			"another":     {Value: &openapi3.Schema{Type: "string"}},
+			"even_a_yaml": {Value: &openapi3.Schema{Type: "string"}},
+		}}}, schemaRef)
 }
-
-const expectedSimple = `
-{
-  "type": "object",
-  "properties": {
-    "bool": {
-      "type": "boolean"
-    },
-    "int": {
-      "type": "integer",
-      "format": "int64"
-    },
-    "int64": {
-      "type": "integer",
-      "format": "int64"
-    },
-    "float64": {
-      "type": "number"
-    },
-    "time": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "string": {
-      "type": "string"
-    },
-    "bytes": {
-      "type": "string",
-      "format": "byte"
-    },
-    "json": {},
-    "slice": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "map": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    },
-    "struct": {
-      "type": "object",
-      "properties": {
-        "x": {
-          "type": "string"
-        }
-      }
-    },
-    "structWithoutFields": {},
-    "ptr": {
-      "type": "string"
-    }
-  }
-}
-`

@@ -1,8 +1,9 @@
-// Package openapi3gen generates OpenAPI 3 schemas for Go types.
+// Package openapi3gen generates OpenAPIv3 JSON schemas from Go types.
 package openapi3gen
 
 import (
 	"encoding/json"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -18,8 +19,22 @@ func (err *CycleError) Error() string {
 	return "Detected JSON cycle"
 }
 
-func NewSchemaRefForValue(value interface{}) (*openapi3.SchemaRef, map[*openapi3.SchemaRef]int, error) {
-	g := NewGenerator()
+// Option allows tweaking SchemaRef generation
+type Option func(*generatorOpt)
+
+type generatorOpt struct {
+	useAllExportedFields bool
+}
+
+// UseAllExportedFields changes the default behavior of only
+// generating schemas for struct fields with a JSON tag.
+func UseAllExportedFields() Option {
+	return func(x *generatorOpt) { x.useAllExportedFields = true }
+}
+
+// NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef.
+func NewSchemaRefForValue(value interface{}, opts ...Option) (*openapi3.SchemaRef, map[*openapi3.SchemaRef]int, error) {
+	g := NewGenerator(opts...)
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
 	for ref := range g.SchemaRefs {
 		ref.Ref = ""
@@ -28,6 +43,8 @@ func NewSchemaRefForValue(value interface{}) (*openapi3.SchemaRef, map[*openapi3
 }
 
 type Generator struct {
+	opts generatorOpt
+
 	Types map[reflect.Type]*openapi3.SchemaRef
 
 	// SchemaRefs contains all references and their counts.
@@ -36,20 +53,25 @@ type Generator struct {
 	SchemaRefs map[*openapi3.SchemaRef]int
 }
 
-func NewGenerator() *Generator {
+func NewGenerator(opts ...Option) *Generator {
+	gOpt := &generatorOpt{}
+	for _, f := range opts {
+		f(gOpt)
+	}
 	return &Generator{
 		Types:      make(map[reflect.Type]*openapi3.SchemaRef),
 		SchemaRefs: make(map[*openapi3.SchemaRef]int),
+		opts:       *gOpt,
 	}
 }
 
 func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, error) {
+	//check generatorOpt consistency here
 	return g.generateSchemaRefFor(nil, t)
 }
 
 func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type) (*openapi3.SchemaRef, error) {
-	ref := g.Types[t]
-	if ref != nil {
+	if ref := g.Types[t]; ref != nil {
 		g.SchemaRefs[ref]++
 		return ref, nil
 	}
@@ -62,7 +84,6 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 }
 
 func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflect.Type) (*openapi3.SchemaRef, error) {
-	// Get TypeInfo
 	typeInfo := jsoninfo.GetTypeInfo(t)
 	for _, parent := range parents {
 		if parent == typeInfo {
@@ -70,19 +91,15 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		}
 	}
 
-	// Doesn't exist.
-	// Create the schema.
 	if cap(parents) == 0 {
 		parents = make([]*jsoninfo.TypeInfo, 0, 4)
 	}
 	parents = append(parents, typeInfo)
 
-	// Ignore pointers
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 
-	// Create instance
 	if strings.HasSuffix(t.Name(), "Ref") {
 		_, a := t.FieldByName("Ref")
 		v, b := t.FieldByName("Value")
@@ -104,23 +121,54 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		}
 	}
 
-	// Allocate schema
 	schema := &openapi3.Schema{}
 
 	switch t.Kind() {
 	case reflect.Func, reflect.Chan:
-		return nil, nil
+		return nil, nil // ignore
+
 	case reflect.Bool:
 		schema.Type = "boolean"
 
-	case reflect.Int,
-		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case reflect.Int:
+		schema.Type = "integer"
+	case reflect.Int8:
+		schema.Type = "integer"
+		schema.Min = &minInt8
+		schema.Max = &maxInt8
+	case reflect.Int16:
+		schema.Type = "integer"
+		schema.Min = &minInt16
+		schema.Max = &maxInt16
+	case reflect.Int32:
+		schema.Type = "integer"
+		schema.Format = "int32"
+	case reflect.Int64:
 		schema.Type = "integer"
 		schema.Format = "int64"
+	case reflect.Uint8:
+		schema.Type = "integer"
+		schema.Min = &zeroInt
+		schema.Max = &maxUint8
+	case reflect.Uint16:
+		schema.Type = "integer"
+		schema.Min = &zeroInt
+		schema.Max = &maxUint16
+	case reflect.Uint32:
+		schema.Type = "integer"
+		schema.Min = &zeroInt
+		schema.Max = &maxUint32
+	case reflect.Uint64:
+		schema.Type = "integer"
+		schema.Min = &zeroInt
+		schema.Max = &maxUint64
 
-	case reflect.Float32, reflect.Float64:
+	case reflect.Float32:
 		schema.Type = "number"
+		schema.Format = "float"
+	case reflect.Float64:
+		schema.Type = "number"
+		schema.Format = "double"
 
 	case reflect.String:
 		schema.Type = "string"
@@ -128,9 +176,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
 			if t == rawMessageType {
-				return &openapi3.SchemaRef{
-					Value: schema,
-				}, nil
+				return &openapi3.SchemaRef{Value: schema}, nil
 			}
 			schema.Type = "string"
 			schema.Format = "byte"
@@ -163,17 +209,26 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			schema.Format = "date-time"
 		} else {
 			for _, fieldInfo := range typeInfo.Fields {
-				// Only fields with JSON tag are considered
-				if !fieldInfo.HasJSONTag {
+				// Only fields with JSON tag are considered (by default)
+				if !fieldInfo.HasJSONTag && !g.opts.useAllExportedFields {
 					continue
 				}
-				ref, err := g.generateSchemaRefFor(parents, fieldInfo.Type)
+				// If asked, try to use yaml tag
+				name, fType := fieldInfo.JSONName, fieldInfo.Type
+				if !fieldInfo.HasJSONTag && g.opts.useAllExportedFields {
+					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+					if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
+						name, fType = tag, ff.Type
+					}
+				}
+
+				ref, err := g.generateSchemaRefFor(parents, fType)
 				if err != nil {
 					return nil, err
 				}
 				if ref != nil {
 					g.SchemaRefs[ref]++
-					schema.WithPropertyRef(fieldInfo.JSONName, ref)
+					schema.WithPropertyRef(name, ref)
 				}
 			}
 
@@ -183,6 +238,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			}
 		}
 	}
+
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
 }
 
@@ -192,4 +248,14 @@ var RefSchemaRef = openapi3.NewSchemaRef("Ref",
 var (
 	timeType       = reflect.TypeOf(time.Time{})
 	rawMessageType = reflect.TypeOf(json.RawMessage{})
+
+	zeroInt   = float64(0)
+	maxInt8   = float64(math.MaxInt8)
+	minInt8   = float64(math.MinInt8)
+	maxInt16  = float64(math.MaxInt16)
+	minInt16  = float64(math.MinInt16)
+	maxUint8  = float64(math.MaxUint8)
+	maxUint16 = float64(math.MaxUint16)
+	maxUint32 = float64(math.MaxUint32)
+	maxUint64 = float64(math.MaxUint64)
 )
