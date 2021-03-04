@@ -61,10 +61,10 @@ func Example() {
 	//       "type": "string"
 	//     },
 	//     "float64": {
+	//       "format": "double",
 	//       "type": "number"
 	//     },
 	//     "int": {
-	//       "format": "int64",
 	//       "type": "integer"
 	//     },
 	//     "int64": {
