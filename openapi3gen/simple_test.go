@@ -36,7 +36,7 @@ type (
 )
 
 func Example() {
-	schema, refsMap, err := openapi3gen.NewSchemaRefForValue(&SomeStruct{})
+	schemaRef, refsMap, err := openapi3gen.NewSchemaRefForValue(&SomeStruct{})
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +45,7 @@ func Example() {
 		panic(fmt.Sprintf("unintended len(refsMap) = %d", len(refsMap)))
 	}
 
-	data, err := json.MarshalIndent(schema, "", "  ")
+	data, err := json.MarshalIndent(schemaRef, "", "  ")
 	if err != nil {
 		panic(err)
 	}

@@ -18,8 +18,22 @@ func (err *CycleError) Error() string {
 	return "Detected JSON cycle"
 }
 
-func NewSchemaRefForValue(value interface{}) (*openapi3.SchemaRef, map[*openapi3.SchemaRef]int, error) {
-	g := NewGenerator()
+// Option allows tweaking SchemaRef generation
+type Option func(*generatorOpt)
+
+type generatorOpt struct {
+	useAllExportedFields bool
+}
+
+// UseAllExportedFields changes the default behavior of only
+// generating schemas for struct fields with a JSON tag.
+func UseAllExportedFields() Option {
+	return func(x *generatorOpt) { x.useAllExportedFields = true }
+}
+
+// NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef.
+func NewSchemaRefForValue(value interface{}, opts ...Option) (*openapi3.SchemaRef, map[*openapi3.SchemaRef]int, error) {
+	g := NewGenerator(opts...)
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
 	for ref := range g.SchemaRefs {
 		ref.Ref = ""
@@ -28,6 +42,8 @@ func NewSchemaRefForValue(value interface{}) (*openapi3.SchemaRef, map[*openapi3
 }
 
 type Generator struct {
+	opts generatorOpt
+
 	Types map[reflect.Type]*openapi3.SchemaRef
 
 	// SchemaRefs contains all references and their counts.
@@ -36,14 +52,20 @@ type Generator struct {
 	SchemaRefs map[*openapi3.SchemaRef]int
 }
 
-func NewGenerator() *Generator {
+func NewGenerator(opts ...Option) *Generator {
+	gOpt := &generatorOpt{}
+	for _, f := range opts {
+		f(gOpt)
+	}
 	return &Generator{
 		Types:      make(map[reflect.Type]*openapi3.SchemaRef),
 		SchemaRefs: make(map[*openapi3.SchemaRef]int),
+		opts:       *gOpt,
 	}
 }
 
 func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, error) {
+	//check generatorOpt consistency here
 	return g.generateSchemaRefFor(nil, t)
 }
 
@@ -155,17 +177,26 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			schema.Format = "date-time"
 		} else {
 			for _, fieldInfo := range typeInfo.Fields {
-				// Only fields with JSON tag are considered
-				if !fieldInfo.HasJSONTag {
+				// Only fields with JSON tag are considered (by default)
+				if !fieldInfo.HasJSONTag && !g.opts.useAllExportedFields {
 					continue
 				}
-				ref, err := g.generateSchemaRefFor(parents, fieldInfo.Type)
+				// If asked, try to use yaml tag
+				name, fType := fieldInfo.JSONName, fieldInfo.Type
+				if !fieldInfo.HasJSONTag && g.opts.useAllExportedFields {
+					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+					if yamlTag := ff.Tag.Get("yaml"); yamlTag != "" {
+						name, fType = yamlTag, ff.Type
+					}
+				}
+
+				ref, err := g.generateSchemaRefFor(parents, fType)
 				if err != nil {
 					return nil, err
 				}
 				if ref != nil {
 					g.SchemaRefs[ref]++
-					schema.WithPropertyRef(fieldInfo.JSONName, ref)
+					schema.WithPropertyRef(name, ref)
 				}
 			}
 

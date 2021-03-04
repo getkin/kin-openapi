@@ -63,7 +63,7 @@ iteration:
 
 		// Read our custom "multijson" tag that
 		// allows multiple fields with the same name.
-		if v := f.Tag.Get("multijson"); len(v) > 0 {
+		if v := f.Tag.Get("multijson"); v != "" {
 			field.MultipleFields = true
 			jsonTag = v
 		}
@@ -74,11 +74,11 @@ iteration:
 		}
 
 		// Parse the tag
-		if len(jsonTag) > 0 {
+		if jsonTag != "" {
 			field.HasJSONTag = true
 			for i, part := range strings.Split(jsonTag, ",") {
 				if i == 0 {
-					if len(part) > 0 {
+					if part != "" {
 						field.JSONName = part
 					}
 				} else {
@@ -92,12 +92,8 @@ iteration:
 			}
 		}
 
-		if _, ok := field.Type.MethodByName("MarshalJSON"); ok {
-			field.TypeIsMarshaller = true
-		}
-		if _, ok := field.Type.MethodByName("UnmarshalJSON"); ok {
-			field.TypeIsUnmarshaller = true
-		}
+		_, field.TypeIsMarshaller = field.Type.MethodByName("MarshalJSON")
+		_, field.TypeIsUnmarshaller = field.Type.MethodByName("UnmarshalJSON")
 
 		// Field is done
 		fields = append(fields, field)
