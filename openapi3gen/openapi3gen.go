@@ -1,4 +1,4 @@
-// Package openapi3gen generates OpenAPI 3 schemas for Go types.
+// Package openapi3gen generates OpenAPIv3 JSON schemas from Go types.
 package openapi3gen
 
 import (
@@ -48,8 +48,7 @@ func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, erro
 }
 
 func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type) (*openapi3.SchemaRef, error) {
-	ref := g.Types[t]
-	if ref != nil {
+	if ref := g.Types[t]; ref != nil {
 		g.SchemaRefs[ref]++
 		return ref, nil
 	}
@@ -62,7 +61,6 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 }
 
 func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflect.Type) (*openapi3.SchemaRef, error) {
-	// Get TypeInfo
 	typeInfo := jsoninfo.GetTypeInfo(t)
 	for _, parent := range parents {
 		if parent == typeInfo {
@@ -70,19 +68,15 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		}
 	}
 
-	// Doesn't exist.
-	// Create the schema.
 	if cap(parents) == 0 {
 		parents = make([]*jsoninfo.TypeInfo, 0, 4)
 	}
 	parents = append(parents, typeInfo)
 
-	// Ignore pointers
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 
-	// Create instance
 	if strings.HasSuffix(t.Name(), "Ref") {
 		_, a := t.FieldByName("Ref")
 		v, b := t.FieldByName("Value")
@@ -104,12 +98,12 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		}
 	}
 
-	// Allocate schema
 	schema := &openapi3.Schema{}
 
 	switch t.Kind() {
 	case reflect.Func, reflect.Chan:
-		return nil, nil
+		return nil, nil // ignore
+
 	case reflect.Bool:
 		schema.Type = "boolean"
 
@@ -128,9 +122,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
 			if t == rawMessageType {
-				return &openapi3.SchemaRef{
-					Value: schema,
-				}, nil
+				return &openapi3.SchemaRef{Value: schema}, nil
 			}
 			schema.Type = "string"
 			schema.Format = "byte"
@@ -183,6 +175,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			}
 		}
 	}
+
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
 }
 

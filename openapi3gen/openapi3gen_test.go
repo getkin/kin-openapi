@@ -33,20 +33,23 @@ func TestSimple(t *testing.T) {
 		Bytes   []byte                   `json:"bytes"`
 		JSON    json.RawMessage          `json:"json"`
 		Time    time.Time                `json:"time"`
-		Slice   []*ExampleChild          `json:"slice"`
+		Slice   []ExampleChild           `json:"slice"`
 		Map     map[string]*ExampleChild `json:"map"`
-		Struct  struct {
+
+		Struct struct {
 			X string `json:"x"`
 		} `json:"struct"`
+
 		EmptyStruct struct {
-			X string
+			Y string
 		} `json:"structWithoutFields"`
+
 		Ptr *ExampleChild `json:"ptr"`
 	}
 
 	schema, refsMap, err := NewSchemaRefForValue(&Example{})
 	require.NoError(t, err)
-	require.Len(t, refsMap, 14)
+	require.Len(t, refsMap, 15)
 	data, err := json.Marshal(schema)
 	require.NoError(t, err)
 	require.JSONEq(t, expectedSimple, string(data))
