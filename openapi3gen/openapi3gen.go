@@ -217,8 +217,8 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 				name, fType := fieldInfo.JSONName, fieldInfo.Type
 				if !fieldInfo.HasJSONTag && g.opts.useAllExportedFields {
 					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
-					if yamlTag := ff.Tag.Get("yaml"); yamlTag != "" {
-						name, fType = yamlTag, ff.Type
+					if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
+						name, fType = tag, ff.Type
 					}
 				}
 
