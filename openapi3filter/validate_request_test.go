@@ -26,7 +26,7 @@ paths:
         content:
           application/json:
             schema:
-              anyOf:
+              oneOf:
               - $ref: '#/components/schemas/Cat'
               - $ref: '#/components/schemas/Dog'
               discriminator:
