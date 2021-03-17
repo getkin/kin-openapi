@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"net/url"
@@ -16,11 +15,10 @@ func Example() {
 	loader := openapi3.NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.SwaggerLoader, uri *url.URL) ([]byte, error) {
-		fmt.Println(uri.Path)
 		return fs.ReadFile(uri.Path)
 	}
 
-	doc, err := loader.LoadSwaggerFromFile("openapi.yml")
+	doc, err := loader.LoadSwaggerFromFile("testdata/recursiveRef/openapi.yml")
 	if err != nil {
 		panic(err)
 	}
@@ -29,6 +27,6 @@ func Example() {
 		panic(err)
 	}
 
-	fmt.Printf("%+v\n", doc.Paths["/foo"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
-	// Output: wip
+	fmt.Println(doc.Paths["/foo"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Properties["foo"].Value.Properties["bar"].Value.Type)
+	// Output: array
 }
