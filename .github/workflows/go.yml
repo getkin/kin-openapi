@@ -23,32 +23,33 @@ jobs:
         shell: bash
     steps:
     - uses: actions/checkout@v2
-    - run: git version
 
     - uses: actions/setup-go@v2
       with:
         go-version: 1.x
-    - run: go version
 
     - run: go mod download && go mod tidy && go mod verify
-    - run: cat go.mod
-    - run: cat go.sum
-    - run: git status --porcelain
-    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - if: runner.os == 'Linux'
+      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go vet ./...
-    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - if: runner.os == 'Linux'
+      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go fmt ./...
-    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - if: runner.os == 'Linux'
+      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go test ./...
-    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - if: runner.os == 'Linux'
+      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
-    - name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
+    - if: runner.os == 'Linux'
+      name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
       run: |
         ! git grep -E '(fmt|errors)[^(]+\(.[A-Z]'
 
-    - name: Did you mean %q
+    - if: runner.os == 'Linux'
+      name: Did you mean %q
       run: |
         ! git grep -E "'[%].'"
