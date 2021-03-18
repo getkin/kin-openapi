@@ -64,7 +64,7 @@ func (server Server) ParameterNames() ([]string, error) {
 		pattern = pattern[i+1:]
 		i = strings.IndexByte(pattern, '}')
 		if i < 0 {
-			return nil, errors.New("Missing '}'")
+			return nil, errors.New("missing '}'")
 		}
 		params = append(params, strings.TrimSpace(pattern[:i]))
 		pattern = pattern[i+1:]
@@ -126,7 +126,7 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 
 func (server *Server) Validate(c context.Context) (err error) {
 	if server.URL == "" {
-		return errors.New("value of url must be a non-empty JSON string")
+		return errors.New("value of url must be a non-empty string")
 	}
 	for _, v := range server.Variables {
 		if err = v.Validate(c); err != nil {
@@ -156,13 +156,13 @@ func (serverVariable *ServerVariable) Validate(c context.Context) error {
 	switch serverVariable.Default.(type) {
 	case float64, string:
 	default:
-		return errors.New("value of default must be either JSON number or JSON string")
+		return errors.New("value of default must be either a number or a string")
 	}
 	for _, item := range serverVariable.Enum {
 		switch item.(type) {
 		case float64, string:
 		default:
-			return errors.New("All 'enum' items must be either a number or a string")
+			return errors.New("all 'enum' items must be either a number or a string")
 		}
 	}
 	return nil

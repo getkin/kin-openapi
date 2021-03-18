@@ -393,10 +393,10 @@ components:
 
 	tests := map[string]string{
 		spec: "",
-		strings.Replace(spec, `openapi: 3.0.2`, ``, 1):            "value of openapi must be a non-empty JSON string",
-		strings.Replace(spec, `openapi: 3.0.2`, `openapi: ''`, 1): "value of openapi must be a non-empty JSON string",
-		strings.Replace(spec, info, ``, 1):                        "invalid info: must be a JSON object",
-		strings.Replace(spec, paths, ``, 1):                       "invalid paths: must be a JSON object",
+		strings.Replace(spec, `openapi: 3.0.2`, ``, 1):            "value of openapi must be a non-empty string",
+		strings.Replace(spec, `openapi: 3.0.2`, `openapi: ''`, 1): "value of openapi must be a non-empty string",
+		strings.Replace(spec, info, ``, 1):                        "invalid info: must be an object",
+		strings.Replace(spec, paths, ``, 1):                       "invalid paths: must be an object",
 	}
 
 	for spec, expectedErr := range tests {

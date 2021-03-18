@@ -33,7 +33,7 @@ func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
 ) ([]byte, error) {
 	source := l.resolveSourceFromURI(location)
 	if source == nil {
-		return nil, fmt.Errorf("Unsupported URI: %q", location.String())
+		return nil, fmt.Errorf("unsupported URI: %q", location.String())
 	}
 	return source, nil
 }

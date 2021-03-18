@@ -120,7 +120,7 @@ func (pathItem *PathItem) GetOperation(method string) *Operation {
 	case http.MethodPut:
 		return pathItem.Put
 	default:
-		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
+		panic(fmt.Errorf("unsupported HTTP method %q", method))
 	}
 }
 
@@ -141,7 +141,7 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	case http.MethodPut:
 		pathItem.Put = operation
 	default:
-		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
+		panic(fmt.Errorf("unsupported HTTP method %q", method))
 	}
 }
 

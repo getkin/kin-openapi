@@ -109,7 +109,7 @@ components:
 `
 
 	_, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
-	require.EqualError(t, err, `invalid response: value MUST be a JSON object`)
+	require.EqualError(t, err, `invalid response: value MUST be an object`)
 }
 
 func TestIssue247(t *testing.T) {

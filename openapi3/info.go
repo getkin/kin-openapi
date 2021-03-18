@@ -40,11 +40,11 @@ func (value *Info) Validate(c context.Context) error {
 	}
 
 	if value.Version == "" {
-		return errors.New("value of version must be a non-empty JSON string")
+		return errors.New("value of version must be a non-empty string")
 	}
 
 	if value.Title == "" {
-		return errors.New("value of title must be a non-empty JSON string")
+		return errors.New("value of title must be a non-empty string")
 	}
 
 	return nil
@@ -87,7 +87,7 @@ func (value *License) UnmarshalJSON(data []byte) error {
 
 func (value *License) Validate(c context.Context) error {
 	if value.Name == "" {
-		return errors.New("value of license name must be a non-empty JSON string")
+		return errors.New("value of license name must be a non-empty string")
 	}
 	return nil
 }

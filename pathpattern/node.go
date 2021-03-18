@@ -212,7 +212,7 @@ loop:
 				// Find variable name
 				i := strings.IndexByte(remaining, '}')
 				if i < 0 {
-					return nil, fmt.Errorf("Missing '}' in: %s", path)
+					return nil, fmt.Errorf("missing '}' in: %s", path)
 				}
 				variableName := strings.TrimSpace(remaining[1:i])
 				remaining = remaining[i+1:]
@@ -247,7 +247,7 @@ loop:
 		if suffix.Kind == SuffixKindRegExp {
 			regExp, err := regexp.Compile(suffix.Pattern)
 			if err != nil {
-				return nil, fmt.Errorf("Invalid regular expression in: %s", path)
+				return nil, fmt.Errorf("invalid regular expression in: %s", path)
 			}
 			suffix.regExp = regExp
 		}

@@ -23,15 +23,15 @@ var (
 	//SchemaFormatValidationDisabled disables validation of schema type formats.
 	SchemaFormatValidationDisabled = false
 
-	errSchema = errors.New("Input does not match the schema")
+	errSchema = errors.New("input does not match the schema")
 
 	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
 	ErrOneOfConflict = errors.New("input matches more than one oneOf schemas")
 
 	// ErrSchemaInputNaN may be returned when validating a number
-	ErrSchemaInputNaN = errors.New("NaN is not allowed")
+	ErrSchemaInputNaN = errors.New("floating point NaN is not allowed")
 	// ErrSchemaInputInf may be returned when validating a number
-	ErrSchemaInputInf = errors.New("Inf is not allowed")
+	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
 )
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
@@ -591,7 +591,7 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 	stack = append(stack, schema)
 
 	if schema.ReadOnly && schema.WriteOnly {
-		return errors.New("A property MUST NOT be marked as both readOnly and writeOnly being true")
+		return errors.New("a property MUST NOT be marked as both readOnly and writeOnly being true")
 	}
 
 	for _, item := range schema.OneOf {
@@ -678,11 +678,11 @@ func (schema *Schema) validate(c context.Context, stack []*Schema) (err error) {
 		}
 	case "array":
 		if schema.Items == nil {
-			return errors.New("When schema type is 'array', schema 'items' must be non-null")
+			return errors.New("when schema type is 'array', schema 'items' must be non-null")
 		}
 	case "object":
 	default:
-		return fmt.Errorf("Unsupported 'type' value '%s'", schemaType)
+		return fmt.Errorf("unsupported 'type' value %q", schemaType)
 	}
 
 	if ref := schema.Items; ref != nil {
@@ -791,7 +791,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "type",
-			Reason:      fmt.Sprintf("Not a JSON value: %T", value),
+			Reason:      fmt.Sprintf("unhandled value of type %T", value),
 		}
 	}
 }
@@ -810,7 +810,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "enum",
-			Reason:      "JSON value is not one of the allowed values",
+			Reason:      "value is not one of the allowed values",
 		}
 	}
 
@@ -994,7 +994,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "exclusiveMinimum",
-			Reason:      fmt.Sprintf("Number must be more than %g", *schema.Min),
+			Reason:      fmt.Sprintf("number must be more than %g", *schema.Min),
 		}
 		if !settings.multiError {
 			return err
@@ -1011,7 +1011,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "exclusiveMaximum",
-			Reason:      fmt.Sprintf("Number must be less than %g", *schema.Max),
+			Reason:      fmt.Sprintf("number must be less than %g", *schema.Max),
 		}
 		if !settings.multiError {
 			return err
@@ -1028,7 +1028,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "minimum",
-			Reason:      fmt.Sprintf("Number must be at least %g", *v),
+			Reason:      fmt.Sprintf("number must be at least %g", *v),
 		}
 		if !settings.multiError {
 			return err
@@ -1045,7 +1045,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "maximum",
-			Reason:      fmt.Sprintf("Number must be most %g", *v),
+			Reason:      fmt.Sprintf("number must be most %g", *v),
 		}
 		if !settings.multiError {
 			return err
@@ -1113,7 +1113,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "minLength",
-				Reason:      fmt.Sprintf("Minimum string length is %d", minLength),
+				Reason:      fmt.Sprintf("minimum string length is %d", minLength),
 			}
 			if !settings.multiError {
 				return err
@@ -1128,7 +1128,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "maxLength",
-				Reason:      fmt.Sprintf("Maximum string length is %d", *maxLength),
+				Reason:      fmt.Sprintf("maximum string length is %d", *maxLength),
 			}
 			if !settings.multiError {
 				return err
@@ -1158,7 +1158,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "pattern",
-			Reason:      fmt.Sprintf("JSON string doesn't match the regular expression %q", schema.Pattern),
+			Reason:      fmt.Sprintf("string doesn't match the regular expression %q", schema.Pattern),
 		}
 		if !settings.multiError {
 			return err
@@ -1173,7 +1173,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			switch {
 			case f.regexp != nil && f.callback == nil:
 				if cp := f.regexp; !cp.MatchString(value) {
-					formatErr = fmt.Sprintf("JSON string doesn't match the format %q (regular expression %q)", format, cp.String())
+					formatErr = fmt.Sprintf("string doesn't match the format %q (regular expression %q)", format, cp.String())
 				}
 			case f.regexp == nil && f.callback != nil:
 				if err := f.callback(value); err != nil {
@@ -1228,7 +1228,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "minItems",
-			Reason:      fmt.Sprintf("Minimum number of items is %d", v),
+			Reason:      fmt.Sprintf("minimum number of items is %d", v),
 		}
 		if !settings.multiError {
 			return err
@@ -1245,7 +1245,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "maxItems",
-			Reason:      fmt.Sprintf("Maximum number of items is %d", *v),
+			Reason:      fmt.Sprintf("maximum number of items is %d", *v),
 		}
 		if !settings.multiError {
 			return err
@@ -1265,7 +1265,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "uniqueItems",
-			Reason:      fmt.Sprintf("Duplicate items found"),
+			Reason:      fmt.Sprintf("duplicate items found"),
 		}
 		if !settings.multiError {
 			return err
@@ -1326,7 +1326,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "minProperties",
-			Reason:      fmt.Sprintf("There must be at least %d properties", v),
+			Reason:      fmt.Sprintf("there must be at least %d properties", v),
 		}
 		if !settings.multiError {
 			return err
@@ -1343,7 +1343,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "maxProperties",
-			Reason:      fmt.Sprintf("There must be at most %d properties", *v),
+			Reason:      fmt.Sprintf("there must be at most %d properties", *v),
 		}
 		if !settings.multiError {
 			return err
@@ -1408,7 +1408,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "properties",
-			Reason:      fmt.Sprintf("Property '%s' is unsupported", k),
+			Reason:      fmt.Sprintf("property %q is unsupported", k),
 		}
 		if !settings.multiError {
 			return err
@@ -1432,7 +1432,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				Value:       value,
 				Schema:      schema,
 				SchemaField: "required",
-				Reason:      fmt.Sprintf("Property '%s' is missing", k),
+				Reason:      fmt.Sprintf("property %q is missing", k),
 			}, k)
 			if !settings.multiError {
 				return err
@@ -1572,5 +1572,5 @@ func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker) {
 }
 
 func unsupportedFormat(format string) error {
-	return fmt.Errorf("Unsupported 'format' value '%s'", format)
+	return fmt.Errorf("unsupported 'format' value %q", format)
 }

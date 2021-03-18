@@ -12,6 +12,13 @@ import (
 	"github.com/getkin/kin-openapi/pathpattern"
 )
 
+// ErrPathNotFound is returned when no route match is found
+var ErrPathNotFound = errors.New("no matching operation was found")
+
+// ErrMethodNotAllowed is returned when no method of the matched route matches
+var ErrMethodNotAllowed = errors.New("method not allowed")
+
+// Route describes the operation an http.Request can match
 type Route struct {
 	Swagger   *openapi3.Swagger
 	Server    *openapi3.Server
@@ -27,6 +34,7 @@ type Route struct {
 // Routers maps a HTTP request to a Router.
 type Routers []*Router
 
+// FindRoute extracts the route and parameters of an http.Request
 func (routers Routers) FindRoute(method string, url *url.URL) (*Router, *Route, map[string]string, error) {
 	for _, router := range routers {
 		// Skip routers that have DO NOT have servers
@@ -97,7 +105,7 @@ func (router *Router) AddSwaggerFromFile(path string) error {
 // AddSwagger adds all operations in the OpenAPI specification.
 func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
 	if err := swagger.Validate(context.TODO()); err != nil {
-		return fmt.Errorf("Validating Swagger failed: %v", err)
+		return fmt.Errorf("validating OpenAPI failed: %v", err)
 	}
 	router.swagger = swagger
 	root := router.node()
@@ -122,12 +130,12 @@ func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
 func (router *Router) AddRoute(route *Route) error {
 	method := route.Method
 	if method == "" {
-		return errors.New("Route is missing method")
+		return errors.New("route is missing method")
 	}
 	method = strings.ToUpper(method)
 	path := route.Path
 	if path == "" {
-		return errors.New("Route is missing path")
+		return errors.New("route is missing path")
 	}
 	return router.node().Add(method+" "+path, router, nil)
 }
@@ -141,6 +149,7 @@ func (router *Router) node() *pathpattern.Node {
 	return root
 }
 
+// FindRoute extracts the route and parameters of an http.Request
 func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string]string, error) {
 	swagger := router.swagger
 
@@ -159,7 +168,7 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 				Route: Route{
 					Swagger: swagger,
 				},
-				Reason: "Does not match any server",
+				Reason: ErrPathNotFound.Error(),
 			}
 		}
 		pathParams = make(map[string]string, 8)
@@ -185,7 +194,7 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 					Swagger: swagger,
 					Server:  server,
 				},
-				Reason: "Path was not found",
+				Reason: ErrPathNotFound.Error(),
 			}
 		}
 
@@ -196,7 +205,7 @@ func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string
 					Swagger: swagger,
 					Server:  server,
 				},
-				Reason: "Path doesn't support the HTTP method",
+				Reason: ErrMethodNotAllowed.Error(),
 			}
 		}
 

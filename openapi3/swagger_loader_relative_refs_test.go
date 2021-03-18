@@ -196,7 +196,7 @@ var refTestDataEntriesResponseError = []refTestDataEntryWithErrorMessage{
 
 func TestLoadFromDataWithExternalRef(t *testing.T) {
 	for _, td := range refTestDataEntries {
-		t.Logf("testcase '%s'", td.name)
+		t.Logf("testcase %q", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
 		loader := NewSwaggerLoader()
@@ -209,7 +209,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 
 func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 	for _, td := range refTestDataEntriesResponseError {
-		t.Logf("testcase '%s'", td.name)
+		t.Logf("testcase %q", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
 		loader := NewSwaggerLoader()
@@ -222,7 +222,7 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 
 func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 	for _, td := range refTestDataEntries {
-		t.Logf("testcase '%s'", td.name)
+		t.Logf("testcase %q", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
 		loader := NewSwaggerLoader()
@@ -801,7 +801,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 
 func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 	for _, td := range relativeDocRefsTestDataEntries {
-		t.Logf("testcase '%s'", td.name)
+		t.Logf("testcase %q", td.name)
 
 		spec := []byte(td.contentTemplate)
 		loader := NewSwaggerLoader()

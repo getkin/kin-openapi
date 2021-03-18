@@ -48,7 +48,7 @@ func (swagger *Swagger) AddServer(server *Server) {
 
 func (swagger *Swagger) Validate(c context.Context) error {
 	if swagger.OpenAPI == "" {
-		return errors.New("value of openapi must be a non-empty JSON string")
+		return errors.New("value of openapi must be a non-empty string")
 	}
 
 	// NOTE: only mention info/components/paths/... key in this func's errors.
@@ -67,7 +67,7 @@ func (swagger *Swagger) Validate(c context.Context) error {
 				return wrap(err)
 			}
 		} else {
-			return wrap(errors.New("must be a JSON object"))
+			return wrap(errors.New("must be an object"))
 		}
 	}
 
@@ -78,7 +78,7 @@ func (swagger *Swagger) Validate(c context.Context) error {
 				return wrap(err)
 			}
 		} else {
-			return wrap(errors.New("must be a JSON object"))
+			return wrap(errors.New("must be an object"))
 		}
 	}
 

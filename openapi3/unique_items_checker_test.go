@@ -32,5 +32,5 @@ func TestRegisterArrayUniqueItemsChecker(t *testing.T) {
 
 	err = schema.VisitJSON(val)
 	require.Error(t, err)
-	require.True(t, strings.HasPrefix(err.Error(), "Duplicate items found"))
+	require.True(t, strings.HasPrefix(err.Error(), "duplicate items found"))
 }

@@ -64,7 +64,7 @@ components:
         properties:
           base64:
             type: string
-      
+
     objB:
       allOf:
       - $ref: '#/components/schemas/genericObj'
@@ -77,7 +77,7 @@ components:
 func forgeRequest(body string) *http.Request {
 	iobody := bytes.NewReader([]byte(body))
 	req, _ := http.NewRequest("PUT", "/blob", iobody)
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add(headerCT, "application/json")
 	return req
 }
 
