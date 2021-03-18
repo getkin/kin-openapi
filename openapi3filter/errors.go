@@ -6,19 +6,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// ErrPathNotFound is returned when no route match is found
-var ErrPathNotFound error = &RouteError{"no matching operation was found"}
-
-// ErrMethodNotAllowed is returned when no method of the matched route matches
-var ErrMethodNotAllowed error = &RouteError{"method not allowed"}
-
-// RouteError describes Router errors
-type RouteError struct {
-	Reason string
-}
-
-func (e *RouteError) Error() string { return e.Reason }
-
 var _ error = &RequestError{}
 
 // RequestError is returned by ValidateRequest when request does not match OpenAPI spec

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -78,7 +79,7 @@ components:
 	doc, err := loader.LoadSwaggerFromData([]byte(spec))
 	require.NoError(t, err)
 
-	router, err := NewRouter(doc)
+	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
 	body := bytes.NewReader([]byte(`{"discr": "objA", "base64": "S25vY2sgS25vY2ssIE5lbyAuLi4="}`))

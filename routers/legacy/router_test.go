@@ -1,4 +1,4 @@
-package openapi3filter
+package legacy
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +45,7 @@ func TestRouter(t *testing.T) {
 			"/onlyGET": &openapi3.PathItem{
 				Get: helloGET,
 			},
-			"/params/{x}/{y}/{z:.*}": &openapi3.PathItem{
+			"/params/{x}/{y}/{z.*}": &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x")},
@@ -70,7 +71,7 @@ func TestRouter(t *testing.T) {
 		},
 	}
 
-	expect := func(r *Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
+	expect := func(r routers.Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
 		req, err := http.NewRequest(method, uri, nil)
 		require.NoError(t, err)
 		route, pathParams, err := r.FindRoute(req)
@@ -78,14 +79,14 @@ func TestRouter(t *testing.T) {
 			if operation == nil {
 				pathItem := doc.Paths[uri]
 				if pathItem == nil {
-					if err.Error() != ErrPathNotFound.Error() {
-						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, ErrPathNotFound, err)
+					if err.Error() != routers.ErrPathNotFound.Error() {
+						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrPathNotFound, err)
 					}
 					return
 				}
 				if pathItem.GetOperation(method) == nil {
-					if err.Error() != ErrMethodNotAllowed.Error() {
-						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, ErrMethodNotAllowed, err)
+					if err.Error() != routers.ErrMethodNotAllowed.Error() {
+						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrMethodNotAllowed, err)
 					}
 				}
 			} else {
@@ -140,19 +141,22 @@ func TestRouter(t *testing.T) {
 	expect(r, http.MethodGet, "/params/a/b/", paramsGET, map[string]string{
 		"x": "a",
 		"y": "b",
-		"z": "",
+		// "z": "",
 	})
 	expect(r, http.MethodGet, "/params/a/b/c%2Fd", paramsGET, map[string]string{
 		"x": "a",
 		"y": "b",
-		"z": "c/d",
+		// "z": "c/d",
 	})
 	expect(r, http.MethodGet, "/books/War.and.Peace", paramsGET, map[string]string{
 		"bookid": "War.and.Peace",
 	})
-	expect(r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
-		"bookid2": "War.and.Peace",
-	})
+	{
+		req, err := http.NewRequest(http.MethodPost, "/books/War.and.Peace.json", nil)
+		require.NoError(t, err)
+		_, _, err = r.FindRoute(req)
+		require.EqualError(t, err, routers.ErrPathNotFound.Error())
+	}
 	expect(r, http.MethodPost, "/partial", nil, nil)
 
 	doc.Servers = []*openapi3.Server{
@@ -181,7 +185,7 @@ func TestRouter(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		route, pathParams, err := r.FindRoute(req)
-		require.EqualError(t, err, ErrMethodNotAllowed.Error())
+		require.EqualError(t, err, routers.ErrMethodNotAllowed.Error())
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}

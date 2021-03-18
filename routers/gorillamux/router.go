@@ -1,4 +1,10 @@
-package openapi3filter
+// package gorillamux implements a router.
+//
+// It differs from the legacy router:
+// * it provides somewhat granular errors: "path not found", "method not allowed". FIXME: https://pkg.go.dev/github.com/gorilla/handlers?utm_source=godoc#MethodHandler
+// * it handles matching routes with extensions (e.g. /books/{id}.json)
+// * it handles path patterns with a different syntax (e.g. /params/{x}/{y}/{z:.*})
+package gorillamux
 
 import (
 	"net/http"
@@ -7,29 +13,20 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 	"github.com/gorilla/mux"
 )
-
-// Route describes the operation an http.Request can match
-type Route struct {
-	Swagger   *openapi3.Swagger
-	Server    *openapi3.Server
-	Path      string
-	PathItem  *openapi3.PathItem
-	Method    string
-	Operation *openapi3.Operation
-}
 
 // Router helps link http.Request.s and an OpenAPIv3 spec
 type Router struct {
 	muxes  []*mux.Route
-	routes []*Route
+	routes []*routers.Route
 }
 
 // NewRouter creates a gorilla/mux router.
 // Assumes spec is .Validate()d
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
-func NewRouter(doc *openapi3.Swagger) (*Router, error) {
+func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 	type srv struct {
 		scheme, host, base string
 		server             *openapi3.Server
@@ -71,7 +68,7 @@ func NewRouter(doc *openapi3.Swagger) (*Router, error) {
 					return nil, err
 				}
 				r.muxes = append(r.muxes, muxRoute)
-				r.routes = append(r.routes, &Route{
+				r.routes = append(r.routes, &routers.Route{
 					Swagger:   doc,
 					Server:    s.server,
 					Path:      path,
@@ -86,7 +83,7 @@ func NewRouter(doc *openapi3.Swagger) (*Router, error) {
 }
 
 // FindRoute extracts the route and parameters of an http.Request
-func (r *Router) FindRoute(req *http.Request) (*Route, map[string]string, error) {
+func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string, error) {
 	for i, muxRoute := range r.muxes {
 		var match mux.RouteMatch
 		if muxRoute.Match(req, &match) {
@@ -96,7 +93,7 @@ func (r *Router) FindRoute(req *http.Request) (*Route, map[string]string, error)
 			return r.routes[i], match.Vars, nil
 		}
 	}
-	return nil, nil, ErrPathNotFound
+	return nil, nil, routers.ErrPathNotFound
 }
 
 func orderedPaths(paths map[string]*openapi3.PathItem) []string {

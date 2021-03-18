@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 type AuthenticationFunc func(context.Context, *AuthenticationInput) error
@@ -18,7 +20,7 @@ type ValidationHandler struct {
 	AuthenticationFunc AuthenticationFunc
 	SwaggerFile        string
 	ErrorEncoder       ErrorEncoder
-	router             *Router
+	router             routers.Router
 }
 
 func (h *ValidationHandler) Load() error {
@@ -30,7 +32,7 @@ func (h *ValidationHandler) Load() error {
 	if err := doc.Validate(loader.Context); err != nil {
 		return err
 	}
-	if h.router, err = NewRouter(doc); err != nil {
+	if h.router, err = legacyrouter.NewRouter(doc); err != nil {
 		return err
 	}
 

@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -156,7 +157,7 @@ func TestFilter(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	router, err := NewRouter(doc)
+	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 	expectWithDecoder := func(req ExampleRequest, resp ExampleResponse, decoder ContentParameterDecoder) error {
 		t.Logf("Request: %s %s", req.Method, req.URL)
@@ -571,7 +572,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	router, err := NewRouter(doc)
+	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
 	// Test each case
@@ -702,7 +703,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	router, err := NewRouter(&doc)
+	router, err := legacyrouter.NewRouter(&doc)
 	require.NoError(t, err)
 
 	// Create the authentication function
@@ -804,7 +805,7 @@ func TestAllSchemesMet(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	router, err := NewRouter(&doc)
+	router, err := legacyrouter.NewRouter(&doc)
 	require.NoError(t, err)
 
 	// Create the authentication function

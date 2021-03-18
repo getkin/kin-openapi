@@ -8,6 +8,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 const spec = `
@@ -72,7 +73,7 @@ func Example() {
 		panic(err)
 	}
 
-	router, err := openapi3filter.NewRouter(doc)
+	router, err := legacyrouter.NewRouter(doc)
 	if err != nil {
 		panic(err)
 	}

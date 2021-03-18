@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 	"github.com/stretchr/testify/require"
 )
 
@@ -87,27 +88,27 @@ func getValidationTests(t *testing.T) []*validationTest {
 			args: validationArgs{
 				r: badHost,
 			},
-			wantErrReason:   ErrPathNotFound.Error(),
-			wantErrResponse: &ValidationError{Status: http.StatusNotFound, Title: ErrPathNotFound.Error()},
+			wantErrReason:   routers.ErrPathNotFound.Error(),
+			wantErrResponse: &ValidationError{Status: http.StatusNotFound, Title: routers.ErrPathNotFound.Error()},
 		},
 		{
 			name: "error - unknown path",
 			args: validationArgs{
 				r: badPath,
 			},
-			wantErrReason:   ErrPathNotFound.Error(),
-			wantErrResponse: &ValidationError{Status: http.StatusNotFound, Title: ErrPathNotFound.Error()},
+			wantErrReason:   routers.ErrPathNotFound.Error(),
+			wantErrResponse: &ValidationError{Status: http.StatusNotFound, Title: routers.ErrPathNotFound.Error()},
 		},
 		{
 			name: "error - unknown method",
 			args: validationArgs{
 				r: badMethod,
 			},
-			wantErrReason: ErrMethodNotAllowed.Error(),
+			wantErrReason: routers.ErrMethodNotAllowed.Error(),
 			// TODO: By HTTP spec, this should have an Allow header with what is allowed
 			// but kin-openapi doesn't provide us the requested method or path, so impossible to provide details
 			wantErrResponse: &ValidationError{Status: http.StatusMethodNotAllowed,
-				Title: ErrMethodNotAllowed.Error()},
+				Title: routers.ErrMethodNotAllowed.Error()},
 		},
 		{
 			name: "error - missing body on POST",
@@ -466,7 +467,7 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 					req.Equal(tt.wantErrBody, err.Error())
 				}
 
-				if e, ok := err.(*RouteError); ok {
+				if e, ok := err.(*routers.RouteError); ok {
 					req.Equal(tt.wantErrReason, e.Error())
 					return
 				}

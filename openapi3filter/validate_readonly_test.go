@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,7 +70,7 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
-	router, err := NewRouter(doc)
+	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
 	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
