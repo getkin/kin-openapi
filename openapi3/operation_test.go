@@ -53,7 +53,7 @@ func TestOperationValidation(t *testing.T) {
 		{
 			"when no Responses object is provided",
 			operationWithoutResponses(),
-			errors.New("value of responses must be a JSON object"),
+			errors.New("value of responses must be an object"),
 		},
 		{
 			"when a Responses object is provided",

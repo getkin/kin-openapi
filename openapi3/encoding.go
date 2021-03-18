@@ -86,7 +86,7 @@ func (encoding *Encoding) Validate(c context.Context) error {
 		sm.Style == SerializationDeepObject && sm.Explode:
 		// it is a valid
 	default:
-		return fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by media type", sm.Style, sm.Explode)
+		return fmt.Errorf("serialization method with style=%q and explode=%v is not supported by media type", sm.Style, sm.Explode)
 	}
 
 	return nil

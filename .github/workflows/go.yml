@@ -14,8 +14,9 @@ jobs:
       matrix:
         # Locked at https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
         os:
-        - ubuntu-18.04
+        - ubuntu-20.04
         - windows-2019
+        - macos-10.15
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -40,3 +41,10 @@ jobs:
     - run: go test ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
       shell: bash
+
+    - name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
+      run: "! git grep -E '(fmt|errors)[^(]+\(.[A-Z]'"
+
+    - name: Did you mean %q
+      run: |
+        ! git grep -E "'[%].'"

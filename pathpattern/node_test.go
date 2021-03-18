@@ -36,11 +36,11 @@ func TestPatterns(t *testing.T) {
 			}
 		}
 		if actually != expected {
-			t.Fatalf("Wrong path!\nInput: %s\nExpected: '%s'\nActually: '%s'\nTree:\n%s\n\n", uri, expected, actually, rootNode.String())
+			t.Fatalf("Wrong path!\nInput: %s\nExpected: %q\nActually: %q\nTree:\n%s\n\n", uri, expected, actually, rootNode.String())
 			return
 		}
 		if !argsEqual(expectedArgs, actualArgs) {
-			t.Fatalf("Wrong variable values!\nInput: %s\nExpected: '%s'\nActually: '%s'\nTree:\n%s\n\n", uri, expectedArgs, actualArgs, rootNode.String())
+			t.Fatalf("Wrong variable values!\nInput: %s\nExpected: %q\nActually: %q\nTree:\n%s\n\n", uri, expectedArgs, actualArgs, rootNode.String())
 			return
 		}
 	}

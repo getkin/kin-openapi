@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -17,10 +16,8 @@ type ValidationErrorEncoder struct {
 
 // Encode implements the ErrorEncoder interface for encoding ValidationErrors
 func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http.ResponseWriter) {
-	var cErr *ValidationError
-
 	if e, ok := err.(*RouteError); ok {
-		cErr = convertRouteError(e)
+		cErr := convertRouteError(e)
 		enc.Encoder(ctx, cErr, w)
 		return
 	}
@@ -31,6 +28,7 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 		return
 	}
 
+	var cErr *ValidationError
 	if e.Err == nil {
 		cErr = convertBasicRequestError(e)
 	} else if e.Err == ErrInvalidRequired {
@@ -43,94 +41,79 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 
 	if cErr != nil {
 		enc.Encoder(ctx, cErr, w)
-	} else {
-		enc.Encoder(ctx, err, w)
+		return
 	}
+	enc.Encoder(ctx, err, w)
 }
 
 func convertRouteError(e *RouteError) *ValidationError {
-	var cErr *ValidationError
-	switch e.Reason {
-	case "Path doesn't support the HTTP method":
-		cErr = &ValidationError{Status: http.StatusMethodNotAllowed, Title: e.Reason}
-	default:
-		cErr = &ValidationError{Status: http.StatusNotFound, Title: e.Reason}
+	status := http.StatusNotFound
+	if e.Reason == ErrMethodNotAllowed.Error() {
+		status = http.StatusMethodNotAllowed
 	}
-	return cErr
+	return &ValidationError{Status: status, Title: e.Reason}
 }
 
 func convertBasicRequestError(e *RequestError) *ValidationError {
-	var cErr *ValidationError
-	unsupportedContentType := "header 'Content-Type' has unexpected value: "
-	if strings.HasPrefix(e.Reason, unsupportedContentType) {
-		if strings.HasSuffix(e.Reason, `: ""`) {
-			cErr = &ValidationError{
+	if strings.HasPrefix(e.Reason, prefixInvalidCT) {
+		if strings.HasSuffix(e.Reason, `""`) {
+			return &ValidationError{
 				Status: http.StatusUnsupportedMediaType,
-				Title:  "header 'Content-Type' is required",
-			}
-		} else {
-			cErr = &ValidationError{
-				Status: http.StatusUnsupportedMediaType,
-				Title:  "unsupported content type " + strings.TrimPrefix(e.Reason, unsupportedContentType),
+				Title:  "header Content-Type is required",
 			}
 		}
-	} else {
-		cErr = &ValidationError{
-			Status: http.StatusBadRequest,
-			Title:  e.Error(),
+		return &ValidationError{
+			Status: http.StatusUnsupportedMediaType,
+			Title:  prefixUnsupportedCT + strings.TrimPrefix(e.Reason, prefixInvalidCT),
 		}
 	}
-	return cErr
+	return &ValidationError{
+		Status: http.StatusBadRequest,
+		Title:  e.Error(),
+	}
 }
 
 func convertErrInvalidRequired(e *RequestError) *ValidationError {
-	var cErr *ValidationError
 	if e.Reason == ErrInvalidRequired.Error() && e.Parameter != nil {
-		cErr = &ValidationError{
+		return &ValidationError{
 			Status: http.StatusBadRequest,
-			Title:  fmt.Sprintf("Parameter '%s' in %s is required", e.Parameter.Name, e.Parameter.In),
-		}
-	} else {
-		cErr = &ValidationError{
-			Status: http.StatusBadRequest,
-			Title:  e.Error(),
+			Title:  fmt.Sprintf("parameter %q in %s is required", e.Parameter.Name, e.Parameter.In),
 		}
 	}
-	return cErr
+	return &ValidationError{
+		Status: http.StatusBadRequest,
+		Title:  e.Error(),
+	}
 }
 
 func convertParseError(e *RequestError, innerErr *ParseError) *ValidationError {
-	var cErr *ValidationError
 	// We treat path params of the wrong type like a 404 instead of a 400
 	if innerErr.Kind == KindInvalidFormat && e.Parameter != nil && e.Parameter.In == "path" {
-		cErr = &ValidationError{
+		return &ValidationError{
 			Status: http.StatusNotFound,
-			Title:  fmt.Sprintf("Resource not found with '%s' value: %v", e.Parameter.Name, innerErr.Value),
+			Title:  fmt.Sprintf("resource not found with %q value: %v", e.Parameter.Name, innerErr.Value),
 		}
-	} else if strings.HasPrefix(innerErr.Reason, "unsupported content type") {
-		cErr = &ValidationError{
+	} else if strings.HasPrefix(innerErr.Reason, prefixUnsupportedCT) {
+		return &ValidationError{
 			Status: http.StatusUnsupportedMediaType,
 			Title:  innerErr.Reason,
 		}
 	} else if innerErr.RootCause() != nil {
 		if rootErr, ok := innerErr.Cause.(*ParseError); ok &&
 			rootErr.Kind == KindInvalidFormat && e.Parameter.In == "query" {
-			cErr = &ValidationError{
+			return &ValidationError{
 				Status: http.StatusBadRequest,
-				Title: fmt.Sprintf("Parameter '%s' in %s is invalid: %v is %s",
+				Title: fmt.Sprintf("parameter %q in %s is invalid: %v is %s",
 					e.Parameter.Name, e.Parameter.In, rootErr.Value, rootErr.Reason),
 			}
-		} else {
-			cErr = &ValidationError{
-				Status: http.StatusBadRequest,
-				Title:  innerErr.Reason,
-			}
+		}
+		return &ValidationError{
+			Status: http.StatusBadRequest,
+			Title:  innerErr.Reason,
 		}
 	}
-	return cErr
+	return nil
 }
-
-var propertyMissingNameRE = regexp.MustCompile(`Property '(?P<name>[^']*)' is missing`)
 
 func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *ValidationError {
 	cErr := &ValidationError{Title: innerErr.Reason}
@@ -151,34 +134,32 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 	if e.Parameter != nil {
 		// We have a JSONPointer in the query param too so need to
 		// make sure 'Parameter' check takes priority over 'Pointer'
-		cErr.Source = &ValidationErrorSource{
-			Parameter: e.Parameter.Name,
-		}
-	} else if innerErr.JSONPointer() != nil {
-		pointer := innerErr.JSONPointer()
-
-		cErr.Source = &ValidationErrorSource{
-			Pointer: toJSONPointer(pointer),
-		}
+		cErr.Source = &ValidationErrorSource{Parameter: e.Parameter.Name}
+	} else if ptr := innerErr.JSONPointer(); ptr != nil {
+		cErr.Source = &ValidationErrorSource{Pointer: toJSONPointer(ptr)}
 	}
 
 	// Add details on allowed values for enums
-	if innerErr.SchemaField == "enum" &&
-		innerErr.Reason == "JSON value is not one of the allowed values" {
+	if innerErr.SchemaField == "enum" {
+		//FIXME?&&		innerErr.Reason == "value is not one of the allowed values" {
 		enums := make([]string, 0, len(innerErr.Schema.Enum))
 		for _, enum := range innerErr.Schema.Enum {
 			enums = append(enums, fmt.Sprintf("%v", enum))
 		}
-		cErr.Detail = fmt.Sprintf("Value '%v' at %s must be one of: %s",
-			innerErr.Value, toJSONPointer(innerErr.JSONPointer()), strings.Join(enums, ", "))
+		cErr.Detail = fmt.Sprintf("value %v at %s must be one of: %s",
+			innerErr.Value,
+			toJSONPointer(innerErr.JSONPointer()),
+			strings.Join(enums, ", "))
 		value := fmt.Sprintf("%v", innerErr.Value)
 		if e.Parameter != nil &&
 			(e.Parameter.Explode == nil || *e.Parameter.Explode == true) &&
 			(e.Parameter.Style == "" || e.Parameter.Style == "form") &&
 			strings.Contains(value, ",") {
 			parts := strings.Split(value, ",")
-			cErr.Detail = cErr.Detail + "; " + fmt.Sprintf("perhaps you intended '?%s=%s'",
-				e.Parameter.Name, strings.Join(parts, "&"+e.Parameter.Name+"="))
+			cErr.Detail = fmt.Sprintf("%s; perhaps you intended '?%s=%s'",
+				cErr.Detail,
+				e.Parameter.Name,
+				strings.Join(parts, "&"+e.Parameter.Name+"="))
 		}
 	}
 	return cErr

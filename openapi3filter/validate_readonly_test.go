@@ -65,16 +65,18 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	}
 
 	sl := openapi3.NewSwaggerLoader()
-	l, err := sl.LoadSwaggerFromData([]byte(spec))
+	doc, err := sl.LoadSwaggerFromData([]byte(spec))
 	require.NoError(t, err)
-	router := NewRouter().WithSwagger(l)
+	err = doc.Validate(sl.Context)
+	require.NoError(t, err)
+	router := NewRouter().WithSwagger(doc)
 
 	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
 	require.NoError(t, err)
 
 	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
 	require.NoError(t, err)
-	httpReq.Header.Add("Content-Type", "application/json")
+	httpReq.Header.Add(headerCT, "application/json")
 
 	route, pathParams, err := router.FindRoute(httpReq.Method, httpReq.URL)
 	require.NoError(t, err)

@@ -24,13 +24,6 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		return nil
 	}
 	status := input.Status
-	if status < 100 {
-		return &ResponseError{
-			Input:  input,
-			Reason: "illegal status code",
-			Err:    fmt.Errorf("Status %d", status),
-		}
-	}
 
 	// These status codes will never be validated.
 	// TODO: The list is probably missing some.
@@ -61,7 +54,6 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		if !options.IncludeResponseStatus {
 			return nil
 		}
-
 		return &ResponseError{Input: input, Reason: "status is not supported"}
 	}
 	response := responseRef.Value
@@ -80,12 +72,12 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		return nil
 	}
 
-	inputMIME := input.Header.Get("Content-Type")
+	inputMIME := input.Header.Get(headerCT)
 	contentType := content.Get(inputMIME)
 	if contentType == nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: fmt.Sprintf("input header 'Content-Type' has unexpected value: %q", inputMIME),
+			Reason: fmt.Sprintf("input header Content-Type has unexpected value: %q", inputMIME),
 		}
 	}
 

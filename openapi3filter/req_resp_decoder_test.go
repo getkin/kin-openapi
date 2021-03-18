@@ -2,6 +2,7 @@ package openapi3filter
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -903,20 +904,9 @@ func TestDecodeParameter(t *testing.T) {
 						req.AddCookie(&http.Cookie{Name: v[0], Value: v[1]})
 					}
 
-					var path string
+					path := "/test"
 					if tc.path != "" {
-						switch tc.param.Style {
-						case "label":
-							path = "." + tc.param.Name
-						case "matrix":
-							path = ";" + tc.param.Name
-						default:
-							path = tc.param.Name
-						}
-						if tc.param.Explode != nil && *tc.param.Explode {
-							path += "*"
-						}
-						path = "/{" + path + "}"
+						path += "/{" + tc.param.Name + "}"
 					}
 
 					info := &openapi3.Info{
@@ -929,12 +919,14 @@ func TestDecodeParameter(t *testing.T) {
 						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
 						Responses:   openapi3.NewResponses(),
 					}
-					spec.AddOperation("/test"+path, http.MethodGet, op)
+					spec.AddOperation(path, http.MethodGet, op)
+					err = spec.Validate(context.Background())
+					require.NoError(t, err)
 					router := NewRouter()
-					require.NoError(t, router.AddSwagger(spec), "failed to create a router")
+					require.NoError(t, router.AddSwagger(spec))
 
 					route, pathParams, err := router.FindRoute(req.Method, req.URL)
-					require.NoError(t, err, "failed to find a route")
+					require.NoError(t, err)
 
 					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
 					got, err := decodeStyledParameter(tc.param, input)
@@ -1015,7 +1007,7 @@ func TestDecodeBody(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name:    "unsupported content type",
+			name:    prefixUnsupportedCT,
 			mime:    "application/xml",
 			wantErr: &ParseError{Kind: KindUnsupportedFormat},
 		},
@@ -1134,7 +1126,7 @@ func TestDecodeBody(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			h := make(http.Header)
-			h.Set(http.CanonicalHeaderKey("Content-Type"), tc.mime)
+			h.Set(headerCT, tc.mime)
 			var schemaRef *openapi3.SchemaRef
 			if tc.schema != nil {
 				schemaRef = tc.schema.NewRef()
@@ -1180,7 +1172,7 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 		}
 
 		h := make(textproto.MIMEHeader)
-		h.Set("Content-Type", p.contentType)
+		h.Set(headerCT, p.contentType)
 		h.Set("Content-Disposition", disp)
 		pw, err := w.CreatePart(h)
 		if err != nil {
@@ -1214,7 +1206,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 		wantErr = &ParseError{Kind: KindUnsupportedFormat}
 	)
 	h := make(http.Header)
-	h.Set(http.CanonicalHeaderKey("Content-Type"), contentType)
+	h.Set(headerCT, contentType)
 
 	RegisterBodyDecoder(contentType, decoder)
 	got, err := decodeBody(body, h, schema, encFn)

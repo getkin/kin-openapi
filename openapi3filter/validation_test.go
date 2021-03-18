@@ -103,7 +103,7 @@ func TestFilter(t *testing.T) {
 								).NewRef(),
 							},
 						},
-						// TODO(decode not): handle decoding "not" JSON Schema
+						// TODO(decode not): handle decoding "not" Schema
 						// {
 						// 	Value: &openapi3.Parameter{
 						// 		In:   "query",
@@ -154,11 +154,13 @@ func TestFilter(t *testing.T) {
 		},
 	}
 
+	err := swagger.Validate(context.Background())
+	require.NoError(t, err)
 	router := NewRouter().WithSwagger(swagger)
 	expectWithDecoder := func(req ExampleRequest, resp ExampleResponse, decoder ContentParameterDecoder) error {
 		t.Logf("Request: %s %s", req.Method, req.URL)
 		httpReq, _ := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
-		httpReq.Header.Set("Content-Type", req.ContentType)
+		httpReq.Header.Set(headerCT, req.ContentType)
 
 		// Find route
 		route, pathParams, err := router.FindRoute(httpReq.Method, httpReq.URL)
@@ -179,7 +181,7 @@ func TestFilter(t *testing.T) {
 			RequestValidationInput: requestValidationInput,
 			Status:                 resp.Status,
 			Header: http.Header{
-				"Content-Type": []string{
+				headerCT: []string{
 					resp.ContentType,
 				},
 			},
@@ -197,15 +199,12 @@ func TestFilter(t *testing.T) {
 		return expectWithDecoder(req, resp, nil)
 	}
 
-	var err error
-	var req ExampleRequest
-	var resp ExampleResponse
-	resp = ExampleResponse{
+	resp := ExampleResponse{
 		Status: 200,
 	}
 	// Test paths
 
-	req = ExampleRequest{
+	req := ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix",
 	}
@@ -286,7 +285,7 @@ func TestFilter(t *testing.T) {
 	err = expect(req, resp)
 	require.IsType(t, &RequestError{}, err)
 
-	// TODO(decode not): handle decoding "not" JSON Schema
+	// TODO(decode not): handle decoding "not" Schema
 	// req = ExampleRequest{
 	// 	Method: "POST",
 	// 	URL:    "http://example.com/api/prefix/v/suffix?queryArgNot=abdfg",
@@ -294,7 +293,7 @@ func TestFilter(t *testing.T) {
 	// err = expect(req, resp)
 	// require.IsType(t, &RequestError{}, err)
 
-	// TODO(decode not): handle decoding "not" JSON Schema
+	// TODO(decode not): handle decoding "not" Schema
 	// req = ExampleRequest{
 	// 	Method: "POST",
 	// 	URL:    "http://example.com/api/prefix/v/suffix?queryArgNot=123",
@@ -433,7 +432,7 @@ func TestValidateRequestBody(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/test", tc.data)
 			if tc.mime != "" {
-				req.Header.Set(http.CanonicalHeaderKey("Content-Type"), tc.mime)
+				req.Header.Set(headerCT, tc.mime)
 			}
 			inp := &RequestValidationInput{Request: req}
 			err := ValidateRequestBody(context.Background(), inp, tc.body)
@@ -570,6 +569,8 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		}
 	}
 
+	err := swagger.Validate(context.Background())
+	require.NoError(t, err)
 	// Declare the router
 	router := NewRouter().WithSwagger(swagger)
 
@@ -701,6 +702,8 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 	}
 
+	err := swagger.Validate(context.Background())
+	require.NoError(t, err)
 	// Create the router
 	router := NewRouter().WithSwagger(&swagger)
 
@@ -801,6 +804,8 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 	}
 
+	err := swagger.Validate(context.Background())
+	require.NoError(t, err)
 	// Create the router from the swagger
 	router := NewRouter().WithSwagger(&swagger)
 

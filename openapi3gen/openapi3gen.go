@@ -15,9 +15,7 @@ import (
 // CycleError indicates that a type graph has one or more possible cycles.
 type CycleError struct{}
 
-func (err *CycleError) Error() string {
-	return "Detected JSON cycle"
-}
+func (err *CycleError) Error() string { return "detected cycle" }
 
 // Option allows tweaking SchemaRef generation
 type Option func(*generatorOpt)

@@ -12,8 +12,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// ErrInvalidRequired is an error that happens when a required value of a parameter or request's body is not defined.
-var ErrInvalidRequired = errors.New("must have a value")
+// ErrAuthenticationServiceMissing is returned when no authentication service
+// is defined for the request validator
+var ErrAuthenticationServiceMissing = errors.New("missing AuthenticationFunc")
+
+// ErrInvalidRequired is returned when a required value of a parameter or request body is not defined.
+var ErrInvalidRequired = errors.New("value is required but missing")
 
 // ValidateRequest is used to validate the given input according to previous
 // loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec, a
@@ -32,13 +36,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 		options = DefaultOptions
 	}
 	route := input.Route
-	if route == nil {
-		return errors.New("invalid route")
-	}
 	operation := route.Operation
-	if operation == nil {
-		return errRouteMissingOperation
-	}
 	operationParameters := operation.Parameters
 	pathItemParameters := route.PathItem.Parameters
 
@@ -87,9 +85,6 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	security := operation.Security
 	// If there aren't any security requirements for the operation
 	if security == nil {
-		if route.Swagger == nil {
-			return errRouteMissingSwagger
-		}
 		// Use the global security requirements.
 		security = &route.Swagger.Security
 	}
@@ -145,7 +140,7 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	// Validate a parameter's value.
 	if value == nil {
 		if parameter.Required {
-			return &RequestError{Input: input, Parameter: parameter, Reason: "must have a value", Err: ErrInvalidRequired}
+			return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidRequired.Error(), Err: ErrInvalidRequired}
 		}
 		return nil
 	}
@@ -164,6 +159,8 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	}
 	return nil
 }
+
+const prefixInvalidCT = "header Content-Type has unexpected value"
 
 // ValidateRequestBody validates data of a request's body.
 //
@@ -208,13 +205,13 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 		return nil
 	}
 
-	inputMIME := req.Header.Get("Content-Type")
+	inputMIME := req.Header.Get(headerCT)
 	contentType := requestBody.Content.Get(inputMIME)
 	if contentType == nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      fmt.Sprintf("header 'Content-Type' has unexpected value: %q", inputMIME),
+			Reason:      fmt.Sprintf("%s %q", prefixInvalidCT, inputMIME),
 		}
 	}
 
@@ -279,9 +276,6 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 // validateSecurityRequirement validates a single OpenAPI 3 security requirement
 func validateSecurityRequirement(c context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
 	swagger := input.Route.Swagger
-	if swagger == nil {
-		return errRouteMissingSwagger
-	}
 	securitySchemes := swagger.Components.SecuritySchemes
 
 	// Ensure deterministic order
@@ -312,7 +306,7 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 		if securityScheme == nil {
 			return &RequestError{
 				Input: input,
-				Err:   fmt.Errorf("Security scheme '%s' is not declared", name),
+				Err:   fmt.Errorf("security scheme %q is not declared", name),
 			}
 		}
 		scopes := securityRequirement[name]

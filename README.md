@@ -44,7 +44,7 @@ Here's some projects that depend on _kin-openapi_:
 
 # Some recipes
 ## Loading OpenAPI document
-Use `SwaggerLoader`, which resolves all JSON references:
+Use `SwaggerLoader`, which resolves all references:
 ```go
 swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
 ```
@@ -108,9 +108,7 @@ func main() {
 	responseValidationInput := &openapi3filter.ResponseValidationInput{
 		RequestValidationInput: requestValidationInput,
 		Status:                 respStatus,
-		Header: http.Header{
-			"Content-Type": []string{respContentType},
-		},
+		Header:                 http.Header{"Content-Type": []string{respContentType}},
 	}
 	if respBody != nil {
 		data, _ := json.Marshal(respBody)
@@ -160,7 +158,7 @@ func xmlBodyDecoder(body []byte) (interface{}, error) {
 }
 ```
 
-## Custom function for check uniqueness of JSON array
+## Custom function to check uniqueness of array items
 
 By defaut, the library check unique items by below predefined function
 
@@ -169,8 +167,6 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 	s := len(xs)
 	m := make(map[string]struct{}, s)
 	for _, x := range xs {
-		// The input slice is coverted from a JSON string, there shall
-		// have no error when covert it back.
 		key, _ := json.Marshal(&x)
 		m[string(key)] = struct{}{}
 	}
@@ -180,7 +176,7 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 
 In the predefined function using `json.Marshal` to generate a string can
 be used as a map key which is to support check the uniqueness of an array
-when the array items are JSON objects or JSON arraies. You can register
+when the array items are objects or arrays. You can register
 you own function according to your input data to get better performance:
 
 ```go
@@ -194,7 +190,7 @@ func main() {
 }
 
 func arrayUniqueItemsChecker(items []interface{}) bool {
-	// Check the uniqueness of the input slice(array in JSON)
+	// Check the uniqueness of the input slice
 }
 ```
 

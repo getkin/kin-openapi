@@ -99,10 +99,30 @@ func Example() {
 		PathParams: pathParams,
 		Route:      route,
 	}
-	if err = openapi3filter.ValidateRequest(loader.Context, requestValidationInput); err == nil {
-		fmt.Println("Valid")
-	} else {
-		fmt.Println("NOT valid")
+	if err := openapi3filter.ValidateRequest(loader.Context, requestValidationInput); err != nil {
+		fmt.Println(err)
 	}
-	// Output: NOT valid
+	// Output:
+	// request body has an error: doesn't match the schema: Doesn't match schema "oneOf"
+	// Schema:
+	//   {
+	//     "discriminator": {
+	//       "propertyName": "pet_type"
+	//     },
+	//     "oneOf": [
+	//       {
+	//         "$ref": "#/components/schemas/Cat"
+	//       },
+	//       {
+	//         "$ref": "#/components/schemas/Dog"
+	//       }
+	//     ]
+	//   }
+	//
+	// Value:
+	//   {
+	//     "bark": true,
+	//     "breed": "Dingo",
+	//     "pet_type": "Cat"
+	//   }
 }

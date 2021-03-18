@@ -71,8 +71,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, location)
 }
 
-// loadSingleElementFromURI read the data from ref and unmarshal to JSON to the
-// passed element.
+// loadSingleElementFromURI reads the data from ref and unmarshals to the passed element.
 func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.URL, element json.Unmarshaler) error {
 	if !swaggerLoader.IsExternalRefsAllowed {
 		return fmt.Errorf("encountered non-allowed external reference: %q", ref)
@@ -428,7 +427,7 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 
 	const prefix = "#/components/headers/"
 	if component == nil {
-		return errors.New("invalid header: value MUST be a JSON object")
+		return errors.New("invalid header: value MUST be an object")
 	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
@@ -475,7 +474,7 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 
 	const prefix = "#/components/parameters/"
 	if component == nil {
-		return errors.New("invalid parameter: value MUST be a JSON object")
+		return errors.New("invalid parameter: value MUST be an object")
 	}
 	ref := component.Ref
 	if ref != "" {
@@ -538,7 +537,7 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 
 	const prefix = "#/components/requestBodies/"
 	if component == nil {
-		return errors.New("invalid requestBody: value MUST be a JSON object")
+		return errors.New("invalid requestBody: value MUST be an object")
 	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
@@ -593,7 +592,7 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 
 	const prefix = "#/components/responses/"
 	if component == nil {
-		return errors.New("invalid response: value MUST be a JSON object")
+		return errors.New("invalid response: value MUST be an object")
 	}
 	ref := component.Ref
 	if ref != "" {
@@ -667,7 +666,7 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 
 	const prefix = "#/components/schemas/"
 	if component == nil {
-		return errors.New("invalid schema: value MUST be a JSON object")
+		return errors.New("invalid schema: value MUST be an object")
 	}
 	ref := component.Ref
 	if ref != "" {
@@ -753,7 +752,7 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 
 	const prefix = "#/components/securitySchemes/"
 	if component == nil {
-		return errors.New("invalid securityScheme: value MUST be a JSON object")
+		return errors.New("invalid securityScheme: value MUST be an object")
 	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
@@ -791,7 +790,7 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 
 	const prefix = "#/components/examples/"
 	if component == nil {
-		return errors.New("invalid example: value MUST be a JSON object")
+		return errors.New("invalid example: value MUST be an object")
 	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
@@ -829,7 +828,7 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 
 	const prefix = "#/components/links/"
 	if component == nil {
-		return errors.New("invalid link: value MUST be a JSON object")
+		return errors.New("invalid link: value MUST be an object")
 	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
@@ -867,7 +866,7 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 
 	const prefix = "#/paths/"
 	if pathItem == nil {
-		return errors.New("invalid path item: value MUST be a JSON object")
+		return errors.New("invalid path item: value MUST be an object")
 	}
 	ref := pathItem.Ref
 	if ref != "" {

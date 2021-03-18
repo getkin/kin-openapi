@@ -519,7 +519,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 		case "password":
 			flows.Password = flow
 		default:
-			return nil, fmt.Errorf("Unsupported flow '%s'", securityScheme.Flow)
+			return nil, fmt.Errorf("unsupported flow %q", securityScheme.Flow)
 		}
 	}
 	return &openapi3.SecuritySchemeRef{
@@ -1077,7 +1077,7 @@ func FromV3SecurityScheme(swagger *openapi3.Swagger, ref *openapi3.SecuritySchem
 			}
 		}
 	default:
-		return nil, fmt.Errorf("Unsupported security scheme type '%s'", securityScheme.Type)
+		return nil, fmt.Errorf("unsupported security scheme type %q", securityScheme.Type)
 	}
 	return result, nil
 }

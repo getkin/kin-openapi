@@ -38,7 +38,7 @@ func (p Parameters) JSONLookup(token string) (interface{}, error) {
 	}
 
 	if index < 0 || index >= len(p) {
-		return nil, fmt.Errorf("index out of bounds array[0,%d] index '%d'", len(p), index)
+		return nil, fmt.Errorf("index %d out of bounds of array of length %d", index, len(p))
 	}
 
 	ref := p[index]

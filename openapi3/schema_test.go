@@ -1082,7 +1082,7 @@ func testSchemaMultiError(t *testing.T, example schemaMultiErrorExample) func(*t
 						break
 					}
 				}
-				require.True(t, found, fmt.Sprintf("Missing %s error on %s", scherr.SchemaField, strings.Join(scherr.JSONPointer(), ".")))
+				require.True(t, found, fmt.Sprintf("missing %s error on %s", scherr.SchemaField, strings.Join(scherr.JSONPointer(), ".")))
 			}
 		}
 	}

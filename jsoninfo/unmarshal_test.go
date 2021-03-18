@@ -149,7 +149,7 @@ func TestDecodeStructFieldsAndExtensions(t *testing.T) {
 		}{}
 		err = d.DecodeStructFieldsAndExtensions(&value)
 		require.Error(t, err)
-		require.EqualError(t, err, "Error while unmarshalling property 'field1' (*int): json: cannot unmarshal string into Go value of type int")
+		require.EqualError(t, err, `failed to unmarshal property "field1" (*int): json: cannot unmarshal string into Go value of type int`)
 		require.Equal(t, 0, value.Field1)
 		require.Equal(t, 2, len(d.DecodeExtensionMap()))
 	})
