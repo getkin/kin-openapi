@@ -1,4 +1,4 @@
-// package legacy implements a router.
+// Package legacy implements a router.
 //
 // It differs from the gorilla/mux router:
 // * it provides granular errors: "path not found", "method not allowed", "variable missing from path"

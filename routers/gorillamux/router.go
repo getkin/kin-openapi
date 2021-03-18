@@ -1,7 +1,7 @@
-// package gorillamux implements a router.
+// Package gorillamux implements a router.
 //
 // It differs from the legacy router:
-// * it provides somewhat granular errors: "path not found", "method not allowed". FIXME: https://pkg.go.dev/github.com/gorilla/handlers?utm_source=godoc#MethodHandler
+// * it provides somewhat granular errors: "path not found", "method not allowed".
 // * it handles matching routes with extensions (e.g. /books/{id}.json)
 // * it handles path patterns with a different syntax (e.g. /params/{x}/{y}/{z:.*})
 package gorillamux
@@ -55,28 +55,34 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
 		pathItem := doc.Paths[path]
-		for method, op := range pathItem.Operations() {
-			for _, s := range servers {
-				muxRoute := muxRouter.Methods(method).Path(s.base + path)
-				if scheme := s.scheme; scheme != "" {
-					muxRoute.Schemes(scheme)
-				}
-				if host := s.host; host != "" {
-					muxRoute.Host(host)
-				}
-				if err := muxRoute.GetError(); err != nil {
-					return nil, err
-				}
-				r.muxes = append(r.muxes, muxRoute)
-				r.routes = append(r.routes, &routers.Route{
-					Swagger:   doc,
-					Server:    s.server,
-					Path:      path,
-					PathItem:  pathItem,
-					Method:    method,
-					Operation: op,
-				})
+
+		operations := pathItem.Operations()
+		methods := make([]string, 0, len(operations))
+		for method := range operations {
+			methods = append(methods, method)
+		}
+		sort.Strings(methods)
+
+		for _, s := range servers {
+			muxRoute := muxRouter.Path(s.base + path).Methods(methods...)
+			if scheme := s.scheme; scheme != "" {
+				muxRoute.Schemes(scheme)
 			}
+			if host := s.host; host != "" {
+				muxRoute.Host(host)
+			}
+			if err := muxRoute.GetError(); err != nil {
+				return nil, err
+			}
+			r.muxes = append(r.muxes, muxRoute)
+			r.routes = append(r.routes, &routers.Route{
+				Swagger:   doc,
+				Server:    s.server,
+				Path:      path,
+				PathItem:  pathItem,
+				Method:    "",
+				Operation: nil,
+			})
 		}
 	}
 	return r, nil
@@ -88,9 +94,18 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 		var match mux.RouteMatch
 		if muxRoute.Match(req, &match) {
 			if err := match.MatchErr; err != nil {
-				return nil, nil, err
+				// What then?
 			}
-			return r.routes[i], match.Vars, nil
+			route := r.routes[i]
+			route.Method = req.Method
+			route.Operation = route.Swagger.Paths[route.Path].GetOperation(route.Method)
+			return route, match.Vars, nil
+		}
+		switch match.MatchErr {
+		case nil:
+		case mux.ErrMethodMismatch:
+			return nil, nil, routers.ErrMethodNotAllowed
+		default: // What then?
 		}
 	}
 	return nil, nil, routers.ErrPathNotFound
