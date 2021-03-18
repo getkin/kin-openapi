@@ -31,7 +31,10 @@ jobs:
     - run: go version
 
     - run: go mod download && go mod tidy && go mod verify
-    # - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: cat go.mod
+    - run: cat go.sum
+    - run: git status --porcelain
+    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go vet ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
