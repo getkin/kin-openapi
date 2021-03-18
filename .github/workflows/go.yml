@@ -23,6 +23,7 @@ jobs:
         shell: bash
     steps:
     - uses: actions/checkout@v2
+    - run: git version
 
     - uses: actions/setup-go@v2
       with:
@@ -30,7 +31,7 @@ jobs:
     - run: go version
 
     - run: go mod download && go mod tidy && go mod verify
-    - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    # - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go vet ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
