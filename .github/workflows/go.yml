@@ -18,6 +18,9 @@ jobs:
         - windows-2019
         - macos-10.15
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/checkout@v2
 
@@ -28,19 +31,15 @@ jobs:
 
     - run: go mod download && go mod tidy && go mod verify
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
-      shell: bash
 
     - run: go vet ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
-      shell: bash
 
     - run: go fmt ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
-      shell: bash
 
     - run: go test ./...
     - run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
-      shell: bash
 
     - name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
       run: |
