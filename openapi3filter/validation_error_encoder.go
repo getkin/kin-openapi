@@ -141,7 +141,6 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 
 	// Add details on allowed values for enums
 	if innerErr.SchemaField == "enum" {
-		//FIXME?&&		innerErr.Reason == "value is not one of the allowed values" {
 		enums := make([]string, 0, len(innerErr.Schema.Enum))
 		for _, enum := range innerErr.Schema.Enum {
 			enums = append(enums, fmt.Sprintf("%v", enum))
