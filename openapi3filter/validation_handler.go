@@ -3,6 +3,8 @@ package openapi3filter
 import (
 	"context"
 	"net/http"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 type AuthenticationFunc func(context.Context, *AuthenticationInput) error
@@ -20,9 +22,15 @@ type ValidationHandler struct {
 }
 
 func (h *ValidationHandler) Load() error {
-	h.router = NewRouter()
-
-	if err := h.router.AddSwaggerFromFile(h.SwaggerFile); err != nil {
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromFile(h.SwaggerFile)
+	if err != nil {
+		return err
+	}
+	if err := doc.Validate(loader.Context); err != nil {
+		return err
+	}
+	if h.router, err = NewRouter(doc); err != nil {
 		return err
 	}
 
@@ -69,7 +77,7 @@ func (h *ValidationHandler) before(w http.ResponseWriter, r *http.Request) (hand
 
 func (h *ValidationHandler) validateRequest(r *http.Request) error {
 	// Find route
-	route, pathParams, err := h.router.FindRoute(r.Method, r.URL)
+	route, pathParams, err := h.router.FindRoute(r)
 	if err != nil {
 		return err
 	}

@@ -1,22 +1,14 @@
 package openapi3filter
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/pathpattern"
+	"github.com/gorilla/mux"
 )
-
-// ErrPathNotFound is returned when no route match is found
-var ErrPathNotFound = errors.New("no matching operation was found")
-
-// ErrMethodNotAllowed is returned when no method of the matched route matches
-var ErrMethodNotAllowed = errors.New("method not allowed")
 
 // Route describes the operation an http.Request can match
 type Route struct {
@@ -26,201 +18,124 @@ type Route struct {
 	PathItem  *openapi3.PathItem
 	Method    string
 	Operation *openapi3.Operation
-
-	// For developers who want use the router for handling too
-	Handler http.Handler
 }
 
-// Routers maps a HTTP request to a Router.
-type Routers []*Router
-
-// FindRoute extracts the route and parameters of an http.Request
-func (routers Routers) FindRoute(method string, url *url.URL) (*Router, *Route, map[string]string, error) {
-	for _, router := range routers {
-		// Skip routers that have DO NOT have servers
-		if len(router.swagger.Servers) == 0 {
-			continue
-		}
-		route, pathParams, err := router.FindRoute(method, url)
-		if err == nil {
-			return router, route, pathParams, nil
-		}
-	}
-	for _, router := range routers {
-		// Skip routers that DO have servers
-		if len(router.swagger.Servers) > 0 {
-			continue
-		}
-		route, pathParams, err := router.FindRoute(method, url)
-		if err == nil {
-			return router, route, pathParams, nil
-		}
-	}
-	return nil, nil, nil, &RouteError{
-		Reason: "None of the routers matches",
-	}
-}
-
-// Router maps a HTTP request to an OpenAPI operation.
+// Router helps link http.Request.s and an OpenAPIv3 spec
 type Router struct {
-	swagger  *openapi3.Swagger
-	pathNode *pathpattern.Node
+	muxes  []*mux.Route
+	routes []*Route
 }
 
-// NewRouter creates a new router.
-//
-// If the given Swagger has servers, router will use them.
-// All operations of the Swagger will be added to the router.
-func NewRouter() *Router {
-	return &Router{}
-}
-
-// WithSwaggerFromFile loads the Swagger file and adds it using WithSwagger.
-// Panics on any error.
-func (router *Router) WithSwaggerFromFile(path string) *Router {
-	if err := router.AddSwaggerFromFile(path); err != nil {
-		panic(err)
+// NewRouter creates a gorilla/mux router.
+// Assumes spec is .Validate()d
+// TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
+func NewRouter(doc *openapi3.Swagger) (*Router, error) {
+	type srv struct {
+		scheme, host, base string
+		server             *openapi3.Server
 	}
-	return router
-}
-
-// WithSwagger adds all operations in the OpenAPI specification.
-// Panics on any error.
-func (router *Router) WithSwagger(swagger *openapi3.Swagger) *Router {
-	if err := router.AddSwagger(swagger); err != nil {
-		panic(err)
+	servers := make([]srv, 0, len(doc.Servers))
+	for _, server := range doc.Servers {
+		u, err := url.Parse(bEncode(server.URL))
+		if err != nil {
+			return nil, err
+		}
+		path := bDecode(u.EscapedPath())
+		if path[len(path)-1] == '/' {
+			path = path[:len(path)-1]
+		}
+		servers = append(servers, srv{
+			host:   bDecode(u.Host), //u.Hostname()?
+			base:   path,
+			scheme: bDecode(u.Scheme),
+			server: server,
+		})
 	}
-	return router
-}
-
-// AddSwaggerFromFile loads the Swagger file and adds it using AddSwagger.
-func (router *Router) AddSwaggerFromFile(path string) error {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile(path)
-	if err != nil {
-		return err
+	if len(servers) == 0 {
+		servers = append(servers, srv{})
 	}
-	return router.AddSwagger(swagger)
-}
-
-// AddSwagger adds all operations in the OpenAPI specification.
-func (router *Router) AddSwagger(swagger *openapi3.Swagger) error {
-	if err := swagger.Validate(context.TODO()); err != nil {
-		return fmt.Errorf("validating OpenAPI failed: %v", err)
-	}
-	router.swagger = swagger
-	root := router.node()
-	for path, pathItem := range swagger.Paths {
-		for method, operation := range pathItem.Operations() {
-			method = strings.ToUpper(method)
-			if err := root.Add(method+" "+path, &Route{
-				Swagger:   swagger,
-				Path:      path,
-				PathItem:  pathItem,
-				Method:    method,
-				Operation: operation,
-			}, nil); err != nil {
-				return err
+	muxRouter := mux.NewRouter() /*.UseEncodedPath()?*/
+	r := &Router{}
+	for _, path := range orderedPaths(doc.Paths) {
+		pathItem := doc.Paths[path]
+		for method, op := range pathItem.Operations() {
+			for _, s := range servers {
+				muxRoute := muxRouter.Methods(method).Path(s.base + path)
+				if scheme := s.scheme; scheme != "" {
+					muxRoute.Schemes(scheme)
+				}
+				if host := s.host; host != "" {
+					muxRoute.Host(host)
+				}
+				if err := muxRoute.GetError(); err != nil {
+					return nil, err
+				}
+				r.muxes = append(r.muxes, muxRoute)
+				r.routes = append(r.routes, &Route{
+					Swagger:   doc,
+					Server:    s.server,
+					Path:      path,
+					PathItem:  pathItem,
+					Method:    method,
+					Operation: op,
+				})
 			}
 		}
 	}
-	return nil
-}
-
-// AddRoute adds a route in the router.
-func (router *Router) AddRoute(route *Route) error {
-	method := route.Method
-	if method == "" {
-		return errors.New("route is missing method")
-	}
-	method = strings.ToUpper(method)
-	path := route.Path
-	if path == "" {
-		return errors.New("route is missing path")
-	}
-	return router.node().Add(method+" "+path, router, nil)
-}
-
-func (router *Router) node() *pathpattern.Node {
-	root := router.pathNode
-	if root == nil {
-		root = &pathpattern.Node{}
-		router.pathNode = root
-	}
-	return root
+	return r, nil
 }
 
 // FindRoute extracts the route and parameters of an http.Request
-func (router *Router) FindRoute(method string, url *url.URL) (*Route, map[string]string, error) {
-	swagger := router.swagger
+func (r *Router) FindRoute(req *http.Request) (*Route, map[string]string, error) {
+	for i, muxRoute := range r.muxes {
+		var match mux.RouteMatch
+		if muxRoute.Match(req, &match) {
+			if err := match.MatchErr; err != nil {
+				return nil, nil, err
+			}
+			return r.routes[i], match.Vars, nil
+		}
+	}
+	return nil, nil, ErrPathNotFound
+}
 
-	// Get server
-	servers := swagger.Servers
-	var server *openapi3.Server
-	var remainingPath string
-	var pathParams map[string]string
-	if len(servers) == 0 {
-		remainingPath = url.Path
-	} else {
-		var paramValues []string
-		server, paramValues, remainingPath = servers.MatchURL(url)
-		if server == nil {
-			return nil, nil, &RouteError{
-				Route: Route{
-					Swagger: swagger,
-				},
-				Reason: ErrPathNotFound.Error(),
+func orderedPaths(paths map[string]*openapi3.PathItem) []string {
+	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#pathsObject
+	// When matching URLs, concrete (non-templated) paths would be matched
+	// before their templated counterparts.
+	// NOTE: sorting by number of variables ASC then by lexicographical
+	// order seems to be a good heuristic.
+	vars := make(map[int][]string)
+	max := 0
+	for path := range paths {
+		count := strings.Count(path, "}")
+		vars[count] = append(vars[count], path)
+		if count > max {
+			max = count
+		}
+	}
+	ordered := make([]string, 0, len(paths))
+	for c := 0; c <= max; c++ {
+		if ps, ok := vars[c]; ok {
+			sort.Strings(ps)
+			for _, p := range ps {
+				ordered = append(ordered, p)
 			}
 		}
-		pathParams = make(map[string]string, 8)
-		paramNames, _ := server.ParameterNames()
-		for i, value := range paramValues {
-			name := paramNames[i]
-			pathParams[name] = value
-		}
 	}
+	return ordered
+}
 
-	// Get PathItem
-	root := router.node()
-	var route *Route
-	node, paramValues := root.Match(method + " " + remainingPath)
-	if node != nil {
-		route, _ = node.Value.(*Route)
-	}
-	if route == nil {
-		pathItem := swagger.Paths[remainingPath]
-		if pathItem == nil {
-			return nil, nil, &RouteError{
-				Route: Route{
-					Swagger: swagger,
-					Server:  server,
-				},
-				Reason: ErrPathNotFound.Error(),
-			}
-		}
+// Magic strings that temporarily replace "{}" so net/url.Parse() works
+var blURL, brURL = strings.Repeat("-", 50), strings.Repeat("_", 50)
 
-		// Get operation
-		if pathItem.GetOperation(method) == nil {
-			return nil, nil, &RouteError{
-				Route: Route{
-					Swagger: swagger,
-					Server:  server,
-				},
-				Reason: ErrMethodNotAllowed.Error(),
-			}
-		}
-
-	}
-
-	if pathParams == nil {
-		pathParams = make(map[string]string, len(paramValues))
-	}
-	paramKeys := node.VariableNames
-	for i, value := range paramValues {
-		key := paramKeys[i]
-		if strings.HasSuffix(key, "*") {
-			key = key[:len(key)-1]
-		}
-		pathParams[key] = value
-	}
-	return route, pathParams, nil
+func bEncode(s string) string {
+	s = strings.Replace(s, "{", blURL, -1)
+	s = strings.Replace(s, "}", brURL, -1)
+	return s
+}
+func bDecode(s string) string {
+	s = strings.Replace(s, blURL, "{", -1)
+	s = strings.Replace(s, brURL, "}", -1)
+	return s
 }

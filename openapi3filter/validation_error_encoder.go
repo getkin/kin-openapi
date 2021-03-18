@@ -48,10 +48,10 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 
 func convertRouteError(e *RouteError) *ValidationError {
 	status := http.StatusNotFound
-	if e.Reason == ErrMethodNotAllowed.Error() {
+	if e == ErrMethodNotAllowed {
 		status = http.StatusMethodNotAllowed
 	}
-	return &ValidationError{Status: status, Title: e.Reason}
+	return &ValidationError{Status: status, Title: e.Error()}
 }
 
 func convertBasicRequestError(e *RequestError) *ValidationError {

@@ -72,7 +72,10 @@ func Example() {
 		panic(err)
 	}
 
-	router := openapi3filter.NewRouter().WithSwagger(doc)
+	router, err := openapi3filter.NewRouter(doc)
+	if err != nil {
+		panic(err)
+	}
 
 	p, err := json.Marshal(map[string]interface{}{
 		"pet_type": "Cat",
@@ -89,7 +92,7 @@ func Example() {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	route, pathParams, err := router.FindRoute(req.Method, req.URL)
+	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
 		panic(err)
 	}

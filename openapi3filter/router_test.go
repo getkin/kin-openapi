@@ -23,7 +23,7 @@ func TestRouter(t *testing.T) {
 	paramsGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	booksPOST := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	partialGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	swagger := &openapi3.Swagger{
+	doc := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -44,8 +44,7 @@ func TestRouter(t *testing.T) {
 			"/onlyGET": &openapi3.PathItem{
 				Get: helloGET,
 			},
-			//TODO: use "/params/{x}/{y}/{z:.*}": &openapi3.PathItem{ when reworking https://github.com/getkin/kin-openapi/pull/210
-			"/params/{x}/{y}/{z*}": &openapi3.PathItem{
+			"/params/{x}/{y}/{z:.*}": &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x")},
@@ -74,10 +73,10 @@ func TestRouter(t *testing.T) {
 	expect := func(r *Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
 		req, err := http.NewRequest(method, uri, nil)
 		require.NoError(t, err)
-		route, pathParams, err := r.FindRoute(req.Method, req.URL)
+		route, pathParams, err := r.FindRoute(req)
 		if err != nil {
 			if operation == nil {
-				pathItem := swagger.Paths[uri]
+				pathItem := doc.Paths[uri]
 				if pathItem == nil {
 					if err.Error() != ErrPathNotFound.Error() {
 						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, ErrPathNotFound, err)
@@ -126,9 +125,10 @@ func TestRouter(t *testing.T) {
 		}
 	}
 
-	err := swagger.Validate(context.Background())
+	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	r := NewRouter().WithSwagger(swagger)
+	r, err := NewRouter(doc)
+	require.NoError(t, err)
 
 	expect(r, http.MethodGet, "/not_existing", nil, nil)
 	expect(r, http.MethodDelete, "/hello", helloDELETE, nil)
@@ -150,19 +150,19 @@ func TestRouter(t *testing.T) {
 	expect(r, http.MethodGet, "/books/War.and.Peace", paramsGET, map[string]string{
 		"bookid": "War.and.Peace",
 	})
-	// TODO: fix https://github.com/getkin/kin-openapi/issues/129
-	// expect(r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
-	// 	"bookid2": "War.and.Peace",
-	// })
+	expect(r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
+		"bookid2": "War.and.Peace",
+	})
 	expect(r, http.MethodPost, "/partial", nil, nil)
 
-	swagger.Servers = []*openapi3.Server{
+	doc.Servers = []*openapi3.Server{
 		{URL: "https://www.example.com/api/v1"},
 		{URL: "https://{d0}.{d1}.com/api/v1/"},
 	}
-	err = swagger.Validate(context.Background())
+	err = doc.Validate(context.Background())
 	require.NoError(t, err)
-	r = NewRouter().WithSwagger(swagger)
+	r, err = NewRouter(doc)
+	require.NoError(t, err)
 	expect(r, http.MethodGet, "/hello", nil, nil)
 	expect(r, http.MethodGet, "/api/v1/hello", nil, nil)
 	expect(r, http.MethodGet, "www.example.com/api/v1/hello", nil, nil)
@@ -180,7 +180,7 @@ func TestRouter(t *testing.T) {
 		req, err := http.NewRequest(http.MethodDelete, uri, nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		route, pathParams, err := r.FindRoute(req.Method, req.URL)
+		route, pathParams, err := r.FindRoute(req)
 		require.EqualError(t, err, ErrMethodNotAllowed.Error())
 		require.Nil(t, route)
 		require.Nil(t, pathParams)

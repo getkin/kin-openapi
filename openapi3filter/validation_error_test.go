@@ -467,12 +467,12 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 				}
 
 				if e, ok := err.(*RouteError); ok {
-					req.Equal(tt.wantErrReason, e.Reason)
+					req.Equal(tt.wantErrReason, e.Error())
 					return
 				}
 
 				e, ok := err.(*RequestError)
-				req.True(ok, "error = %v, not a RequestError -- %#v", err, err)
+				req.True(ok, "not a RequestError: %T -- %#v", err, err)
 
 				req.Equal(tt.wantErrReason, e.Reason)
 

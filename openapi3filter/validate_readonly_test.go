@@ -69,7 +69,8 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
-	router := NewRouter().WithSwagger(doc)
+	router, err := NewRouter(doc)
+	require.NoError(t, err)
 
 	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
 	require.NoError(t, err)
@@ -78,7 +79,7 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	require.NoError(t, err)
 	httpReq.Header.Add(headerCT, "application/json")
 
-	route, pathParams, err := router.FindRoute(httpReq.Method, httpReq.URL)
+	route, pathParams, err := router.FindRoute(httpReq)
 	require.NoError(t, err)
 
 	err = ValidateRequest(sl.Context, &RequestValidationInput{
