@@ -43,7 +43,8 @@ jobs:
       shell: bash
 
     - name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
-      run: "! git grep -E '(fmt|errors)[^(]+\(.[A-Z]'"
+      run: |
+        ! git grep -E '(fmt|errors)[^(]+\(.[A-Z]'
 
     - name: Did you mean %q
       run: |
