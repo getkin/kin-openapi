@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -922,10 +923,10 @@ func TestDecodeParameter(t *testing.T) {
 					spec.AddOperation(path, http.MethodGet, op)
 					err = spec.Validate(context.Background())
 					require.NoError(t, err)
-					router := NewRouter()
-					require.NoError(t, router.AddSwagger(spec))
+					router, err := legacyrouter.NewRouter(spec)
+					require.NoError(t, err)
 
-					route, pathParams, err := router.FindRoute(req.Method, req.URL)
+					route, pathParams, err := router.FindRoute(req)
 					require.NoError(t, err)
 
 					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}

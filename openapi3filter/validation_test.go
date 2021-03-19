@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +45,7 @@ func TestFilter(t *testing.T) {
 	complexArgSchema.Required = []string{"name", "id"}
 
 	// Declare router
-	swagger := &openapi3.Swagger{
+	doc := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -154,16 +155,18 @@ func TestFilter(t *testing.T) {
 		},
 	}
 
-	err := swagger.Validate(context.Background())
+	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	router := NewRouter().WithSwagger(swagger)
+	router, err := legacyrouter.NewRouter(doc)
+	require.NoError(t, err)
 	expectWithDecoder := func(req ExampleRequest, resp ExampleResponse, decoder ContentParameterDecoder) error {
 		t.Logf("Request: %s %s", req.Method, req.URL)
-		httpReq, _ := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
+		httpReq, err := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
+		require.NoError(t, err)
 		httpReq.Header.Set(headerCT, req.ContentType)
 
 		// Find route
-		route, pathParams, err := router.FindRoute(httpReq.Method, httpReq.URL)
+		route, pathParams, err := router.FindRoute(httpReq)
 		require.NoError(t, err)
 
 		// Validate request
@@ -476,8 +479,7 @@ func toJSON(v interface{}) io.Reader {
 	return bytes.NewReader(data)
 }
 
-// TestOperationOrSwaggerSecurity asserts that the swagger's SecurityRequirements are used if no SecurityRequirements are provided for an operation.
-func TestOperationOrSwaggerSecurity(t *testing.T) {
+func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *testing.T) {
 	// Create the security schemes
 	securitySchemes := []ExampleSecurityScheme{
 		{
@@ -526,8 +528,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		},
 	}
 
-	// Create the swagger
-	swagger := &openapi3.Swagger{
+	doc := &openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -546,12 +547,12 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 
 	// Add the security schemes to the components
 	for _, scheme := range securitySchemes {
-		swagger.Components.SecuritySchemes[scheme.Name] = &openapi3.SecuritySchemeRef{
+		doc.Components.SecuritySchemes[scheme.Name] = &openapi3.SecuritySchemeRef{
 			Value: scheme.Scheme,
 		}
 	}
 
-	// Add the paths from the test cases to the swagger's paths
+	// Add the paths from the test cases to the spec's paths
 	for _, tc := range tc {
 		var securityRequirements *openapi3.SecurityRequirements = nil
 		if tc.schemes != nil {
@@ -561,7 +562,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 			}
 			securityRequirements = tempS
 		}
-		swagger.Paths[tc.name] = &openapi3.PathItem{
+		doc.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
 				Responses: openapi3.NewResponses(),
@@ -569,10 +570,10 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		}
 	}
 
-	err := swagger.Validate(context.Background())
+	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	// Declare the router
-	router := NewRouter().WithSwagger(swagger)
+	router, err := legacyrouter.NewRouter(doc)
+	require.NoError(t, err)
 
 	// Test each case
 	for _, path := range tc {
@@ -588,12 +589,11 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 
 		// Create the request
 		emptyBody := bytes.NewReader(make([]byte, 0))
-		pathURL, err := url.Parse(path.name)
-		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, pathURL)
+		httpReq := httptest.NewRequest(http.MethodGet, path.name, emptyBody)
+		route, _, err := router.FindRoute(httpReq)
 		require.NoError(t, err)
 		req := RequestValidationInput{
-			Request: httptest.NewRequest(http.MethodGet, path.name, emptyBody),
+			Request: httpReq,
 			Route:   route,
 			Options: &Options{
 				AuthenticationFunc: func(c context.Context, input *AuthenticationInput) error {
@@ -662,8 +662,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		},
 	}
 
-	// Create the swagger
-	swagger := openapi3.Swagger{
+	doc := openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -675,9 +674,9 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		},
 	}
 
-	// Add the security schemes to the swagger's components
+	// Add the security schemes to the spec's components
 	for schemeName := range schemes {
-		swagger.Components.SecuritySchemes[schemeName] = &openapi3.SecuritySchemeRef{
+		doc.Components.SecuritySchemes[schemeName] = &openapi3.SecuritySchemeRef{
 			Value: &openapi3.SecurityScheme{
 				Type:   "http",
 				Scheme: "basic",
@@ -685,7 +684,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 	}
 
-	// Add the paths to the swagger
+	// Add the paths to the spec
 	for _, tc := range tc {
 		// Create the security requirements from the test cases's schemes
 		securityRequirements := openapi3.NewSecurityRequirements()
@@ -694,7 +693,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 
 		// Create the path with the security requirements
-		swagger.Paths[tc.name] = &openapi3.PathItem{
+		doc.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
 				Responses: openapi3.NewResponses(),
@@ -702,10 +701,10 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 	}
 
-	err := swagger.Validate(context.Background())
+	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	// Create the router
-	router := NewRouter().WithSwagger(&swagger)
+	router, err := legacyrouter.NewRouter(&doc)
+	require.NoError(t, err)
 
 	// Create the authentication function
 	authFunc := makeAuthFunc(schemes)
@@ -714,7 +713,8 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		// Create the request input for the path
 		tcURL, err := url.Parse(tc.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, tcURL)
+		httpReq := httptest.NewRequest(http.MethodGet, tcURL.String(), nil)
+		route, _, err := router.FindRoute(httpReq)
 		require.NoError(t, err)
 		req := RequestValidationInput{
 			Route: route,
@@ -759,8 +759,7 @@ func TestAllSchemesMet(t *testing.T) {
 		},
 	}
 
-	// Create the swagger
-	swagger := openapi3.Swagger{
+	doc := openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -772,9 +771,9 @@ func TestAllSchemesMet(t *testing.T) {
 		},
 	}
 
-	// Add the security schemes to the swagger's components
+	// Add the security schemes to the spec's components
 	for schemeName := range schemes {
-		swagger.Components.SecuritySchemes[schemeName] = &openapi3.SecuritySchemeRef{
+		doc.Components.SecuritySchemes[schemeName] = &openapi3.SecuritySchemeRef{
 			Value: &openapi3.SecurityScheme{
 				Type:   "http",
 				Scheme: "basic",
@@ -782,7 +781,7 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 	}
 
-	// Add the paths to the swagger
+	// Add the paths to the spec
 	for _, tc := range tc {
 		// Create the security requirement for the path
 		securityRequirement := openapi3.SecurityRequirement{}
@@ -794,7 +793,7 @@ func TestAllSchemesMet(t *testing.T) {
 			}
 		}
 
-		swagger.Paths[tc.name] = &openapi3.PathItem{
+		doc.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security: &openapi3.SecurityRequirements{
 					securityRequirement,
@@ -804,10 +803,10 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 	}
 
-	err := swagger.Validate(context.Background())
+	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	// Create the router from the swagger
-	router := NewRouter().WithSwagger(&swagger)
+	router, err := legacyrouter.NewRouter(&doc)
+	require.NoError(t, err)
 
 	// Create the authentication function
 	authFunc := makeAuthFunc(schemes)
@@ -816,7 +815,8 @@ func TestAllSchemesMet(t *testing.T) {
 		// Create the request input for the path
 		tcURL, err := url.Parse(tc.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, tcURL)
+		httpReq := httptest.NewRequest(http.MethodGet, tcURL.String(), nil)
+		route, _, err := router.FindRoute(httpReq)
 		require.NoError(t, err)
 		req := RequestValidationInput{
 			Route: route,

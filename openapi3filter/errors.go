@@ -6,15 +6,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type RouteError struct {
-	Route  Route
-	Reason string
-}
-
-func (err *RouteError) Error() string {
-	return err.Reason
-}
-
 var _ error = &RequestError{}
 
 // RequestError is returned by ValidateRequest when request does not match OpenAPI spec

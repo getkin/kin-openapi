@@ -37,10 +37,9 @@ Here's some projects that depend on _kin-openapi_:
     * Support for OpenAPI 3 files, including serialization, deserialization, and validation.
   * _openapi3filter_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3filter))
     * Validates HTTP requests and responses
+    * Provides a [gorilla/mux](https://github.com/gorilla/mux) router for OpenAPI operations
   * _openapi3gen_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3gen))
     * Generates `*openapi3.Schema` values for Go types.
-  * _pathpattern_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/pathpattern))
-    * Matches strings with OpenAPI path patterns ("/path/{parameter}")
 
 # Some recipes
 ## Loading OpenAPI document
@@ -51,19 +50,12 @@ swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
 
 ## Getting OpenAPI operation that matches request
 ```go
-func GetOperation(httpRequest *http.Request) (*openapi3.Operation, error) {
-  // Load Swagger file
-  router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
-
-  // Find route
-  route, _, err := router.FindRoute("GET", req.URL)
-  if err != nil {
-    return nil, err
-  }
-
-  // Get OpenAPI 3 operation
-  return route.Operation
-}
+loader := openapi3.NewSwaggerLoader()
+spec, _ := loader.LoadSwaggerFromData([]byte(`...`))
+_ := spec.Validate(loader.Context)
+router, _ := openapi3filter.NewRouter(spec)
+route, pathParams, _ := router.FindRoute(httpRequest)
+// Do something with route.Operation
 ```
 
 ## Validating HTTP requests/responses
@@ -81,12 +73,15 @@ import (
 )
 
 func main() {
-	router := openapi3filter.NewRouter().WithSwaggerFromFile("swagger.json")
 	ctx := context.Background()
+	loader := &openapi3.SwaggerLoader{Context: ctx}
+	spec, _ := loader.LoadSwaggerFromFile("openapi3_spec.json")
+	_ := spec.Validate(ctx)
+	router, _ := openapi3filter.NewRouter(spec)
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
 	// Find route
-	route, pathParams, _ := router.FindRoute(httpReq.Method, httpReq.URL)
+	route, pathParams, _ := router.FindRoute(httpReq)
 
 	// Validate request
 	requestValidationInput := &openapi3filter.RequestValidationInput{
