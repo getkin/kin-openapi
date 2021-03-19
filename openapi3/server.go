@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net/url"
 	"strings"
@@ -128,7 +129,17 @@ func (server *Server) Validate(c context.Context) (err error) {
 	if server.URL == "" {
 		return errors.New("value of url must be a non-empty string")
 	}
-	for _, v := range server.Variables {
+	opening, closing := strings.Count(server.URL, "{"), strings.Count(server.URL, "}")
+	if opening != closing {
+		return errors.New("server URL has mismatched { and }")
+	}
+	if opening != len(server.Variables) {
+		return errors.New("server has undeclared variables")
+	}
+	for name, v := range server.Variables {
+		if !strings.Contains(server.URL, fmt.Sprintf("{%s}", name)) {
+			return errors.New("server has undeclared variables")
+		}
 		if err = v.Validate(c); err != nil {
 			return
 		}
@@ -154,7 +165,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 
 func (serverVariable *ServerVariable) Validate(c context.Context) error {
 	switch serverVariable.Default.(type) {
-	case float64, string:
+	case float64, string, nil:
 	default:
 		return errors.New("value of default must be either a number or a string")
 	}

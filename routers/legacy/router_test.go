@@ -161,7 +161,10 @@ func TestRouter(t *testing.T) {
 
 	doc.Servers = []*openapi3.Server{
 		{URL: "https://www.example.com/api/v1"},
-		{URL: "https://{d0}.{d1}.com/api/v1/"},
+		{URL: "https://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
+			"d0": {Default: "www"},
+			"d1": {Enum: []interface{}{"example"}},
+		}},
 	}
 	err = doc.Validate(context.Background())
 	require.NoError(t, err)

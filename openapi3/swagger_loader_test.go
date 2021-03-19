@@ -1,11 +1,13 @@
 package openapi3
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -82,8 +84,8 @@ func TestResolveSchemaRef(t *testing.T) {
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
-
 	require.NoError(t, err)
+
 	refAVisited := doc.Components.Schemas["A"].Value.AllOf[0]
 	require.Equal(t, "#/components/schemas/B", refAVisited.Ref)
 	require.NotNil(t, refAVisited.Value)
@@ -267,7 +269,6 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
-
 	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
 
@@ -496,4 +497,34 @@ paths:
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+}
+
+func TestServersVariables(t *testing.T) {
+	const spec = `
+openapi: 3.0.1
+info:
+  title: My API
+  version: 1.0.0
+paths: {}
+servers:
+- @@@
+`
+	for value, expected := range map[string]error{
+		`{url: /}`:                            nil,
+		`{url: "http://{x}.{y}.example.com"}`: errors.New("invalid servers: server has undeclared variables"),
+		`{url: "http://{x}.y}.example.com"}`:  errors.New("invalid servers: server URL has mismatched { and }"),
+		`{url: "http://{x.example.com"}`:      errors.New("invalid servers: server URL has mismatched { and }"),
+		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`: nil,
+		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:  nil,
+		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:  errors.New("invalid servers: server has undeclared variables"),
+		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:  errors.New("invalid servers: server has undeclared variables"),
+	} {
+		t.Run(value, func(t *testing.T) {
+			loader := NewSwaggerLoader()
+			doc, err := loader.LoadSwaggerFromData([]byte(strings.Replace(spec, "@@@", value, 1)))
+			require.NoError(t, err)
+			err = doc.Validate(loader.Context)
+			require.Equal(t, expected, err)
+		})
+	}
 }
