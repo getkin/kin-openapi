@@ -448,6 +448,7 @@ func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema {
 
 func (schema *Schema) WithPattern(pattern string) *Schema {
 	schema.Pattern = pattern
+	schema.compiledPattern = nil
 	return schema
 }
 
