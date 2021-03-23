@@ -51,9 +51,9 @@ swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
 ## Getting OpenAPI operation that matches request
 ```go
 loader := openapi3.NewSwaggerLoader()
-spec, _ := loader.LoadSwaggerFromData([]byte(`...`))
-_ := spec.Validate(loader.Context)
-router, _ := openapi3filter.NewRouter(spec)
+doc, _ := loader.LoadSwaggerFromData([]byte(`...`))
+_ := doc.Validate(loader.Context)
+router, _ := gorillamux.NewRouter(doc)
 route, pathParams, _ := router.FindRoute(httpRequest)
 // Do something with route.Operation
 ```
@@ -70,14 +70,15 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func main() {
 	ctx := context.Background()
 	loader := &openapi3.SwaggerLoader{Context: ctx}
-	spec, _ := loader.LoadSwaggerFromFile("openapi3_spec.json")
-	_ := spec.Validate(ctx)
-	router, _ := openapi3filter.NewRouter(spec)
+	doc, _ := loader.LoadSwaggerFromFile("openapi3_spec.json")
+	_ := doc.Validate(ctx)
+	router, _ := legacyrouter.NewRouter(doc)
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
 	// Find route
@@ -190,6 +191,14 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 ```
 
 ## Sub-v0 breaking API changes
+
+### v0.51.0
+* Type `openapi3filter.Route` moved to `routers` (and `Route.Handler` was dropped. See https://github.com/getkin/kin-openapi/issues/329)
+* Type `openapi3filter.RouteError` moved to `routers` (so did `ErrPathNotFound` and `ErrMethodNotAllowed` which are now `RouteError`s)
+* Routers' `FindRoute(...)` method now takes only one argument: `*http.Request`
+* `getkin/kin-openapi/openapi3filter.Router` moved to `getkin/kin-openapi/routers/legacy`
+* `openapi3filter.NewRouter()` and its related `WithSwaggerFromFile(string)`, `WithSwagger(*openapi3.Swagger)`, `AddSwaggerFromFile(string)` and `AddSwagger(*openapi3.Swagger)` are all replaced with a single `<router package>.NewRouter(*openapi3.Swagger)`
+	* NOTE: the `NewRouter(doc)` call now requires that the user ensures `doc` is valid (`doc.Validate() != nil`). This used to be asserted.
 
 ### v0.47.0
 Field `(*openapi3.SwaggerLoader).LoadSwaggerFromURIFunc` of type `func(*openapi3.SwaggerLoader, *url.URL) (*openapi3.Swagger, error)` was removed after the addition of the field `(*openapi3.SwaggerLoader).ReadFromURIFunc` of type `func(*openapi3.SwaggerLoader, *url.URL) ([]byte, error)`.
