@@ -60,7 +60,7 @@ jobs:
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go test ./...
-    - run: cd openapi3/testdata && go test -flags with_embed ./... && cd -
+    - run: cd openapi3/testdata && go test -tags with_embed ./... && cd -
     - if: runner.os == 'Linux'
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
