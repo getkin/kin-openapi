@@ -60,6 +60,7 @@ jobs:
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go test ./...
+    - run: go test -flags with_embed ./...
     - if: runner.os == 'Linux'
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 

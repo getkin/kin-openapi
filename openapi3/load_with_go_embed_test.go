@@ -1,3 +1,5 @@
+//+build with_embed
+
 package openapi3_test
 
 import (
