@@ -1,3 +1,5 @@
+//+build with_embed
+
 package openapi3_test
 
 import (
@@ -8,7 +10,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-//go:embed testdata/recursiveRef/*
+//go:embed recursiveRef/*
 var fs embed.FS
 
 func Example() {
@@ -18,7 +20,7 @@ func Example() {
 		return fs.ReadFile(uri.Path)
 	}
 
-	doc, err := loader.LoadSwaggerFromFile("testdata/recursiveRef/openapi.yml")
+	doc, err := loader.LoadSwaggerFromFile("recursiveRef/openapi.yml")
 	if err != nil {
 		panic(err)
 	}
