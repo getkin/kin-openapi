@@ -837,6 +837,25 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.OneOf; len(v) > 0 {
+
+		if schema.Discriminator != nil {
+			if len(schema.Discriminator.Mapping) > 0 {
+				/* Find mapped object by ref */
+				if valuemap, okcheck := value.(map[string]interface{}); okcheck {
+					pn := schema.Discriminator.PropertyName
+					if discriminatorVal, okcheck := valuemap[pn]; okcheck {
+						if mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]; okcheck {
+							for _, item := range v {
+								if item.Ref == mapref {
+									return item.Value.visitJSON(settings, value)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		ok := 0
 		for _, item := range v {
 			v := item.Value
