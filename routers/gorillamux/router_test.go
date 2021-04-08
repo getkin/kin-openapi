@@ -158,9 +158,10 @@ func TestRouter(t *testing.T) {
 
 	doc.Servers = []*openapi3.Server{
 		{URL: "https://www.example.com/api/v1"},
-		{URL: "https://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
-			"d0": {Default: "www"},
-			"d1": {Default: "example", Enum: []string{"example"}},
+		{URL: "{scheme}://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
+			"d0":     {Default: "www"},
+			"d1":     {Default: "example", Enum: []string{"example"}},
+			"scheme": {Default: "https", Enum: []string{"https", "http"}},
 		}},
 	}
 	err = doc.Validate(context.Background())
@@ -176,6 +177,7 @@ func TestRouter(t *testing.T) {
 	expect(r, http.MethodGet, "https://domain0.domain1.com/api/v1/hello", helloGET, map[string]string{
 		"d0": "domain0",
 		"d1": "domain1",
+		// "scheme": "https", TODO: https://github.com/gorilla/mux/issues/624
 	})
 
 	{
@@ -189,4 +191,18 @@ func TestRouter(t *testing.T) {
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}
+}
+
+func TestPermuteScheme(t *testing.T) {
+	scheme0 := "{sche}{me}"
+	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
+		"d0":   {Default: "www"},
+		"d1":   {Default: "example", Enum: []string{"example"}},
+		"sche": {Default: "http"},
+		"me":   {Default: "s", Enum: []string{"", "s"}},
+	}}
+	err := server.Validate(context.Background())
+	require.NoError(t, err)
+	perms := permutePart(scheme0, server)
+	require.Equal(t, []string{"http", "https"}, perms)
 }

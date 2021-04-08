@@ -28,12 +28,17 @@ type Router struct {
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
 func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 	type srv struct {
-		scheme, host, base string
-		server             *openapi3.Server
+		schemes    []string
+		host, base string
+		server     *openapi3.Server
 	}
 	servers := make([]srv, 0, len(doc.Servers))
 	for _, server := range doc.Servers {
-		u, err := url.Parse(bEncode(server.URL))
+		serverURL := server.URL
+		scheme0 := strings.Split(serverURL, "://")[0]
+		schemes := permutePart(scheme0, server)
+
+		u, err := url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
 		if err != nil {
 			return nil, err
 		}
@@ -42,10 +47,10 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 			path = path[:len(path)-1]
 		}
 		servers = append(servers, srv{
-			host:   bDecode(u.Host), //u.Hostname()?
-			base:   path,
-			scheme: bDecode(u.Scheme),
-			server: server,
+			host:    bDecode(u.Host), //u.Hostname()?
+			base:    path,
+			schemes: schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
+			server:  server,
 		})
 	}
 	if len(servers) == 0 {
@@ -65,8 +70,8 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 
 		for _, s := range servers {
 			muxRoute := muxRouter.Path(s.base + path).Methods(methods...)
-			if scheme := s.scheme; scheme != "" {
-				muxRoute.Schemes(scheme)
+			if schemes := s.schemes; len(schemes) != 0 {
+				muxRoute.Schemes(schemes...)
 			}
 			if host := s.host; host != "" {
 				muxRoute.Host(host)
@@ -150,4 +155,49 @@ func bDecode(s string) string {
 	s = strings.Replace(s, blURL, "{", -1)
 	s = strings.Replace(s, brURL, "}", -1)
 	return s
+}
+
+func permutePart(part0 string, srv *openapi3.Server) []string {
+	type mapAndSlice struct {
+		m map[string]struct{}
+		s []string
+	}
+	var2val := make(map[string]mapAndSlice)
+	max := 0
+	for name0, v := range srv.Variables {
+		name := "{" + name0 + "}"
+		if !strings.Contains(part0, name) {
+			continue
+		}
+		m := map[string]struct{}{v.Default: {}}
+		for _, value := range v.Enum {
+			m[value] = struct{}{}
+		}
+		if l := len(m); l > max {
+			max = l
+		}
+		s := make([]string, 0, len(m))
+		for value := range m {
+			s = append(s, value)
+		}
+		var2val[name] = mapAndSlice{m: m, s: s}
+	}
+	if len(var2val) == 0 {
+		return []string{part0}
+	}
+
+	partsMap := make(map[string]struct{}, max*len(var2val))
+	for i := 0; i < max; i++ {
+		part := part0
+		for name, mas := range var2val {
+			part = strings.Replace(part, name, mas.s[i%len(mas.s)], -1)
+		}
+		partsMap[part] = struct{}{}
+	}
+	parts := make([]string, 0, len(partsMap))
+	for part := range partsMap {
+		parts = append(parts, part)
+	}
+	sort.Strings(parts)
+	return parts
 }
