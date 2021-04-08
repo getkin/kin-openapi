@@ -163,7 +163,7 @@ func TestRouter(t *testing.T) {
 		{URL: "https://www.example.com/api/v1"},
 		{URL: "https://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
 			"d0": {Default: "www"},
-			"d1": {Enum: []interface{}{"example"}},
+			"d1": {Default: "example", Enum: []string{"example"}},
 		}},
 	}
 	err = doc.Validate(context.Background())

@@ -150,9 +150,9 @@ func (server *Server) Validate(c context.Context) (err error) {
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.0.
 type ServerVariable struct {
 	ExtensionProps
-	Enum        []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default     interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
-	Description string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 func (serverVariable *ServerVariable) MarshalJSON() ([]byte, error) {
@@ -164,17 +164,12 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 }
 
 func (serverVariable *ServerVariable) Validate(c context.Context) error {
-	switch serverVariable.Default.(type) {
-	case float64, string, nil:
-	default:
-		return errors.New("value of default must be either a number or a string")
-	}
-	for _, item := range serverVariable.Enum {
-		switch item.(type) {
-		case float64, string:
-		default:
-			return errors.New("all 'enum' items must be either a number or a string")
+	if serverVariable.Default == "" {
+		data, err := serverVariable.MarshalJSON()
+		if err != nil {
+			return err
 		}
+		return fmt.Errorf("field default is required in %s", data)
 	}
 	return nil
 }

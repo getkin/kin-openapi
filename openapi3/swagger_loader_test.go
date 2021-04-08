@@ -514,10 +514,11 @@ servers:
 		`{url: "http://{x}.{y}.example.com"}`: errors.New("invalid servers: server has undeclared variables"),
 		`{url: "http://{x}.y}.example.com"}`:  errors.New("invalid servers: server URL has mismatched { and }"),
 		`{url: "http://{x.example.com"}`:      errors.New("invalid servers: server URL has mismatched { and }"),
-		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`: nil,
-		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:  nil,
-		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:  errors.New("invalid servers: server has undeclared variables"),
-		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:  errors.New("invalid servers: server has undeclared variables"),
+		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                nil,
+		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: nil,
+		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New(`invalid servers: field default is required in {"enum":["www"]}`),
+		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
+		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
 	} {
 		t.Run(value, func(t *testing.T) {
 			loader := NewSwaggerLoader()
