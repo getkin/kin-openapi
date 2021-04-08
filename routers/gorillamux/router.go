@@ -7,6 +7,7 @@
 package gorillamux
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
@@ -33,6 +34,12 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 	}
 	servers := make([]srv, 0, len(doc.Servers))
 	for _, server := range doc.Servers {
+		for k, v := range server.Variables {
+			server.URL = strings.ReplaceAll(server.URL,
+				fmt.Sprintf("{%v}", k),
+				v.Default.(string))
+		}
+
 		u, err := url.Parse(bEncode(server.URL))
 		if err != nil {
 			return nil, err
