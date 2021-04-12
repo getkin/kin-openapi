@@ -1187,39 +1187,42 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 }
 
 func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
-	var (
-		contentType = "text/csv"
-		decoder     = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
-			data, err := ioutil.ReadAll(body)
-			if err != nil {
-				return nil, err
-			}
-			var vv []interface{}
-			for _, v := range strings.Split(string(data), ",") {
-				vv = append(vv, v)
-			}
-			return vv, nil
+	var decoder BodyDecoder
+	decoder = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (decoded interface{}, err error) {
+		var data []byte
+		if data, err = ioutil.ReadAll(body); err != nil {
+			return
 		}
-		schema  = openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()
-		encFn   = func(string) *openapi3.Encoding { return nil }
-		body    = strings.NewReader("foo,bar")
-		want    = []interface{}{"foo", "bar"}
-		wantErr = &ParseError{Kind: KindUnsupportedFormat}
-	)
+		return strings.Split(string(data), ","), nil
+	}
+	contentType := "text/csv"
 	h := make(http.Header)
 	h.Set(headerCT, contentType)
 
+	originalDecoder := RegisteredBodyDecoder(contentType)
+	require.Nil(t, originalDecoder)
+
 	RegisterBodyDecoder(contentType, decoder)
+	require.Equal(t, fmt.Sprintf("%v", decoder), fmt.Sprintf("%v", RegisteredBodyDecoder(contentType)))
+
+	body := strings.NewReader("foo,bar")
+	schema := openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
 	got, err := decodeBody(body, h, schema, encFn)
 
 	require.NoError(t, err)
-	require.Truef(t, reflect.DeepEqual(got, want), "got %v, want %v", got, want)
+	require.Equal(t, []string{"foo", "bar"}, got)
 
 	UnregisterBodyDecoder(contentType)
-	_, err = decodeBody(body, h, schema, encFn)
 
-	require.Error(t, err)
-	require.Truef(t, matchParseError(err, wantErr), "got error:\n%v\nwant error:\n%v", err, wantErr)
+	originalDecoder = RegisteredBodyDecoder(contentType)
+	require.Nil(t, originalDecoder)
+
+	_, err = decodeBody(body, h, schema, encFn)
+	require.Equal(t, &ParseError{
+		Kind:   KindUnsupportedFormat,
+		Reason: prefixUnsupportedCT + ` "text/csv"`,
+	}, err)
 }
 
 func matchParseError(got, want error) bool {
