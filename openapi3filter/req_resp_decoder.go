@@ -767,10 +767,19 @@ type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (
 // By default, there is content type "application/json" is supported only.
 var bodyDecoders = make(map[string]BodyDecoder)
 
+// RegisteredBodyDecoder returns the registered body decoder for the given content type.
+//
+// If no decoder was registered for the given content type, nil is returned.
+// This call is not thread-safe: body decoders should not be created/destroyed by multiple goroutines.
+func RegisteredBodyDecoder(contentType string) BodyDecoder {
+	return bodyDecoders[contentType]
+}
+
 // RegisterBodyDecoder registers a request body's decoder for a content type.
 //
 // If a decoder for the specified content type already exists, the function replaces
 // it with the specified decoder.
+// This call is not thread-safe: body decoders should not be created/destroyed by multiple goroutines.
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 	if contentType == "" {
 		panic("contentType is empty")
@@ -784,6 +793,7 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 // UnregisterBodyDecoder dissociates a body decoder from a content type.
 //
 // Decoding this content type will result in an error.
+// This call is not thread-safe: body decoders should not be created/destroyed by multiple goroutines.
 func UnregisterBodyDecoder(contentType string) {
 	if contentType == "" {
 		panic("contentType is empty")
