@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -839,16 +840,28 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 	if v := schema.OneOf; len(v) > 0 {
 
 		if schema.Discriminator != nil {
-			if len(schema.Discriminator.Mapping) > 0 {
-				/* Find mapped object by ref */
-				if valuemap, okcheck := value.(map[string]interface{}); okcheck {
-					pn := schema.Discriminator.PropertyName
-					if discriminatorVal, okcheck := valuemap[pn]; okcheck {
+			/* Find mapped object by ref */
+			if valuemap, okcheck := value.(map[string]interface{}); okcheck {
+				pn := schema.Discriminator.PropertyName
+				if discriminatorVal, okcheck := valuemap[pn]; okcheck {
+					if len(schema.Discriminator.Mapping) > 0 {
 						if mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]; okcheck {
 							for _, item := range v {
 								if item.Ref == mapref {
 									return item.Value.visitJSON(settings, value)
 								}
+							}
+						}
+					} else {
+						/* Assume implicit mapping on objectType as stated in Mapping Type Names section:
+						``It is implied, that the property to which discriminator refers, contains the
+						name of the target schema. In the example above, the objectType property should
+						contain either simpleObject, or complexObject string.''*/
+						for _, oneof := range schema.OneOf {
+							/* TODO: ugly.. should this be a property of the SchemaRef? */
+							objectType := strings.ReplaceAll(oneof.Ref, "#/components/schemas/", "")
+							if objectType == discriminatorVal {
+								return oneof.Value.visitJSON(settings, value)
 							}
 						}
 					}
