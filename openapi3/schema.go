@@ -867,19 +867,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			err := v.visitJSON(settings, value)
 			settings.failfast = oldfailfast
 			if err == nil {
-				if schema.Discriminator != nil {
-					pn := schema.Discriminator.PropertyName
-					if valuemap, okcheck := value.(map[string]interface{}); okcheck {
-						if discriminatorVal, okcheck := valuemap[pn]; okcheck == true {
-							mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]
-							if okcheck && mapref == item.Ref {
-								ok++
-							}
-						}
-					}
-				} else {
-					ok++
-				}
+				ok++
 			}
 		}
 		if ok != 1 {
