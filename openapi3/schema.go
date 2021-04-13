@@ -858,9 +858,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 						name of the target schema. In the example above, the objectType property should
 						contain either simpleObject, or complexObject string.''*/
 						for _, oneof := range schema.OneOf {
-							/* TODO: ugly.. should this be a property of the SchemaRef? */
-							objectType := strings.ReplaceAll(oneof.Ref, "#/components/schemas/", "")
-							if objectType == discriminatorVal {
+							if strings.HasSuffix(oneof.Ref, discriminatorVal.(string)) {
 								return oneof.Value.visitJSON(settings, value)
 							}
 						}
