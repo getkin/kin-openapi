@@ -412,7 +412,6 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 		swaggerLoader.visitedHeader[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/headers/"
 	if component == nil {
 		return errors.New("invalid header: value MUST be an object")
 	}
@@ -459,7 +458,6 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 		swaggerLoader.visitedParameter[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/parameters/"
 	if component == nil {
 		return errors.New("invalid parameter: value MUST be an object")
 	}
@@ -522,7 +520,6 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 		swaggerLoader.visitedRequestBody[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/requestBodies/"
 	if component == nil {
 		return errors.New("invalid requestBody: value MUST be an object")
 	}
@@ -577,7 +574,6 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 		swaggerLoader.visitedResponse[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/responses/"
 	if component == nil {
 		return errors.New("invalid response: value MUST be an object")
 	}
@@ -651,7 +647,6 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 		swaggerLoader.visitedSchema[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/schemas/"
 	if component == nil {
 		return errors.New("invalid schema: value MUST be an object")
 	}
@@ -737,7 +732,6 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 		swaggerLoader.visitedSecurityScheme[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/securitySchemes/"
 	if component == nil {
 		return errors.New("invalid securityScheme: value MUST be an object")
 	}
@@ -775,7 +769,6 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 		swaggerLoader.visitedExample[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/examples/"
 	if component == nil {
 		return errors.New("invalid example: value MUST be an object")
 	}
@@ -813,7 +806,6 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 		swaggerLoader.visitedLink[component.Value] = struct{}{}
 	}
 
-	const prefix = "#/components/links/"
 	if component == nil {
 		return errors.New("invalid link: value MUST be an object")
 	}
@@ -851,7 +843,6 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 	}
 	swaggerLoader.visitedPathItemRefs[key] = struct{}{}
 
-	const prefix = "#/paths/"
 	if pathItem == nil {
 		return errors.New("invalid path item: value MUST be an object")
 	}
@@ -868,6 +859,7 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 				return
 			}
 
+			const prefix = "#/paths/"
 			if !strings.HasPrefix(ref, prefix) {
 				err = fmt.Errorf("expected prefix %q in URI %q", prefix, ref)
 				return
