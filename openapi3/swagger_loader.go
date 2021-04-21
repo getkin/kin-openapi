@@ -388,30 +388,31 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {
-	componentPath := path
-	if !strings.HasPrefix(ref, "#") {
-		if !swaggerLoader.IsExternalRefsAllowed {
-			return nil, "", nil, fmt.Errorf("encountered non-allowed external reference: %q", ref)
-		}
-		parsedURL, err := url.Parse(ref)
-		if err != nil {
-			return nil, "", nil, fmt.Errorf("cannot parse reference: %q: %v", ref, parsedURL)
-		}
-		fragment := parsedURL.Fragment
-		parsedURL.Fragment = ""
-
-		resolvedPath, err := resolvePath(path, parsedURL)
-		if err != nil {
-			return nil, "", nil, fmt.Errorf("error resolving path: %v", err)
-		}
-
-		if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
-			return nil, "", nil, fmt.Errorf("error resolving reference %q: %v", ref, err)
-		}
-		ref = "#" + fragment
-		componentPath = resolvedPath
+	if strings.HasPrefix(ref, "#") {
+		return swagger, ref, path, nil
 	}
-	return swagger, ref, componentPath, nil
+
+	if !swaggerLoader.IsExternalRefsAllowed {
+		return nil, "", nil, fmt.Errorf("encountered non-allowed external reference: %q", ref)
+	}
+
+	parsedURL, err := url.Parse(ref)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("cannot parse reference: %q: %v", ref, parsedURL)
+	}
+	fragment := parsedURL.Fragment
+	parsedURL.Fragment = ""
+
+	resolvedPath, err := resolvePath(path, parsedURL)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("error resolving path: %v", err)
+	}
+
+	if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
+		return nil, "", nil, fmt.Errorf("error resolving reference %q: %v", ref, err)
+	}
+
+	return swagger, "#" + fragment, resolvedPath, nil
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, documentPath *url.URL) error {
