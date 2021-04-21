@@ -1,0 +1,8 @@
+openapi: 3.0.1
+components:
+  schemas:
+    Test:
+      type: object
+      properties:
+        test:
+          $ref: 'ext.json#/definitions/b'
