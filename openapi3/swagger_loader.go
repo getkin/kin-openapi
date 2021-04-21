@@ -63,6 +63,11 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 	return swaggerLoader.loadSwaggerFromURIInternal(location)
 }
 
+// LoadSwaggerFromFile loads a spec from a local file path
+func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
+	return swaggerLoader.LoadSwaggerFromURI(&url.URL{Path: path})
+}
+
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
 	data, err := swaggerLoader.readURL(location)
 	if err != nil {
@@ -121,19 +126,9 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 	return ioutil.ReadFile(location.Path)
 }
 
-// LoadSwaggerFromFile loads a spec from a local file path
-func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
-	swaggerLoader.resetVisitedPathItemRefs()
-	return swaggerLoader.loadSwaggerFromURIInternal(&url.URL{Path: path})
-}
-
 // LoadSwaggerFromData loads a spec from a byte array
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) {
 	swaggerLoader.resetVisitedPathItemRefs()
-	return swaggerLoader.loadSwaggerFromDataInternal(data)
-}
-
-func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataInternal(data []byte) (*Swagger, error) {
 	doc := &Swagger{}
 	if err := yaml.Unmarshal(data, doc); err != nil {
 		return nil, err
