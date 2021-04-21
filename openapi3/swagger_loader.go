@@ -124,16 +124,7 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 // LoadSwaggerFromFile loads a spec from a local file path
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
 	swaggerLoader.resetVisitedPathItemRefs()
-	return swaggerLoader.loadSwaggerFromFileInternal(path)
-}
-
-func (swaggerLoader *SwaggerLoader) loadSwaggerFromFileInternal(path string) (*Swagger, error) {
-	pathAsURL := &url.URL{Path: path}
-	data, err := swaggerLoader.readURL(pathAsURL)
-	if err != nil {
-		return nil, err
-	}
-	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, pathAsURL)
+	return swaggerLoader.loadSwaggerFromURIInternal(&url.URL{Path: path})
 }
 
 // LoadSwaggerFromData loads a spec from a byte array
@@ -388,7 +379,7 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {
-	if strings.HasPrefix(ref, "#") {
+	if ref != "" && ref[0] == '#' {
 		return swagger, ref, path, nil
 	}
 
