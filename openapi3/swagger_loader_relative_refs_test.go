@@ -814,25 +814,25 @@ func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 
 const relativeSchemaDocsRefTemplate = `
 openapi: 3.0.0
-info: 
+info:
   title: ""
   version: "1.0"
 paths: {}
-components: 
-  schemas: 
-    TestSchema: 
+components:
+  schemas:
+    TestSchema:
       $ref: relativeDocs/CustomTestSchema.yml
 `
 
 const relativeResponseDocsRefTemplate = `
 openapi: 3.0.0
-info: 
+info:
   title: ""
   version: "1.0"
 paths: {}
-components: 
-  responses: 
-    TestResponse: 
+components:
+  responses:
+    TestResponse:
       $ref: relativeDocs/CustomTestResponse.yml
 `
 
@@ -844,7 +844,7 @@ info:
 paths: {}
 components:
   parameters:
-    TestParameter: 
+    TestParameter:
       $ref: relativeDocs/CustomTestParameter.yml
 `
 
