@@ -10,10 +10,10 @@ patch:
       headers:
         X-Rate-Limit-Reset:
           $ref: "../../../../CustomTestHeader.yml"
-        X-Another:
-          $ref: '../../../CustomTestHeader1bis.yml#/header'
-        X-And-Another:
-          $ref: '../../../CustomTestHeader2bis.yml#/header'
+        # X-Another:
+        #   $ref: '../../../../CustomTestHeader1bis.yml#/header'
+        # X-And-Another:
+        #   $ref: '../../../../CustomTestHeader2bis.yml#/header'
       content:
         application/json:
           schema:
