@@ -113,6 +113,9 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 			return nil, err
 		}
 		defer resp.Body.Close()
+		if resp.StatusCode > 399 {
+			return nil, fmt.Errorf("request returned status code %d", resp.StatusCode)
+		}
 		return ioutil.ReadAll(resp.Body)
 	}
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
