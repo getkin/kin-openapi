@@ -36,7 +36,6 @@ type SwaggerLoader struct {
 
 	visitedPathItemRefs map[string]struct{}
 
-	visitedLast      *url.URL
 	visitedDocuments map[string]*Swagger
 
 	visitedExample        map[*Example]struct{}
@@ -77,16 +76,6 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, location)
 }
 
-func (swaggerLoader *SwaggerLoader) resolveWith(p *url.URL, ref string) (actual *url.URL, err error) {
-	actual = p
-	if last := swaggerLoader.visitedLast; last != nil {
-		if actual, err = joinRef(last, ref); err != nil {
-			return
-		}
-	}
-	return
-}
-
 func (swaggerLoader *SwaggerLoader) allowsExternalRefs(ref string) (err error) {
 	if !swaggerLoader.IsExternalRefsAllowed {
 		err = fmt.Errorf("encountered disallowed external reference: %q", ref)
@@ -125,7 +114,6 @@ func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPat
 }
 
 func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
-	swaggerLoader.visitedLast = location
 	if f := swaggerLoader.ReadFromURIFunc; f != nil {
 		return f(swaggerLoader, location)
 	}
@@ -161,7 +149,6 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 // elements and returns a *Swagger with all resolved data or an error if unable to load data or resolve refs.
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
 	swaggerLoader.resetVisitedPathItemRefs()
-	swaggerLoader.visitedLast = path
 	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, path)
 }
 
@@ -444,7 +431,7 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 	parsedURL.Fragment = ""
 
 	var resolvedPath *url.URL
-	if resolvedPath, err = swaggerLoader.resolveWith(path, ref); err != nil {
+	if resolvedPath, err = resolvePath(path, parsedURL); err != nil {
 		return nil, "", nil, fmt.Errorf("error resolving path: %v", err)
 	}
 
