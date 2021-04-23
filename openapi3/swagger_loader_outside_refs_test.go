@@ -16,7 +16,5 @@ func TestLoadOutsideRefs(t *testing.T) {
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
-	props := doc.Paths["/service"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Items.Value.Properties
-	require.NotNil(t, props)
-	require.Equal(t, "string", props["created_at"].Value.Type)
+	require.Equal(t, "string", doc.Paths["/service"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Items.Value.AllOf[0].Value.Properties["created_at"].Value.Type)
 }
