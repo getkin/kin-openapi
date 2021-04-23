@@ -238,22 +238,6 @@ func copyURL(basePath *url.URL) (newPath *url.URL, err error) {
 	return
 }
 
-func joinRef(basePath *url.URL, ref string) (*url.URL, error) {
-	if basePath == nil {
-		panic(fmt.Sprintf(">>> ref=%q", ref))
-	}
-	refd, err := url.Parse(ref)
-	if err != nil {
-		return nil, err
-	}
-	newPath, err := copyURL(basePath)
-	if err != nil {
-		return nil, err
-	}
-	newPath.Path = path.Join(path.Dir(newPath.Path), refd.Path)
-	return newPath, nil
-}
-
 func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
 	if basePath == nil {
 		return relativePath, nil

@@ -14,7 +14,7 @@ var _ jsonpointer.JSONPointable = (*Headers)(nil)
 
 func (h Headers) JSONLookup(token string) (interface{}, error) {
 	ref, ok := h[token]
-	if ref == nil || ok == false {
+	if ref == nil || !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 

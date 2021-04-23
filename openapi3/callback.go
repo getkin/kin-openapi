@@ -13,7 +13,7 @@ var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
 
 func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 	ref, ok := c[token]
-	if ref == nil || ok == false {
+	if ref == nil || !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 

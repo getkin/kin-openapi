@@ -1266,7 +1266,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "uniqueItems",
-			Reason:      fmt.Sprintf("duplicate items found"),
+			Reason:      "duplicate items found",
 		}
 		if !settings.multiError {
 			return err
