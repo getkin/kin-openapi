@@ -231,20 +231,13 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	return
 }
 
-func copyURL(basePath *url.URL) (newPath *url.URL, err error) {
-	if newPath, err = url.Parse(basePath.String()); err != nil {
-		err = fmt.Errorf("cannot copy path: %q", basePath.String())
-	}
-	return
-}
-
 func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
 	if basePath == nil {
 		return relativePath, nil
 	}
-	newPath, err := copyURL(basePath)
+	newPath, err := url.Parse(basePath.String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot copy path: %q", basePath.String())
 	}
 	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
 	return newPath, nil
@@ -845,7 +838,7 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 	}
 	key += entrypoint
 	if _, ok := swaggerLoader.visitedPathItemRefs[key]; ok {
-		return
+		return nil
 	}
 	swaggerLoader.visitedPathItemRefs[key] = struct{}{}
 
@@ -857,7 +850,7 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = swaggerLoader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
-				return
+				return err
 			}
 			*pathItem = p
 		} else {
