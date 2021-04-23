@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -134,12 +133,7 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
 		return nil, fmt.Errorf("unsupported URI: %q", location.String())
 	}
-	data, err := ioutil.ReadFile(location.Path)
-	if err != nil {
-		pwd, _ := os.Getwd()
-		return nil, fmt.Errorf("err:%q, path:%q, pwd:%q", err.Error(), location.Path, pwd)
-	}
-	return data, nil
+	return ioutil.ReadFile(location.Path)
 }
 
 // LoadSwaggerFromData loads a spec from a byte array
@@ -421,7 +415,6 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 	if resolvedPath, err = resolvePath(path, parsedURL); err != nil {
 		return nil, "", nil, fmt.Errorf("error resolving path: %v", err)
 	}
-	fmt.Println(">>> resolveRefSwagger", "path=", path, "parsedURL=", parsedURL, "resolvedPath=", resolvedPath)
 
 	if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
 		return nil, "", nil, fmt.Errorf("error resolving reference %q: %v", ref, err)
