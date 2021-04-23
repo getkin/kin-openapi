@@ -50,8 +50,7 @@ paths:
                 type: object
       callbacks:
         myCallback:
-          '{$request.query.queryUrl}':
-            $ref: '#/components/callbacks/MyCallback'
+          $ref: '#/components/callbacks/MyCallback'
 
 components:
   schemas:
@@ -59,13 +58,14 @@ components:
     SomeOtherPayload: {type: boolean}
   callbacks:
     MyCallback:
-      post:
-        requestBody:
-          description: Callback payload
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/SomeOtherPayload'
-        responses:
-          '200':
-            description: callback successfully processed
+      '{$request.query.queryUrl}':
+        post:
+          requestBody:
+            description: Callback payload
+            content:
+              'application/json':
+                schema:
+                  $ref: '#/components/schemas/SomeOtherPayload'
+          responses:
+            '200':
+              description: callback successfully processed
