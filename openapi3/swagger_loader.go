@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -64,8 +65,8 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 }
 
 // LoadSwaggerFromFile loads a spec from a local file path
-func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(path string) (*Swagger, error) {
-	return swaggerLoader.LoadSwaggerFromURI(&url.URL{Path: path})
+func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(location string) (*Swagger, error) {
+	return swaggerLoader.LoadSwaggerFromURI(&url.URL{Path: filepath.ToSlash(location)})
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
@@ -150,16 +151,16 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, 
 
 // LoadSwaggerFromDataWithPath takes the OpenApi spec data in bytes and a path where the resolver can find referred
 // elements and returns a *Swagger with all resolved data or an error if unable to load data or resolve refs.
-func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, path *url.URL) (*Swagger, error) {
+func (swaggerLoader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, location *url.URL) (*Swagger, error) {
 	swaggerLoader.resetVisitedPathItemRefs()
-	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, path)
+	return swaggerLoader.loadSwaggerFromDataWithPathInternal(data, location)
 }
 
-func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, path *url.URL) (*Swagger, error) {
+func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []byte, location *url.URL) (*Swagger, error) {
 	if swaggerLoader.visitedDocuments == nil {
 		swaggerLoader.visitedDocuments = make(map[string]*Swagger)
 	}
-	uri := path.String()
+	uri := location.String()
 	if doc, ok := swaggerLoader.visitedDocuments[uri]; ok {
 		return doc, nil
 	}
@@ -170,7 +171,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 	if err := yaml.Unmarshal(data, swagger); err != nil {
 		return nil, err
 	}
-	if err := swaggerLoader.ResolveRefsIn(swagger, path); err != nil {
+	if err := swaggerLoader.ResolveRefsIn(swagger, location); err != nil {
 		return nil, err
 	}
 
@@ -178,7 +179,7 @@ func (swaggerLoader *SwaggerLoader) loadSwaggerFromDataWithPathInternal(data []b
 }
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
-func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.URL) (err error) {
+func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, location *url.URL) (err error) {
 	if swaggerLoader.visitedPathItemRefs == nil {
 		swaggerLoader.resetVisitedPathItemRefs()
 	}
@@ -186,37 +187,37 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 	// Visit all components
 	components := swagger.Components
 	for _, component := range components.Headers {
-		if err = swaggerLoader.resolveHeaderRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveHeaderRef(swagger, component, location); err != nil {
 			return
 		}
 	}
 	for _, component := range components.Parameters {
-		if err = swaggerLoader.resolveParameterRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveParameterRef(swagger, component, location); err != nil {
 			return
 		}
 	}
 	for _, component := range components.RequestBodies {
-		if err = swaggerLoader.resolveRequestBodyRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveRequestBodyRef(swagger, component, location); err != nil {
 			return
 		}
 	}
 	for _, component := range components.Responses {
-		if err = swaggerLoader.resolveResponseRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveResponseRef(swagger, component, location); err != nil {
 			return
 		}
 	}
 	for _, component := range components.Schemas {
-		if err = swaggerLoader.resolveSchemaRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveSchemaRef(swagger, component, location); err != nil {
 			return
 		}
 	}
 	for _, component := range components.SecuritySchemes {
-		if err = swaggerLoader.resolveSecuritySchemeRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveSecuritySchemeRef(swagger, component, location); err != nil {
 			return
 		}
 	}
 	for _, component := range components.Examples {
-		if err = swaggerLoader.resolveExampleRef(swagger, component, path); err != nil {
+		if err = swaggerLoader.resolveExampleRef(swagger, component, location); err != nil {
 			return
 		}
 	}
@@ -226,7 +227,7 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, path *url.UR
 		if pathItem == nil {
 			continue
 		}
-		if err = swaggerLoader.resolvePathItemRef(swagger, entrypoint, pathItem, path); err != nil {
+		if err = swaggerLoader.resolvePathItemRef(swagger, entrypoint, pathItem, location); err != nil {
 			return
 		}
 	}

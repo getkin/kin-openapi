@@ -1,0 +1,34 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "My other API",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {
+      "DefaultObject": {
+        "type": "object",
+        "properties": {
+          "foo": {
+            "type": "string"
+          },
+          "bar": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "responses": {
+      "DefaultResponse": {
+        "description": "",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DefaultObject"
+            }
+          }
+        }
+      }
+    }
+  }
+}
