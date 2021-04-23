@@ -21,8 +21,8 @@ func TestIssue301(t *testing.T) {
 		Value.Content["application/json"].Schema.
 		Value.Type)
 
-	otherCallbacks := doc.Paths["/trans"].Post.Callbacks["transactionCallback"].Value
-	require.Equal(t, "boolean", (*otherCallbacks)["{$request.query.queryUrl}"].Post.RequestBody.
-		Value.Content["application/json"].Schema.
-		Value.Type)
+	otherCallbacks := doc.Paths["/other"].Post.Callbacks["myCallback"].Value
+	require.Equal(t, "boolean", (*otherCallbacks)["{$request.query.queryUrl}"]) //.Post.RequestBody.
+	// Value.Content["application/json"].Schema.
+	// Value.Type)
 }
