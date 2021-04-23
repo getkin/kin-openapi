@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"reflect"
 	"strconv"
@@ -132,7 +133,12 @@ func (swaggerLoader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 	if location.Scheme != "" || location.Host != "" || location.RawQuery != "" {
 		return nil, fmt.Errorf("unsupported URI: %q", location.String())
 	}
-	return ioutil.ReadFile(location.Path)
+	data, err := ioutil.ReadFile(location.Path)
+	if err != nil {
+		pwd, _ := os.Getwd()
+		return nil, fmt.Errorf("err:%q, path:%q, pwd:%q", err.Error(), location.Path, pwd)
+	}
+	return data, nil
 }
 
 // LoadSwaggerFromData loads a spec from a byte array
