@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -64,7 +63,7 @@ components:
             type: integer
 `
 
-func TestExample(t *testing.T) {
+func Example() {
 	loader := openapi3.NewSwaggerLoader()
 	doc, err := loader.LoadSwaggerFromData([]byte(spec))
 	if err != nil {
