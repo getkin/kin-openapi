@@ -9,6 +9,7 @@ import (
 
 func TestIssue220(t *testing.T) {
 	specPath := filepath.FromSlash("testdata/my-openapi.json")
+	t.Logf("specPath: %q", specPath)
 
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
@@ -17,4 +18,6 @@ func TestIssue220(t *testing.T) {
 
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+
+	require.Equal(t, "integer", doc.Paths["/foo"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Properties["bar"].Value.Type)
 }
