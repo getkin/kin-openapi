@@ -39,7 +39,6 @@ type SwaggerLoader struct {
 
 	visitedDocuments map[string]*Swagger
 
-	// visitedCallback       map[*Callback]struct{}
 	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
 	visitedLink           map[*Link]struct{}
@@ -806,15 +805,6 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 }
 
 func (swaggerLoader *SwaggerLoader) resolveCallbackRef(swagger *Swagger, component *CallbackRef, documentPath *url.URL) (err error) {
-	// if component != nil && component.Value != nil {
-	// 	if swaggerLoader.visitedCallback == nil {
-	// 		swaggerLoader.visitedCallback = make(map[*Callback]struct{})
-	// 	}
-	// 	if _, ok := swaggerLoader.visitedCallback[component.Value]; ok {
-	// 		return nil
-	// 	}
-	// 	swaggerLoader.visitedCallback[component.Value] = struct{}{}
-	// }
 
 	if component == nil {
 		return errors.New("invalid callback: value MUST be an object")
