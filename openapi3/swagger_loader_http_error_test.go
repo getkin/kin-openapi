@@ -48,4 +48,8 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
 
 	require.Nil(t, swagger)
 	require.EqualError(t, err, fmt.Sprintf("error resolving reference \"%s/components.openapi.json#/components/headers/CustomTestHeader\": request returned status code 400", ts.URL))
+
+	swagger, err = loader.LoadSwaggerFromData(spec)
+	require.Nil(t, swagger)
+	require.EqualError(t, err, fmt.Sprintf("error resolving reference \"%s/components.openapi.json#/components/headers/CustomTestHeader\": request returned status code 400", ts.URL))
 }
