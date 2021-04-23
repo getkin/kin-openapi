@@ -846,9 +846,9 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				if discriminatorVal, okcheck := valuemap[pn]; okcheck {
 					if len(schema.Discriminator.Mapping) > 0 {
 						if mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]; okcheck {
-							for _, item := range v {
-								if item.Ref == mapref {
-									return item.Value.visitJSON(settings, value)
+							for _, oneof := range v {
+								if oneof.Ref == mapref {
+									return oneof.Value.visitJSON(settings, value)
 								}
 							}
 						}
@@ -857,9 +857,9 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 						``It is implied, that the property to which discriminator refers, contains the
 						name of the target schema. In the example above, the objectType property should
 						contain either simpleObject, or complexObject string.''*/
-						for _, oneof := range schema.OneOf {
-							if strings.HasSuffix(oneof.Ref, discriminatorVal.(string)) {
-								return oneof.Value.visitJSON(settings, value)
+						for _, v := range schema.OneOf {
+							if strings.HasSuffix(v.Ref, discriminatorVal.(string)) {
+								return v.Value.visitJSON(settings, value)
 							}
 						}
 					}
