@@ -420,6 +420,7 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 	if resolvedPath, err = resolvePath(path, parsedURL); err != nil {
 		return nil, "", nil, fmt.Errorf("error resolving path: %v", err)
 	}
+	fmt.Println(">>> resolveRefSwagger", "path=", path, "parsedURL=", parsedURL, "resolvedPath=", resolvedPath)
 
 	if swagger, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
 		return nil, "", nil, fmt.Errorf("error resolving reference %q: %v", ref, err)
