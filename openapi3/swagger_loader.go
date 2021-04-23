@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -66,7 +67,7 @@ func (swaggerLoader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*Swag
 
 // LoadSwaggerFromFile loads a spec from a local file path
 func (swaggerLoader *SwaggerLoader) LoadSwaggerFromFile(location string) (*Swagger, error) {
-	return swaggerLoader.LoadSwaggerFromURI(&url.URL{Path: location})
+	return swaggerLoader.LoadSwaggerFromURI(&url.URL{Path: filepath.ToSlash(location)})
 }
 
 func (swaggerLoader *SwaggerLoader) loadSwaggerFromURIInternal(location *url.URL) (*Swagger, error) {
