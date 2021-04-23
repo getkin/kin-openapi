@@ -921,6 +921,8 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 
 	// check header
 	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+	require.Equal(t, "header1", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Another"].Value.Description)
+	require.Equal(t, "header2", nestedDirPath.Patch.Responses["200"].Value.Headers["X-And-Another"].Value.Description)
 
 	// check request body
 	require.Equal(t, "example request", nestedDirPath.Patch.RequestBody.Value.Description)
@@ -939,6 +941,8 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 
 	// check header
 	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+	require.Equal(t, "header1", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Another"].Value.Description)
+	require.Equal(t, "header2", nestedDirPath.Patch.Responses["200"].Value.Headers["X-And-Another"].Value.Description)
 
 	// check request body
 	require.Equal(t, "example request", moreNestedDirPath.Patch.RequestBody.Value.Description)
