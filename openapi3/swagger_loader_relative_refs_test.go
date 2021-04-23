@@ -814,25 +814,25 @@ func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 
 const relativeSchemaDocsRefTemplate = `
 openapi: 3.0.0
-info: 
+info:
   title: ""
   version: "1.0"
 paths: {}
-components: 
-  schemas: 
-    TestSchema: 
+components:
+  schemas:
+    TestSchema:
       $ref: relativeDocs/CustomTestSchema.yml
 `
 
 const relativeResponseDocsRefTemplate = `
 openapi: 3.0.0
-info: 
+info:
   title: ""
   version: "1.0"
 paths: {}
-components: 
-  responses: 
-    TestResponse: 
+components:
+  responses:
+    TestResponse:
       $ref: relativeDocs/CustomTestResponse.yml
 `
 
@@ -844,7 +844,7 @@ info:
 paths: {}
 components:
   parameters:
-    TestParameter: 
+    TestParameter:
       $ref: relativeDocs/CustomTestParameter.yml
 `
 
@@ -921,6 +921,8 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 
 	// check header
 	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+	require.Equal(t, "header1", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Another"].Value.Description)
+	require.Equal(t, "header2", nestedDirPath.Patch.Responses["200"].Value.Headers["X-And-Another"].Value.Description)
 
 	// check request body
 	require.Equal(t, "example request", nestedDirPath.Patch.RequestBody.Value.Description)
@@ -939,6 +941,8 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 
 	// check header
 	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+	require.Equal(t, "header1", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Another"].Value.Description)
+	require.Equal(t, "header2", nestedDirPath.Patch.Responses["200"].Value.Headers["X-And-Another"].Value.Description)
 
 	// check request body
 	require.Equal(t, "example request", moreNestedDirPath.Patch.RequestBody.Value.Description)

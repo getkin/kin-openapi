@@ -25,7 +25,7 @@ func TestExportedNonTagged(t *testing.T) {
 	type Bla struct {
 		A          string
 		Another    string `json:"another"`
-		yetAnother string
+		yetAnother string // unused because unexported
 		EvenAYaml  string `yaml:"even_a_yaml"`
 	}
 

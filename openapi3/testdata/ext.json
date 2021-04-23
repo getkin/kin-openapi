@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "a": {
+            "type": "string"
+        },
+        "b": {
+            "type": "object",
+            "description": "I use a local reference.",
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/a"
+                }
+            }
+        }
+    }
+}

@@ -135,9 +135,7 @@ func orderedPaths(paths map[string]*openapi3.PathItem) []string {
 	for c := 0; c <= max; c++ {
 		if ps, ok := vars[c]; ok {
 			sort.Strings(ps)
-			for _, p := range ps {
-				ordered = append(ordered, p)
-			}
+			ordered = append(ordered, ps...)
 		}
 	}
 	return ordered
