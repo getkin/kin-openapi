@@ -49,15 +49,15 @@ paths:
               schema:
                 type: object
       callbacks:
-        myCallback:
-          $ref: '#/components/callbacks/MyCallback'
+        myEvent:
+          $ref: '#/components/callbacks/MyCallbackEvent'
 
 components:
   schemas:
     SomePayload: {type: object}
     SomeOtherPayload: {type: boolean}
   callbacks:
-    MyCallback:
+    MyCallbackEvent:
       '{$request.query.queryUrl}':
         post:
           requestBody:

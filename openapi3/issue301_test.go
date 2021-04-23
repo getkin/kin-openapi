@@ -21,7 +21,7 @@ func TestIssue301(t *testing.T) {
 		Value.Content["application/json"].Schema.
 		Value.Type)
 
-	otherCallbacks := doc.Paths["/other"].Post.Callbacks["myCallback"].Value
+	otherCallbacks := doc.Paths["/other"].Post.Callbacks["myEvent"].Value
 	require.Equal(t, "boolean", (*otherCallbacks)["{$request.query.queryUrl}"].Post.RequestBody.
 		Value.Content["application/json"].Schema.
 		Value.Type)
