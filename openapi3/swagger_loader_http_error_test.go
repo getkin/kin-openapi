@@ -1,14 +1,22 @@
 package openapi3
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "")
+	}))
+	defer ts.Close()
+
 	spec := []byte(`
 {
     "openapi": "3.0.0",
@@ -24,7 +32,7 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
                         "description": "test",
                         "headers": {
                             "X-TEST-HEADER": {
-                                "$ref": "http://` + addr + `/components.openapi.json#/components/headers/CustomTestHeader"
+                                "$ref": "` + ts.URL + `/components.openapi.json#/components/headers/CustomTestHeader"
                             }
                         }
                     }
@@ -34,11 +42,6 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-
-	httpmock.RegisterResponder("GET", "http://localhost:7965/components.openapi.json",
-		httpmock.NewStringResponder(400, ""))
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
 	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
