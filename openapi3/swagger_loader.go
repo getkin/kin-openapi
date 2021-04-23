@@ -85,7 +85,7 @@ func (swaggerLoader *SwaggerLoader) allowsExternalRefs(ref string) (err error) {
 }
 
 // loadSingleElementFromURI reads the data from ref and unmarshals to the passed element.
-func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.URL, element json.Unmarshaler) (*url.URL, error) {
+func (swaggerLoader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.URL, element interface{}) (*url.URL, error) {
 	if err := swaggerLoader.allowsExternalRefs(ref); err != nil {
 		return nil, err
 	}
@@ -218,6 +218,11 @@ func (swaggerLoader *SwaggerLoader) ResolveRefsIn(swagger *Swagger, location *ur
 	}
 	for _, component := range components.Examples {
 		if err = swaggerLoader.resolveExampleRef(swagger, component, location); err != nil {
+			return
+		}
+	}
+	for _, component := range components.Callbacks {
+		if err = swaggerLoader.resolveCallbackRef(swagger, component, location); err != nil {
 			return
 		}
 	}
@@ -799,6 +804,94 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	return nil
 }
 
+func (swaggerLoader *SwaggerLoader) resolveCallbackRef(swagger *Swagger, component *CallbackRef, documentPath *url.URL) (err error) {
+
+	if component == nil {
+		return errors.New("invalid callback: value MUST be an object")
+	}
+	if ref := component.Ref; ref != "" {
+		if isSingleRefElement(ref) {
+			var resolved Callback
+			if documentPath, err = swaggerLoader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
+				return err
+			}
+			component.Value = &resolved
+		} else {
+			var resolved CallbackRef
+			componentPath, err := swaggerLoader.resolveComponent(swagger, ref, documentPath, &resolved)
+			if err != nil {
+				return err
+			}
+			if err := swaggerLoader.resolveCallbackRef(swagger, &resolved, componentPath); err != nil {
+				return err
+			}
+			component.Value = resolved.Value
+		}
+	}
+	value := component.Value
+	if value == nil {
+		return nil
+	}
+
+	for entrypoint, pathItem := range *value {
+		entrypoint, pathItem := entrypoint, pathItem
+		err = func() (err error) {
+			key := "-"
+			if documentPath != nil {
+				key = documentPath.EscapedPath()
+			}
+			key += entrypoint
+			if _, ok := swaggerLoader.visitedPathItemRefs[key]; ok {
+				return nil
+			}
+			swaggerLoader.visitedPathItemRefs[key] = struct{}{}
+
+			if pathItem == nil {
+				return errors.New("invalid path item: value MUST be an object")
+			}
+			ref := pathItem.Ref
+			if ref != "" {
+				if isSingleRefElement(ref) {
+					var p PathItem
+					if documentPath, err = swaggerLoader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
+						return err
+					}
+					*pathItem = p
+				} else {
+					if swagger, ref, documentPath, err = swaggerLoader.resolveRefSwagger(swagger, ref, documentPath); err != nil {
+						return
+					}
+
+					rest := strings.TrimPrefix(ref, "#/components/callbacks/")
+					if rest == ref {
+						return fmt.Errorf(`expected prefix "#/components/callbacks/" in URI %q`, ref)
+					}
+					id := unescapeRefString(rest)
+
+					definitions := swagger.Components.Callbacks
+					if definitions == nil {
+						return failedToResolveRefFragmentPart(ref, "callbacks")
+					}
+					resolved := definitions[id]
+					if resolved == nil {
+						return failedToResolveRefFragmentPart(ref, id)
+					}
+
+					for _, p := range *resolved.Value {
+						*pathItem = *p
+						break
+					}
+				}
+			}
+			return swaggerLoader.resolvePathItemRefContinued(swagger, pathItem, documentPath)
+		}()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if swaggerLoader.visitedLink == nil {
@@ -880,7 +973,10 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 			*pathItem = *resolved
 		}
 	}
+	return swaggerLoader.resolvePathItemRefContinued(swagger, pathItem, documentPath)
+}
 
+func (swaggerLoader *SwaggerLoader) resolvePathItemRefContinued(swagger *Swagger, pathItem *PathItem, documentPath *url.URL) (err error) {
 	for _, parameter := range pathItem.Parameters {
 		if err = swaggerLoader.resolveParameterRef(swagger, parameter, documentPath); err != nil {
 			return
@@ -899,6 +995,11 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 		}
 		for _, response := range operation.Responses {
 			if err = swaggerLoader.resolveResponseRef(swagger, response, documentPath); err != nil {
+				return
+			}
+		}
+		for _, callback := range operation.Callbacks {
+			if err = swaggerLoader.resolveCallbackRef(swagger, callback, documentPath); err != nil {
 				return
 			}
 		}
