@@ -25,13 +25,13 @@ func failedToResolveRefFragmentPart(value, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
 }
 
-// SwaggerLoader helps deserialize a Swagger object
-type SwaggerLoader struct {
+// Loader helps deserialize a Swagger object
+type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
 
 	// ReadFromURIFunc allows overriding the any file/URL reading func
-	ReadFromURIFunc func(loader *SwaggerLoader, url *url.URL) ([]byte, error)
+	ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
 
 	Context context.Context
 
@@ -49,27 +49,27 @@ type SwaggerLoader struct {
 	visitedSecurityScheme map[*SecurityScheme]struct{}
 }
 
-// NewSwaggerLoader returns an empty SwaggerLoader
-func NewSwaggerLoader() *SwaggerLoader {
-	return &SwaggerLoader{}
+// NewLoader returns an empty Loader
+func NewLoader() *Loader {
+	return &Loader{}
 }
 
-func (loader *SwaggerLoader) resetVisitedPathItemRefs() {
+func (loader *Loader) resetVisitedPathItemRefs() {
 	loader.visitedPathItemRefs = make(map[string]struct{})
 }
 
 // LoadSwaggerFromURI loads a spec from a remote URL
-func (loader *SwaggerLoader) LoadSwaggerFromURI(location *url.URL) (*T, error) {
+func (loader *Loader) LoadSwaggerFromURI(location *url.URL) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	return loader.loadFromURIInternal(location)
 }
 
 // LoadSwaggerFromFile loads a spec from a local file path
-func (loader *SwaggerLoader) LoadSwaggerFromFile(location string) (*T, error) {
+func (loader *Loader) LoadSwaggerFromFile(location string) (*T, error) {
 	return loader.LoadSwaggerFromURI(&url.URL{Path: filepath.ToSlash(location)})
 }
 
-func (loader *SwaggerLoader) loadFromURIInternal(location *url.URL) (*T, error) {
+func (loader *Loader) loadFromURIInternal(location *url.URL) (*T, error) {
 	data, err := loader.readURL(location)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (loader *SwaggerLoader) loadFromURIInternal(location *url.URL) (*T, error) 
 	return loader.loadFromDataWithPathInternal(data, location)
 }
 
-func (loader *SwaggerLoader) allowsExternalRefs(ref string) (err error) {
+func (loader *Loader) allowsExternalRefs(ref string) (err error) {
 	if !loader.IsExternalRefsAllowed {
 		err = fmt.Errorf("encountered disallowed external reference: %q", ref)
 	}
@@ -85,7 +85,7 @@ func (loader *SwaggerLoader) allowsExternalRefs(ref string) (err error) {
 }
 
 // loadSingleElementFromURI reads the data from ref and unmarshals to the passed element.
-func (loader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.URL, element interface{}) (*url.URL, error) {
+func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element interface{}) (*url.URL, error) {
 	if err := loader.allowsExternalRefs(ref); err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (loader *SwaggerLoader) loadSingleElementFromURI(ref string, rootPath *url.
 	return resolvedPath, nil
 }
 
-func (loader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
+func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 	if f := loader.ReadFromURIFunc; f != nil {
 		return f(loader, location)
 	}
@@ -137,7 +137,7 @@ func (loader *SwaggerLoader) readURL(location *url.URL) ([]byte, error) {
 }
 
 // LoadSwaggerFromData loads a spec from a byte array
-func (loader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*T, error) {
+func (loader *Loader) LoadSwaggerFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
 	if err := yaml.Unmarshal(data, doc); err != nil {
@@ -151,12 +151,12 @@ func (loader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*T, error) {
 
 // LoadSwaggerFromDataWithPath takes the OpenAPI document data in bytes and a path where the resolver can find referred
 // elements and returns a *T with all resolved data or an error if unable to load data or resolve refs.
-func (loader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, location *url.URL) (*T, error) {
+func (loader *Loader) LoadSwaggerFromDataWithPath(data []byte, location *url.URL) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	return loader.loadFromDataWithPathInternal(data, location)
 }
 
-func (loader *SwaggerLoader) loadFromDataWithPathInternal(data []byte, location *url.URL) (*T, error) {
+func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.URL) (*T, error) {
 	if loader.visitedDocuments == nil {
 		loader.visitedDocuments = make(map[string]*T)
 	}
@@ -179,7 +179,7 @@ func (loader *SwaggerLoader) loadFromDataWithPathInternal(data []byte, location 
 }
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
-func (loader *SwaggerLoader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
+func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	if loader.visitedPathItemRefs == nil {
 		loader.resetVisitedPathItemRefs()
 	}
@@ -267,7 +267,7 @@ func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
 
-func (loader *SwaggerLoader) resolveComponent(
+func (loader *Loader) resolveComponent(
 	doc *T,
 	ref string,
 	path *url.URL,
@@ -400,7 +400,7 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 	}
 }
 
-func (loader *SwaggerLoader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
+func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
 	if ref != "" && ref[0] == '#' {
 		return doc, ref, path, nil
 	}
@@ -428,7 +428,7 @@ func (loader *SwaggerLoader) resolveRef(doc *T, ref string, path *url.URL) (*T, 
 	return doc, "#" + fragment, resolvedPath, nil
 }
 
-func (loader *SwaggerLoader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedHeader == nil {
 			loader.visitedHeader = make(map[*Header]struct{})
@@ -474,7 +474,7 @@ func (loader *SwaggerLoader) resolveHeaderRef(doc *T, component *HeaderRef, docu
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedParameter == nil {
 			loader.visitedParameter = make(map[*Parameter]struct{})
@@ -531,7 +531,7 @@ func (loader *SwaggerLoader) resolveParameterRef(doc *T, component *ParameterRef
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedRequestBody == nil {
 			loader.visitedRequestBody = make(map[*RequestBody]struct{})
@@ -585,7 +585,7 @@ func (loader *SwaggerLoader) resolveRequestBodyRef(doc *T, component *RequestBod
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedResponse == nil {
 			loader.visitedResponse = make(map[*Response]struct{})
@@ -654,7 +654,7 @@ func (loader *SwaggerLoader) resolveResponseRef(doc *T, component *ResponseRef, 
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedSchema == nil {
 			loader.visitedSchema = make(map[*Schema]struct{})
@@ -732,7 +732,7 @@ func (loader *SwaggerLoader) resolveSchemaRef(doc *T, component *SchemaRef, docu
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedSecurityScheme == nil {
 			loader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
@@ -768,7 +768,7 @@ func (loader *SwaggerLoader) resolveSecuritySchemeRef(doc *T, component *Securit
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedExample == nil {
 			loader.visitedExample = make(map[*Example]struct{})
@@ -804,7 +804,7 @@ func (loader *SwaggerLoader) resolveExampleRef(doc *T, component *ExampleRef, do
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
 
 	if component == nil {
 		return errors.New("invalid callback: value MUST be an object")
@@ -892,7 +892,7 @@ func (loader *SwaggerLoader) resolveCallbackRef(doc *T, component *CallbackRef, 
 	return nil
 }
 
-func (loader *SwaggerLoader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
+func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
 	if component != nil && component.Value != nil {
 		if loader.visitedLink == nil {
 			loader.visitedLink = make(map[*Link]struct{})
@@ -928,7 +928,7 @@ func (loader *SwaggerLoader) resolveLinkRef(doc *T, component *LinkRef, document
 	return nil
 }
 
-func (loader *SwaggerLoader) resolvePathItemRef(doc *T, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
+func (loader *Loader) resolvePathItemRef(doc *T, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
 	key := "_"
 	if documentPath != nil {
 		key = documentPath.EscapedPath()
@@ -976,7 +976,7 @@ func (loader *SwaggerLoader) resolvePathItemRef(doc *T, entrypoint string, pathI
 	return loader.resolvePathItemRefContinued(doc, pathItem, documentPath)
 }
 
-func (loader *SwaggerLoader) resolvePathItemRefContinued(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
+func (loader *Loader) resolvePathItemRefContinued(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	for _, parameter := range pathItem.Parameters {
 		if err = loader.resolveParameterRef(doc, parameter, documentPath); err != nil {
 			return

@@ -21,7 +21,7 @@ paths:
 `
 
 func TestPathValidate(t *testing.T) {
-	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(emptyPathSpec))
+	doc, err := NewLoader().LoadSwaggerFromData([]byte(emptyPathSpec))
 	require.NoError(t, err)
 	err = doc.Paths.Validate(context.Background())
 	require.NoError(t, err)

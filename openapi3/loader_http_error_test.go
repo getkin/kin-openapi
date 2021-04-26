@@ -42,7 +42,7 @@ func TestLoadReferenceFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 
@@ -86,7 +86,7 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 

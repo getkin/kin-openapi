@@ -16,7 +16,7 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 	require.NoError(t, err)
 	{
 		// Refs need resolving before we can Validate
-		sl := openapi3.NewSwaggerLoader()
+		sl := openapi3.NewLoader()
 		err = sl.ResolveRefsIn(&doc3, nil)
 		require.NoError(t, err)
 		err = doc3.Validate(context.Background())

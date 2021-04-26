@@ -103,7 +103,7 @@ func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 
 	doc3.Security = ToV3SecurityRequirements(doc2.Security)
 	{
-		sl := openapi3.NewSwaggerLoader()
+		sl := openapi3.NewLoader()
 		if err := sl.ResolveRefsIn(doc3, nil); err != nil {
 			return nil, err
 		}

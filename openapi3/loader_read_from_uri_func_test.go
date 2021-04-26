@@ -11,9 +11,9 @@ import (
 )
 
 func TestLoaderReadFromURIFunc(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *SwaggerLoader, url *url.URL) ([]byte, error) {
+	loader.ReadFromURIFunc = func(loader *Loader, url *url.URL) ([]byte, error) {
 		return ioutil.ReadFile(filepath.Join("testdata", url.Path))
 	}
 	doc, err := loader.LoadSwaggerFromFile("recursiveRef/openapi.yml")
@@ -28,7 +28,7 @@ type multipleSourceLoaderExample struct {
 }
 
 func (l *multipleSourceLoaderExample) LoadSwaggerFromURI(
-	loader *SwaggerLoader,
+	loader *Loader,
 	location *url.URL,
 ) ([]byte, error) {
 	source := l.resolveSourceFromURI(location)
@@ -56,7 +56,7 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 			externalLocation.String(): externalSpec,
 		},
 	}
-	loader := &SwaggerLoader{
+	loader := &Loader{
 		IsExternalRefsAllowed: true,
 		ReadFromURIFunc:       multipleSourceLoader.LoadSwaggerFromURI,
 	}

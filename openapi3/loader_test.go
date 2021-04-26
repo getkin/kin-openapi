@@ -55,7 +55,7 @@ paths:
                 $ref: '#/components/schemas/ErrorModel'
 `)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
@@ -68,9 +68,9 @@ paths:
 	require.NoError(t, err)
 }
 
-func ExampleSwaggerLoader() {
+func ExampleLoader() {
 	const source = `{"info":{"description":"An API"}}`
-	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
+	doc, err := NewLoader().LoadSwaggerFromData([]byte(source))
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +80,7 @@ func ExampleSwaggerLoader() {
 
 func TestResolveSchemaRef(t *testing.T) {
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1",description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
@@ -93,7 +93,7 @@ func TestResolveSchemaRef(t *testing.T) {
 
 func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
@@ -122,7 +122,7 @@ paths:
               examples:
                 test:
                   $ref: '#/components/examples/test'`)
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 
@@ -160,7 +160,7 @@ paths:
                 $ref: '#/components/schemas/Thing'
 `)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	_, err := loader.LoadSwaggerFromData(spec)
 	require.Error(t, err)
 }
@@ -188,7 +188,7 @@ paths:
           description: Test call.
 `)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
@@ -220,7 +220,7 @@ paths:
           description: Test call.
 `)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
@@ -242,7 +242,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 	ts.Start()
 	defer ts.Close()
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	url, err := url.Parse("http://" + addr + "/test.openapi.json")
 	require.NoError(t, err)
@@ -254,7 +254,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 }
 
 func TestLoadWithReferenceInReference(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/refInRef/openapi.json")
 	require.NoError(t, err)
@@ -265,7 +265,7 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
@@ -273,7 +273,7 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/testrefsinglecomponent.openapi.json")
 	require.NoError(t, err)
@@ -316,7 +316,7 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
     }
 }`)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
@@ -355,7 +355,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 	ts.Start()
 	defer ts.Close()
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
@@ -365,7 +365,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 }
 
 func TestLoadYamlFile(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
 	require.NoError(t, err)
@@ -374,7 +374,7 @@ func TestLoadYamlFile(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
 	require.NoError(t, err)
@@ -383,7 +383,7 @@ func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/pathref.openapi.yml")
 	require.NoError(t, err)
@@ -423,7 +423,7 @@ paths:
             father:
               $ref: '#/components/links/Father'
 `)
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(source)
 	require.NoError(t, err)
 
@@ -492,7 +492,7 @@ paths:
                 $ref: '#/components/schemas/ErrorModel'
 `)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
@@ -521,7 +521,7 @@ servers:
 		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
 	} {
 		t.Run(value, func(t *testing.T) {
-			loader := NewSwaggerLoader()
+			loader := NewLoader()
 			doc, err := loader.LoadSwaggerFromData([]byte(strings.Replace(spec, "@@@", value, 1)))
 			require.NoError(t, err)
 			err = doc.Validate(loader.Context)

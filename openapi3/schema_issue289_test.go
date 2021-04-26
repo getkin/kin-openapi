@@ -29,7 +29,7 @@ func TestIssue289(t *testing.T) {
 openapi: "3.0.1"
 `)
 
-	s, err := NewSwaggerLoader().LoadSwaggerFromData(spec)
+	s, err := NewLoader().LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 	err = s.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
 		"name":    "kin-openapi",

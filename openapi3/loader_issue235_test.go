@@ -7,7 +7,7 @@ import (
 )
 
 func TestIssue235OK(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/issue235.spec0.yml")
 	require.NoError(t, err)
@@ -17,7 +17,7 @@ func TestIssue235OK(t *testing.T) {
 
 func TestIssue235CircularDep(t *testing.T) {
 	t.Skip("TODO: return an error on circular dependencies between external files of a spec")
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/issue235.spec0-typo.yml")
 	require.Nil(t, doc)

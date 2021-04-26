@@ -44,14 +44,14 @@ Here's some projects that depend on _kin-openapi_:
 
 # Some recipes
 ## Loading OpenAPI document
-Use `SwaggerLoader`, which resolves all references:
+Use `openapi3.Loader`, which resolves all references:
 ```go
-doc, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
+doc, err := openapi3.NewLoader().LoadSwaggerFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
 ```go
-loader := openapi3.NewSwaggerLoader()
+loader := openapi3.NewLoader()
 doc, _ := loader.LoadSwaggerFromData([]byte(`...`))
 _ := doc.Validate(loader.Context)
 router, _ := gorillamux.NewRouter(doc)
@@ -76,7 +76,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	loader := &openapi3.SwaggerLoader{Context: ctx}
+	loader := &openapi3.Loader{Context: ctx}
 	doc, _ := loader.LoadSwaggerFromFile("openapi3_spec.json")
 	_ := doc.Validate(ctx)
 	router, _ := legacyrouter.NewRouter(doc)
@@ -200,6 +200,8 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 * Renamed `openapi2conv.FromV3Swagger` to `openapi2conv.FromV3`.
 * Renamed `routers.Route.Swagger` to `routers.Route.Spec`.
 * Renamed `openapi3.Swagger` to `openapi3.T`.
+* Renamed `openapi3.SwaggerLoader` to `openapi3.Loader`.
+* Renamed `openapi3.NewSwaggerLoader` to `openapi3.NewLoader`.
 
 ### v0.51.0
 * Type `openapi3filter.Route` moved to `routers` (and `Route.Handler` was dropped. See https://github.com/getkin/kin-openapi/issues/329)

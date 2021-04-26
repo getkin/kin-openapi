@@ -14,7 +14,7 @@ import (
 var fs embed.FS
 
 func Example() {
-	loader := openapi3.NewSwaggerLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.TLoader, uri *url.URL) ([]byte, error) {
 		return fs.ReadFile(uri.Path)

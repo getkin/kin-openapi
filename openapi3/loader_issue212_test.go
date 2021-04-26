@@ -72,7 +72,7 @@ components:
                   pattern: ^\/images\/[0-9a-f]{64}$
 `
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	doc, err := loader.LoadSwaggerFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)

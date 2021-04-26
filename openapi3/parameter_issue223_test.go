@@ -109,7 +109,7 @@ components:
           type: string
 `
 
-	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
+	doc, err := NewLoader().LoadSwaggerFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(context.Background())
 	require.EqualError(t, err, `invalid paths: operation GET /pets/{petId} must define exactly all path parameters`)

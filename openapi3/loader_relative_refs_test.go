@@ -199,7 +199,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 		t.Logf("testcase %q", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
-		loader := NewSwaggerLoader()
+		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
@@ -212,7 +212,7 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 		t.Logf("testcase %q", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
-		loader := NewSwaggerLoader()
+		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.EqualError(t, err, *td.errorMessage)
@@ -225,7 +225,7 @@ func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 		t.Logf("testcase %q", td.name)
 
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
-		loader := NewSwaggerLoader()
+		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
@@ -804,7 +804,7 @@ func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 		t.Logf("testcase %q", td.name)
 
 		spec := []byte(td.contentTemplate)
-		loader := NewSwaggerLoader()
+		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/"})
 		require.NoError(t, err)
@@ -906,7 +906,7 @@ paths:
 `
 
 func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
 

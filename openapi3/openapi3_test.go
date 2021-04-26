@@ -11,7 +11,7 @@ import (
 )
 
 func TestRefsJSON(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 
 	t.Log("Marshal *T to JSON")
 	data, err := json.Marshal(spec())
@@ -49,7 +49,7 @@ func TestRefsJSON(t *testing.T) {
 }
 
 func TestRefsYAML(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 
 	t.Log("Marshal *T to YAML")
 	data, err := yaml.Marshal(spec())

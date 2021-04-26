@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoaderSupportsRecursiveReference(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadSwaggerFromFile("testdata/recursiveRef/openapi.yml")
 	require.NoError(t, err)
