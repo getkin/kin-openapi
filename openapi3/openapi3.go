@@ -47,8 +47,8 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
-func (doc *T) Validate(c context.Context) error {
-	if doc.OpenAPI == "" {
+func (value *T) Validate(ctx context.Context) error {
+	if value.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}
 
@@ -56,15 +56,15 @@ func (doc *T) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid components: %v", e) }
-		if err := doc.Components.Validate(c); err != nil {
+		if err := value.Components.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid info: %v", e) }
-		if v := doc.Info; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Info; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		} else {
@@ -74,8 +74,8 @@ func (doc *T) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid paths: %v", e) }
-		if v := doc.Paths; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Paths; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		} else {
@@ -85,8 +85,8 @@ func (doc *T) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid security: %v", e) }
-		if v := doc.Security; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Security; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		}
@@ -94,8 +94,8 @@ func (doc *T) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
-		if v := doc.Servers; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Servers; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		}

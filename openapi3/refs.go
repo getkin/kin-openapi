@@ -27,12 +27,11 @@ func (value *CallbackRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *CallbackRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *CallbackRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value CallbackRef) JSONLookup(token string) (interface{}, error) {
@@ -59,8 +58,11 @@ func (value *ExampleRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *ExampleRef) Validate(c context.Context) error {
-	return nil
+func (value *ExampleRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
+	}
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value ExampleRef) JSONLookup(token string) (interface{}, error) {
@@ -87,13 +89,13 @@ func (value *HeaderRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *HeaderRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *HeaderRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
+
 func (value HeaderRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return value.Ref, nil
@@ -116,12 +118,11 @@ func (value *LinkRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *LinkRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *LinkRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 type ParameterRef struct {
@@ -139,12 +140,11 @@ func (value *ParameterRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *ParameterRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *ParameterRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value ParameterRef) JSONLookup(token string) (interface{}, error) {
@@ -171,12 +171,11 @@ func (value *ResponseRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *ResponseRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *ResponseRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value ResponseRef) JSONLookup(token string) (interface{}, error) {
@@ -203,12 +202,11 @@ func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *RequestBodyRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *RequestBodyRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
@@ -242,12 +240,11 @@ func (value *SchemaRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *SchemaRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *SchemaRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value SchemaRef) JSONLookup(token string) (interface{}, error) {
@@ -274,12 +271,11 @@ func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
-func (value *SecuritySchemeRef) Validate(c context.Context) error {
-	v := value.Value
-	if v == nil {
-		return foundUnresolvedRef(value.Ref)
+func (value *SecuritySchemeRef) Validate(ctx context.Context) error {
+	if v := value.Value; v != nil {
+		return v.Validate(ctx)
 	}
-	return v.Validate(c)
+	return foundUnresolvedRef(value.Ref)
 }
 
 func (value SecuritySchemeRef) JSONLookup(token string) (interface{}, error) {

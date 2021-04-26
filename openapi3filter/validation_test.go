@@ -596,7 +596,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 			Request: httpReq,
 			Route:   route,
 			Options: &Options{
-				AuthenticationFunc: func(c context.Context, input *AuthenticationInput) error {
+				AuthenticationFunc: func(ctx context.Context, input *AuthenticationInput) error {
 					if schemesValidated != nil {
 						if validated, ok := (*schemesValidated)[input.SecurityScheme]; ok {
 							if validated {
@@ -840,8 +840,8 @@ func TestAllSchemesMet(t *testing.T) {
 // makeAuthFunc creates an authentication function that accepts the given valid schemes.
 // If an invalid or unknown scheme is encountered, an error is returned by the returned function.
 // Otherwise the return value of the returned function is nil.
-func makeAuthFunc(schemes map[string]bool) func(c context.Context, input *AuthenticationInput) error {
-	return func(c context.Context, input *AuthenticationInput) error {
+func makeAuthFunc(schemes map[string]bool) func(ctx context.Context, input *AuthenticationInput) error {
+	return func(ctx context.Context, input *AuthenticationInput) error {
 		// If the scheme is valid and present in the schemes
 		valid, present := schemes[input.SecuritySchemeName]
 		if valid && present {

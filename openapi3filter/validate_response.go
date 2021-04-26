@@ -17,7 +17,7 @@ import (
 //
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
-func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
+func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error {
 	req := input.RequestValidationInput.Request
 	switch req.Method {
 	case "HEAD":

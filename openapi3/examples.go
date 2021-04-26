@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -45,4 +46,8 @@ func (example *Example) MarshalJSON() ([]byte, error) {
 
 func (example *Example) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, example)
+}
+
+func (value *Example) Validate(ctx context.Context) error {
+	return nil // TODO
 }
