@@ -86,7 +86,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// If there aren't any security requirements for the operation
 	if security == nil {
 		// Use the global security requirements.
-		security = &route.Swagger.Security
+		security = &route.Spec.Security
 	}
 	if security != nil {
 		if err = ValidateSecurityRequirements(c, input, *security); err != nil && !options.MultiError {
@@ -275,7 +275,7 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 
 // validateSecurityRequirement validates a single OpenAPI 3 security requirement
 func validateSecurityRequirement(c context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
-	doc := input.Route.Swagger
+	doc := input.Route.Spec
 	securitySchemes := doc.Components.SecuritySchemes
 
 	// Ensure deterministic order
