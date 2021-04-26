@@ -30,7 +30,7 @@ func Example() {
 		panic(err)
 	}
 	if !reflect.DeepEqual(doc, docAgain) {
-		fmt.Println("Objects doc & docAgain should be the same")
+		fmt.Println("objects doc & docAgain should be the same")
 	}
 	// Output:
 }
