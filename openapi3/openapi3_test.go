@@ -13,26 +13,26 @@ import (
 func TestRefsJSON(t *testing.T) {
 	loader := NewSwaggerLoader()
 
-	t.Log("Marshal *Swagger to JSON")
+	t.Log("Marshal *T to JSON")
 	data, err := json.Marshal(spec())
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Unmarshal *Swagger from JSON")
-	docA := &Swagger{}
+	t.Log("Unmarshal *T from JSON")
+	docA := &T{}
 	err = json.Unmarshal(specJSON, &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Resolve refs in unmarshalled *Swagger")
+	t.Log("Resolve refs in unmarshalled *T")
 	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
-	t.Log("Resolve refs in marshalled *Swagger")
+	t.Log("Resolve refs in marshalled *T")
 	docB, err := loader.LoadSwaggerFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
-	t.Log("Validate *Swagger")
+	t.Log("Validate *T")
 	err = docA.Validate(loader.Context)
 	require.NoError(t, err)
 	err = docB.Validate(loader.Context)
@@ -51,26 +51,26 @@ func TestRefsJSON(t *testing.T) {
 func TestRefsYAML(t *testing.T) {
 	loader := NewSwaggerLoader()
 
-	t.Log("Marshal *Swagger to YAML")
+	t.Log("Marshal *T to YAML")
 	data, err := yaml.Marshal(spec())
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Unmarshal *Swagger from YAML")
-	docA := &Swagger{}
+	t.Log("Unmarshal *T from YAML")
+	docA := &T{}
 	err = yaml.Unmarshal(specYAML, &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
-	t.Log("Resolve refs in unmarshalled *Swagger")
+	t.Log("Resolve refs in unmarshalled *T")
 	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
-	t.Log("Resolve refs in marshalled *Swagger")
+	t.Log("Resolve refs in marshalled *T")
 	docB, err := loader.LoadSwaggerFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
-	t.Log("Validate *Swagger")
+	t.Log("Validate *T")
 	err = docA.Validate(loader.Context)
 	require.NoError(t, err)
 	err = docB.Validate(loader.Context)
@@ -237,7 +237,7 @@ var specJSON = []byte(`
 }
 `)
 
-func spec() *Swagger {
+func spec() *T {
 	parameter := &Parameter{
 		Description: "Some parameter",
 		Name:        "example",
@@ -257,7 +257,7 @@ func spec() *Swagger {
 		Description: "Some schema",
 	}
 	example := map[string]string{"name": "Some example"}
-	return &Swagger{
+	return &T{
 		OpenAPI: "3.0",
 		Info: &Info{
 			Title:   "MyAPI",
@@ -401,7 +401,7 @@ components:
 
 	for spec, expectedErr := range tests {
 		t.Run(expectedErr, func(t *testing.T) {
-			doc := &Swagger{}
+			doc := &T{}
 			err := yaml.Unmarshal([]byte(spec), &doc)
 			require.NoError(t, err)
 

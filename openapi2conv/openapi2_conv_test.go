@@ -11,7 +11,7 @@ import (
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
-	var doc3 openapi3.Swagger
+	var doc3 openapi3.T
 	err := json.Unmarshal([]byte(exampleV3), &doc3)
 	require.NoError(t, err)
 	{

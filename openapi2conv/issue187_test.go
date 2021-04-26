@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func v2v3JSON(spec2 []byte) (doc3 *openapi3.Swagger, err error) {
+func v2v3JSON(spec2 []byte) (doc3 *openapi3.T, err error) {
 	var doc2 openapi2.T
 	if err = json.Unmarshal(spec2, &doc2); err != nil {
 		return
@@ -20,7 +20,7 @@ func v2v3JSON(spec2 []byte) (doc3 *openapi3.Swagger, err error) {
 	return
 }
 
-func v2v3YAML(spec2 []byte) (doc3 *openapi3.Swagger, err error) {
+func v2v3YAML(spec2 []byte) (doc3 *openapi3.T, err error) {
 	var doc2 openapi2.T
 	if err = yaml.Unmarshal(spec2, &doc2); err != nil {
 		return

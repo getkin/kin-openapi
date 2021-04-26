@@ -13,10 +13,10 @@ import (
 )
 
 // ToV3 converts an OpenAPIv2 spec to an OpenAPIv3 spec
-func ToV3(doc2 *openapi2.T) (*openapi3.Swagger, error) {
+func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 	stripNonCustomExtensions(doc2.Extensions)
 
-	doc3 := &openapi3.Swagger{
+	doc3 := &openapi3.T{
 		OpenAPI:        "3.0.3",
 		Info:           &doc2.Info,
 		Components:     openapi3.Components{},
@@ -526,7 +526,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 }
 
 // FromV3 converts an OpenAPIv3 spec to an OpenAPIv2 spec
-func FromV3(doc3 *openapi3.Swagger) (*openapi2.T, error) {
+func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 	doc2Responses, err := FromV3Responses(doc3.Components.Responses, &doc3.Components)
 	if err != nil {
 		return nil, err
@@ -786,7 +786,7 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 	return result
 }
 
-func FromV3PathItem(doc3 *openapi3.Swagger, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
+func FromV3PathItem(doc3 *openapi3.T, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
 	stripNonCustomExtensions(pathItem.Extensions)
 	result := &openapi2.PathItem{
 		ExtensionProps: pathItem.ExtensionProps,
@@ -872,7 +872,7 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 	return parameters
 }
 
-func FromV3Operation(doc3 *openapi3.Swagger, operation *openapi3.Operation) (*openapi2.Operation, error) {
+func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2.Operation, error) {
 	if operation == nil {
 		return nil, nil
 	}
@@ -1029,7 +1029,7 @@ func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) 
 	return result, nil
 }
 
-func FromV3SecurityScheme(doc3 *openapi3.Swagger, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {
+func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {
 	securityScheme := ref.Value
 	if securityScheme == nil {
 		return nil, nil

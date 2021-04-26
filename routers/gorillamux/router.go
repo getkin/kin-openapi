@@ -26,7 +26,7 @@ type Router struct {
 // NewRouter creates a gorilla/mux router.
 // Assumes spec is .Validate()d
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
-func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
+func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	type srv struct {
 		schemes    []string
 		host, base string

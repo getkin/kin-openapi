@@ -914,7 +914,7 @@ func TestDecodeParameter(t *testing.T) {
 						Title:   "MyAPI",
 						Version: "0.1",
 					}
-					spec := &openapi3.Swagger{OpenAPI: "3.0.0", Info: info}
+					spec := &openapi3.T{OpenAPI: "3.0.0", Info: info}
 					op := &openapi3.Operation{
 						OperationID: "test",
 						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},

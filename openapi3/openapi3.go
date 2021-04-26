@@ -8,8 +8,8 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Swagger is the root of an OpenAPI v3 document
-type Swagger struct {
+// T is the root of an OpenAPI v3 document
+type T struct {
 	ExtensionProps
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
@@ -21,15 +21,15 @@ type Swagger struct {
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
-func (doc *Swagger) MarshalJSON() ([]byte, error) {
+func (doc *T) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(doc)
 }
 
-func (doc *Swagger) UnmarshalJSON(data []byte) error {
+func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
 
-func (doc *Swagger) AddOperation(path string, method string, operation *Operation) {
+func (doc *T) AddOperation(path string, method string, operation *Operation) {
 	paths := doc.Paths
 	if paths == nil {
 		paths = make(Paths)
@@ -43,11 +43,11 @@ func (doc *Swagger) AddOperation(path string, method string, operation *Operatio
 	pathItem.SetOperation(method, operation)
 }
 
-func (doc *Swagger) AddServer(server *Server) {
+func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
-func (doc *Swagger) Validate(c context.Context) error {
+func (doc *T) Validate(c context.Context) error {
 	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}

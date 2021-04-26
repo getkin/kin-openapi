@@ -45,7 +45,7 @@ func TestFilter(t *testing.T) {
 	complexArgSchema.Required = []string{"name", "id"}
 
 	// Declare router
-	doc := &openapi3.Swagger{
+	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -528,7 +528,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 		},
 	}
 
-	doc := &openapi3.Swagger{
+	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -662,7 +662,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		},
 	}
 
-	doc := openapi3.Swagger{
+	doc := openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -759,7 +759,7 @@ func TestAllSchemesMet(t *testing.T) {
 		},
 	}
 
-	doc := openapi3.Swagger{
+	doc := openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",

@@ -57,7 +57,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	noDescriptionIsInvalid := func(data []byte) *Swagger {
+	noDescriptionIsInvalid := func(data []byte) *T {
 		loader := NewSwaggerLoader()
 		doc, err := loader.LoadSwaggerFromData(data)
 		require.NoError(t, err)
@@ -69,7 +69,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		return doc
 	}
 
-	var docWithNoResponseDescription *Swagger
+	var docWithNoResponseDescription *T
 	{
 		spec := []byte(strings.Replace(spec, `"description": ""`, ``, 1))
 		docWithNoResponseDescription = noDescriptionIsInvalid(spec)

@@ -199,6 +199,7 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 * Renamed `openapi2conv.ToV3Swagger` to `openapi2conv.ToV3`.
 * Renamed `openapi2conv.FromV3Swagger` to `openapi2conv.FromV3`.
 * Renamed `routers.Route.Swagger` to `routers.Route.Spec`.
+* Renamed `openapi3.Swagger` to `openapi3.T`.
 
 ### v0.51.0
 * Type `openapi3filter.Route` moved to `routers` (and `Route.Handler` was dropped. See https://github.com/getkin/kin-openapi/issues/329)

@@ -11,21 +11,21 @@ import (
 type refTestDataEntry struct {
 	name            string
 	contentTemplate string
-	testFunc        func(t *testing.T, doc *Swagger)
+	testFunc        func(t *testing.T, doc *T)
 }
 
 type refTestDataEntryWithErrorMessage struct {
 	name            string
 	contentTemplate string
 	errorMessage    *string
-	testFunc        func(t *testing.T, doc *Swagger)
+	testFunc        func(t *testing.T, doc *T)
 }
 
 var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SchemaRef",
 		contentTemplate: externalSchemaRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Schemas["TestSchema"].Value.Type)
 			require.Equal(t, "string", doc.Components.Schemas["TestSchema"].Value.Type)
 		},
@@ -33,7 +33,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ResponseRef",
 		contentTemplate: externalResponseRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			desc := "description"
 			require.Equal(t, &desc, doc.Components.Responses["TestResponse"].Value.Description)
 		},
@@ -41,7 +41,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ParameterRef",
 		contentTemplate: externalParameterRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Parameters["TestParameter"].Value.Name)
 			require.Equal(t, "id", doc.Components.Parameters["TestParameter"].Value.Name)
 		},
@@ -49,7 +49,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ExampleRef",
 		contentTemplate: externalExampleRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Examples["TestExample"].Value.Description)
 			require.Equal(t, "description", doc.Components.Examples["TestExample"].Value.Description)
 		},
@@ -57,14 +57,14 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "RequestBodyRef",
 		contentTemplate: externalRequestBodyRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.RequestBodies["TestRequestBody"].Value.Content)
 		},
 	},
 	{
 		name:            "SecuritySchemeRef",
 		contentTemplate: externalSecuritySchemeRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
 			require.Equal(t, "description", doc.Components.SecuritySchemes["TestSecurityScheme"].Value.Description)
 		},
@@ -72,7 +72,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ExternalHeaderRef",
 		contentTemplate: externalHeaderRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Headers["TestHeader"].Value.Description)
 			require.Equal(t, "description", doc.Components.Headers["TestHeader"].Value.Description)
 		},
@@ -80,7 +80,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathParameterRef",
 		contentTemplate: externalPathParameterRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test/{id}"].Parameters[0].Value.Name)
 			require.Equal(t, "id", doc.Paths["/test/{id}"].Parameters[0].Value.Name)
 		},
@@ -88,7 +88,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationParameterRef",
 		contentTemplate: externalPathOperationParameterRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test/{id}"].Get.Parameters[0].Value)
 			require.Equal(t, "id", doc.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
 		},
@@ -96,7 +96,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationRequestBodyRef",
 		contentTemplate: externalPathOperationRequestBodyRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value)
 			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content)
 		},
@@ -104,7 +104,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationResponseRef",
 		contentTemplate: externalPathOperationResponseRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value)
 			desc := "description"
 			require.Equal(t, &desc, doc.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -113,7 +113,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationParameterSchemaRef",
 		contentTemplate: externalPathOperationParameterSchemaRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value)
 			require.Equal(t, "string", doc.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
 			require.Equal(t, "id", doc.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
@@ -123,7 +123,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationParameterRefWithContentInQuery",
 		contentTemplate: externalPathOperationParameterWithContentInQueryTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			schemaRef := doc.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema
 			require.NotNil(t, schemaRef.Value)
 			require.Equal(t, "string", schemaRef.Value.Type)
@@ -133,7 +133,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationRequestBodyExampleRef",
 		contentTemplate: externalPathOperationRequestBodyExampleRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value)
 			require.Equal(t, "description", doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
 		},
@@ -141,7 +141,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationReqestBodyContentSchemaRef",
 		contentTemplate: externalPathOperationReqestBodyContentSchemaRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value)
 			require.Equal(t, "string", doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
 		},
@@ -149,7 +149,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationResponseExampleRef",
 		contentTemplate: externalPathOperationResponseExampleRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value)
 			desc := "testdescription"
 			require.Equal(t, &desc, doc.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -159,7 +159,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathOperationResponseSchemaRef",
 		contentTemplate: externalPathOperationResponseSchemaRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value)
 			desc := "testdescription"
 			require.Equal(t, &desc, doc.Paths["/test"].Post.Responses["default"].Value.Description)
@@ -169,7 +169,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ComponentHeaderSchemaRef",
 		contentTemplate: externalComponentHeaderSchemaRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Headers["TestHeader"].Value)
 			require.Equal(t, "string", doc.Components.Headers["TestHeader"].Value.Schema.Value.Type)
 		},
@@ -177,7 +177,7 @@ var refTestDataEntries = []refTestDataEntry{
 	{
 		name:            "RequestResponseHeaderRef",
 		contentTemplate: externalRequestResponseHeaderRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 			require.Equal(t, "description", doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 		},
@@ -189,7 +189,7 @@ var refTestDataEntriesResponseError = []refTestDataEntryWithErrorMessage{
 		name:            "CannotContainBothSchemaAndContentInAParameter",
 		contentTemplate: externalCannotContainBothSchemaAndContentInAParameter,
 		errorMessage:    &(&struct{ x string }{"cannot contain both schema and content in a parameter"}).x,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 		},
 	},
 }
@@ -723,7 +723,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SchemaRef",
 		contentTemplate: relativeSchemaDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Schemas["TestSchema"].Value.Type)
 			require.Equal(t, "string", doc.Components.Schemas["TestSchema"].Value.Type)
 		},
@@ -731,7 +731,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ResponseRef",
 		contentTemplate: relativeResponseDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			desc := "description"
 			require.Equal(t, &desc, doc.Components.Responses["TestResponse"].Value.Description)
 		},
@@ -739,7 +739,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ParameterRef",
 		contentTemplate: relativeParameterDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Parameters["TestParameter"].Value.Name)
 			require.Equal(t, "param", doc.Components.Parameters["TestParameter"].Value.Name)
 			require.Equal(t, true, doc.Components.Parameters["TestParameter"].Value.Required)
@@ -748,7 +748,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "ExampleRef",
 		contentTemplate: relativeExampleDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, "param", doc.Components.Examples["TestExample"].Value.Summary)
 			require.NotNil(t, "param", doc.Components.Examples["TestExample"].Value.Value)
 			require.Equal(t, "An example", doc.Components.Examples["TestExample"].Value.Summary)
@@ -757,7 +757,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "RequestRef",
 		contentTemplate: relativeRequestDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, "param", doc.Components.RequestBodies["TestRequestBody"].Value.Description)
 			require.Equal(t, "example request", doc.Components.RequestBodies["TestRequestBody"].Value.Description)
 		},
@@ -765,7 +765,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "HeaderRef",
 		contentTemplate: relativeHeaderDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, "param", doc.Components.Headers["TestHeader"].Value.Description)
 			require.Equal(t, "description", doc.Components.Headers["TestHeader"].Value.Description)
 		},
@@ -773,7 +773,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "HeaderRef",
 		contentTemplate: relativeHeaderDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, "param", doc.Components.Headers["TestHeader"].Value.Description)
 			require.Equal(t, "description", doc.Components.Headers["TestHeader"].Value.Description)
 		},
@@ -781,7 +781,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "SecuritySchemeRef",
 		contentTemplate: relativeSecuritySchemeDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.SecuritySchemes["TestSecurityScheme"].Value.Type)
 			require.NotNil(t, doc.Components.SecuritySchemes["TestSecurityScheme"].Value.Scheme)
 			require.Equal(t, "http", doc.Components.SecuritySchemes["TestSecurityScheme"].Value.Type)
@@ -791,7 +791,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 	{
 		name:            "PathRef",
 		contentTemplate: relativePathDocsRefTemplate,
-		testFunc: func(t *testing.T, doc *Swagger) {
+		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/pets"])
 			require.NotNil(t, doc.Paths["/pets"].Get.Responses["200"])
 			require.NotNil(t, doc.Paths["/pets"].Get.Responses["200"].Value.Content["application/json"])

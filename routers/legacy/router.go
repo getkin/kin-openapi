@@ -50,7 +50,7 @@ func (rs Routers) FindRoute(req *http.Request) (routers.Router, *routers.Route, 
 
 // Router maps a HTTP request to an OpenAPI operation.
 type Router struct {
-	doc      *openapi3.Swagger
+	doc      *openapi3.T
 	pathNode *pathpattern.Node
 }
 
@@ -58,7 +58,7 @@ type Router struct {
 //
 // If the given OpenAPIv3 document has servers, router will use them.
 // All operations of the document will be added to the router.
-func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
+func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	if err := doc.Validate(context.Background()); err != nil {
 		return nil, fmt.Errorf("validating OpenAPI failed: %v", err)
 	}

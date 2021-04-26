@@ -13,7 +13,7 @@ type Router interface {
 
 // Route describes the operation an http.Request can match
 type Route struct {
-	Spec      *openapi3.Swagger
+	Spec      *openapi3.T
 	Server    *openapi3.Server
 	Path      string
 	PathItem  *openapi3.PathItem
