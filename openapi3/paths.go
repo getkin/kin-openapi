@@ -9,16 +9,16 @@ import (
 // Paths is specified by OpenAPI/Swagger standard version 3.0.
 type Paths map[string]*PathItem
 
-func (paths Paths) Validate(c context.Context) error {
+func (value Paths) Validate(ctx context.Context) error {
 	normalizedPaths := make(map[string]string)
-	for path, pathItem := range paths {
+	for path, pathItem := range value {
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
 
 		if pathItem == nil {
-			paths[path] = &PathItem{}
-			pathItem = paths[path]
+			value[path] = &PathItem{}
+			pathItem = value[path]
 		}
 
 		normalizedPath, pathParamsCount := normalizeTemplatedPath(path)
@@ -49,7 +49,7 @@ func (paths Paths) Validate(c context.Context) error {
 			}
 		}
 
-		if err := pathItem.Validate(c); err != nil {
+		if err := pathItem.Validate(ctx); err != nil {
 			return err
 		}
 	}

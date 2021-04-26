@@ -7,9 +7,9 @@ import (
 )
 
 func TestLoadOutsideRefs(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/303bis/service.yaml")
+	doc, err := loader.LoadFromFile("testdata/303bis/service.yaml")
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 

@@ -26,7 +26,7 @@ type Router struct {
 // NewRouter creates a gorilla/mux router.
 // Assumes spec is .Validate()d
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
-func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
+func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	type srv struct {
 		schemes    []string
 		host, base string
@@ -81,7 +81,7 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 			}
 			r.muxes = append(r.muxes, muxRoute)
 			r.routes = append(r.routes, &routers.Route{
-				Swagger:   doc,
+				Spec:      doc,
 				Server:    s.server,
 				Path:      path,
 				PathItem:  pathItem,
@@ -103,7 +103,7 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 			}
 			route := r.routes[i]
 			route.Method = req.Method
-			route.Operation = route.Swagger.Paths[route.Path].GetOperation(route.Method)
+			route.Operation = route.Spec.Paths[route.Path].GetOperation(route.Method)
 			return route, match.Vars, nil
 		}
 		switch match.MatchErr {

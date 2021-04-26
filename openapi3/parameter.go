@@ -64,9 +64,9 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 	return nil
 }
 
-func (parameters Parameters) Validate(c context.Context) error {
+func (value Parameters) Validate(ctx context.Context) error {
 	dupes := make(map[string]struct{})
-	for _, item := range parameters {
+	for _, item := range value {
 		if v := item.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
@@ -75,7 +75,7 @@ func (parameters Parameters) Validate(c context.Context) error {
 			dupes[key] = struct{}{}
 		}
 
-		if err := item.Validate(c); err != nil {
+		if err := item.Validate(ctx); err != nil {
 			return err
 		}
 	}
@@ -236,11 +236,11 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 	}
 }
 
-func (parameter *Parameter) Validate(c context.Context) error {
-	if parameter.Name == "" {
+func (value *Parameter) Validate(ctx context.Context) error {
+	if value.Name == "" {
 		return errors.New("parameter name can't be blank")
 	}
-	in := parameter.In
+	in := value.In
 	switch in {
 	case
 		ParameterInPath,
@@ -248,55 +248,55 @@ func (parameter *Parameter) Validate(c context.Context) error {
 		ParameterInHeader,
 		ParameterInCookie:
 	default:
-		return fmt.Errorf("parameter can't have 'in' value %q", parameter.In)
+		return fmt.Errorf("parameter can't have 'in' value %q", value.In)
 	}
 
 	// Validate a parameter's serialization method.
-	sm, err := parameter.SerializationMethod()
+	sm, err := value.SerializationMethod()
 	if err != nil {
 		return err
 	}
 	var smSupported bool
 	switch {
-	case parameter.In == ParameterInPath && sm.Style == SerializationSimple && !sm.Explode,
-		parameter.In == ParameterInPath && sm.Style == SerializationSimple && sm.Explode,
-		parameter.In == ParameterInPath && sm.Style == SerializationLabel && !sm.Explode,
-		parameter.In == ParameterInPath && sm.Style == SerializationLabel && sm.Explode,
-		parameter.In == ParameterInPath && sm.Style == SerializationMatrix && !sm.Explode,
-		parameter.In == ParameterInPath && sm.Style == SerializationMatrix && sm.Explode,
+	case value.In == ParameterInPath && sm.Style == SerializationSimple && !sm.Explode,
+		value.In == ParameterInPath && sm.Style == SerializationSimple && sm.Explode,
+		value.In == ParameterInPath && sm.Style == SerializationLabel && !sm.Explode,
+		value.In == ParameterInPath && sm.Style == SerializationLabel && sm.Explode,
+		value.In == ParameterInPath && sm.Style == SerializationMatrix && !sm.Explode,
+		value.In == ParameterInPath && sm.Style == SerializationMatrix && sm.Explode,
 
-		parameter.In == ParameterInQuery && sm.Style == SerializationForm && sm.Explode,
-		parameter.In == ParameterInQuery && sm.Style == SerializationForm && !sm.Explode,
-		parameter.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && sm.Explode,
-		parameter.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && !sm.Explode,
-		parameter.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && sm.Explode,
-		parameter.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && !sm.Explode,
-		parameter.In == ParameterInQuery && sm.Style == SerializationDeepObject && sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationForm && sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationForm && !sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && !sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && !sm.Explode,
+		value.In == ParameterInQuery && sm.Style == SerializationDeepObject && sm.Explode,
 
-		parameter.In == ParameterInHeader && sm.Style == SerializationSimple && !sm.Explode,
-		parameter.In == ParameterInHeader && sm.Style == SerializationSimple && sm.Explode,
+		value.In == ParameterInHeader && sm.Style == SerializationSimple && !sm.Explode,
+		value.In == ParameterInHeader && sm.Style == SerializationSimple && sm.Explode,
 
-		parameter.In == ParameterInCookie && sm.Style == SerializationForm && !sm.Explode,
-		parameter.In == ParameterInCookie && sm.Style == SerializationForm && sm.Explode:
+		value.In == ParameterInCookie && sm.Style == SerializationForm && !sm.Explode,
+		value.In == ParameterInCookie && sm.Style == SerializationForm && sm.Explode:
 		smSupported = true
 	}
 	if !smSupported {
 		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
-		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, e)
 	}
 
-	if (parameter.Schema == nil) == (parameter.Content == nil) {
+	if (value.Schema == nil) == (value.Content == nil) {
 		e := errors.New("parameter must contain exactly one of content and schema")
-		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, e)
 	}
-	if schema := parameter.Schema; schema != nil {
-		if err := schema.Validate(c); err != nil {
-			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
+	if schema := value.Schema; schema != nil {
+		if err := schema.Validate(ctx); err != nil {
+			return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, err)
 		}
 	}
-	if content := parameter.Content; content != nil {
-		if err := content.Validate(c); err != nil {
-			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
+	if content := value.Content; content != nil {
+		if err := content.Validate(ctx); err != nil {
+			return fmt.Errorf("parameter %q content is invalid: %v", value.Name, err)
 		}
 	}
 	return nil

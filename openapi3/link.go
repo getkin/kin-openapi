@@ -44,7 +44,7 @@ func (value *Link) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
-func (value *Link) Validate(c context.Context) error {
+func (value *Link) Validate(ctx context.Context) error {
 	if value.OperationID == "" && value.OperationRef == "" {
 		return errors.New("missing operationId or operationRef on link")
 	}

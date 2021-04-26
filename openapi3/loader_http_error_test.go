@@ -42,15 +42,15 @@ func TestLoadReferenceFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 
-	require.Nil(t, swagger)
+	require.Nil(t, doc)
 	require.EqualError(t, err, fmt.Sprintf("error resolving reference \"%s/components.openapi.json#/components/headers/CustomTestHeader\": error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL, ts.URL))
 
-	swagger, err = loader.LoadSwaggerFromData(spec)
-	require.Nil(t, swagger)
+	doc, err = loader.LoadFromData(spec)
+	require.Nil(t, doc)
 	require.EqualError(t, err, fmt.Sprintf("error resolving reference \"%s/components.openapi.json#/components/headers/CustomTestHeader\": error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL, ts.URL))
 }
 
@@ -86,14 +86,14 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 
-	require.Nil(t, swagger)
+	require.Nil(t, doc)
 	require.EqualError(t, err, fmt.Sprintf("error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL))
 
-	swagger, err = loader.LoadSwaggerFromData(spec)
-	require.Nil(t, swagger)
+	doc, err = loader.LoadFromData(spec)
+	require.Nil(t, doc)
 	require.EqualError(t, err, fmt.Sprintf("error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL))
 }

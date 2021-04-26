@@ -11,19 +11,19 @@ import (
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
-	var doc3 openapi3.Swagger
+	var doc3 openapi3.T
 	err := json.Unmarshal([]byte(exampleV3), &doc3)
 	require.NoError(t, err)
 	{
 		// Refs need resolving before we can Validate
-		sl := openapi3.NewSwaggerLoader()
+		sl := openapi3.NewLoader()
 		err = sl.ResolveRefsIn(&doc3, nil)
 		require.NoError(t, err)
 		err = doc3.Validate(context.Background())
 		require.NoError(t, err)
 	}
 
-	spec2, err := FromV3Swagger(&doc3)
+	spec2, err := FromV3(&doc3)
 	require.NoError(t, err)
 	data, err := json.Marshal(spec2)
 	require.NoError(t, err)
@@ -31,11 +31,11 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 }
 
 func TestConvOpenAPIV2ToV3(t *testing.T) {
-	var doc2 openapi2.Swagger
+	var doc2 openapi2.T
 	err := json.Unmarshal([]byte(exampleV2), &doc2)
 	require.NoError(t, err)
 
-	spec3, err := ToV3Swagger(&doc2)
+	spec3, err := ToV3(&doc2)
 	require.NoError(t, err)
 	err = spec3.Validate(context.Background())
 	require.NoError(t, err)

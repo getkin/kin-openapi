@@ -1,10 +1,3 @@
-// Package openapi2 parses and writes OpenAPI 2 specifications.
-//
-// Does not cover all elements of OpenAPI 2.
-// When OpenAPI version 3 is backwards-compatible with version 2, version 3 elements have been used.
-//
-// The specification:
-// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md
 package openapi2
 
 import (
@@ -16,7 +9,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type Swagger struct {
+// T is the root of an OpenAPI v2 document
+type T struct {
 	openapi3.ExtensionProps
 	Swagger             string                         `json:"swagger"`
 	Info                openapi3.Info                  `json:"info"`
@@ -34,19 +28,19 @@ type Swagger struct {
 	Tags                openapi3.Tags                  `json:"tags,omitempty"`
 }
 
-func (swagger *Swagger) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(swagger)
+func (doc *T) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(doc)
 }
 
-func (swagger *Swagger) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, swagger)
+func (doc *T) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
 
-func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {
-	paths := swagger.Paths
+func (doc *T) AddOperation(path string, method string, operation *Operation) {
+	paths := doc.Paths
 	if paths == nil {
 		paths = make(map[string]*PathItem, 8)
-		swagger.Paths = paths
+		doc.Paths = paths
 	}
 	pathItem := paths[path]
 	if pathItem == nil {

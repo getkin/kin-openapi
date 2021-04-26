@@ -14,9 +14,9 @@ func TestIssue220(t *testing.T) {
 	} {
 		t.Logf("specPath: %q", specPath)
 
-		loader := NewSwaggerLoader()
+		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadSwaggerFromFile(specPath)
+		doc, err := loader.LoadFromFile(specPath)
 		require.NoError(t, err)
 
 		err = doc.Validate(loader.Context)

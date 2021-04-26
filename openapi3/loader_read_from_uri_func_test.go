@@ -11,24 +11,24 @@ import (
 )
 
 func TestLoaderReadFromURIFunc(t *testing.T) {
-	loader := NewSwaggerLoader()
+	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *SwaggerLoader, url *url.URL) ([]byte, error) {
+	loader.ReadFromURIFunc = func(loader *Loader, url *url.URL) ([]byte, error) {
 		return ioutil.ReadFile(filepath.Join("testdata", url.Path))
 	}
-	doc, err := loader.LoadSwaggerFromFile("recursiveRef/openapi.yml")
+	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 	require.NoError(t, doc.Validate(loader.Context))
 	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo"].Value.Properties["bar"].Value.Items.Value.Example)
 }
 
-type multipleSourceSwaggerLoaderExample struct {
+type multipleSourceLoaderExample struct {
 	Sources map[string][]byte
 }
 
-func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
-	loader *SwaggerLoader,
+func (l *multipleSourceLoaderExample) LoadFromURI(
+	loader *Loader,
 	location *url.URL,
 ) ([]byte, error) {
 	source := l.resolveSourceFromURI(location)
@@ -38,7 +38,7 @@ func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
 	return source, nil
 }
 
-func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location fmt.Stringer) []byte {
+func (l *multipleSourceLoaderExample) resolveSourceFromURI(location fmt.Stringer) []byte {
 	return l.Sources[location.String()]
 }
 
@@ -50,18 +50,18 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 		externalLocation.String(),
 	))
 	externalSpec := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"External Spec"},"paths":{},"components":{"schemas":{"External":{"type":"string"}}}}`)
-	multipleSourceLoader := &multipleSourceSwaggerLoaderExample{
+	multipleSourceLoader := &multipleSourceLoaderExample{
 		Sources: map[string][]byte{
 			rootLocation.String():     rootSpec,
 			externalLocation.String(): externalSpec,
 		},
 	}
-	loader := &SwaggerLoader{
+	loader := &Loader{
 		IsExternalRefsAllowed: true,
-		ReadFromURIFunc:       multipleSourceLoader.LoadSwaggerFromURI,
+		ReadFromURIFunc:       multipleSourceLoader.LoadFromURI,
 	}
 
-	doc, err := loader.LoadSwaggerFromURI(rootLocation)
+	doc, err := loader.LoadFromURI(rootLocation)
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)

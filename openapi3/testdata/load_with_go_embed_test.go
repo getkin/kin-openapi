@@ -14,13 +14,13 @@ import (
 var fs embed.FS
 
 func Example() {
-	loader := openapi3.NewSwaggerLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *openapi3.SwaggerLoader, uri *url.URL) ([]byte, error) {
+	loader.ReadFromURIFunc = func(loader *openapi3.Loader, uri *url.URL) ([]byte, error) {
 		return fs.ReadFile(uri.Path)
 	}
 
-	doc, err := loader.LoadSwaggerFromFile("recursiveRef/openapi.yml")
+	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	if err != nil {
 		panic(err)
 	}

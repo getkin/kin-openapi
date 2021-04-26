@@ -7,9 +7,9 @@ import (
 )
 
 func TestIssue341(t *testing.T) {
-	sl := NewSwaggerLoader()
+	sl := NewLoader()
 	sl.IsExternalRefsAllowed = true
-	doc, err := sl.LoadSwaggerFromFile("testdata/main.yaml")
+	doc, err := sl.LoadFromFile("testdata/main.yaml")
 	require.NoError(t, err)
 
 	err = doc.Validate(sl.Context)

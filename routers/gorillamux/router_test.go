@@ -24,7 +24,7 @@ func TestRouter(t *testing.T) {
 	paramsGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	booksPOST := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	partialGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	doc := &openapi3.Swagger{
+	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",

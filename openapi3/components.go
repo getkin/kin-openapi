@@ -34,12 +34,12 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, components)
 }
 
-func (components *Components) Validate(c context.Context) (err error) {
+func (components *Components) Validate(ctx context.Context) (err error) {
 	for k, v := range components.Schemas {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -48,7 +48,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -57,7 +57,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -66,7 +66,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -75,7 +75,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -84,7 +84,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}

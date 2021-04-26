@@ -8,7 +8,8 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-type Swagger struct {
+// T is the root of an OpenAPI v3 document
+type T struct {
 	ExtensionProps
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
@@ -20,19 +21,19 @@ type Swagger struct {
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
-func (swagger *Swagger) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(swagger)
+func (doc *T) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(doc)
 }
 
-func (swagger *Swagger) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, swagger)
+func (doc *T) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
 
-func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {
-	paths := swagger.Paths
+func (doc *T) AddOperation(path string, method string, operation *Operation) {
+	paths := doc.Paths
 	if paths == nil {
 		paths = make(Paths)
-		swagger.Paths = paths
+		doc.Paths = paths
 	}
 	pathItem := paths[path]
 	if pathItem == nil {
@@ -42,12 +43,12 @@ func (swagger *Swagger) AddOperation(path string, method string, operation *Oper
 	pathItem.SetOperation(method, operation)
 }
 
-func (swagger *Swagger) AddServer(server *Server) {
-	swagger.Servers = append(swagger.Servers, server)
+func (doc *T) AddServer(server *Server) {
+	doc.Servers = append(doc.Servers, server)
 }
 
-func (swagger *Swagger) Validate(c context.Context) error {
-	if swagger.OpenAPI == "" {
+func (value *T) Validate(ctx context.Context) error {
+	if value.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}
 
@@ -55,15 +56,15 @@ func (swagger *Swagger) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid components: %v", e) }
-		if err := swagger.Components.Validate(c); err != nil {
+		if err := value.Components.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid info: %v", e) }
-		if v := swagger.Info; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Info; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		} else {
@@ -73,8 +74,8 @@ func (swagger *Swagger) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid paths: %v", e) }
-		if v := swagger.Paths; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Paths; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		} else {
@@ -84,8 +85,8 @@ func (swagger *Swagger) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid security: %v", e) }
-		if v := swagger.Security; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Security; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		}
@@ -93,8 +94,8 @@ func (swagger *Swagger) Validate(c context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
-		if v := swagger.Servers; v != nil {
-			if err := v.Validate(c); err != nil {
+		if v := value.Servers; v != nil {
+			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		}

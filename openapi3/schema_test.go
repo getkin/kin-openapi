@@ -1211,7 +1211,7 @@ components:
 		"name":      "kin-openapi",
 		"ownerName": true,
 	}
-	s, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(api))
+	s, err := NewLoader().LoadFromData([]byte(api))
 	require.NoError(t, err)
 	require.NotNil(t, s)
 	err = s.Components.Schemas["Test"].Value.VisitJSON(data)

@@ -8,7 +8,7 @@ import (
 	"github.com/getkin/kin-openapi/routers"
 )
 
-// A ContentParameterDecoder takes a parameter definition from the swagger spec,
+// A ContentParameterDecoder takes a parameter definition from the OpenAPI spec,
 // and the value which we received for it. It is expected to return the
 // value unmarshaled into an interface which can be traversed for
 // validation, it should also return the schema to be used for validating the
