@@ -12,6 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
+        go: ['1.14', '1.x']
         # Locked at https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
         os:
         - ubuntu-20.04
@@ -21,28 +22,32 @@ jobs:
     defaults:
       run:
         shell: bash
+    name: ${{ matrix.go }} on ${{ matrix.os }}
     steps:
 
     - uses: actions/setup-go@v2
       with:
-        go-version: 1.x
+        go-version: ${{ matrix.go }}
 
     - id: go-cache-paths
       run: |
         echo "::set-output name=go-build::$(go env GOCACHE)"
         echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+    - run: echo ${{ steps.go-cache-paths.outputs.go-build }}
+    - run: echo ${{ steps.go-cache-paths.outputs.go-mod }}
 
     - name: Go Build Cache
       uses: actions/cache@v2
       with:
         path: ${{ steps.go-cache-paths.outputs.go-build }}
-        key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ matrix.go }}-build-${{ hashFiles('**/go.sum') }}
 
-    - name: Go Mod Cache
+    - name: Go Mod Cache (go>=1.15)
       uses: actions/cache@v2
       with:
         path: ${{ steps.go-cache-paths.outputs.go-mod }}
-        key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ matrix.go }}-mod-${{ hashFiles('**/go.sum') }}
+      if: matrix.go != '1.14'
 
 
     - uses: actions/checkout@v2
@@ -61,6 +66,7 @@ jobs:
 
     - run: go test ./...
     - run: cd openapi3/testdata && go test -tags with_embed ./... && cd -
+      if: matrix.go != '1.14'
     - if: runner.os == 'Linux'
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
