@@ -10,7 +10,7 @@ func TestIssue301(t *testing.T) {
 	sl := NewLoader()
 	sl.IsExternalRefsAllowed = true
 
-	doc, err := sl.LoadSwaggerFromFile("testdata/callbacks.yml")
+	doc, err := sl.LoadFromFile("testdata/callbacks.yml")
 	require.NoError(t, err)
 
 	err = doc.Validate(sl.Context)

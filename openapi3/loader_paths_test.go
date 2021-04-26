@@ -27,7 +27,7 @@ paths:
 		"/foo/bar": "",
 	} {
 		loader := NewLoader()
-		doc, err := loader.LoadSwaggerFromData([]byte(strings.Replace(spec, "PATH", path, 1)))
+		doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "PATH", path, 1)))
 		require.NoError(t, err)
 		err = doc.Validate(loader.Context)
 		if expectedErr != "" {

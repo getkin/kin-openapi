@@ -46,7 +46,7 @@ func TestParsingDiscriminator(t *testing.T) {
 `
 
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData([]byte(spec))
+	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)

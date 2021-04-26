@@ -25,7 +25,7 @@ func failedToResolveRefFragmentPart(value, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
 }
 
-// Loader helps deserialize a Swagger object
+// Loader helps deserialize an OpenAPIv3 document
 type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
@@ -58,15 +58,15 @@ func (loader *Loader) resetVisitedPathItemRefs() {
 	loader.visitedPathItemRefs = make(map[string]struct{})
 }
 
-// LoadSwaggerFromURI loads a spec from a remote URL
-func (loader *Loader) LoadSwaggerFromURI(location *url.URL) (*T, error) {
+// LoadFromURI loads a spec from a remote URL
+func (loader *Loader) LoadFromURI(location *url.URL) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	return loader.loadFromURIInternal(location)
 }
 
-// LoadSwaggerFromFile loads a spec from a local file path
-func (loader *Loader) LoadSwaggerFromFile(location string) (*T, error) {
-	return loader.LoadSwaggerFromURI(&url.URL{Path: filepath.ToSlash(location)})
+// LoadFromFile loads a spec from a local file path
+func (loader *Loader) LoadFromFile(location string) (*T, error) {
+	return loader.LoadFromURI(&url.URL{Path: filepath.ToSlash(location)})
 }
 
 func (loader *Loader) loadFromURIInternal(location *url.URL) (*T, error) {
@@ -136,8 +136,8 @@ func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 	return ioutil.ReadFile(location.Path)
 }
 
-// LoadSwaggerFromData loads a spec from a byte array
-func (loader *Loader) LoadSwaggerFromData(data []byte) (*T, error) {
+// LoadFromData loads a spec from a byte array
+func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
 	if err := yaml.Unmarshal(data, doc); err != nil {
@@ -149,9 +149,9 @@ func (loader *Loader) LoadSwaggerFromData(data []byte) (*T, error) {
 	return doc, nil
 }
 
-// LoadSwaggerFromDataWithPath takes the OpenAPI document data in bytes and a path where the resolver can find referred
+// LoadFromDataWithPath takes the OpenAPI document data in bytes and a path where the resolver can find referred
 // elements and returns a *T with all resolved data or an error if unable to load data or resolve refs.
-func (loader *Loader) LoadSwaggerFromDataWithPath(data []byte, location *url.URL) (*T, error) {
+func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	return loader.loadFromDataWithPathInternal(data, location)
 }

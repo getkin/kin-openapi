@@ -56,7 +56,7 @@ paths:
 `)
 
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
@@ -70,7 +70,7 @@ paths:
 
 func ExampleLoader() {
 	const source = `{"info":{"description":"An API"}}`
-	doc, err := NewLoader().LoadSwaggerFromData([]byte(source))
+	doc, err := NewLoader().LoadFromData([]byte(source))
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ func ExampleLoader() {
 func TestResolveSchemaRef(t *testing.T) {
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1",description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(source)
+	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestResolveSchemaRef(t *testing.T) {
 func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(source)
+	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.EqualError(t, err, `invalid paths: found unresolved ref: ""`)
@@ -123,7 +123,7 @@ paths:
                 test:
                   $ref: '#/components/examples/test'`)
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(source)
+	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
@@ -161,7 +161,7 @@ paths:
 `)
 
 	loader := NewLoader()
-	_, err := loader.LoadSwaggerFromData(spec)
+	_, err := loader.LoadFromData(spec)
 	require.Error(t, err)
 }
 
@@ -189,7 +189,7 @@ paths:
 `)
 
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Paths["/"].Parameters[0].Value)
@@ -221,7 +221,7 @@ paths:
 `)
 
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
@@ -247,7 +247,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 	url, err := url.Parse("http://" + addr + "/test.openapi.json")
 	require.NoError(t, err)
 
-	doc, err := loader.LoadSwaggerFromURI(url)
+	doc, err := loader.LoadFromURI(url)
 	require.NoError(t, err)
 
 	require.Equal(t, "string", doc.Components.Schemas["TestSchema"].Value.Type)
@@ -256,7 +256,7 @@ func TestLoadFromRemoteURL(t *testing.T) {
 func TestLoadWithReferenceInReference(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/refInRef/openapi.json")
+	doc, err := loader.LoadFromFile("testdata/refInRef/openapi.json")
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 	err = doc.Validate(loader.Context)
@@ -267,7 +267,7 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
+	doc, err := loader.LoadFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
 	require.NotNil(t, doc.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
@@ -275,7 +275,7 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/testrefsinglecomponent.openapi.json")
+	doc, err := loader.LoadFromFile("testdata/testrefsinglecomponent.openapi.json")
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Components.Responses["SomeResponse"])
@@ -317,7 +317,7 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
 }`)
 
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
@@ -357,7 +357,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
@@ -367,7 +367,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 func TestLoadYamlFile(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
+	doc, err := loader.LoadFromFile("testdata/test.openapi.yml")
 	require.NoError(t, err)
 
 	require.Equal(t, "OAI Specification in YAML", doc.Info.Title)
@@ -376,7 +376,7 @@ func TestLoadYamlFile(t *testing.T) {
 func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
+	doc, err := loader.LoadFromFile("testdata/testref.openapi.yml")
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Components.Schemas["AnotherTestSchema"].Value.Type)
@@ -385,7 +385,7 @@ func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/pathref.openapi.yml")
+	doc, err := loader.LoadFromFile("testdata/pathref.openapi.yml")
 	require.NoError(t, err)
 
 	require.NotNil(t, doc.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
@@ -424,7 +424,7 @@ paths:
               $ref: '#/components/links/Father'
 `)
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(source)
+	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
@@ -493,7 +493,7 @@ paths:
 `)
 
 	loader := NewLoader()
-	doc, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
@@ -522,7 +522,7 @@ servers:
 	} {
 		t.Run(value, func(t *testing.T) {
 			loader := NewLoader()
-			doc, err := loader.LoadSwaggerFromData([]byte(strings.Replace(spec, "@@@", value, 1)))
+			doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "@@@", value, 1)))
 			require.NoError(t, err)
 			err = doc.Validate(loader.Context)
 			require.Equal(t, expected, err)

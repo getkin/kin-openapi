@@ -28,7 +28,7 @@ func TestRefsJSON(t *testing.T) {
 	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
 	t.Log("Resolve refs in marshalled *T")
-	docB, err := loader.LoadSwaggerFromData(data)
+	docB, err := loader.LoadFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 
@@ -66,7 +66,7 @@ func TestRefsYAML(t *testing.T) {
 	err = loader.ResolveRefsIn(docA, nil)
 	require.NoError(t, err)
 	t.Log("Resolve refs in marshalled *T")
-	docB, err := loader.LoadSwaggerFromData(data)
+	docB, err := loader.LoadFromData(data)
 	require.NoError(t, err)
 	require.NotEmpty(t, docB)
 

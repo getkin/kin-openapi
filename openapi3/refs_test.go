@@ -108,7 +108,7 @@ components:
           type: string
 `
 
-	_, err := NewLoader().LoadSwaggerFromData([]byte(spec))
+	_, err := NewLoader().LoadFromData([]byte(spec))
 	require.EqualError(t, err, `invalid response: value MUST be an object`)
 }
 
@@ -213,7 +213,7 @@ components:
         - type: integer
           format: int32
   `
-	root, err := NewLoader().LoadSwaggerFromData([]byte(spec))
+	root, err := NewLoader().LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
 	ptr, err := jsonpointer.New("/paths/~1pet/put/responses/200/content")

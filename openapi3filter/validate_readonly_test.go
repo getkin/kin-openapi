@@ -66,7 +66,7 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	}
 
 	sl := openapi3.NewLoader()
-	doc, err := sl.LoadSwaggerFromData([]byte(spec))
+	doc, err := sl.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)

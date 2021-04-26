@@ -65,7 +65,7 @@ components:
 
 func Example() {
 	loader := openapi3.NewLoader()
-	doc, err := loader.LoadSwaggerFromData([]byte(spec))
+	doc, err := loader.LoadFromData([]byte(spec))
 	if err != nil {
 		panic(err)
 	}

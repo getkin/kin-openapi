@@ -20,7 +20,7 @@ func Example() {
 		return fs.ReadFile(uri.Path)
 	}
 
-	doc, err := loader.LoadSwaggerFromFile("recursiveRef/openapi.yml")
+	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	if err != nil {
 		panic(err)
 	}

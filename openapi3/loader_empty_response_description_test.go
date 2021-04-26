@@ -34,7 +34,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 	{
 		spec := []byte(spec)
 		loader := NewLoader()
-		doc, err := loader.LoadSwaggerFromData(spec)
+		doc, err := loader.LoadFromData(spec)
 		require.NoError(t, err)
 		got := doc.Paths["/path1"].Get.Responses["200"].Value.Description
 		expected := ""
@@ -47,7 +47,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 	{
 		spec := []byte(strings.Replace(spec, `"description": ""`, `"description": "My response"`, 1))
 		loader := NewLoader()
-		doc, err := loader.LoadSwaggerFromData(spec)
+		doc, err := loader.LoadFromData(spec)
 		require.NoError(t, err)
 		got := doc.Paths["/path1"].Get.Responses["200"].Value.Description
 		expected := "My response"
@@ -59,7 +59,7 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 
 	noDescriptionIsInvalid := func(data []byte) *T {
 		loader := NewLoader()
-		doc, err := loader.LoadSwaggerFromData(data)
+		doc, err := loader.LoadFromData(data)
 		require.NoError(t, err)
 		got := doc.Paths["/path1"].Get.Responses["200"].Value.Description
 		require.Nil(t, got)

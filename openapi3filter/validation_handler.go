@@ -25,7 +25,7 @@ type ValidationHandler struct {
 
 func (h *ValidationHandler) Load() error {
 	loader := openapi3.NewLoader()
-	doc, err := loader.LoadSwaggerFromFile(h.File)
+	doc, err := loader.LoadFromFile(h.File)
 	if err != nil {
 		return err
 	}

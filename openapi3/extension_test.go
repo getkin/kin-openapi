@@ -12,7 +12,7 @@ import (
 func ExampleExtensionProps_DecodeWith() {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	spec, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
+	spec, err := loader.LoadFromFile("testdata/testref.openapi.json")
 	if err != nil {
 		panic(err)
 	}

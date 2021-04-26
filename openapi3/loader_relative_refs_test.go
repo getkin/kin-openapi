@@ -201,7 +201,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
 		td.testFunc(t, doc)
 	}
@@ -214,7 +214,7 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.EqualError(t, err, *td.errorMessage)
 		td.testFunc(t, doc)
 	}
@@ -227,7 +227,7 @@ func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 		require.NoError(t, err)
 		td.testFunc(t, doc)
 	}
@@ -806,7 +806,7 @@ func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 		spec := []byte(td.contentTemplate)
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/"})
+		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/"})
 		require.NoError(t, err)
 		td.testFunc(t, doc)
 	}
@@ -908,7 +908,7 @@ paths:
 func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadSwaggerFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
+	doc, err := loader.LoadFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
 
 	require.NoError(t, err)
 
