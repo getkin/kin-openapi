@@ -194,18 +194,18 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 ## Sub-v0 breaking API changes
 
 ### v0.61.0
-* Renamed `openapi3filter.ValidationHandler.SwaggerFile` to `openapi3filter.ValidationHandler.File`.
 * Renamed `openapi2.Swagger` to `openapi2.T`.
-* Renamed `openapi2conv.ToV3Swagger` to `openapi2conv.ToV3`.
 * Renamed `openapi2conv.FromV3Swagger` to `openapi2conv.FromV3`.
-* Renamed `routers.Route.Swagger` to `routers.Route.Spec`.
+* Renamed `openapi2conv.ToV3Swagger` to `openapi2conv.ToV3`.
+* Renamed `openapi3.LoadSwaggerFromData` to `openapi3.LoadFromData`.
+* Renamed `openapi3.LoadSwaggerFromDataWithPath` to `openapi3.LoadFromDataWithPath`.
+* Renamed `openapi3.LoadSwaggerFromFile` to `openapi3.LoadFromFile`.
+* Renamed `openapi3.LoadSwaggerFromURI` to `openapi3.LoadFromURI`.
+* Renamed `openapi3.NewSwaggerLoader` to `openapi3.NewLoader`.
 * Renamed `openapi3.Swagger` to `openapi3.T`.
 * Renamed `openapi3.SwaggerLoader` to `openapi3.Loader`.
-* Renamed `openapi3.NewSwaggerLoader` to `openapi3.NewLoader`.
-* Renamed `openapi3.LoadSwaggerFromURI` to `openapi3.LoadFromURI`.
-* Renamed `openapi3.LoadSwaggerFromFile` to `openapi3.LoadFromFile`.
-* Renamed `openapi3.LoadSwaggerFromDataWithPath` to `openapi3.LoadFromDataWithPath`.
-* Renamed `openapi3.LoadSwaggerFromData` to `openapi3.LoadFromData`.
+* Renamed `openapi3filter.ValidationHandler.SwaggerFile` to `openapi3filter.ValidationHandler.File`.
+* Renamed `routers.Route.Swagger` to `routers.Route.Spec`.
 
 ### v0.51.0
 * Type `openapi3filter.Route` moved to `routers` (and `Route.Handler` was dropped. See https://github.com/getkin/kin-openapi/issues/329)
