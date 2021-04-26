@@ -70,11 +70,11 @@ paths:
 
 func ExampleSwaggerLoader() {
 	const source = `{"info":{"description":"An API"}}`
-	swagger, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
+	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(source))
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print(swagger.Info.Description)
+	fmt.Print(doc.Info.Description)
 	// Output: An API
 }
 
@@ -189,10 +189,10 @@ paths:
 `)
 
 	loader := NewSwaggerLoader()
-	swagger, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/"].Parameters[0].Value)
+	require.NotNil(t, doc.Paths["/"].Parameters[0].Value)
 }
 
 func TestLoadRequestExampleRef(t *testing.T) {
@@ -221,10 +221,10 @@ paths:
 `)
 
 	loader := NewSwaggerLoader()
-	swagger, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
+	require.NotNil(t, doc.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
 }
 
 func createTestServer(handler http.Handler) *httptest.Server {
@@ -247,10 +247,10 @@ func TestLoadFromRemoteURL(t *testing.T) {
 	url, err := url.Parse("http://" + addr + "/test.openapi.json")
 	require.NoError(t, err)
 
-	swagger, err := loader.LoadSwaggerFromURI(url)
+	doc, err := loader.LoadSwaggerFromURI(url)
 	require.NoError(t, err)
 
-	require.Equal(t, "string", swagger.Components.Schemas["TestSchema"].Value.Type)
+	require.Equal(t, "string", doc.Components.Schemas["TestSchema"].Value.Type)
 }
 
 func TestLoadWithReferenceInReference(t *testing.T) {
@@ -267,20 +267,20 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
+	doc, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.json")
 	require.NoError(t, err)
-	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
+	require.NotNil(t, doc.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
 
 func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testdata/testrefsinglecomponent.openapi.json")
+	doc, err := loader.LoadSwaggerFromFile("testdata/testrefsinglecomponent.openapi.json")
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Components.Responses["SomeResponse"])
+	require.NotNil(t, doc.Components.Responses["SomeResponse"])
 	desc := "this is a single response definition"
-	require.Equal(t, &desc, swagger.Components.Responses["SomeResponse"].Value.Description)
+	require.Equal(t, &desc, doc.Components.Responses["SomeResponse"].Value.Description)
 }
 
 func TestLoadRequestResponseHeaderRef(t *testing.T) {
@@ -317,11 +317,11 @@ func TestLoadRequestResponseHeaderRef(t *testing.T) {
 }`)
 
 	loader := NewSwaggerLoader()
-	swagger, err := loader.LoadSwaggerFromData(spec)
+	doc, err := loader.LoadSwaggerFromData(spec)
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
-	require.Equal(t, "testheader", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.Equal(t, "testheader", doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 }
 
 func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
@@ -357,39 +357,39 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	doc, err := loader.LoadSwaggerFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
-	require.Equal(t, "description", swagger.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+	require.Equal(t, "description", doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
 }
 
 func TestLoadYamlFile(t *testing.T) {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
+	doc, err := loader.LoadSwaggerFromFile("testdata/test.openapi.yml")
 	require.NoError(t, err)
 
-	require.Equal(t, "OAI Specification in YAML", swagger.Info.Title)
+	require.Equal(t, "OAI Specification in YAML", doc.Info.Title)
 }
 
 func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
+	doc, err := loader.LoadSwaggerFromFile("testdata/testref.openapi.yml")
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Components.Schemas["AnotherTestSchema"].Value.Type)
+	require.NotNil(t, doc.Components.Schemas["AnotherTestSchema"].Value.Type)
 }
 
 func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
 	loader := NewSwaggerLoader()
 	loader.IsExternalRefsAllowed = true
-	swagger, err := loader.LoadSwaggerFromFile("testdata/pathref.openapi.yml")
+	doc, err := loader.LoadSwaggerFromFile("testdata/pathref.openapi.yml")
 	require.NoError(t, err)
 
-	require.NotNil(t, swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
-	require.Equal(t, "string", swagger.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+	require.NotNil(t, doc.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+	require.Equal(t, "string", doc.Paths["/test"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 }
 
 func TestResolveResponseLinkRef(t *testing.T) {

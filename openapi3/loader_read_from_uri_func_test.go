@@ -23,11 +23,11 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo"].Value.Properties["bar"].Value.Items.Value.Example)
 }
 
-type multipleSourceSwaggerLoaderExample struct {
+type multipleSourceLoaderExample struct {
 	Sources map[string][]byte
 }
 
-func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
+func (l *multipleSourceLoaderExample) LoadSwaggerFromURI(
 	loader *SwaggerLoader,
 	location *url.URL,
 ) ([]byte, error) {
@@ -38,7 +38,7 @@ func (l *multipleSourceSwaggerLoaderExample) LoadSwaggerFromURI(
 	return source, nil
 }
 
-func (l *multipleSourceSwaggerLoaderExample) resolveSourceFromURI(location fmt.Stringer) []byte {
+func (l *multipleSourceLoaderExample) resolveSourceFromURI(location fmt.Stringer) []byte {
 	return l.Sources[location.String()]
 }
 
@@ -50,7 +50,7 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 		externalLocation.String(),
 	))
 	externalSpec := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"External Spec"},"paths":{},"components":{"schemas":{"External":{"type":"string"}}}}`)
-	multipleSourceLoader := &multipleSourceSwaggerLoaderExample{
+	multipleSourceLoader := &multipleSourceLoaderExample{
 		Sources: map[string][]byte{
 			rootLocation.String():     rootSpec,
 			externalLocation.String(): externalSpec,

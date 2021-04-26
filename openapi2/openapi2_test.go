@@ -9,15 +9,15 @@ import (
 )
 
 func TestReadingSwagger(t *testing.T) {
-	var swagger Swagger
+	var doc Swagger
 
 	input, err := ioutil.ReadFile("testdata/swagger.json")
 	require.NoError(t, err)
 
-	err = json.Unmarshal(input, &swagger)
+	err = json.Unmarshal(input, &doc)
 	require.NoError(t, err)
 
-	output, err := json.Marshal(swagger)
+	output, err := json.Marshal(doc)
 	require.NoError(t, err)
 
 	require.JSONEq(t, string(input), string(output))

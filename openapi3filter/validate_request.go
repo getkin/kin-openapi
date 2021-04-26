@@ -112,7 +112,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 func ValidateParameter(c context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
 	if parameter.Schema == nil && parameter.Content == nil {
 		// We have no schema for the parameter. Assume that everything passes
-		// a schema-less check, but this could also be an error. The Swagger
+		// a schema-less check, but this could also be an error. The OpenAPI
 		// validation allows this to happen.
 		return nil
 	}
@@ -275,8 +275,8 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 
 // validateSecurityRequirement validates a single OpenAPI 3 security requirement
 func validateSecurityRequirement(c context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
-	swagger := input.Route.Swagger
-	securitySchemes := swagger.Components.SecuritySchemes
+	doc := input.Route.Swagger
+	securitySchemes := doc.Components.SecuritySchemes
 
 	// Ensure deterministic order
 	names := make([]string, 0, len(securityRequirement))

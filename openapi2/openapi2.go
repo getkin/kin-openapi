@@ -16,6 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+// Swagger is the root of an OpenAPI v2 document
 type Swagger struct {
 	openapi3.ExtensionProps
 	Swagger             string                         `json:"swagger"`
@@ -34,19 +35,19 @@ type Swagger struct {
 	Tags                openapi3.Tags                  `json:"tags,omitempty"`
 }
 
-func (swagger *Swagger) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(swagger)
+func (doc *Swagger) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(doc)
 }
 
-func (swagger *Swagger) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, swagger)
+func (doc *Swagger) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
 
-func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {
-	paths := swagger.Paths
+func (doc *Swagger) AddOperation(path string, method string, operation *Operation) {
+	paths := doc.Paths
 	if paths == nil {
 		paths = make(map[string]*PathItem, 8)
-		swagger.Paths = paths
+		doc.Paths = paths
 	}
 	pathItem := paths[path]
 	if pathItem == nil {

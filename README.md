@@ -46,7 +46,7 @@ Here's some projects that depend on _kin-openapi_:
 ## Loading OpenAPI document
 Use `SwaggerLoader`, which resolves all references:
 ```go
-swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
+doc, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
@@ -192,6 +192,9 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 ```
 
 ## Sub-v0 breaking API changes
+
+### v0.61.0
+* Renamed `openapi3filter.ValidationHandler.SwaggerFile` to `openapi3filter.ValidationHandler.File`.
 
 ### v0.51.0
 * Type `openapi3filter.Route` moved to `routers` (and `Route.Handler` was dropped. See https://github.com/getkin/kin-openapi/issues/329)
