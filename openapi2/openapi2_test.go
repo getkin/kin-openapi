@@ -1,24 +1,36 @@
-package openapi2
+package openapi2_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"testing"
+	"reflect"
 
-	"github.com/stretchr/testify/require"
+	"github.com/getkin/kin-openapi/openapi2"
 )
 
-func TestReadingSwagger(t *testing.T) {
-	var doc Swagger
-
+func Example() {
 	input, err := ioutil.ReadFile("testdata/swagger.json")
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	err = json.Unmarshal(input, &doc)
-	require.NoError(t, err)
+	var doc openapi2.Swagger
+	if err = json.Unmarshal(input, &doc); err != nil {
+		panic(err)
+	}
 
 	output, err := json.Marshal(doc)
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	require.JSONEq(t, string(input), string(output))
+	var docAgain openapi2.Swagger
+	if err = json.Unmarshal(output, &docAgain); err != nil {
+		panic(err)
+	}
+	if !reflect.DeepEqual(doc, docAgain) {
+		fmt.Println("Objects doc & docAgain should be the same")
+	}
+	// Output:
 }
