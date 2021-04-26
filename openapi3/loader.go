@@ -149,7 +149,7 @@ func (loader *SwaggerLoader) LoadSwaggerFromData(data []byte) (*Swagger, error) 
 	return doc, nil
 }
 
-// LoadSwaggerFromDataWithPath takes the OpenApi spec data in bytes and a path where the resolver can find referred
+// LoadSwaggerFromDataWithPath takes the OpenAPI document data in bytes and a path where the resolver can find referred
 // elements and returns a *Swagger with all resolved data or an error if unable to load data or resolve refs.
 func (loader *SwaggerLoader) LoadSwaggerFromDataWithPath(data []byte, location *url.URL) (*Swagger, error) {
 	loader.resetVisitedPathItemRefs()

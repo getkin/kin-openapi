@@ -1,4 +1,3 @@
-// Package openapi2conv converts an OpenAPI v2 specification to v3.
 package openapi2conv
 
 import (
@@ -13,8 +12,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// ToV3Swagger converts an OpenAPIv2 spec to an OpenAPIv3 spec
-func ToV3Swagger(doc2 *openapi2.Swagger) (*openapi3.Swagger, error) {
+// ToV3 converts an OpenAPIv2 spec to an OpenAPIv3 spec
+func ToV3(doc2 *openapi2.T) (*openapi3.Swagger, error) {
 	stripNonCustomExtensions(doc2.Extensions)
 
 	doc3 := &openapi3.Swagger{
@@ -112,7 +111,7 @@ func ToV3Swagger(doc2 *openapi2.Swagger) (*openapi3.Swagger, error) {
 	return doc3, nil
 }
 
-func ToV3PathItem(doc2 *openapi2.Swagger, components *openapi3.Components, pathItem *openapi2.PathItem, consumes []string) (*openapi3.PathItem, error) {
+func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, consumes []string) (*openapi3.PathItem, error) {
 	stripNonCustomExtensions(pathItem.Extensions)
 	doc3 := &openapi3.PathItem{
 		ExtensionProps: pathItem.ExtensionProps,
@@ -140,7 +139,7 @@ func ToV3PathItem(doc2 *openapi2.Swagger, components *openapi3.Components, pathI
 	return doc3, nil
 }
 
-func ToV3Operation(doc2 *openapi2.Swagger, components *openapi3.Components, pathItem *openapi2.PathItem, operation *openapi2.Operation, consumes []string) (*openapi3.Operation, error) {
+func ToV3Operation(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, operation *openapi2.Operation, consumes []string) (*openapi3.Operation, error) {
 	if operation == nil {
 		return nil, nil
 	}
@@ -526,15 +525,15 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 	}, nil
 }
 
-// FromV3Swagger converts an OpenAPIv3 spec to an OpenAPIv2 spec
-func FromV3Swagger(doc3 *openapi3.Swagger) (*openapi2.Swagger, error) {
+// FromV3 converts an OpenAPIv3 spec to an OpenAPIv2 spec
+func FromV3(doc3 *openapi3.Swagger) (*openapi2.T, error) {
 	doc2Responses, err := FromV3Responses(doc3.Components.Responses, &doc3.Components)
 	if err != nil {
 		return nil, err
 	}
 	stripNonCustomExtensions(doc3.Extensions)
 	schemas, parameters := FromV3Schemas(doc3.Components.Schemas, &doc3.Components)
-	doc2 := &openapi2.Swagger{
+	doc2 := &openapi2.T{
 		Swagger:        "2.0",
 		Info:           *doc3.Info,
 		Definitions:    schemas,
@@ -1093,7 +1092,7 @@ func stripNonCustomExtensions(extensions map[string]interface{}) {
 	}
 }
 
-func addPathExtensions(doc2 *openapi2.Swagger, path string, extensionProps openapi3.ExtensionProps) {
+func addPathExtensions(doc2 *openapi2.T, path string, extensionProps openapi3.ExtensionProps) {
 	paths := doc2.Paths
 	if paths == nil {
 		paths = make(map[string]*openapi2.PathItem, 8)

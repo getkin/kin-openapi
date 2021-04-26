@@ -15,7 +15,7 @@ func Example() {
 		panic(err)
 	}
 
-	var doc openapi2.Swagger
+	var doc openapi2.T
 	if err = json.Unmarshal(input, &doc); err != nil {
 		panic(err)
 	}
@@ -25,7 +25,7 @@ func Example() {
 		panic(err)
 	}
 
-	var docAgain openapi2.Swagger
+	var docAgain openapi2.T
 	if err = json.Unmarshal(output, &docAgain); err != nil {
 		panic(err)
 	}
