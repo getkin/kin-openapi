@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -837,6 +838,35 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.OneOf; len(v) > 0 {
+
+		if schema.Discriminator != nil {
+			/* Find mapped object by ref */
+			if valuemap, okcheck := value.(map[string]interface{}); okcheck {
+				pn := schema.Discriminator.PropertyName
+				if discriminatorVal, okcheck := valuemap[pn]; okcheck {
+					if len(schema.Discriminator.Mapping) > 0 {
+						if mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]; okcheck {
+							for _, oneof := range v {
+								if oneof.Ref == mapref {
+									return oneof.Value.visitJSON(settings, value)
+								}
+							}
+						}
+					} else {
+						/* Assume implicit mapping on objectType as stated in Mapping Type Names section:
+						``It is implied, that the property to which discriminator refers, contains the
+						name of the target schema. In the example above, the objectType property should
+						contain either simpleObject, or complexObject string.''*/
+						for _, v := range schema.OneOf {
+							if strings.HasSuffix(v.Ref, discriminatorVal.(string)) {
+								return v.Value.visitJSON(settings, value)
+							}
+						}
+					}
+				}
+			}
+		}
+
 		ok := 0
 		for _, item := range v {
 			v := item.Value
@@ -848,19 +878,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			err := v.visitJSON(settings, value)
 			settings.failfast = oldfailfast
 			if err == nil {
-				if schema.Discriminator != nil {
-					pn := schema.Discriminator.PropertyName
-					if valuemap, okcheck := value.(map[string]interface{}); okcheck {
-						if discriminatorVal, okcheck := valuemap[pn]; okcheck == true {
-							mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]
-							if okcheck && mapref == item.Ref {
-								ok++
-							}
-						}
-					}
-				} else {
-					ok++
-				}
+				ok++
 			}
 		}
 		if ok != 1 {
