@@ -1,4 +1,4 @@
-package openapi3filter_test
+package legacy_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
-	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/routers/legacy"
 )
 
 const spec = `
@@ -73,7 +73,7 @@ func Example() {
 		panic(err)
 	}
 
-	router, err := legacyrouter.NewRouter(doc)
+	router, err := legacy.NewRouter(doc)
 	if err != nil {
 		panic(err)
 	}
