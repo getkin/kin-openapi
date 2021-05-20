@@ -5,6 +5,8 @@ github.com/getkin/kin-openapi v0.52.0 h1:6WqsF5d6PfJ8AscdD+9Rtb2RP2iBWyC7V6Gcjss
 github.com/getkin/kin-openapi v0.52.0/go.mod h1:fRpo2Nw4Czgy0QnrIesRrEXs5+15N1F9mGZLP/aIomE=
 github.com/getkin/kin-openapi v0.61.0 h1:6awGqF5nG5zkVpMsAih1QH4VgzS8phTxECUWIFo7zko=
 github.com/getkin/kin-openapi v0.61.0/go.mod h1:7Yn5whZr5kJi6t+kShccXS8ae1APpYTW6yheSwk8Yi4=
+github.com/getkin/kin-openapi v0.62.0 h1:qDGdXTLo20ANSgflJEYotfNzHGvYvilNogWOryEwRrI=
+github.com/getkin/kin-openapi v0.62.0/go.mod h1:7Yn5whZr5kJi6t+kShccXS8ae1APpYTW6yheSwk8Yi4=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-openapi/jsonpointer v0.19.5 h1:gZr+CIYByUqjcgeLXnQu2gHYQC9o73G2XUeOFYEICuY=
