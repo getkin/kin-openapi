@@ -130,7 +130,8 @@ components:
     someSchema:
       description: Some schema
   headers:
-    otherHeader: {}
+    otherHeader:
+      schema: {type: string}
     someHeader:
       "$ref": "#/components/headers/otherHeader"
   examples:
@@ -207,7 +208,11 @@ var specJSON = []byte(`
       }
     },
     "headers": {
-      "otherHeader": {},
+      "otherHeader": {
+        "schema": {
+          "type": "string"
+      	}
+      },
       "someHeader": {
         "$ref": "#/components/headers/otherHeader"
       }
@@ -317,7 +322,7 @@ func spec() *T {
 					Ref: "#/components/headers/otherHeader",
 				},
 				"otherHeader": {
-					Value: &Header{},
+					Value: &Header{Parameter{Schema: &SchemaRef{Value: NewStringSchema()}}},
 				},
 			},
 			Examples: map[string]*ExampleRef{
