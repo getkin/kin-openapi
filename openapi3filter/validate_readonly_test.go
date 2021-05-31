@@ -73,6 +73,9 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
+	err = sl.CompileSchemas()
+	require.NoError(t, err)
+
 	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
 	require.NoError(t, err)
 
