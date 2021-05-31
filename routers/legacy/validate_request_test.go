@@ -72,6 +72,9 @@ func Example() {
 	if err := doc.Validate(loader.Context); err != nil {
 		panic(err)
 	}
+	if err = doc.CompileSchemas(); err != nil {
+		panic(err)
+	}
 
 	router, err := legacy.NewRouter(doc)
 	if err != nil {

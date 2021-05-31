@@ -13,8 +13,15 @@ import (
 )
 
 func Example() {
-	doc, err := openapi3.NewLoader().LoadFromFile("./testdata/petstore.yaml")
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromFile("./testdata/petstore.yaml")
 	if err != nil {
+		panic(err)
+	}
+	if err = doc.Validate(loader.Context); err != nil {
+		panic(err)
+	}
+	if err = doc.CompileSchemas(); err != nil {
 		panic(err)
 	}
 

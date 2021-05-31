@@ -68,12 +68,14 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	sl := openapi3.NewLoader()
 	doc, err := sl.LoadFromData([]byte(spec))
 	require.NoError(t, err)
+
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
-	router, err := legacyrouter.NewRouter(doc)
+
+	err = doc.CompileSchemas()
 	require.NoError(t, err)
 
-	err = sl.CompileSchemas()
+	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
 	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
