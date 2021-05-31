@@ -123,9 +123,9 @@ func convertError(me openapi3.MultiError) map[string][]string {
 		case *openapi3.SchemaError:
 			// Can inspect schema validation errors here, e.g. err.Value
 			field := prefixBody
-			if path := err.JSONPointer(); len(path) > 0 {
-				field = fmt.Sprintf("%s.%s", field, strings.Join(path, "."))
-			}
+			// if path := err.JSONPointer(); len(path) > 0 {
+			// 	field = fmt.Sprintf("%s.%s", field, strings.Join(path, "."))
+			// }
 			if _, ok := issues[field]; !ok {
 				issues[field] = make([]string, 0, 3)
 			}
