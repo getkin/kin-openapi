@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // T is the root of an OpenAPI v3 document
@@ -19,6 +20,46 @@ type T struct {
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	refd, refdAsReq, refdAsRep *gojsonschema.SchemaLoader
+}
+
+// CompileSchemas needs to be called before any use of VisitJSON*()
+func (doc *T) CompileSchemas() error {
+	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsRequest())); err != nil {
+		return err
+	}
+	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsResponse())); err != nil {
+		return err
+	}
+	return doc.compileSchemas(newSchemaValidationSettings())
+}
+
+func (doc *T) compileSchemas(settings *schemaValidationSettings) (err error) {
+	docSchemas := doc.Components.Schemas
+	schemas := make(schemasJSON, len(docSchemas))
+	for name, docSchema := range docSchemas {
+		schemas[name] = docSchema.Value.fromOpenAPISchema(settings)
+	}
+	//FIXME merge loops
+	refd := gojsonschema.NewSchemaLoader()
+	for name, schema := range schemas {
+		absRef := "#/components/schemas/" + name
+		sl := gojsonschema.NewGoLoader(schema)
+		if err = refd.AddSchema(absRef, sl); err != nil {
+			return
+		}
+	}
+
+	switch {
+	case settings.asreq:
+		doc.refdAsReq = refd
+	case settings.asrep:
+		doc.refdAsRep = refd
+	default:
+		doc.refd = refd
+	}
+	return
 }
 
 func (doc *T) MarshalJSON() ([]byte, error) {

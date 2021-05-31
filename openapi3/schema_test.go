@@ -324,7 +324,7 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
-		Title:  "STRING: format 'date-time'",
+		Title:  `STRING: format "byte"`,
 		Schema: NewBytesSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
@@ -1220,14 +1220,20 @@ components:
             type: boolean
       type: object
 `
-	data := map[string]interface{}{
-		"name":      "kin-openapi",
-		"ownerName": true,
-	}
 	s, err := NewLoader().LoadFromData([]byte(api))
 	require.NoError(t, err)
 	require.NotNil(t, s)
-	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
+
+	err = s.Validate(context.Background())
+	require.NoError(t, err)
+
+	err = s.CompileSchemas()
+	require.NoError(t, err)
+
+	err = s.Components.Schemas["Test"].Value.VisitData(s, map[string]interface{}{
+		"name":      "kin-openapi",
+		"ownerName": true,
+	})
 	require.NotNil(t, err)
 	require.NotEqual(t, errSchema, err)
 	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)

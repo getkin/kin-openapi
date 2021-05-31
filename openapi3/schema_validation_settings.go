@@ -4,14 +4,8 @@ package openapi3
 type SchemaValidationOption func(*schemaValidationSettings)
 
 type schemaValidationSettings struct {
-	failfast     bool
 	multiError   bool
 	asreq, asrep bool // exclusive (XOR) fields
-}
-
-// FailFast returns schema validation errors quicker.
-func FailFast() SchemaValidationOption {
-	return func(s *schemaValidationSettings) { s.failfast = true }
 }
 
 func MultiErrors() SchemaValidationOption {

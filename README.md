@@ -156,43 +156,18 @@ func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, e
 }
 ```
 
-## Custom function to check uniqueness of array items
-
-By defaut, the library check unique items by below predefined function
-
-```go
-func isSliceOfUniqueItems(xs []interface{}) bool {
-	s := len(xs)
-	m := make(map[string]struct{}, s)
-	for _, x := range xs {
-		key, _ := json.Marshal(&x)
-		m[string(key)] = struct{}{}
-	}
-	return s == len(m)
-}
-```
-
-In the predefined function using `json.Marshal` to generate a string can
-be used as a map key which is to support check the uniqueness of an array
-when the array items are objects or arrays. You can register
-you own function according to your input data to get better performance:
-
-```go
-func main() {
-	// ...
-
-	// Register a customized function used to check uniqueness of array.
-	openapi3.RegisterArrayUniqueItemsChecker(arrayUniqueItemsChecker)
-
-	// ... other validate codes
-}
-
-func arrayUniqueItemsChecker(items []interface{}) bool {
-	// Check the uniqueness of the input slice
-}
-```
 
 ## Sub-v0 breaking API changes
+
+### v0.???
+OpenAPIv3 "in-house" schema validation was replaced with a correct JSON Schema implementation and conversion from OpenAPIv3 Schema to JSON Schema.
+* Dropped `openapi3.ErrOneOfConflict`: now when a value matches more than one `oneOf` schemas the error string contains `Must validate one and only one schema (oneOf)`
+* Dropped `openapi3.SchemaFormatValidationDisabled`: any `openapi3.Schema.Format` value is valid.
+* Dropped `openapi3.FailFast() openapi3.SchemaValidationOption` and `openapi3.SchemaErrorDetailsDisabled`: validating values against schemas is offloaded to a third-party library that does not provide such a mechanism.
+* Dropped `openapi3.RegisterArrayUniqueItemsChecker(openapi3.SliceUniqueItemsChecker)`: validating values against schemas is offloaded to a third-party library that does not provide such a mechanism.
+* Dropped `openapi3.SchemaStringFormats`, `openapi3.FormatCallback`, `openapi3.Format`, `openapi3.FormatOfStringForUUIDOfRFC4122`, `openapi3.DefineStringFormat(...)` and `openapi3.DefineStringFormatCallback(...)`. If your special format is not already under [`gojsonschema.FormatCheckers`](https://pkg.go.dev/github.com/xeipuuv/gojsonschema#pkg-variables), first define a [`gojsonschema.FormatChecker`](https://pkg.go.dev/github.com/xeipuuv/gojsonschema#FormatChecker) and register it with [`gojsonschema.FormatCheckers.Add("my-format", myImpl{})`](https://pkg.go.dev/github.com/xeipuuv/gojsonschema#FormatCheckerChain.Add) *before compiling your schemas*.
+* Dropped `openapi3.ErrSchemaInputNaN` and `openapi3.ErrSchemaInputInf`: OpenAPIv3 does not explicitly mention the related values.
+* Replaced `openapi3.SchemaError` with `openapi3.SchemaValidationError` which wraps `[]gojsonschema.ResultError` and thus provides similar functionality and more.\
 
 ### v0.84.0
 * The prototype of `openapi3gen.NewSchemaRefForValue` changed:

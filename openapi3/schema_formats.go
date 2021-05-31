@@ -1,105 +1,49 @@
 package openapi3
 
 import (
-	"fmt"
-	"net"
+	"github.com/xeipuuv/gojsonschema"
 	"regexp"
-	"strings"
+	// https://github.com/xeipuuv/gojsonschema/pull/297/files discriminator support
 )
-
-const (
-	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
-	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`
-)
-
-//FormatCallback custom check on exotic formats
-type FormatCallback func(Val string) error
-
-type Format struct {
-	regexp   *regexp.Regexp
-	callback FormatCallback
-}
-
-//SchemaStringFormats allows for validating strings format
-var SchemaStringFormats = make(map[string]Format, 8)
-
-//DefineStringFormat Defines a new regexp pattern for a given format
-func DefineStringFormat(name string, pattern string) {
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		err := fmt.Errorf("format %q has invalid pattern %q: %v", name, pattern, err)
-		panic(err)
-	}
-	SchemaStringFormats[name] = Format{regexp: re}
-}
-
-// DefineStringFormatCallback adds a validation function for a specific schema format entry
-func DefineStringFormatCallback(name string, callback FormatCallback) {
-	SchemaStringFormats[name] = Format{callback: callback}
-}
-
-func validateIP(ip string) error {
-	parsed := net.ParseIP(ip)
-	if parsed == nil {
-		return &SchemaError{
-			Value:  ip,
-			Reason: "Not an IP address",
-		}
-	}
-	return nil
-}
-
-func validateIPv4(ip string) error {
-	if err := validateIP(ip); err != nil {
-		return err
-	}
-
-	if !(strings.Count(ip, ":") < 2) {
-		return &SchemaError{
-			Value:  ip,
-			Reason: "Not an IPv4 address (it's IPv6)",
-		}
-	}
-	return nil
-}
-
-func validateIPv6(ip string) error {
-	if err := validateIP(ip); err != nil {
-		return err
-	}
-
-	if !(strings.Count(ip, ":") >= 2) {
-		return &SchemaError{
-			Value:  ip,
-			Reason: "Not an IPv6 address (it's IPv4)",
-		}
-	}
-	return nil
-}
 
 func init() {
-	// This pattern catches only some suspiciously wrong-looking email addresses.
-	// Use DefineStringFormat(...) if you need something stricter.
-	DefineStringFormat("email", `^[^@]+@[^@<>",\s]+$`)
+	// gojsonschema.FormatCheckers = gojsonschema.FormatCheckerChain{} FIXME https://github.com/xeipuuv/gojsonschema/pull/326
+	gojsonschema.FormatCheckers.Add("byte", byteFormatChecker{})
+	gojsonschema.FormatCheckers.Add("date", gojsonschema.DateFormatChecker{})
+	gojsonschema.FormatCheckers.Add("date-time", gojsonschema.DateTimeFormatChecker{})
+}
 
-	// Base64
-	// The pattern supports base64 and b./ase64url. Padding ('=') is supported.
-	DefineStringFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
+type byteFormatChecker struct{}
 
-	// date
-	DefineStringFormat("date", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`)
+var _ gojsonschema.FormatChecker = (*byteFormatChecker)(nil)
+var reByteFormatChecker = regexp.MustCompile(`(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
 
-	// date-time
-	DefineStringFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
+// IsFormat supports base64 and base64url. Padding ('=') is supported.
+func (byteFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if !ok {
+		return true
+	}
 
+	return reByteFormatChecker.MatchString(asString)
+}
+
+// DefineEmailFormat opts-in to checking email format (outside of OpenAPIv3 spec)
+func DefineEmailFormat() {
+	gojsonschema.FormatCheckers.Add("email", gojsonschema.EmailFormatChecker{})
+}
+
+// DefineUUIDFormat opts-in to checking uuid format v1-v5 as specified by RFC4122 (outside of OpenAPIv3 spec)
+func DefineUUIDFormat() {
+	gojsonschema.FormatCheckers.Add("uuid", gojsonschema.UUIDFormatChecker{})
 }
 
 // DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
 func DefineIPv4Format() {
-	DefineStringFormatCallback("ipv4", validateIPv4)
+	gojsonschema.FormatCheckers.Add("ipv4", gojsonschema.IPV4FormatChecker{})
 }
 
 // DefineIPv6Format opts in ipv6 format validation on top of OAS 3 spec
 func DefineIPv6Format() {
-	DefineStringFormatCallback("ipv6", validateIPv6)
+	gojsonschema.FormatCheckers.Add("ipv6", gojsonschema.IPV6FormatChecker{})
 }
