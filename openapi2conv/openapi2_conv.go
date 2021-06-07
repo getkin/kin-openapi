@@ -232,6 +232,9 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			ExtensionProps: parameter.ExtensionProps,
 		}
 		if parameter.Name != "" {
+			if result.Extensions == nil {
+				result.Extensions = make(map[string]interface{})
+			}
 			result.Extensions["x-originalParamName"] = parameter.Name
 		}
 
