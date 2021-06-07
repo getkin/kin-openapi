@@ -1,4 +1,6 @@
-module github.com/getkin/kin-openapi
+module github.com/jasmanx11/kin-openapi
+
+replace github.com/getkin/kin-openapi => github.com/jasmanx11/kin-openapi
 
 go 1.14
 
