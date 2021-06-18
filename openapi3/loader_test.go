@@ -162,7 +162,7 @@ paths:
 
 	loader := NewLoader()
 	_, err := loader.LoadFromData(spec)
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 func TestLoadPathParamRef(t *testing.T) {

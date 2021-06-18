@@ -319,6 +319,7 @@ func (loader *Loader) resolveComponent(
 		err = nil
 	}
 
+	var schemaRef *SchemaRef
 	switch x := cursor.(type) {
 	case map[string]interface{}:
 		codec := func(got, expect interface{}) error {
@@ -337,17 +338,17 @@ func (loader *Loader) resolveComponent(
 		return componentPath, nil
 
 	case *SchemaRef:
-		if err := loader.resolveSchemaRef(doc, x, path); err != nil {
+		schemaRef = x
+	}
+
+	if reflect.TypeOf(cursor) == reflect.TypeOf(resolved) {
+		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
+		return componentPath, nil
+	} else if schemaRef != nil {
+		if err := loader.resolveSchemaRef(doc, schemaRef, path); err != nil {
 			return nil, fmt.Errorf("bad data in %q: %w", ref, err)
 		}
 		return componentPath, nil
-
-	default:
-		if reflect.TypeOf(cursor) == reflect.TypeOf(resolved) {
-			reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
-			return componentPath, nil
-
-		}
 	}
 	return nil, fmt.Errorf("bad data in %q: %T", ref, cursor)
 }
