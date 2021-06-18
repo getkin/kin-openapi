@@ -319,12 +319,8 @@ func (loader *Loader) resolveComponent(
 		err = nil
 	}
 
-	switch {
-	case reflect.TypeOf(cursor) == reflect.TypeOf(resolved):
-		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
-		return componentPath, nil
-
-	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]interface{}{}):
+	switch x := cursor.(type) {
+	case map[string]interface{}:
 		codec := func(got, expect interface{}) error {
 			enc, err := json.Marshal(got)
 			if err != nil {
@@ -336,13 +332,24 @@ func (loader *Loader) resolveComponent(
 			return nil
 		}
 		if err := codec(cursor, resolved); err != nil {
-			return nil, fmt.Errorf("bad data in %q", ref)
+			return nil, fmt.Errorf("bad data in %q: %w", ref, err)
+		}
+		return componentPath, nil
+
+	case *SchemaRef:
+		if err := loader.resolveSchemaRef(doc, x, path); err != nil {
+			return nil, fmt.Errorf("bad data in %q: %w", ref, err)
 		}
 		return componentPath, nil
 
 	default:
-		return nil, fmt.Errorf("bad data in %q", ref)
+		if reflect.TypeOf(cursor) == reflect.TypeOf(resolved) {
+			reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
+			return componentPath, nil
+
+		}
 	}
+	return nil, fmt.Errorf("bad data in %q: %T", ref, cursor)
 }
 
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
