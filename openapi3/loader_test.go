@@ -165,6 +165,88 @@ paths:
 	require.NoError(t, err)
 }
 
+func TestLoadWithSchemaRef(t *testing.T) {
+	spec := []byte(`
+openapi: 3.0.1
+info:
+  title: API
+  description: This is a simple API
+  contact:
+    email: admin@example.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://host/xxx/interface/v1
+paths:
+  /notification:
+    post:
+      tags:
+       - notification
+      summary: summary
+      description: change notification
+      operationId: postMessage
+      requestBody:
+        description: Notification
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+               $ref: '#/components/schemas/Message'
+          application/xml:
+            schema:
+              type: array
+              xml: 
+               name: Message
+              items:            
+               $ref: '#/components/schemas/Message'              
+        required: false
+      responses:
+        201:
+          description: item created
+        400:
+          description: invalid input, object invalid
+        409:
+           $ref: '#/components/schemas/error'          
+        
+   
+components:
+  schemas:
+
+    Message:
+      required:
+      - eventTypeName
+      - msgID
+      type: object
+      properties:
+        eventTypeName:
+          type: string
+          example: earthquake
+        msgID:
+          minimum: 0
+          type: integer
+          format: int32
+
+    error:
+      required:
+        - code
+        - message
+      properties:
+        code: 
+          type: integer
+          format: int32
+          example: 100
+        message:
+          type: string             
+`)
+
+	loader := NewLoader()
+	_, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+}
+
 func TestLoadPathParamRef(t *testing.T) {
 	spec := []byte(`
 openapi: '3.0.0'
