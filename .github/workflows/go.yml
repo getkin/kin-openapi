@@ -65,6 +65,7 @@ jobs:
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
     - run: go test ./...
+    - run: go test -v -run TestRaceyPatternSchema -race ./...
     - run: |
         cd openapi3/testdata
         go get -u -v github.com/getkin/kin-openapi
