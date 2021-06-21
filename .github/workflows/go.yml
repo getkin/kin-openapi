@@ -66,6 +66,8 @@ jobs:
 
     - run: go test ./...
     - run: go test -v -run TestRaceyPatternSchema -race ./...
+      env:
+        CGO_ENABLED: '1'
     - run: |
         cd openapi3/testdata
         go get -u -v github.com/getkin/kin-openapi
