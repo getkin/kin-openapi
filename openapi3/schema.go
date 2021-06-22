@@ -666,7 +666,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "byte", "binary", "date", "date-time", "password":
 				// In JSON Draft-07 (not validated yet though):
 			case "regex":
-				if !SchemaErrorDetailsDisabled {
+				if !SchemaFormatValidationDisabled {
 					if err = schema.compilePattern(); err != nil {
 						return err
 					}
