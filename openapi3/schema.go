@@ -1471,7 +1471,7 @@ func (schema *Schema) compilePattern() (err error) {
 			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", schema.Pattern, err),
 		}
 	}
-	return err
+	return nil
 }
 
 type SchemaError struct {
