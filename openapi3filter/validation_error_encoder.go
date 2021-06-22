@@ -119,10 +119,10 @@ func convertParseError(e *RequestError, innerErr *ParseError) *ValidationError {
 func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *ValidationError {
 	cErr := &ValidationError{Title: innerErr.Reason}
 
-	// Handle "Origin" error
-	if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
-		cErr = convertSchemaError(e, originErr)
-	}
+	// // Handle "Origin" error
+	// if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
+	// 	cErr = convertSchemaError(e, originErr)
+	// }
 
 	// Add http status code
 	if e.Parameter != nil {
@@ -136,8 +136,8 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 		// We have a JSONPointer in the query param too so need to
 		// make sure 'Parameter' check takes priority over 'Pointer'
 		cErr.Source = &ValidationErrorSource{Parameter: e.Parameter.Name}
-	} else if ptr := innerErr.JSONPointer(); ptr != nil {
-		cErr.Source = &ValidationErrorSource{Pointer: toJSONPointer(ptr)}
+		// } else if ptr := innerErr.JSONPointer(); ptr != nil {
+		// 	cErr.Source = &ValidationErrorSource{Pointer: toJSONPointer(ptr)}
 	}
 
 	// Add details on allowed values for enums
@@ -148,7 +148,7 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 		}
 		cErr.Detail = fmt.Sprintf("value %v at %s must be one of: %s",
 			innerErr.Value,
-			toJSONPointer(innerErr.JSONPointer()),
+			"toJSONPointer(innerErr.JSONPointer())",
 			strings.Join(enums, ", "))
 		value := fmt.Sprintf("%v", innerErr.Value)
 		if e.Parameter != nil &&
