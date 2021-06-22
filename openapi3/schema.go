@@ -666,6 +666,11 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "byte", "binary", "date", "date-time", "password":
 				// In JSON Draft-07 (not validated yet though):
 			case "regex":
+				if !SchemaErrorDetailsDisabled {
+					if err = schema.compilePattern(); err != nil {
+						return err
+					}
+				}
 			case "time", "email", "idn-email":
 			case "hostname", "idn-hostname", "ipv4", "ipv6":
 			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
@@ -1141,13 +1146,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	// "pattern"
 	if pattern := schema.Pattern; pattern != "" && schema.compiledPattern == nil {
 		var err error
-		if schema.compiledPattern, err = regexp.Compile(pattern); err != nil {
-			err = &SchemaError{
-				Value:       value,
-				Schema:      schema,
-				SchemaField: "pattern",
-				Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
-			}
+		if err = schema.compilePattern(); err != nil {
 			if !settings.multiError {
 				return err
 			}
@@ -1459,6 +1458,20 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, typ strin
 		SchemaField: "type",
 		Reason:      "Field must be set to " + schema.Type + " or not be present",
 	}
+}
+
+func (schema *Schema) compilePattern() (err error) {
+	if schema.Pattern == "" {
+		return nil
+	}
+	if schema.compiledPattern, err = regexp.Compile(schema.Pattern); err != nil {
+		return &SchemaError{
+			Schema:      schema,
+			SchemaField: "pattern",
+			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", schema.Pattern, err),
+		}
+	}
+	return err
 }
 
 type SchemaError struct {
