@@ -109,8 +109,6 @@ type Schema struct {
 	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
 	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
-	// Object-related, here for struct compactness
-	AdditionalPropertiesAllowed *bool `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
@@ -141,12 +139,13 @@ type Schema struct {
 	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
 
 	// Object
-	Required             []string       `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties           Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
-	MinProps             uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProps             *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	AdditionalProperties *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`
-	Discriminator        *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Required                    []string       `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties                  Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
+	MinProps                    uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProps                    *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // In this order...
+	AdditionalProperties        *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // ...for multijson
+	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
