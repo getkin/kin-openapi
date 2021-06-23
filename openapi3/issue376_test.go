@@ -20,17 +20,23 @@ components:
       properties:
         prop:
           $ref: '#/components/schemas/schema1/additionalProperties'
+paths: {}
+info:
+  title: An API
+  version: 1.2.3.4
 `)
 
   loader := NewLoader()
+
   doc, err := loader.LoadFromData(spec)
   require.NoError(t, err)
-  // require.Equal(t, "An API", doc.Info.Title)
-  require.Equal(t, 2, len(doc.Components.Schemas))
-  // require.Equal(t, 1, len(doc.Paths))
-  // def := doc.Paths["/items"].Put.Responses.Default().Value
-  // desc := "unexpected error"
-  // require.Equal(t, &desc, def.Description)
+
   err = doc.Validate(loader.Context)
   require.NoError(t, err)
+
+  require.Equal(t, "An API", doc.Info.Title)
+  require.Equal(t, 2, len(doc.Components.Schemas))
+  require.Equal(t, 0, len(doc.Paths))
+
+  require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }
