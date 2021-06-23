@@ -110,7 +110,7 @@ type Schema struct {
 	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	// Object-related, here for struct compactness
-	AdditionalPropertiesAllowed *bool `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`
+	AdditionalPropertiesAllowed *bool `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
@@ -145,7 +145,7 @@ type Schema struct {
 	Properties           Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
 	MinProps             uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProps             *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	AdditionalProperties *SchemaRef     `json:"-" multijson:"additionalProperties,omitempty" yaml:"-"`
+	AdditionalProperties *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`
 	Discriminator        *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
 

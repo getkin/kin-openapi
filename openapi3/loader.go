@@ -305,6 +305,9 @@ func (loader *Loader) resolveComponent(
 	}
 	var cursor interface{}
 	if cursor, err = drill(doc); err != nil {
+		if path == nil {
+			return nil, err
+		}
 		var err2 error
 		data, err2 := loader.readURL(path)
 		if err2 != nil {
@@ -346,6 +349,14 @@ func (loader *Loader) resolveComponent(
 }
 
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
+	// Special case due to multijson
+	if s, ok := cursor.(*SchemaRef); ok && fieldName == "additionalProperties" {
+		if ap := s.Value.AdditionalProperties; ap != nil {
+			return ap, nil
+		}
+		return s.Value.AdditionalPropertiesAllowed, nil
+	}
+
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 	case reflect.Map:
 		elementValue := val.MapIndex(reflect.ValueOf(fieldName))
@@ -372,6 +383,10 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 			field := val.Type().Field(i)
 			tagValue := field.Tag.Get("yaml")
 			yamlKey := strings.Split(tagValue, ",")[0]
+			if yamlKey == "-" {
+				tagValue := field.Tag.Get("multijson")
+				yamlKey = strings.Split(tagValue, ",")[0]
+			}
 			if yamlKey == fieldName {
 				return val.Field(i).Interface(), nil
 			}
