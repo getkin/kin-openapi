@@ -1,13 +1,13 @@
 package openapi3
 
 import (
-  "testing"
+	"testing"
 
-  "github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIssue376(t *testing.T) {
-  spec := []byte(`
+	spec := []byte(`
 openapi: 3.0.0
 components:
   schemas:
@@ -26,17 +26,17 @@ info:
   version: 1.2.3.4
 `)
 
-  loader := NewLoader()
+	loader := NewLoader()
 
-  doc, err := loader.LoadFromData(spec)
-  require.NoError(t, err)
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
 
-  err = doc.Validate(loader.Context)
-  require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
 
-  require.Equal(t, "An API", doc.Info.Title)
-  require.Equal(t, 2, len(doc.Components.Schemas))
-  require.Equal(t, 0, len(doc.Paths))
+	require.Equal(t, "An API", doc.Info.Title)
+	require.Equal(t, 2, len(doc.Components.Schemas))
+	require.Equal(t, 0, len(doc.Paths))
 
-  require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
+	require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }
