@@ -69,6 +69,7 @@ jobs:
         cd openapi3/testdata
         go get -u -v github.com/getkin/kin-openapi
         go test -tags with_embed ./...
+        git --no-pager diff && git checkout -- .
         cd -
       if: matrix.go != '1.14'
     - if: runner.os == 'Linux'
