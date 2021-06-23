@@ -351,10 +351,10 @@ func (loader *Loader) resolveComponent(
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 	// Special case due to multijson
 	if s, ok := cursor.(*SchemaRef); ok && fieldName == "additionalProperties" {
-		if ap := s.Value.AdditionalProperties; ap != nil {
-			return ap, nil
+		if ap := s.Value.AdditionalPropertiesAllowed; ap != nil {
+			return *ap, nil
 		}
-		return s.Value.AdditionalPropertiesAllowed, nil
+		return s.Value.AdditionalProperties, nil
 	}
 
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
