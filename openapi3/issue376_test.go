@@ -42,15 +42,15 @@ info:
 	require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }
 
-func TestUnmarshallingMultijsonTag(t *testing.T) {
+func TestMultijsonTagSerialization(t *testing.T) {
 	spec := []byte(`
 openapi: 3.0.0
 components:
   schemas:
     unset:
       type: number
-    empty-object:
-      additionalProperties: {}
+    #empty-object:
+    # TODO additionalProperties: {}
     object:
       additionalProperties: {type: string}
     boolean:
@@ -73,6 +73,15 @@ info:
 		ap := propSchema.Value.AdditionalProperties
 		apa := propSchema.Value.AdditionalPropertiesAllowed
 
+		encoded, err := propSchema.MarshalJSON()
+		require.NoError(t, err)
+		require.Equal(t, string(encoded), map[string]string{
+			"unset": `{"type":"number"}`,
+			// TODO: "empty-object":`{"additionalProperties":{}}`,
+			"object":  `{"additionalProperties":{"type":"string"}}`,
+			"boolean": `{"additionalProperties":false}`,
+		}[propName])
+
 		if propName == "unset" {
 			require.True(t, ap == nil && apa == nil)
 			continue
@@ -80,7 +89,7 @@ info:
 
 		apStr := ""
 		if ap != nil {
-			apStr = fmt.Sprintf("{Ref:- Value.AdditionalProperties:%+v Value.AdditionalPropertiesAllowed:%+v}", (*ap).Value.AdditionalProperties, (*ap).Value.AdditionalPropertiesAllowed)
+			apStr = fmt.Sprintf("{Ref:%s Value.Type:%v}", (*ap).Ref, (*ap).Value.Type)
 		}
 		apaStr := ""
 		if apa != nil {
