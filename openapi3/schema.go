@@ -1144,7 +1144,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	}
 
 	// "pattern"
-	if pattern := schema.Pattern; pattern != "" && schema.compiledPattern == nil {
+	if schema.Pattern != "" && schema.compiledPattern == nil {
 		var err error
 		if err = schema.compilePattern(); err != nil {
 			if !settings.multiError {
