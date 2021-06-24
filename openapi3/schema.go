@@ -677,7 +677,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 				}
 			}
 		}
-		if pattern := schema.Pattern; pattern != "" {
+		if schema.Pattern != "" {
 			if err = schema.compilePattern(); err != nil {
 				return err
 			}
