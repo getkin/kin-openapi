@@ -1219,3 +1219,13 @@ components:
 	require.NotEqual(t, errSchema, err)
 	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
 }
+
+func TestValidationFailsOnInvalidPattern(t *testing.T) {
+	schema := Schema{
+		Pattern: "[",
+		Type:    "string",
+	}
+
+	var err = schema.Validate(context.Background())
+	require.Error(t, err)
+}
