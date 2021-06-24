@@ -666,11 +666,6 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "byte", "binary", "date", "date-time", "password":
 				// In JSON Draft-07 (not validated yet though):
 			case "regex":
-				if !SchemaFormatValidationDisabled {
-					if err = schema.compilePattern(); err != nil {
-						return err
-					}
-				}
 			case "time", "email", "idn-email":
 			case "hostname", "idn-hostname", "ipv4", "ipv6":
 			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
@@ -680,6 +675,11 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 				if _, ok := SchemaStringFormats[format]; !ok && !SchemaFormatValidationDisabled {
 					return unsupportedFormat(format)
 				}
+			}
+		}
+		if pattern := schema.Pattern; pattern != "" {
+			if err = schema.compilePattern(); err != nil {
+				return err
 			}
 		}
 	case "array":
@@ -1461,9 +1461,6 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, typ strin
 }
 
 func (schema *Schema) compilePattern() (err error) {
-	if schema.Pattern == "" {
-		return nil
-	}
 	if schema.compiledPattern, err = regexp.Compile(schema.Pattern); err != nil {
 		return &SchemaError{
 			Schema:      schema,

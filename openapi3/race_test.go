@@ -11,6 +11,7 @@ import (
 func TestRaceyPatternSchema(t *testing.T) {
 	schema := openapi3.Schema{
 		Pattern: "^test|for|race|condition$",
+		Type:    "string",
 	}
 
 	err := schema.Validate(context.Background())
