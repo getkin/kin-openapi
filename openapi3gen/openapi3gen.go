@@ -128,7 +128,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	case reflect.Bool:
 		schema.Type = "boolean"
 
-	case reflect.Int:
+	case reflect.Int, reflect.Uint:
 		schema.Type = "integer"
 	case reflect.Int8:
 		schema.Type = "integer"
