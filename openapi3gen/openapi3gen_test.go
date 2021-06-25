@@ -50,6 +50,6 @@ func TestExportUint(t *testing.T) {
 	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
 		Type: "object",
 		Properties: map[string]*openapi3.SchemaRef{
-			"uint": {Value: &openapi3.Schema{Type: "integer"}},
+			"uint": {Value: &openapi3.Schema{Type: "integer", Min: &zeroInt}},
 		}}}, schemaRef)
 }
