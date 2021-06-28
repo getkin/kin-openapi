@@ -144,6 +144,9 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	case reflect.Int64:
 		schema.Type = "integer"
 		schema.Format = "int64"
+	case reflect.Uint:
+		schema.Type = "integer"
+		schema.Min = &zeroInt
 	case reflect.Uint8:
 		schema.Type = "integer"
 		schema.Min = &zeroInt

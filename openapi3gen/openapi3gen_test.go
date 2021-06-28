@@ -39,3 +39,17 @@ func TestExportedNonTagged(t *testing.T) {
 			"even_a_yaml": {Value: &openapi3.Schema{Type: "string"}},
 		}}}, schemaRef)
 }
+
+func TestExportUint(t *testing.T) {
+	type UnsignedIntStruct struct {
+		UnsignedInt uint `json:"uint"`
+	}
+
+	schemaRef, _, err := NewSchemaRefForValue(&UnsignedIntStruct{}, UseAllExportedFields())
+	require.NoError(t, err)
+	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
+		Type: "object",
+		Properties: map[string]*openapi3.SchemaRef{
+			"uint": {Value: &openapi3.Schema{Type: "integer", Min: &zeroInt}},
+		}}}, schemaRef)
+}
