@@ -1,0 +1,40 @@
+openapi: 3.0.0
+info:
+  title: customer
+  version: '1.0'
+servers:
+  - url: 'httpbin.kwaf-demo.test'
+paths:
+  '/customers/{customer_id}':
+    parameters:
+      - schema:
+          type: integer
+        name: customer_id
+        in: path
+        required: true
+    get:
+      parameters:
+      - schema:
+          type: integer
+          maximum: 100
+        name: customer_id
+        in: path
+        required: true
+      summary: customer
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_id:
+                    type: integer
+                  customer_name:
+                    type: string
+      operationId: get-customers-customer_id
+      description: Retrieve a specific customer by ID
+components:
+  schemas: {}
