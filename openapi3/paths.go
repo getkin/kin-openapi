@@ -50,13 +50,30 @@ func (value Paths) Validate(ctx context.Context) error {
 					expected *= -1
 				}
 				missing := make(map[string]struct{}, expected)
-				for _, name := range append(setParams, commonParams...) {
+				definedParams := append(setParams, commonParams...)
+				for _, name := range definedParams {
 					if _, ok := varsInPath[name]; !ok {
 						missing[name] = struct{}{}
 					}
 				}
+				for name := range varsInPath {
+					got := false
+					for _, othername := range definedParams {
+						if othername == name {
+							got = true
+							break
+						}
+					}
+					if !got {
+						missing[name] = struct{}{}
+					}
+				}
 				if len(missing) != 0 {
-					return fmt.Errorf("operation %s %s must define exactly all path parameters (missing: %v)", method, path, missing)
+					missings := make([]string, 0, len(missing))
+					for name := range missing {
+						missings = append(missings, name)
+					}
+					return fmt.Errorf("operation %s %s must define exactly all path parameters (missing: %v)", method, path, missings)
 				}
 			}
 		}
