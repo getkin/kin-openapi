@@ -217,9 +217,21 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 				// If asked, try to use yaml tag
 				name, fType := fieldInfo.JSONName, fieldInfo.Type
 				if !fieldInfo.HasJSONTag && g.opts.useAllExportedFields {
-					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
-					if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
-						name, fType = tag, ff.Type
+					// Handle anonymous fields/embedded structs
+					if t.Field(fieldInfo.Index[0]).Anonymous {
+						ref, err := g.generateSchemaRefFor(parents, fType)
+						if err != nil {
+							return nil, err
+						}
+						if ref != nil {
+							g.SchemaRefs[ref]++
+							schema.WithPropertyRef(name, ref)
+						}
+					} else {
+						ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+						if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
+							name, fType = tag, ff.Type
+						}
 					}
 				}
 
