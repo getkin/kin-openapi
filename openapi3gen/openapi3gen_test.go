@@ -1,6 +1,7 @@
 package openapi3gen
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -52,4 +53,34 @@ func TestExportUint(t *testing.T) {
 		Properties: map[string]*openapi3.SchemaRef{
 			"uint": {Value: &openapi3.Schema{Type: "integer", Min: &zeroInt}},
 		}}}, schemaRef)
+}
+
+func TestEmbeddedStructs(t *testing.T) {
+	type EmbeddedStruct struct {
+		ID string
+	}
+
+	type ContainerStruct struct {
+		Name string
+		EmbeddedStruct
+	}
+
+	instance := &ContainerStruct{
+		Name: "Container",
+		EmbeddedStruct: EmbeddedStruct{
+			ID: "Embedded",
+		},
+	}
+
+	generator := NewGenerator(UseAllExportedFields())
+
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	require.NoError(t, err)
+
+	var ok bool
+	_, ok = schemaRef.Value.Properties["Name"]
+	require.Equal(t, true, ok)
+
+	_, ok = schemaRef.Value.Properties["ID"]
+	require.Equal(t, true, ok)
 }
