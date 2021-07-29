@@ -192,7 +192,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			items, err := g.generateSchemaRefFor(parents, t.Elem())
 			if err != nil {
 				if _, ok := err.(*CycleError); ok {
-					items = g.getCycleSchemaRef(t.Elem(), schema)
+					items = g.genereateCycleSchemaRef(t.Elem(), schema)
 				} else {
 					return nil, err
 				}
@@ -208,7 +208,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		additionalProperties, err := g.generateSchemaRefFor(parents, t.Elem())
 		if err != nil {
 			if _, ok := err.(*CycleError); ok {
-				additionalProperties = g.getCycleSchemaRef(t.Elem(), schema)
+				additionalProperties = g.genereateCycleSchemaRef(t.Elem(), schema)
 			} else {
 				return nil, err
 			}
@@ -236,7 +236,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 						ref, err := g.generateSchemaRefFor(parents, fType)
 						if err != nil {
 							if _, ok := err.(*CycleError); ok {
-								ref = g.getCycleSchemaRef(fType, schema)
+								ref = g.genereateCycleSchemaRef(fType, schema)
 							} else {
 								return nil, err
 							}
@@ -256,7 +256,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 				ref, err := g.generateSchemaRefFor(parents, fType)
 				if err != nil {
 					if _, ok := err.(*CycleError); ok {
-						ref = g.getCycleSchemaRef(fType, schema)
+						ref = g.genereateCycleSchemaRef(fType, schema)
 					} else {
 						return nil, err
 					}
@@ -277,11 +277,11 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
 }
 
-func (g *Generator) getCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
+func (g *Generator) genereateCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
 	var typeName string
 	switch t.Kind() {
 	case reflect.Ptr, reflect.Slice, reflect.Map:
-		return g.getCycleSchemaRef(t.Elem(), schema)
+		return g.genereateCycleSchemaRef(t.Elem(), schema)
 	default:
 		typeName = t.Name()
 	}

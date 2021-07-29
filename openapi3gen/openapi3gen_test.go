@@ -71,7 +71,7 @@ func TestEmbeddedStructs(t *testing.T) {
 	require.Equal(t, true, ok)
 }
 
-func TestCircularReferences(t *testing.T) {
+func TestCyclicReferences(t *testing.T) {
 	type ObjectDiff struct {
 		FieldCycle *ObjectDiff
 		SliceCycle []*ObjectDiff
