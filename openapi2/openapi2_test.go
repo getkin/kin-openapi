@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/ghodss/yaml"
 )
 
 func Example() {
@@ -19,18 +20,33 @@ func Example() {
 	if err = json.Unmarshal(input, &doc); err != nil {
 		panic(err)
 	}
+	if doc.ExternalDocs.Description != "Find out more about Swagger" {
+		panic(`doc.ExternalDocs was parsed incorrectly!`)
+	}
 
-	output, err := json.Marshal(doc)
+	outputJSON, err := json.Marshal(doc)
 	if err != nil {
 		panic(err)
 	}
-
-	var docAgain openapi2.T
-	if err = json.Unmarshal(output, &docAgain); err != nil {
+	var docAgainFromJSON openapi2.T
+	if err = json.Unmarshal(outputJSON, &docAgainFromJSON); err != nil {
 		panic(err)
 	}
-	if !reflect.DeepEqual(doc, docAgain) {
-		fmt.Println("objects doc & docAgain should be the same")
+	if !reflect.DeepEqual(doc, docAgainFromJSON) {
+		fmt.Println("objects doc & docAgainFromJSON should be the same")
 	}
+
+	outputYAML, err := yaml.Marshal(doc)
+	if err != nil {
+		panic(err)
+	}
+	var docAgainFromYAML openapi2.T
+	if err = yaml.Unmarshal(outputYAML, &docAgainFromYAML); err != nil {
+		panic(err)
+	}
+	if !reflect.DeepEqual(doc, docAgainFromYAML) {
+		fmt.Println("objects doc & docAgainFromYAML should be the same")
+	}
+
 	// Output:
 }
