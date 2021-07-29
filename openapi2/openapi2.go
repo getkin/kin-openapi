@@ -20,7 +20,7 @@ type T struct {
 	Host                string                         `json:"host,omitempty" yaml:"host,omitempty"`
 	BasePath            string                         `json:"basePath,omitempty" yaml:"basePath,omitempty"`
 	Paths               map[string]*PathItem           `json:"paths,omitempty" yaml:"paths,omitempty"`
-	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty,noref" yaml:"definitions,omitempty,noref`
+	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty,noref" yaml:"definitions,omitempty,noref"`
 	Parameters          map[string]*Parameter          `json:"parameters,omitempty,noref" yaml:"parameters,omitempty,noref"`
 	Responses           map[string]*Response           `json:"responses,omitempty,noref" yaml:"responses,omitempty,noref"`
 	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
