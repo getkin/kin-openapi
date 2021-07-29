@@ -3,6 +3,7 @@ package openapi3gen
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
@@ -104,6 +105,11 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		if a && b {
 			vs, err := g.generateSchemaRefFor(parents, v.Type)
 			if err != nil {
+				// TODO: this needs code review
+				if _, ok := err.(*CycleError); ok {
+					g.SchemaRefs[vs]++
+					return vs, nil
+				}
 				return nil, err
 			}
 			refSchemaRef := RefSchemaRef
@@ -185,7 +191,11 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			schema.Type = "array"
 			items, err := g.generateSchemaRefFor(parents, t.Elem())
 			if err != nil {
-				return nil, err
+				if _, ok := err.(*CycleError); ok {
+					items = g.getCycleSchemaRef(t.Elem(), schema)
+				} else {
+					return nil, err
+				}
 			}
 			if items != nil {
 				g.SchemaRefs[items]++
@@ -197,7 +207,11 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		schema.Type = "object"
 		additionalProperties, err := g.generateSchemaRefFor(parents, t.Elem())
 		if err != nil {
-			return nil, err
+			if _, ok := err.(*CycleError); ok {
+				additionalProperties = g.getCycleSchemaRef(t.Elem(), schema)
+			} else {
+				return nil, err
+			}
 		}
 		if additionalProperties != nil {
 			g.SchemaRefs[additionalProperties]++
@@ -221,7 +235,11 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 					if t.Field(fieldInfo.Index[0]).Anonymous {
 						ref, err := g.generateSchemaRefFor(parents, fType)
 						if err != nil {
-							return nil, err
+							if _, ok := err.(*CycleError); ok {
+								ref = g.getCycleSchemaRef(fType, schema)
+							} else {
+								return nil, err
+							}
 						}
 						if ref != nil {
 							g.SchemaRefs[ref]++
@@ -237,7 +255,11 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 
 				ref, err := g.generateSchemaRefFor(parents, fType)
 				if err != nil {
-					return nil, err
+					if _, ok := err.(*CycleError); ok {
+						ref = g.getCycleSchemaRef(fType, schema)
+					} else {
+						return nil, err
+					}
 				}
 				if ref != nil {
 					g.SchemaRefs[ref]++
@@ -253,6 +275,18 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	}
 
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
+}
+
+func (g *Generator) getCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
+	var typeName string
+	switch t.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map:
+		return g.getCycleSchemaRef(t.Elem(), schema)
+	default:
+		typeName = t.Name()
+	}
+
+	return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema)
 }
 
 var RefSchemaRef = openapi3.NewSchemaRef("Ref",
