@@ -192,7 +192,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			items, err := g.generateSchemaRefFor(parents, t.Elem())
 			if err != nil {
 				if _, ok := err.(*CycleError); ok {
-					items = g.genereateCycleSchemaRef(t.Elem(), schema)
+					items = g.generateCycleSchemaRef(t.Elem(), schema)
 				} else {
 					return nil, err
 				}
@@ -208,7 +208,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		additionalProperties, err := g.generateSchemaRefFor(parents, t.Elem())
 		if err != nil {
 			if _, ok := err.(*CycleError); ok {
-				additionalProperties = g.genereateCycleSchemaRef(t.Elem(), schema)
+				additionalProperties = g.generateCycleSchemaRef(t.Elem(), schema)
 			} else {
 				return nil, err
 			}
@@ -236,7 +236,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 						ref, err := g.generateSchemaRefFor(parents, fType)
 						if err != nil {
 							if _, ok := err.(*CycleError); ok {
-								ref = g.genereateCycleSchemaRef(fType, schema)
+								ref = g.generateCycleSchemaRef(fType, schema)
 							} else {
 								return nil, err
 							}
@@ -256,7 +256,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 				ref, err := g.generateSchemaRefFor(parents, fType)
 				if err != nil {
 					if _, ok := err.(*CycleError); ok {
-						ref = g.genereateCycleSchemaRef(fType, schema)
+						ref = g.generateCycleSchemaRef(fType, schema)
 					} else {
 						return nil, err
 					}
@@ -277,11 +277,23 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
 }
 
-func (g *Generator) genereateCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
+func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
 	var typeName string
 	switch t.Kind() {
-	case reflect.Ptr, reflect.Slice, reflect.Map:
-		return g.genereateCycleSchemaRef(t.Elem(), schema)
+	case reflect.Ptr:
+		return g.generateCycleSchemaRef(t.Elem(), schema)
+	case reflect.Slice:
+		ref := g.generateCycleSchemaRef(t.Elem(), schema)
+		sliceSchema := openapi3.NewSchema()
+		sliceSchema.Type = "array"
+		sliceSchema.Items = ref
+		return openapi3.NewSchemaRef("", sliceSchema)
+	case reflect.Map:
+		ref := g.generateCycleSchemaRef(t.Elem(), schema)
+		mapSchema := openapi3.NewSchema()
+		mapSchema.Type = "object"
+		mapSchema.AdditionalProperties = ref
+		return openapi3.NewSchemaRef("", mapSchema)
 	default:
 		typeName = t.Name()
 	}
