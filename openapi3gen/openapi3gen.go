@@ -23,12 +23,19 @@ type Option func(*generatorOpt)
 
 type generatorOpt struct {
 	useAllExportedFields bool
+	throwErrorOnCycle    bool
 }
 
 // UseAllExportedFields changes the default behavior of only
 // generating schemas for struct fields with a JSON tag.
 func UseAllExportedFields() Option {
 	return func(x *generatorOpt) { x.useAllExportedFields = true }
+}
+
+// ThrowErrorOnCycle changes the default behavior of creating cycle
+// refs to instead error if a cycle is detected.
+func ThrowErrorOnCycle() Option {
+	return func(x *generatorOpt) { x.throwErrorOnCycle = true }
 }
 
 // NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef.
@@ -105,8 +112,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		if a && b {
 			vs, err := g.generateSchemaRefFor(parents, v.Type)
 			if err != nil {
-				// TODO: this needs code review
-				if _, ok := err.(*CycleError); ok {
+				if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
 					g.SchemaRefs[vs]++
 					return vs, nil
 				}
@@ -191,7 +197,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			schema.Type = "array"
 			items, err := g.generateSchemaRefFor(parents, t.Elem())
 			if err != nil {
-				if _, ok := err.(*CycleError); ok {
+				if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
 					items = g.generateCycleSchemaRef(t.Elem(), schema)
 				} else {
 					return nil, err
@@ -207,7 +213,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		schema.Type = "object"
 		additionalProperties, err := g.generateSchemaRefFor(parents, t.Elem())
 		if err != nil {
-			if _, ok := err.(*CycleError); ok {
+			if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
 				additionalProperties = g.generateCycleSchemaRef(t.Elem(), schema)
 			} else {
 				return nil, err
@@ -235,7 +241,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 					if t.Field(fieldInfo.Index[0]).Anonymous {
 						ref, err := g.generateSchemaRefFor(parents, fType)
 						if err != nil {
-							if _, ok := err.(*CycleError); ok {
+							if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
 								ref = g.generateCycleSchemaRef(fType, schema)
 							} else {
 								return nil, err
@@ -255,7 +261,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 
 				ref, err := g.generateSchemaRefFor(parents, fType)
 				if err != nil {
-					if _, ok := err.(*CycleError); ok {
+					if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
 						ref = g.generateCycleSchemaRef(fType, schema)
 					} else {
 						return nil, err

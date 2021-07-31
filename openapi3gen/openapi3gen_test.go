@@ -8,6 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type CyclicType0 struct {
+	CyclicField *CyclicType1 `json:"a"`
+}
+type CyclicType1 struct {
+	CyclicField *CyclicType0 `json:"b"`
+}
+
+func TestCyclic(t *testing.T) {
+	schemaRef, refsMap, err := NewSchemaRefForValue(&CyclicType0{}, ThrowErrorOnCycle())
+	require.IsType(t, &CycleError{}, err)
+	require.Nil(t, schemaRef)
+	require.Empty(t, refsMap)
+}
+
 func TestExportedNonTagged(t *testing.T) {
 	type Bla struct {
 		A          string
@@ -99,5 +113,4 @@ func TestCyclicReferences(t *testing.T) {
 	require.NotNil(t, schemaRef.Value.Properties["MapCycle"])
 	require.Equal(t, "object", schemaRef.Value.Properties["MapCycle"].Value.Type)
 	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Ref)
-
 }
