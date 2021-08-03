@@ -16,7 +16,7 @@ type CyclicType1 struct {
 }
 
 func TestCyclic(t *testing.T) {
-	schemaRef, refsMap, err := NewSchemaRefForValue(&CyclicType0{})
+	schemaRef, refsMap, err := NewSchemaRefForValue(&CyclicType0{}, ThrowErrorOnCycle())
 	require.IsType(t, &CycleError{}, err)
 	require.Nil(t, schemaRef)
 	require.Empty(t, refsMap)
@@ -83,4 +83,34 @@ func TestEmbeddedStructs(t *testing.T) {
 
 	_, ok = schemaRef.Value.Properties["ID"]
 	require.Equal(t, true, ok)
+}
+
+func TestCyclicReferences(t *testing.T) {
+	type ObjectDiff struct {
+		FieldCycle *ObjectDiff
+		SliceCycle []*ObjectDiff
+		MapCycle   map[*ObjectDiff]*ObjectDiff
+	}
+
+	instance := &ObjectDiff{
+		FieldCycle: nil,
+		SliceCycle: nil,
+		MapCycle:   nil,
+	}
+
+	generator := NewGenerator(UseAllExportedFields())
+
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	require.NoError(t, err)
+
+	require.NotNil(t, schemaRef.Value.Properties["FieldCycle"])
+	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["FieldCycle"].Ref)
+
+	require.NotNil(t, schemaRef.Value.Properties["SliceCycle"])
+	require.Equal(t, "array", schemaRef.Value.Properties["SliceCycle"].Value.Type)
+	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["SliceCycle"].Value.Items.Ref)
+
+	require.NotNil(t, schemaRef.Value.Properties["MapCycle"])
+	require.Equal(t, "object", schemaRef.Value.Properties["MapCycle"].Value.Type)
+	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Ref)
 }
