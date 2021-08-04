@@ -95,7 +95,7 @@ func TestVisitJSON_OneOf_MissingDiscriptorValue(t *testing.T) {
 		"name":  "snoopy",
 		"$type": "snake",
 	})
-	require.EqualError(t, err, "input does not a valid discriminator value")
+	require.EqualError(t, err, "input does not contain a valid discriminator value")
 }
 
 func TestVisitJSON_OneOf_MissingField(t *testing.T) {

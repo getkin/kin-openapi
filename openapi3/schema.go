@@ -848,7 +848,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				}
 
 				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorVal.(string)]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
-					return errors.New("input does not a valid discriminator value")
+					return errors.New("input does not contain a valid discriminator value")
 				}
 			}
 		}
