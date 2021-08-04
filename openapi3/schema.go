@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -841,33 +842,53 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.OneOf; len(v) > 0 {
+		var discriminatorRef string
+		if schema.Discriminator != nil {
+			pn := schema.Discriminator.PropertyName
+			if valuemap, okcheck := value.(map[string]interface{}); okcheck {
+				discriminatorVal, okcheck := valuemap[pn]
+				if !okcheck {
+					return errors.New("input does not contain the discriminator property")
+				}
+
+				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorVal.(string)]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+					return errors.New("input does not a valid discriminator value")
+				}
+			}
+		}
+
 		ok := 0
+		validationErrors := []error{}
 		for _, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
+
+			if discriminatorRef != "" && discriminatorRef != item.Ref {
+				continue
+			}
+
 			var oldfailfast bool
 			oldfailfast, settings.failfast = settings.failfast, true
 			err := v.visitJSON(settings, value)
 			settings.failfast = oldfailfast
-			if err == nil {
-				if schema.Discriminator != nil {
-					pn := schema.Discriminator.PropertyName
-					if valuemap, okcheck := value.(map[string]interface{}); okcheck {
-						if discriminatorVal, okcheck := valuemap[pn]; okcheck == true {
-							mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]
-							if okcheck && mapref == item.Ref {
-								ok++
-							}
-						}
-					}
-				} else {
-					ok++
-				}
+			if err != nil {
+				validationErrors = append(validationErrors, err)
+				continue
 			}
+
+			ok++
 		}
+
 		if ok != 1 {
+			if len(validationErrors) > 1 {
+				errorMessages := make([]string, len(validationErrors))
+				for _, err := range validationErrors {
+					errorMessages = append(errorMessages, err.Error())
+				}
+				return errors.New("doesn't match schema due to: " + strings.Join(errorMessages, " and "))
+			}
 			if settings.failfast {
 				return errSchema
 			}
@@ -878,7 +899,10 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			}
 			if ok > 1 {
 				e.Origin = ErrOneOfConflict
+			} else if len(validationErrors) == 1 {
+				e.Origin = validationErrors[0]
 			}
+
 			return e
 		}
 	}
