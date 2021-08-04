@@ -825,10 +825,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		var oldfailfast bool
-		oldfailfast, settings.failfast = settings.failfast, true
 		err := v.visitJSON(settings, value)
-		settings.failfast = oldfailfast
 		if err == nil {
 			if settings.failfast {
 				return errSchema
@@ -869,10 +866,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				continue
 			}
 
-			var oldfailfast bool
-			oldfailfast, settings.failfast = settings.failfast, true
 			err := v.visitJSON(settings, value)
-			settings.failfast = oldfailfast
 			if err != nil {
 				validationErrors = append(validationErrors, err)
 				continue
@@ -914,10 +908,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			var oldfailfast bool
-			oldfailfast, settings.failfast = settings.failfast, true
 			err := v.visitJSON(settings, value)
-			settings.failfast = oldfailfast
 			if err == nil {
 				ok = true
 				break
@@ -940,10 +931,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		var oldfailfast bool
-		oldfailfast, settings.failfast = settings.failfast, false
 		err := v.visitJSON(settings, value)
-		settings.failfast = oldfailfast
 		if err != nil {
 			if settings.failfast {
 				return errSchema
