@@ -10,7 +10,6 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
-	"strings"
 	"unicode/utf16"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -877,11 +876,14 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 		if ok != 1 {
 			if len(validationErrors) > 1 {
-				errorMessages := make([]string, len(validationErrors))
+				errorMessage := ""
 				for _, err := range validationErrors {
-					errorMessages = append(errorMessages, err.Error())
+					if errorMessage != "" {
+						errorMessage += " Or "
+					}
+					errorMessage += err.Error()
 				}
-				return errors.New("doesn't match schema due to: " + strings.Join(errorMessages, " and "))
+				return errors.New("doesn't match schema due to: " + errorMessage)
 			}
 			if settings.failfast {
 				return errSchema
