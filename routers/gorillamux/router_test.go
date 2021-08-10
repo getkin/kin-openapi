@@ -146,7 +146,7 @@ func TestRouter(t *testing.T) {
 	expect(r, http.MethodGet, "/params/a/b/c%2Fd", paramsGET, map[string]string{
 		"x": "a",
 		"y": "b",
-		"z": "c/d",
+		"z": "c%2Fd",
 	})
 	expect(r, http.MethodGet, "/books/War.and.Peace", paramsGET, map[string]string{
 		"bookid": "War.and.Peace",

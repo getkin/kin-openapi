@@ -56,7 +56,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	if len(servers) == 0 {
 		servers = append(servers, srv{})
 	}
-	muxRouter := mux.NewRouter() /*.UseEncodedPath()?*/
+	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
 		pathItem := doc.Paths[path]
