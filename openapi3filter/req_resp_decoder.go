@@ -809,6 +809,11 @@ const prefixUnsupportedCT = "unsupported content type"
 // The function returns ParseError when a body is invalid.
 func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	contentType := header.Get(headerCT)
+	if contentType == "" {
+		if _, ok := body.(*multipart.Part); ok {
+			contentType = "text/plain"
+		}
+	}
 	mediaType := parseMediaType(contentType)
 	decoder, ok := bodyDecoders[mediaType]
 	if !ok {
