@@ -68,13 +68,13 @@ jobs:
     - run: go test -v -run TestRaceyPatternSchema -race ./...
       env:
         CGO_ENABLED: '1'
+    - if: runner.os == 'Linux'
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
     - run: |
         cp openapi3/testdata/load_with_go_embed_test.go openapi3/
         cat go.mod | sed 's%go 1.14%go 1.16%' >gomod && mv gomod go.mod
         go test ./...
       if: matrix.go != '1.14'
-    - if: runner.os == 'Linux'
 
 
     - if: runner.os == 'Linux'
