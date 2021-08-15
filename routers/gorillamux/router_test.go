@@ -8,6 +8,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,6 +31,7 @@ func TestRouter(t *testing.T) {
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
+
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
 				Connect: helloCONNECT,
@@ -195,7 +197,7 @@ func TestRouter(t *testing.T) {
 
 func TestPermuteScheme(t *testing.T) {
 	scheme0 := "{sche}{me}"
-	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
+	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1", Variables: map[string]*openapi3.ServerVariable{
 		"d0":   {Default: "www"},
 		"d1":   {Default: "example", Enum: []string{"example"}},
 		"sche": {Default: "http"},
@@ -205,4 +207,17 @@ func TestPermuteScheme(t *testing.T) {
 	require.NoError(t, err)
 	perms := permutePart(scheme0, server)
 	require.Equal(t, []string{"http", "https"}, perms)
+}
+
+func TestServerPath(t *testing.T) {
+	server := &openapi3.Server{URL: "http://example.com"}
+	err := server.Validate(context.Background())
+	require.NoError(t, err)
+
+	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
+		server,
+		&openapi3.Server{URL: "http://example.com/"},
+		&openapi3.Server{URL: "http://example.com/path"}},
+	})
+	assert.Nil(t, err)
 }
