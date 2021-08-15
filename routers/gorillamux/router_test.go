@@ -197,7 +197,7 @@ func TestRouter(t *testing.T) {
 
 func TestPermuteScheme(t *testing.T) {
 	scheme0 := "{sche}{me}"
-	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1", Variables: map[string]*openapi3.ServerVariable{
+	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
 		"d0":   {Default: "www"},
 		"d1":   {Default: "example", Enum: []string{"example"}},
 		"sche": {Default: "http"},
