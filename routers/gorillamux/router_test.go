@@ -8,7 +8,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +30,6 @@ func TestRouter(t *testing.T) {
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
 				Connect: helloCONNECT,
@@ -219,5 +217,5 @@ func TestServerPath(t *testing.T) {
 		&openapi3.Server{URL: "http://example.com/"},
 		&openapi3.Server{URL: "http://example.com/path"}},
 	})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
