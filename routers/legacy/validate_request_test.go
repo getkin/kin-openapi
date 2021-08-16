@@ -107,26 +107,6 @@ func Example() {
 		fmt.Println(err)
 	}
 	// Output:
-	// request body has an error: doesn't match the schema: Doesn't match schema "oneOf"
-	// Schema:
-	//   {
-	//     "discriminator": {
-	//       "propertyName": "pet_type"
-	//     },
-	//     "oneOf": [
-	//       {
-	//         "$ref": "#/components/schemas/Cat"
-	//       },
-	//       {
-	//         "$ref": "#/components/schemas/Dog"
-	//       }
-	//     ]
-	//   }
-	//
-	// Value:
-	//   {
-	//     "bark": true,
-	//     "breed": "Dingo",
-	//     "pet_type": "Cat"
-	//   }
+	// request body has an error: doesn't match the schema: input matches more than one oneOf schemas
+
 }

@@ -824,10 +824,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		var oldfailfast bool
-		oldfailfast, settings.failfast = settings.failfast, true
 		err := v.visitJSON(settings, value)
-		settings.failfast = oldfailfast
 		if err == nil {
 			if settings.failfast {
 				return errSchema
@@ -841,33 +838,53 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.OneOf; len(v) > 0 {
+		var discriminatorRef string
+		if schema.Discriminator != nil {
+			pn := schema.Discriminator.PropertyName
+			if valuemap, okcheck := value.(map[string]interface{}); okcheck {
+				discriminatorVal, okcheck := valuemap[pn]
+				if !okcheck {
+					return errors.New("input does not contain the discriminator property")
+				}
+
+				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorVal.(string)]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+					return errors.New("input does not contain a valid discriminator value")
+				}
+			}
+		}
+
 		ok := 0
+		validationErrors := []error{}
 		for _, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			var oldfailfast bool
-			oldfailfast, settings.failfast = settings.failfast, true
-			err := v.visitJSON(settings, value)
-			settings.failfast = oldfailfast
-			if err == nil {
-				if schema.Discriminator != nil {
-					pn := schema.Discriminator.PropertyName
-					if valuemap, okcheck := value.(map[string]interface{}); okcheck {
-						if discriminatorVal, okcheck := valuemap[pn]; okcheck == true {
-							mapref, okcheck := schema.Discriminator.Mapping[discriminatorVal.(string)]
-							if okcheck && mapref == item.Ref {
-								ok++
-							}
-						}
-					}
-				} else {
-					ok++
-				}
+
+			if discriminatorRef != "" && discriminatorRef != item.Ref {
+				continue
 			}
+
+			err := v.visitJSON(settings, value)
+			if err != nil {
+				validationErrors = append(validationErrors, err)
+				continue
+			}
+
+			ok++
 		}
+
 		if ok != 1 {
+			if len(validationErrors) > 1 {
+				errorMessage := ""
+				for _, err := range validationErrors {
+					if errorMessage != "" {
+						errorMessage += " Or "
+					}
+					errorMessage += err.Error()
+				}
+				return errors.New("doesn't match schema due to: " + errorMessage)
+			}
 			if settings.failfast {
 				return errSchema
 			}
@@ -878,7 +895,10 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			}
 			if ok > 1 {
 				e.Origin = ErrOneOfConflict
+			} else if len(validationErrors) == 1 {
+				e.Origin = validationErrors[0]
 			}
+
 			return e
 		}
 	}
@@ -890,10 +910,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			var oldfailfast bool
-			oldfailfast, settings.failfast = settings.failfast, true
 			err := v.visitJSON(settings, value)
-			settings.failfast = oldfailfast
 			if err == nil {
 				ok = true
 				break
@@ -916,10 +933,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		var oldfailfast bool
-		oldfailfast, settings.failfast = settings.failfast, false
 		err := v.visitJSON(settings, value)
-		settings.failfast = oldfailfast
 		if err != nil {
 			if settings.failfast {
 				return errSchema
