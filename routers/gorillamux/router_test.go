@@ -206,3 +206,16 @@ func TestPermuteScheme(t *testing.T) {
 	perms := permutePart(scheme0, server)
 	require.Equal(t, []string{"http", "https"}, perms)
 }
+
+func TestServerPath(t *testing.T) {
+	server := &openapi3.Server{URL: "http://example.com"}
+	err := server.Validate(context.Background())
+	require.NoError(t, err)
+
+	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
+		server,
+		&openapi3.Server{URL: "http://example.com/"},
+		&openapi3.Server{URL: "http://example.com/path"}},
+	})
+	require.NoError(t, err)
+}
