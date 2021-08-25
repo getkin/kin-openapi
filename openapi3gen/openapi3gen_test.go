@@ -196,6 +196,10 @@ func TestSchemaCustomizer(t *testing.T) {
       "type": "string"
     },
     "another": {
+      "enum": [
+        "a",
+        "b"
+      ],
       "type": "string"
     }
   },

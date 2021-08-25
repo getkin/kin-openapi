@@ -239,7 +239,6 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 			schema.Format = "date-time"
 		} else {
 			for _, fieldInfo := range typeInfo.Fields {
-				var fieldTag reflect.StructTag
 				// Only fields with JSON tag are considered (by default)
 				if !fieldInfo.HasJSONTag && !g.opts.useAllExportedFields {
 					continue
@@ -263,11 +262,17 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 						}
 					} else {
 						ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
-						fieldTag = ff.Tag
 						if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
 							fieldName, fType = tag, ff.Type
 						}
 					}
+				}
+
+				// extract the field tag if we have a customizer
+				var fieldTag reflect.StructTag
+				if g.opts.schemaCustomizer != nil {
+					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+					fieldTag = ff.Tag
 				}
 
 				ref, err := g.generateSchemaRefFor(parents, fType, fieldName, fieldTag)
