@@ -1,0 +1,7 @@
+https://pkg.go.dev/github.com/santhosh-tekuri/jsonschema/v4#Compiler
+	(*Compiler).AddResource and (*Compiler).Compile() both require filenames / URLs
+		How to map that to components $ref?
+
+https://pkg.go.dev/github.com/qri-io/jsonschema?utm_source=godoc
+	1 schema = 1 json.Unmarshal
+		How to add multiple component schemas?
