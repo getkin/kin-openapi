@@ -22,7 +22,7 @@ type schemaExample struct {
 }
 
 func TestSchemas(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
+	DefineUUIDFormat()
 	for _, example := range schemaExamples {
 		t.Run(example.Title, testSchema(t, example))
 	}
@@ -1196,6 +1196,10 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 func TestIssue283(t *testing.T) {
 	const api = `
 openapi: "3.0.1"
+info:
+  title: An API
+  version: v1
+paths: {}
 components:
   schemas:
     Test:
@@ -1207,15 +1211,17 @@ components:
             type: boolean
       type: object
 `
-	data := map[string]interface{}{
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(api))
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Test"].Value.VisitData(doc, map[string]interface{}{
 		"name":      "kin-openapi",
 		"ownerName": true,
-	}
-	s, err := NewLoader().LoadFromData([]byte(api))
-	require.NoError(t, err)
-	require.NotNil(t, s)
-	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
-	require.NotNil(t, err)
+	})
 	require.NotEqual(t, errSchema, err)
 	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
 }

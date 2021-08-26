@@ -22,8 +22,6 @@ var (
 	//SchemaFormatValidationDisabled disables validation of schema type formats.
 	SchemaFormatValidationDisabled = false
 
-	errSchema = errors.New("input does not match the schema")
-
 	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
 	ErrOneOfConflict = errors.New("input matches more than one oneOf schemas")
 
@@ -40,11 +38,8 @@ func (doc *T) compileSchemas(settings *schemaValidationSettings) (err error) {
 }
 
 func (schema *Schema) visitData(doc *T, data interface{}, opts ...SchemaValidationOption) (err error) {
-	return schema.VisitJSON(data, opts...)
-}
-
-func (value *Schema) Validate(ctx context.Context) error {
-	return value.validate(ctx, []*Schema{})
+	settings := newSchemaValidationSettings(opts...)
+	return schema.visitJSON(settings, data)
 }
 
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {
@@ -216,11 +211,6 @@ func (schema *Schema) IsMatchingJSONArray(value []interface{}) bool {
 func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool {
 	settings := newSchemaValidationSettings(FailFast())
 	return schema.visitJSON(settings, value) == nil
-}
-
-func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOption) error {
-	settings := newSchemaValidationSettings(opts...)
-	return schema.visitJSON(settings, value)
 }
 
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interface{}) (err error) {

@@ -1,6 +1,8 @@
 package openapi3
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -8,6 +10,8 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
 )
+
+var errSchema = errors.New("input does not match the schema")
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
 func Float64Ptr(value float64) *float64 {
@@ -129,6 +133,11 @@ var _ jsonpointer.JSONPointable = (*Schema)(nil)
 // It will use #/components/schemas if given doc is non-nil and doc.CompileSchemas() was called.
 func (schema *Schema) VisitData(doc *T, data interface{}, opts ...SchemaValidationOption) (err error) {
 	return schema.visitData(doc, data, opts...)
+}
+
+// VisitJSON validates given data against schema only.
+func (schema *Schema) VisitJSON(data interface{}, opts ...SchemaValidationOption) error {
+	return schema.VisitData(nil, data, opts...)
 }
 
 func NewSchema() *Schema {
@@ -559,140 +568,6 @@ func (schema *Schema) IsEmpty() bool {
 	return true
 }
 
-// func (schema *Schema) expectedType(settings *schemaValidationSettings, typ string) error {
-// 	if settings.failfast {
-// 		return errSchema
-// 	}
-// 	return &SchemaError{
-// 		Value:       typ,
-// 		Schema:      schema,
-// 		SchemaField: "type",
-// 		Reason:      "Field must be set to " + schema.Type + " or not be present",
-// 	}
-// }
-
-// func (schema *Schema) compilePattern() (err error) {
-// 	if schema.compiledPattern, err = regexp.Compile(schema.Pattern); err != nil {
-// 		return &SchemaError{
-// 			Schema:      schema,
-// 			SchemaField: "pattern",
-// 			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", schema.Pattern, err),
-// 		}
-// 	}
-// 	return nil
-// }
-
-// type SchemaError struct {
-// 	Value       interface{}
-// 	reversePath []string
-// 	Schema      *Schema
-// 	SchemaField string
-// 	Reason      string
-// 	Origin      error
-// }
-
-// func markSchemaErrorKey(err error, key string) error {
-// 	if v, ok := err.(*SchemaError); ok {
-// 		v.reversePath = append(v.reversePath, key)
-// 		return v
-// 	}
-// 	if v, ok := err.(MultiError); ok {
-// 		for _, e := range v {
-// 			_ = markSchemaErrorKey(e, key)
-// 		}
-// 		return v
-// 	}
-// 	return err
-// }
-
-// func markSchemaErrorIndex(err error, index int) error {
-// 	if v, ok := err.(*SchemaError); ok {
-// 		v.reversePath = append(v.reversePath, strconv.FormatInt(int64(index), 10))
-// 		return v
-// 	}
-// 	if v, ok := err.(MultiError); ok {
-// 		for _, e := range v {
-// 			_ = markSchemaErrorIndex(e, index)
-// 		}
-// 		return v
-// 	}
-// 	return err
-// }
-
-// func (err *SchemaError) JSONPointer() []string {
-// 	reversePath := err.reversePath
-// 	path := append([]string(nil), reversePath...)
-// 	for left, right := 0, len(path)-1; left < right; left, right = left+1, right-1 {
-// 		path[left], path[right] = path[right], path[left]
-// 	}
-// 	return path
-// }
-
-// func (err *SchemaError) Error() string {
-// 	if err.Origin != nil {
-// 		return err.Origin.Error()
-// 	}
-
-// 	buf := bytes.NewBuffer(make([]byte, 0, 256))
-// 	if len(err.reversePath) > 0 {
-// 		buf.WriteString(`Error at "`)
-// 		reversePath := err.reversePath
-// 		for i := len(reversePath) - 1; i >= 0; i-- {
-// 			buf.WriteByte('/')
-// 			buf.WriteString(reversePath[i])
-// 		}
-// 		buf.WriteString(`": `)
-// 	}
-// 	reason := err.Reason
-// 	if reason == "" {
-// 		buf.WriteString(`Doesn't match schema "`)
-// 		buf.WriteString(err.SchemaField)
-// 		buf.WriteString(`"`)
-// 	} else {
-// 		buf.WriteString(reason)
-// 	}
-// 	if !SchemaErrorDetailsDisabled {
-// 		buf.WriteString("\nSchema:\n  ")
-// 		encoder := json.NewEncoder(buf)
-// 		encoder.SetIndent("  ", "  ")
-// 		if err := encoder.Encode(err.Schema); err != nil {
-// 			panic(err)
-// 		}
-// 		buf.WriteString("\nValue:\n  ")
-// 		if err := encoder.Encode(err.Value); err != nil {
-// 			panic(err)
-// 		}
-// 	}
-// 	return buf.String()
-// }
-
-// func isSliceOfUniqueItems(xs []interface{}) bool {
-// 	s := len(xs)
-// 	m := make(map[string]struct{}, s)
-// 	for _, x := range xs {
-// 		// The input slice is coverted from a JSON string, there shall
-// 		// have no error when covert it back.
-// 		key, _ := json.Marshal(&x)
-// 		m[string(key)] = struct{}{}
-// 	}
-// 	return s == len(m)
-// }
-
-// // SliceUniqueItemsChecker is an function used to check if an given slice
-// // have unique items.
-// type SliceUniqueItemsChecker func(items []interface{}) bool
-
-// // By default using predefined func isSliceOfUniqueItems which make use of
-// // json.Marshal to generate a key for map used to check if a given slice
-// // have unique items.
-// var sliceUniqueItemsChecker SliceUniqueItemsChecker = isSliceOfUniqueItems
-
-// // RegisterArrayUniqueItemsChecker is used to register a customized function
-// // used to check if JSON array have unique items.
-// func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker) {
-// 	sliceUniqueItemsChecker = fn
-// }
-
-// func unsupportedFormat(format string) error {
-// 	return fmt.Errorf("unsupported 'format' value %q", format)
-// }
+func (value *Schema) Validate(ctx context.Context) error {
+	return value.validate(ctx, []*Schema{})
+}

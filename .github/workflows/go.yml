@@ -77,6 +77,18 @@ jobs:
       if: matrix.go != '1.14'
 
 
+    - run: go test -tags xeipuuv ./...
+    - run: go test -tags xeipuuv -v -run TestRaceyPatternSchema -race ./...
+      env:
+        CGO_ENABLED: '1'
+    - run: |
+        cp openapi3/testdata/load_with_go_embed_test.go openapi3/
+        cat go.mod | sed 's%go 1.14%go 1.16%' >gomod && mv gomod go.mod
+        go test -tags xeipuuv ./...
+      if: matrix.go != '1.14'
+
+
+
     - if: runner.os == 'Linux'
       name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
       run: |
