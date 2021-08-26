@@ -19,6 +19,8 @@ type T struct {
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	refd, refdAsReq, refdAsRep schemaLoader
 }
 
 func (doc *T) MarshalJSON() ([]byte, error) {
@@ -27,6 +29,17 @@ func (doc *T) MarshalJSON() ([]byte, error) {
 
 func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
+}
+
+// CompileSchemas needs to be called before any use of VisitJSON*()
+func (doc *T) CompileSchemas() error {
+	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsRequest())); err != nil {
+		return err
+	}
+	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsResponse())); err != nil {
+		return err
+	}
+	return doc.compileSchemas(newSchemaValidationSettings())
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {

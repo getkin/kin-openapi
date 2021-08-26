@@ -15,6 +15,9 @@ func TestIssue341(t *testing.T) {
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
+
 	err = sl.ResolveRefsIn(doc, nil)
 	require.NoError(t, err)
 

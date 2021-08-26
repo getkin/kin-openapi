@@ -128,6 +128,8 @@ func TestRouter(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 	r, err := NewRouter(doc)
 	require.NoError(t, err)
 
@@ -167,6 +169,8 @@ func TestRouter(t *testing.T) {
 		}},
 	}
 	err = doc.Validate(context.Background())
+	require.NoError(t, err)
+	err = doc.CompileSchemas()
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)

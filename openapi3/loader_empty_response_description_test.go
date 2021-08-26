@@ -42,6 +42,8 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		t.Log("Empty description provided: valid spec")
 		err = doc.Validate(loader.Context)
 		require.NoError(t, err)
+		err = doc.CompileSchemas()
+		require.NoError(t, err)
 	}
 
 	{
@@ -55,6 +57,8 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		t.Log("Non-empty description provided: valid spec")
 		err = doc.Validate(loader.Context)
 		require.NoError(t, err)
+		err = doc.CompileSchemas()
+		require.NoError(t, err)
 	}
 
 	noDescriptionIsInvalid := func(data []byte) *T {
@@ -66,6 +70,8 @@ func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
 		t.Log("No description provided: invalid spec")
 		err = doc.Validate(loader.Context)
 		require.Error(t, err)
+		err = doc.CompileSchemas()
+		require.NoError(t, err)
 		return doc
 	}
 

@@ -25,4 +25,6 @@ func TestPathValidate(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Paths.Validate(context.Background())
 	require.NoError(t, err)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 }

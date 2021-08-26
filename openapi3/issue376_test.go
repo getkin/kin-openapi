@@ -35,6 +35,9 @@ info:
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
+
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
 	require.Equal(t, 0, len(doc.Paths))
@@ -67,6 +70,9 @@ info:
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.CompileSchemas()
 	require.NoError(t, err)
 
 	for propName, propSchema := range doc.Components.Schemas {

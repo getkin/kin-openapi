@@ -12,6 +12,9 @@ func TestLoaderSupportsRecursiveReference(t *testing.T) {
 	doc, err := loader.LoadFromFile("testdata/recursiveRef/openapi.yml")
 	require.NoError(t, err)
 	require.NotNil(t, doc)
-	require.NoError(t, doc.Validate(loader.Context))
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Example)
 }

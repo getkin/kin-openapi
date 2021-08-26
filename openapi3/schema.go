@@ -125,6 +125,12 @@ type Schema struct {
 
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
 
+// VisitData validates given data against schema, using components from doc if given.
+// It will use #/components/schemas if given doc is non-nil and doc.CompileSchemas() was called.
+func (schema *Schema) VisitData(doc *T, data interface{}, opts ...SchemaValidationOption) (err error) {
+	return schema.visitData(doc, data, opts...)
+}
+
 func NewSchema() *Schema {
 	return &Schema{}
 }

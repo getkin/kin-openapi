@@ -16,6 +16,9 @@ func TestIssue301(t *testing.T) {
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
+
 	transCallbacks := doc.Paths["/trans"].Post.Callbacks["transactionCallback"].Value
 	require.Equal(t, "object", (*transCallbacks)["http://notificationServer.com?transactionId={$request.body#/id}&email={$request.body#/email}"].Post.RequestBody.
 		Value.Content["application/json"].Schema.

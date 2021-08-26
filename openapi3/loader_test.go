@@ -66,6 +66,8 @@ paths:
 	require.Equal(t, &desc, def.Description)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 }
 
 func ExampleLoader() {
@@ -85,6 +87,8 @@ func TestResolveSchemaRef(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 
 	refAVisited := doc.Components.Schemas["A"].Value.AllOf[0]
 	require.Equal(t, "#/components/schemas/B", refAVisited.Ref)
@@ -98,6 +102,8 @@ func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.EqualError(t, err, `invalid paths: found unresolved ref: ""`)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {
@@ -127,6 +133,8 @@ paths:
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.CompileSchemas()
 	require.NoError(t, err)
 
 	example := doc.Paths["/"].Get.Responses.Get(200).Value.Content.Get("application/json").Examples["test"]
@@ -260,6 +268,8 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.CompileSchemas()
 	require.NoError(t, err)
 	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
@@ -430,6 +440,9 @@ paths:
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
+
 	response := doc.Paths[`/users/{id}`].Get.Responses.Get(200).Value
 	link := response.Links[`father`].Value
 	require.NotNil(t, link)
@@ -497,6 +510,8 @@ paths:
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+	err = doc.CompileSchemas()
+	require.NoError(t, err)
 }
 
 func TestServersVariables(t *testing.T) {
@@ -526,6 +541,8 @@ servers:
 			require.NoError(t, err)
 			err = doc.Validate(loader.Context)
 			require.Equal(t, expected, err)
+			err = doc.CompileSchemas()
+			require.NoError(t, err)
 		})
 	}
 }
