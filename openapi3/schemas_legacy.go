@@ -33,6 +33,16 @@ var (
 	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
 )
 
+type schemaLoader = struct{}
+
+func (doc *T) compileSchemas(settings *schemaValidationSettings) (err error) {
+	return
+}
+
+func (schema *Schema) visitData(doc *T, data interface{}, opts ...SchemaValidationOption) (err error) {
+	return schema.VisitJSON(data, opts...)
+}
+
 func (value *Schema) Validate(ctx context.Context) error {
 	return value.validate(ctx, []*Schema{})
 }

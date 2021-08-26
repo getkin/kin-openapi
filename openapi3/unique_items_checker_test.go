@@ -1,3 +1,5 @@
+// +build legacy
+
 package openapi3_test
 
 import (
