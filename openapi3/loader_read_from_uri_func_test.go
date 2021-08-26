@@ -22,8 +22,6 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Example)
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
 }
 
 type multipleSourceLoaderExample struct {
@@ -68,9 +66,6 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
-	require.NoError(t, err)
-
-	err = doc.CompileSchemas()
 	require.NoError(t, err)
 
 	refRootVisited := doc.Components.Schemas["Root"].Value.AllOf[0]

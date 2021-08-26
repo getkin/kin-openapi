@@ -77,8 +77,6 @@ components:
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
 
 	expected, err := json.Marshal(&Schema{
 		Type:     "object",

@@ -157,8 +157,6 @@ func TestFilter(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
@@ -576,8 +574,6 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
@@ -709,8 +705,6 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(&doc)
 	require.NoError(t, err)
 
@@ -812,8 +806,6 @@ func TestAllSchemesMet(t *testing.T) {
 	}
 
 	err := doc.Validate(context.Background())
-	require.NoError(t, err)
-	err = doc.CompileSchemas()
 	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(&doc)
 	require.NoError(t, err)

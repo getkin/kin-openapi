@@ -27,10 +27,6 @@ func Example() {
 		panic(err)
 	}
 
-	if err = doc.CompileSchemas(); err != nil {
-		panic(err)
-	}
-
 	fmt.Println(doc.Paths["/foo"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Type)
 	// Output: string
 }

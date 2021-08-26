@@ -37,7 +37,5 @@ paths:
 			require.NoError(t, err)
 		}
 
-		err = doc.CompileSchemas()
-		require.NoError(t, err)
 	}
 }

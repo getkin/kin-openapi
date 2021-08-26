@@ -114,5 +114,5 @@ func (value *T) Validate(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	return value.CompileSchemas()
 }

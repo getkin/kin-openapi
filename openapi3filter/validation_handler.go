@@ -32,9 +32,6 @@ func (h *ValidationHandler) Load() error {
 	if err := doc.Validate(loader.Context); err != nil {
 		return err
 	}
-	if err := doc.CompileSchemas(); err != nil {
-		return err
-	}
 	if h.router, err = legacyrouter.NewRouter(doc); err != nil {
 		return err
 	}

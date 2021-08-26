@@ -12,6 +12,4 @@ func TestOverridingGlobalParametersValidation(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
 }

@@ -923,8 +923,6 @@ func TestDecodeParameter(t *testing.T) {
 					doc.AddOperation(path, http.MethodGet, op)
 					err = doc.Validate(context.Background())
 					require.NoError(t, err)
-					err = doc.CompileSchemas()
-					require.NoError(t, err)
 					router, err := legacyrouter.NewRouter(doc)
 					require.NoError(t, err)
 

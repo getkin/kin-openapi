@@ -79,9 +79,6 @@ components:
 	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
-
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 

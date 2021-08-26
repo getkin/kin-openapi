@@ -72,9 +72,6 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
-	err = doc.CompileSchemas()
-	require.NoError(t, err)
-
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 

@@ -35,11 +35,7 @@ func TestRefsJSON(t *testing.T) {
 	t.Log("Validate *T")
 	err = docA.Validate(loader.Context)
 	require.NoError(t, err)
-	err = docA.CompileSchemas()
-	require.NoError(t, err)
 	err = docB.Validate(loader.Context)
-	require.NoError(t, err)
-	err = docB.CompileSchemas()
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")
@@ -77,11 +73,7 @@ func TestRefsYAML(t *testing.T) {
 	t.Log("Validate *T")
 	err = docA.Validate(loader.Context)
 	require.NoError(t, err)
-	err = docA.CompileSchemas()
-	require.NoError(t, err)
 	err = docB.Validate(loader.Context)
-	require.NoError(t, err)
-	err = docB.CompileSchemas()
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")
@@ -425,8 +417,6 @@ components:
 				require.NoError(t, err)
 			}
 
-			err = doc.CompileSchemas()
-			require.NoError(t, err)
 		})
 	}
 }

@@ -22,9 +22,6 @@ func TestIssue220(t *testing.T) {
 		err = doc.Validate(loader.Context)
 		require.NoError(t, err)
 
-		err = doc.CompileSchemas()
-		require.NoError(t, err)
-
 		require.Equal(t, "integer", doc.Paths["/foo"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Properties["bar"].Value.Type)
 	}
 }
