@@ -1202,7 +1202,8 @@ components:
 		"ownerName": true,
 	})
 	require.NotEqual(t, errSchema, err)
-	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
+	require.Contains(t, err.Error(), `ownerName`)
+	require.True(t, strings.Contains(err.Error(), `schema "not"`) || strings.Contains(err.Error(), `schema (not)`))
 }
 
 func TestValidationFailsOnInvalidPattern(t *testing.T) {
