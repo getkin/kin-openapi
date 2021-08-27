@@ -14,6 +14,9 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+// SchemaFormatValidationDisabled FIXME: drop
+var SchemaFormatValidationDisabled = true
+
 type schemaLoader = *gojsonschema.SchemaLoader
 
 func (doc *T) compileSchemas(settings *schemaValidationSettings) (err error) {

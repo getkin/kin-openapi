@@ -914,23 +914,29 @@ type schemaTypeExample struct {
 
 func TestTypes(t *testing.T) {
 	for title, example := range typeExamples {
-		t.Run(title, testType(t, example))
+		testType(t, title, example)
 	}
 }
 
-func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
-	return func(t *testing.T) {
-		baseSchema := example.Schema
-		for _, typ := range example.AllValid {
+func testType(t *testing.T, title string, example schemaTypeExample) {
+	baseSchema := example.Schema
+	for _, typ := range example.AllValid {
+		t.Run(title+"_Valid_"+typ, func(t *testing.T) {
 			schema := baseSchema.WithFormat(typ)
 			err := schema.Validate(context.Background())
 			require.NoError(t, err)
-		}
-		for _, typ := range example.AllInvalid {
+		})
+	}
+	for _, typ := range example.AllInvalid {
+		t.Run(title+"_Invalid_"+typ, func(t *testing.T) {
 			schema := baseSchema.WithFormat(typ)
 			err := schema.Validate(context.Background())
-			require.Error(t, err)
-		}
+			if SchemaFormatValidationDisabled {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
 	}
 }
 
