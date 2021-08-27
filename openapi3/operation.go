@@ -120,18 +120,19 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 	}
 }
 
-func (value *Operation) Validate(ctx context.Context) error {
-	if v := value.Parameters; v != nil {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (operation *Operation) Validate(ctx context.Context) error {
+	if v := operation.Parameters; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	if v := value.RequestBody; v != nil {
+	if v := operation.RequestBody; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	if v := value.Responses; v != nil {
+	if v := operation.Responses; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}

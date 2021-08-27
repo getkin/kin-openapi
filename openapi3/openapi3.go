@@ -60,10 +60,10 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
-// Validate goes through the whole document and errors on non compliance to the OpenAPIv3 specification.
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 // Validation ends with a call to CompileSchemas()
-func (value *T) Validate(ctx context.Context) error {
-	if value.OpenAPI == "" {
+func (doc *T) Validate(ctx context.Context) error {
+	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}
 
@@ -71,14 +71,14 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid components: %v", e) }
-		if err := value.Components.Validate(ctx); err != nil {
+		if err := doc.Components.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid info: %v", e) }
-		if v := value.Info; v != nil {
+		if v := doc.Info; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -89,7 +89,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid paths: %v", e) }
-		if v := value.Paths; v != nil {
+		if v := doc.Paths; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -100,7 +100,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid security: %v", e) }
-		if v := value.Security; v != nil {
+		if v := doc.Security; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -109,12 +109,12 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
-		if v := value.Servers; v != nil {
+		if v := doc.Servers; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		}
 	}
 
-	return value.CompileSchemas()
+	return doc.CompileSchemas()
 }

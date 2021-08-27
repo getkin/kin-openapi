@@ -29,11 +29,12 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
-func (value Responses) Validate(ctx context.Context) error {
-	if len(value) == 0 {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (responses Responses) Validate(ctx context.Context) error {
+	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
-	for _, v := range value {
+	for _, v := range responses {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -94,12 +95,13 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
-func (value *Response) Validate(ctx context.Context) error {
-	if value.Description == nil {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (response *Response) Validate(ctx context.Context) error {
+	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
 
-	if content := value.Content; content != nil {
+	if content := response.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return err
 		}

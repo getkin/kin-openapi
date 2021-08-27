@@ -61,11 +61,12 @@ func (encoding *Encoding) SerializationMethod() *SerializationMethod {
 	return sm
 }
 
-func (value *Encoding) Validate(ctx context.Context) error {
-	if value == nil {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (encoding *Encoding) Validate(ctx context.Context) error {
+	if encoding == nil {
 		return nil
 	}
-	for k, v := range value.Headers {
+	for k, v := range encoding.Headers {
 		if err := ValidateIdentifier(k); err != nil {
 			return nil
 		}
@@ -75,7 +76,7 @@ func (value *Encoding) Validate(ctx context.Context) error {
 	}
 
 	// Validate a media types's serialization method.
-	sm := value.SerializationMethod()
+	sm := encoding.SerializationMethod()
 	switch {
 	case sm.Style == SerializationForm && sm.Explode,
 		sm.Style == SerializationForm && !sm.Explode,

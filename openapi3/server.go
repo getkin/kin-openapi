@@ -14,9 +14,9 @@ import (
 // Servers is specified by OpenAPI/Swagger standard version 3.0.
 type Servers []*Server
 
-// Validate ensures servers are per the OpenAPIv3 specification.
-func (value Servers) Validate(ctx context.Context) error {
-	for _, v := range value {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (servers Servers) Validate(ctx context.Context) error {
+	for _, v := range servers {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -125,19 +125,20 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 	return params, input, true
 }
 
-func (value *Server) Validate(ctx context.Context) (err error) {
-	if value.URL == "" {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (server *Server) Validate(ctx context.Context) (err error) {
+	if server.URL == "" {
 		return errors.New("value of url must be a non-empty string")
 	}
-	opening, closing := strings.Count(value.URL, "{"), strings.Count(value.URL, "}")
+	opening, closing := strings.Count(server.URL, "{"), strings.Count(server.URL, "}")
 	if opening != closing {
 		return errors.New("server URL has mismatched { and }")
 	}
-	if opening != len(value.Variables) {
+	if opening != len(server.Variables) {
 		return errors.New("server has undeclared variables")
 	}
-	for name, v := range value.Variables {
-		if !strings.Contains(value.URL, fmt.Sprintf("{%s}", name)) {
+	for name, v := range server.Variables {
+		if !strings.Contains(server.URL, fmt.Sprintf("{%s}", name)) {
 			return errors.New("server has undeclared variables")
 		}
 		if err = v.Validate(ctx); err != nil {
@@ -163,9 +164,10 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, serverVariable)
 }
 
-func (value *ServerVariable) Validate(ctx context.Context) error {
-	if value.Default == "" {
-		data, err := value.MarshalJSON()
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (serverVariable *ServerVariable) Validate(ctx context.Context) error {
+	if serverVariable.Default == "" {
+		data, err := serverVariable.MarshalJSON()
 		if err != nil {
 			return err
 		}

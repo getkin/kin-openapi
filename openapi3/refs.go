@@ -27,6 +27,7 @@ func (value *CallbackRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *CallbackRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -58,6 +59,7 @@ func (value *ExampleRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *ExampleRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -89,6 +91,7 @@ func (value *HeaderRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *HeaderRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -118,6 +121,7 @@ func (value *LinkRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *LinkRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -140,6 +144,7 @@ func (value *ParameterRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *ParameterRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -171,6 +176,7 @@ func (value *ResponseRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *ResponseRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -202,6 +208,7 @@ func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *RequestBodyRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -240,6 +247,7 @@ func (value *SchemaRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *SchemaRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
@@ -271,6 +279,7 @@ func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *SecuritySchemeRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)

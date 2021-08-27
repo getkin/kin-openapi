@@ -48,6 +48,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, example)
 }
 
-func (value *Example) Validate(ctx context.Context) error {
-	return nil // TODO
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (example *Example) Validate(ctx context.Context) error {
+	return nil // TODO https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#example-object
 }

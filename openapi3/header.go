@@ -9,12 +9,13 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
+// Headers represents components' header mapping
 type Headers map[string]*HeaderRef
 
 var _ jsonpointer.JSONPointable = (*Headers)(nil)
 
-func (h Headers) JSONLookup(token string) (interface{}, error) {
-	ref, ok := h[token]
+func (hs Headers) JSONLookup(token string) (interface{}, error) {
+	ref, ok := hs[token]
 	if ref == nil || !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
@@ -33,33 +34,34 @@ type Header struct {
 
 var _ jsonpointer.JSONPointable = (*Header)(nil)
 
-func (value *Header) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (h *Header) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, h)
 }
 
 // SerializationMethod returns a header's serialization method.
-func (value *Header) SerializationMethod() (*SerializationMethod, error) {
-	style := value.Style
+func (h *Header) SerializationMethod() (*SerializationMethod, error) {
+	style := h.Style
 	if style == "" {
 		style = SerializationSimple
 	}
 	explode := false
-	if value.Explode != nil {
-		explode = *value.Explode
+	if h.Explode != nil {
+		explode = *h.Explode
 	}
 	return &SerializationMethod{Style: style, Explode: explode}, nil
 }
 
-func (value *Header) Validate(ctx context.Context) error {
-	if value.Name != "" {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (h *Header) Validate(ctx context.Context) error {
+	if h.Name != "" {
 		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")
 	}
-	if value.In != "" {
+	if h.In != "" {
 		return errors.New("header 'in' MUST NOT be specified, it is implicitly in header")
 	}
 
 	// Validate a parameter's serialization method.
-	sm, err := value.SerializationMethod()
+	sm, err := h.SerializationMethod()
 	if err != nil {
 		return err
 	}
@@ -70,17 +72,17 @@ func (value *Header) Validate(ctx context.Context) error {
 		return fmt.Errorf("header schema is invalid: %v", e)
 	}
 
-	if (value.Schema == nil) == (value.Content == nil) {
-		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", value)
+	if (h.Schema == nil) == (h.Content == nil) {
+		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", h)
 		return fmt.Errorf("header schema is invalid: %v", e)
 	}
-	if schema := value.Schema; schema != nil {
+	if schema := h.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
 			return fmt.Errorf("header schema is invalid: %v", err)
 		}
 	}
 
-	if content := value.Content; content != nil {
+	if content := h.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("header content is invalid: %v", err)
 		}
@@ -88,41 +90,41 @@ func (value *Header) Validate(ctx context.Context) error {
 	return nil
 }
 
-func (value Header) JSONLookup(token string) (interface{}, error) {
+func (h Header) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":
-		if value.Schema != nil {
-			if value.Schema.Ref != "" {
-				return &Ref{Ref: value.Schema.Ref}, nil
+		if h.Schema != nil {
+			if h.Schema.Ref != "" {
+				return &Ref{Ref: h.Schema.Ref}, nil
 			}
-			return value.Schema.Value, nil
+			return h.Schema.Value, nil
 		}
 	case "name":
-		return value.Name, nil
+		return h.Name, nil
 	case "in":
-		return value.In, nil
+		return h.In, nil
 	case "description":
-		return value.Description, nil
+		return h.Description, nil
 	case "style":
-		return value.Style, nil
+		return h.Style, nil
 	case "explode":
-		return value.Explode, nil
-	case "allowEmptyValue":
-		return value.AllowEmptyValue, nil
+		return h.Explode, nil
+	case "allowEmptyh":
+		return h.AllowEmptyValue, nil
 	case "allowReserved":
-		return value.AllowReserved, nil
+		return h.AllowReserved, nil
 	case "deprecated":
-		return value.Deprecated, nil
+		return h.Deprecated, nil
 	case "required":
-		return value.Required, nil
+		return h.Required, nil
 	case "example":
-		return value.Example, nil
+		return h.Example, nil
 	case "examples":
-		return value.Examples, nil
+		return h.Examples, nil
 	case "content":
-		return value.Content, nil
+		return h.Content, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(value.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(h.ExtensionProps, token)
 	return v, err
 }
