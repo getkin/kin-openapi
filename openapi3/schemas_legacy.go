@@ -183,36 +183,6 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	return
 }
 
-func (schema *Schema) IsMatching(value interface{}) bool {
-	settings := newSchemaValidationSettings(FailFast())
-	return schema.visitJSON(settings, value) == nil
-}
-
-func (schema *Schema) IsMatchingJSONBoolean(value bool) bool {
-	settings := newSchemaValidationSettings(FailFast())
-	return schema.visitJSON(settings, value) == nil
-}
-
-func (schema *Schema) IsMatchingJSONNumber(value float64) bool {
-	settings := newSchemaValidationSettings(FailFast())
-	return schema.visitJSON(settings, value) == nil
-}
-
-func (schema *Schema) IsMatchingJSONString(value string) bool {
-	settings := newSchemaValidationSettings(FailFast())
-	return schema.visitJSON(settings, value) == nil
-}
-
-func (schema *Schema) IsMatchingJSONArray(value []interface{}) bool {
-	settings := newSchemaValidationSettings(FailFast())
-	return schema.visitJSON(settings, value) == nil
-}
-
-func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool {
-	settings := newSchemaValidationSettings(FailFast())
-	return schema.visitJSON(settings, value) == nil
-}
-
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interface{}) (err error) {
 	switch value := value.(type) {
 	case nil:
@@ -419,21 +389,11 @@ func (schema *Schema) visitJSONNull(settings *schemaValidationSettings) (err err
 	}
 }
 
-func (schema *Schema) VisitJSONBoolean(value bool) error {
-	settings := newSchemaValidationSettings()
-	return schema.visitJSONBoolean(settings, value)
-}
-
 func (schema *Schema) visitJSONBoolean(settings *schemaValidationSettings, value bool) (err error) {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "boolean" {
 		return schema.expectedType(settings, "boolean")
 	}
 	return
-}
-
-func (schema *Schema) VisitJSONNumber(value float64) error {
-	settings := newSchemaValidationSettings()
-	return schema.visitJSONNumber(settings, value)
 }
 
 func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value float64) error {
@@ -554,11 +514,6 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	return nil
 }
 
-func (schema *Schema) VisitJSONString(value string) error {
-	settings := newSchemaValidationSettings()
-	return schema.visitJSONString(settings, value)
-}
-
 func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value string) error {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "string" {
 		return schema.expectedType(settings, "string")
@@ -673,11 +628,6 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	return nil
 }
 
-func (schema *Schema) VisitJSONArray(value []interface{}) error {
-	settings := newSchemaValidationSettings()
-	return schema.visitJSONArray(settings, value)
-}
-
 func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value []interface{}) error {
 	if schemaType := schema.Type; schemaType != "" && schemaType != "array" {
 		return schema.expectedType(settings, "array")
@@ -767,11 +717,6 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 	}
 
 	return nil
-}
-
-func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
-	settings := newSchemaValidationSettings()
-	return schema.visitJSONObject(settings, value)
 }
 
 func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]interface{}) error {

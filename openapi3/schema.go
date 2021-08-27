@@ -135,11 +135,6 @@ func (schema *Schema) VisitData(doc *T, data interface{}, opts ...SchemaValidati
 	return schema.visitData(doc, data, opts...)
 }
 
-// VisitJSON validates given data against schema only.
-func (schema *Schema) VisitJSON(data interface{}, opts ...SchemaValidationOption) error {
-	return schema.VisitData(nil, data, opts...)
-}
-
 func NewSchema() *Schema {
 	return &Schema{}
 }

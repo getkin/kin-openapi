@@ -54,7 +54,7 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 		}
 		// NaN and Inf aren't valid JSON but are handled
 		for _, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
-			err := schema.VisitJSON(value)
+			err := schema.VisitData(nil, value)
 			require.Error(t, err)
 		}
 	}
@@ -66,7 +66,7 @@ func validateSchema(t *testing.T, schema *Schema, value interface{}, opts ...Sch
 	var val interface{}
 	err = json.Unmarshal(data, &val)
 	require.NoError(t, err)
-	return schema.VisitJSON(val, opts...)
+	return schema.VisitData(nil, val, opts...)
 }
 
 var schemaExamples = map[string]schemaExample{
