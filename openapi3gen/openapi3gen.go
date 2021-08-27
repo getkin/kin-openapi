@@ -21,7 +21,7 @@ func (err *CycleError) Error() string { return "detected cycle" }
 // Option allows tweaking SchemaRef generation
 type Option func(*generatorOpt)
 
-type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) *openapi3.Schema
+type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
 type generatorOpt struct {
 	useAllExportedFields bool
@@ -297,7 +297,9 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	}
 
 	if g.opts.schemaCustomizer != nil {
-		schema = g.opts.schemaCustomizer(name, t, tag, schema)
+		if err := g.opts.schemaCustomizer(name, t, tag, schema); err != nil {
+			return nil, err
+		}
 	}
 
 	return openapi3.NewSchemaRef(t.Name(), schema), nil

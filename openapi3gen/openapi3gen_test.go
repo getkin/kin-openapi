@@ -2,6 +2,7 @@ package openapi3gen
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -158,7 +159,7 @@ func TestSchemaCustomizer(t *testing.T) {
 		EnumField string `json:"another" myenumtag:"a,b"`
 	}
 
-	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) *openapi3.Schema {
+	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		t.Logf("Field=%s,Tag=%s", name, tag)
 		if tag.Get("mymintag") != "" {
 			minVal, _ := strconv.ParseFloat(tag.Get("mymintag"), 64)
@@ -173,11 +174,12 @@ func TestSchemaCustomizer(t *testing.T) {
 				schema.Enum = append(schema.Enum, s)
 			}
 		}
-		return schema
+		return nil
 	}))
 	require.NoError(t, err)
-	jsonSchema, _ := json.MarshalIndent(schemaRef, "", "  ")
-	require.Equal(t, `{
+	jsonSchema, err := json.MarshalIndent(schemaRef, "", "  ")
+	require.NoError(t, err)
+	require.JSONEq(t, `{
   "properties": {
     "AnonStruct": {
       "properties": {
@@ -205,4 +207,12 @@ func TestSchemaCustomizer(t *testing.T) {
   },
   "type": "object"
 }`, string(jsonSchema))
+}
+
+func TestSchemaCustomizerError(t *testing.T) {
+	type Bla struct{}
+	_, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return fmt.Errorf("test error")
+	}))
+	require.EqualError(t, err, "test error")
 }
