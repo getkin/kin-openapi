@@ -31,7 +31,7 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
 
-// CompileSchemas needs to be called before any use of VisitJSON*()
+// CompileSchemas needs to be called before any use of VisitData()
 func (doc *T) CompileSchemas() error {
 	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsRequest())); err != nil {
 		return err
@@ -60,6 +60,8 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
+// Validate goes through the whole document and errors on non compliance to the OpenAPIv3 specification.
+// Validation ends with a call to CompileSchemas()
 func (value *T) Validate(ctx context.Context) error {
 	if value.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
