@@ -21,6 +21,11 @@ func (err *CycleError) Error() string { return "detected cycle" }
 // Option allows tweaking SchemaRef generation
 type Option func(*generatorOpt)
 
+// SchemaCustomizerFn is a callback function, allowing
+// the OpenAPI schema definition to be updated with additional
+// properties during the generation process, based on the
+// name of the field, the Go type, and the struct tags.
+// name will be "_root" for the top level object, and tag will be ""
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
 type generatorOpt struct {
