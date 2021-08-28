@@ -1,7 +1,11 @@
 package openapi3gen
 
 import (
+	"encoding/json"
+	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -143,4 +147,72 @@ func TestCyclicReferences(t *testing.T) {
 	require.NotNil(t, schemaRef.Value.Properties["MapCycle"])
 	require.Equal(t, "object", schemaRef.Value.Properties["MapCycle"].Value.Type)
 	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Ref)
+}
+
+func TestSchemaCustomizer(t *testing.T) {
+	type Bla struct {
+		UntaggedStringField string
+		AnonStruct          struct {
+			InnerFieldWithoutTag int
+			InnerFieldWithTag    int `mymintag:"-1" mymaxtag:"50"`
+		}
+		EnumField string `json:"another" myenumtag:"a,b"`
+	}
+
+	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		t.Logf("Field=%s,Tag=%s", name, tag)
+		if tag.Get("mymintag") != "" {
+			minVal, _ := strconv.ParseFloat(tag.Get("mymintag"), 64)
+			schema.Min = &minVal
+		}
+		if tag.Get("mymaxtag") != "" {
+			maxVal, _ := strconv.ParseFloat(tag.Get("mymaxtag"), 64)
+			schema.Max = &maxVal
+		}
+		if tag.Get("myenumtag") != "" {
+			for _, s := range strings.Split(tag.Get("myenumtag"), ",") {
+				schema.Enum = append(schema.Enum, s)
+			}
+		}
+		return nil
+	}))
+	require.NoError(t, err)
+	jsonSchema, err := json.MarshalIndent(schemaRef, "", "  ")
+	require.NoError(t, err)
+	require.JSONEq(t, `{
+  "properties": {
+    "AnonStruct": {
+      "properties": {
+        "InnerFieldWithTag": {
+          "maximum": 50,
+          "minimum": -1,
+          "type": "integer"
+        },
+        "InnerFieldWithoutTag": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "UntaggedStringField": {
+      "type": "string"
+    },
+    "another": {
+      "enum": [
+        "a",
+        "b"
+      ],
+      "type": "string"
+    }
+  },
+  "type": "object"
+}`, string(jsonSchema))
+}
+
+func TestSchemaCustomizerError(t *testing.T) {
+	type Bla struct{}
+	_, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return fmt.Errorf("test error")
+	}))
+	require.EqualError(t, err, "test error")
 }
