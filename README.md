@@ -13,7 +13,6 @@ The project has received pull requests from many people. Thanks to everyone!
 
 Here's some projects that depend on _kin-openapi_:
   * [https://github.com/Tufin/oasdiff](https://github.com/Tufin/oasdiff) - "A diff tool for OpenAPI Specification 3"
-  * [github.com/getkin/kin](https://github.com/getkin/kin) - "A configurable backend"
   * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
   * [github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen) - Generate Go server boilerplate from an OpenAPIv3 spec document
   * [github.com/dunglas/vulcain](https://github.com/dunglas/vulcain) - "Use HTTP/2 Server Push to create fast and idiomatic client-driven REST APIs"
