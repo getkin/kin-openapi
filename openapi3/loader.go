@@ -780,7 +780,7 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
+			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
 				return err
 			}
 			component.Value = &scheme
@@ -794,7 +794,7 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
+			_ = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	return nil
@@ -817,7 +817,7 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var example Example
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
+			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
 				return err
 			}
 			component.Value = &example
@@ -831,7 +831,7 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
+			_ = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	return nil
@@ -943,7 +943,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var link Link
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
+			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
 				return err
 			}
 			component.Value = &link
@@ -957,7 +957,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
+			_ = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	return nil
