@@ -9,6 +9,7 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
+// Links repressents component's link mapping
 type Links map[string]*LinkRef
 
 func (l Links) JSONLookup(token string) (interface{}, error) {
@@ -44,6 +45,7 @@ func (value *Link) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
 func (value *Link) Validate(ctx context.Context) error {
 	if value.OperationID == "" && value.OperationRef == "" {
 		return errors.New("missing operationId or operationRef on link")

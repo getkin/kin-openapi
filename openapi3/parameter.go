@@ -10,12 +10,13 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
+// ParametersMap represents the parameter components
 type ParametersMap map[string]*ParameterRef
 
 var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
 
-func (p ParametersMap) JSONLookup(token string) (interface{}, error) {
-	ref, ok := p[token]
+func (pm ParametersMap) JSONLookup(token string) (interface{}, error) {
+	ref, ok := pm[token]
 	if ref == nil || ok == false {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
@@ -31,17 +32,17 @@ type Parameters []*ParameterRef
 
 var _ jsonpointer.JSONPointable = (*Parameters)(nil)
 
-func (p Parameters) JSONLookup(token string) (interface{}, error) {
+func (parameters Parameters) JSONLookup(token string) (interface{}, error) {
 	index, err := strconv.Atoi(token)
 	if err != nil {
 		return nil, err
 	}
 
-	if index < 0 || index >= len(p) {
-		return nil, fmt.Errorf("index %d out of bounds of array of length %d", index, len(p))
+	if index < 0 || index >= len(parameters) {
+		return nil, fmt.Errorf("index %d out of bounds of array of length %d", index, len(parameters))
 	}
 
-	ref := p[index]
+	ref := parameters[index]
 
 	if ref != nil && ref.Ref != "" {
 		return &Ref{Ref: ref.Ref}, nil
@@ -64,9 +65,10 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 	return nil
 }
 
-func (value Parameters) Validate(ctx context.Context) error {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (parameters Parameters) Validate(ctx context.Context) error {
 	dupes := make(map[string]struct{})
-	for _, item := range value {
+	for _, item := range parameters {
 		if v := item.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
@@ -237,11 +239,12 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 	}
 }
 
-func (value *Parameter) Validate(ctx context.Context) error {
-	if value.Name == "" {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (parameter *Parameter) Validate(ctx context.Context) error {
+	if parameter.Name == "" {
 		return errors.New("parameter name can't be blank")
 	}
-	in := value.In
+	in := parameter.In
 	switch in {
 	case
 		ParameterInPath,
@@ -249,56 +252,56 @@ func (value *Parameter) Validate(ctx context.Context) error {
 		ParameterInHeader,
 		ParameterInCookie:
 	default:
-		return fmt.Errorf("parameter can't have 'in' value %q", value.In)
+		return fmt.Errorf("parameter can't have 'in' value %q", parameter.In)
 	}
 
 	// Validate a parameter's serialization method.
-	sm, err := value.SerializationMethod()
+	sm, err := parameter.SerializationMethod()
 	if err != nil {
 		return err
 	}
 	var smSupported bool
 	switch {
-	case value.In == ParameterInPath && sm.Style == SerializationSimple && !sm.Explode,
-		value.In == ParameterInPath && sm.Style == SerializationSimple && sm.Explode,
-		value.In == ParameterInPath && sm.Style == SerializationLabel && !sm.Explode,
-		value.In == ParameterInPath && sm.Style == SerializationLabel && sm.Explode,
-		value.In == ParameterInPath && sm.Style == SerializationMatrix && !sm.Explode,
-		value.In == ParameterInPath && sm.Style == SerializationMatrix && sm.Explode,
+	case parameter.In == ParameterInPath && sm.Style == SerializationSimple && !sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationSimple && sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationLabel && !sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationLabel && sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationMatrix && !sm.Explode,
+		parameter.In == ParameterInPath && sm.Style == SerializationMatrix && sm.Explode,
 
-		value.In == ParameterInQuery && sm.Style == SerializationForm && sm.Explode,
-		value.In == ParameterInQuery && sm.Style == SerializationForm && !sm.Explode,
-		value.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && sm.Explode,
-		value.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && !sm.Explode,
-		value.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && sm.Explode,
-		value.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && !sm.Explode,
-		value.In == ParameterInQuery && sm.Style == SerializationDeepObject && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationForm && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationForm && !sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationSpaceDelimited && !sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationPipeDelimited && !sm.Explode,
+		parameter.In == ParameterInQuery && sm.Style == SerializationDeepObject && sm.Explode,
 
-		value.In == ParameterInHeader && sm.Style == SerializationSimple && !sm.Explode,
-		value.In == ParameterInHeader && sm.Style == SerializationSimple && sm.Explode,
+		parameter.In == ParameterInHeader && sm.Style == SerializationSimple && !sm.Explode,
+		parameter.In == ParameterInHeader && sm.Style == SerializationSimple && sm.Explode,
 
-		value.In == ParameterInCookie && sm.Style == SerializationForm && !sm.Explode,
-		value.In == ParameterInCookie && sm.Style == SerializationForm && sm.Explode:
+		parameter.In == ParameterInCookie && sm.Style == SerializationForm && !sm.Explode,
+		parameter.In == ParameterInCookie && sm.Style == SerializationForm && sm.Explode:
 		smSupported = true
 	}
 	if !smSupported {
 		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
-		return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
 	}
 
-	if (value.Schema == nil) == (value.Content == nil) {
+	if (parameter.Schema == nil) == (parameter.Content == nil) {
 		e := errors.New("parameter must contain exactly one of content and schema")
-		return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
 	}
-	if schema := value.Schema; schema != nil {
+	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, err)
+			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
 		}
 	}
 
-	if content := value.Content; content != nil {
+	if content := parameter.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q content is invalid: %v", value.Name, err)
+			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
 		}
 	}
 	return nil

@@ -97,8 +97,9 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
 }
 
-func (value *RequestBody) Validate(ctx context.Context) error {
-	if v := value.Content; v != nil {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (requestBody *RequestBody) Validate(ctx context.Context) error {
+	if v := requestBody.Content; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}

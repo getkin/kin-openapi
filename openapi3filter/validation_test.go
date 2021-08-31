@@ -159,6 +159,7 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
+
 	expectWithDecoder := func(req ExampleRequest, resp ExampleResponse, decoder ContentParameterDecoder) error {
 		t.Logf("Request: %s %s", req.Method, req.URL)
 		httpReq, err := http.NewRequest(req.Method, req.URL, marshalReader(req.Body))
@@ -198,6 +199,7 @@ func TestFilter(t *testing.T) {
 		require.NoError(t, err)
 		return err
 	}
+
 	expect := func(req ExampleRequest, resp ExampleResponse) error {
 		return expectWithDecoder(req, resp, nil)
 	}

@@ -29,11 +29,13 @@ paths:
 		loader := NewLoader()
 		doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "PATH", path, 1)))
 		require.NoError(t, err)
+
 		err = doc.Validate(loader.Context)
 		if expectedErr != "" {
 			require.EqualError(t, err, expectedErr)
 		} else {
 			require.NoError(t, err)
 		}
+
 	}
 }

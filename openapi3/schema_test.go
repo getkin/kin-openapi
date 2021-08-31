@@ -14,7 +14,6 @@ import (
 )
 
 type schemaExample struct {
-	Title         string
 	Schema        *Schema
 	Serialization interface{}
 	AllValid      []interface{}
@@ -22,9 +21,9 @@ type schemaExample struct {
 }
 
 func TestSchemas(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
-	for _, example := range schemaExamples {
-		t.Run(example.Title, testSchema(t, example))
+	DefineUUIDFormat()
+	for title, example := range schemaExamples {
+		t.Run(title, testSchema(t, example))
 	}
 }
 
@@ -55,7 +54,7 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 		}
 		// NaN and Inf aren't valid JSON but are handled
 		for _, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
-			err := schema.VisitJSON(value)
+			err := schema.VisitData(nil, value)
 			require.Error(t, err)
 		}
 	}
@@ -67,12 +66,11 @@ func validateSchema(t *testing.T, schema *Schema, value interface{}, opts ...Sch
 	var val interface{}
 	err = json.Unmarshal(data, &val)
 	require.NoError(t, err)
-	return schema.VisitJSON(val, opts...)
+	return schema.VisitData(nil, val, opts...)
 }
 
-var schemaExamples = []schemaExample{
-	{
-		Title:         "EMPTY SCHEMA",
+var schemaExamples = map[string]schemaExample{
+	"EMPTY SCHEMA": {
 		Schema:        &Schema{},
 		Serialization: map[string]interface{}{
 			// This OA3 schema is exactly this draft-04 schema:
@@ -91,8 +89,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title:  "JUST NULLABLE",
+	"JUST NULLABLE": {
 		Schema: NewSchema().WithNullable(),
 		Serialization: map[string]interface{}{
 			// This OA3 schema is exactly both this draft-04 schema: {} and:
@@ -113,8 +110,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title:  "NULLABLE BOOLEAN",
+	"NULLABLE BOOLEAN": {
 		Schema: NewBoolSchema().WithNullable(),
 		Serialization: map[string]interface{}{
 			"nullable": true,
@@ -135,8 +131,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "NULLABLE ANYOF",
+	"NULLABLE ANYOF": {
 		Schema: NewAnyOfSchema(
 			NewIntegerSchema(),
 			NewFloat64Schema(),
@@ -161,8 +156,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title:  "BOOLEAN",
+	"BOOLEAN": {
 		Schema: NewBoolSchema(),
 		Serialization: map[string]interface{}{
 			"type": "boolean",
@@ -180,8 +174,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "NUMBER",
+	"NUMBER": {
 		Schema: NewFloat64Schema().
 			WithMin(2.5).
 			WithMax(3.5),
@@ -207,8 +200,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "INTEGER",
+	"INTEGER": {
 		Schema: NewInt64Schema().
 			WithMin(2).
 			WithMax(5),
@@ -235,8 +227,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "STRING",
+	"STRING": {
 		Schema: NewStringSchema().
 			WithMinLength(2).
 			WithMaxLength(3).
@@ -264,8 +255,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title:  "STRING: optional format 'uuid'",
+	"STRING: optional format 'uuid'": {
 		Schema: NewUUIDSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
@@ -285,8 +275,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title:  "STRING: format 'date-time'",
+	"STRING: format 'date-time'": {
 		Schema: NewDateTimeSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
@@ -310,8 +299,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title:  "STRING: format 'date-time'",
+	"STRING: format 'byte'": {
 		Schema: NewBytesSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
@@ -342,8 +330,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ARRAY",
+	"ARRAY": {
 		Schema: &Schema{
 			Type:        "array",
 			MinItems:    2,
@@ -382,8 +369,8 @@ var schemaExamples = []schemaExample{
 			},
 		},
 	},
-	{
-		Title: "ARRAY : items format 'object'",
+
+	"ARRAY : items format 'object'": {
 		Schema: &Schema{
 			Type:        "array",
 			UniqueItems: true,
@@ -439,8 +426,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ARRAY : items format 'object' and object with a property of array type ",
+	"ARRAY : items format 'object' and object with a property of array type ": {
 		Schema: &Schema{
 			Type:        "array",
 			UniqueItems: true,
@@ -525,8 +511,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ARRAY : items format 'array'",
+	"ARRAY : items format 'array'": {
 		Schema: &Schema{
 			Type:        "array",
 			UniqueItems: true,
@@ -569,8 +554,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ARRAY : items format 'array' and array with object type items",
+	"ARRAY : items format 'array' and array with object type items": {
 		Schema: &Schema{
 			Type:        "array",
 			UniqueItems: true,
@@ -673,8 +657,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "OBJECT",
+	"OBJECT": {
 		Schema: &Schema{
 			Type:     "object",
 			MaxProps: Uint64Ptr(2),
@@ -718,7 +701,8 @@ var schemaExamples = []schemaExample{
 			},
 		},
 	},
-	{
+
+	"OBJECT: 2": {
 		Schema: &Schema{
 			Type: "object",
 			AdditionalProperties: &SchemaRef{
@@ -746,7 +730,8 @@ var schemaExamples = []schemaExample{
 			},
 		},
 	},
-	{
+
+	"OBJECT: 3": {
 		Schema: &Schema{
 			Type:                        "object",
 			AdditionalPropertiesAllowed: BoolPtr(true),
@@ -764,8 +749,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "NOT",
+	"NOT": {
 		Schema: &Schema{
 			Not: &SchemaRef{
 				Value: &Schema{
@@ -801,8 +785,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ANY OF",
+	"ANY OF": {
 		Schema: &Schema{
 			AnyOf: []*SchemaRef{
 				{
@@ -842,8 +825,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ALL OF",
+	"ALL OF": {
 		Schema: &Schema{
 			AllOf: []*SchemaRef{
 				{
@@ -883,8 +865,7 @@ var schemaExamples = []schemaExample{
 		},
 	},
 
-	{
-		Title: "ONE OF",
+	"ONE OF": {
 		Schema: &Schema{
 			OneOf: []*SchemaRef{
 				{
@@ -926,37 +907,41 @@ var schemaExamples = []schemaExample{
 }
 
 type schemaTypeExample struct {
-	Title      string
 	Schema     *Schema
 	AllValid   []string
 	AllInvalid []string
 }
 
 func TestTypes(t *testing.T) {
-	for _, example := range typeExamples {
-		t.Run(example.Title, testType(t, example))
+	for title, example := range typeExamples {
+		testType(t, title, example)
 	}
 }
 
-func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
-	return func(t *testing.T) {
-		baseSchema := example.Schema
-		for _, typ := range example.AllValid {
+func testType(t *testing.T, title string, example schemaTypeExample) {
+	baseSchema := example.Schema
+	for _, typ := range example.AllValid {
+		t.Run(title+"_Valid_"+typ, func(t *testing.T) {
 			schema := baseSchema.WithFormat(typ)
 			err := schema.Validate(context.Background())
 			require.NoError(t, err)
-		}
-		for _, typ := range example.AllInvalid {
+		})
+	}
+	for _, typ := range example.AllInvalid {
+		t.Run(title+"_Invalid_"+typ, func(t *testing.T) {
 			schema := baseSchema.WithFormat(typ)
 			err := schema.Validate(context.Background())
-			require.Error(t, err)
-		}
+			if SchemaFormatValidationDisabled {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
 	}
 }
 
-var typeExamples = []schemaTypeExample{
-	{
-		Title:  "STRING",
+var typeExamples = map[string]schemaTypeExample{
+	"STRING": {
 		Schema: NewStringSchema(),
 		AllValid: []string{
 			"",
@@ -973,8 +958,7 @@ var typeExamples = []schemaTypeExample{
 		},
 	},
 
-	{
-		Title:  "NUMBER",
+	"NUMBER": {
 		Schema: NewFloat64Schema(),
 		AllValid: []string{
 			"",
@@ -986,8 +970,7 @@ var typeExamples = []schemaTypeExample{
 		},
 	},
 
-	{
-		Title:  "INTEGER",
+	"INTEGER": {
 		Schema: NewIntegerSchema(),
 		AllValid: []string{
 			"",
@@ -1001,8 +984,8 @@ var typeExamples = []schemaTypeExample{
 }
 
 func TestSchemaErrors(t *testing.T) {
-	for _, example := range schemaErrorExamples {
-		t.Run(example.Title, testSchemaError(t, example))
+	for title, example := range schemaErrorExamples {
+		t.Run(title, testSchemaError(t, example))
 	}
 }
 
@@ -1014,14 +997,12 @@ func testSchemaError(t *testing.T, example schemaErrorExample) func(*testing.T) 
 }
 
 type schemaErrorExample struct {
-	Title string
 	Error *SchemaError
 	Want  string
 }
 
-var schemaErrorExamples = []schemaErrorExample{
-	{
-		Title: "SIMPLE",
+var schemaErrorExamples = map[string]schemaErrorExample{
+	"SIMPLE": {
 		Error: &SchemaError{
 			Value:  1,
 			Schema: &Schema{},
@@ -1029,8 +1010,8 @@ var schemaErrorExamples = []schemaErrorExample{
 		},
 		Want: "SIMPLE",
 	},
-	{
-		Title: "NEST",
+
+	"NEST": {
 		Error: &SchemaError{
 			Value:  1,
 			Schema: &Schema{},
@@ -1046,15 +1027,14 @@ var schemaErrorExamples = []schemaErrorExample{
 }
 
 type schemaMultiErrorExample struct {
-	Title          string
 	Schema         *Schema
 	Values         []interface{}
 	ExpectedErrors []MultiError
 }
 
 func TestSchemasMultiError(t *testing.T) {
-	for _, example := range schemaMultiErrorExamples {
-		t.Run(example.Title, testSchemaMultiError(t, example))
+	for title, example := range schemaMultiErrorExamples {
+		t.Run(title, testSchemaMultiError(t, example))
 	}
 }
 
@@ -1088,9 +1068,8 @@ func testSchemaMultiError(t *testing.T, example schemaMultiErrorExample) func(*t
 	}
 }
 
-var schemaMultiErrorExamples = []schemaMultiErrorExample{
-	{
-		Title: "STRING",
+var schemaMultiErrorExamples = map[string]schemaMultiErrorExample{
+	"STRING": {
 		Schema: NewStringSchema().
 			WithMinLength(2).
 			WithMaxLength(3).
@@ -1104,8 +1083,8 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 			{&SchemaError{SchemaField: "maxLength"}, &SchemaError{SchemaField: "pattern"}},
 		},
 	},
-	{
-		Title: "NUMBER",
+
+	"NUMBER": {
 		Schema: NewIntegerSchema().
 			WithMin(1).
 			WithMax(10),
@@ -1118,8 +1097,8 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 			{&SchemaError{SchemaField: "type"}, &SchemaError{SchemaField: "maximum"}},
 		},
 	},
-	{
-		Title: "ARRAY: simple",
+
+	"ARRAY: simple": {
 		Schema: NewArraySchema().
 			WithMinItems(2).
 			WithMaxItems(2).
@@ -1142,8 +1121,8 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 			},
 		},
 	},
-	{
-		Title: "ARRAY: object",
+
+	"ARRAY: object": {
 		Schema: NewArraySchema().
 			WithItems(NewObjectSchema().
 				WithProperties(map[string]*Schema{
@@ -1166,8 +1145,8 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 			},
 		},
 	},
-	{
-		Title: "OBJECT",
+
+	"OBJECT": {
 		Schema: NewObjectSchema().
 			WithProperties(map[string]*Schema{
 				"key1": NewStringSchema(),
@@ -1196,6 +1175,10 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 func TestIssue283(t *testing.T) {
 	const api = `
 openapi: "3.0.1"
+info:
+  title: An API
+  version: v1
+paths: {}
 components:
   schemas:
     Test:
@@ -1207,17 +1190,20 @@ components:
             type: boolean
       type: object
 `
-	data := map[string]interface{}{
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(api))
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Test"].Value.VisitData(doc, map[string]interface{}{
 		"name":      "kin-openapi",
 		"ownerName": true,
-	}
-	s, err := NewLoader().LoadFromData([]byte(api))
-	require.NoError(t, err)
-	require.NotNil(t, s)
-	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
-	require.NotNil(t, err)
+	})
 	require.NotEqual(t, errSchema, err)
-	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
+	require.Contains(t, err.Error(), `ownerName`)
+	require.True(t, strings.Contains(err.Error(), `schema "not"`) || strings.Contains(err.Error(), `schema (not)`))
 }
 
 func TestValidationFailsOnInvalidPattern(t *testing.T) {
@@ -1225,7 +1211,6 @@ func TestValidationFailsOnInvalidPattern(t *testing.T) {
 		Pattern: "[",
 		Type:    "string",
 	}
-
-	var err = schema.Validate(context.Background())
+	err := schema.Validate(context.Background())
 	require.Error(t, err)
 }

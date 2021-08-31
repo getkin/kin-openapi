@@ -16,17 +16,17 @@ func TestEncodingJSON(t *testing.T) {
 	require.NotEmpty(t, data)
 
 	t.Log("Unmarshal *openapi3.Encoding from JSON")
-	docA := &Encoding{}
-	err = json.Unmarshal(encodingJSON, &docA)
+	enc := &Encoding{}
+	err = json.Unmarshal(encodingJSON, &enc)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
 	t.Log("Validate *openapi3.Encoding")
-	err = docA.Validate(context.Background())
+	err = enc.Validate(context.Background())
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")
-	dataA, err := json.Marshal(docA)
+	dataA, err := json.Marshal(enc)
 	require.NoError(t, err)
 	require.JSONEq(t, string(data), string(encodingJSON))
 	require.JSONEq(t, string(data), string(dataA))

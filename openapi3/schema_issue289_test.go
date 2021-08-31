@@ -27,13 +27,21 @@ func TestIssue289(t *testing.T) {
       pattern: "^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$"
       type: string
 openapi: "3.0.1"
+info:
+  title: An API
+  version: v1
+paths: {}
 `)
 
-	s, err := NewLoader().LoadFromData(spec)
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = s.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Server"].Value.VisitData(doc, map[string]interface{}{
 		"name":    "kin-openapi",
 		"address": "127.0.0.1",
 	})
-	require.EqualError(t, err, ErrOneOfConflict.Error())
+	require.Contains(t, err.Error(), "oneOf")
 }

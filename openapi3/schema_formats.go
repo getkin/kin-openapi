@@ -1,14 +1,11 @@
+// +build legacy
+
 package openapi3
 
 import (
 	"fmt"
 	"net"
 	"regexp"
-)
-
-const (
-	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
-	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
 )
 
 //FormatCallback custom check on exotic formats
@@ -102,4 +99,10 @@ func DefineIPv4Format() {
 // DefineIPv6Format opts in ipv6 format validation on top of OAS 3 spec
 func DefineIPv6Format() {
 	DefineStringFormatCallback("ipv6", validateIPv6)
+}
+
+// DefineUUIDFormat defines a string format for UUID v1-v5 as specified by RFC4122
+func DefineUUIDFormat() {
+	const FormatOfStringForUUIDOfRFC4122 = `^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
+	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
 }

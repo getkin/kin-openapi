@@ -7,7 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var emptyPathSpec = `
+func TestPathValidate(t *testing.T) {
+	const emptyPathSpec = `
 openapi: "3.0.0"
 info:
   version: 1.0.0
@@ -19,8 +20,6 @@ servers:
 paths:
   /pets:
 `
-
-func TestPathValidate(t *testing.T) {
 	doc, err := NewLoader().LoadFromData([]byte(emptyPathSpec))
 	require.NoError(t, err)
 	err = doc.Paths.Validate(context.Background())

@@ -104,8 +104,9 @@ func (content Content) Get(mime string) *MediaType {
 	return content["*/*"]
 }
 
-func (value Content) Validate(ctx context.Context) error {
-	for _, v := range value {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (content Content) Validate(ctx context.Context) error {
+	for _, v := range content {
 		// Validate MediaType
 		if err := v.Validate(ctx); err != nil {
 			return err

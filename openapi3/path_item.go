@@ -116,8 +116,9 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	}
 }
 
-func (value *PathItem) Validate(ctx context.Context) error {
-	for _, operation := range value.Operations() {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (pathItem *PathItem) Validate(ctx context.Context) error {
+	for _, operation := range pathItem.Operations() {
 		if err := operation.Validate(ctx); err != nil {
 			return err
 		}

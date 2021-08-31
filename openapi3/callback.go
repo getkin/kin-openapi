@@ -7,6 +7,7 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
+// Callbacks represents components' callback mapping
 type Callbacks map[string]*CallbackRef
 
 var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
@@ -26,8 +27,9 @@ func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 // Callback is specified by OpenAPI/Swagger standard version 3.0.
 type Callback map[string]*PathItem
 
-func (value Callback) Validate(ctx context.Context) error {
-	for _, v := range value {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+func (cb Callback) Validate(ctx context.Context) error {
+	for _, v := range cb {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}

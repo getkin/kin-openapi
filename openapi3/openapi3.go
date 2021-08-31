@@ -19,6 +19,8 @@ type T struct {
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	refd, refdAsReq, refdAsRep schemaLoader
 }
 
 func (doc *T) MarshalJSON() ([]byte, error) {
@@ -27,6 +29,17 @@ func (doc *T) MarshalJSON() ([]byte, error) {
 
 func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
+}
+
+// CompileSchemas needs to be called before any use of VisitData()
+func (doc *T) CompileSchemas() error {
+	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsRequest())); err != nil {
+		return err
+	}
+	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsResponse())); err != nil {
+		return err
+	}
+	return doc.compileSchemas(newSchemaValidationSettings())
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {
@@ -47,8 +60,10 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
-func (value *T) Validate(ctx context.Context) error {
-	if value.OpenAPI == "" {
+// Validate goes through the receiver value and its descendants and errors on any non compliance to the OpenAPIv3 specification.
+// Validation ends with a call to CompileSchemas()
+func (doc *T) Validate(ctx context.Context) error {
+	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}
 
@@ -56,14 +71,14 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid components: %v", e) }
-		if err := value.Components.Validate(ctx); err != nil {
+		if err := doc.Components.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid info: %v", e) }
-		if v := value.Info; v != nil {
+		if v := doc.Info; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -74,7 +89,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid paths: %v", e) }
-		if v := value.Paths; v != nil {
+		if v := doc.Paths; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -85,7 +100,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid security: %v", e) }
-		if v := value.Security; v != nil {
+		if v := doc.Security; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -94,12 +109,12 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
-		if v := value.Servers; v != nil {
+		if v := doc.Servers; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
 		}
 	}
 
-	return nil
+	return doc.CompileSchemas()
 }

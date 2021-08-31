@@ -1,12 +1,19 @@
 package openapi3
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-var oneofSpec = []byte(`components:
+const oneofSpec = `
+openapi: "3.0.1"
+info:
+  title: An API
+  version: v1
+paths: {}
+components:
   schemas:
     Cat:
       type: object
@@ -18,11 +25,11 @@ var oneofSpec = []byte(`components:
         $type:
           type: string
           enum:
-            - cat
+          - cat
       required:
-        - name
-        - scratches
-        - $type
+      - name
+      - scratches
+      - $type
     Dog:
       type: object
       properties:
@@ -33,24 +40,30 @@ var oneofSpec = []byte(`components:
         $type:
           type: string
           enum:
-            - dog
+          - dog
       required:
-        - name
-        - barks
-        - $type
+      - name
+      - barks
+      - $type
     Animal:
       type: object
       oneOf:
-        - $ref: "#/components/schemas/Cat"
-        - $ref: "#/components/schemas/Dog"
+      - $ref: "#/components/schemas/Cat"
+      - $ref: "#/components/schemas/Dog"
       discriminator:
         propertyName: $type
         mapping:
           cat: "#/components/schemas/Cat"
           dog: "#/components/schemas/Dog"
-`)
+`
 
-var oneofNoDiscriminatorSpec = []byte(`components:
+const oneofNoDiscriminatorSpec = `
+openapi: "3.0.1"
+info:
+  title: An API
+  version: v1
+paths: {}
+components:
   schemas:
     Cat:
       type: object
@@ -60,8 +73,8 @@ var oneofNoDiscriminatorSpec = []byte(`components:
         scratches:
           type: boolean
       required:
-        - name
-        - scratches
+      - name
+      - scratches
     Dog:
       type: object
       properties:
@@ -70,49 +83,63 @@ var oneofNoDiscriminatorSpec = []byte(`components:
         barks:
           type: boolean
       required:
-        - name
-        - barks
+      - name
+      - barks
     Animal:
       type: object
       oneOf:
-        - $ref: "#/components/schemas/Cat"
-        - $ref: "#/components/schemas/Dog"
-`)
+      - $ref: "#/components/schemas/Cat"
+      - $ref: "#/components/schemas/Dog"
+`
 
-func TestVisitJSON_OneOf_MissingDiscriptorProperty(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
+func TestVisitData_OneOf_MissingDiscriptorProperty(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(oneofSpec))
 	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.Components.Schemas["Animal"].Value.VisitData(doc, map[string]interface{}{
 		"name": "snoopy",
 	})
 	require.EqualError(t, err, "input does not contain the discriminator property")
 }
 
-func TestVisitJSON_OneOf_MissingDiscriptorValue(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
+func TestVisitData_OneOf_MissingDiscriptorValue(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(oneofSpec))
 	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.Components.Schemas["Animal"].Value.VisitData(doc, map[string]interface{}{
 		"name":  "snoopy",
 		"$type": "snake",
 	})
 	require.EqualError(t, err, "input does not contain a valid discriminator value")
 }
 
-func TestVisitJSON_OneOf_MissingField(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
+func TestVisitData_OneOf_MissingField(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(oneofSpec))
 	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.Components.Schemas["Animal"].Value.VisitData(doc, map[string]interface{}{
 		"name":  "snoopy",
 		"$type": "dog",
 	})
-	require.EqualError(t, err, "Error at \"/barks\": property \"barks\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"$type\": {\n        \"enum\": [\n          \"dog\"\n        ],\n        \"type\": \"string\"\n      },\n      \"barks\": {\n        \"type\": \"boolean\"\n      },\n      \"name\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"barks\",\n      \"$type\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"$type\": \"dog\",\n    \"name\": \"snoopy\"\n  }\n")
+	require.Contains(t, err.Error(), "barks")
+	require.True(t, strings.Contains(err.Error(), "is required") || strings.Contains(err.Error(), "is missing"))
 }
 
-func TestVisitJSON_OneOf_NoDiscriptor_MissingField(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofNoDiscriminatorSpec)
+func TestVisitData_OneOf_NoDiscriptor_MissingField(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(oneofNoDiscriminatorSpec))
 	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	err = doc.Components.Schemas["Animal"].Value.VisitData(doc, map[string]interface{}{
 		"name": "snoopy",
 	})
-	require.EqualError(t, err, "doesn't match schema due to: Error at \"/scratches\": property \"scratches\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"name\": {\n        \"type\": \"string\"\n      },\n      \"scratches\": {\n        \"type\": \"boolean\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"scratches\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"name\": \"snoopy\"\n  }\n Or Error at \"/barks\": property \"barks\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"barks\": {\n        \"type\": \"boolean\"\n      },\n      \"name\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"barks\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"name\": \"snoopy\"\n  }\n")
+	require.Contains(t, err.Error(), "scratches")
+	require.True(t, strings.Contains(err.Error(), "is required") || strings.Contains(err.Error(), "is missing"))
 }

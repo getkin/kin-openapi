@@ -1,3 +1,5 @@
+// +build legacy
+
 package openapi3_test
 
 import (
@@ -19,7 +21,7 @@ func TestRegisterArrayUniqueItemsChecker(t *testing.T) {
 	)
 
 	// Fist checked by predefined function
-	err := schema.VisitJSON(val)
+	err := schema.VisitData(nil, val)
 	require.NoError(t, err)
 
 	// Register a function will always return false when check if a
@@ -30,7 +32,7 @@ func TestRegisterArrayUniqueItemsChecker(t *testing.T) {
 	})
 	defer openapi3.RegisterArrayUniqueItemsChecker(nil) // Reset for other tests
 
-	err = schema.VisitJSON(val)
+	err = schema.VisitData(nil, val)
 	require.Error(t, err)
 	require.True(t, strings.HasPrefix(err.Error(), "duplicate items found"))
 }
