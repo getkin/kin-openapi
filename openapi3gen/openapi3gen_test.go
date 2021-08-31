@@ -2,7 +2,7 @@ package openapi3gen
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"reflect"
 	"strconv"
 	"strings"
@@ -162,11 +162,17 @@ func TestSchemaCustomizer(t *testing.T) {
 	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		t.Logf("Field=%s,Tag=%s", name, tag)
 		if tag.Get("mymintag") != "" {
-			minVal, _ := strconv.ParseFloat(tag.Get("mymintag"), 64)
+			minVal, err := strconv.ParseFloat(tag.Get("mymintag"), 64)
+			if err != nil {
+				return err
+			}
 			schema.Min = &minVal
 		}
 		if tag.Get("mymaxtag") != "" {
-			maxVal, _ := strconv.ParseFloat(tag.Get("mymaxtag"), 64)
+			maxVal, err := strconv.ParseFloat(tag.Get("mymaxtag"), 64)
+			if err != nil {
+				return err
+			}
 			schema.Max = &maxVal
 		}
 		if tag.Get("myenumtag") != "" {
@@ -212,7 +218,7 @@ func TestSchemaCustomizer(t *testing.T) {
 func TestSchemaCustomizerError(t *testing.T) {
 	type Bla struct{}
 	_, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
-		return fmt.Errorf("test error")
+		return errors.New("test error")
 	}))
 	require.EqualError(t, err, "test error")
 }
