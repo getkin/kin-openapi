@@ -20,6 +20,23 @@ import (
 // type schemaLoader = *gojsonschema.SchemaLoader
 
 func (doc *T) compileSchemas(settings *schemaValidationSettings) (err error) {
+	docSchemas := doc.Components.Schemas
+	schemas := make(map[string][]byte, len(docSchemas))
+	for name, docSchema := range docSchemas {
+	 	schema := docSchema.Value.fromOpenAPISchema(settings)
+	 	var schemaBytes []byte
+		if schemaBytes, err = json.Marshal(schema);err!=nil{
+			return
+		}
+		schemas[name] =schemaBytes
+	}
+
+	refd:=jsonschema.NewCompiler()
+	refd.Draft=jsonschema.Draft4
+	for name,schemaBytes:=range schemas{
+		r:=
+	}
+
 	return
 }
 
