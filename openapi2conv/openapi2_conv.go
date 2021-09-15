@@ -896,7 +896,9 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 		if err != nil {
 			return nil, err
 		}
-		result.Parameters = append(result.Parameters, r)
+		if r != nil {
+			result.Parameters = append(result.Parameters, r)
+		}
 	}
 	if v := operation.RequestBody; v != nil {
 		// Find parameter name that we can use for the body
