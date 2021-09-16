@@ -79,6 +79,14 @@ const exampleV2 = `
 		"ItemExtension": {
 			"description": "It could be anything.",
 			"type": "boolean"
+		},
+		"foo": {
+			"description": "foo description",
+			"enum": [
+				"bar",
+				"baz"
+			],
+			"type": "string"
 		}
 	},
 	"externalDocs": {
@@ -305,6 +313,29 @@ const exampleV2 = `
 			},
 			"x-path": "path extension 1",
 			"x-path2": "path extension 2"
+		},
+		"/foo": {
+			"get": {
+				"operationId": "getFoo",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "foo",
+						"schema": {
+							"$ref": "#/definitions/foo"
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/foo"
+						}
+					}
+				},
+				"summary": "get foo"
+			}
 		}
 	},
 	"responses": {
@@ -420,6 +451,14 @@ const exampleV3 = `
 				"type": "string",
 				"x-formData-name": "fileUpload2",
 				"x-mimetype": "text/plain"
+			},
+			"foo": {
+				"description": "foo description",
+				"enum": [
+					"bar",
+					"baz"
+				],
+				"type": "string"
 			}
 		}
 	},
@@ -646,6 +685,33 @@ const exampleV3 = `
 			},
 			"x-path": "path extension 1",
 			"x-path2": "path extension 2"
+		},
+		"/foo": {
+			"get": {
+				"operationId": "getFoo",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "foo",
+						"schema": {
+							"$ref": "#/components/schemas/foo"
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/foo"
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"summary": "get foo"
+			}
 		}
 	},
 	"security": [
