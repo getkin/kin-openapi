@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -832,6 +833,8 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 func init() {
 	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 	RegisterBodyDecoder("application/json", jsonBodyDecoder)
+	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/problem+json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
@@ -849,6 +852,14 @@ func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schem
 func jsonBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	var value interface{}
 	if err := json.NewDecoder(body).Decode(&value); err != nil {
+		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
+	}
+	return value, nil
+}
+
+func yamlBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+	var value interface{}
+	if err := yaml.NewDecoder(body).Decode(&value); err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
 	return value, nil
