@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -37,24 +38,23 @@ func DefineStringFormatCallback(name string, callback FormatCallback) {
 	SchemaStringFormats[name] = Format{callback: callback}
 }
 
-func validateIP(ip string) (*net.IP, error) {
+func validateIP(ip string) error {
 	parsed := net.ParseIP(ip)
 	if parsed == nil {
-		return nil, &SchemaError{
+		return &SchemaError{
 			Value:  ip,
 			Reason: "Not an IP address",
 		}
 	}
-	return &parsed, nil
+	return nil
 }
 
 func validateIPv4(ip string) error {
-	parsed, err := validateIP(ip)
-	if err != nil {
+	if err := validateIP(ip); err != nil {
 		return err
 	}
 
-	if parsed.To4() == nil {
+	if !(strings.Count(ip, ":") < 2) {
 		return &SchemaError{
 			Value:  ip,
 			Reason: "Not an IPv4 address (it's IPv6)",
@@ -62,13 +62,13 @@ func validateIPv4(ip string) error {
 	}
 	return nil
 }
+
 func validateIPv6(ip string) error {
-	parsed, err := validateIP(ip)
-	if err != nil {
+	if err := validateIP(ip); err != nil {
 		return err
 	}
 
-	if parsed.To4() != nil {
+	if !(strings.Count(ip, ":") >= 2) {
 		return &SchemaError{
 			Value:  ip,
 			Reason: "Not an IPv6 address (it's IPv4)",
