@@ -35,6 +35,10 @@ func (err *RequestError) Error() string {
 	}
 }
 
+func (err *RequestError) Unwrap() error {
+	return err.Err
+}
+
 var _ error = &ResponseError{}
 
 // ResponseError is returned by ValidateResponse when response does not match OpenAPI spec
@@ -54,6 +58,10 @@ func (err *ResponseError) Error() string {
 		}
 	}
 	return reason
+}
+
+func (err *ResponseError) Unwrap() error {
+	return err.Err
 }
 
 var _ error = &SecurityRequirementsError{}

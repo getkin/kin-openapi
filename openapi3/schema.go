@@ -1564,6 +1564,10 @@ func (err *SchemaError) Error() string {
 	return buf.String()
 }
 
+func (err *SchemaError) Unwrap() error {
+	return err.Origin
+}
+
 func isSliceOfUniqueItems(xs []interface{}) bool {
 	s := len(xs)
 	m := make(map[string]struct{}, s)
