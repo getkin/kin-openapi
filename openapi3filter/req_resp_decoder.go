@@ -43,6 +43,8 @@ type ParseError struct {
 	path []interface{}
 }
 
+var _ interface{ Unwrap() error } = ParseError{}
+
 func (e *ParseError) Error() string {
 	var msg []string
 	if p := e.Path(); len(p) > 0 {
@@ -82,7 +84,7 @@ func (e *ParseError) RootCause() error {
 	return e.Cause
 }
 
-func (e *ParseError) Unwrap() error {
+func (e ParseError) Unwrap() error {
 	return e.Cause
 }
 

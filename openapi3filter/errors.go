@@ -17,6 +17,8 @@ type RequestError struct {
 	Err         error
 }
 
+var _ interface{ Unwrap() error } = RequestError{}
+
 func (err *RequestError) Error() string {
 	reason := err.Reason
 	if e := err.Err; e != nil {
@@ -35,7 +37,7 @@ func (err *RequestError) Error() string {
 	}
 }
 
-func (err *RequestError) Unwrap() error {
+func (err RequestError) Unwrap() error {
 	return err.Err
 }
 
@@ -47,6 +49,8 @@ type ResponseError struct {
 	Reason string
 	Err    error
 }
+
+var _ interface{ Unwrap() error } = ResponseError{}
 
 func (err *ResponseError) Error() string {
 	reason := err.Reason
@@ -60,7 +64,7 @@ func (err *ResponseError) Error() string {
 	return reason
 }
 
-func (err *ResponseError) Unwrap() error {
+func (err ResponseError) Unwrap() error {
 	return err.Err
 }
 
