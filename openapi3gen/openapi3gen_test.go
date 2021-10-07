@@ -150,13 +150,23 @@ func TestCyclicReferences(t *testing.T) {
 }
 
 func TestSchemaCustomizer(t *testing.T) {
-	type Bla struct {
+	type NestedInnerBla struct {
+		Enum1Field string `json:"enum1" myenumtag:"a,b"`
+	}
+
+	type InnerBla struct {
 		UntaggedStringField string
 		AnonStruct          struct {
 			InnerFieldWithoutTag int
 			InnerFieldWithTag    int `mymintag:"-1" mymaxtag:"50"`
+			NestedInnerBla
 		}
-		EnumField string `json:"another" myenumtag:"a,b"`
+		Enum2Field string `json:"enum2" myenumtag:"c,d"`
+	}
+
+	type Bla struct {
+		InnerBla
+		EnumField3 string `json:"enum3" myenumtag:"e,f"`
 	}
 
 	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
@@ -196,17 +206,31 @@ func TestSchemaCustomizer(t *testing.T) {
         },
         "InnerFieldWithoutTag": {
           "type": "integer"
-        }
+        },
+				"enum1": {
+					"enum": [
+						"a",
+						"b"
+					],
+					"type": "string"
+				}
       },
       "type": "object"
     },
     "UntaggedStringField": {
       "type": "string"
     },
-    "another": {
+    "enum2": {
       "enum": [
-        "a",
-        "b"
+        "c",
+        "d"
+      ],
+      "type": "string"
+    },
+    "enum3": {
+      "enum": [
+        "e",
+        "f"
       ],
       "type": "string"
     }

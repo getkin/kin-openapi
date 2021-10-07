@@ -103,6 +103,16 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 	return ref, err
 }
 
+func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.StructField {
+	var ff reflect.StructField
+	// fieldInfo.Index is an array of indexes starting from the root of the type
+	for i := 0; i < len(fieldInfo.Index); i++ {
+		ff = t.Field(fieldInfo.Index[i])
+		t = ff.Type
+	}
+	return ff
+}
+
 func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
 	typeInfo := jsoninfo.GetTypeInfo(t)
 	for _, parent := range parents {
@@ -266,7 +276,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 							schema.WithPropertyRef(fieldName, ref)
 						}
 					} else {
-						ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+						ff := getStructField(t, fieldInfo)
 						if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
 							fieldName, fType = tag, ff.Type
 						}
@@ -276,7 +286,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 				// extract the field tag if we have a customizer
 				var fieldTag reflect.StructTag
 				if g.opts.schemaCustomizer != nil {
-					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+					ff := getStructField(t, fieldInfo)
 					fieldTag = ff.Tag
 				}
 
