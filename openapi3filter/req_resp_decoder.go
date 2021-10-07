@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -14,6 +13,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -41,6 +42,8 @@ type ParseError struct {
 
 	path []interface{}
 }
+
+var _ interface{ Unwrap() error } = ParseError{}
 
 func (e *ParseError) Error() string {
 	var msg []string
@@ -78,6 +81,10 @@ func (e *ParseError) RootCause() error {
 	if v, ok := e.Cause.(*ParseError); ok {
 		return v.RootCause()
 	}
+	return e.Cause
+}
+
+func (e ParseError) Unwrap() error {
 	return e.Cause
 }
 
