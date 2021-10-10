@@ -16,6 +16,16 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
+const (
+	TypeArray     = "array"
+	TypeBoolean   = "boolean"
+	TypeInteger   = "integer"
+	TypeNumber    = "number"
+	TypeObject    = "object"
+	TypeString    = "string"
+	TypeUndefined = ""
+)
+
 var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
 	SchemaErrorDetailsDisabled = false
@@ -297,72 +307,72 @@ func NewAllOfSchema(schemas ...*Schema) *Schema {
 
 func NewBoolSchema() *Schema {
 	return &Schema{
-		Type: "boolean",
+		Type: TypeBoolean,
 	}
 }
 
 func NewFloat64Schema() *Schema {
 	return &Schema{
-		Type: "number",
+		Type: TypeNumber,
 	}
 }
 
 func NewIntegerSchema() *Schema {
 	return &Schema{
-		Type: "integer",
+		Type: TypeInteger,
 	}
 }
 
 func NewInt32Schema() *Schema {
 	return &Schema{
-		Type:   "integer",
+		Type:   TypeInteger,
 		Format: "int32",
 	}
 }
 
 func NewInt64Schema() *Schema {
 	return &Schema{
-		Type:   "integer",
+		Type:   TypeInteger,
 		Format: "int64",
 	}
 }
 
 func NewStringSchema() *Schema {
 	return &Schema{
-		Type: "string",
+		Type: TypeString,
 	}
 }
 
 func NewDateTimeSchema() *Schema {
 	return &Schema{
-		Type:   "string",
+		Type:   TypeString,
 		Format: "date-time",
 	}
 }
 
 func NewUUIDSchema() *Schema {
 	return &Schema{
-		Type:   "string",
+		Type:   TypeString,
 		Format: "uuid",
 	}
 }
 
 func NewBytesSchema() *Schema {
 	return &Schema{
-		Type:   "string",
+		Type:   TypeString,
 		Format: "byte",
 	}
 }
 
 func NewArraySchema() *Schema {
 	return &Schema{
-		Type: "array",
+		Type: TypeArray,
 	}
 }
 
 func NewObjectSchema() *Schema {
 	return &Schema{
-		Type:       "object",
+		Type:       TypeObject,
 		Properties: make(map[string]*SchemaRef),
 	}
 }
@@ -636,9 +646,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 
 	schemaType := schema.Type
 	switch schemaType {
-	case "":
-	case "boolean":
-	case "number":
+	case TypeUndefined:
+	case TypeBoolean:
+	case TypeNumber:
 		if format := schema.Format; len(format) > 0 {
 			switch format {
 			case "float", "double":
@@ -648,7 +658,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 				}
 			}
 		}
-	case "integer":
+	case TypeInteger:
 		if format := schema.Format; len(format) > 0 {
 			switch format {
 			case "int32", "int64":
@@ -658,7 +668,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 				}
 			}
 		}
-	case "string":
+	case TypeString:
 		if format := schema.Format; len(format) > 0 {
 			switch format {
 			// Supported by OpenAPIv3.0.1:
@@ -681,11 +691,11 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 				return err
 			}
 		}
-	case "array":
+	case TypeArray:
 		if schema.Items == nil {
 			return errors.New("when schema type is 'array', schema 'items' must be non-null")
 		}
-	case "object":
+	case TypeObject:
 	default:
 		return fmt.Errorf("unsupported 'type' value %q", schemaType)
 	}
@@ -966,8 +976,8 @@ func (schema *Schema) VisitJSONBoolean(value bool) error {
 }
 
 func (schema *Schema) visitJSONBoolean(settings *schemaValidationSettings, value bool) (err error) {
-	if schemaType := schema.Type; schemaType != "" && schemaType != "boolean" {
-		return schema.expectedType(settings, "boolean")
+	if schemaType := schema.Type; schemaType != "" && schemaType != TypeBoolean {
+		return schema.expectedType(settings, TypeBoolean)
 	}
 	return
 }
@@ -996,7 +1006,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			}
 			me = append(me, err)
 		}
-	} else if schemaType != "" && schemaType != "number" {
+	} else if schemaType != "" && schemaType != TypeNumber {
 		return schema.expectedType(settings, "number, integer")
 	}
 
@@ -1101,8 +1111,8 @@ func (schema *Schema) VisitJSONString(value string) error {
 }
 
 func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value string) error {
-	if schemaType := schema.Type; schemaType != "" && schemaType != "string" {
-		return schema.expectedType(settings, "string")
+	if schemaType := schema.Type; schemaType != "" && schemaType != TypeString {
+		return schema.expectedType(settings, TypeString)
 	}
 
 	var me MultiError
@@ -1220,8 +1230,8 @@ func (schema *Schema) VisitJSONArray(value []interface{}) error {
 }
 
 func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value []interface{}) error {
-	if schemaType := schema.Type; schemaType != "" && schemaType != "array" {
-		return schema.expectedType(settings, "array")
+	if schemaType := schema.Type; schemaType != "" && schemaType != TypeArray {
+		return schema.expectedType(settings, TypeArray)
 	}
 
 	var me MultiError
@@ -1316,8 +1326,8 @@ func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
 }
 
 func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]interface{}) error {
-	if schemaType := schema.Type; schemaType != "" && schemaType != "object" {
-		return schema.expectedType(settings, "object")
+	if schemaType := schema.Type; schemaType != "" && schemaType != TypeObject {
+		return schema.expectedType(settings, TypeObject)
 	}
 
 	var me MultiError
