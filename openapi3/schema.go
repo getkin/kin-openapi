@@ -17,13 +17,12 @@ import (
 )
 
 const (
-	TypeArray     = "array"
-	TypeBoolean   = "boolean"
-	TypeInteger   = "integer"
-	TypeNumber    = "number"
-	TypeObject    = "object"
-	TypeString    = "string"
-	TypeUndefined = ""
+	TypeArray   = "array"
+	TypeBoolean = "boolean"
+	TypeInteger = "integer"
+	TypeNumber  = "number"
+	TypeObject  = "object"
+	TypeString  = "string"
 )
 
 var (
@@ -646,7 +645,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 
 	schemaType := schema.Type
 	switch schemaType {
-	case TypeUndefined:
+	case "":
 	case TypeBoolean:
 	case TypeNumber:
 		if format := schema.Format; len(format) > 0 {
