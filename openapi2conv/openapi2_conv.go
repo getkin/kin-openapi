@@ -26,11 +26,18 @@ func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 	}
 
 	if host := doc2.Host; host != "" {
+		if strings.Contains(host, "/") {
+			err := fmt.Errorf("invalid host %q. This MUST be the host only and does not include the scheme nor sub-paths.", host)
+			return nil, err
+		}
 		schemes := doc2.Schemes
 		if len(schemes) == 0 {
-			schemes = []string{"https://"}
+			schemes = []string{"https"}
 		}
 		basePath := doc2.BasePath
+		if basePath == "" {
+			basePath = "/"
+		}
 		for _, scheme := range schemes {
 			u := url.URL{
 				Scheme: scheme,
