@@ -1176,7 +1176,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "pattern",
-			Reason:      fmt.Sprintf("string doesn't match the regular expression \"%s\"", schema.Pattern),
+			Reason:      fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern),
 		}
 		if !settings.multiError {
 			return err
@@ -1191,7 +1191,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			switch {
 			case f.regexp != nil && f.callback == nil:
 				if cp := f.regexp; !cp.MatchString(value) {
-					formatErr = fmt.Sprintf("string doesn't match the format %q (regular expression \"%s\")", format, cp.String())
+					formatErr = fmt.Sprintf(`string doesn't match the format %q (regular expression "%s")`, format, cp.String())
 				}
 			case f.regexp == nil && f.callback != nil:
 				if err := f.callback(value); err != nil {

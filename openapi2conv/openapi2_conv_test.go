@@ -23,9 +23,9 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	spec2, err := FromV3(&doc3)
+	doc2, err := FromV3(&doc3)
 	require.NoError(t, err)
-	data, err := json.Marshal(spec2)
+	data, err := json.Marshal(doc2)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV2, string(data))
 }
@@ -35,11 +35,11 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 	err := json.Unmarshal([]byte(exampleV2), &doc2)
 	require.NoError(t, err)
 
-	spec3, err := ToV3(&doc2)
+	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = spec3.Validate(context.Background())
+	err = doc3.Validate(context.Background())
 	require.NoError(t, err)
-	data, err := json.Marshal(spec3)
+	data, err := json.Marshal(doc3)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV3, string(data))
 }
