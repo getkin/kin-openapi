@@ -2,8 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -50,27 +49,29 @@ func TestInternalizeRefs(t *testing.T) {
 			doc = doc.InternalizeRefs(context.Background(), baseResolver)
 
 			// Validate the internalized spec
-			require.Nil(t, doc.Validate(context.Background()), "validating internalized spec")
+			err = doc.Validate(context.Background())
+			require.Nil(t, err, "validating internalized spec")
 
-			// write it out to the current directory, a different context to where
-			// we read it from which should fail if there are external references
 			data, err := doc.MarshalJSON()
-			require.NoError(t, err, "marshalling interalized spec")
+			require.NoError(t, err, "marshalling internalized spec")
 
 			// run a static check over the file, making sure each occurence of a
 			// reference is followed by a #
-			s, _ := json.MarshalIndent(doc, "", "  ")
-			fmt.Println(string(s))
-			require.Equal(t, len(regexpRef.FindAll(data, -1)), len(regexpRefInternal.FindAll(data, -1)), "checking all references are internal")
+			numRefs := len(regexpRef.FindAll(data, -1))
+			numInternalRefs := len(regexpRefInternal.FindAll(data, -1))
+			require.Equal(t, numRefs, numInternalRefs, "checking all references are internal")
 
-			require.NoError(t, os.WriteFile("__internalized.openapi.json", data, 0644), "writing internalized spec to new context")
-
+			// write it out to the current directory, a different context to where
+			// we read it from which should fail if there are external references
+			require.NoError(t, ioutil.WriteFile("__internalized.openapi.json", data, 0644), "writing internalized spec to new context")
 			doc2, err := sl.LoadFromFile(test.filename)
 			require.NoError(t, err, "reloading spec")
-			require.Nil(t, doc2.Validate(context.Background()), "validating reloaded spec")
+			err = doc2.Validate(context.Background())
+			require.Nil(t, err, "validating reloaded spec")
 
 			// try delete our artifact
-			require.NoError(t, os.Remove("__internalized.openapi.json"), "removing test artifact")
+			err = os.Remove("__internalized.openapi.json")
+			require.NoError(t, err, "removing test artifact")
 		})
 	}
 }
