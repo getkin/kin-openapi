@@ -3,14 +3,8 @@ package openapi3
 import (
 	"context"
 	"strconv"
+	"strings"
 )
-
-func isInternalRef(ref string) bool {
-	return ref != "" && ref[0] == '#'
-}
-func isExternalRef(ref string) bool {
-	return ref != "" && ref[0] != '#'
-}
 
 func schemaNames(s Schemas) []string {
 	out := make([]string, 0, len(s))
@@ -32,9 +26,13 @@ func parametersMapNames(s ParametersMap) []string {
 // to the components section.
 //
 // refNameResolver takes in references to returns a name to store the reference under locally.
-//
-// Currently response and request bodies are just inlined rather than moved to the components.
+// Some care should be taken to make sure the resolver does not return duplicate names for different
+// references.
 func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) *T {
+	isExternalRef := func(ref string) bool {
+		return ref != "" && !strings.HasPrefix(ref, "#/components/")
+	}
+
 	addSchemaToSpec := func(s *SchemaRef) string {
 		if s == nil || !isExternalRef(s.Ref) {
 			return ""
