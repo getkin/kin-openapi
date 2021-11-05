@@ -28,16 +28,22 @@ func parametersMapNames(s ParametersMap) []string {
 	return out
 }
 
-// InternalizeSpecRefs removes all references to external files from the spec and moves them
+// InternalizeRefs removes all references to external files from the spec and moves them
 // to the components section.
 //
 // refNameResolver takes in references to returns a name to store the reference under locally.
 //
 // Currently response and request bodies are just inlined rather than moved to the components.
-func (spec *T) InternalizeSpecRefs(ctx context.Context, refNameResolver func(ref string) string) *T {
+func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) *T {
 	addSchemaToSpec := func(s *SchemaRef) string {
+		if s == nil || !isExternalRef(s.Ref) {
+			return ""
+		}
+
 		name := refNameResolver(s.Ref)
 
+		// I just added a more comprehensive check for this being a schema but people should really
+		// make sure their resolver returns unique names
 		val := 1
 		for {
 			// basic check, may need something more exhaustive...
@@ -52,33 +58,158 @@ func (spec *T) InternalizeSpecRefs(ctx context.Context, refNameResolver func(ref
 			}
 			break
 		}
-
+		if spec.Components.Schemas == nil {
+			spec.Components.Schemas = make(Schemas)
+		}
 		spec.Components.Schemas[name] = s.Value.NewRef()
 		s.Ref = "#/components/schemas/" + name
 		return s.Ref
 	}
-	tryAddSchemaRef := func(s *SchemaRef) {
-		if s != nil && isExternalRef(s.Ref) {
-			addSchemaToSpec(s)
-		}
-	}
 
 	addParameterToSpec := func(p *ParameterRef) string {
+		if p == nil || !isExternalRef(p.Ref) {
+			return ""
+		}
 		name := refNameResolver(p.Ref)
 		if _, ok := spec.Components.Parameters[name]; ok {
 			p.Ref = "#/components/parameters/" + name
 			return p.Ref
 		}
 
+		if spec.Components.Parameters == nil {
+			spec.Components.Parameters = make(ParametersMap)
+		}
 		spec.Components.Parameters[name] = &ParameterRef{Value: p.Value}
 		p.Ref = "#/components/parameters/" + name
 		return p.Ref
+	}
+
+	addHeaderToSpec := func(h *HeaderRef) string {
+		if h == nil || !isExternalRef(h.Ref) {
+			return ""
+		}
+		name := refNameResolver(h.Ref)
+		if _, ok := spec.Components.Headers[name]; ok {
+			h.Ref = "#/components/headers/" + name
+			return h.Ref
+		}
+		if spec.Components.Headers == nil {
+			spec.Components.Headers = make(Headers)
+		}
+		spec.Components.Headers[name] = &HeaderRef{Value: h.Value}
+		h.Ref = "#/components/headers/" + name
+		return h.Ref
+	}
+
+	addRequestBodyToSpec := func(r *RequestBodyRef) string {
+		if r == nil || !isExternalRef(r.Ref) {
+			return ""
+		}
+		name := refNameResolver(r.Ref)
+		if _, ok := spec.Components.RequestBodies[name]; ok {
+			r.Ref = "#/components/requestBodies/" + name
+			return r.Ref
+		}
+		if spec.Components.RequestBodies == nil {
+			spec.Components.RequestBodies = make(RequestBodies)
+		}
+		spec.Components.RequestBodies[name] = &RequestBodyRef{Value: r.Value}
+		r.Ref = "#/components/requestBodies/" + name
+		return r.Ref
+	}
+
+	addResponseToSpec := func(r *ResponseRef) string {
+		if r == nil || !isExternalRef(r.Ref) {
+			return ""
+		}
+		name := refNameResolver(r.Ref)
+		if _, ok := spec.Components.Responses[name]; ok {
+			r.Ref = "#/components/responses/" + name
+			return r.Ref
+		}
+		if spec.Components.Responses == nil {
+			spec.Components.Responses = make(Responses)
+		}
+		spec.Components.Responses[name] = &ResponseRef{Value: r.Value}
+		r.Ref = "#/components/responses/" + name
+		return r.Ref
+	}
+
+	addSecuritySchemeToSpec := func(ss *SecuritySchemeRef) string {
+		if ss == nil || !isExternalRef(ss.Ref) {
+			return ""
+		}
+		name := refNameResolver(ss.Ref)
+		if _, ok := spec.Components.SecuritySchemes[name]; ok {
+			ss.Ref = "#/components/securitySchemes/" + name
+			return ss.Ref
+		}
+		if spec.Components.SecuritySchemes == nil {
+			spec.Components.SecuritySchemes = make(SecuritySchemes)
+		}
+		spec.Components.SecuritySchemes[name] = &SecuritySchemeRef{Value: ss.Value}
+		ss.Ref = "#/components/securitySchemes/" + name
+		return ss.Ref
+	}
+
+	addExampleToSpec := func(e *ExampleRef) string {
+		if e == nil || !isExternalRef(e.Ref) {
+			return ""
+		}
+		name := refNameResolver(e.Ref)
+		if _, ok := spec.Components.Examples[name]; ok {
+			e.Ref = "#/components/examples/" + name
+			return e.Ref
+		}
+		if spec.Components.Examples == nil {
+			spec.Components.Examples = make(Examples)
+		}
+		spec.Components.Examples[name] = &ExampleRef{Value: e.Value}
+		e.Ref = "#/components/examples/" + name
+		return e.Ref
+	}
+
+	addLinkToSpec := func(l *LinkRef) string {
+		if l == nil || !isExternalRef(l.Ref) {
+			return ""
+		}
+		name := refNameResolver(l.Ref)
+		if _, ok := spec.Components.Links[name]; ok {
+			l.Ref = "#/components/links/" + name
+			return l.Ref
+		}
+		if spec.Components.Links == nil {
+			spec.Components.Links = make(Links)
+		}
+		spec.Components.Links[name] = &LinkRef{Value: l.Value}
+		l.Ref = "#/components/links/" + name
+		return l.Ref
+	}
+
+	addCallbackToSpec := func(c *CallbackRef) string {
+		if c == nil || !isExternalRef(c.Ref) {
+			return ""
+		}
+		name := refNameResolver(c.Ref)
+		if _, ok := spec.Components.Callbacks[name]; ok {
+			c.Ref = "#/components/callbacks/" + name
+			return c.Ref
+		}
+		if spec.Components.Callbacks == nil {
+			spec.Components.Callbacks = make(Callbacks)
+		}
+		spec.Components.Callbacks[name] = &CallbackRef{Value: c.Value}
+		c.Ref = "#/components/callbacks/" + name
+		return c.Ref
 	}
 
 	var derefSchema func(*Schema, []*Schema)
 	derefSchema = func(s *Schema, stack []*Schema) {
 		if len(stack) > 1000 {
 			panic("unresolved circular reference")
+		}
+		if s == nil {
+			return
 		}
 		for _, p := range stack {
 			if p == s {
@@ -89,72 +220,147 @@ func (spec *T) InternalizeSpecRefs(ctx context.Context, refNameResolver func(ref
 
 		for _, list := range []SchemaRefs{s.AllOf, s.AnyOf, s.OneOf} {
 			for _, s2 := range list {
-				tryAddSchemaRef(s2)
-				derefSchema(s2.Value, stack)
+				addSchemaToSpec(s2)
+				if s2 != nil {
+					derefSchema(s2.Value, stack)
+				}
 			}
 		}
 		for _, s2 := range s.Properties {
-			tryAddSchemaRef(s2)
-			derefSchema(s2.Value, stack)
+			addSchemaToSpec(s2)
+			if s2 != nil {
+				derefSchema(s2.Value, stack)
+			}
 		}
 		for _, ref := range []*SchemaRef{s.Not, s.AdditionalProperties, s.Items} {
+			addSchemaToSpec(ref)
 			if ref != nil {
-				tryAddSchemaRef(ref)
 				derefSchema(ref.Value, stack)
 			}
 		}
 	}
+	var derefParameter func(Parameter)
 
-	derefParameter := func(p *Parameter) {
-		tryAddSchemaRef(p.Schema)
-		if p.Schema.Value != nil {
-			derefSchema(p.Schema.Value, nil)
+	derefHeaders := func(hs Headers) {
+		for _, h := range hs {
+			addHeaderToSpec(h)
+			derefParameter(h.Value.Parameter)
+		}
+	}
+
+	derefExamples := func(es Examples) {
+		for _, e := range es {
+			addExampleToSpec(e)
 		}
 	}
 
 	derefContent := func(c Content) {
 		for _, mediatype := range c {
-			tryAddSchemaRef(mediatype.Schema)
+			addSchemaToSpec(mediatype.Schema)
 			if mediatype.Schema != nil {
 				derefSchema(mediatype.Schema.Value, nil)
+			}
+			derefExamples(mediatype.Examples)
+			for _, e := range mediatype.Encoding {
+				derefHeaders(e.Headers)
 			}
 		}
 	}
 
-	// inline all component references
+	derefLinks := func(ls Links) {
+		for _, l := range ls {
+			addLinkToSpec(l)
+		}
+	}
+
+	derefResponses := func(es Responses) {
+		for _, e := range es {
+			addResponseToSpec(e)
+			if e.Value != nil {
+				derefHeaders(e.Value.Headers)
+				derefContent(e.Value.Content)
+				derefLinks(e.Value.Links)
+			}
+		}
+	}
+
+	derefParameter = func(p Parameter) {
+		addSchemaToSpec(p.Schema)
+		derefContent(p.Content)
+		if p.Schema != nil {
+			derefSchema(p.Schema.Value, nil)
+		}
+	}
+
+	derefRequestBody := func(r RequestBody) {
+		derefContent(r.Content)
+	}
+
+	var derefPaths func(map[string]*PathItem)
+	derefPaths = func(paths map[string]*PathItem) {
+		for _, ops := range paths {
+			// inline full operations
+			ops.Ref = ""
+
+			for _, op := range ops.Operations() {
+				addRequestBodyToSpec(op.RequestBody)
+				if op.RequestBody != nil && op.RequestBody.Value != nil {
+					derefRequestBody(*op.RequestBody.Value)
+				}
+				for _, cb := range op.Callbacks {
+					addCallbackToSpec(cb)
+					if cb.Value != nil {
+						derefPaths(*cb.Value)
+					}
+				}
+				derefResponses(op.Responses)
+				for _, param := range op.Parameters {
+					addParameterToSpec(param)
+					if param.Value != nil {
+						derefParameter(*param.Value)
+					}
+				}
+			}
+		}
+	}
+
+	// Handle components section
 	names := schemaNames(spec.Components.Schemas)
 	for _, name := range names {
 		schema := spec.Components.Schemas[name]
-		derefSchema(schema.Value, nil)
+		addSchemaToSpec(schema)
+		if schema != nil {
+			derefSchema(schema.Value, nil)
+		}
 	}
 	names = parametersMapNames(spec.Components.Parameters)
 	for _, name := range names {
 		p := spec.Components.Parameters[name]
-		derefParameter(p.Value)
+		addParameterToSpec(p)
+		if p != nil && p.Value != nil {
+			derefParameter(*p.Value)
+		}
 	}
-
-	for _, ops := range spec.Paths {
-		// inline full operations
-		ops.Ref = ""
-
-		for _, op := range ops.Operations() {
-			if op.RequestBody != nil {
-				op.RequestBody.Ref = ""
-				derefContent(op.RequestBody.Value.Content)
-			}
-			for _, res := range op.Responses {
-				res.Ref = ""
-				derefContent(res.Value.Content)
-			}
-			for _, param := range op.Parameters {
-				// don't inline, add to file refs
-				if isExternalRef(param.Ref) {
-					addParameterToSpec(param)
-				}
-				derefParameter(param.Value)
-			}
+	derefHeaders(spec.Components.Headers)
+	for _, req := range spec.Components.RequestBodies {
+		addRequestBodyToSpec(req)
+		if req != nil && req.Value != nil {
+			derefRequestBody(*req.Value)
+		}
+	}
+	derefResponses(spec.Components.Responses)
+	for _, ss := range spec.Components.SecuritySchemes {
+		addSecuritySchemeToSpec(ss)
+	}
+	derefExamples(spec.Components.Examples)
+	derefLinks(spec.Components.Links)
+	for _, cb := range spec.Components.Callbacks {
+		addCallbackToSpec(cb)
+		if cb != nil && cb.Value != nil {
+			derefPaths(*cb.Value)
 		}
 	}
 
+	derefPaths(spec.Paths)
 	return spec
 }
