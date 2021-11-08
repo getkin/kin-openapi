@@ -800,13 +800,22 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 		return schema.visitJSONArray(settings, value)
 	case map[string]interface{}:
 		return schema.visitJSONObject(settings, value)
-	default:
-		return &SchemaError{
-			Value:       value,
-			Schema:      schema,
-			SchemaField: "type",
-			Reason:      fmt.Sprintf("unhandled value of type %T", value),
+	case map[interface{}]interface{}: // for YAML cf. issue #444
+		values := make(map[string]interface{}, len(value))
+		for key, v := range value {
+			if k, ok := key.(string); ok {
+				values[k] = v
+			}
 		}
+		if len(value) == len(values) {
+			return schema.visitJSONObject(settings, values)
+		}
+	}
+	return &SchemaError{
+		Value:       value,
+		Schema:      schema,
+		SchemaField: "type",
+		Reason:      fmt.Sprintf("unhandled value of type %T", value),
 	}
 }
 
