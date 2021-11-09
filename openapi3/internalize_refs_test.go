@@ -25,7 +25,6 @@ func baseResolver(ref string) string {
 func TestInternalizeRefs(t *testing.T) {
 	var regexpRef = regexp.MustCompile(`"\$ref":`)
 	var regexpRefInternal = regexp.MustCompile(`"\$ref":"\#`)
-	_, _ = regexpRef, regexpRefInternal
 
 	tests := []struct {
 		filename string
@@ -53,9 +52,6 @@ func TestInternalizeRefs(t *testing.T) {
 
 			data, err := doc.MarshalJSON()
 			require.NoError(t, err, "marshalling internalized spec")
-
-			// indent, _ := json.MarshalIndent(doc, "", "  ")
-			// t.Logf("%s\n", indent)
 
 			// run a static check over the file, making sure each occurence of a
 			// reference is followed by a #
