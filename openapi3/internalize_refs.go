@@ -51,7 +51,12 @@ func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref str
 					val++
 					continue
 				}
-				s.Ref = "#/components/schemas/" + name
+				newRef := "#/components/schemas/" + name
+				if newRef == s.Ref {
+					s.Ref = ""
+				} else {
+					s.Ref = newRef
+				}
 				return s.Ref
 			}
 			break
@@ -328,6 +333,7 @@ func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref str
 		schema := spec.Components.Schemas[name]
 		addSchemaToSpec(schema)
 		if schema != nil {
+			schema.Ref = "" // always dereference the top level
 			derefSchema(schema.Value, nil)
 		}
 	}
@@ -336,6 +342,7 @@ func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref str
 		p := spec.Components.Parameters[name]
 		addParameterToSpec(p)
 		if p != nil && p.Value != nil {
+			p.Ref = "" // always dereference the top level
 			derefParameter(*p.Value)
 		}
 	}
@@ -343,6 +350,7 @@ func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref str
 	for _, req := range spec.Components.RequestBodies {
 		addRequestBodyToSpec(req)
 		if req != nil && req.Value != nil {
+			req.Ref = "" // always dereference the top level
 			derefRequestBody(*req.Value)
 		}
 	}
@@ -355,6 +363,7 @@ func (spec *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref str
 	for _, cb := range spec.Components.Callbacks {
 		addCallbackToSpec(cb)
 		if cb != nil && cb.Value != nil {
+			cb.Ref = "" // always dereference the top level
 			derefPaths(*cb.Value)
 		}
 	}
