@@ -2,25 +2,11 @@ package openapi3
 
 import (
 	"context"
-	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func baseResolver(ref string) string {
-	split := strings.Split(ref, "#")
-	if len(split) == 2 {
-		return filepath.Base(split[1])
-	}
-	ref = split[0]
-	for ext := filepath.Ext(ref); len(ext) > 0; ext = filepath.Ext(ref) {
-		ref = strings.TrimSuffix(ref, ext)
-	}
-	return filepath.Base(ref)
-}
 
 func TestInternalizeRefs(t *testing.T) {
 	var regexpRef = regexp.MustCompile(`"\$ref":`)
@@ -44,7 +30,7 @@ func TestInternalizeRefs(t *testing.T) {
 			require.NoError(t, err, "loading test file")
 
 			// Internalize the references
-			doc = doc.InternalizeRefs(context.Background(), baseResolver)
+			doc.InternalizeRefs(context.Background(), DefaultRefNameResolver)
 
 			// Validate the internalized spec
 			err = doc.Validate(context.Background())
