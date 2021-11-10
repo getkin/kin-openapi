@@ -86,7 +86,7 @@ func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver) {
 	return s.Ref
 }
 
-func (doc *T) addParameterToSpec(p *ParameterRef, refNameResolver RefNameResolver) string {
+func (doc *T) addParameterToSpec(p *ParameterRef, refNameResolver RefNameResolver) {
 	if p == nil || !isExternalRef(p.Ref) {
 		return ""
 	}
