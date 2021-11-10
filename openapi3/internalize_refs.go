@@ -50,7 +50,7 @@ func isExternalRef(ref string) bool {
 	return ref != "" && !strings.HasPrefix(ref, "#/components/")
 }
 
-func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver) string {
+func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver) {
 	if s == nil || !isExternalRef(s.Ref) {
 		return ""
 	}
