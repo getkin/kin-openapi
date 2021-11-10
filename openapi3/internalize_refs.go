@@ -206,7 +206,7 @@ func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver) {
 	return l.Ref
 }
 
-func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver) string {
+func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver) {
 	if c == nil || !isExternalRef(c.Ref) {
 		return ""
 	}
