@@ -155,7 +155,7 @@ func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver)
 	return r.Ref
 }
 
-func (doc *T) addSecuritySchemeToSpec(ss *SecuritySchemeRef, refNameResolver RefNameResolver) string {
+func (doc *T) addSecuritySchemeToSpec(ss *SecuritySchemeRef, refNameResolver RefNameResolver) {
 	if ss == nil || !isExternalRef(ss.Ref) {
 		return ""
 	}
