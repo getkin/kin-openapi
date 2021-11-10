@@ -189,7 +189,7 @@ func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver) {
 	return e.Ref
 }
 
-func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver) string {
+func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver) {
 	if l == nil || !isExternalRef(l.Ref) {
 		return ""
 	}
