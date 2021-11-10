@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -52,48 +51,30 @@ func isExternalRef(ref string) bool {
 
 func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver) {
 	if s == nil || !isExternalRef(s.Ref) {
-		return ""
+		return
 	}
 
 	name := refNameResolver(s.Ref)
-
-	// I just added a more comprehensive check for this being a schema but people should really
-	// make sure their resolver returns unique names
-	val := 1
-	for {
-		// basic check, may need something more exhaustive...
-		if existing, ok := doc.Components.Schemas[name]; ok {
-			if existing.Value.Description != s.Value.Description || s.Value.Type != existing.Value.Type {
-				name = refNameResolver(s.Ref) + strconv.Itoa(val)
-				val++
-				continue
-			}
-			newRef := "#/components/schemas/" + name
-			if newRef == s.Ref {
-				s.Ref = ""
-			} else {
-				s.Ref = newRef
-			}
-			return s.Ref
-		}
-		break
+	if _, ok := doc.Components.Schemas[name]; ok {
+		s.Ref = "#/components/schemas/" + name
+		return
 	}
+
 	if doc.Components.Schemas == nil {
 		doc.Components.Schemas = make(Schemas)
 	}
 	doc.Components.Schemas[name] = s.Value.NewRef()
 	s.Ref = "#/components/schemas/" + name
-	return s.Ref
 }
 
 func (doc *T) addParameterToSpec(p *ParameterRef, refNameResolver RefNameResolver) {
 	if p == nil || !isExternalRef(p.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(p.Ref)
 	if _, ok := doc.Components.Parameters[name]; ok {
 		p.Ref = "#/components/parameters/" + name
-		return p.Ref
+		return
 	}
 
 	if doc.Components.Parameters == nil {
@@ -101,126 +82,121 @@ func (doc *T) addParameterToSpec(p *ParameterRef, refNameResolver RefNameResolve
 	}
 	doc.Components.Parameters[name] = &ParameterRef{Value: p.Value}
 	p.Ref = "#/components/parameters/" + name
-	return p.Ref
 }
 
-func (doc *T) addHeaderToSpec(h *HeaderRef, refNameResolver RefNameResolver) string {
+func (doc *T) addHeaderToSpec(h *HeaderRef, refNameResolver RefNameResolver) {
 	if h == nil || !isExternalRef(h.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(h.Ref)
 	if _, ok := doc.Components.Headers[name]; ok {
 		h.Ref = "#/components/headers/" + name
-		return h.Ref
+		return
 	}
 	if doc.Components.Headers == nil {
 		doc.Components.Headers = make(Headers)
 	}
 	doc.Components.Headers[name] = &HeaderRef{Value: h.Value}
 	h.Ref = "#/components/headers/" + name
-	return h.Ref
 }
 
-func (doc *T) addRequestBodyToSpec(r *RequestBodyRef, refNameResolver RefNameResolver) string {
+func (doc *T) addRequestBodyToSpec(r *RequestBodyRef, refNameResolver RefNameResolver) {
 	if r == nil || !isExternalRef(r.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(r.Ref)
 	if _, ok := doc.Components.RequestBodies[name]; ok {
 		r.Ref = "#/components/requestBodies/" + name
-		return r.Ref
+		return
 	}
 	if doc.Components.RequestBodies == nil {
 		doc.Components.RequestBodies = make(RequestBodies)
 	}
 	doc.Components.RequestBodies[name] = &RequestBodyRef{Value: r.Value}
 	r.Ref = "#/components/requestBodies/" + name
-	return r.Ref
 }
 
 func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver) {
 	if r == nil || !isExternalRef(r.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(r.Ref)
 	if _, ok := doc.Components.Responses[name]; ok {
 		r.Ref = "#/components/responses/" + name
-		return r.Ref
+		return
 	}
 	if doc.Components.Responses == nil {
 		doc.Components.Responses = make(Responses)
 	}
 	doc.Components.Responses[name] = &ResponseRef{Value: r.Value}
 	r.Ref = "#/components/responses/" + name
-	return r.Ref
+
 }
 
 func (doc *T) addSecuritySchemeToSpec(ss *SecuritySchemeRef, refNameResolver RefNameResolver) {
 	if ss == nil || !isExternalRef(ss.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(ss.Ref)
 	if _, ok := doc.Components.SecuritySchemes[name]; ok {
 		ss.Ref = "#/components/securitySchemes/" + name
-		return ss.Ref
+		return
 	}
 	if doc.Components.SecuritySchemes == nil {
 		doc.Components.SecuritySchemes = make(SecuritySchemes)
 	}
 	doc.Components.SecuritySchemes[name] = &SecuritySchemeRef{Value: ss.Value}
 	ss.Ref = "#/components/securitySchemes/" + name
-	return ss.Ref
+
 }
 
 func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver) {
 	if e == nil || !isExternalRef(e.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(e.Ref)
 	if _, ok := doc.Components.Examples[name]; ok {
 		e.Ref = "#/components/examples/" + name
-		return e.Ref
+		return
 	}
 	if doc.Components.Examples == nil {
 		doc.Components.Examples = make(Examples)
 	}
 	doc.Components.Examples[name] = &ExampleRef{Value: e.Value}
 	e.Ref = "#/components/examples/" + name
-	return e.Ref
+
 }
 
 func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver) {
 	if l == nil || !isExternalRef(l.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(l.Ref)
 	if _, ok := doc.Components.Links[name]; ok {
 		l.Ref = "#/components/links/" + name
-		return l.Ref
+		return
 	}
 	if doc.Components.Links == nil {
 		doc.Components.Links = make(Links)
 	}
 	doc.Components.Links[name] = &LinkRef{Value: l.Value}
 	l.Ref = "#/components/links/" + name
-	return l.Ref
+
 }
 
 func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver) {
 	if c == nil || !isExternalRef(c.Ref) {
-		return ""
+		return
 	}
 	name := refNameResolver(c.Ref)
 	if _, ok := doc.Components.Callbacks[name]; ok {
 		c.Ref = "#/components/callbacks/" + name
-		return c.Ref
 	}
 	if doc.Components.Callbacks == nil {
 		doc.Components.Callbacks = make(Callbacks)
 	}
 	doc.Components.Callbacks[name] = &CallbackRef{Value: c.Value}
 	c.Ref = "#/components/callbacks/" + name
-	return c.Ref
 }
 
 func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver) {
@@ -336,13 +312,17 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 // to the components section.
 //
 // refNameResolver takes in references to returns a name to store the reference under locally.
+// It MUST return a unique name for each reference type.
 // A default implementation is provided that will suffice for most use cases. See the function
 // documention for more details.
 //
 // Example:
 //
-//   doc.InternalizeRefs(context.Background(), DefaultRefNameResolver)
+//   doc.InternalizeRefs(context.Background(), nil)
 func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) {
+	if refNameResolver == nil {
+		refNameResolver = DefaultRefNameResolver
+	}
 
 	// Handle components section
 	names := schemaNames(doc.Components.Schemas)
