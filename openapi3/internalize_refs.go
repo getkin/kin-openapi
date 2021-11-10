@@ -138,7 +138,7 @@ func (doc *T) addRequestBodyToSpec(r *RequestBodyRef, refNameResolver RefNameRes
 	return r.Ref
 }
 
-func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver) string {
+func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver) {
 	if r == nil || !isExternalRef(r.Ref) {
 		return ""
 	}
