@@ -167,3 +167,27 @@ paths:
 	err = doc3.Validate(context.Background())
 	require.NoError(t, err)
 }
+
+func TestPR449(t *testing.T) {
+	spec := `
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: title
+
+securityDefinitions:
+  OAuth2Application:
+    type: "oauth2"
+    flow: "application"
+    tokenUrl: "example.com/oauth2/token"
+`
+	doc3, err := v2v3YAML([]byte(spec))
+	require.NoError(t, err)
+	require.NotNil(t, doc3.Components.SecuritySchemes["OAuth2Application"].Value.Flows.ClientCredentials)
+	_, err = yaml.Marshal(doc3)
+	require.NoError(t, err)
+
+	doc2, err := FromV3(doc3)
+	require.NoError(t, err)
+	require.Equal(t, doc2.SecurityDefinitions["OAuth2Application"].Flow, "application")
+}

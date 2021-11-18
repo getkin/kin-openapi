@@ -525,6 +525,8 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 			flows.AuthorizationCode = flow
 		case "password":
 			flows.Password = flow
+		case "application":
+			flows.ClientCredentials = flow
 		default:
 			return nil, fmt.Errorf("unsupported flow %q", securityScheme.Flow)
 		}
@@ -1076,6 +1078,8 @@ func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*o
 				result.Flow = "accessCode"
 			} else if flow = flows.Password; flow != nil {
 				result.Flow = "password"
+			} else if flow = flows.ClientCredentials; flow != nil {
+				result.Flow = "application"
 			} else {
 				return nil, nil
 			}
