@@ -230,13 +230,14 @@ func TestRelativeURL(t *testing.T) {
 		},
 		Paths: openapi3.Paths{
 			"/hello": &openapi3.PathItem{
-				 Get:     helloGET,
+				Get: helloGET,
 			},
 		},
 	}
 	router, err := NewRouter(doc)
 	require.NoError(t, err)
-	req, _ := http.NewRequest(http.MethodGet, "https://example.com/api/v1/hello", nil)
+	req, err := http.NewRequest(http.MethodGet, "https://example.com/api/v1/hello", nil)
+	require.NoError(t, err)
 	route, _, err := router.FindRoute(req)
 	require.NoError(t, err)
 	require.Equal(t, "/hello", route.Path)

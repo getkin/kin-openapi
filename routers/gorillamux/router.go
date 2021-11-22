@@ -42,15 +42,12 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 			scheme0 := strings.Split(serverURL, "://")[0]
 			schemes = permutePart(scheme0, server)
 			u, err = url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
-			if err != nil {
-				return nil, err
-			}
 		} else {
 			u, err = url.Parse(bEncode(serverURL))
-			if err != nil {
-				return nil, err
-			}
 		}
+	  if err != nil {
+		  return nil, err
+	  }
 		path := bDecode(u.EscapedPath())
 		if len(path) > 0 && path[len(path)-1] == '/' {
 			path = path[:len(path)-1]
