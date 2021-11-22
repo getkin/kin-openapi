@@ -219,3 +219,25 @@ func TestServerPath(t *testing.T) {
 	})
 	require.NoError(t, err)
 }
+
+func TestRelativeURL(t *testing.T) {
+	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	doc := &openapi3.T{
+		Servers: openapi3.Servers{
+			&openapi3.Server{
+				URL: "/api/v1",
+			},
+		},
+		Paths: openapi3.Paths{
+			"/hello": &openapi3.PathItem{
+				 Get:     helloGET,
+			},
+		},
+	}
+	router, err := NewRouter(doc)
+	require.NoError(t, err)
+	req, _ := http.NewRequest(http.MethodGet, "https://example.com/api/v1/hello", nil)
+	route, _, err := router.FindRoute(req)
+	require.NoError(t, err)
+	require.Equal(t, "/hello", route.Path)
+}
