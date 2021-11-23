@@ -246,3 +246,41 @@ func TestSchemaCustomizerError(t *testing.T) {
 	}))
 	require.EqualError(t, err, "test error")
 }
+
+func TestRecursiveSchema(t *testing.T) {
+
+	type RecursiveType struct {
+		Field1     string           `json:"field1"`
+		Field2     string           `json:"field2"`
+		Field3     string           `json:"field3"`
+		Components []*RecursiveType `json:"children,omitempty"`
+	}
+
+	schemaRef, _, err := NewSchemaRefForValue(&RecursiveType{})
+	require.NoError(t, err)
+
+	jsonSchema, err := schemaRef.MarshalJSON()
+	require.NoError(t, err)
+
+	require.JSONEq(t, `{
+		"properties": {
+			"children": {
+				"items": {
+					"$ref": "#/components/schemas/RecursiveType"
+				},
+				"type": "array"
+			},
+			"field1": {
+				"type": "string"
+			},
+			"field2": {
+				"type": "string"
+			},
+			"field3": {
+				"type": "string"
+			}
+		},
+		"type": "object"
+	}`, string(jsonSchema))
+
+}

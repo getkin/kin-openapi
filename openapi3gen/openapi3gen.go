@@ -57,7 +57,9 @@ func NewSchemaRefForValue(value interface{}, opts ...Option) (*openapi3.SchemaRe
 	g := NewGenerator(opts...)
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
 	for ref := range g.SchemaRefs {
-		ref.Ref = ""
+		if !strings.HasPrefix(ref.Ref, "#/") {
+			ref.Ref = ""
+		}
 	}
 	return ref, g.SchemaRefs, err
 }
