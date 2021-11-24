@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
@@ -19,11 +20,106 @@ type CyclicType1 struct {
 	CyclicField *CyclicType0 `json:"b"`
 }
 
+func TestSimpleStruct(t *testing.T) {
+	type SomeOtherType string
+
+	type SomeStruct struct {
+		Bool    bool                      `json:"bool"`
+		Int     int                       `json:"int"`
+		Int64   int64                     `json:"int64"`
+		Float64 float64                   `json:"float64"`
+		String  string                    `json:"string"`
+		Bytes   []byte                    `json:"bytes"`
+		JSON    json.RawMessage           `json:"json"`
+		Time    time.Time                 `json:"time"`
+		Slice   []SomeOtherType           `json:"slice"`
+		Map     map[string]*SomeOtherType `json:"map"`
+
+		Struct struct {
+			X string `json:"x"`
+		} `json:"struct"`
+
+		EmptyStruct struct {
+			Y string
+		} `json:"structWithoutFields"`
+
+		Ptr *SomeOtherType `json:"ptr"`
+	}
+
+	g := NewGenerator()
+	schemaRef, err := g.newSchemaRefForValue(&SomeStruct{}, nil)
+	require.NoError(t, err)
+	require.Len(t, g.SchemaRefs, 15)
+
+	schemaJSON, err := json.Marshal(schemaRef)
+	require.NoError(t, err)
+
+	require.JSONEq(t, `
+	{
+	  "properties": {
+	    "bool": {
+	      "type": "boolean"
+	    },
+	    "bytes": {
+	      "format": "byte",
+	      "type": "string"
+	    },
+	    "float64": {
+	      "format": "double",
+	      "type": "number"
+	    },
+	    "int": {
+	      "type": "integer"
+	    },
+	    "int64": {
+	      "format": "int64",
+	      "type": "integer"
+	    },
+	    "json": {},
+	    "map": {
+	      "additionalProperties": {
+	        "type": "string"
+	      },
+	      "type": "object"
+	    },
+	    "ptr": {
+	      "type": "string"
+	    },
+	    "slice": {
+	      "items": {
+	        "type": "string"
+	      },
+	      "type": "array"
+	    },
+	    "string": {
+	      "type": "string"
+	    },
+	    "struct": {
+	      "properties": {
+	        "x": {
+	          "type": "string"
+	        }
+	      },
+	      "type": "object"
+	    },
+	    "structWithoutFields": {},
+	    "time": {
+	      "format": "date-time",
+	      "type": "string"
+	    }
+	  },
+	  "type": "object"
+	}
+	`, string(schemaJSON))
+
+}
+
 func TestCyclic(t *testing.T) {
-	schemaRef, refsMap, err := NewSchemaRefForValue(&CyclicType0{}, ThrowErrorOnCycle())
+	g := NewGenerator(ThrowErrorOnCycle())
+	schemaRef, err := g.newSchemaRefForValue(&CyclicType0{}, nil)
 	require.IsType(t, &CycleError{}, err)
 	require.Nil(t, schemaRef)
-	require.Empty(t, refsMap)
+	require.Empty(t, g.SchemaRefs)
 }
 
 func TestExportedNonTagged(t *testing.T) {
@@ -34,7 +130,7 @@ func TestExportedNonTagged(t *testing.T) {
 		EvenAYaml  string `yaml:"even_a_yaml"`
 	}
 
-	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields())
+	schemaRef, err := NewSchemaRefForValue(&Bla{}, nil, UseAllExportedFields())
 	require.NoError(t, err)
 	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
 		Type: "object",
@@ -50,7 +146,7 @@ func TestExportUint(t *testing.T) {
 		UnsignedInt uint `json:"uint"`
 	}
 
-	schemaRef, _, err := NewSchemaRefForValue(&UnsignedIntStruct{}, UseAllExportedFields())
+	schemaRef, err := NewSchemaRefForValue(&UnsignedIntStruct{}, nil, UseAllExportedFields())
 	require.NoError(t, err)
 	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
 		Type: "object",
@@ -169,7 +265,7 @@ func TestSchemaCustomizer(t *testing.T) {
 		EnumField3 string `json:"enum3" myenumtag:"e,f"`
 	}
 
-	schemaRef, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+	schemaRef, err := NewSchemaRefForValue(&Bla{}, nil, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		t.Logf("Field=%s,Tag=%s", name, tag)
 		if tag.Get("mymintag") != "" {
 			minVal, err := strconv.ParseFloat(tag.Get("mymintag"), 64)
@@ -241,7 +337,7 @@ func TestSchemaCustomizer(t *testing.T) {
 
 func TestSchemaCustomizerError(t *testing.T) {
 	type Bla struct{}
-	_, _, err := NewSchemaRefForValue(&Bla{}, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+	_, err := NewSchemaRefForValue(&Bla{}, nil, UseAllExportedFields(), SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		return errors.New("test error")
 	}))
 	require.EqualError(t, err, "test error")
@@ -257,7 +353,7 @@ func TestRecursiveSchema(t *testing.T) {
 	}
 
 	schemas := make(openapi3.Schemas)
-	schemaRef, err := NewSchemaRefAndComponentsForValue(&RecursiveType{}, schemas)
+	schemaRef, err := NewSchemaRefForValue(&RecursiveType{}, schemas)
 	require.NoError(t, err)
 
 	jsonSchemas, err := json.MarshalIndent(&schemas, "", "  ")

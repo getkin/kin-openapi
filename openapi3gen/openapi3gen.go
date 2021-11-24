@@ -52,33 +52,10 @@ func SchemaCustomizer(sc SchemaCustomizerFn) Option {
 	return func(x *generatorOpt) { x.schemaCustomizer = sc }
 }
 
-// NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef.
-func NewSchemaRefForValue(value interface{}, opts ...Option) (*openapi3.SchemaRef, map[*openapi3.SchemaRef]int, error) {
+// NewSchemaRefForValue returns the ref for this schema, and an array of dependent component schemas
+func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
 	g := NewGenerator(opts...)
-	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
-	for ref := range g.SchemaRefs {
-		ref.Ref = ""
-	}
-	return ref, g.SchemaRefs, err
-}
-
-// NewSchemaRefAndComponentsForValue returns the ref for this schema, and an array of dependent component schemas
-func NewSchemaRefAndComponentsForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
-	g := NewGenerator(opts...)
-	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
-	for ref := range g.SchemaRefs {
-		if g.ComponentSchemas[ref.Ref] {
-			schemas[ref.Ref] = &openapi3.SchemaRef{
-				Value: ref.Value,
-			}
-		}
-		if strings.HasPrefix(ref.Ref, "#/components/schemas/") {
-			ref.Value = nil
-		} else {
-			ref.Ref = ""
-		}
-	}
-	return ref, err
+	return g.newSchemaRefForValue(value, schemas)
 }
 
 type Generator struct {
@@ -111,6 +88,23 @@ func NewGenerator(opts ...Option) *Generator {
 func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, error) {
 	//check generatorOpt consistency here
 	return g.generateSchemaRefFor(nil, t, "_root", "")
+}
+
+func (g *Generator) newSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
+	for ref := range g.SchemaRefs {
+		if g.ComponentSchemas[ref.Ref] && schemas != nil {
+			schemas[ref.Ref] = &openapi3.SchemaRef{
+				Value: ref.Value,
+			}
+		}
+		if strings.HasPrefix(ref.Ref, "#/components/schemas/") {
+			ref.Value = nil
+		} else {
+			ref.Ref = ""
+		}
+	}
+	return ref, err
 }
 
 func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
