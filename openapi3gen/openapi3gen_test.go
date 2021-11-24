@@ -256,11 +256,38 @@ func TestRecursiveSchema(t *testing.T) {
 		Components []*RecursiveType `json:"children,omitempty"`
 	}
 
-	schemaRef, _, err := NewSchemaRefForValue(&RecursiveType{})
+	schemas := make(openapi3.Schemas)
+	schemaRef, err := NewSchemaRefAndComponentsForValue(&RecursiveType{}, schemas)
 	require.NoError(t, err)
 
-	jsonSchema, err := schemaRef.MarshalJSON()
+	jsonSchemas, err := json.MarshalIndent(&schemas, "", "  ")
 	require.NoError(t, err)
+
+	jsonSchemaRef, err := json.MarshalIndent(&schemaRef, "", "  ")
+	require.NoError(t, err)
+
+	require.JSONEq(t, `{
+		"RecursiveType": {
+			"properties": {
+				"children": {
+					"items": {
+						"$ref": "#/components/schemas/RecursiveType"
+					},
+					"type": "array"
+				},
+				"field1": {
+					"type": "string"
+				},
+				"field2": {
+					"type": "string"
+				},
+				"field3": {
+					"type": "string"
+				}
+			},
+			"type": "object"
+		}
+	}`, string(jsonSchemas))
 
 	require.JSONEq(t, `{
 		"properties": {
@@ -281,6 +308,6 @@ func TestRecursiveSchema(t *testing.T) {
 			}
 		},
 		"type": "object"
-	}`, string(jsonSchema))
+	}`, string(jsonSchemaRef))
 
 }

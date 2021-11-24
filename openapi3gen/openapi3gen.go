@@ -57,11 +57,28 @@ func NewSchemaRefForValue(value interface{}, opts ...Option) (*openapi3.SchemaRe
 	g := NewGenerator(opts...)
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
 	for ref := range g.SchemaRefs {
-		if !strings.HasPrefix(ref.Ref, "#/") {
+		ref.Ref = ""
+	}
+	return ref, g.SchemaRefs, err
+}
+
+// NewSchemaRefAndComponentsForValue returns the ref for this schema, and an array of dependent component schemas
+func NewSchemaRefAndComponentsForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
+	g := NewGenerator(opts...)
+	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
+	for ref := range g.SchemaRefs {
+		if g.ComponentSchemas[ref.Ref] {
+			schemas[ref.Ref] = &openapi3.SchemaRef{
+				Value: ref.Value,
+			}
+		}
+		if strings.HasPrefix(ref.Ref, "#/components/schemas/") {
+			ref.Value = nil
+		} else {
 			ref.Ref = ""
 		}
 	}
-	return ref, g.SchemaRefs, err
+	return ref, err
 }
 
 type Generator struct {
@@ -73,6 +90,9 @@ type Generator struct {
 	// If count is 1, it's not ne
 	// An OpenAPI identifier has been assigned to each.
 	SchemaRefs map[*openapi3.SchemaRef]int
+
+	// ComponentSchemas contains a map of schemas that must be defined in the components, due to cycles
+	ComponentSchemas map[string]bool
 }
 
 func NewGenerator(opts ...Option) *Generator {
@@ -81,9 +101,10 @@ func NewGenerator(opts ...Option) *Generator {
 		f(gOpt)
 	}
 	return &Generator{
-		Types:      make(map[reflect.Type]*openapi3.SchemaRef),
-		SchemaRefs: make(map[*openapi3.SchemaRef]int),
-		opts:       *gOpt,
+		Types:            make(map[reflect.Type]*openapi3.SchemaRef),
+		SchemaRefs:       make(map[*openapi3.SchemaRef]int),
+		ComponentSchemas: make(map[string]bool),
+		opts:             *gOpt,
 	}
 }
 
@@ -343,6 +364,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 		typeName = t.Name()
 	}
 
+	g.ComponentSchemas[typeName] = true
 	return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema)
 }
 
