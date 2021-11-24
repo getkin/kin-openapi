@@ -52,7 +52,7 @@ func SchemaCustomizer(sc SchemaCustomizerFn) Option {
 	return func(x *generatorOpt) { x.schemaCustomizer = sc }
 }
 
-// NewSchemaRefForValue returns the ref for this schema, and an array of dependent component schemas
+// NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef, and updates a supplied map with any dependent component schemas (for cycles)
 func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
 	g := NewGenerator(opts...)
 	return g.newSchemaRefForValue(value, schemas)
