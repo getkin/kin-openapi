@@ -372,7 +372,7 @@ func NewArraySchema() *Schema {
 func NewObjectSchema() *Schema {
 	return &Schema{
 		Type:       TypeObject,
-		Properties: make(map[string]*SchemaRef),
+		Properties: make(Schemas),
 	}
 }
 
@@ -493,7 +493,7 @@ func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema 
 func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema {
 	properties := schema.Properties
 	if properties == nil {
-		properties = make(map[string]*SchemaRef)
+		properties = make(Schemas)
 		schema.Properties = properties
 	}
 	properties[name] = ref
@@ -501,7 +501,7 @@ func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema {
 }
 
 func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema {
-	result := make(map[string]*SchemaRef, len(properties))
+	result := make(Schemas, len(properties))
 	for k, v := range properties {
 		result[k] = &SchemaRef{
 			Value: v,
