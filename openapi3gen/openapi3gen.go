@@ -68,8 +68,8 @@ type Generator struct {
 	// An OpenAPI identifier has been assigned to each.
 	SchemaRefs map[*openapi3.SchemaRef]int
 
-	// ComponentSchemaRefs is a set of schemas that must be defined in the components to avoid cycles
-	ComponentSchemaRefs map[string]struct{}
+	// componentSchemaRefs is a set of schemas that must be defined in the components to avoid cycles
+	componentSchemaRefs map[string]struct{}
 }
 
 func NewGenerator(opts ...Option) *Generator {
@@ -80,7 +80,7 @@ func NewGenerator(opts ...Option) *Generator {
 	return &Generator{
 		Types:               make(map[reflect.Type]*openapi3.SchemaRef),
 		SchemaRefs:          make(map[*openapi3.SchemaRef]int),
-		ComponentSchemaRefs: make(map[string]struct{}),
+		componentSchemaRefs: make(map[string]struct{}),
 		opts:                *gOpt,
 	}
 }
@@ -97,7 +97,7 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 		return nil, err
 	}
 	for ref := range g.SchemaRefs {
-		if _, ok := g.ComponentSchemaRefs[ref.Ref]; ok && schemas != nil {
+		if _, ok := g.componentSchemaRefs[ref.Ref]; ok && schemas != nil {
 			schemas[ref.Ref] = &openapi3.SchemaRef{
 				Value: ref.Value,
 			}
@@ -365,7 +365,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 		typeName = t.Name()
 	}
 
-	g.ComponentSchemaRefs[typeName] = struct{}{}
+	g.componentSchemaRefs[typeName] = struct{}{}
 	return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema)
 }
 
