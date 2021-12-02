@@ -107,7 +107,7 @@ func (g *Generator) newSchemaRefForValue(value interface{}, schemas openapi3.Sch
 			ref.Ref = ""
 		}
 	}
-	return ref, err
+	return ref, nil
 }
 
 func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
@@ -116,11 +116,14 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 		return ref, nil
 	}
 	ref, err := g.generateWithoutSaving(parents, t, name, tag)
+	if err != nil {
+		return nil, err
+	}
 	if ref != nil {
 		g.Types[t] = ref
 		g.SchemaRefs[ref]++
 	}
-	return ref, err
+	return ref, nil
 }
 
 func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.StructField {
