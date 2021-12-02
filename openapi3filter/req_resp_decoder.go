@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -40,6 +42,8 @@ type ParseError struct {
 
 	path []interface{}
 }
+
+var _ interface{ Unwrap() error } = ParseError{}
 
 func (e *ParseError) Error() string {
 	var msg []string
@@ -77,6 +81,10 @@ func (e *ParseError) RootCause() error {
 	if v, ok := e.Cause.(*ParseError); ok {
 		return v.RootCause()
 	}
+	return e.Cause
+}
+
+func (e ParseError) Unwrap() error {
 	return e.Cause
 }
 
@@ -832,6 +840,8 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 func init() {
 	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 	RegisterBodyDecoder("application/json", jsonBodyDecoder)
+	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/problem+json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
@@ -849,6 +859,14 @@ func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schem
 func jsonBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	var value interface{}
 	if err := json.NewDecoder(body).Decode(&value); err != nil {
+		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
+	}
+	return value, nil
+}
+
+func yamlBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+	var value interface{}
+	if err := yaml.NewDecoder(body).Decode(&value); err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
 	return value, nil

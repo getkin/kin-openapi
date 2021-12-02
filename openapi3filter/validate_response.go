@@ -77,7 +77,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if contentType == nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: fmt.Sprintf("input header Content-Type has unexpected value: %q", inputMIME),
+			Reason: fmt.Sprintf("response header Content-Type has unexpected value: %q", inputMIME),
 		}
 	}
 

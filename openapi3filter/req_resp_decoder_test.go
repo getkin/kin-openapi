@@ -1036,6 +1036,18 @@ func TestDecodeBody(t *testing.T) {
 			want: "foo",
 		},
 		{
+			name: "x-yaml",
+			mime: "application/x-yaml",
+			body: strings.NewReader("foo"),
+			want: "foo",
+		},
+		{
+			name: "yaml",
+			mime: "application/yaml",
+			body: strings.NewReader("foo"),
+			want: "foo",
+		},
+		{
 			name: "urlencoded form",
 			mime: "application/x-www-form-urlencoded",
 			body: strings.NewReader(urlencodedForm.Encode()),

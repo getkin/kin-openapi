@@ -52,14 +52,10 @@ func SchemaCustomizer(sc SchemaCustomizerFn) Option {
 	return func(x *generatorOpt) { x.schemaCustomizer = sc }
 }
 
-// NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef.
-func NewSchemaRefForValue(value interface{}, opts ...Option) (*openapi3.SchemaRef, map[*openapi3.SchemaRef]int, error) {
+// NewSchemaRefForValue is a shortcut for NewGenerator(...).NewSchemaRefForValue(...)
+func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
 	g := NewGenerator(opts...)
-	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
-	for ref := range g.SchemaRefs {
-		ref.Ref = ""
-	}
-	return ref, g.SchemaRefs, err
+	return g.NewSchemaRefForValue(value, schemas)
 }
 
 type Generator struct {
@@ -71,6 +67,9 @@ type Generator struct {
 	// If count is 1, it's not ne
 	// An OpenAPI identifier has been assigned to each.
 	SchemaRefs map[*openapi3.SchemaRef]int
+
+	// componentSchemaRefs is a set of schemas that must be defined in the components to avoid cycles
+	componentSchemaRefs map[string]struct{}
 }
 
 func NewGenerator(opts ...Option) *Generator {
@@ -79,9 +78,10 @@ func NewGenerator(opts ...Option) *Generator {
 		f(gOpt)
 	}
 	return &Generator{
-		Types:      make(map[reflect.Type]*openapi3.SchemaRef),
-		SchemaRefs: make(map[*openapi3.SchemaRef]int),
-		opts:       *gOpt,
+		Types:               make(map[reflect.Type]*openapi3.SchemaRef),
+		SchemaRefs:          make(map[*openapi3.SchemaRef]int),
+		componentSchemaRefs: make(map[string]struct{}),
+		opts:                *gOpt,
 	}
 }
 
@@ -90,17 +90,51 @@ func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, erro
 	return g.generateSchemaRefFor(nil, t, "_root", "")
 }
 
+// NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef, and updates a supplied map with any dependent component schemas if they lead to cycles
+func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
+	if err != nil {
+		return nil, err
+	}
+	for ref := range g.SchemaRefs {
+		if _, ok := g.componentSchemaRefs[ref.Ref]; ok && schemas != nil {
+			schemas[ref.Ref] = &openapi3.SchemaRef{
+				Value: ref.Value,
+			}
+		}
+		if strings.HasPrefix(ref.Ref, "#/components/schemas/") {
+			ref.Value = nil
+		} else {
+			ref.Ref = ""
+		}
+	}
+	return ref, nil
+}
+
 func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
 	if ref := g.Types[t]; ref != nil && g.opts.schemaCustomizer == nil {
 		g.SchemaRefs[ref]++
 		return ref, nil
 	}
 	ref, err := g.generateWithoutSaving(parents, t, name, tag)
+	if err != nil {
+		return nil, err
+	}
 	if ref != nil {
 		g.Types[t] = ref
 		g.SchemaRefs[ref]++
 	}
-	return ref, err
+	return ref, nil
+}
+
+func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.StructField {
+	var ff reflect.StructField
+	// fieldInfo.Index is an array of indexes starting from the root of the type
+	for i := 0; i < len(fieldInfo.Index); i++ {
+		ff = t.Field(fieldInfo.Index[i])
+		t = ff.Type
+	}
+	return ff
 }
 
 func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
@@ -266,7 +300,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 							schema.WithPropertyRef(fieldName, ref)
 						}
 					} else {
-						ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+						ff := getStructField(t, fieldInfo)
 						if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
 							fieldName, fType = tag, ff.Type
 						}
@@ -276,7 +310,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 				// extract the field tag if we have a customizer
 				var fieldTag reflect.StructTag
 				if g.opts.schemaCustomizer != nil {
-					ff := t.Field(fieldInfo.Index[len(fieldInfo.Index)-1])
+					ff := getStructField(t, fieldInfo)
 					fieldTag = ff.Tag
 				}
 
@@ -331,6 +365,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 		typeName = t.Name()
 	}
 
+	g.componentSchemaRefs[typeName] = struct{}{}
 	return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema)
 }
 
