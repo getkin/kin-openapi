@@ -982,27 +982,27 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		schemaRef, _ = FromV3SchemaRef(schemaRef, components)
 		if ref := schemaRef.Ref; ref != "" {
 			result.Schema = &openapi3.SchemaRef{Ref: FromV3Ref(ref)}
+			return result, nil
 		}
-		if schema := schemaRef.Value; schema != nil {
-			result.Type = schema.Type
-			result.Format = schema.Format
-			result.Enum = schema.Enum
-			result.Minimum = schema.Min
-			result.Maximum = schema.Max
-			result.ExclusiveMin = schema.ExclusiveMin
-			result.ExclusiveMax = schema.ExclusiveMax
-			result.MinLength = schema.MinLength
-			result.MaxLength = schema.MaxLength
-			result.Pattern = schema.Pattern
-			result.Default = schema.Default
-			result.Items = schema.Items
-			result.MinItems = schema.MinItems
-			result.MaxItems = schema.MaxItems
-			result.AllowEmptyValue = schema.AllowEmptyValue
-			// result.CollectionFormat = schema.CollectionFormat
-			result.UniqueItems = schema.UniqueItems
-			result.MultipleOf = schema.MultipleOf
-		}
+		schema := schemaRef.Value
+		result.Type = schema.Type
+		result.Format = schema.Format
+		result.Enum = schema.Enum
+		result.Minimum = schema.Min
+		result.Maximum = schema.Max
+		result.ExclusiveMin = schema.ExclusiveMin
+		result.ExclusiveMax = schema.ExclusiveMax
+		result.MinLength = schema.MinLength
+		result.MaxLength = schema.MaxLength
+		result.Pattern = schema.Pattern
+		result.Default = schema.Default
+		result.Items = schema.Items
+		result.MinItems = schema.MinItems
+		result.MaxItems = schema.MaxItems
+		result.AllowEmptyValue = schema.AllowEmptyValue
+		// result.CollectionFormat = schema.CollectionFormat
+		result.UniqueItems = schema.UniqueItems
+		result.MultipleOf = schema.MultipleOf
 	}
 	return result, nil
 }
