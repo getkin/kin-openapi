@@ -193,6 +193,11 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 
 ## Sub-v0 breaking API changes
 
+### v0.84.0
+* The prototype of `openapi3gen.NewSchemaRefForValue` changed:
+	* It no longer returns a map but that is still accessible under the field `(*Generator).SchemaRefs`.
+	* It now takes in an additional argument (basically `doc.Components.Schemas`) which gets written to so `$ref` cycles can be properly handled.
+
 ### v0.61.0
 * Renamed `openapi2.Swagger` to `openapi2.T`.
 * Renamed `openapi2conv.FromV3Swagger` to `openapi2conv.FromV3`.
