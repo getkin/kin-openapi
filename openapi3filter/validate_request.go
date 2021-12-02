@@ -140,7 +140,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	// Validate a parameter's value.
 	if value == nil {
 		if parameter.Required {
-			return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidRequired.Error(), Err: ErrInvalidRequired}
+			return &RequestError{Input: input, Parameter: parameter, Err: ErrInvalidRequired}
 		}
 		return nil
 	}
