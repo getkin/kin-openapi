@@ -92,6 +92,9 @@ func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, erro
 
 func (g *Generator) newSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
+	if err != nil {
+		return nil, err
+	}
 	for ref := range g.SchemaRefs {
 		if _, ok := g.ComponentSchemaRefs[ref.Ref]; ok && schemas != nil {
 			schemas[ref.Ref] = &openapi3.SchemaRef{
