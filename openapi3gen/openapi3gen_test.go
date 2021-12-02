@@ -115,11 +115,33 @@ func TestSimpleStruct(t *testing.T) {
 }
 
 func TestCyclic(t *testing.T) {
-	g := NewGenerator(ThrowErrorOnCycle())
-	schemaRef, err := g.newSchemaRefForValue(&CyclicType0{}, nil)
+	schemas := make(openapi3.Schemas)
+	schemaRef, err := NewSchemaRefForValue(&CyclicType0{}, schemas, ThrowErrorOnCycle())
+	require.Error(t, err)
 	require.IsType(t, &CycleError{}, err)
-	require.Nil(t, schemaRef)
-	require.Empty(t, g.SchemaRefs)
+	require.Empty(t, schemas)
+
+	schemaRef, err = NewSchemaRefForValue(&CyclicType0{}, schemas)
+	require.NoError(t, err)
+	schemaRefForCyclicType0 := &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			Type: "object",
+			Properties: openapi3.Schemas{
+				"a": {
+					Value: &openapi3.Schema{
+						Type: "object",
+						Properties: openapi3.Schemas{
+							"b": {Ref: "#/components/schemas/CyclicType0"},
+						},
+					},
+				},
+			},
+		},
+	}
+	require.Equal(t, schemaRefForCyclicType0, schemaRef)
+	require.Equal(t, openapi3.Schemas{
+		"CyclicType0": schemaRefForCyclicType0,
+	}, schemas)
 }
 
 func TestExportedNonTagged(t *testing.T) {
