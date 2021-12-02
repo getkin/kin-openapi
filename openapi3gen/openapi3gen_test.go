@@ -3,6 +3,7 @@ package openapi3gen_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -14,16 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type CyclicType0 struct {
-	CyclicField *CyclicType1 `json:"a"`
-}
-type CyclicType1 struct {
-	CyclicField *CyclicType0 `json:"b"`
-}
-
-func TestSimpleStruct(t *testing.T) {
+func ExampleGenerator_SchemaRefs() {
 	type SomeOtherType string
-
 	type SomeStruct struct {
 		Bool    bool                      `json:"bool"`
 		Int     int                       `json:"int"`
@@ -49,100 +42,136 @@ func TestSimpleStruct(t *testing.T) {
 
 	g := openapi3gen.NewGenerator()
 	schemaRef, err := g.NewSchemaRefForValue(&SomeStruct{}, nil)
-	require.NoError(t, err)
-	require.Len(t, g.SchemaRefs, 15)
-
-	schemaJSON, err := json.Marshal(schemaRef)
-	require.NoError(t, err)
-
-	require.JSONEq(t, `
-	{
-	  "properties": {
-	    "bool": {
-	      "type": "boolean"
-	    },
-	    "bytes": {
-	      "format": "byte",
-	      "type": "string"
-	    },
-	    "float64": {
-	      "format": "double",
-	      "type": "number"
-	    },
-	    "int": {
-	      "type": "integer"
-	    },
-	    "int64": {
-	      "format": "int64",
-	      "type": "integer"
-	    },
-	    "json": {},
-	    "map": {
-	      "additionalProperties": {
-	        "type": "string"
-	      },
-	      "type": "object"
-	    },
-	    "ptr": {
-	      "type": "string"
-	    },
-	    "slice": {
-	      "items": {
-	        "type": "string"
-	      },
-	      "type": "array"
-	    },
-	    "string": {
-	      "type": "string"
-	    },
-	    "struct": {
-	      "properties": {
-	        "x": {
-	          "type": "string"
-	        }
-	      },
-	      "type": "object"
-	    },
-	    "structWithoutFields": {},
-	    "time": {
-	      "format": "date-time",
-	      "type": "string"
-	    }
-	  },
-	  "type": "object"
+	if err != nil {
+		panic(err)
 	}
-	`, string(schemaJSON))
 
+	fmt.Printf("g.SchemaRefs: %d\n", len(g.SchemaRefs))
+	var data []byte
+	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// g.SchemaRefs: 15
+	// schemaRef: {
+	//   "properties": {
+	//     "bool": {
+	//       "type": "boolean"
+	//     },
+	//     "bytes": {
+	//       "format": "byte",
+	//       "type": "string"
+	//     },
+	//     "float64": {
+	//       "format": "double",
+	//       "type": "number"
+	//     },
+	//     "int": {
+	//       "type": "integer"
+	//     },
+	//     "int64": {
+	//       "format": "int64",
+	//       "type": "integer"
+	//     },
+	//     "json": {},
+	//     "map": {
+	//       "additionalProperties": {
+	//         "type": "string"
+	//       },
+	//       "type": "object"
+	//     },
+	//     "ptr": {
+	//       "type": "string"
+	//     },
+	//     "slice": {
+	//       "items": {
+	//         "type": "string"
+	//       },
+	//       "type": "array"
+	//     },
+	//     "string": {
+	//       "type": "string"
+	//     },
+	//     "struct": {
+	//       "properties": {
+	//         "x": {
+	//           "type": "string"
+	//         }
+	//       },
+	//       "type": "object"
+	//     },
+	//     "structWithoutFields": {},
+	//     "time": {
+	//       "format": "date-time",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
 }
 
-func TestCyclic(t *testing.T) {
+func ExampleThrowErrorOnCycle() {
+	type CyclicType0 struct {
+		CyclicField *struct {
+			CyclicField *CyclicType0 `json:"b"`
+		} `json:"a"`
+	}
+
 	schemas := make(openapi3.Schemas)
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&CyclicType0{}, schemas, openapi3gen.ThrowErrorOnCycle())
-	require.Error(t, err)
-	require.IsType(t, &openapi3gen.CycleError{}, err)
-	require.Empty(t, schemas)
-
-	schemaRef, err = openapi3gen.NewSchemaRefForValue(&CyclicType0{}, schemas)
-	require.NoError(t, err)
-	schemaRefForCyclicType0 := &openapi3.SchemaRef{
-		Value: &openapi3.Schema{
-			Type: "object",
-			Properties: openapi3.Schemas{
-				"a": {
-					Value: &openapi3.Schema{
-						Type: "object",
-						Properties: openapi3.Schemas{
-							"b": {Ref: "#/components/schemas/CyclicType0"},
-						},
-					},
-				},
-			},
-		},
+	if schemaRef != nil || err == nil {
+		panic(`With option ThrowErrorOnCycle, an error is returned when a schema reference cycle is found`)
 	}
-	require.Equal(t, schemaRefForCyclicType0, schemaRef)
-	require.Equal(t, openapi3.Schemas{
-		"CyclicType0": schemaRefForCyclicType0,
-	}, schemas)
+	if _, ok := err.(*openapi3gen.CycleError); !ok {
+		panic(`With option ThrowErrorOnCycle, an error of type CycleError is returned`)
+	}
+	if len(schemas) != 0 {
+		panic(`No references should have been collected at this point`)
+	}
+
+	if schemaRef, err = openapi3gen.NewSchemaRefForValue(&CyclicType0{}, schemas); err != nil {
+		panic(err)
+	}
+
+	var data []byte
+	if data, err = json.MarshalIndent(schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	if data, err = json.MarshalIndent(schemas, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemas: %s\n", data)
+	// Output:
+	// schemaRef: {
+	//   "properties": {
+	//     "a": {
+	//       "properties": {
+	//         "b": {
+	//           "$ref": "#/components/schemas/CyclicType0"
+	//         }
+	//       },
+	//       "type": "object"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
+	// schemas: {
+	//   "CyclicType0": {
+	//     "properties": {
+	//       "a": {
+	//         "properties": {
+	//           "b": {
+	//             "$ref": "#/components/schemas/CyclicType0"
+	//           }
+	//         },
+	//         "type": "object"
+	//       }
+	//     },
+	//     "type": "object"
+	//   }
+	// }
 }
 
 func TestExportedNonTagged(t *testing.T) {
@@ -164,24 +193,34 @@ func TestExportedNonTagged(t *testing.T) {
 		}}}, schemaRef)
 }
 
-func TestExportUint(t *testing.T) {
+func ExampleUseAllExportedFields() {
 	type UnsignedIntStruct struct {
 		UnsignedInt uint `json:"uint"`
 	}
 
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&UnsignedIntStruct{}, nil, openapi3gen.UseAllExportedFields())
-	require.NoError(t, err)
-	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
-		Type: "object",
-		Properties: openapi3.Schemas{
-			"uint": {Value: &openapi3.Schema{
-				Type: "integer",
-				Min:  openapi3.Float64Ptr(0),
-			}},
-		}}}, schemaRef)
+	if err != nil {
+		panic(err)
+	}
+
+	var data []byte
+	if data, err = json.MarshalIndent(schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemaRef: {
+	//   "properties": {
+	//     "uint": {
+	//       "minimum": 0,
+	//       "type": "integer"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
 }
 
-func TestEmbeddedStructs(t *testing.T) {
+func ExampleGenerateSchemaRef() {
 	type EmbeddedStruct struct {
 		ID string
 	}
@@ -201,14 +240,28 @@ func TestEmbeddedStructs(t *testing.T) {
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
 
 	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	var ok bool
-	_, ok = schemaRef.Value.Properties["Name"]
-	require.Equal(t, true, ok)
-
-	_, ok = schemaRef.Value.Properties["ID"]
-	require.Equal(t, true, ok)
+	var data []byte
+	if data, err = json.MarshalIndent(schemaRef.Value.Properties["Name"].Value, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf(`schemaRef.Value.Properties["Name"].Value: %s`, data)
+	fmt.Println()
+	if data, err = json.MarshalIndent(schemaRef.Value.Properties["ID"].Value, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf(`schemaRef.Value.Properties["ID"].Value: %s`, data)
+	fmt.Println()
+	// Output:
+	// schemaRef.Value.Properties["Name"].Value: {
+	//   "type": "string"
+	// }
+	// schemaRef.Value.Properties["ID"].Value: {
+	//   "type": "string"
+	// }
 }
 
 func TestEmbeddedPointerStructs(t *testing.T) {
@@ -271,7 +324,7 @@ func TestCyclicReferences(t *testing.T) {
 	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Ref)
 }
 
-func TestSchemaCustomizer(t *testing.T) {
+func ExampleSchemaCustomizer() {
 	type NestedInnerBla struct {
 		Enum1Field string `json:"enum1" myenumtag:"a,b"`
 	}
@@ -292,7 +345,6 @@ func TestSchemaCustomizer(t *testing.T) {
 	}
 
 	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
-		t.Logf("Field=%s,Tag=%s", name, tag)
 		if tag.Get("mymintag") != "" {
 			minVal, err := strconv.ParseFloat(tag.Get("mymintag"), 64)
 			if err != nil {
@@ -316,52 +368,58 @@ func TestSchemaCustomizer(t *testing.T) {
 	})
 
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	jsonSchema, err := json.MarshalIndent(schemaRef, "", "  ")
-	require.NoError(t, err)
-	require.JSONEq(t, `{
-  "properties": {
-    "AnonStruct": {
-      "properties": {
-        "InnerFieldWithTag": {
-          "maximum": 50,
-          "minimum": -1,
-          "type": "integer"
-        },
-        "InnerFieldWithoutTag": {
-          "type": "integer"
-        },
-				"enum1": {
-					"enum": [
-						"a",
-						"b"
-					],
-					"type": "string"
-				}
-      },
-      "type": "object"
-    },
-    "UntaggedStringField": {
-      "type": "string"
-    },
-    "enum2": {
-      "enum": [
-        "c",
-        "d"
-      ],
-      "type": "string"
-    },
-    "enum3": {
-      "enum": [
-        "e",
-        "f"
-      ],
-      "type": "string"
-    }
-  },
-  "type": "object"
-}`, string(jsonSchema))
+	var data []byte
+	if data, err = json.MarshalIndent(schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemaRef: {
+	//   "properties": {
+	//     "AnonStruct": {
+	//       "properties": {
+	//         "InnerFieldWithTag": {
+	//           "maximum": 50,
+	//           "minimum": -1,
+	//           "type": "integer"
+	//         },
+	//         "InnerFieldWithoutTag": {
+	//           "type": "integer"
+	//         },
+	//         "enum1": {
+	//           "enum": [
+	//             "a",
+	//             "b"
+	//           ],
+	//           "type": "string"
+	//         }
+	//       },
+	//       "type": "object"
+	//     },
+	//     "UntaggedStringField": {
+	//       "type": "string"
+	//     },
+	//     "enum2": {
+	//       "enum": [
+	//         "c",
+	//         "d"
+	//       ],
+	//       "type": "string"
+	//     },
+	//     "enum3": {
+	//       "enum": [
+	//         "e",
+	//         "f"
+	//       ],
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
 }
 
 func TestSchemaCustomizerError(t *testing.T) {
@@ -374,7 +432,7 @@ func TestSchemaCustomizerError(t *testing.T) {
 	require.EqualError(t, err, "test error")
 }
 
-func TestRecursiveSchema(t *testing.T) {
+func ExampleNewSchemaRefForValue_recursive() {
 	type RecursiveType struct {
 		Field1     string           `json:"field1"`
 		Field2     string           `json:"field2"`
@@ -384,55 +442,60 @@ func TestRecursiveSchema(t *testing.T) {
 
 	schemas := make(openapi3.Schemas)
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&RecursiveType{}, schemas)
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	jsonSchemas, err := json.MarshalIndent(&schemas, "", "  ")
-	require.NoError(t, err)
-
-	jsonSchemaRef, err := json.MarshalIndent(&schemaRef, "", "  ")
-	require.NoError(t, err)
-
-	require.JSONEq(t, `{
-		"RecursiveType": {
-			"properties": {
-				"children": {
-					"items": {
-						"$ref": "#/components/schemas/RecursiveType"
-					},
-					"type": "array"
-				},
-				"field1": {
-					"type": "string"
-				},
-				"field2": {
-					"type": "string"
-				},
-				"field3": {
-					"type": "string"
-				}
-			},
-			"type": "object"
-		}
-	}`, string(jsonSchemas))
-
-	require.JSONEq(t, `{
-		"properties": {
-			"children": {
-				"items": {
-					"$ref": "#/components/schemas/RecursiveType"
-				},
-				"type": "array"
-			},
-			"field1": {
-				"type": "string"
-			},
-			"field2": {
-				"type": "string"
-			},
-			"field3": {
-				"type": "string"
-			}
-		},
-		"type": "object"
-	}`, string(jsonSchemaRef))
+	var data []byte
+	if data, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemas: %s\n", data)
+	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemas: {
+	//   "RecursiveType": {
+	//     "properties": {
+	//       "children": {
+	//         "items": {
+	//           "$ref": "#/components/schemas/RecursiveType"
+	//         },
+	//         "type": "array"
+	//       },
+	//       "field1": {
+	//         "type": "string"
+	//       },
+	//       "field2": {
+	//         "type": "string"
+	//       },
+	//       "field3": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   }
+	// }
+	// schemaRef: {
+	//   "properties": {
+	//     "children": {
+	//       "items": {
+	//         "$ref": "#/components/schemas/RecursiveType"
+	//       },
+	//       "type": "array"
+	//     },
+	//     "field1": {
+	//       "type": "string"
+	//     },
+	//     "field2": {
+	//       "type": "string"
+	//     },
+	//     "field3": {
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
 }
