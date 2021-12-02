@@ -298,6 +298,10 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			required = true
 		}
 
+		var schemaRefRef string
+		if schemaRef := parameter.Schema; schemaRef != nil && schemaRef.Ref != "" {
+			schemaRefRef = schemaRef.Ref
+		}
 		result := &openapi3.Parameter{
 			In:             parameter.In,
 			Name:           parameter.Name,
@@ -322,7 +326,9 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 				AllowEmptyValue: parameter.AllowEmptyValue,
 				UniqueItems:     parameter.UniqueItems,
 				MultipleOf:      parameter.MultipleOf,
-			}}),
+			},
+				Ref: schemaRefRef,
+			}),
 		}
 		return &openapi3.ParameterRef{Value: result}, nil, nil, nil
 	}
@@ -980,6 +986,10 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRef, _ = FromV3SchemaRef(schemaRef, components)
+		if ref := schemaRef.Ref; ref != "" {
+			result.Schema = &openapi3.SchemaRef{Ref: FromV3Ref(ref)}
+			return result, nil
+		}
 		schema := schemaRef.Value
 		result.Type = schema.Type
 		result.Format = schema.Format
