@@ -298,6 +298,10 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			required = true
 		}
 
+		var schemaRefRef string
+		if schemaRef := parameter.Schema; schemaRef != nil && schemaRef.Ref != "" {
+			schemaRefRef = schemaRef.Ref
+		}
 		result := &openapi3.Parameter{
 			In:             parameter.In,
 			Name:           parameter.Name,
@@ -322,7 +326,9 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 				AllowEmptyValue: parameter.AllowEmptyValue,
 				UniqueItems:     parameter.UniqueItems,
 				MultipleOf:      parameter.MultipleOf,
-			}}),
+			},
+				Ref: schemaRefRef,
+			}),
 		}
 		return &openapi3.ParameterRef{Value: result}, nil, nil, nil
 	}
