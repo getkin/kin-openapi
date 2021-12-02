@@ -317,9 +317,14 @@ const exampleV2 = `
 		"/foo": {
 			"get": {
 				"operationId": "getFoo",
+				"consumes": [
+					"application/json",
+					"application/xml"
+				],
 				"parameters": [
 					{
-						"in": "query",
+						"x-originalParamName": "foo",
+						"in": "body",
 						"name": "foo",
 						"schema": {
 							"$ref": "#/definitions/foo"
@@ -689,15 +694,21 @@ const exampleV3 = `
 		"/foo": {
 			"get": {
 				"operationId": "getFoo",
-				"parameters": [
-					{
-						"in": "query",
-						"name": "foo",
-						"schema": {
-							"$ref": "#/components/schemas/foo"
+				"requestBody": {
+					"x-originalParamName": "foo",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/foo"
+							}
+						},
+						"application/xml": {
+							"schema": {
+								"$ref": "#/components/schemas/foo"
+							}
 						}
 					}
-				],
+				},
 				"responses": {
 					"default": {
 						"content": {
