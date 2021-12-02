@@ -220,7 +220,7 @@ func ExampleUseAllExportedFields() {
 	// }
 }
 
-func ExampleGenerateSchemaRef() {
+func ExampleGenerator_GenerateSchemaRef() {
 	type EmbeddedStruct struct {
 		ID string
 	}
