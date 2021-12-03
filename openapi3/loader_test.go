@@ -227,18 +227,18 @@ paths:
 	require.NotNil(t, doc.Paths["/"].Post.RequestBody.Value.Content.Get("application/json").Examples["test"])
 }
 
-func createTestServer(handler http.Handler) *httptest.Server {
+func createTestServer(t *testing.T, handler http.Handler) *httptest.Server {
 	ts := httptest.NewUnstartedServer(handler)
-	l, _ := net.Listen("tcp", addr)
+	l, err := net.Listen("tcp", addr)
+	require.NoError(t, err)
 	ts.Listener.Close()
 	ts.Listener = l
 	return ts
 }
 
 func TestLoadFromRemoteURL(t *testing.T) {
-
 	fs := http.FileServer(http.Dir("testdata"))
-	ts := createTestServer(fs)
+	ts := createTestServer(t, fs)
 	ts.Start()
 	defer ts.Close()
 
@@ -351,7 +351,7 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 }`)
 
 	fs := http.FileServer(http.Dir("testdata"))
-	ts := createTestServer(fs)
+	ts := createTestServer(t, fs)
 	ts.Start()
 	defer ts.Close()
 

@@ -244,8 +244,6 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 }
 
 func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef, required bool) (interface{}, error) {
-	var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error)
-
 	if len(schema.Value.AllOf) > 0 {
 		var value interface{}
 		var err error
@@ -298,6 +296,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 	}
 
 	if schema.Value.Type != "" {
+		var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error)
 		switch schema.Value.Type {
 		case "array":
 			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, error) {

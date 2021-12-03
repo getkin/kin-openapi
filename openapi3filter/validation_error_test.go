@@ -56,7 +56,8 @@ type validationTest struct {
 }
 
 func getValidationTests(t *testing.T) []*validationTest {
-	badHost, _ := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
+	badHost, err := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
+	require.NoError(t, err)
 	badPath := newPetstoreRequest(t, http.MethodGet, "/watdis", nil)
 	badMethod := newPetstoreRequest(t, http.MethodTrace, "/pet", nil)
 

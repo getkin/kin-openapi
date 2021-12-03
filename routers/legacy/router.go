@@ -125,7 +125,10 @@ func (router *Router) FindRoute(req *http.Request) (*routers.Route, map[string]s
 			}
 		}
 		pathParams = make(map[string]string, 8)
-		paramNames, _ := server.ParameterNames()
+		paramNames, err := server.ParameterNames()
+		if err != nil {
+			return nil, nil, err
+		}
 		for i, value := range paramValues {
 			name := paramNames[i]
 			pathParams[name] = value
