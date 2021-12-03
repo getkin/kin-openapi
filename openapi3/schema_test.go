@@ -389,7 +389,7 @@ var schemaExamples = []schemaExample{
 			UniqueItems: true,
 			Items: (&Schema{
 				Type: "object",
-				Properties: map[string]*SchemaRef{
+				Properties: Schemas{
 					"key1": NewFloat64Schema().NewRef(),
 				},
 			}).NewRef(),
@@ -446,7 +446,7 @@ var schemaExamples = []schemaExample{
 			UniqueItems: true,
 			Items: (&Schema{
 				Type: "object",
-				Properties: map[string]*SchemaRef{
+				Properties: Schemas{
 					"key1": (&Schema{
 						Type:        "array",
 						UniqueItems: true,
@@ -579,7 +579,7 @@ var schemaExamples = []schemaExample{
 				UniqueItems: true,
 				Items: (&Schema{
 					Type: "object",
-					Properties: map[string]*SchemaRef{
+					Properties: Schemas{
 						"key1": NewFloat64Schema().NewRef(),
 					},
 				}).NewRef(),
@@ -678,7 +678,7 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Type:     "object",
 			MaxProps: Uint64Ptr(2),
-			Properties: map[string]*SchemaRef{
+			Properties: Schemas{
 				"numberProperty": NewFloat64Schema().NewRef(),
 			},
 		},

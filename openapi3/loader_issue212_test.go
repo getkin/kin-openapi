@@ -81,7 +81,7 @@ components:
 	expected, err := json.Marshal(&Schema{
 		Type:     "object",
 		Required: []string{"id", "uri"},
-		Properties: map[string]*SchemaRef{
+		Properties: Schemas{
 			"id":  {Value: &Schema{Type: "string"}},
 			"uri": {Value: &Schema{Type: "string"}},
 		},
