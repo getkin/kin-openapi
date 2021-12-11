@@ -17,6 +17,7 @@ type T struct {
 	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 	Schemes             []string                       `json:"schemes,omitempty" yaml:"schemes,omitempty"`
 	Consumes            []string                       `json:"consumes,omitempty" yaml:"consumes,omitempty"`
+	Produces            []string                       `json:"produces,omitempty" yaml:"produces,omitempty"`
 	Host                string                         `json:"host,omitempty" yaml:"host,omitempty"`
 	BasePath            string                         `json:"basePath,omitempty" yaml:"basePath,omitempty"`
 	Paths               map[string]*PathItem           `json:"paths,omitempty" yaml:"paths,omitempty"`
