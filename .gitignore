@@ -20,3 +20,4 @@
 .idea
 
 /openapi3/load_with_go_embed_test.go
+.vscode
