@@ -17,6 +17,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var _ routers.Router = &Router{}
+
 // Router helps link http.Request.s and an OpenAPIv3 spec
 type Router struct {
 	muxes  []*mux.Route
@@ -107,10 +109,10 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 			if err := match.MatchErr; err != nil {
 				// What then?
 			}
-			route := r.routes[i]
+			route := *r.routes[i]
 			route.Method = req.Method
 			route.Operation = route.Spec.Paths[route.Path].GetOperation(route.Method)
-			return route, match.Vars, nil
+			return &route, match.Vars, nil
 		}
 		switch match.MatchErr {
 		case nil:
