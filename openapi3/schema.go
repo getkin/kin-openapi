@@ -1078,7 +1078,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			Value:       value,
 			Schema:      schema,
 			SchemaField: "maximum",
-			Reason:      fmt.Sprintf("number must be most %g", *v),
+			Reason:      fmt.Sprintf("number must be at most %g", *v),
 		}
 		if !settings.multiError {
 			return err
