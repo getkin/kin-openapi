@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -24,17 +25,10 @@ func (h Headers) JSONLookup(token string) (interface{}, error) {
 	return ref.Value, nil
 }
 
+// Header is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md#headerObject
 type Header struct {
-	ExtensionProps
-
-	// Optional description. Should use CommonMark syntax.
-	Description string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Deprecated  bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required    bool        `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema      *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example     interface{} `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples    Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content     Content     `json:"content,omitempty" yaml:"content,omitempty"`
+	Parameter
 }
 
 var _ jsonpointer.JSONPointable = (*Header)(nil)
@@ -43,10 +37,52 @@ func (value *Header) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// SerializationMethod returns a header's serialization method.
+func (value *Header) SerializationMethod() (*SerializationMethod, error) {
+	style := value.Style
+	if style == "" {
+		style = SerializationSimple
+	}
+	explode := false
+	if value.Explode != nil {
+		explode = *value.Explode
+	}
+	return &SerializationMethod{Style: style, Explode: explode}, nil
+}
+
 func (value *Header) Validate(ctx context.Context) error {
-	if v := value.Schema; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return err
+	if value.Name != "" {
+		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")
+	}
+	if value.In != "" {
+		return errors.New("header 'in' MUST NOT be specified, it is implicitly in header")
+	}
+
+	// Validate a parameter's serialization method.
+	sm, err := value.SerializationMethod()
+	if err != nil {
+		return err
+	}
+	if smSupported := false ||
+		sm.Style == SerializationSimple && !sm.Explode ||
+		sm.Style == SerializationSimple && sm.Explode; !smSupported {
+		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a header parameter", sm.Style, sm.Explode)
+		return fmt.Errorf("header schema is invalid: %v", e)
+	}
+
+	if (value.Schema == nil) == (value.Content == nil) {
+		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", value)
+		return fmt.Errorf("header schema is invalid: %v", e)
+	}
+	if schema := value.Schema; schema != nil {
+		if err := schema.Validate(ctx); err != nil {
+			return fmt.Errorf("header schema is invalid: %v", err)
+		}
+	}
+
+	if content := value.Content; content != nil {
+		if err := content.Validate(ctx); err != nil {
+			return fmt.Errorf("header content is invalid: %v", err)
 		}
 	}
 	return nil
@@ -61,8 +97,20 @@ func (value Header) JSONLookup(token string) (interface{}, error) {
 			}
 			return value.Schema.Value, nil
 		}
+	case "name":
+		return value.Name, nil
+	case "in":
+		return value.In, nil
 	case "description":
 		return value.Description, nil
+	case "style":
+		return value.Style, nil
+	case "explode":
+		return value.Explode, nil
+	case "allowEmptyValue":
+		return value.AllowEmptyValue, nil
+	case "allowReserved":
+		return value.AllowReserved, nil
 	case "deprecated":
 		return value.Deprecated, nil
 	case "required":

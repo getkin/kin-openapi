@@ -26,11 +26,18 @@ func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 	}
 
 	if host := doc2.Host; host != "" {
+		if strings.Contains(host, "/") {
+			err := fmt.Errorf("invalid host %q. This MUST be the host only and does not include the scheme nor sub-paths.", host)
+			return nil, err
+		}
 		schemes := doc2.Schemes
 		if len(schemes) == 0 {
-			schemes = []string{"https://"}
+			schemes = []string{"https"}
 		}
 		basePath := doc2.BasePath
+		if basePath == "" {
+			basePath = "/"
+		}
 		for _, scheme := range schemes {
 			u := url.URL{
 				Scheme: scheme,
@@ -232,6 +239,9 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			ExtensionProps: parameter.ExtensionProps,
 		}
 		if parameter.Name != "" {
+			if result.Extensions == nil {
+				result.Extensions = make(map[string]interface{})
+			}
 			result.Extensions["x-originalParamName"] = parameter.Name
 		}
 
@@ -288,6 +298,10 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			required = true
 		}
 
+		var schemaRefRef string
+		if schemaRef := parameter.Schema; schemaRef != nil && schemaRef.Ref != "" {
+			schemaRefRef = schemaRef.Ref
+		}
 		result := &openapi3.Parameter{
 			In:             parameter.In,
 			Name:           parameter.Name,
@@ -312,7 +326,9 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 				AllowEmptyValue: parameter.AllowEmptyValue,
 				UniqueItems:     parameter.UniqueItems,
 				MultipleOf:      parameter.MultipleOf,
-			}}),
+			},
+				Ref: schemaRefRef,
+			}),
 		}
 		return &openapi3.ParameterRef{Value: result}, nil, nil, nil
 	}
@@ -515,6 +531,8 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 			flows.AuthorizationCode = flow
 		case "password":
 			flows.Password = flow
+		case "application":
+			flows.ClientCredentials = flow
 		default:
 			return nil, fmt.Errorf("unsupported flow %q", securityScheme.Flow)
 		}
@@ -968,6 +986,10 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRef, _ = FromV3SchemaRef(schemaRef, components)
+		if ref := schemaRef.Ref; ref != "" {
+			result.Schema = &openapi3.SchemaRef{Ref: FromV3Ref(ref)}
+			return result, nil
+		}
 		schema := schemaRef.Value
 		result.Type = schema.Type
 		result.Format = schema.Format
@@ -1066,6 +1088,8 @@ func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*o
 				result.Flow = "accessCode"
 			} else if flow = flows.Password; flow != nil {
 				result.Flow = "password"
+			} else if flow = flows.ClientCredentials; flow != nil {
+				result.Flow = "application"
 			} else {
 				return nil, nil
 			}

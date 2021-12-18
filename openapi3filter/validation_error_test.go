@@ -56,7 +56,8 @@ type validationTest struct {
 }
 
 func getValidationTests(t *testing.T) []*validationTest {
-	badHost, _ := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
+	badHost, err := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
+	require.NoError(t, err)
 	badPath := newPetstoreRequest(t, http.MethodGet, "/watdis", nil)
 	badMethod := newPetstoreRequest(t, http.MethodTrace, "/pet", nil)
 
@@ -180,7 +181,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:   "status",
 			wantErrParamIn: "query",
-			wantErrReason:  ErrInvalidRequired.Error(),
+			wantErrBody:    `parameter "status" in query has an error: value is required but missing`,
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "status" in query is required`},
 		},
@@ -424,7 +425,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:   "petId",
 			wantErrParamIn: "path",
-			wantErrReason:  ErrInvalidRequired.Error(),
+			wantErrBody:    `parameter "petId" in path has an error: value is required but missing`,
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "petId" in path is required`},
 		},

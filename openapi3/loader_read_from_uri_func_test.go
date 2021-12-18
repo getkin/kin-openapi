@@ -20,7 +20,7 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 	require.NoError(t, doc.Validate(loader.Context))
-	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo"].Value.Properties["bar"].Value.Items.Value.Example)
+	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Example)
 }
 
 type multipleSourceLoaderExample struct {

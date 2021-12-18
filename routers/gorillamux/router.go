@@ -35,15 +35,21 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	servers := make([]srv, 0, len(doc.Servers))
 	for _, server := range doc.Servers {
 		serverURL := server.URL
-		scheme0 := strings.Split(serverURL, "://")[0]
-		schemes := permutePart(scheme0, server)
-
-		u, err := url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
+		var schemes []string
+		var u *url.URL
+		var err error
+		if strings.Contains(serverURL, "://") {
+			scheme0 := strings.Split(serverURL, "://")[0]
+			schemes = permutePart(scheme0, server)
+			u, err = url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
+		} else {
+			u, err = url.Parse(bEncode(serverURL))
+		}
 		if err != nil {
 			return nil, err
 		}
 		path := bDecode(u.EscapedPath())
-		if path[len(path)-1] == '/' {
+		if len(path) > 0 && path[len(path)-1] == '/' {
 			path = path[:len(path)-1]
 		}
 		servers = append(servers, srv{
@@ -56,7 +62,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	if len(servers) == 0 {
 		servers = append(servers, srv{})
 	}
-	muxRouter := mux.NewRouter() /*.UseEncodedPath()?*/
+	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
 		pathItem := doc.Paths[path]
