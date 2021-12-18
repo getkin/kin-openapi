@@ -62,16 +62,19 @@ paths:
 		``: false,
 	} {
 		loader := &openapi3.Loader{Context: context.Background()}
+		t.Logf("using servers: %q (%v)", servers, expectError)
 		doc, err := loader.LoadFromData(spec(servers))
 		require.NoError(t, err)
 		err = doc.Validate(context.Background())
 		require.NoError(t, err)
 
-		for _, newRouter := range []func(*openapi3.T) (routers.Router, error){gorillamux.NewRouter, legacy.NewRouter} {
+		for i, newRouter := range []func(*openapi3.T) (routers.Router, error){gorillamux.NewRouter, legacy.NewRouter} {
+			t.Logf("using NewRouter from %s", map[int]string{0: "gorillamux", 1: "legacy"}[i])
 			router, err := newRouter(doc)
 			require.NoError(t, err)
 
-			{
+			if true {
+				t.Logf("using naked newRouter")
 				httpReq, err := http.NewRequest(http.MethodPost, "/base/test", strings.NewReader(`{}`))
 				require.NoError(t, err)
 				httpReq.Header.Set("Content-Type", "application/json")
@@ -92,7 +95,8 @@ paths:
 				require.NoError(t, err)
 			}
 
-			{
+			if true {
+				t.Logf("using httptest.NewServer")
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					route, pathParams, err := router.FindRoute(r)
 					if err != nil {
