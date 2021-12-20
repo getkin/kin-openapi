@@ -1,15 +1,16 @@
-package openapi3
+package openapi3_test
 
 import (
-	"context"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIssue241Ghodss(t *testing.T) {
-	const spec = `components:
+	spec := `
+components:
   schemas:
     FooBar:
       properties:
@@ -24,11 +25,12 @@ info:
   version: version not set
 openapi: 3.0.3
 paths: {}
-`
+`[1:]
 
-	doc, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
-	err = doc.Validate(context.Background())
+	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
 	yml, err := yaml.Marshal(doc)
