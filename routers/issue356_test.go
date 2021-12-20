@@ -59,7 +59,7 @@ paths:
 
 		`- url: http://localhost:3000/base`: true,
 
-		``: false,
+		``: true,
 	} {
 		loader := &openapi3.Loader{Context: context.Background()}
 		t.Logf("using servers: %q (%v)", servers, expectError)
