@@ -64,6 +64,7 @@ jobs:
     - if: runner.os == 'Linux'
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
 
+    - run: go test -count=10 -v -run TestIssue356 ./routers
     - run: go test ./...
     - run: go test -v -run TestRaceyPatternSchema -race ./...
       env:
