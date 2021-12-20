@@ -11,21 +11,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func v2v3JSON(spec2 []byte) (doc3 *openapi3.Swagger, err error) {
-	var doc2 openapi2.Swagger
+func v2v3JSON(spec2 []byte) (doc3 *openapi3.T, err error) {
+	var doc2 openapi2.T
 	if err = json.Unmarshal(spec2, &doc2); err != nil {
 		return
 	}
-	doc3, err = ToV3Swagger(&doc2)
+	doc3, err = ToV3(&doc2)
 	return
 }
 
-func v2v3YAML(spec2 []byte) (doc3 *openapi3.Swagger, err error) {
-	var doc2 openapi2.Swagger
+func v2v3YAML(spec2 []byte) (doc3 *openapi3.T, err error) {
+	var doc2 openapi2.T
 	if err = yaml.Unmarshal(spec2, &doc2); err != nil {
 		return
 	}
-	doc3, err = ToV3Swagger(&doc2)
+	doc3, err = ToV3(&doc2)
 	return
 }
 
@@ -166,4 +166,28 @@ paths:
 
 	err = doc3.Validate(context.Background())
 	require.NoError(t, err)
+}
+
+func TestPR449(t *testing.T) {
+	spec := `
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: title
+
+securityDefinitions:
+  OAuth2Application:
+    type: "oauth2"
+    flow: "application"
+    tokenUrl: "example.com/oauth2/token"
+`
+	doc3, err := v2v3YAML([]byte(spec))
+	require.NoError(t, err)
+	require.NotNil(t, doc3.Components.SecuritySchemes["OAuth2Application"].Value.Flows.ClientCredentials)
+	_, err = yaml.Marshal(doc3)
+	require.NoError(t, err)
+
+	doc2, err := FromV3(doc3)
+	require.NoError(t, err)
+	require.Equal(t, doc2.SecurityDefinitions["OAuth2Application"].Flow, "application")
 }

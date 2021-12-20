@@ -13,12 +13,12 @@ The project has received pull requests from many people. Thanks to everyone!
 
 Here's some projects that depend on _kin-openapi_:
   * [https://github.com/Tufin/oasdiff](https://github.com/Tufin/oasdiff) - "A diff tool for OpenAPI Specification 3"
-  * [github.com/getkin/kin](https://github.com/getkin/kin) - "A configurable backend"
   * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
-  * [github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen) - Generate Go server boilerplate from an OpenAPI 3 spec
+  * [github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen) - Generate Go server boilerplate from an OpenAPIv3 spec document
   * [github.com/dunglas/vulcain](https://github.com/dunglas/vulcain) - "Use HTTP/2 Server Push to create fast and idiomatic client-driven REST APIs"
   * [github.com/danielgtaylor/restish](https://github.com/danielgtaylor/restish) - "...a CLI for interacting with REST-ish HTTP APIs with some nice features built-in"
   * [github.com/goadesign/goa](https://github.com/goadesign/goa) - "Goa is a framework for building micro-services and APIs in Go using a unique design-first approach."
+  * [github.com/hashicorp/nomad-openapi](https://github.com/hashicorp/nomad-openapi) - "Nomad is an easy-to-use, flexible, and performant workload orchestrator that can deploy a mix of microservice, batch, containerized, and non-containerized applications. Nomad is easy to operate and scale and has native Consul and Vault integrations."
   * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
 ## Alternatives
@@ -44,15 +44,15 @@ Here's some projects that depend on _kin-openapi_:
 
 # Some recipes
 ## Loading OpenAPI document
-Use `SwaggerLoader`, which resolves all references:
+Use `openapi3.Loader`, which resolves all references:
 ```go
-swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("swagger.json")
+doc, err := openapi3.NewLoader().LoadFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
 ```go
-loader := openapi3.NewSwaggerLoader()
-doc, _ := loader.LoadSwaggerFromData([]byte(`...`))
+loader := openapi3.NewLoader()
+doc, _ := loader.LoadFromData([]byte(`...`))
 _ := doc.Validate(loader.Context)
 router, _ := gorillamux.NewRouter(doc)
 route, pathParams, _ := router.FindRoute(httpRequest)
@@ -76,8 +76,8 @@ import (
 
 func main() {
 	ctx := context.Background()
-	loader := &openapi3.SwaggerLoader{Context: ctx}
-	doc, _ := loader.LoadSwaggerFromFile("openapi3_spec.json")
+	loader := &openapi3.Loader{Context: ctx}
+	doc, _ := loader.LoadFromFile("openapi3_spec.json")
 	_ := doc.Validate(ctx)
 	router, _ := legacyrouter.NewRouter(doc)
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
@@ -192,6 +192,25 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 ```
 
 ## Sub-v0 breaking API changes
+
+### v0.84.0
+* The prototype of `openapi3gen.NewSchemaRefForValue` changed:
+	* It no longer returns a map but that is still accessible under the field `(*Generator).SchemaRefs`.
+	* It now takes in an additional argument (basically `doc.Components.Schemas`) which gets written to so `$ref` cycles can be properly handled.
+
+### v0.61.0
+* Renamed `openapi2.Swagger` to `openapi2.T`.
+* Renamed `openapi2conv.FromV3Swagger` to `openapi2conv.FromV3`.
+* Renamed `openapi2conv.ToV3Swagger` to `openapi2conv.ToV3`.
+* Renamed `openapi3.LoadSwaggerFromData` to `openapi3.LoadFromData`.
+* Renamed `openapi3.LoadSwaggerFromDataWithPath` to `openapi3.LoadFromDataWithPath`.
+* Renamed `openapi3.LoadSwaggerFromFile` to `openapi3.LoadFromFile`.
+* Renamed `openapi3.LoadSwaggerFromURI` to `openapi3.LoadFromURI`.
+* Renamed `openapi3.NewSwaggerLoader` to `openapi3.NewLoader`.
+* Renamed `openapi3.Swagger` to `openapi3.T`.
+* Renamed `openapi3.SwaggerLoader` to `openapi3.Loader`.
+* Renamed `openapi3filter.ValidationHandler.SwaggerFile` to `openapi3filter.ValidationHandler.File`.
+* Renamed `routers.Route.Swagger` to `routers.Route.Spec`.
 
 ### v0.51.0
 * Type `openapi3filter.Route` moved to `routers` (and `Route.Handler` was dropped. See https://github.com/getkin/kin-openapi/issues/329)

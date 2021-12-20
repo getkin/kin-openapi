@@ -103,15 +103,15 @@ func (ss *SecurityScheme) WithBearerFormat(value string) *SecurityScheme {
 	return ss
 }
 
-func (ss *SecurityScheme) Validate(c context.Context) error {
+func (value *SecurityScheme) Validate(ctx context.Context) error {
 	hasIn := false
 	hasBearerFormat := false
 	hasFlow := false
-	switch ss.Type {
+	switch value.Type {
 	case "apiKey":
 		hasIn = true
 	case "http":
-		scheme := ss.Scheme
+		scheme := value.Scheme
 		switch scheme {
 		case "bearer":
 			hasBearerFormat = true
@@ -122,46 +122,46 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 	case "oauth2":
 		hasFlow = true
 	case "openIdConnect":
-		if ss.OpenIdConnectUrl == "" {
-			return fmt.Errorf("no OIDC URL found for openIdConnect security scheme %q", ss.Name)
+		if value.OpenIdConnectUrl == "" {
+			return fmt.Errorf("no OIDC URL found for openIdConnect security scheme %q", value.Name)
 		}
 	default:
-		return fmt.Errorf("security scheme 'type' can't be %q", ss.Type)
+		return fmt.Errorf("security scheme 'type' can't be %q", value.Type)
 	}
 
 	// Validate "in" and "name"
 	if hasIn {
-		switch ss.In {
+		switch value.In {
 		case "query", "header", "cookie":
 		default:
-			return fmt.Errorf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", ss.In)
+			return fmt.Errorf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", value.In)
 		}
-		if ss.Name == "" {
+		if value.Name == "" {
 			return errors.New("security scheme of type 'apiKey' should have 'name'")
 		}
-	} else if len(ss.In) > 0 {
-		return fmt.Errorf("security scheme of type %q can't have 'in'", ss.Type)
-	} else if len(ss.Name) > 0 {
+	} else if len(value.In) > 0 {
+		return fmt.Errorf("security scheme of type %q can't have 'in'", value.Type)
+	} else if len(value.Name) > 0 {
 		return errors.New("security scheme of type 'apiKey' can't have 'name'")
 	}
 
 	// Validate "format"
 	// "bearerFormat" is an arbitrary string so we only check if the scheme supports it
-	if !hasBearerFormat && len(ss.BearerFormat) > 0 {
-		return fmt.Errorf("security scheme of type %q can't have 'bearerFormat'", ss.Type)
+	if !hasBearerFormat && len(value.BearerFormat) > 0 {
+		return fmt.Errorf("security scheme of type %q can't have 'bearerFormat'", value.Type)
 	}
 
 	// Validate "flow"
 	if hasFlow {
-		flow := ss.Flows
+		flow := value.Flows
 		if flow == nil {
-			return fmt.Errorf("security scheme of type %q should have 'flows'", ss.Type)
+			return fmt.Errorf("security scheme of type %q should have 'flows'", value.Type)
 		}
-		if err := flow.Validate(c); err != nil {
+		if err := flow.Validate(ctx); err != nil {
 			return fmt.Errorf("security scheme 'flow' is invalid: %v", err)
 		}
-	} else if ss.Flows != nil {
-		return fmt.Errorf("security scheme of type %q can't have 'flows'", ss.Type)
+	} else if value.Flows != nil {
+		return fmt.Errorf("security scheme of type %q can't have 'flows'", value.Type)
 	}
 	return nil
 }
@@ -191,18 +191,18 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flows)
 }
 
-func (flows *OAuthFlows) Validate(c context.Context) error {
+func (flows *OAuthFlows) Validate(ctx context.Context) error {
 	if v := flows.Implicit; v != nil {
-		return v.Validate(c, oAuthFlowTypeImplicit)
+		return v.Validate(ctx, oAuthFlowTypeImplicit)
 	}
 	if v := flows.Password; v != nil {
-		return v.Validate(c, oAuthFlowTypePassword)
+		return v.Validate(ctx, oAuthFlowTypePassword)
 	}
 	if v := flows.ClientCredentials; v != nil {
-		return v.Validate(c, oAuthFlowTypeClientCredentials)
+		return v.Validate(ctx, oAuthFlowTypeClientCredentials)
 	}
 	if v := flows.AuthorizationCode; v != nil {
-		return v.Validate(c, oAuthFlowAuthorizationCode)
+		return v.Validate(ctx, oAuthFlowAuthorizationCode)
 	}
 	return errors.New("no OAuth flow is defined")
 }
@@ -223,7 +223,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }
 
-func (flow *OAuthFlow) Validate(c context.Context, typ oAuthFlowType) error {
+func (flow *OAuthFlow) Validate(ctx context.Context, typ oAuthFlowType) error {
 	if typ == oAuthFlowAuthorizationCode || typ == oAuthFlowTypeImplicit {
 		if v := flow.AuthorizationURL; v == "" {
 			return errors.New("an OAuth flow is missing 'authorizationUrl in authorizationCode or implicit '")

@@ -914,7 +914,7 @@ func TestDecodeParameter(t *testing.T) {
 						Title:   "MyAPI",
 						Version: "0.1",
 					}
-					spec := &openapi3.Swagger{OpenAPI: "3.0.0", Info: info}
+					spec := &openapi3.T{OpenAPI: "3.0.0", Info: info}
 					op := &openapi3.Operation{
 						OperationID: "test",
 						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
@@ -974,6 +974,7 @@ func TestDecodeBody(t *testing.T) {
 		{name: "c", contentType: "text/plain", data: strings.NewReader("c2")},
 		{name: "d", contentType: "application/json", data: bytes.NewReader(d)},
 		{name: "f", contentType: "application/octet-stream", data: strings.NewReader("foo"), filename: "f1"},
+		{name: "g", data: strings.NewReader("g1")},
 	})
 	require.NoError(t, err)
 
@@ -987,10 +988,14 @@ func TestDecodeBody(t *testing.T) {
 		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
 	})
+	require.NoError(t, err)
+
 	multipartAdditionalProps, multipartMimeAdditionalProps, err := newTestMultipartForm([]*testFormPart{
 		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
 	})
+	require.NoError(t, err)
+
 	multipartAdditionalPropsErr, multipartMimeAdditionalPropsErr, err := newTestMultipartForm([]*testFormPart{
 		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
@@ -1028,6 +1033,18 @@ func TestDecodeBody(t *testing.T) {
 			name: "json",
 			mime: "application/json",
 			body: strings.NewReader("\"foo\""),
+			want: "foo",
+		},
+		{
+			name: "x-yaml",
+			mime: "application/x-yaml",
+			body: strings.NewReader("foo"),
+			want: "foo",
+		},
+		{
+			name: "yaml",
+			mime: "application/yaml",
+			body: strings.NewReader("foo"),
 			want: "foo",
 		},
 		{
@@ -1075,8 +1092,9 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 				WithProperty("d", openapi3.NewObjectSchema().WithProperty("d1", openapi3.NewStringSchema())).
-				WithProperty("f", openapi3.NewStringSchema().WithFormat("binary")),
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo"},
+				WithProperty("f", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("g", openapi3.NewStringSchema()),
+			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo", "g": "g1"},
 		},
 		{
 			name: "multipartExtraPart",

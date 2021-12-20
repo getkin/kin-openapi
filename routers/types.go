@@ -8,12 +8,19 @@ import (
 
 // Router helps link http.Request.s and an OpenAPIv3 spec
 type Router interface {
+	// FindRoute matches an HTTP request with the operation it resolves to.
+	// Hosts are matched from the OpenAPIv3 servers key.
+	//
+	// If you experience ErrPathNotFound and have localhost hosts specified as your servers,
+	// turning these server URLs as relative (leaving only the path) should resolve this.
+	//
+	// See openapi3filter for example uses with request and response validation.
 	FindRoute(req *http.Request) (route *Route, pathParams map[string]string, err error)
 }
 
 // Route describes the operation an http.Request can match
 type Route struct {
-	Swagger   *openapi3.Swagger
+	Spec      *openapi3.T
 	Server    *openapi3.Server
 	Path      string
 	PathItem  *openapi3.PathItem

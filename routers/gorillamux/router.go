@@ -17,6 +17,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var _ routers.Router = &Router{}
+
 // Router helps link http.Request.s and an OpenAPIv3 spec
 type Router struct {
 	muxes  []*mux.Route
@@ -26,7 +28,7 @@ type Router struct {
 // NewRouter creates a gorilla/mux router.
 // Assumes spec is .Validate()d
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
-func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
+func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	type srv struct {
 		schemes    []string
 		host, base string
@@ -35,15 +37,21 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 	servers := make([]srv, 0, len(doc.Servers))
 	for _, server := range doc.Servers {
 		serverURL := server.URL
-		scheme0 := strings.Split(serverURL, "://")[0]
-		schemes := permutePart(scheme0, server)
-
-		u, err := url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
+		var schemes []string
+		var u *url.URL
+		var err error
+		if strings.Contains(serverURL, "://") {
+			scheme0 := strings.Split(serverURL, "://")[0]
+			schemes = permutePart(scheme0, server)
+			u, err = url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
+		} else {
+			u, err = url.Parse(bEncode(serverURL))
+		}
 		if err != nil {
 			return nil, err
 		}
 		path := bDecode(u.EscapedPath())
-		if path[len(path)-1] == '/' {
+		if len(path) > 0 && path[len(path)-1] == '/' {
 			path = path[:len(path)-1]
 		}
 		servers = append(servers, srv{
@@ -56,7 +64,7 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 	if len(servers) == 0 {
 		servers = append(servers, srv{})
 	}
-	muxRouter := mux.NewRouter() /*.UseEncodedPath()?*/
+	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
 		pathItem := doc.Paths[path]
@@ -81,7 +89,7 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 			}
 			r.muxes = append(r.muxes, muxRoute)
 			r.routes = append(r.routes, &routers.Route{
-				Swagger:   doc,
+				Spec:      doc,
 				Server:    s.server,
 				Path:      path,
 				PathItem:  pathItem,
@@ -101,10 +109,10 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 			if err := match.MatchErr; err != nil {
 				// What then?
 			}
-			route := r.routes[i]
+			route := *r.routes[i]
 			route.Method = req.Method
-			route.Operation = route.Swagger.Paths[route.Path].GetOperation(route.Method)
-			return route, match.Vars, nil
+			route.Operation = route.Spec.Paths[route.Path].GetOperation(route.Method)
+			return &route, match.Vars, nil
 		}
 		switch match.MatchErr {
 		case nil:

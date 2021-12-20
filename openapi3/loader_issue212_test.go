@@ -72,8 +72,8 @@ components:
                   pattern: ^\/images\/[0-9a-f]{64}$
 `
 
-	loader := NewSwaggerLoader()
-	doc, err := loader.LoadSwaggerFromData([]byte(spec))
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ components:
 	expected, err := json.Marshal(&Schema{
 		Type:     "object",
 		Required: []string{"id", "uri"},
-		Properties: map[string]*SchemaRef{
+		Properties: Schemas{
 			"id":  {Value: &Schema{Type: "string"}},
 			"uri": {Value: &Schema{Type: "string"}},
 		},

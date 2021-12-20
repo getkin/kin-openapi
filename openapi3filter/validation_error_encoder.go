@@ -75,7 +75,7 @@ func convertBasicRequestError(e *RequestError) *ValidationError {
 }
 
 func convertErrInvalidRequired(e *RequestError) *ValidationError {
-	if e.Reason == ErrInvalidRequired.Error() && e.Parameter != nil {
+	if e.Err == ErrInvalidRequired && e.Parameter != nil {
 		return &ValidationError{
 			Status: http.StatusBadRequest,
 			Title:  fmt.Sprintf("parameter %q in %s is required", e.Parameter.Name, e.Parameter.In),

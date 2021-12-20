@@ -25,7 +25,7 @@ var ErrInvalidRequired = errors.New("value is required but missing")
 //
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
-func ValidateRequest(c context.Context, input *RequestValidationInput) error {
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	var (
 		err error
 		me  openapi3.MultiError
@@ -49,7 +49,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 			}
 		}
 
-		if err = ValidateParameter(c, input, parameter); err != nil && !options.MultiError {
+		if err = ValidateParameter(ctx, input, parameter); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -60,7 +60,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
-		if err = ValidateParameter(c, input, parameter.Value); err != nil && !options.MultiError {
+		if err = ValidateParameter(ctx, input, parameter.Value); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -72,7 +72,7 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// RequestBody
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
-		if err = ValidateRequestBody(c, input, requestBody.Value); err != nil && !options.MultiError {
+		if err = ValidateRequestBody(ctx, input, requestBody.Value); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -86,10 +86,10 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 	// If there aren't any security requirements for the operation
 	if security == nil {
 		// Use the global security requirements.
-		security = &route.Swagger.Security
+		security = &route.Spec.Security
 	}
 	if security != nil {
-		if err = ValidateSecurityRequirements(c, input, *security); err != nil && !options.MultiError {
+		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
 			return err
 		}
 
@@ -109,10 +109,10 @@ func ValidateRequest(c context.Context, input *RequestValidationInput) error {
 // The function returns RequestError with a ParseError cause when unable to parse a value.
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateParameter(c context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
+func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
 	if parameter.Schema == nil && parameter.Content == nil {
 		// We have no schema for the parameter. Assume that everything passes
-		// a schema-less check, but this could also be an error. The Swagger
+		// a schema-less check, but this could also be an error. The OpenAPI
 		// validation allows this to happen.
 		return nil
 	}
@@ -140,7 +140,7 @@ func ValidateParameter(c context.Context, input *RequestValidationInput, paramet
 	// Validate a parameter's value.
 	if value == nil {
 		if parameter.Required {
-			return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidRequired.Error(), Err: ErrInvalidRequired}
+			return &RequestError{Input: input, Parameter: parameter, Err: ErrInvalidRequired}
 		}
 		return nil
 	}
@@ -166,7 +166,7 @@ const prefixInvalidCT = "header Content-Type has unexpected value"
 //
 // The function returns RequestError with ErrInvalidRequired cause when a value is required but not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateRequestBody(c context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
+func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
 	var (
 		req  = input.Request
 		data []byte
@@ -252,13 +252,13 @@ func ValidateRequestBody(c context.Context, input *RequestValidationInput, reque
 // ValidateSecurityRequirements goes through multiple OpenAPI 3 security
 // requirements in order and returns nil on the first valid requirement.
 // If no requirement is met, errors are returned in order.
-func ValidateSecurityRequirements(c context.Context, input *RequestValidationInput, srs openapi3.SecurityRequirements) error {
+func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationInput, srs openapi3.SecurityRequirements) error {
 	if len(srs) == 0 {
 		return nil
 	}
 	var errs []error
 	for _, sr := range srs {
-		if err := validateSecurityRequirement(c, input, sr); err != nil {
+		if err := validateSecurityRequirement(ctx, input, sr); err != nil {
 			if len(errs) == 0 {
 				errs = make([]error, 0, len(srs))
 			}
@@ -274,9 +274,9 @@ func ValidateSecurityRequirements(c context.Context, input *RequestValidationInp
 }
 
 // validateSecurityRequirement validates a single OpenAPI 3 security requirement
-func validateSecurityRequirement(c context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
-	swagger := input.Route.Swagger
-	securitySchemes := swagger.Components.SecuritySchemes
+func validateSecurityRequirement(ctx context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
+	doc := input.Route.Spec
+	securitySchemes := doc.Components.SecuritySchemes
 
 	// Ensure deterministic order
 	names := make([]string, 0, len(securityRequirement))
@@ -310,7 +310,7 @@ func validateSecurityRequirement(c context.Context, input *RequestValidationInpu
 			}
 		}
 		scopes := securityRequirement[name]
-		if err := f(c, &AuthenticationInput{
+		if err := f(ctx, &AuthenticationInput{
 			RequestValidationInput: input,
 			SecuritySchemeName:     name,
 			SecurityScheme:         securityScheme,

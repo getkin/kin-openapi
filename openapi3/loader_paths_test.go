@@ -26,8 +26,8 @@ paths:
 		"foo/bar":  "invalid paths: path \"foo/bar\" does not start with a forward slash (/)",
 		"/foo/bar": "",
 	} {
-		loader := NewSwaggerLoader()
-		doc, err := loader.LoadSwaggerFromData([]byte(strings.Replace(spec, "PATH", path, 1)))
+		loader := NewLoader()
+		doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "PATH", path, 1)))
 		require.NoError(t, err)
 		err = doc.Validate(loader.Context)
 		if expectedErr != "" {

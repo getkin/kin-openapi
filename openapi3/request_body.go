@@ -97,9 +97,9 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
 }
 
-func (requestBody *RequestBody) Validate(c context.Context) error {
-	if v := requestBody.Content; v != nil {
-		if err := v.Validate(c); err != nil {
+func (value *RequestBody) Validate(ctx context.Context) error {
+	if v := value.Content; v != nil {
+		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}

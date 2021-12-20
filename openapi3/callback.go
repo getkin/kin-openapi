@@ -26,9 +26,9 @@ func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 // Callback is specified by OpenAPI/Swagger standard version 3.0.
 type Callback map[string]*PathItem
 
-func (value Callback) Validate(c context.Context) error {
+func (value Callback) Validate(ctx context.Context) error {
 	for _, v := range value {
-		if err := v.Validate(c); err != nil {
+		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}

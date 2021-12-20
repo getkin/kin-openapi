@@ -50,15 +50,15 @@ func (rs Routers) FindRoute(req *http.Request) (routers.Router, *routers.Route, 
 
 // Router maps a HTTP request to an OpenAPI operation.
 type Router struct {
-	doc      *openapi3.Swagger
+	doc      *openapi3.T
 	pathNode *pathpattern.Node
 }
 
 // NewRouter creates a new router.
 //
-// If the given Swagger has servers, router will use them.
-// All operations of the Swagger will be added to the router.
-func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
+// If the given OpenAPIv3 document has servers, router will use them.
+// All operations of the document will be added to the router.
+func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	if err := doc.Validate(context.Background()); err != nil {
 		return nil, fmt.Errorf("validating OpenAPI failed: %v", err)
 	}
@@ -68,7 +68,7 @@ func NewRouter(doc *openapi3.Swagger) (routers.Router, error) {
 		for method, operation := range pathItem.Operations() {
 			method = strings.ToUpper(method)
 			if err := root.Add(method+" "+path, &routers.Route{
-				Swagger:   doc,
+				Spec:      doc,
 				Path:      path,
 				PathItem:  pathItem,
 				Method:    method,
@@ -125,7 +125,10 @@ func (router *Router) FindRoute(req *http.Request) (*routers.Route, map[string]s
 			}
 		}
 		pathParams = make(map[string]string, 8)
-		paramNames, _ := server.ParameterNames()
+		paramNames, err := server.ParameterNames()
+		if err != nil {
+			return nil, nil, err
+		}
 		for i, value := range paramValues {
 			name := paramNames[i]
 			pathParams[name] = value

@@ -275,6 +275,12 @@ var schemaExamples = []schemaExample{
 			"dd7d8481-81a3-407f-95f0-a2f1cb382a4b",
 			"dcba3901-2fba-48c1-9db2-00422055804e",
 			"ace8e3be-c254-4c10-8859-1401d9a9d52a",
+			"DD7D8481-81A3-407F-95F0-A2F1CB382A4B",
+			"DCBA3901-2FBA-48C1-9DB2-00422055804E",
+			"ACE8E3BE-C254-4C10-8859-1401D9A9D52A",
+			"dd7D8481-81A3-407f-95F0-A2F1CB382A4B",
+			"DCBA3901-2FBA-48C1-9db2-00422055804e",
+			"ACE8E3BE-c254-4C10-8859-1401D9A9D52A",
 		},
 		AllInvalid: []interface{}{
 			nil,
@@ -282,6 +288,13 @@ var schemaExamples = []schemaExample{
 			"4cf3i040-ea14-4daa-b0b5-ea9329473519",
 			"aaf85740-7e27-4b4f-b4554-a03a43b1f5e3",
 			"56f5bff4-z4b6-48e6-a10d-b6cf66a83b04",
+			"G39840B1-D0EF-446D-E555-48FCCA50A90A",
+			"4CF3I040-EA14-4DAA-B0B5-EA9329473519",
+			"AAF85740-7E27-4B4F-B4554-A03A43B1F5E3",
+			"56F5BFF4-Z4B6-48E6-A10D-B6CF66A83B04",
+			"4CF3I040-EA14-4Daa-B0B5-EA9329473519",
+			"AAf85740-7E27-4B4F-B4554-A03A43b1F5E3",
+			"56F5Bff4-Z4B6-48E6-a10D-B6CF66A83B04",
 		},
 	},
 
@@ -389,7 +402,7 @@ var schemaExamples = []schemaExample{
 			UniqueItems: true,
 			Items: (&Schema{
 				Type: "object",
-				Properties: map[string]*SchemaRef{
+				Properties: Schemas{
 					"key1": NewFloat64Schema().NewRef(),
 				},
 			}).NewRef(),
@@ -446,7 +459,7 @@ var schemaExamples = []schemaExample{
 			UniqueItems: true,
 			Items: (&Schema{
 				Type: "object",
-				Properties: map[string]*SchemaRef{
+				Properties: Schemas{
 					"key1": (&Schema{
 						Type:        "array",
 						UniqueItems: true,
@@ -579,7 +592,7 @@ var schemaExamples = []schemaExample{
 				UniqueItems: true,
 				Items: (&Schema{
 					Type: "object",
-					Properties: map[string]*SchemaRef{
+					Properties: Schemas{
 						"key1": NewFloat64Schema().NewRef(),
 					},
 				}).NewRef(),
@@ -678,7 +691,7 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Type:     "object",
 			MaxProps: Uint64Ptr(2),
-			Properties: map[string]*SchemaRef{
+			Properties: Schemas{
 				"numberProperty": NewFloat64Schema().NewRef(),
 			},
 		},
@@ -1211,11 +1224,21 @@ components:
 		"name":      "kin-openapi",
 		"ownerName": true,
 	}
-	s, err := NewSwaggerLoader().LoadSwaggerFromData([]byte(api))
+	s, err := NewLoader().LoadFromData([]byte(api))
 	require.NoError(t, err)
 	require.NotNil(t, s)
 	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
 	require.NotNil(t, err)
 	require.NotEqual(t, errSchema, err)
 	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
+}
+
+func TestValidationFailsOnInvalidPattern(t *testing.T) {
+	schema := Schema{
+		Pattern: "[",
+		Type:    "string",
+	}
+
+	var err = schema.Validate(context.Background())
+	require.Error(t, err)
 }

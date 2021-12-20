@@ -28,7 +28,7 @@ func newPetstoreRequest(t *testing.T, method, path string, body io.Reader) *http
 
 type validationFields struct {
 	Handler      http.Handler
-	SwaggerFile  string
+	File         string
 	ErrorEncoder ErrorEncoder
 }
 type validationArgs struct {
@@ -56,7 +56,8 @@ type validationTest struct {
 }
 
 func getValidationTests(t *testing.T) []*validationTest {
-	badHost, _ := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
+	badHost, err := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
+	require.NoError(t, err)
 	badPath := newPetstoreRequest(t, http.MethodGet, "/watdis", nil)
 	badMethod := newPetstoreRequest(t, http.MethodTrace, "/pet", nil)
 
@@ -180,7 +181,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:   "status",
 			wantErrParamIn: "query",
-			wantErrReason:  ErrInvalidRequired.Error(),
+			wantErrBody:    `parameter "status" in query has an error: value is required but missing`,
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "status" in query is required`},
 		},
@@ -424,7 +425,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:   "petId",
 			wantErrParamIn: "path",
-			wantErrReason:  ErrInvalidRequired.Error(),
+			wantErrBody:    `parameter "petId" in path has an error: value is required but missing`,
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "petId" in path is required`},
 		},
@@ -543,12 +544,12 @@ func TestValidationErrorEncoder(t *testing.T) {
 }
 
 func buildValidationHandler(tt *validationTest) (*ValidationHandler, error) {
-	if tt.fields.SwaggerFile == "" {
-		tt.fields.SwaggerFile = "fixtures/petstore.json"
+	if tt.fields.File == "" {
+		tt.fields.File = "fixtures/petstore.json"
 	}
 	h := &ValidationHandler{
 		Handler:      tt.fields.Handler,
-		SwaggerFile:  tt.fields.SwaggerFile,
+		File:         tt.fields.File,
 		ErrorEncoder: tt.fields.ErrorEncoder,
 	}
 	tt.wantErr = tt.wantErr ||
@@ -588,7 +589,7 @@ func runTest_ServeHTTP(t *testing.T, handler http.Handler, encoder ErrorEncoder,
 	h := &ValidationHandler{
 		Handler:      handler,
 		ErrorEncoder: encoder,
-		SwaggerFile:  "fixtures/petstore.json",
+		File:         "fixtures/petstore.json",
 	}
 	err := h.Load()
 	require.NoError(t, err)
@@ -600,7 +601,7 @@ func runTest_ServeHTTP(t *testing.T, handler http.Handler, encoder ErrorEncoder,
 func runTest_Middleware(t *testing.T, handler http.Handler, encoder ErrorEncoder, req *http.Request) *http.Response {
 	h := &ValidationHandler{
 		ErrorEncoder: encoder,
-		SwaggerFile:  "fixtures/petstore.json",
+		File:         "fixtures/petstore.json",
 	}
 	err := h.Load()
 	require.NoError(t, err)

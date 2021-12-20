@@ -45,7 +45,7 @@ func TestFilter(t *testing.T) {
 	complexArgSchema.Required = []string{"name", "id"}
 
 	// Declare router
-	doc := &openapi3.Swagger{
+	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -528,7 +528,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 		},
 	}
 
-	doc := &openapi3.Swagger{
+	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -596,7 +596,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 			Request: httpReq,
 			Route:   route,
 			Options: &Options{
-				AuthenticationFunc: func(c context.Context, input *AuthenticationInput) error {
+				AuthenticationFunc: func(ctx context.Context, input *AuthenticationInput) error {
 					if schemesValidated != nil {
 						if validated, ok := (*schemesValidated)[input.SecurityScheme]; ok {
 							if validated {
@@ -662,7 +662,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		},
 	}
 
-	doc := openapi3.Swagger{
+	doc := openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -759,7 +759,7 @@ func TestAllSchemesMet(t *testing.T) {
 		},
 	}
 
-	doc := openapi3.Swagger{
+	doc := openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
 			Title:   "MyAPI",
@@ -840,8 +840,8 @@ func TestAllSchemesMet(t *testing.T) {
 // makeAuthFunc creates an authentication function that accepts the given valid schemes.
 // If an invalid or unknown scheme is encountered, an error is returned by the returned function.
 // Otherwise the return value of the returned function is nil.
-func makeAuthFunc(schemes map[string]bool) func(c context.Context, input *AuthenticationInput) error {
-	return func(c context.Context, input *AuthenticationInput) error {
+func makeAuthFunc(schemes map[string]bool) func(ctx context.Context, input *AuthenticationInput) error {
+	return func(ctx context.Context, input *AuthenticationInput) error {
 		// If the scheme is valid and present in the schemes
 		valid, present := schemes[input.SecuritySchemeName]
 		if valid && present {

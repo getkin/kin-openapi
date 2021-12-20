@@ -75,8 +75,8 @@ components:
             type: integer
 `
 
-	loader := openapi3.NewSwaggerLoader()
-	doc, err := loader.LoadSwaggerFromData([]byte(spec))
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
 	router, err := legacyrouter.NewRouter(doc)

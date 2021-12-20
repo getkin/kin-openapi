@@ -1,0 +1,28 @@
+openapi: 3.0.0
+info:
+  title: 'some service spec'
+  version: 1.2.3
+
+paths:
+  /service:
+    get:
+      tags:
+        - services/service
+      summary: List services
+      description: List services.
+      operationId: list-services
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/model_service"
+
+components:
+  schemas:
+    model_service:
+      allOf:
+        - $ref: "common/properties.yaml#/timestamps"

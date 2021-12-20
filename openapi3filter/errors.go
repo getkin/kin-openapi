@@ -17,6 +17,8 @@ type RequestError struct {
 	Err         error
 }
 
+var _ interface{ Unwrap() error } = RequestError{}
+
 func (err *RequestError) Error() string {
 	reason := err.Reason
 	if e := err.Err; e != nil {
@@ -35,6 +37,10 @@ func (err *RequestError) Error() string {
 	}
 }
 
+func (err RequestError) Unwrap() error {
+	return err.Err
+}
+
 var _ error = &ResponseError{}
 
 // ResponseError is returned by ValidateResponse when response does not match OpenAPI spec
@@ -43,6 +49,8 @@ type ResponseError struct {
 	Reason string
 	Err    error
 }
+
+var _ interface{ Unwrap() error } = ResponseError{}
 
 func (err *ResponseError) Error() string {
 	reason := err.Reason
@@ -54,6 +62,10 @@ func (err *ResponseError) Error() string {
 		}
 	}
 	return reason
+}
+
+func (err ResponseError) Unwrap() error {
+	return err.Err
 }
 
 var _ error = &SecurityRequirementsError{}

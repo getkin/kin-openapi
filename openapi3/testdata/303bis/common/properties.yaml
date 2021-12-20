@@ -1,0 +1,16 @@
+timestamp:
+  type: string
+  description: Date and time in ISO 8601 format.
+  example: "2020-04-09T18:14:30Z"
+  readOnly: true
+  nullable: true
+
+timestamps:
+  type: object
+  properties:
+    created_at:
+      $ref: "#/timestamp"
+    deleted_at:
+      $ref: "#/timestamp"
+    updated_at:
+      $ref: "#/timestamp"

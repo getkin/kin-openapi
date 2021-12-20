@@ -116,9 +116,9 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	}
 }
 
-func (pathItem *PathItem) Validate(c context.Context) error {
-	for _, operation := range pathItem.Operations() {
-		if err := operation.Validate(c); err != nil {
+func (value *PathItem) Validate(ctx context.Context) error {
+	for _, operation := range value.Operations() {
+		if err := operation.Validate(ctx); err != nil {
 			return err
 		}
 	}

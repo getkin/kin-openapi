@@ -11,35 +11,35 @@ import (
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
-	var doc3 openapi3.Swagger
+	var doc3 openapi3.T
 	err := json.Unmarshal([]byte(exampleV3), &doc3)
 	require.NoError(t, err)
 	{
 		// Refs need resolving before we can Validate
-		sl := openapi3.NewSwaggerLoader()
+		sl := openapi3.NewLoader()
 		err = sl.ResolveRefsIn(&doc3, nil)
 		require.NoError(t, err)
 		err = doc3.Validate(context.Background())
 		require.NoError(t, err)
 	}
 
-	spec2, err := FromV3Swagger(&doc3)
+	doc2, err := FromV3(&doc3)
 	require.NoError(t, err)
-	data, err := json.Marshal(spec2)
+	data, err := json.Marshal(doc2)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV2, string(data))
 }
 
 func TestConvOpenAPIV2ToV3(t *testing.T) {
-	var doc2 openapi2.Swagger
+	var doc2 openapi2.T
 	err := json.Unmarshal([]byte(exampleV2), &doc2)
 	require.NoError(t, err)
 
-	spec3, err := ToV3Swagger(&doc2)
+	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = spec3.Validate(context.Background())
+	err = doc3.Validate(context.Background())
 	require.NoError(t, err)
-	data, err := json.Marshal(spec3)
+	data, err := json.Marshal(doc3)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV3, string(data))
 }
@@ -79,6 +79,14 @@ const exampleV2 = `
 		"ItemExtension": {
 			"description": "It could be anything.",
 			"type": "boolean"
+		},
+		"foo": {
+			"description": "foo description",
+			"enum": [
+				"bar",
+				"baz"
+			],
+			"type": "string"
 		}
 	},
 	"externalDocs": {
@@ -305,6 +313,34 @@ const exampleV2 = `
 			},
 			"x-path": "path extension 1",
 			"x-path2": "path extension 2"
+		},
+		"/foo": {
+			"get": {
+				"operationId": "getFoo",
+				"consumes": [
+					"application/json",
+					"application/xml"
+				],
+				"parameters": [
+					{
+						"x-originalParamName": "foo",
+						"in": "body",
+						"name": "foo",
+						"schema": {
+							"$ref": "#/definitions/foo"
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/foo"
+						}
+					}
+				},
+				"summary": "get foo"
+			}
 		}
 	},
 	"responses": {
@@ -420,6 +456,14 @@ const exampleV3 = `
 				"type": "string",
 				"x-formData-name": "fileUpload2",
 				"x-mimetype": "text/plain"
+			},
+			"foo": {
+				"description": "foo description",
+				"enum": [
+					"bar",
+					"baz"
+				],
+				"type": "string"
 			}
 		}
 	},
@@ -646,6 +690,39 @@ const exampleV3 = `
 			},
 			"x-path": "path extension 1",
 			"x-path2": "path extension 2"
+		},
+		"/foo": {
+			"get": {
+				"operationId": "getFoo",
+				"requestBody": {
+					"x-originalParamName": "foo",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/foo"
+							}
+						},
+						"application/xml": {
+							"schema": {
+								"$ref": "#/components/schemas/foo"
+							}
+						}
+					}
+				},
+				"responses": {
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/foo"
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"summary": "get foo"
+			}
 		}
 	},
 	"security": [
