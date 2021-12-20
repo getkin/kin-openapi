@@ -218,6 +218,8 @@ func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 	return ptr, err
 }
 
+// SchemaRef represents either a Schema or a $ref to a Schema.
+// When serializing and both fields are set, Ref is preferred over Value.
 type SchemaRef struct {
 	Ref   string
 	Value *Schema
