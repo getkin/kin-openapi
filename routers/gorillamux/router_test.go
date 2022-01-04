@@ -59,10 +59,10 @@ func TestRouter(t *testing.T) {
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid")},
 				},
 			},
-			"/books/{bookid2}.json": &openapi3.PathItem{
+			"/books/{bookid}.json": &openapi3.PathItem{
 				Post: booksPOST,
 				Parameters: openapi3.Parameters{
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid2")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid")},
 				},
 			},
 			"/partial": &openapi3.PathItem{
@@ -152,7 +152,7 @@ func TestRouter(t *testing.T) {
 		"bookid": "War.and.Peace",
 	})
 	expect(r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
-		"bookid2": "War.and.Peace",
+		"bookid": "War.and.Peace",
 	})
 	expect(r, http.MethodPost, "/partial", nil, nil)
 
