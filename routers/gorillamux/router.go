@@ -128,7 +128,7 @@ func orderedPaths(paths map[string]*openapi3.PathItem) []string {
 	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#pathsObject
 	// When matching URLs, concrete (non-templated) paths would be matched
 	// before their templated counterparts.
-	// NOTE: sorting by number of variables ASC then by lexicographical
+	// NOTE: sorting by number of variables ASC then by descending lexicographical
 	// order seems to be a good heuristic.
 	vars := make(map[int][]string)
 	max := 0
