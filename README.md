@@ -151,7 +151,7 @@ func main() {
 	}
 }
 
-func xmlBodyDecoder(body []byte) (interface{}, error) {
+func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded interface{}, err error) {
 	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
 }
 ```
