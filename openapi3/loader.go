@@ -422,8 +422,17 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 	if loader.rootDir == "" {
 		return current
 	}
-	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
-
+	joinedPath := path.Join(loader.rootDir, resolvedRef)
+	// Unfortunately `path.Join` remove last slash from result file.
+	// For example:
+	// ```
+	// path.Join("foo/bar/", "") == "foo/bar"
+	// ```
+	// In this workaround we try to restore last slash if needed.
+	if (resolvedRef == "" || strings.HasSuffix(resolvedRef, "/")) && !strings.HasSuffix(joinedPath, "/") {
+		joinedPath += "/"
+	}
+	return &url.URL{Path: joinedPath}
 }
 
 func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
