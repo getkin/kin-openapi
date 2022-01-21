@@ -422,11 +422,20 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 	if loader.rootDir == "" {
 		return current
 	}
+	if resolvedRef == "" {
+		return current
+	}
 	var fragment string
 	relPath := resolvedRef
 	if idx := strings.IndexByte(relPath, '#'); idx >= 0 {
 		fragment = relPath[idx+1:]
 		relPath = relPath[:idx]
+	}
+	if relPath == "" {
+		return &url.URL{
+			Path:     current.Path,
+			Fragment: fragment,
+		}
 	}
 	respolvedPath := path.Join(loader.rootDir, relPath)
 	// Unfortunately `path.Join` remove last slash from result file.
