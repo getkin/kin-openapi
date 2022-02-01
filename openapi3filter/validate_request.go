@@ -230,8 +230,10 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		}
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
+	defaultsSet := false
+	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
+	opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
@@ -245,8 +247,6 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			Err:         err,
 		}
 	}
-
-	defaultsSet := true
 
 	if defaultsSet {
 		var err error

@@ -1341,7 +1341,12 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if settings.asreq || settings.asrep {
 		for propName, propSchema := range schema.Properties {
 			if value[propName] == nil {
-				value[propName] = propSchema.Value.Default
+				if dlft := propSchema.Value.Default; dlft != nil {
+					value[propName] = dlft
+					if f := settings.defaultsSet; f != nil {
+						settings.onceSettingDefaults.Do(f)
+					}
+				}
 			}
 		}
 	}
