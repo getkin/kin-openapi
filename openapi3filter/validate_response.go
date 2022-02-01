@@ -111,7 +111,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	input.SetBodyBytes(data)
 
 	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
-	value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
+	_, value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,

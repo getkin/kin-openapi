@@ -134,10 +134,10 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		schema = parameter.Schema.Value
 	}
 
-	// Maybe use default value
-	if value == nil && schema != nil {
-		value = schema.Default
-	}
+	// // Maybe use default value
+	// if value == nil && schema != nil {
+	// 	value = schema.Default
+	// }
 
 	// Validate a parameter's value.
 	if value == nil {
@@ -169,16 +169,13 @@ const prefixInvalidCT = "header Content-Type has unexpected value"
 // The function returns RequestError with ErrInvalidRequired cause when a value is required but not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
 func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
-	var (
-		req  = input.Request
-		data []byte
-	)
-
 	options := input.Options
 	if options == nil {
 		options = DefaultOptions
 	}
 
+	var data []byte
+	req := input.Request
 	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
 		var err error
@@ -223,7 +220,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
-	value, err := decodeBody(bytes.NewReader(data), req.Header, contentType.Schema, encFn)
+	mediaType, value, err := decodeBody(bytes.NewReader(data), req.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &RequestError{
 			Input:       input,
@@ -248,6 +245,23 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			Err:         err,
 		}
 	}
+
+	defaultsSet := true
+
+	if defaultsSet {
+		var err error
+		if data, err = encodeBody(value, mediaType); err != nil {
+			return &RequestError{
+				Input:       input,
+				RequestBody: requestBody,
+				Reason:      "rewriting failed",
+				Err:         err,
+			}
+		}
+		// Put the data back into the input
+		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+	}
+
 	return nil
 }
 

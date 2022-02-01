@@ -1338,6 +1338,14 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		return schema.expectedType(settings, TypeObject)
 	}
 
+	if settings.asreq || settings.asrep {
+		for propName, propSchema := range schema.Properties {
+			if value[propName] == nil {
+				value[propName] = propSchema.Value.Default
+			}
+		}
+	}
+
 	var me MultiError
 
 	// "properties"

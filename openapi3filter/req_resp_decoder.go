@@ -814,7 +814,11 @@ const prefixUnsupportedCT = "unsupported content type"
 
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
-func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (
+	string,
+	interface{},
+	error,
+) {
 	contentType := header.Get(headerCT)
 	if contentType == "" {
 		if _, ok := body.(*multipart.Part); ok {
@@ -824,16 +828,16 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	mediaType := parseMediaType(contentType)
 	decoder, ok := bodyDecoders[mediaType]
 	if !ok {
-		return nil, &ParseError{
+		return "", nil, &ParseError{
 			Kind:   KindUnsupportedFormat,
 			Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, mediaType),
 		}
 	}
 	value, err := decoder(body, header, schema, encFn)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return value, nil
+	return mediaType, value, nil
 }
 
 func init() {
@@ -982,7 +986,7 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		}
 
 		var value interface{}
-		if value, err = decodeBody(part, http.Header(part.Header), valueSchema, subEncFn); err != nil {
+		if _, value, err = decodeBody(part, http.Header(part.Header), valueSchema, subEncFn); err != nil {
 			if v, ok := err.(*ParseError); ok {
 				return nil, &ParseError{path: []interface{}{name}, Cause: v}
 			}
