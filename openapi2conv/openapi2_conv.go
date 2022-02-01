@@ -424,7 +424,31 @@ func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
 	if schemaRef := response.Schema; schemaRef != nil {
 		result.WithJSONSchemaRef(ToV3SchemaRef(schemaRef))
 	}
+	if headers := response.Headers; len(headers) > 0 {
+		result.Headers = ToV3Headers(headers)
+	}
 	return &openapi3.ResponseRef{Value: result}, nil
+}
+
+func ToV3Headers(defs map[string]*openapi2.Header) openapi3.Headers {
+	headers := make(openapi3.Headers)
+	for name, header := range defs {
+		stripNonCustomExtensions(header.Extensions)
+		if ref := header.Ref; ref != "" {
+			headers[name] = &openapi3.HeaderRef{Ref: ToV3Ref(ref)}
+		} else {
+			headers[name] = &openapi3.HeaderRef{Value: &openapi3.Header{
+				Parameter: openapi3.Parameter{
+					ExtensionProps: header.ExtensionProps,
+					Description:    header.Description,
+					Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{
+						Type: header.Type,
+					}},
+				},
+			}}
+		}
+	}
+	return headers
 }
 
 func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.SchemaRef {
@@ -654,6 +678,7 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		doc2.SecurityDefinitions = doc2SecuritySchemes
 	}
 	doc2.Security = FromV3SecurityRequirements(doc3.Security)
+
 	return doc2, nil
 }
 
@@ -1048,7 +1073,39 @@ func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) 
 			result.Schema, _ = FromV3SchemaRef(ct.Schema, components)
 		}
 	}
+	if headers := response.Headers; len(headers) > 0 {
+		result.Headers = FromV3Headers(headers, components)
+	}
 	return result, nil
+}
+
+func FromV3Headers(defs openapi3.Headers, components *openapi3.Components) map[string]*openapi2.Header {
+	headers := make(map[string]*openapi2.Header)
+	for name, header := range defs {
+		if ref := header.Ref; ref != "" {
+			headers[name] = &openapi2.Header{Ref: FromV3Ref(ref)}
+		} else {
+			stripNonCustomExtensions(header.Value.Extensions)
+			var headerType string
+			if ref := header.Value.Schema.Ref; ref != "" {
+				name := getParameterNameFromNewRef(ref)
+				if val, ok := components.Schemas[name]; ok {
+					headerType = val.Value.Type
+				}
+			} else {
+				headerType = header.Value.Schema.Value.Type
+			}
+
+			headers[name] = &openapi2.Header{
+				ExtensionProps: header.Value.ExtensionProps,
+				Description:    header.Value.Description,
+				Type:           headerType,
+			}
+
+		}
+	}
+
+	return headers
 }
 
 func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {
