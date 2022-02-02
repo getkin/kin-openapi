@@ -184,7 +184,8 @@ const exampleV2 = `
 						"headers": {
 							"ETag": {
 								"description": "The ETag (or entity tag) HTTP response header is an identifier for a specific version of a resource.",
-								"type": "string"
+								"type": "string",
+								"maxLength": 64
 							}
 						}
 					},
@@ -555,7 +556,8 @@ const exampleV3 = `
 							"ETag": {
 								"description": "The ETag (or entity tag) HTTP response header is an identifier for a specific version of a resource.",
 								"schema": {
-									"type": "string"
+									"type": "string",
+									"maxLength": 64
 								}
 							}
 						}

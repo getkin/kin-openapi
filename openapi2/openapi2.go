@@ -232,10 +232,7 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 type Header struct {
-	openapi3.ExtensionProps
-	Ref         string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Type        string `json:"type,omitempty" yaml:"type,omitempty"`
+	Parameter
 }
 
 func (header *Header) MarshalJSON() ([]byte, error) {
