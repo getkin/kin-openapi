@@ -424,7 +424,27 @@ func ToV3Response(response *openapi2.Response) (*openapi3.ResponseRef, error) {
 	if schemaRef := response.Schema; schemaRef != nil {
 		result.WithJSONSchemaRef(ToV3SchemaRef(schemaRef))
 	}
+	if headers := response.Headers; len(headers) > 0 {
+		result.Headers = ToV3Headers(headers)
+	}
 	return &openapi3.ResponseRef{Value: result}, nil
+}
+
+func ToV3Headers(defs map[string]*openapi2.Header) openapi3.Headers {
+	headers := make(openapi3.Headers, len(defs))
+	for name, header := range defs {
+		header.In = ""
+		header.Name = ""
+		if ref := header.Ref; ref != "" {
+			headers[name] = &openapi3.HeaderRef{Ref: ToV3Ref(ref)}
+		} else {
+			parameter, _, _, _ := ToV3Parameter(nil, &header.Parameter, nil)
+			headers[name] = &openapi3.HeaderRef{Value: &openapi3.Header{
+				Parameter: *parameter.Value,
+			}}
+		}
+	}
+	return headers
 }
 
 func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.SchemaRef {
@@ -654,6 +674,7 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		doc2.SecurityDefinitions = doc2SecuritySchemes
 	}
 	doc2.Security = FromV3SecurityRequirements(doc3.Security)
+
 	return doc2, nil
 }
 
@@ -1048,7 +1069,28 @@ func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) 
 			result.Schema, _ = FromV3SchemaRef(ct.Schema, components)
 		}
 	}
+	if headers := response.Headers; len(headers) > 0 {
+		var err error
+		if result.Headers, err = FromV3Headers(headers, components); err != nil {
+			return nil, err
+		}
+	}
 	return result, nil
+}
+
+func FromV3Headers(defs openapi3.Headers, components *openapi3.Components) (map[string]*openapi2.Header, error) {
+	headers := make(map[string]*openapi2.Header, len(defs))
+	for name, header := range defs {
+		ref := openapi3.ParameterRef{Ref: header.Ref, Value: &header.Value.Parameter}
+		parameter, err := FromV3Parameter(&ref, components)
+		if err != nil {
+			return nil, err
+		}
+		parameter.In = ""
+		parameter.Name = ""
+		headers[name] = &openapi2.Header{Parameter: *parameter}
+	}
+	return headers, nil
 }
 
 func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {

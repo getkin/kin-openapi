@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/stretchr/testify/require"
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
@@ -179,6 +180,13 @@ const exampleV2 = `
 								"$ref": "#/definitions/Item"
 							},
 							"type": "array"
+						},
+						"headers": {
+							"ETag": {
+								"description": "The ETag (or entity tag) HTTP response header is an identifier for a specific version of a resource.",
+								"type": "string",
+								"maxLength": 64
+							}
 						}
 					},
 					"404": {
@@ -543,7 +551,16 @@ const exampleV3 = `
 								}
 							}
 						},
-						"description": "ok"
+						"description": "ok",
+						"headers": {
+							"ETag": {
+								"description": "The ETag (or entity tag) HTTP response header is an identifier for a specific version of a resource.",
+								"schema": {
+									"type": "string",
+									"maxLength": 64
+								}
+							}
+						}
 					},
 					"404": {
 						"description": "404 response"
