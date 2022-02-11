@@ -845,6 +845,20 @@ func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOptio
 	return nil
 }
 
+func (schema *Schema) Compile() error {
+	// TODO: Ideally this would be contextual in the main openapi spec. So that it compiles
+	// 		 using T.compiler instead. The current implementation probably wont handle
+	//		 handle refs well. Suggested use: doc.compiler.Compile("root#/jsonPtr")
+
+	jsonStr, err := json.Marshal(schema)
+	if err != nil {
+		return err
+	}
+
+	schema.compiledSchema, err = jsonschema.CompileString("schema", string(jsonStr))
+	return err
+}
+
 func (schema *Schema) compilePattern() (err error) {
 	if schema.compiledPattern, err = regexp.Compile(schema.Pattern); err != nil {
 		return &SchemaError{

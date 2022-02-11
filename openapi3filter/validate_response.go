@@ -126,6 +126,10 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		opts = append(opts, openapi3.MultiErrors())
 	}
 
+	if err := contentType.Schema.Value.Compile(); err != nil {
+		return err
+	}
+
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
 		return &ResponseError{
 			Input:  input,
