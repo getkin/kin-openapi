@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-
 	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
 )

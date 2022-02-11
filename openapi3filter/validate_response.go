@@ -126,12 +126,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		opts = append(opts, openapi3.MultiErrors())
 	}
 
-	var spec *openapi3.T
-	if input.RequestValidationInput.Route != nil {
-		spec = input.RequestValidationInput.Route.Spec
-	}
-
-	if err := contentType.Schema.Value.VisitData(spec, value, opts...); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: "response body doesn't match the schema",

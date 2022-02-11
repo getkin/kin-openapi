@@ -3,42 +3,42 @@ package openapi3
 import (
 	"bytes"
 	"errors"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"strings"
-
-	"github.com/xeipuuv/gojsonschema"
 )
 
 // SchemaValidationError is a collection of errors
-type SchemaValidationError []gojsonschema.ResultError
+type SchemaValidationError jsonschema.ValidationError
 
 var _ error = (*SchemaValidationError)(nil)
 
 func (e SchemaValidationError) Error() string {
 	var buff strings.Builder
-	for i, re := range []gojsonschema.ResultError(e) {
+	for i, re := range jsonschema.ValidationError(e).Causes {
 		if i != 0 {
 			buff.WriteString("\n")
 		}
-		buff.WriteString(re.String())
+		re.AbsoluteKeywordLocation = ""
+		buff.WriteString(re.Error())
 	}
 	return buff.String()
 }
 
 // Errors unwraps into much detailed errors.
 // See https://pkg.go.dev/github.com/xeipuuv/gojsonschema#ResultError
-func (e SchemaValidationError) Errors() []gojsonschema.ResultError {
-	return e
+func (e SchemaValidationError) Errors() *jsonschema.ValidationError {
+	return e.Causes[0]
 }
 
 // JSONPointer returns a dot (.) delimited "JSON path" to the context of the first error.
 func (e SchemaValidationError) JSONPointer() string {
-	return []gojsonschema.ResultError(e)[0].Field()
+	return jsonschema.ValidationError(e).Causes[0].KeywordLocation
 }
 
 func (e SchemaValidationError) asMultiError() MultiError {
-	errs := make([]error, 0, len(e))
-	for _, re := range e {
-		errs = append(errs, errors.New(re.String()))
+	errs := make([]error, 0, len(e.Causes))
+	for _, re := range e.Causes {
+		errs = append(errs, errors.New(re.Error()))
 	}
 	return errs
 }

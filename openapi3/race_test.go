@@ -18,7 +18,7 @@ func TestRaceyPatternSchema(t *testing.T) {
 	require.NoError(t, err)
 
 	visit := func() {
-		err := schema.VisitJSONString("test")
+		//err := schema.VisitJSONString("test")
 		require.NoError(t, err)
 	}
 

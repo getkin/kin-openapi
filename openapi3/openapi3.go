@@ -1,12 +1,13 @@
 package openapi3
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/getkin/kin-openapi/jsoninfo"
-	"github.com/xeipuuv/gojsonschema"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 // T is the root of an OpenAPI v3 document
@@ -21,45 +22,39 @@ type T struct {
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
-	refd, refdAsReq, refdAsRep *gojsonschema.SchemaLoader
+	compiler *jsonschema.Compiler
+}
+
+type docSchemas struct {
+	Components Components `json:"components,omitempty" yaml:"components,omitempty"`
 }
 
 // CompileSchemas needs to be called before any use of VisitJSON*()
 func (doc *T) CompileSchemas() error {
-	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsRequest())); err != nil {
+	doc.compiler = jsonschema.NewCompiler()
+	doc.compiler.Draft = jsonschema.Draft2020
+	oas, err := jsonschema.CompileString("oas", oasComponentSchema)
+	if err != nil {
 		return err
 	}
-	if err := doc.compileSchemas(newSchemaValidationSettings(VisitAsResponse())); err != nil {
-		return err
-	}
-	return doc.compileSchemas(newSchemaValidationSettings())
-}
 
-func (doc *T) compileSchemas(settings *schemaValidationSettings) (err error) {
-	docSchemas := doc.Components.Schemas
-	schemas := make(schemasJSON, len(docSchemas))
-	for name, docSchema := range docSchemas {
-		schemas[name] = docSchema.Value.fromOpenAPISchema(settings)
+	doc.compiler.RegisterExtension("oas31", oas, componentsCompiler{})
+
+	docSch := docSchemas{doc.Components}
+	jsonStr, err := json.Marshal(docSch)
+
+	if err := doc.compiler.AddResource("root", bytes.NewReader(jsonStr)); err != nil {
+		return err
 	}
-	//FIXME merge loops
-	refd := gojsonschema.NewSchemaLoader()
-	for name, schema := range schemas {
-		absRef := "#/components/schemas/" + name
-		sl := gojsonschema.NewGoLoader(schema)
-		if err = refd.AddSchema(absRef, sl); err != nil {
-			return
+
+	rootSchema, err := doc.compiler.Compile("root")
+	if oasSch, ok := rootSchema.Extensions["oas31"].(componentsSchema); ok {
+		for name := range doc.Components.Schemas {
+			doc.Components.Schemas[name].Value.compiledSchema = oasSch.GetSchema(name)
 		}
 	}
 
-	switch {
-	case settings.asreq:
-		doc.refdAsReq = refd
-	case settings.asrep:
-		doc.refdAsRep = refd
-	default:
-		doc.refd = refd
-	}
-	return
+	return err
 }
 
 func (doc *T) MarshalJSON() ([]byte, error) {

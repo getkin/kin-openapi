@@ -155,12 +155,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		opts = append(opts, openapi3.MultiErrors())
 	}
 
-	var spec *openapi3.T
-	if input.Route != nil {
-		spec = input.Route.Spec
-	}
-
-	if err = schema.VisitData(spec, value, opts...); err != nil {
+	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
 	return nil
@@ -243,12 +238,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		opts = append(opts, openapi3.MultiErrors())
 	}
 
-	var spec *openapi3.T
-	if input.Route != nil {
-		spec = input.Route.Spec
-	}
-
-	if err := contentType.Schema.Value.VisitData(spec, value, opts...); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,

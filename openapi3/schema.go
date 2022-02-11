@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"regexp"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
-	"github.com/xeipuuv/gojsonschema"
 )
 
 const (
@@ -137,6 +137,8 @@ type Schema struct {
 	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // In this order...
 	AdditionalProperties        *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // ...for multijson
 	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+
+	compiledSchema *jsonschema.Schema
 }
 
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
@@ -638,6 +640,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if schema.Items == nil {
 			return errors.New("when schema type is 'array', schema 'items' must be non-null")
 		}
+	case TypeObject:
 	default:
 		return fmt.Errorf("unsupported 'type' value %q", schemaType)
 	}
@@ -824,49 +827,22 @@ func (s *Schema) fromOpenAPISchema(settings *schemaValidationSettings) (schema s
 
 // VisitJSON validates given data against schema only.
 func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOption) error {
-	return schema.VisitData(nil, value, opts...)
-}
-
-// VisitData validates given data against schema, using components from doc if given.
-// It will use #/components/schemas if given doc is non-nil and doc.CompileSchemas() was called.
-func (schema *Schema) VisitData(doc *T, data interface{}, opts ...SchemaValidationOption) (err error) {
 	settings := newSchemaValidationSettings(opts...)
-	ls := gojsonschema.NewGoLoader(schema.fromOpenAPISchema(settings))
-	ld := gojsonschema.NewGoLoader(data)
-
-	var res *gojsonschema.Result
-	if doc != nil {
-		if doc.refdAsReq == nil || doc.refdAsRep == nil || doc.refd == nil {
-			panic(`func (*T) CompileSchemas() error must be called first`)
-		}
-		var whole *gojsonschema.Schema
-		switch {
-		case settings.asreq:
-			whole, err = doc.refdAsReq.Compile(ls)
-		case settings.asrep:
-			whole, err = doc.refdAsRep.Compile(ls)
-		default:
-			whole, err = doc.refd.Compile(ls)
-		}
-		if err != nil {
-			return
-		}
-		res, err = whole.Validate(ld)
-	} else {
-		res, err = gojsonschema.Validate(ls, ld)
-	}
-	if err != nil {
-		return
+	if schema.compiledSchema == nil {
+		panic(`func (*T) CompileSchemas() error must be called first`)
 	}
 
-	if !res.Valid() {
-		err := SchemaValidationError(res.Errors())
-		if settings.multiError {
-			return err.asMultiError()
+	if err := schema.compiledSchema.Validate(value); err != nil {
+		if errFmt, ok := err.(*jsonschema.ValidationError); ok {
+			errWrap := SchemaValidationError(*errFmt)
+			if settings.multiError {
+				return errWrap.asMultiError()
+			}
+			return errWrap
 		}
-		return err
 	}
-	return
+
+	return nil
 }
 
 func (schema *Schema) compilePattern() (err error) {

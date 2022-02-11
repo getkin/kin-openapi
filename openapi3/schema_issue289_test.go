@@ -35,9 +35,9 @@ openapi: "3.0.1"
 	err = s.CompileSchemas()
 	require.NoError(t, err)
 
-	err = s.Components.Schemas["Server"].Value.VisitData(s, map[string]interface{}{
+	err = s.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
 		"name":    "kin-openapi",
 		"address": "127.0.0.1",
 	})
-	require.EqualError(t, err, "address: Must validate one and only one schema (oneOf)")
+	require.EqualError(t, err, "jsonschema: '/address' does not validate with #/properties/address/oneOf: valid against schemas at indexes 0 and 1")
 }

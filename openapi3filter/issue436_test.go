@@ -63,6 +63,10 @@ components:
 		panic(err)
 	}
 
+	if err = doc.CompileSchemas(); err != nil {
+		panic(err)
+	}
+
 	router, err := gorillamux.NewRouter(doc)
 	if err != nil {
 		panic(err)

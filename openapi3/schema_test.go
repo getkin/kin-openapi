@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	// "fmt"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"math"
-	// "reflect"
 	"strings"
 	"testing"
 
@@ -69,6 +68,12 @@ func validateSchema(t *testing.T, schema *Schema, value interface{}, opts ...Sch
 	var val interface{}
 	err = json.Unmarshal(data, &val)
 	require.NoError(t, err)
+	dataSchema, err := json.Marshal(schema)
+	require.NoError(t, err)
+	schema.compiledSchema, err = jsonschema.CompileString("r", string(dataSchema))
+	if err != nil {
+		return nil
+	}
 	return schema.VisitJSON(val, opts...)
 }
 
@@ -1232,7 +1237,7 @@ components:
 	err = s.CompileSchemas()
 	require.NoError(t, err)
 
-	err = s.Components.Schemas["Test"].Value.VisitData(s, map[string]interface{}{
+	err = s.Components.Schemas["Test"].Value.VisitJSON(map[string]interface{}{
 		"name":      "kin-openapi",
 		"ownerName": true,
 	})
