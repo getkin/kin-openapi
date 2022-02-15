@@ -1308,7 +1308,10 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		}
 		for i, item := range value {
 			if err := itemSchema.visitJSON(settings, item); err != nil {
-				err = markSchemaErrorIndex(err, i)
+				// No need to mark index in error if validate the value with enum array
+				if len(itemSchema.Enum) == 0 {
+					err = markSchemaErrorIndex(err, i)
+				}
 				if !settings.multiError {
 					return err
 				}
