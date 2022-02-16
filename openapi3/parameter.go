@@ -252,6 +252,10 @@ func (value *Parameter) Validate(ctx context.Context) error {
 		return fmt.Errorf("parameter can't have 'in' value %q", value.In)
 	}
 
+	if in == ParameterInPath && !value.Required {
+		return fmt.Errorf("path parameter %q must be required", value.Name)
+	}
+
 	// Validate a parameter's serialization method.
 	sm, err := value.SerializationMethod()
 	if err != nil {

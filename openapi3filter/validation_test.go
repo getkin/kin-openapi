@@ -62,9 +62,10 @@ func TestFilter(t *testing.T) {
 					Parameters: openapi3.Parameters{
 						{
 							Value: &openapi3.Parameter{
-								In:     "path",
-								Name:   "pathArg",
-								Schema: openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
+								In:       "path",
+								Name:     "pathArg",
+								Schema:   openapi3.NewStringSchema().WithMaxLength(2).NewRef(),
+								Required: true,
 							},
 						},
 						{

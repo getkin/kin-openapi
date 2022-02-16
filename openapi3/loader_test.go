@@ -412,6 +412,7 @@ paths:
       parameters:
         - name: id,
           in: path
+          required: true
           schema:
             type: string
       responses:
