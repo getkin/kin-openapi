@@ -701,6 +701,10 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 	//Only select one formData or request body for an individual requestBody as OpenAPI 2 does not support multiples
 	if requestBodyRef.Value != nil {
 		for contentType, mediaType := range requestBodyRef.Value.Content {
+			if consumes == nil {
+				consumes = make(map[string]struct{})
+			}
+			consumes[contentType] = struct{}{}
 			if contentType == "application/x-www-form-urlencoded" || contentType == "multipart/form-data" {
 				formParameters = FromV3RequestBodyFormData(mediaType)
 				return
