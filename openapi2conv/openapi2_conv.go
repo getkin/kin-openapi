@@ -707,7 +707,7 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 			consumes[contentType] = struct{}{}
 			if contentType == "application/x-www-form-urlencoded" || contentType == "multipart/form-data" {
 				formParameters = FromV3RequestBodyFormData(mediaType)
-				return
+				continue
 			}
 
 			paramName := name
@@ -721,7 +721,6 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 			}
 
 			bodyOrRefParameters = append(bodyOrRefParameters, r)
-			return
 		}
 	}
 	return
