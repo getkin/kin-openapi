@@ -1124,17 +1124,33 @@ func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*o
 		if flows != nil {
 			var flow *openapi3.OAuthFlow
 			// TODO: Is this the right priority? What if multiple defined?
-			if flow = flows.Implicit; flow != nil {
+			switch {
+			case flows.Implicit != nil:
 				result.Flow = "implicit"
-			} else if flow = flows.AuthorizationCode; flow != nil {
+				flow = flows.Implicit
+				result.AuthorizationURL = flow.AuthorizationURL
+
+			case flows.AuthorizationCode != nil:
 				result.Flow = "accessCode"
-			} else if flow = flows.Password; flow != nil {
+				flow = flows.AuthorizationCode
+				result.AuthorizationURL = flow.AuthorizationURL
+				result.TokenURL = flow.TokenURL
+
+			case flows.Password != nil:
 				result.Flow = "password"
-			} else if flow = flows.ClientCredentials; flow != nil {
+				flow = flows.Password
+				result.TokenURL = flow.TokenURL
+
+			case flows.ClientCredentials != nil:
 				result.Flow = "application"
-			} else {
+				flow = flows.ClientCredentials
+				result.TokenURL = flow.TokenURL
+
+			default:
 				return nil, nil
 			}
+
+			result.Scopes = make(map[string]string, len(flow.Scopes))
 			for scope, desc := range flow.Scopes {
 				result.Scopes[scope] = desc
 			}
