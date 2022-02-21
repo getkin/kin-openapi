@@ -1,11 +1,13 @@
 package openapi3
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 // T is the root of an OpenAPI v3 document
@@ -19,6 +21,40 @@ type T struct {
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	compiler *jsonschema.Compiler
+}
+
+type docSchemas struct {
+	Components Components `json:"components,omitempty" yaml:"components,omitempty"`
+}
+
+// CompileSchemas needs to be called before any use of VisitJSON*()
+func (doc *T) CompileSchemas() error {
+	doc.compiler = jsonschema.NewCompiler()
+	doc.compiler.Draft = jsonschema.Draft2020
+	oas, err := jsonschema.CompileString("oas", oasComponentSchema)
+	if err != nil {
+		return err
+	}
+
+	doc.compiler.RegisterExtension("oas31", oas, componentsCompiler{})
+
+	docSch := docSchemas{doc.Components}
+	jsonStr, err := json.Marshal(docSch)
+
+	if err := doc.compiler.AddResource("root", bytes.NewReader(jsonStr)); err != nil {
+		return err
+	}
+
+	rootSchema, err := doc.compiler.Compile("root")
+	if oasSch, ok := rootSchema.Extensions["oas31"].(componentsSchema); ok {
+		for name := range doc.Components.Schemas {
+			doc.Components.Schemas[name].Value.compiledSchema = oasSch.GetSchema(name)
+		}
+	}
+
+	return err
 }
 
 func (doc *T) MarshalJSON() ([]byte, error) {

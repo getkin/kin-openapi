@@ -13,8 +13,15 @@ import (
 )
 
 func Example() {
-	doc, err := openapi3.NewLoader().LoadFromFile("./testdata/petstore.yaml")
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromFile("./testdata/petstore.yaml")
 	if err != nil {
+		panic(err)
+	}
+	if err = doc.Validate(loader.Context); err != nil {
+		panic(err)
+	}
+	if err = doc.CompileSchemas(); err != nil {
 		panic(err)
 	}
 
@@ -123,9 +130,9 @@ func convertError(me openapi3.MultiError) map[string][]string {
 		case *openapi3.SchemaError:
 			// Can inspect schema validation errors here, e.g. err.Value
 			field := prefixBody
-			if path := err.JSONPointer(); len(path) > 0 {
-				field = fmt.Sprintf("%s.%s", field, strings.Join(path, "."))
-			}
+			// if path := err.JSONPointer(); len(path) > 0 {
+			// 	field = fmt.Sprintf("%s.%s", field, strings.Join(path, "."))
+			// }
 			if _, ok := issues[field]; !ok {
 				issues[field] = make([]string, 0, 3)
 			}
