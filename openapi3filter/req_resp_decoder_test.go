@@ -908,6 +908,7 @@ func TestDecodeParameter(t *testing.T) {
 					path := "/test"
 					if tc.path != "" {
 						path += "/{" + tc.param.Name + "}"
+						tc.param.Required = true
 					}
 
 					info := &openapi3.Info{
