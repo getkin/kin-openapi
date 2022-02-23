@@ -789,9 +789,9 @@ const exampleV3 = `
 
 const exampleRequestBodyV3 = `{
 	"info": {
-	  "description": "Test Spec",
-	  "title": "Test Spec",
-	  "version": "0.0.0"
+		"description": "Test Spec",
+		"title": "Test Spec",
+		"version": "0.0.0"
 	},
 	"components": {
 		"requestBodies": {
