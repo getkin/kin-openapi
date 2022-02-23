@@ -828,30 +828,30 @@ const exampleRequestBodyV2 = `{
 	"consumes": ["application/json"],
 	"host": "localhost",
 	"info": {
-	  "description": "Test Spec",
-	  "title": "Test Spec",
-	  "version": "0.0.0"
+		"description": "Test Spec",
+		"title": "Test Spec",
+		"version": "0.0.0"
 	},
 	"parameters": {
-	  "FooBody": {
-		"description": "test spec request body.",
-		"in": "body",
-		"name": "FooBody",
-		"required": true,
-		"schema": {
-		  "properties": { "message": { "type": "string" } },
-		  "type": "object"
+		"FooBody": {
+			"description": "test spec request body.",
+			"in": "body",
+			"name": "FooBody",
+			"required": true,
+			"schema": {
+				"properties": { "message": { "type": "string" } },
+				"type": "object"
+			}
 		}
-	  }
 	},
 	"paths": {
-	  "/foo-path": {
-		"post": {
-		  "parameters": [{ "$ref": "#/parameters/FooBody" }],
-		  "responses": { "202": { "description": "Test spec post." } },
-		  "summary": "Test spec path"
+		"/foo-path": {
+			"post": {
+				"parameters": [{ "$ref": "#/parameters/FooBody" }],
+				"responses": { "202": { "description": "Test spec post." } },
+				"summary": "Test spec path"
+			}
 		}
-	  }
 	},
 	"schemes": ["http"],
 	"swagger": "2.0"
