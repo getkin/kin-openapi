@@ -698,27 +698,29 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 		return
 	}
 
-	//Only select one formData or request body for an individual requesstBody as OpenAPI 2 does not support multiples
+	//Only select one formData or request body for an individual requestBody as OpenAPI 2 does not support multiples
 	if requestBodyRef.Value != nil {
 		for contentType, mediaType := range requestBodyRef.Value.Content {
 			if consumes == nil {
 				consumes = make(map[string]struct{})
 			}
 			consumes[contentType] = struct{}{}
-			if formParams := FromV3RequestBodyFormData(mediaType); len(formParams) != 0 {
-				formParameters = formParams
-			} else {
-				paramName := name
-				if originalName, ok := requestBodyRef.Value.Extensions["x-originalParamName"]; ok {
-					json.Unmarshal(originalName.(json.RawMessage), &paramName)
-				}
-
-				var r *openapi2.Parameter
-				if r, err = FromV3RequestBody(paramName, requestBodyRef, mediaType, components); err != nil {
-					return
-				}
-				bodyOrRefParameters = append(bodyOrRefParameters, r)
+			if contentType == "application/x-www-form-urlencoded" || contentType == "multipart/form-data" {
+				formParameters = FromV3RequestBodyFormData(mediaType)
+				continue
 			}
+
+			paramName := name
+			if originalName, ok := requestBodyRef.Value.Extensions["x-originalParamName"]; ok {
+				json.Unmarshal(originalName.(json.RawMessage), &paramName)
+			}
+
+			var r *openapi2.Parameter
+			if r, err = FromV3RequestBody(paramName, requestBodyRef, mediaType, components); err != nil {
+				return
+			}
+
+			bodyOrRefParameters = append(bodyOrRefParameters, r)
 		}
 	}
 	return
