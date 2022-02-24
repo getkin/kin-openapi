@@ -82,19 +82,39 @@ components:
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
-	body := bytes.NewReader([]byte(`{"discr": "objA", "base64": "S25vY2sgS25vY2ssIE5lbyAuLi4="}`))
-	req, err := http.NewRequest("PUT", "/blob", body)
-	require.NoError(t, err)
-	req.Header.Add(headerCT, "application/json")
+	t.Run("valid", func(t *testing.T) {
+		body := bytes.NewReader([]byte(`{"discr": "objA", "base64": "S25vY2sgS25vY2ssIE5lbyAuLi4="}`))
+		req, err := http.NewRequest("PUT", "/blob", body)
+		require.NoError(t, err)
+		req.Header.Add(headerCT, "application/json")
 
-	route, pathParams, err := router.FindRoute(req)
-	require.NoError(t, err)
+		route, pathParams, err := router.FindRoute(req)
+		require.NoError(t, err)
 
-	requestValidationInput := &RequestValidationInput{
-		Request:    req,
-		PathParams: pathParams,
-		Route:      route,
-	}
-	err = ValidateRequest(loader.Context, requestValidationInput)
-	require.NoError(t, err)
+		requestValidationInput := &RequestValidationInput{
+			Request:    req,
+			PathParams: pathParams,
+			Route:      route,
+		}
+		err = ValidateRequest(loader.Context, requestValidationInput)
+		require.NoError(t, err)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		body := bytes.NewReader([]byte(`{"discr": "objA", "value": 10}`))
+		req, err := http.NewRequest("PUT", "/blob", body)
+		require.NoError(t, err)
+		req.Header.Add(headerCT, "application/json")
+
+		route, pathParams, err := router.FindRoute(req)
+		require.NoError(t, err)
+
+		requestValidationInput := &RequestValidationInput{
+			Request:    req,
+			PathParams: pathParams,
+			Route:      route,
+		}
+		err = ValidateRequest(loader.Context, requestValidationInput)
+		require.Error(t, err)
+	})
 }
