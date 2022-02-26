@@ -729,6 +729,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
+	if v := schema.ExternalDocs; v != nil {
+		if err = v.Validate(ctx); err != nil {
+			return fmt.Errorf("invalid external docs: %w", err)
+		}
+	}
+
 	return
 }
 
