@@ -354,6 +354,9 @@ func spec() *T {
 }
 
 func TestValidation(t *testing.T) {
+	version := `
+openapi: 3.0.2
+`
 	info := `
 info:
   title: "Hello World REST APIs"
@@ -381,9 +384,17 @@ paths:
         200:
           description: "Get a single greeting object"
 `
-	spec := `
-openapi: 3.0.2
-` + info + paths + `
+	externalDocs := `
+externalDocs:
+  url: https://root-ext-docs.com
+`
+	tags := `
+tags:
+  - name: "pet"
+    externalDocs:
+      url: https://tags-ext-docs.com
+`
+	spec := version + info + paths + externalDocs + tags + `
 components:
   schemas:
     GreetingObject:
@@ -399,23 +410,58 @@ components:
               type: string
 `
 
-	tests := map[string]string{
-		spec: "",
-		strings.Replace(spec, `openapi: 3.0.2`, ``, 1):            "value of openapi must be a non-empty string",
-		strings.Replace(spec, `openapi: 3.0.2`, `openapi: ''`, 1): "value of openapi must be a non-empty string",
-		strings.Replace(spec, info, ``, 1):                        "invalid info: must be an object",
-		strings.Replace(spec, paths, ``, 1):                       "invalid paths: must be an object",
+	tests := []struct {
+		name        string
+		spec        string
+		expectedErr string
+	}{
+		{
+			name: "no errors",
+			spec: spec,
+		},
+		{
+			name:        "version is missing",
+			spec:        strings.Replace(spec, version, "", 1),
+			expectedErr: "value of openapi must be a non-empty string",
+		},
+		{
+			name:        "version is empty string",
+			spec:        strings.Replace(spec, version, "openapi: ''", 1),
+			expectedErr: "value of openapi must be a non-empty string",
+		},
+		{
+			name:        "info section is missing",
+			spec:        strings.Replace(spec, info, ``, 1),
+			expectedErr: "invalid info: must be an object",
+		},
+		{
+			name:        "paths section is missing",
+			spec:        strings.Replace(spec, paths, ``, 1),
+			expectedErr: "invalid paths: must be an object",
+		},
+		{
+			name: "externalDocs section is invalid",
+			spec: strings.Replace(spec, externalDocs,
+				strings.ReplaceAll(externalDocs, "url: https://root-ext-docs.com", "url: ''"), 1),
+			expectedErr: "invalid external docs: url is required",
+		},
+		{
+			name: "tags section is invalid",
+			spec: strings.Replace(spec, tags,
+				strings.ReplaceAll(tags, "url: https://tags-ext-docs.com", "url: ''"), 1),
+			expectedErr: "invalid tags: invalid external docs: url is required",
+		},
 	}
-
-	for spec, expectedErr := range tests {
-		t.Run(expectedErr, func(t *testing.T) {
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.name, func(t *testing.T) {
 			doc := &T{}
-			err := yaml.Unmarshal([]byte(spec), &doc)
+			err := yaml.Unmarshal([]byte(tt.spec), &doc)
 			require.NoError(t, err)
 
 			err = doc.Validate(context.Background())
-			if expectedErr != "" {
-				require.EqualError(t, err, expectedErr)
+			if tt.expectedErr != "" {
+				require.EqualError(t, err, tt.expectedErr)
 			} else {
 				require.NoError(t, err)
 			}

@@ -1,6 +1,10 @@
 package openapi3
 
 import (
+	"context"
+	"fmt"
+	"net/url"
+
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
@@ -18,4 +22,14 @@ func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
 
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, e)
+}
+
+func (e *ExternalDocs) Validate(ctx context.Context) error {
+	if e.URL == "" {
+		return fmt.Errorf("url is required")
+	}
+	if _, err := url.Parse(e.URL); err != nil {
+		return fmt.Errorf("url is incorrect: %w", err)
+	}
+	return nil
 }

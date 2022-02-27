@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -137,6 +138,11 @@ func (value *Operation) Validate(ctx context.Context) error {
 		}
 	} else {
 		return errors.New("value of responses must be an object")
+	}
+	if v := value.ExternalDocs; v != nil {
+		if err := v.Validate(ctx); err != nil {
+			return fmt.Errorf("invalid external docs: %w", err)
+		}
 	}
 	return nil
 }

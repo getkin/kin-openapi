@@ -101,5 +101,23 @@ func (value *T) Validate(ctx context.Context) error {
 		}
 	}
 
+	{
+		wrap := func(e error) error { return fmt.Errorf("invalid tags: %w", e) }
+		if v := value.Tags; v != nil {
+			if err := v.Validate(ctx); err != nil {
+				return wrap(err)
+			}
+		}
+	}
+
+	{
+		wrap := func(e error) error { return fmt.Errorf("invalid external docs: %w", e) }
+		if v := value.ExternalDocs; v != nil {
+			if err := v.Validate(ctx); err != nil {
+				return wrap(err)
+			}
+		}
+	}
+
 	return nil
 }
