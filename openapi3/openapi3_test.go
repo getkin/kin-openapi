@@ -123,6 +123,7 @@ components:
   requestBodies:
     someRequestBody:
       description: Some request body
+      content: {}
   responses:
     someResponse:
       description: Some response
@@ -194,7 +195,8 @@ var specJSON = []byte(`
     },
     "requestBodies": {
       "someRequestBody": {
-        "description": "Some request body"
+        "description": "Some request body",
+        "content": {}
       }
     },
     "responses": {
@@ -253,6 +255,7 @@ func spec() *T {
 	}
 	requestBody := &RequestBody{
 		Description: "Some request body",
+		Content:     NewContent(),
 	}
 	responseDescription := "Some response"
 	response := &Response{
