@@ -133,7 +133,7 @@ func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.Struct
 	for i := 0; i < len(fieldInfo.Index); i++ {
 		ff = t.Field(fieldInfo.Index[i])
 		t = ff.Type
-		if t.Kind() == reflect.Ptr {
+		for t.Kind() == reflect.Ptr {
 			t = t.Elem()
 		}
 	}
