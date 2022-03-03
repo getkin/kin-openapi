@@ -3,7 +3,7 @@ package routers
 import (
 	"net/http"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/seek-ret/kin-openapi/openapi3"
 )
 
 // Router helps link http.Request.s and an OpenAPIv3 spec

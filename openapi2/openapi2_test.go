@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"reflect"
 
-	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/seek-ret/kin-openapi/openapi2"
 	"github.com/ghodss/yaml"
 )
 
