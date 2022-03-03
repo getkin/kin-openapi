@@ -3,7 +3,6 @@ module github.com/seek-ret/kin-openapi
 go 1.17
 
 require (
-	github.com/getkin/kin-openapi v0.90.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/gorilla/mux v1.8.0
