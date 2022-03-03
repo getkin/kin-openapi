@@ -474,6 +474,10 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	for i, v := range schema.Value.AllOf {
 		schema.Value.AllOf[i] = ToV3SchemaRef(v)
 	}
+	if schema.Value.Type == "file" {
+		schema.Value.Type = "string"
+		schema.Value.Format = "binary"
+	}
 	return schema
 }
 
