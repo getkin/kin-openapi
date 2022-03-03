@@ -455,6 +455,11 @@ func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.Schem
 	return schemas
 }
 
+
+var types2To3 = map[string][2]string{
+	"file": {"string", "binary"},
+}
+
 func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	if ref := schema.Ref; ref != "" {
 		return &openapi3.SchemaRef{Ref: ToV3Ref(ref)}
@@ -474,10 +479,15 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	for i, v := range schema.Value.AllOf {
 		schema.Value.AllOf[i] = ToV3SchemaRef(v)
 	}
-	if schema.Value.Type == "file" {
-		schema.Value.Type = "string"
-		schema.Value.Format = "binary"
+
+	for paramType, typeAndFormat := range types2To3 {
+		if schema.Value.Type == paramType {
+			schema.Value.Type = typeAndFormat[0]
+			schema.Value.Format = typeAndFormat[1]
+			break
+		}
 	}
+
 	return schema
 }
 
