@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/seek-ret/kin-openapi/jsoninfo"
 )
 
 // Tags is specified by OpenAPI/Swagger 3.0 standard.

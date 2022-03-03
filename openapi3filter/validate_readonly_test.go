@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/seek-ret/kin-openapi/openapi3"
+	legacyrouter "github.com/seek-ret/kin-openapi/routers/legacy"
 	"github.com/stretchr/testify/require"
 )
 

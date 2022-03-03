@@ -16,7 +16,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/seek-ret/kin-openapi/openapi3"
 )
 
 // ParseErrorKind describes a kind of ParseError.

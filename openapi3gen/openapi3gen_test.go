@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/seek-ret/kin-openapi/openapi3"
+	"github.com/seek-ret/kin-openapi/openapi3gen"
 	"github.com/stretchr/testify/require"
 )
 
@@ -294,7 +294,7 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 	require.Equal(t, true, ok)
 }
 
-// See: https://github.com/getkin/kin-openapi/issues/500
+// See: https://github.com/seek-ret/kin-openapi/issues/500
 func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 	type EmbeddedStruct struct {
 		ID string

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/seek-ret/kin-openapi/jsoninfo"
 )
 
 // Servers is specified by OpenAPI/Swagger standard version 3.0.
