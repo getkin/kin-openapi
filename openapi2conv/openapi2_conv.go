@@ -455,6 +455,7 @@ func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.Schem
 	return schemas
 }
 
+
 func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	if ref := schema.Ref; ref != "" {
 		return &openapi3.SchemaRef{Ref: ToV3Ref(ref)}
@@ -474,6 +475,23 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	for i, v := range schema.Value.AllOf {
 		schema.Value.AllOf[i] = ToV3SchemaRef(v)
 	}
+
+	schema = ToV3SchemaTypes(schema)
+
+	return schema
+}
+
+// ToV3SchemaTypes performs the type & format migrations from v2 to v3
+func ToV3SchemaTypes(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
+	if schema.Value == nil {
+		return schema
+	}
+
+	if schema.Value.Type == "file" {
+		schema.Value.Type = "string"
+		schema.Value.Format = "binary"
+	}
+
 	return schema
 }
 
