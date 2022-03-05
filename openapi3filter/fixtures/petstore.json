@@ -121,7 +121,7 @@
         ],
         "summary": "Add a new pet to the store",
         "description": "",
-        "operationId": "addPet",
+        "operationId": "addPet2",
         "responses": {
           "405": {
             "description": "Invalid input"
