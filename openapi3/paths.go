@@ -82,6 +82,11 @@ func (value Paths) Validate(ctx context.Context) error {
 			return err
 		}
 	}
+
+	if err := value.validateUniqueOperationIDs(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -109,6 +114,30 @@ func (paths Paths) Find(key string) *PathItem {
 		pathNormalized, got, _ := normalizeTemplatedPath(path)
 		if got == expected && pathNormalized == normalizedPath {
 			return pathItem
+		}
+	}
+	return nil
+}
+
+func (value Paths) validateUniqueOperationIDs() error {
+	operationIDs := make(map[string]string)
+	for urlPath, pathItem := range value {
+		if pathItem == nil {
+			continue
+		}
+		for httpMethod, operation := range pathItem.Operations() {
+			if operation == nil || operation.OperationID == "" {
+				continue
+			}
+			endpoint := httpMethod + " " + urlPath
+			if endpointDup, ok := operationIDs[operation.OperationID]; ok {
+				if endpoint > endpointDup { // For make error message a bit more deterministic. May be useful for tests.
+					endpoint, endpointDup = endpointDup, endpoint
+				}
+				return fmt.Errorf("operations %q and %q have the same operation id %q",
+					endpoint, endpointDup, operation.OperationID)
+			}
+			operationIDs[operation.OperationID] = endpoint
 		}
 	}
 	return nil
