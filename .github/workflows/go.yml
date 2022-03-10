@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.14', '1.x']
+        go: ['1.16', '1.x']
         os:
         - ubuntu-latest
         - windows-latest
@@ -46,8 +46,6 @@ jobs:
       with:
         path: ${{ steps.go-cache-paths.outputs.go-mod }}
         key: ${{ runner.os }}-go-${{ matrix.go }}-mod-${{ hashFiles('**/go.sum') }}
-      if: matrix.go != '1.14' # cf https://github.com/deepmap/oapi-codegen/pull/322#issuecomment-805192283
-
 
     - uses: actions/checkout@v2
 
