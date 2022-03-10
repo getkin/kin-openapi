@@ -12,12 +12,11 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.14', '1.x']
-        # Locked at https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+        go: ['1.16', '1.x']
         os:
-        - ubuntu-20.04
-        - windows-2019
-        - macos-10.15
+        - ubuntu-latest
+        - windows-latest
+        - macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -47,8 +46,6 @@ jobs:
       with:
         path: ${{ steps.go-cache-paths.outputs.go-mod }}
         key: ${{ runner.os }}-go-${{ matrix.go }}-mod-${{ hashFiles('**/go.sum') }}
-      if: matrix.go != '1.14'
-
 
     - uses: actions/checkout@v2
 
@@ -70,12 +67,6 @@ jobs:
         CGO_ENABLED: '1'
     - if: runner.os == 'Linux'
       run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
-    - run: |
-        cp openapi3/testdata/load_with_go_embed_test.go openapi3/
-        cat go.mod | sed 's%go 1.14%go 1.16%' >gomod && mv gomod go.mod
-        go test ./...
-      if: matrix.go != '1.14'
-
 
     - if: runner.os == 'Linux'
       name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings

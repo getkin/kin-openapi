@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -26,7 +27,7 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 
 func (e *ExternalDocs) Validate(ctx context.Context) error {
 	if e.URL == "" {
-		return fmt.Errorf("url is required")
+		return errors.New("url is required")
 	}
 	if _, err := url.Parse(e.URL); err != nil {
 		return fmt.Errorf("url is incorrect: %w", err)

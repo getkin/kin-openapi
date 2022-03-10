@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -99,7 +100,7 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 
 func (value *RequestBody) Validate(ctx context.Context) error {
 	if value.Content == nil {
-		return fmt.Errorf("content of the request body is required")
+		return errors.New("content of the request body is required")
 	}
 	return value.Content.Validate(ctx)
 }
