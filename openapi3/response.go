@@ -104,7 +104,6 @@ func (value *Response) Validate(ctx context.Context) error {
 			return err
 		}
 	}
-	
 	if headers := value.Headers; headers != nil {
 		for _, header := range headers {
 			if err := header.Validate(ctx); err != nil {
