@@ -83,7 +83,7 @@ func (value Parameters) Validate(ctx context.Context) error {
 }
 
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md#parameterObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
 type Parameter struct {
 	ExtensionProps
 	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`

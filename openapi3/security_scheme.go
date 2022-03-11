@@ -25,6 +25,8 @@ func (s SecuritySchemes) JSONLookup(token string) (interface{}, error) {
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
 
+// SecurityScheme is specified by OpenAPI/Swagger standard version 3.0.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#securitySchemeObject
 type SecurityScheme struct {
 	ExtensionProps
 
@@ -166,6 +168,8 @@ func (value *SecurityScheme) Validate(ctx context.Context) error {
 	return nil
 }
 
+// OAuthFlows is specified by OpenAPI/Swagger standard version 3.0.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauthFlowsObject
 type OAuthFlows struct {
 	ExtensionProps
 	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
@@ -207,6 +211,8 @@ func (flows *OAuthFlows) Validate(ctx context.Context) error {
 	return errors.New("no OAuth flow is defined")
 }
 
+// OAuthFlow is specified by OpenAPI/Swagger standard version 3.0.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauthFlowObject
 type OAuthFlow struct {
 	ExtensionProps
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`

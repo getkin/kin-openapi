@@ -7,6 +7,7 @@ import (
 )
 
 // Discriminator is specified by OpenAPI/Swagger standard version 3.0.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminatorObject
 type Discriminator struct {
 	ExtensionProps
 	PropertyName string            `json:"propertyName" yaml:"propertyName"`

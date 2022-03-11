@@ -26,6 +26,7 @@ func (r RequestBodies) JSONLookup(token string) (interface{}, error) {
 }
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#requestBodyObject
 type RequestBody struct {
 	ExtensionProps
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`

@@ -39,6 +39,7 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 }
 
 // Server is specified by OpenAPI/Swagger standard version 3.0.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#serverObject
 type Server struct {
 	ExtensionProps
 	URL         string                     `json:"url" yaml:"url"`
@@ -148,6 +149,7 @@ func (value *Server) Validate(ctx context.Context) (err error) {
 }
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.0.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
 	ExtensionProps
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
