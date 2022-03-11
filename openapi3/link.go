@@ -25,11 +25,13 @@ func (l Links) JSONLookup(token string) (interface{}, error) {
 
 var _ jsonpointer.JSONPointable = (*Links)(nil)
 
-// Link is specified by OpenAPI/Swagger standard version 3.0.
+// Link is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#linkObject
 type Link struct {
 	ExtensionProps
-	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+
 	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
+	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Parameters   map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Server       *Server                `json:"server,omitempty" yaml:"server,omitempty"`

@@ -7,9 +7,11 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Info is specified by OpenAPI/Swagger standard version 3.0.
+// Info is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#infoObject
 type Info struct {
 	ExtensionProps
+
 	Title          string   `json:"title" yaml:"title"` // Required
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
@@ -50,9 +52,11 @@ func (value *Info) Validate(ctx context.Context) error {
 	return nil
 }
 
-// Contact is specified by OpenAPI/Swagger standard version 3.0.
+// Contact is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contactObject
 type Contact struct {
 	ExtensionProps
+
 	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
 	Email string `json:"email,omitempty" yaml:"email,omitempty"`
@@ -70,9 +74,11 @@ func (value *Contact) Validate(ctx context.Context) error {
 	return nil
 }
 
-// License is specified by OpenAPI/Swagger standard version 3.0.
+// License is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#licenseObject
 type License struct {
 	ExtensionProps
+
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
 }

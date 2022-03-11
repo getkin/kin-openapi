@@ -8,9 +8,11 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Components is specified by OpenAPI/Swagger standard version 3.0.
+// Components is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#componentsObject
 type Components struct {
 	ExtensionProps
+
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`

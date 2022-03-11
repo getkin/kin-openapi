@@ -11,7 +11,7 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Servers is specified by OpenAPI/Swagger standard version 3.0.
+// Servers is specified by OpenAPI/Swagger standard version 3.
 type Servers []*Server
 
 // Validate ensures servers are per the OpenAPIv3 specification.
@@ -38,9 +38,11 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 	return nil, nil, ""
 }
 
-// Server is specified by OpenAPI/Swagger standard version 3.0.
+// Server is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#serverObject
 type Server struct {
 	ExtensionProps
+
 	URL         string                     `json:"url" yaml:"url"`
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
@@ -147,9 +149,11 @@ func (value *Server) Validate(ctx context.Context) (err error) {
 	return
 }
 
-// ServerVariable is specified by OpenAPI/Swagger standard version 3.0.
+// ServerVariable is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
 	ExtensionProps
+
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`

@@ -47,26 +47,25 @@ jobs:
         path: ${{ steps.go-cache-paths.outputs.go-mod }}
         key: ${{ runner.os }}-go-${{ matrix.go }}-mod-${{ hashFiles('**/go.sum') }}
 
+    - if: runner.os == 'Linux'
+      run: sudo apt install silversearcher-ag
+
     - uses: actions/checkout@v2
 
     - run: go mod download && go mod tidy && go mod verify
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - run: go vet ./...
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - run: go fmt ./...
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - run: go test ./...
     - run: go test -v -run TestRaceyPatternSchema -race ./...
       env:
         CGO_ENABLED: '1'
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - if: runner.os == 'Linux'
       name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
@@ -77,3 +76,61 @@ jobs:
       name: Did you mean %q
       run: |
         ! git grep -E "'[%].'"
+
+    - if: runner.os == 'Linux'
+      name: Also add yaml tags
+      run: |
+        ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
+
+    - if: runner.os == 'Linux'
+      name: Missing specification object link to definition
+      run: |
+        [[ 30 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
+
+    - if: runner.os == 'Linux'
+      name: Style around ExtensionProps embedding
+      run: |
+        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+ExtensionProps\n[^\n]' openapi3/*.go
+
+    - if: runner.os == 'Linux'
+      name: Ensure all exported fields are mentioned in Validate() impls
+      run: |
+        for ty in $TYPES; do
+          # Ensure definition
+          if ! ag 'type.[A-Z].+struct..\n.+ExtensionProps' openapi3/*.go | grep -F "type $ty struct"; then
+            echo "OAI type $ty is not defined" && exit 1
+          fi
+
+          # Ensure impl Validate()
+          if ! git grep -InE 'func [(].+Schema[)] Validate[(]ctx context.Context[)].+error.+[{]'; then
+            echo "OAI type $ty does not implement Validate()" && exit 1
+          fi
+
+          # TODO: $ty mention all its exported fields within Validate()
+        done
+      env:
+        TYPES: >
+          Components
+          Contact
+          Discriminator
+          Encoding
+          Example
+          ExternalDocs
+          Info
+          License
+          Link
+          MediaType
+          OAuthFlow
+          OAuthFlows
+          Operation
+          Parameter
+          PathItem
+          RequestBody
+          Response
+          Schema
+          SecurityScheme
+          Server
+          ServerVariable
+          T
+          Tag
+          XML
