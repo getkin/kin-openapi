@@ -26,5 +26,5 @@ func UnmarshalRef(data []byte, destRef *string, destOtherwise interface{}) error
 }
 
 type refProps struct {
-	Ref string `json:"$ref,omitempty"`
+	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 }

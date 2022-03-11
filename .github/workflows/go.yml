@@ -77,3 +77,9 @@ jobs:
       name: Did you mean %q
       run: |
         ! git grep -E "'[%].'"
+
+    - if: runner.os == 'Linux'
+      name: Also add yaml tags
+      run: |
+        git grep -InE 'json:"' | grep -v _test.go | grep -v yaml: >>README.md
+        git --no-pager diff --exit-code
