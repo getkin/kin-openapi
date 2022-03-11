@@ -6,7 +6,7 @@
 # Introduction
 A [Go](https://golang.org) project for handling [OpenAPI](https://www.openapis.org/) files. We target the latest OpenAPI version (currently 3), but the project contains support for older OpenAPI versions too.
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](./LICENSE).
 
 ## Contributors and users
 The project has received pull requests from many people. Thanks to everyone!
@@ -27,7 +27,8 @@ Here's some projects that depend on _kin-openapi_:
 * [go-openapi](https://github.com/go-openapi)'s [spec3](https://github.com/go-openapi/spec3)
 	* an iteration on [spec](https://github.com/go-openapi/spec) (for OpenAPIv2)
 	* see [README](https://github.com/go-openapi/spec3/tree/3fab9faa9094e06ebd19ded7ea96d156c2283dca#oai-object-model---) for the missing parts
-* See [https://github.com/OAI](https://github.com/OAI)'s [great tooling list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md)
+
+Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md) as well as [OpenAPI.Tools](https://openapi.tools/).
 
 # Structure
   * _openapi2_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2))
