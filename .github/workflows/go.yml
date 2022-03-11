@@ -119,6 +119,7 @@ jobs:
           Info
           License
           Link
+          MediaType
           OAuthFlow
           OAuthFlows
           Operation
@@ -126,7 +127,6 @@ jobs:
           PathItem
           RequestBody
           Response
-          ruct
           Schema
           SecurityScheme
           Server
