@@ -77,8 +77,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Also add yaml tags
       run: |
-        git grep -InE 'json:"' | grep -v _test.go | grep -v yaml: >>README.md
-        git --no-pager diff --exit-code
+        ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
 
     - if: runner.os == 'Linux'
       name: Missing specification object link to definition
@@ -88,5 +87,47 @@ jobs:
     - if: runner.os == 'Linux'
       name: Style around ExtensionProps embedding
       run: |
-        ag -B2 -A2 'type.[A-Z].+struct..\n.+ExtensionProps\n[^\n]' openapi3/*.go >>README.md
-        git --no-pager diff --exit-code
+        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+ExtensionProps\n[^\n]' openapi3/*.go
+
+    - if: runner.os == 'Linux'
+      name: Ensure all exported fields are mentioned in Validate() impls
+      run: |
+        for ty in $TYPES; do
+          # Ensure definition
+          if ! ag 'type.[A-Z].+struct..\n.+ExtensionProps' openapi3/*.go | grep -F "type $ty struct"; then
+            echo "OAI type $ty is not defined" && exit 1
+          fi
+
+          # Ensure impl Validate()
+          if ! git grep -InE 'func [(].+Schema[)] Validate[(]ctx context.Context[)].+error.+[{]'; then
+            echo "OAI type $ty does not implement Validate()" && exit 1
+          fi
+
+          # TODO: $ty mention all its exported fields within Validate()
+        done
+      env:
+        TYPES: >
+          Components
+          Contact
+          Discriminator
+          Encoding
+          Example
+          ExternalDocs
+          Info
+          License
+          Link
+          OAuthFlow
+          OAuthFlows
+          Operation
+          Parameter
+          PathItem
+          RequestBody
+          Response
+          ruct
+          Schema
+          SecurityScheme
+          Server
+          ServerVariable
+          T
+          Tag
+          XML
