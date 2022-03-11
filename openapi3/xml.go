@@ -6,7 +6,7 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// XML is specified by OpenAPI/Swagger standard version 3.0.
+// XML is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xmlObject
 type XML struct {
 	ExtensionProps

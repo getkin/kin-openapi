@@ -8,7 +8,7 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// PathItem is specified by OpenAPI/Swagger standard version 3.0.
+// PathItem is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#pathItemObject
 type PathItem struct {
 	ExtensionProps

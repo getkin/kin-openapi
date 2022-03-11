@@ -7,7 +7,7 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Info is specified by OpenAPI/Swagger standard version 3.0.
+// Info is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#infoObject
 type Info struct {
 	ExtensionProps
@@ -51,7 +51,7 @@ func (value *Info) Validate(ctx context.Context) error {
 	return nil
 }
 
-// Contact is specified by OpenAPI/Swagger standard version 3.0.
+// Contact is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contactObject
 type Contact struct {
 	ExtensionProps
@@ -72,7 +72,7 @@ func (value *Contact) Validate(ctx context.Context) error {
 	return nil
 }
 
-// License is specified by OpenAPI/Swagger standard version 3.0.
+// License is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#licenseObject
 type License struct {
 	ExtensionProps

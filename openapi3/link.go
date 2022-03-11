@@ -25,7 +25,7 @@ func (l Links) JSONLookup(token string) (interface{}, error) {
 
 var _ jsonpointer.JSONPointable = (*Links)(nil)
 
-// Link is specified by OpenAPI/Swagger standard version 3.0.
+// Link is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#linkObject
 type Link struct {
 	ExtensionProps
