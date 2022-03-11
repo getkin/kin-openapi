@@ -58,6 +58,7 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responseObject
 type Response struct {
 	ExtensionProps
+
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`

@@ -12,6 +12,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oasObject
 type T struct {
 	ExtensionProps
+
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
 	Info         *Info                `json:"info" yaml:"info"`   // Required

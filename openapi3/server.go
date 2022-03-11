@@ -42,6 +42,7 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#serverObject
 type Server struct {
 	ExtensionProps
+
 	URL         string                     `json:"url" yaml:"url"`
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
@@ -152,6 +153,7 @@ func (value *Server) Validate(ctx context.Context) (err error) {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
 	ExtensionProps
+
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`

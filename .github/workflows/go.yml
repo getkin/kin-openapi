@@ -50,23 +50,19 @@ jobs:
     - uses: actions/checkout@v2
 
     - run: go mod download && go mod tidy && go mod verify
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - run: go vet ./...
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - run: go fmt ./...
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - run: go test ./...
     - run: go test -v -run TestRaceyPatternSchema -race ./...
       env:
         CGO_ENABLED: '1'
-    - if: runner.os == 'Linux'
-      run: git --no-pager diff && [[ $(git --no-pager diff --name-only | wc -l) = 0 ]]
+    - run: git --no-pager diff --exit-code
 
     - if: runner.os == 'Linux'
       name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
@@ -88,3 +84,9 @@ jobs:
       name: Missing specification object link to definition
       run: |
         [[ 30 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
+
+    - if: runner.os == 'Linux'
+      name: Style around ExtensionProps embedding
+      run: |
+        ag -B2 -A2 'type.[A-Z].+struct..\n.+ExtensionProps\n[^\n]' openapi3/*.go >>README.md
+        git --no-pager diff --exit-code

@@ -29,6 +29,7 @@ var _ jsonpointer.JSONPointable = (*Links)(nil)
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#linkObject
 type Link struct {
 	ExtensionProps
+
 	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`

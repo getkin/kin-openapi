@@ -12,6 +12,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#componentsObject
 type Components struct {
 	ExtensionProps
+
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`

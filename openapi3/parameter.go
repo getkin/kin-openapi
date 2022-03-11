@@ -86,6 +86,7 @@ func (value Parameters) Validate(ctx context.Context) error {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
 type Parameter struct {
 	ExtensionProps
+
 	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
 	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
 	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
