@@ -1416,7 +1416,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			}
 		}
 		allowed := schema.AdditionalPropertiesAllowed
-		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
+		if additionalProperties != nil || allowed == nil || *allowed {
 			if additionalProperties != nil {
 				if err := additionalProperties.visitJSON(settings, v); err != nil {
 					if settings.failfast {
