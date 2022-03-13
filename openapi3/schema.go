@@ -871,8 +871,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 					return errors.New("input does not contain the discriminator property")
 				}
 
-				_, okcheck = discriminatorVal.(string)
-				if !okcheck {
+				if _, okcheck = discriminatorVal.(string); !okcheck {
 					return errors.New("descriminator value is not a string")
 				}
 
