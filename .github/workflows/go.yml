@@ -82,7 +82,7 @@ jobs:
       run: |
         ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
 
-    - if: runner.os == 'Linux'
+    - if: runner.os == 'Linux' && matrix.go != '1.16'
       name: nilness
       run: go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...
 
