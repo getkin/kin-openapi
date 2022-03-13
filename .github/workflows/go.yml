@@ -83,6 +83,10 @@ jobs:
         ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
 
     - if: runner.os == 'Linux'
+      name: nilness
+      run: go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...
+
+    - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
         [[ 30 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
