@@ -795,8 +795,6 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 
 	switch value := value.(type) {
-	case nil:
-		return schema.visitJSONNull(settings)
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
 	case float64:
@@ -1421,7 +1419,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			}
 		}
 		allowed := schema.AdditionalPropertiesAllowed
-		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
+		if additionalProperties != nil || allowed == nil || *allowed {
 			if additionalProperties != nil {
 				if err := additionalProperties.visitJSON(settings, v); err != nil {
 					if settings.failfast {
