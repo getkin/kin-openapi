@@ -673,12 +673,15 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			// Supported by OpenAPIv3.0.1:
 			case "byte", "binary", "date", "date-time", "password":
-				// In JSON Draft-07 (not validated yet though):
-			case "regex":
-			case "time", "email", "idn-email":
-			case "hostname", "idn-hostname", "ipv4", "ipv6":
-			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
-			case "json-pointer", "relative-json-pointer":
+			// In JSON Draft-07 (not validated yet though):
+			// https://json-schema.org/draft-07/json-schema-release-notes.html#formats
+			case "iri", "iri-reference", "uri-template", "idn-email", "idn-hostname":
+			case "json-pointer", "relative-json-pointer", "regex", "time":
+			// In JSON Draft 2019-09 (not validated yet though):
+			// https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
+			case "duration", "uuid":
+			// Defined in some other specification
+			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
 				if _, ok := SchemaStringFormats[format]; !ok && !SchemaFormatValidationDisabled {
