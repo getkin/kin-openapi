@@ -671,7 +671,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	case TypeString:
 		if format := schema.Format; len(format) > 0 {
 			switch format {
-			// Supported by OpenAPIv3.0.1:
+			// Supported by OpenAPIv3.0.3:
+			// https://spec.openapis.org/oas/v3.0.3
 			case "byte", "binary", "date", "date-time", "password":
 			// In JSON Draft-07 (not validated yet though):
 			// https://json-schema.org/draft-07/json-schema-release-notes.html#formats
