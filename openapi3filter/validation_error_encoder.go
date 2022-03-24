@@ -34,6 +34,8 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 		cErr = convertBasicRequestError(e)
 	} else if e.Err == ErrInvalidRequired {
 		cErr = convertErrInvalidRequired(e)
+	} else if e.Err == ErrInvalidEmptyValue {
+		cErr = convertErrInvalidEmptyValue(e)
 	} else if innerErr, ok := e.Err.(*ParseError); ok {
 		cErr = convertParseError(e, innerErr)
 	} else if innerErr, ok := e.Err.(*openapi3.SchemaError); ok {
@@ -79,6 +81,19 @@ func convertErrInvalidRequired(e *RequestError) *ValidationError {
 		return &ValidationError{
 			Status: http.StatusBadRequest,
 			Title:  fmt.Sprintf("parameter %q in %s is required", e.Parameter.Name, e.Parameter.In),
+		}
+	}
+	return &ValidationError{
+		Status: http.StatusBadRequest,
+		Title:  e.Error(),
+	}
+}
+
+func convertErrInvalidEmptyValue(e *RequestError) *ValidationError {
+	if e.Err == ErrInvalidEmptyValue && e.Parameter != nil {
+		return &ValidationError{
+			Status: http.StatusBadRequest,
+			Title:  fmt.Sprintf("parameter %q in %s is not allowed to be empty", e.Parameter.Name, e.Parameter.In),
 		}
 	}
 	return &ValidationError{
