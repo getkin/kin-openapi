@@ -147,7 +147,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidRequired.Error(), Err: ErrInvalidRequired}
 	}
 
-	if IsNilValue(value) {
+	if isNilValue(value) {
 		if !parameter.AllowEmptyValue && found {
 			return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidEmptyValue.Error(), Err: ErrInvalidEmptyValue}
 		}
