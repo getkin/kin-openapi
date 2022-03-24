@@ -83,7 +83,7 @@ components:
 				_, found = input.RequestValidationInput.Request.Header[http.CanonicalHeaderKey(input.SecurityScheme.Name)]
 			case "cookie":
 				_, err := input.RequestValidationInput.Request.Cookie(input.SecurityScheme.Name)
-				found = errors.Is(err, http.ErrNoCookie)
+				found = !errors.Is(err, http.ErrNoCookie)
 			}
 			if !found {
 				return fmt.Errorf("%v not found in %v", input.SecurityScheme.Name, input.SecurityScheme.In)
