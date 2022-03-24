@@ -43,6 +43,23 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	operationParameters := operation.Parameters
 	pathItemParameters := route.PathItem.Parameters
 
+	// Security
+	security := operation.Security
+	// If there aren't any security requirements for the operation
+	if security == nil {
+		// Use the global security requirements.
+		security = &route.Spec.Security
+	}
+	if security != nil {
+		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
+			return err
+		}
+
+		if err != nil {
+			me = append(me, err)
+		}
+	}
+
 	// For each parameter of the PathItem
 	for _, parameterRef := range pathItemParameters {
 		parameter := parameterRef.Value
@@ -76,23 +93,6 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
 		if err = ValidateRequestBody(ctx, input, requestBody.Value); err != nil && !options.MultiError {
-			return err
-		}
-
-		if err != nil {
-			me = append(me, err)
-		}
-	}
-
-	// Security
-	security := operation.Security
-	// If there aren't any security requirements for the operation
-	if security == nil {
-		// Use the global security requirements.
-		security = &route.Spec.Security
-	}
-	if security != nil {
-		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
 			return err
 		}
 
