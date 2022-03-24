@@ -239,10 +239,10 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 		return nil, false, fmt.Errorf("unsupported parameter's 'in': %s", param.In)
 	}
 
-	return decodeValue(dec, param.Name, sm, param.Schema, param.Required, param.AllowEmptyValue)
+	return decodeValue(dec, param.Name, sm, param.Schema, param.Required)
 }
 
-func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef, required bool, allowEmpty bool) (interface{}, bool, error) {
+func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef, required bool) (interface{}, bool, error) {
 	var found bool
 
 	if len(schema.Value.AllOf) > 0 {
@@ -250,7 +250,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		var err error
 		for _, sr := range schema.Value.AllOf {
 			var f bool
-			value, f, err = decodeValue(dec, param, sm, sr, required, allowEmpty)
+			value, f, err = decodeValue(dec, param, sm, sr, required)
 			found = found || f
 			if value == nil || err != nil {
 				break
@@ -261,7 +261,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 
 	if len(schema.Value.AnyOf) > 0 {
 		for _, sr := range schema.Value.AnyOf {
-			value, f, _ := decodeValue(dec, param, sm, sr, required, allowEmpty)
+			value, f, _ := decodeValue(dec, param, sm, sr, required)
 			found = found || f
 			if value != nil {
 				return value, found, nil
@@ -277,7 +277,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		isMatched := 0
 		var value interface{}
 		for _, sr := range schema.Value.OneOf {
-			v, f, _ := decodeValue(dec, param, sm, sr, required, allowEmpty)
+			v, f, _ := decodeValue(dec, param, sm, sr, required)
 			found = found || f
 			if v != nil {
 				value = v
@@ -289,7 +289,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		} else if isMatched > 1 {
 			return nil, found, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
 		}
-		if required || (!allowEmpty && found) {
+		if required {
 			return nil, found, fmt.Errorf("decoding oneOf failed: %q is required", param)
 		}
 		return nil, found, nil
@@ -967,7 +967,7 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 		}
 		sm := enc.SerializationMethod()
 
-		if value, _, err = decodeValue(dec, name, sm, prop, false, false); err != nil {
+		if value, _, err = decodeValue(dec, name, sm, prop, false); err != nil {
 			return nil, err
 		}
 		obj[name] = value
