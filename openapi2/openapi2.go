@@ -151,6 +151,7 @@ type Operation struct {
 	Responses    map[string]*Response   `json:"responses" yaml:"responses"`
 	Consumes     []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
 	Produces     []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
+	Schemes      []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
 	Security     *SecurityRequirements  `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
