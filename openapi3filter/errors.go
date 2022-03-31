@@ -22,7 +22,7 @@ var _ interface{ Unwrap() error } = RequestError{}
 func (err *RequestError) Error() string {
 	reason := err.Reason
 	if e := err.Err; e != nil {
-		if len(reason) == 0 {
+		if len(reason) == 0 || reason == e.Error() {
 			reason = e.Error()
 		} else {
 			reason += ": " + e.Error()

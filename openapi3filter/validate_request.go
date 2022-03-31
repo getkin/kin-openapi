@@ -19,6 +19,9 @@ var ErrAuthenticationServiceMissing = errors.New("missing AuthenticationFunc")
 // ErrInvalidRequired is returned when a required value of a parameter or request body is not defined.
 var ErrInvalidRequired = errors.New("value is required but missing")
 
+// ErrInvalidEmptyValue is returned when a value of a parameter or request body is empty while it's not allowed.
+var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
+
 // ValidateRequest is used to validate the given input according to previous
 // loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec, a
 // non-nil error will be returned.
@@ -39,6 +42,23 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	operation := route.Operation
 	operationParameters := operation.Parameters
 	pathItemParameters := route.PathItem.Parameters
+
+	// Security
+	security := operation.Security
+	// If there aren't any security requirements for the operation
+	if security == nil {
+		// Use the global security requirements.
+		security = &route.Spec.Security
+	}
+	if security != nil {
+		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
+			return err
+		}
+
+		if err != nil {
+			me = append(me, err)
+		}
+	}
 
 	// For each parameter of the PathItem
 	for _, parameterRef := range pathItemParameters {
@@ -81,23 +101,6 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 		}
 	}
 
-	// Security
-	security := operation.Security
-	// If there aren't any security requirements for the operation
-	if security == nil {
-		// Use the global security requirements.
-		security = &route.Spec.Security
-	}
-	if security != nil {
-		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
-			return err
-		}
-
-		if err != nil {
-			me = append(me, err)
-		}
-	}
-
 	if len(me) > 0 {
 		return me
 	}
@@ -108,6 +111,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 // ValidateParameter validates a parameter's value by JSON schema.
 // The function returns RequestError with a ParseError cause when unable to parse a value.
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
+// The function returns RequestError with ErrInvalidEmptyValue cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
 func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
 	if parameter.Schema == nil && parameter.Content == nil {
@@ -124,23 +128,28 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 
 	var value interface{}
 	var err error
+	var found bool
 	var schema *openapi3.Schema
 
 	// Validation will ensure that we either have content or schema.
 	if parameter.Content != nil {
-		if value, schema, err = decodeContentParameter(parameter, input); err != nil {
+		if value, schema, found, err = decodeContentParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 	} else {
-		if value, err = decodeStyledParameter(parameter, input); err != nil {
+		if value, found, err = decodeStyledParameter(parameter, input); err != nil {
 			return &RequestError{Input: input, Parameter: parameter, Err: err}
 		}
 		schema = parameter.Schema.Value
 	}
-	// Validate a parameter's value.
-	if value == nil {
-		if parameter.Required {
-			return &RequestError{Input: input, Parameter: parameter, Err: ErrInvalidRequired}
+	// Validate a parameter's value and presence.
+	if parameter.Required && !found {
+		return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidRequired.Error(), Err: ErrInvalidRequired}
+	}
+
+	if isNilValue(value) {
+		if !parameter.AllowEmptyValue && found {
+			return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidEmptyValue.Error(), Err: ErrInvalidEmptyValue}
 		}
 		return nil
 	}
