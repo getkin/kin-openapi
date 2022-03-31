@@ -215,7 +215,12 @@ func TestServerPath(t *testing.T) {
 	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
 		server,
 		&openapi3.Server{URL: "http://example.com/"},
-		&openapi3.Server{URL: "http://example.com/path"}},
+		&openapi3.Server{URL: "http://example.com/path"},
+		newServerWithVariables(
+			"{scheme}://localhost",
+			map[string]string{
+				"scheme": "https",
+			})},
 	})
 	require.NoError(t, err)
 }
@@ -241,4 +246,83 @@ func TestRelativeURL(t *testing.T) {
 	route, _, err := router.FindRoute(req)
 	require.NoError(t, err)
 	require.Equal(t, "/hello", route.Path)
+}
+
+func Test_resolveServerURL(t *testing.T) {
+	type args struct {
+		server *openapi3.Server
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Test without any variables at all",
+			args: args{
+				server: newServerWithVariables(
+					"http://example.com",
+					nil),
+			},
+			want: "http://example.com",
+		},
+		{
+			name: "Test entire URL is a single variable",
+			args: args{
+				server: newServerWithVariables(
+					"{server}",
+					map[string]string{"server": "/"}),
+			},
+			want: "/",
+		},
+		{
+			name: "Test with variable scheme",
+			args: args{
+				server: newServerWithVariables(
+					"{scheme}://localhost",
+					map[string]string{"scheme": "https"}),
+			},
+			want: "https://localhost",
+		},
+		{
+			name: "Test variable scheme, port, and root-path",
+			args: args{
+				server: newServerWithVariables(
+					"{scheme}://localhost:{port}/{root-path}",
+					map[string]string{"scheme": "https", "port": "8080", "root-path": "api"}),
+			},
+			want: "https://localhost:8080/api",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveServerURL(tt.args.server); got != tt.want {
+				t.Errorf("resolveServerURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func newServerWithVariables(url string, variables map[string]string) *openapi3.Server {
+	var serverVariables = map[string]*openapi3.ServerVariable{}
+
+	for key, value := range variables {
+		serverVariables[key] = newServerVariable(value)
+	}
+
+	return &openapi3.Server{
+		ExtensionProps: openapi3.ExtensionProps{},
+		URL:            url,
+		Description:    "",
+		Variables:      serverVariables,
+	}
+}
+
+func newServerVariable(defaultValue string) *openapi3.ServerVariable {
+	return &openapi3.ServerVariable{
+		ExtensionProps: openapi3.ExtensionProps{},
+		Enum:           nil,
+		Default:        defaultValue,
+		Description:    "",
+	}
 }

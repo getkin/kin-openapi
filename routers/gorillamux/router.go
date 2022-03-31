@@ -7,6 +7,7 @@
 package gorillamux
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
@@ -36,7 +37,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	}
 	servers := make([]srv, 0, len(doc.Servers))
 	for _, server := range doc.Servers {
-		serverURL := server.URL
+		serverURL := resolveServerURL(server)
 		var schemes []string
 		var u *url.URL
 		var err error
@@ -99,6 +100,19 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 		}
 	}
 	return r, nil
+}
+
+// resolveServerURL Resolves variables that may be in the server.URL property
+// Each variable that is declared in the OpenAPI document will be replaced
+// with its default value. See more info on server variables at
+// https://spec.openapis.org/oas/v3.0.3#server-variable-object
+func resolveServerURL(server *openapi3.Server) string {
+	var resolvedValue = server.URL
+	for key, element := range server.Variables {
+		// TODO: are OpenAPI Server Variable names case-sensitive?
+		resolvedValue = strings.Replace(resolvedValue, fmt.Sprintf("{%s}", key), element.Default, -1)
+	}
+	return resolvedValue
 }
 
 // FindRoute extracts the route and parameters of an http.Request
