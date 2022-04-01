@@ -38,14 +38,10 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	for _, server := range doc.Servers {
 		serverURL := server.URL
 		var schemes []string
-		var u *url.URL
-		var err error
 		if strings.Contains(serverURL, "://") {
 			scheme0 := strings.Split(serverURL, "://")[0]
 			schemes = permutePart(scheme0, server)
-			u, err = url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
-		} else {
-			u, err = url.Parse(bEncode(serverURL))
+			serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
 		}
 		if err != nil {
 			return nil, err
