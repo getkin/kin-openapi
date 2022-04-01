@@ -468,6 +468,17 @@ func TestSchemaCustomizerError(t *testing.T) {
 	require.EqualError(t, err, "test error")
 }
 
+func TestSchemaCustomizerExcludeSchema(t *testing.T) {
+	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return &openapi3gen.ExcludeSchemaSentinel{}
+	})
+
+	type Bla struct{}
+	schema, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	require.NoError(t, err)
+	require.Nil(t, schema)
+}
+
 func ExampleNewSchemaRefForValue_recursive() {
 	type RecursiveType struct {
 		Field1     string           `json:"field1"`
