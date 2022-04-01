@@ -163,6 +163,9 @@ func TestRouter(t *testing.T) {
 			"d1":     {Default: "example", Enum: []string{"example"}},
 			"scheme": {Default: "https", Enum: []string{"https", "http"}},
 		}},
+		{URL: "http://127.0.0.1:{port}/api/v1", Variables: map[string]*openapi3.ServerVariable{
+			"port": {Default: "8000"},
+		}},
 	}
 	err = doc.Validate(context.Background())
 	require.NoError(t, err)
@@ -178,6 +181,9 @@ func TestRouter(t *testing.T) {
 		"d0": "domain0",
 		"d1": "domain1",
 		// "scheme": "https", TODO: https://github.com/gorilla/mux/issues/624
+	})
+	expect(r, http.MethodGet, "http://127.0.0.1:8000/api/v1/hello", helloGET, map[string]string{
+		"port": "8000",
 	})
 
 	{
