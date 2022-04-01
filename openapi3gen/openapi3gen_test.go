@@ -469,12 +469,25 @@ func TestSchemaCustomizerError(t *testing.T) {
 }
 
 func TestSchemaCustomizerExcludeSchema(t *testing.T) {
+	type Bla struct {
+		Str string
+	}
+
 	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return nil
+	})
+	schema, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	require.NoError(t, err)
+	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
+		Type: "object",
+		Properties: map[string]*openapi3.SchemaRef{
+			"Str": {Value: &openapi3.Schema{Type: "string"}},
+		}}}, schema)
+
+	customizer = openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		return &openapi3gen.ExcludeSchemaSentinel{}
 	})
-
-	type Bla struct{}
-	schema, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	schema, err = openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
 	require.NoError(t, err)
 	require.Nil(t, schema)
 }
