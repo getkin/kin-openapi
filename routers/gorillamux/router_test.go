@@ -229,6 +229,11 @@ func TestServerPath(t *testing.T) {
 func TestRelativeURL(t *testing.T) {
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "rel",
+			Version: "1",
+		},
 		Servers: openapi3.Servers{
 			&openapi3.Server{
 				URL: "/api/v1",
@@ -240,6 +245,8 @@ func TestRelativeURL(t *testing.T) {
 			},
 		},
 	}
+	err := doc.Validate(context.Background())
+	require.NoError(t, err)
 	router, err := NewRouter(doc)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "https://example.com/api/v1/hello", nil)
