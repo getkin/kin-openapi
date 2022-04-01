@@ -438,6 +438,20 @@ paths:
 	require.Equal(t, "link to to the father", link.Description)
 }
 
+func TestLinksFromOAISpec(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromFile("testdata/link-example.yaml")
+	require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	response := doc.Paths[`/2.0/repositories/{username}/{slug}`].Get.Responses.Get(200).Value
+	link := response.Links[`repositoryPullRequests`].Value
+	require.Equal(t, map[string]interface{}{
+		"username": "$response.body#/owner/username",
+		"slug":     "$response.body#/slug",
+	}, link.Parameters)
+}
+
 func TestResolveNonComponentsRef(t *testing.T) {
 	spec := []byte(`
 openapi: 3.0.0
