@@ -72,6 +72,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	expect := func(r routers.Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
+		t.Helper()
 		req, err := http.NewRequest(method, uri, nil)
 		require.NoError(t, err)
 		route, pathParams, err := r.FindRoute(req)
