@@ -2,58 +2,75 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"sort"
 
 	"github.com/go-openapi/jsonpointer"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/perimeterx/marshmallow"
 )
-
-// Ref is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
-type Ref struct {
-	Ref string `json:"$ref" yaml:"$ref"`
-}
 
 // CallbackRef represents either a Callback or a $ref to a Callback.
 // When serializing and both fields are set, Ref is preferred over Value.
 type CallbackRef struct {
 	Ref   string
 	Value *Callback
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
 // MarshalYAML returns the YAML encoding of CallbackRef.
-func (value *CallbackRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *CallbackRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of CallbackRef.
-func (value *CallbackRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *CallbackRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return json.Marshal(x.Value)
 }
 
 // UnmarshalJSON sets CallbackRef to a copy of data.
-func (value *CallbackRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *CallbackRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if CallbackRef does not comply with the OpenAPI spec.
-func (value *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value CallbackRef) JSONLookup(token string) (interface{}, error) {
+func (x *CallbackRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
 
@@ -62,41 +79,62 @@ func (value CallbackRef) JSONLookup(token string) (interface{}, error) {
 type ExampleRef struct {
 	Ref   string
 	Value *Example
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
-func (value *ExampleRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *ExampleRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of ExampleRef.
-func (value *ExampleRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *ExampleRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets ExampleRef to a copy of data.
-func (value *ExampleRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *ExampleRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if ExampleRef does not comply with the OpenAPI spec.
-func (value *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value ExampleRef) JSONLookup(token string) (interface{}, error) {
+func (x *ExampleRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
 
@@ -105,41 +143,62 @@ func (value ExampleRef) JSONLookup(token string) (interface{}, error) {
 type HeaderRef struct {
 	Ref   string
 	Value *Header
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
 // MarshalYAML returns the YAML encoding of HeaderRef.
-func (value *HeaderRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *HeaderRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of HeaderRef.
-func (value *HeaderRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *HeaderRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets HeaderRef to a copy of data.
-func (value *HeaderRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *HeaderRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if HeaderRef does not comply with the OpenAPI spec.
-func (value *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value HeaderRef) JSONLookup(token string) (interface{}, error) {
+func (x *HeaderRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
 
@@ -148,30 +207,63 @@ func (value HeaderRef) JSONLookup(token string) (interface{}, error) {
 type LinkRef struct {
 	Ref   string
 	Value *Link
+	extra []string
 }
 
+var _ jsonpointer.JSONPointable = (*LinkRef)(nil)
+
 // MarshalYAML returns the YAML encoding of LinkRef.
-func (value *LinkRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *LinkRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of LinkRef.
-func (value *LinkRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *LinkRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets LinkRef to a copy of data.
-func (value *LinkRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *LinkRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if LinkRef does not comply with the OpenAPI spec.
-func (value *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
+}
+
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+func (x *LinkRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return x.Ref, nil
+	}
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
+	return ptr, err
 }
 
 // ParameterRef represents either a Parameter or a $ref to a Parameter.
@@ -179,84 +271,62 @@ func (value *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) er
 type ParameterRef struct {
 	Ref   string
 	Value *Parameter
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
 
 // MarshalYAML returns the YAML encoding of ParameterRef.
-func (value *ParameterRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *ParameterRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of ParameterRef.
-func (value *ParameterRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *ParameterRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets ParameterRef to a copy of data.
-func (value *ParameterRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *ParameterRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if ParameterRef does not comply with the OpenAPI spec.
-func (value *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value ParameterRef) JSONLookup(token string) (interface{}, error) {
+func (x *ParameterRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
-	return ptr, err
-}
-
-// ResponseRef represents either a Response or a $ref to a Response.
-// When serializing and both fields are set, Ref is preferred over Value.
-type ResponseRef struct {
-	Ref   string
-	Value *Response
-}
-
-var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
-
-// MarshalYAML returns the YAML encoding of ResponseRef.
-func (value *ResponseRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
-}
-
-// MarshalJSON returns the JSON encoding of ResponseRef.
-func (value *ResponseRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
-}
-
-// UnmarshalJSON sets ResponseRef to a copy of data.
-func (value *ResponseRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
-}
-
-// Validate returns an error if ResponseRef does not comply with the OpenAPI spec.
-func (value *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error {
-	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
-		return v.Validate(ctx)
-	}
-	return foundUnresolvedRef(value.Ref)
-}
-
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value ResponseRef) JSONLookup(token string) (interface{}, error) {
-	if token == "$ref" {
-		return value.Ref, nil
-	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
 
@@ -265,41 +335,126 @@ func (value ResponseRef) JSONLookup(token string) (interface{}, error) {
 type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
-func (value *RequestBodyRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *RequestBodyRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of RequestBodyRef.
-func (value *RequestBodyRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *RequestBodyRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets RequestBodyRef to a copy of data.
-func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if RequestBodyRef does not comply with the OpenAPI spec.
-func (value *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
+func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
+	return ptr, err
+}
 
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+// ResponseRef represents either a Response or a $ref to a Response.
+// When serializing and both fields are set, Ref is preferred over Value.
+type ResponseRef struct {
+	Ref   string
+	Value *Response
+	extra []string
+}
+
+var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
+
+// MarshalYAML returns the YAML encoding of ResponseRef.
+func (x *ResponseRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
+}
+
+// MarshalJSON returns the JSON encoding of ResponseRef.
+func (x *ResponseRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
+}
+
+// UnmarshalJSON sets ResponseRef to a copy of data.
+func (x *ResponseRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
+}
+
+// Validate returns an error if ResponseRef does not comply with the OpenAPI spec.
+func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
+		return v.Validate(ctx)
+	}
+	return foundUnresolvedRef(x.Ref)
+}
+
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+func (x *ResponseRef) JSONLookup(token string) (interface{}, error) {
+	if token == "$ref" {
+		return x.Ref, nil
+	}
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
 
@@ -308,48 +463,62 @@ func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 type SchemaRef struct {
 	Ref   string
 	Value *Schema
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
-func NewSchemaRef(ref string, value *Schema) *SchemaRef {
-	return &SchemaRef{
-		Ref:   ref,
-		Value: value,
-	}
-}
-
 // MarshalYAML returns the YAML encoding of SchemaRef.
-func (value *SchemaRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *SchemaRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of SchemaRef.
-func (value *SchemaRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *SchemaRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets SchemaRef to a copy of data.
-func (value *SchemaRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *SchemaRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if SchemaRef does not comply with the OpenAPI spec.
-func (value *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value SchemaRef) JSONLookup(token string) (interface{}, error) {
+func (x *SchemaRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
 
@@ -358,48 +527,61 @@ func (value SchemaRef) JSONLookup(token string) (interface{}, error) {
 type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
+	extra []string
 }
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
-func (value *SecuritySchemeRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+func (x *SecuritySchemeRef) MarshalYAML() (interface{}, error) {
+	if ref := x.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	}
+	return x.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of SecuritySchemeRef.
-func (value *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+func (x *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
+	if ref := x.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+	return x.Value.MarshalJSON()
 }
 
 // UnmarshalJSON sets SecuritySchemeRef to a copy of data.
-func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
+func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
+	var refOnly Ref
+	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+		x.Ref = refOnly.Ref
+		if len(extra) != 0 {
+			x.extra = make([]string, 0, len(extra))
+			for key := range extra {
+				x.extra = append(x.extra, key)
+			}
+		}
+		return nil
+	}
+	return json.Unmarshal(data, &x.Value)
 }
 
 // Validate returns an error if SecuritySchemeRef does not comply with the OpenAPI spec.
-func (value *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	if v := value.Value; v != nil {
+	if extra := x.extra; len(extra) != 0 {
+		sort.Strings(extra)
+		return fmt.Errorf("extra sibling fields: %+v", extra)
+	}
+	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
-	return foundUnresolvedRef(value.Ref)
+	return foundUnresolvedRef(x.Ref)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (value SecuritySchemeRef) JSONLookup(token string) (interface{}, error) {
+func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
-		return value.Ref, nil
+		return x.Ref, nil
 	}
-
-	ptr, _, err := jsonpointer.GetForToken(value.Value, token)
+	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
-}
-
-// marshalRefYAML returns the YAML encoding of ref values.
-func marshalRefYAML(value string, otherwise interface{}) (interface{}, error) {
-	if value != "" {
-		return &Ref{Ref: value}, nil
-	}
-	return otherwise, nil
 }

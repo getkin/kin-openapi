@@ -108,16 +108,21 @@ jobs:
         [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
 
     - if: runner.os == 'Linux'
-      name: Style around ExtensionProps embedding
+      name: Missing validation of unknown fields in extensions
       run: |
-        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+ExtensionProps\n[^\n]' openapi3/*.go
+        [[ $(( 1 + $(git grep -InF 'return validateExtensions' -- openapi3 | wc -l) )) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]
+
+    - if: runner.os == 'Linux'
+      name: Style around Extensions embedding
+      run: |
+        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+Extensions\n[^\n]' openapi3/*.go
 
     - if: runner.os == 'Linux'
       name: Ensure all exported fields are mentioned in Validate() impls
       run: |
         for ty in $TYPES; do
           # Ensure definition
-          if ! ag 'type.[A-Z].+struct..\n.+ExtensionProps' openapi3/*.go | grep -F "type $ty struct"; then
+          if ! ag 'type.[A-Z].+struct..\n.+Extensions' openapi3/*.go | grep -F "type $ty struct"; then
             echo "OAI type $ty is not defined" && exit 1
           fi
 
@@ -165,4 +170,11 @@ jobs:
     - run: go install github.com/incu6us/goimports-reviser/v2@latest
     - run: which goimports-reviser
     - run: find . -type f -iname '*.go' ! -iname '*.pb.go' -exec goimports-reviser -file-path {} \;
+    - run: git --no-pager diff --exit-code
+
+  check-gen:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: ./refs.sh | tee openapi3/refs.go
     - run: git --no-pager diff --exit-code

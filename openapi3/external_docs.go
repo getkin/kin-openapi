@@ -2,17 +2,16 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // ExternalDocs is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#external-documentation-object
 type ExternalDocs struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -20,12 +19,31 @@ type ExternalDocs struct {
 
 // MarshalJSON returns the JSON encoding of ExternalDocs.
 func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(e)
+	m := make(map[string]interface{}, 2+len(e.Extensions))
+	for k, v := range e.Extensions {
+		m[k] = v
+	}
+	if x := e.Description; x != "" {
+		m["description"] = x
+	}
+	if x := e.URL; x != "" {
+		m["url"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets ExternalDocs to a copy of data.
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, e)
+	type ExternalDocsBis ExternalDocs
+	var x ExternalDocsBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "url")
+	*e = ExternalDocs(x)
+	return nil
 }
 
 // Validate returns an error if ExternalDocs does not comply with the OpenAPI spec.
@@ -38,5 +56,6 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
 	if _, err := url.Parse(e.URL); err != nil {
 		return fmt.Errorf("url is incorrect: %w", err)
 	}
-	return nil
+
+	return validateExtensions(e.Extensions)
 }

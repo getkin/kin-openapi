@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -42,15 +43,42 @@ info:
 	require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }
 
+func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
+	schema := &Schema{
+		AdditionalProperties: AdditionalProperties{
+			Has:    BoolPtr(false),
+			Schema: NewSchemaRef("", &Schema{}),
+		},
+	}
+	err := schema.Validate(context.Background())
+	require.ErrorContains(t, err, ` to both `)
+
+	schema = &Schema{
+		AdditionalProperties: AdditionalProperties{
+			Has: BoolPtr(false),
+		},
+	}
+	err = schema.Validate(context.Background())
+	require.NoError(t, err)
+
+	schema = &Schema{
+		AdditionalProperties: AdditionalProperties{
+			Schema: NewSchemaRef("", &Schema{}),
+		},
+	}
+	err = schema.Validate(context.Background())
+	require.NoError(t, err)
+}
+
 func TestMultijsonTagSerialization(t *testing.T) {
-	spec := []byte(`
+	specYAML := []byte(`
 openapi: 3.0.0
 components:
   schemas:
     unset:
       type: number
-    #empty-object:
-    # TODO additionalProperties: {}
+    empty-object:
+      additionalProperties: {}
     object:
       additionalProperties: {type: string}
     boolean:
@@ -61,42 +89,77 @@ info:
   version: 1.2.3.4
 `)
 
-	loader := NewLoader()
+	specJSON := []byte(`{
+  "openapi": "3.0.0",
+  "components": {
+    "schemas": {
+      "unset": {
+        "type": "number"
+      },
+      "empty-object": {
+        "additionalProperties": {
+        }
+      },
+      "object": {
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "boolean": {
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+  },
+  "info": {
+    "title": "An API",
+    "version": "1.2.3.4"
+  }
+}`)
 
-	doc, err := loader.LoadFromData(spec)
-	require.NoError(t, err)
+	for i, spec := range [][]byte{specJSON, specYAML} {
+		t.Run(fmt.Sprintf("spec%02d", i), func(t *testing.T) {
+			loader := NewLoader()
 
-	err = doc.Validate(loader.Context)
-	require.NoError(t, err)
+			doc, err := loader.LoadFromData(spec)
+			require.NoError(t, err)
 
-	for propName, propSchema := range doc.Components.Schemas {
-		ap := propSchema.Value.AdditionalProperties
-		apa := propSchema.Value.AdditionalPropertiesAllowed
+			err = doc.Validate(loader.Context)
+			require.NoError(t, err)
 
-		encoded, err := propSchema.MarshalJSON()
-		require.NoError(t, err)
-		require.Equal(t, string(encoded), map[string]string{
-			"unset": `{"type":"number"}`,
-			// TODO: "empty-object":`{"additionalProperties":{}}`,
-			"object":  `{"additionalProperties":{"type":"string"}}`,
-			"boolean": `{"additionalProperties":false}`,
-		}[propName])
+			for propName, propSchema := range doc.Components.Schemas {
+				t.Run(propName, func(t *testing.T) {
+					ap := propSchema.Value.AdditionalProperties.Schema
+					apa := propSchema.Value.AdditionalProperties.Has
 
-		if propName == "unset" {
-			require.True(t, ap == nil && apa == nil)
-			continue
-		}
+					apStr := ""
+					if ap != nil {
+						apStr = fmt.Sprintf("{Ref:%s Value.Type:%v}", (*ap).Ref, (*ap).Value.Type)
+					}
+					apaStr := ""
+					if apa != nil {
+						apaStr = fmt.Sprintf("%v", *apa)
+					}
 
-		apStr := ""
-		if ap != nil {
-			apStr = fmt.Sprintf("{Ref:%s Value.Type:%v}", (*ap).Ref, (*ap).Value.Type)
-		}
-		apaStr := ""
-		if apa != nil {
-			apaStr = fmt.Sprintf("%v", *apa)
-		}
+					encoded, err := propSchema.MarshalJSON()
+					require.NoError(t, err)
+					require.Equal(t, map[string]string{
+						"unset":        `{"type":"number"}`,
+						"empty-object": `{"additionalProperties":{}}`,
+						"object":       `{"additionalProperties":{"type":"string"}}`,
+						"boolean":      `{"additionalProperties":false}`,
+					}[propName], string(encoded))
 
-		require.Truef(t, (ap != nil && apa == nil) || (ap == nil && apa != nil),
-			"%s: isnil(%s) xor isnil(%s)", propName, apaStr, apStr)
+					if propName == "unset" {
+						require.True(t, ap == nil && apa == nil)
+						return
+					}
+
+					require.Truef(t, (ap != nil && apa == nil) || (ap == nil && apa != nil),
+						"%s: isnil(%s) xor isnil(%s)", propName, apaStr, apStr)
+				})
+			}
+		})
 	}
 }

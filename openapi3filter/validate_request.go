@@ -346,10 +346,6 @@ func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationI
 
 // validateSecurityRequirement validates a single OpenAPI 3 security requirement
 func validateSecurityRequirement(ctx context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
-	doc := input.Route.Spec
-	securitySchemes := doc.Components.SecuritySchemes
-
-	// Ensure deterministic order
 	names := make([]string, 0, len(securityRequirement))
 	for name := range securityRequirement {
 		names = append(names, name)
@@ -364,6 +360,11 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 	f := options.AuthenticationFunc
 	if f == nil {
 		return ErrAuthenticationServiceMissing
+	}
+
+	var securitySchemes openapi3.SecuritySchemes
+	if components := input.Route.Spec.Components; components != nil {
+		securitySchemes = components.SecuritySchemes
 	}
 
 	// For each scheme for the requirement

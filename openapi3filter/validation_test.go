@@ -541,7 +541,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 				securitySchemes[1].Name: {},
 			},
 		},
-		Components: openapi3.Components{
+		Components: &openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
 	}
@@ -670,7 +670,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 			Version: "0.1",
 		},
 		Paths: map[string]*openapi3.PathItem{},
-		Components: openapi3.Components{
+		Components: &openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
 	}
@@ -767,7 +767,7 @@ func TestAllSchemesMet(t *testing.T) {
 			Version: "0.1",
 		},
 		Paths: map[string]*openapi3.PathItem{},
-		Components: openapi3.Components{
+		Components: &openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
 	}

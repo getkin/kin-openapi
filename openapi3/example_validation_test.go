@@ -241,6 +241,7 @@ paths:
 					spec.WriteString(tc.parametersExample)
 					spec.WriteString(`
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -249,7 +250,6 @@ paths:
 					spec.WriteString(tc.mediaTypeRequestExample)
 					spec.WriteString(`
         description: Created user object
-        required: true
       responses:
         '204':
           description: "success"
@@ -262,11 +262,12 @@ paths:
   /readWriteOnly:
     post:
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ReadWriteOnlyData"
-            required: true`)
+`)
 					spec.WriteString(tc.readWriteOnlyMediaTypeRequestExample)
 					spec.WriteString(`
       responses:

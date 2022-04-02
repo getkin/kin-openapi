@@ -175,6 +175,7 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 func unmarshal(data []byte, v interface{}) error {
 	// See https://github.com/getkin/kin-openapi/issues/680
 	if err := json.Unmarshal(data, v); err != nil {
+		// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
 		return yaml.Unmarshal(data, v)
 	}
 	return nil
@@ -190,54 +191,54 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		loader.resetVisitedPathItemRefs()
 	}
 
-	// Visit all components
-	components := doc.Components
-	for _, component := range components.Headers {
-		if err = loader.resolveHeaderRef(doc, component, location); err != nil {
-			return
+	if components := doc.Components; components != nil {
+		for _, component := range components.Headers {
+			if err = loader.resolveHeaderRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.Parameters {
-		if err = loader.resolveParameterRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.Parameters {
+			if err = loader.resolveParameterRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.RequestBodies {
-		if err = loader.resolveRequestBodyRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.RequestBodies {
+			if err = loader.resolveRequestBodyRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.Responses {
-		if err = loader.resolveResponseRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.Responses {
+			if err = loader.resolveResponseRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.Schemas {
-		if err = loader.resolveSchemaRef(doc, component, location, []string{}); err != nil {
-			return
+		for _, component := range components.Schemas {
+			if err = loader.resolveSchemaRef(doc, component, location, []string{}); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.SecuritySchemes {
-		if err = loader.resolveSecuritySchemeRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.SecuritySchemes {
+			if err = loader.resolveSecuritySchemeRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
 
-	examples := make([]string, 0, len(components.Examples))
-	for name := range components.Examples {
-		examples = append(examples, name)
-	}
-	sort.Strings(examples)
-	for _, name := range examples {
-		component := components.Examples[name]
-		if err = loader.resolveExampleRef(doc, component, location); err != nil {
-			return
+		examples := make([]string, 0, len(components.Examples))
+		for name := range components.Examples {
+			examples = append(examples, name)
 		}
-	}
+		sort.Strings(examples)
+		for _, name := range examples {
+			component := components.Examples[name]
+			if err = loader.resolveExampleRef(doc, component, location); err != nil {
+				return
+			}
+		}
 
-	for _, component := range components.Callbacks {
-		if err = loader.resolveCallbackRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.Callbacks {
+			if err = loader.resolveCallbackRef(doc, component, location); err != nil {
+				return
+			}
 		}
 	}
 
@@ -361,10 +362,10 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 	// Special case due to multijson
 	if s, ok := cursor.(*SchemaRef); ok && fieldName == "additionalProperties" {
-		if ap := s.Value.AdditionalPropertiesAllowed; ap != nil {
+		if ap := s.Value.AdditionalProperties.Has; ap != nil {
 			return *ap, nil
 		}
-		return s.Value.AdditionalProperties, nil
+		return s.Value.AdditionalProperties.Schema, nil
 	}
 
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
@@ -390,14 +391,7 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 		hasFields := false
 		for i := 0; i < val.NumField(); i++ {
 			hasFields = true
-			field := val.Type().Field(i)
-			tagValue := field.Tag.Get("yaml")
-			yamlKey := strings.Split(tagValue, ",")[0]
-			if yamlKey == "-" {
-				tagValue := field.Tag.Get("multijson")
-				yamlKey = strings.Split(tagValue, ",")[0]
-			}
-			if yamlKey == fieldName {
+			if fieldName == strings.Split(val.Type().Field(i).Tag.Get("yaml"), ",")[0] {
 				return val.Field(i).Interface(), nil
 			}
 		}
@@ -407,14 +401,10 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 			return drillIntoField(val.FieldByName("Value").Interface(), fieldName)
 		}
 		if hasFields {
-			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "ExtensionProps" {
-				extensions := val.Field(0).Interface().(ExtensionProps).Extensions
+			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "Extensions" {
+				extensions := val.Field(0).Interface().(map[string]interface{})
 				if enc, ok := extensions[fieldName]; ok {
-					var dec interface{}
-					if err := json.Unmarshal(enc.(json.RawMessage), &dec); err != nil {
-						return nil, err
-					}
-					return dec, nil
+					return enc, nil
 				}
 			}
 		}
@@ -757,7 +747,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
-	if v := value.AdditionalProperties; v != nil {
+	if v := value.AdditionalProperties.Schema; v != nil {
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err
 		}
@@ -923,7 +913,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 					}
 					id := unescapeRefString(rest)
 
-					if doc.Components.Callbacks == nil {
+					if doc.Components == nil || doc.Components.Callbacks == nil {
 						return failedToResolveRefFragmentPart(ref, "callbacks")
 					}
 					resolved := doc.Components.Callbacks[id]

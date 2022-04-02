@@ -1137,10 +1137,8 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
 			// Every such part has a type that is defined by an items schema in the property's schema.
 			var exists bool
-			valueSchema, exists = schema.Value.Properties[name]
-			if !exists {
-				anyProperties := schema.Value.AdditionalPropertiesAllowed
-				if anyProperties != nil {
+			if valueSchema, exists = schema.Value.Properties[name]; !exists {
+				if anyProperties := schema.Value.AdditionalProperties.Has; anyProperties != nil {
 					switch *anyProperties {
 					case true:
 						//additionalProperties: true
@@ -1150,11 +1148,10 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 						return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 					}
 				}
-				if schema.Value.AdditionalProperties == nil {
+				if schema.Value.AdditionalProperties.Schema == nil {
 					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 				}
-				valueSchema, exists = schema.Value.AdditionalProperties.Value.Properties[name]
-				if !exists {
+				if valueSchema, exists = schema.Value.AdditionalProperties.Schema.Value.Properties[name]; !exists {
 					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 				}
 			}
@@ -1179,8 +1176,8 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			for k, v := range sr.Value.Properties {
 				allTheProperties[k] = v
 			}
-			if sr.Value.AdditionalProperties != nil {
-				for k, v := range sr.Value.AdditionalProperties.Value.Properties {
+			if addProps := sr.Value.AdditionalProperties.Schema; addProps != nil {
+				for k, v := range addProps.Value.Properties {
 					allTheProperties[k] = v
 				}
 			}
@@ -1189,8 +1186,8 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		for k, v := range schema.Value.Properties {
 			allTheProperties[k] = v
 		}
-		if schema.Value.AdditionalProperties != nil {
-			for k, v := range schema.Value.AdditionalProperties.Value.Properties {
+		if addProps := schema.Value.AdditionalProperties.Schema; addProps != nil {
+			for k, v := range addProps.Value.Properties {
 				allTheProperties[k] = v
 			}
 		}

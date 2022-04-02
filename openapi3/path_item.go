@@ -2,17 +2,16 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // PathItem is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
 type PathItem struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
@@ -32,12 +31,80 @@ type PathItem struct {
 
 // MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(pathItem)
+	if ref := pathItem.Ref; ref != "" {
+		return json.Marshal(Ref{Ref: ref})
+	}
+
+	m := make(map[string]interface{}, 13+len(pathItem.Extensions))
+	for k, v := range pathItem.Extensions {
+		m[k] = v
+	}
+	if x := pathItem.Summary; x != "" {
+		m["summary"] = x
+	}
+	if x := pathItem.Description; x != "" {
+		m["description"] = x
+	}
+	if x := pathItem.Connect; x != nil {
+		m["connect"] = x
+	}
+	if x := pathItem.Delete; x != nil {
+		m["delete"] = x
+	}
+	if x := pathItem.Get; x != nil {
+		m["get"] = x
+	}
+	if x := pathItem.Head; x != nil {
+		m["head"] = x
+	}
+	if x := pathItem.Options; x != nil {
+		m["options"] = x
+	}
+	if x := pathItem.Patch; x != nil {
+		m["patch"] = x
+	}
+	if x := pathItem.Post; x != nil {
+		m["post"] = x
+	}
+	if x := pathItem.Put; x != nil {
+		m["put"] = x
+	}
+	if x := pathItem.Trace; x != nil {
+		m["trace"] = x
+	}
+	if x := pathItem.Servers; len(x) != 0 {
+		m["servers"] = x
+	}
+	if x := pathItem.Parameters; len(x) != 0 {
+		m["parameters"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets PathItem to a copy of data.
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, pathItem)
+	type PathItemBis PathItem
+	var x PathItemBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "$ref")
+	delete(x.Extensions, "summary")
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "connect")
+	delete(x.Extensions, "delete")
+	delete(x.Extensions, "get")
+	delete(x.Extensions, "head")
+	delete(x.Extensions, "options")
+	delete(x.Extensions, "patch")
+	delete(x.Extensions, "post")
+	delete(x.Extensions, "put")
+	delete(x.Extensions, "trace")
+	delete(x.Extensions, "servers")
+	delete(x.Extensions, "parameters")
+	*pathItem = PathItem(x)
+	return nil
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
@@ -139,5 +206,6 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 			return fmt.Errorf("invalid operation %s: %v", method, err)
 		}
 	}
-	return nil
+
+	return validateExtensions(pathItem.Extensions)
 }

@@ -78,7 +78,7 @@ func ExampleLoader() {
 }
 
 func TestResolveSchemaRef(t *testing.T) {
-	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1",description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
+	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
@@ -88,15 +88,6 @@ func TestResolveSchemaRef(t *testing.T) {
 	refAVisited := doc.Components.Schemas["A"].Value.AllOf[0]
 	require.Equal(t, "#/components/schemas/B", refAVisited.Ref)
 	require.NotNil(t, refAVisited.Value)
-}
-
-func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
-	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
-	loader := NewLoader()
-	doc, err := loader.LoadFromData(source)
-	require.NoError(t, err)
-	err = doc.Validate(loader.Context)
-	require.EqualError(t, err, `invalid paths: invalid path /foo: invalid operation POST: found unresolved ref: ""`)
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {

@@ -17,8 +17,6 @@ import (
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/mohae/deepcopy"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 const (
@@ -71,6 +69,14 @@ func Uint64Ptr(value uint64) *uint64 {
 	return &value
 }
 
+// NewSchemaRef simply builds a SchemaRef
+func NewSchemaRef(ref string, value *Schema) *SchemaRef {
+	return &SchemaRef{
+		Ref:   ref,
+		Value: value,
+	}
+}
+
 type Schemas map[string]*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)
@@ -114,7 +120,7 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
 type Schema struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
@@ -159,13 +165,57 @@ type Schema struct {
 	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
 
 	// Object
-	Required                    []string       `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties                  Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
-	MinProps                    uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProps                    *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // In this order...
-	AdditionalProperties        *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // ...for multijson
-	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Required             []string             `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties           Schemas              `json:"properties,omitempty" yaml:"properties,omitempty"`
+	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
+	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+}
+
+type AdditionalProperties struct {
+	Has    *bool
+	Schema *SchemaRef
+}
+
+// MarshalJSON returns the JSON encoding of AdditionalProperties.
+func (addProps *AdditionalProperties) MarshalJSON() ([]byte, error) {
+	if x := addProps.Has; x != nil {
+		if *x {
+			return []byte("true"), nil
+		}
+		return []byte("false"), nil
+	}
+	if x := addProps.Schema; x != nil {
+		return json.Marshal(x)
+	}
+	return nil, nil
+}
+
+// UnmarshalJSON sets AdditionalProperties to a copy of data.
+func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
+	var x interface{}
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	switch y := x.(type) {
+	case nil:
+	case bool:
+		addProps.Has = &y
+	case map[string]interface{}:
+		if len(y) == 0 {
+			addProps.Schema = &SchemaRef{Value: &Schema{}}
+		} else {
+			buf := new(bytes.Buffer)
+			json.NewEncoder(buf).Encode(y)
+			if err := json.NewDecoder(buf).Decode(&addProps.Schema); err != nil {
+				return err
+			}
+		}
+	default:
+		return errors.New("cannot unmarshal additionalProperties: value must be either a schema object or a boolean")
+	}
+	return nil
 }
 
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
@@ -176,30 +226,216 @@ func NewSchema() *Schema {
 
 // MarshalJSON returns the JSON encoding of Schema.
 func (schema *Schema) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(schema)
+	m := make(map[string]interface{}, 36+len(schema.Extensions))
+	for k, v := range schema.Extensions {
+		m[k] = v
+	}
+
+	if x := schema.OneOf; len(x) != 0 {
+		m["oneOf"] = x
+	}
+	if x := schema.AnyOf; len(x) != 0 {
+		m["anyOf"] = x
+	}
+	if x := schema.AllOf; len(x) != 0 {
+		m["allOf"] = x
+	}
+	if x := schema.Not; x != nil {
+		m["not"] = x
+	}
+	if x := schema.Type; len(x) != 0 {
+		m["type"] = x
+	}
+	if x := schema.Title; len(x) != 0 {
+		m["title"] = x
+	}
+	if x := schema.Format; len(x) != 0 {
+		m["format"] = x
+	}
+	if x := schema.Description; len(x) != 0 {
+		m["description"] = x
+	}
+	if x := schema.Enum; len(x) != 0 {
+		m["enum"] = x
+	}
+	if x := schema.Default; x != nil {
+		m["default"] = x
+	}
+	if x := schema.Example; x != nil {
+		m["example"] = x
+	}
+	if x := schema.ExternalDocs; x != nil {
+		m["externalDocs"] = x
+	}
+
+	// Array-related
+	if x := schema.UniqueItems; x {
+		m["uniqueItems"] = x
+	}
+	// Number-related
+	if x := schema.ExclusiveMin; x {
+		m["exclusiveMinimum"] = x
+	}
+	if x := schema.ExclusiveMax; x {
+		m["exclusiveMaximum"] = x
+	}
+	// Properties
+	if x := schema.Nullable; x {
+		m["nullable"] = x
+	}
+	if x := schema.ReadOnly; x {
+		m["readOnly"] = x
+	}
+	if x := schema.WriteOnly; x {
+		m["writeOnly"] = x
+	}
+	if x := schema.AllowEmptyValue; x {
+		m["allowEmptyValue"] = x
+	}
+	if x := schema.Deprecated; x {
+		m["deprecated"] = x
+	}
+	if x := schema.XML; x != nil {
+		m["xml"] = x
+	}
+
+	// Number
+	if x := schema.Min; x != nil {
+		m["minimum"] = x
+	}
+	if x := schema.Max; x != nil {
+		m["maximum"] = x
+	}
+	if x := schema.MultipleOf; x != nil {
+		m["multipleOf"] = x
+	}
+
+	// String
+	if x := schema.MinLength; x != 0 {
+		m["minLength"] = x
+	}
+	if x := schema.MaxLength; x != nil {
+		m["maxLength"] = x
+	}
+	if x := schema.Pattern; x != "" {
+		m["pattern"] = x
+	}
+
+	// Array
+	if x := schema.MinItems; x != 0 {
+		m["minItems"] = x
+	}
+	if x := schema.MaxItems; x != nil {
+		m["maxItems"] = x
+	}
+	if x := schema.Items; x != nil {
+		m["items"] = x
+	}
+
+	// Object
+	if x := schema.Required; len(x) != 0 {
+		m["required"] = x
+	}
+	if x := schema.Properties; len(x) != 0 {
+		m["properties"] = x
+	}
+	if x := schema.MinProps; x != 0 {
+		m["minProperties"] = x
+	}
+	if x := schema.MaxProps; x != nil {
+		m["maxProperties"] = x
+	}
+	if x := schema.AdditionalProperties; x.Has != nil || x.Schema != nil {
+		m["additionalProperties"] = &x
+	}
+	if x := schema.Discriminator; x != nil {
+		m["discriminator"] = x
+	}
+
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
-	err := jsoninfo.UnmarshalStrictStruct(data, schema)
+	type SchemaBis Schema
+	var x SchemaBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+
+	delete(x.Extensions, "oneOf")
+	delete(x.Extensions, "anyOf")
+	delete(x.Extensions, "allOf")
+	delete(x.Extensions, "not")
+	delete(x.Extensions, "type")
+	delete(x.Extensions, "title")
+	delete(x.Extensions, "format")
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "enum")
+	delete(x.Extensions, "default")
+	delete(x.Extensions, "example")
+	delete(x.Extensions, "externalDocs")
+
+	// Array-related, here for struct compactness
+	delete(x.Extensions, "uniqueItems")
+	// Number-related, here for struct compactness
+	delete(x.Extensions, "exclusiveMinimum")
+	delete(x.Extensions, "exclusiveMaximum")
+	// Properties
+	delete(x.Extensions, "nullable")
+	delete(x.Extensions, "readOnly")
+	delete(x.Extensions, "writeOnly")
+	delete(x.Extensions, "allowEmptyValue")
+	delete(x.Extensions, "deprecated")
+	delete(x.Extensions, "xml")
+
+	// Number
+	delete(x.Extensions, "minimum")
+	delete(x.Extensions, "maximum")
+	delete(x.Extensions, "multipleOf")
+
+	// String
+	delete(x.Extensions, "minLength")
+	delete(x.Extensions, "maxLength")
+	delete(x.Extensions, "pattern")
+
+	// Array
+	delete(x.Extensions, "minItems")
+	delete(x.Extensions, "maxItems")
+	delete(x.Extensions, "items")
+
+	// Object
+	delete(x.Extensions, "required")
+	delete(x.Extensions, "properties")
+	delete(x.Extensions, "minProperties")
+	delete(x.Extensions, "maxProperties")
+	delete(x.Extensions, "additionalProperties")
+	delete(x.Extensions, "discriminator")
+
+	*schema = Schema(x)
+
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
 		if eg, ok := schema.Example.(string); ok {
 			schema.Example = strings.TrimSuffix(eg, "T00:00:00Z")
 		}
 	}
-	return err
+	return nil
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (schema Schema) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "additionalProperties":
-		if schema.AdditionalProperties != nil {
-			if schema.AdditionalProperties.Ref != "" {
-				return &Ref{Ref: schema.AdditionalProperties.Ref}, nil
+		if addProps := schema.AdditionalProperties.Has; addProps != nil {
+			return *addProps, nil
+		}
+		if addProps := schema.AdditionalProperties.Schema; addProps != nil {
+			if addProps.Ref != "" {
+				return &Ref{Ref: addProps.Ref}, nil
 			}
-			return schema.AdditionalProperties.Value, nil
+			return addProps.Value, nil
 		}
 	case "not":
 		if schema.Not != nil {
@@ -237,8 +473,6 @@ func (schema Schema) JSONLookup(token string) (interface{}, error) {
 		return schema.Example, nil
 	case "externalDocs":
 		return schema.ExternalDocs, nil
-	case "additionalPropertiesAllowed":
-		return schema.AdditionalPropertiesAllowed, nil
 	case "uniqueItems":
 		return schema.UniqueItems, nil
 	case "exclusiveMin":
@@ -285,7 +519,7 @@ func (schema Schema) JSONLookup(token string) (interface{}, error) {
 		return schema.Discriminator, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(schema.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(schema.Extensions, token)
 	return v, err
 }
 
@@ -546,19 +780,14 @@ func (schema *Schema) WithMaxProperties(i int64) *Schema {
 }
 
 func (schema *Schema) WithAnyAdditionalProperties() *Schema {
-	schema.AdditionalProperties = nil
-	t := true
-	schema.AdditionalPropertiesAllowed = &t
+	schema.AdditionalProperties = AdditionalProperties{Has: BoolPtr(true)}
 	return schema
 }
 
 func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
-	if v == nil {
-		schema.AdditionalProperties = nil
-	} else {
-		schema.AdditionalProperties = &SchemaRef{
-			Value: v,
-		}
+	schema.AdditionalProperties = AdditionalProperties{}
+	if v != nil {
+		schema.AdditionalProperties.Schema = &SchemaRef{Value: v}
 	}
 	return schema
 }
@@ -577,10 +806,10 @@ func (schema *Schema) IsEmpty() bool {
 	if n := schema.Not; n != nil && !n.Value.IsEmpty() {
 		return false
 	}
-	if ap := schema.AdditionalProperties; ap != nil && !ap.Value.IsEmpty() {
+	if ap := schema.AdditionalProperties.Schema; ap != nil {
 		return false
 	}
-	if apa := schema.AdditionalPropertiesAllowed; apa != nil && !*apa {
+	if apa := schema.AdditionalProperties.Has; apa != nil && !*apa {
 		return false
 	}
 	if items := schema.Items; items != nil && !items.Value.IsEmpty() {
@@ -615,12 +844,12 @@ func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) er
 	return schema.validate(ctx, []*Schema{})
 }
 
-func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {
+func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
 	validationOpts := getValidationOptions(ctx)
 
 	for _, existing := range stack {
 		if existing == schema {
-			return
+			return nil
 		}
 	}
 	stack = append(stack, schema)
@@ -634,8 +863,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
@@ -644,8 +873,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
@@ -654,8 +883,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
@@ -664,8 +893,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
@@ -716,7 +945,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			}
 		}
 		if schema.Pattern != "" && !validationOpts.schemaPatternValidationDisabled {
-			if err = schema.compilePattern(); err != nil {
+			if err := schema.compilePattern(); err != nil {
 				return err
 			}
 		}
@@ -734,8 +963,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
@@ -750,23 +979,26 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
-	if ref := schema.AdditionalProperties; ref != nil {
+	if schema.AdditionalProperties.Has != nil && schema.AdditionalProperties.Schema != nil {
+		return errors.New("additionalProperties are set to both boolean and schema")
+	}
+	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		v := ref.Value
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
 		}
-		if err = v.validate(ctx, stack); err != nil {
-			return
+		if err := v.validate(ctx, stack); err != nil {
+			return err
 		}
 	}
 
 	if v := schema.ExternalDocs; v != nil {
-		if err = v.Validate(ctx); err != nil {
+		if err := v.Validate(ctx); err != nil {
 			return fmt.Errorf("invalid external docs: %w", err)
 		}
 	}
@@ -783,7 +1015,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	return
+	return validateExtensions(schema.Extensions)
 }
 
 func (schema *Schema) IsMatching(value interface{}) bool {
@@ -1572,7 +1804,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 	// "additionalProperties"
 	var additionalProperties *Schema
-	if ref := schema.AdditionalProperties; ref != nil {
+	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		additionalProperties = ref.Value
 	}
 	keys := make([]string, 0, len(value))
@@ -1606,8 +1838,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				continue
 			}
 		}
-		allowed := schema.AdditionalPropertiesAllowed
-		if additionalProperties != nil || allowed == nil || *allowed {
+		if allowed := schema.AdditionalProperties.Has; allowed == nil || *allowed {
 			if additionalProperties != nil {
 				if err := additionalProperties.visitJSON(settings, v); err != nil {
 					if settings.failfast {
