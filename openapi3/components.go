@@ -91,6 +91,33 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 		}
 	}
 
+	for k, v := range components.Examples {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(ctx); err != nil {
+			return
+		}
+	}
+
+	for k, v := range components.Links {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(ctx); err != nil {
+			return
+		}
+	}
+
+	for k, v := range components.Callbacks {
+		if err = ValidateIdentifier(k); err != nil {
+			return
+		}
+		if err = v.Validate(ctx); err != nil {
+			return
+		}
+	}
+
 	return
 }
 
