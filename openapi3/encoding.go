@@ -11,11 +11,10 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encodingObject
 type Encoding struct {
 	ExtensionProps
-
-	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
 	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
 	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
+	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
+	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
 	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 }
 

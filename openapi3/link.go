@@ -29,14 +29,13 @@ var _ jsonpointer.JSONPointable = (*Links)(nil)
 // Link is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#linkObject
 type Link struct {
+	RequestBody interface{}            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Server      *Server                `json:"server,omitempty" yaml:"server,omitempty"`
 	ExtensionProps
-
-	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
-	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Parameters   map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Server       *Server                `json:"server,omitempty" yaml:"server,omitempty"`
-	RequestBody  interface{}            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	OperationRef string `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
+	OperationID  string `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	Description  string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Link.
