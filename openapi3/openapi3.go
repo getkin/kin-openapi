@@ -12,14 +12,15 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oasObject
 type T struct {
 	ExtensionProps
+
+	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
-	Info         *Info                `json:"info" yaml:"info"`
-	Paths        Paths                `json:"paths" yaml:"paths"`
-	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	OpenAPI      string               `json:"openapi" yaml:"openapi"`
+	Info         *Info                `json:"info" yaml:"info"`   // Required
+	Paths        Paths                `json:"paths" yaml:"paths"` // Required
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
+	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of T.

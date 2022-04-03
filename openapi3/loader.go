@@ -25,20 +25,28 @@ func failedToResolveRefFragmentPart(value, what string) error {
 
 // Loader helps deserialize an OpenAPIv3 document
 type Loader struct {
-	Context               context.Context
-	visitedSecurityScheme map[*SecurityScheme]struct{}
-	ReadFromURIFunc       ReadFromURIFunc
-	visitedSchema         map[*Schema]struct{}
-	visitedPathItemRefs   map[string]struct{}
-	visitedDocuments      map[string]*T
+	// IsExternalRefsAllowed enables visiting other files
+	IsExternalRefsAllowed bool
+
+	// ReadFromURIFunc allows overriding the any file/URL reading func
+	ReadFromURIFunc ReadFromURIFunc
+
+	Context context.Context
+
+	rootDir string
+
+	visitedPathItemRefs map[string]struct{}
+
+	visitedDocuments map[string]*T
+
 	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
 	visitedLink           map[*Link]struct{}
 	visitedParameter      map[*Parameter]struct{}
 	visitedRequestBody    map[*RequestBody]struct{}
 	visitedResponse       map[*Response]struct{}
-	rootDir               string
-	IsExternalRefsAllowed bool
+	visitedSchema         map[*Schema]struct{}
+	visitedSecurityScheme map[*SecurityScheme]struct{}
 }
 
 // NewLoader returns an empty Loader

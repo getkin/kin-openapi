@@ -107,44 +107,57 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject
 type Schema struct {
 	ExtensionProps
-	Default                     interface{} `json:"default,omitempty" yaml:"default,omitempty"`
-	Example                     interface{} `json:"example,omitempty" yaml:"example,omitempty"`
-	MaxProps                    *uint64     `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	Not                         *SchemaRef  `json:"not,omitempty" yaml:"not,omitempty"`
-	Properties                  Schemas     `json:"properties,omitempty" yaml:"properties,omitempty"`
-	Items                       *SchemaRef  `json:"items,omitempty" yaml:"items,omitempty"`
-	MaxItems                    *uint64     `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	compiledPattern             *regexp.Regexp
-	MaxLength                   *uint64        `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`
-	AdditionalProperties        *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`
-	ExternalDocs                *ExternalDocs  `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	MultipleOf                  *float64       `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
-	Max                         *float64       `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	Min                         *float64       `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	XML                         *XML           `json:"xml,omitempty" yaml:"xml,omitempty"`
-	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
-	Type                        string         `json:"type,omitempty" yaml:"type,omitempty"`
-	Description                 string         `json:"description,omitempty" yaml:"description,omitempty"`
-	Pattern                     string         `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	Title                       string         `json:"title,omitempty" yaml:"title,omitempty"`
-	Format                      string         `json:"format,omitempty" yaml:"format,omitempty"`
-	AllOf                       SchemaRefs     `json:"allOf,omitempty" yaml:"allOf,omitempty"`
-	Enum                        []interface{}  `json:"enum,omitempty" yaml:"enum,omitempty"`
-	AnyOf                       SchemaRefs     `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
-	OneOf                       SchemaRefs     `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
+
+	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
+	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
+	AllOf        SchemaRefs    `json:"allOf,omitempty" yaml:"allOf,omitempty"`
+	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
+	Type         string        `json:"type,omitempty" yaml:"type,omitempty"`
+	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
+	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
+	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default      interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
+	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	// Array-related, here for struct compactness
+	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	// Number-related, here for struct compactness
+	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	// Properties
+	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
+	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
+	WriteOnly       bool `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
+
+	// Number
+	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	Max        *float64 `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	MultipleOf *float64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+
+	// String
+	MinLength       uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	MaxLength       *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	Pattern         string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	compiledPattern *regexp.Regexp
+
+	// Array
+	MinItems uint64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MaxItems *uint64    `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
+
+	// Object
 	Required                    []string       `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties                  Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
 	MinProps                    uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MinLength                   uint64         `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MinItems                    uint64         `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	WriteOnly                   bool           `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	UniqueItems                 bool           `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	ExclusiveMin                bool           `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax                bool           `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	Nullable                    bool           `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	Deprecated                  bool           `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	ReadOnly                    bool           `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	AllowEmptyValue             bool           `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	MaxProps                    *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // In this order...
+	AdditionalProperties        *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // ...for multijson
+	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
@@ -1507,11 +1520,11 @@ func (schema *Schema) compilePattern() (err error) {
 
 type SchemaError struct {
 	Value       interface{}
-	Origin      error
+	reversePath []string
 	Schema      *Schema
 	SchemaField string
 	Reason      string
-	reversePath []string
+	Origin      error
 }
 
 var _ interface{ Unwrap() error } = SchemaError{}

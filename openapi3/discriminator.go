@@ -10,8 +10,9 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminatorObject
 type Discriminator struct {
 	ExtensionProps
-	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+
 	PropertyName string            `json:"propertyName" yaml:"propertyName"`
+	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Discriminator.

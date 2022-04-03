@@ -223,10 +223,11 @@ func (flows *OAuthFlows) Validate(ctx context.Context) error {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauthFlowObject
 type OAuthFlow struct {
 	ExtensionProps
-	Scopes           map[string]string `json:"scopes" yaml:"scopes"`
+
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
 	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"`
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.

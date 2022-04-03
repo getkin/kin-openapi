@@ -14,18 +14,40 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
 	ExtensionProps
-	RequestBody  *RequestBodyRef       `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
-	Servers      *Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Security     *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Callbacks    Callbacks             `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
-	Responses    Responses             `json:"responses" yaml:"responses"`
-	ExternalDocs *ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	OperationID  string                `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string                `json:"description,omitempty" yaml:"description,omitempty"`
-	Summary      string                `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Tags         []string              `json:"tags,omitempty" yaml:"tags,omitempty"`
-	Parameters   Parameters            `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Deprecated   bool                  `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+
+	// Optional tags for documentation.
+	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+
+	// Optional short summary.
+	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
+
+	// Optional description. Should use CommonMark syntax.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+
+	// Optional operation ID.
+	OperationID string `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+
+	// Optional parameters.
+	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+
+	// Optional body parameter.
+	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+
+	// Responses.
+	Responses Responses `json:"responses" yaml:"responses"` // Required
+
+	// Optional callbacks
+	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+
+	Deprecated bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+
+	// Optional security requirements that overrides top-level security.
+	Security *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+
+	// Optional servers that overrides top-level servers.
+	Servers *Servers `json:"servers,omitempty" yaml:"servers,omitempty"`
+
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Operation)(nil)
