@@ -554,7 +554,7 @@ func (schema *Schema) IsEmpty(settings *schemaValidationSettings) bool {
 
 	if schema.Type != "" || schema.Format != "" || len(schema.Enum) != 0 ||
 		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
-		schema.Nullable || schema.AllowEmptyValue ||
+		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
 		schema.MinItems != 0 || schema.MaxItems != nil ||
