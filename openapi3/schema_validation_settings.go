@@ -4,9 +4,10 @@ package openapi3
 type SchemaValidationOption func(*schemaValidationSettings)
 
 type schemaValidationSettings struct {
-	failfast     bool
-	multiError   bool
-	asreq, asrep bool // exclusive (XOR) fields
+	failfast        bool
+	multiError      bool
+	asreq, asrep    bool // exclusive (XOR) fields
+	writeEp, readEp bool
 }
 
 // FailFast returns schema validation errors quicker.
@@ -21,8 +22,17 @@ func MultiErrors() SchemaValidationOption {
 func VisitAsRequest() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.asreq, s.asrep = true, false }
 }
+
 func VisitAsResponse() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.asreq, s.asrep = false, true }
+}
+
+func ReadEndpoint() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.writeEp, s.readEp = false, true }
+}
+
+func WriteEndpoint() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.readEp, s.writeEp = false, true }
 }
 
 func newSchemaValidationSettings(opts ...SchemaValidationOption) *schemaValidationSettings {

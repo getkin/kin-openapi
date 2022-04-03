@@ -15,6 +15,15 @@ func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error { retur
 
 var _ AuthenticationFunc = NoopAuthenticationFunc
 
+// EndpointType Represents what type of endpoint we'll be running validation on
+type EndpointType int32
+
+const (
+	None EndpointType = iota
+	WriteEndpoint
+	ReadEndpoint
+)
+
 type ValidationHandler struct {
 	Handler            http.Handler
 	AuthenticationFunc AuthenticationFunc

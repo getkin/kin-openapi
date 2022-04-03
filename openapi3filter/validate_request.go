@@ -245,6 +245,12 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
+	if options.EndpointType == ReadEndpoint {
+		opts = append(opts, openapi3.ReadEndpoint())
+	}
+	if options.EndpointType == WriteEndpoint {
+		opts = append(opts, openapi3.WriteEndpoint())
+	}
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
