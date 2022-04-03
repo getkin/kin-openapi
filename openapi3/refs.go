@@ -22,6 +22,7 @@ type CallbackRef struct {
 
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
+// MarshalJSON returns the JSON encoding of CallbackRef.
 func (value *CallbackRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -55,6 +56,7 @@ type ExampleRef struct {
 
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
 
+// MarshalJSON returns the JSON encoding of ExampleRef.
 func (value *ExampleRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -88,6 +90,7 @@ type HeaderRef struct {
 
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
+// MarshalJSON returns the JSON encoding of HeaderRef.
 func (value *HeaderRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -119,6 +122,7 @@ type LinkRef struct {
 	Value *Link
 }
 
+// MarshalJSON returns the JSON encoding of LinkRef.
 func (value *LinkRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -143,6 +147,7 @@ type ParameterRef struct {
 
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
 
+// MarshalJSON returns the JSON encoding of ParameterRef.
 func (value *ParameterRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -176,6 +181,7 @@ type ResponseRef struct {
 
 var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
 
+// MarshalJSON returns the JSON encoding of ResponseRef.
 func (value *ResponseRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -209,6 +215,7 @@ type RequestBodyRef struct {
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
+// MarshalJSON returns the JSON encoding of RequestBodyRef.
 func (value *RequestBodyRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -249,6 +256,7 @@ func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 	}
 }
 
+// MarshalJSON returns the JSON encoding of SchemaRef.
 func (value *SchemaRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
@@ -282,6 +290,7 @@ type SecuritySchemeRef struct {
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
 
+// MarshalJSON returns the JSON encoding of SecuritySchemeRef.
 func (value *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }

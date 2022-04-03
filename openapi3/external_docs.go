@@ -18,6 +18,7 @@ type ExternalDocs struct {
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of ExternalDocs.
 func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(e)
 }

@@ -56,6 +56,7 @@ func NewOperation() *Operation {
 	return &Operation{}
 }
 
+// MarshalJSON returns the JSON encoding of Operation.
 func (operation *Operation) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(operation)
 }

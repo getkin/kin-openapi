@@ -48,6 +48,7 @@ type Server struct {
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Server.
 func (server *Server) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(server)
 }
@@ -159,6 +160,7 @@ type ServerVariable struct {
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of ServerVariable.
 func (serverVariable *ServerVariable) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(serverVariable)
 }

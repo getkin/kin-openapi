@@ -67,6 +67,7 @@ func NewJWTSecurityScheme() *SecurityScheme {
 	}
 }
 
+// MarshalJSON returns the JSON encoding of SecurityScheme.
 func (ss *SecurityScheme) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(ss)
 }
@@ -188,6 +189,7 @@ const (
 	oAuthFlowAuthorizationCode
 )
 
+// MarshalJSON returns the JSON encoding of OAuthFlows.
 func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(flows)
 }
@@ -223,6 +225,7 @@ type OAuthFlow struct {
 	Scopes           map[string]string `json:"scopes" yaml:"scopes"`
 }
 
+// MarshalJSON returns the JSON encoding of OAuthFlow.
 func (flow *OAuthFlow) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(flow)
 }

@@ -20,6 +20,7 @@ type Info struct {
 	Version        string   `json:"version" yaml:"version"` // Required
 }
 
+// MarshalJSON returns the JSON encoding of Info.
 func (value *Info) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
@@ -62,6 +63,7 @@ type Contact struct {
 	Email string `json:"email,omitempty" yaml:"email,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Contact.
 func (value *Contact) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
@@ -83,6 +85,7 @@ type License struct {
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of License.
 func (value *License) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }

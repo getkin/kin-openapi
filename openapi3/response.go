@@ -89,6 +89,7 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 	return response
 }
 
+// MarshalJSON returns the JSON encoding of Response.
 func (response *Response) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(response)
 }

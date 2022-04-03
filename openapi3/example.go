@@ -41,6 +41,7 @@ func NewExample(value interface{}) *Example {
 	}
 }
 
+// MarshalJSON returns the JSON encoding of Example.
 func (example *Example) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(example)
 }

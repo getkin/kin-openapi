@@ -29,6 +29,7 @@ type PathItem struct {
 	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(pathItem)
 }

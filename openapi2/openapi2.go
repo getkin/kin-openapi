@@ -29,6 +29,7 @@ type T struct {
 	Tags                openapi3.Tags                  `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of T.
 func (doc *T) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(doc)
 }
@@ -64,6 +65,7 @@ type PathItem struct {
 	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(pathItem)
 }
@@ -155,6 +157,7 @@ type Operation struct {
 	Security     *SecurityRequirements  `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Operation.
 func (operation *Operation) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(operation)
 }
@@ -207,6 +210,7 @@ type Parameter struct {
 	Default          interface{}         `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Parameter.
 func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(parameter)
 }
@@ -224,6 +228,7 @@ type Response struct {
 	Examples    map[string]interface{} `json:"examples,omitempty" yaml:"examples,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Response.
 func (response *Response) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(response)
 }
@@ -236,6 +241,7 @@ type Header struct {
 	Parameter
 }
 
+// MarshalJSON returns the JSON encoding of Header.
 func (header *Header) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(header)
 }
@@ -260,6 +266,7 @@ type SecurityScheme struct {
 	Tags             openapi3.Tags     `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of SecurityScheme.
 func (securityScheme *SecurityScheme) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(securityScheme)
 }

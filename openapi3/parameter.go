@@ -161,6 +161,7 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
 	return parameter
 }
 
+// MarshalJSON returns the JSON encoding of Parameter.
 func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(parameter)
 }

@@ -92,6 +92,7 @@ func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType {
 	return m[mediaType]
 }
 
+// MarshalJSON returns the JSON encoding of RequestBody.
 func (requestBody *RequestBody) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(requestBody)
 }

@@ -164,6 +164,7 @@ func NewSchema() *Schema {
 	return &Schema{}
 }
 
+// MarshalJSON returns the JSON encoding of Schema.
 func (schema *Schema) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(schema)
 }

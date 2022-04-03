@@ -39,6 +39,7 @@ func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding {
 	return encoding
 }
 
+// MarshalJSON returns the JSON encoding of Encoding.
 func (encoding *Encoding) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(encoding)
 }

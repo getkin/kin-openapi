@@ -38,6 +38,7 @@ type Tag struct {
 	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Tag.
 func (t *Tag) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(t)
 }

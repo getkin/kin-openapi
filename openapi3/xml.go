@@ -18,6 +18,7 @@ type XML struct {
 	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of XML.
 func (value *XML) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }

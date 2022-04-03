@@ -38,6 +38,7 @@ type Link struct {
 	RequestBody  interface{}            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Link.
 func (value *Link) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }

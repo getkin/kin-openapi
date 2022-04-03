@@ -28,6 +28,7 @@ func NewComponents() Components {
 	return Components{}
 }
 
+// MarshalJSON returns the JSON encoding of Components.
 func (components *Components) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(components)
 }

@@ -15,6 +15,7 @@ type Discriminator struct {
 	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Discriminator.
 func (value *Discriminator) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }

@@ -60,6 +60,7 @@ func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType 
 	return mediaType
 }
 
+// MarshalJSON returns the JSON encoding of MediaType.
 func (mediaType *MediaType) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(mediaType)
 }
