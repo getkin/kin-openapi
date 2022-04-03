@@ -383,7 +383,6 @@ func ExampleValidator() {
 	// OpenAPI specification for a simple service that squares integers, with
 	// some limitations.
 	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
-info:
 openapi: 3.0.0
 info:
   title: 'Validator - square example'
