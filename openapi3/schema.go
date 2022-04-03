@@ -106,14 +106,14 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject
 type Schema struct {
-	Default interface{} `json:"default,omitempty" yaml:"default,omitempty"`
-	Example interface{} `json:"example,omitempty" yaml:"example,omitempty"`
 	ExtensionProps
-	MaxProps                    *uint64    `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	Not                         *SchemaRef `json:"not,omitempty" yaml:"not,omitempty"`
-	Properties                  Schemas    `json:"properties,omitempty" yaml:"properties,omitempty"`
-	Items                       *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
-	MaxItems                    *uint64    `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	Default                     interface{} `json:"default,omitempty" yaml:"default,omitempty"`
+	Example                     interface{} `json:"example,omitempty" yaml:"example,omitempty"`
+	MaxProps                    *uint64     `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	Not                         *SchemaRef  `json:"not,omitempty" yaml:"not,omitempty"`
+	Properties                  Schemas     `json:"properties,omitempty" yaml:"properties,omitempty"`
+	Items                       *SchemaRef  `json:"items,omitempty" yaml:"items,omitempty"`
+	MaxItems                    *uint64     `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
 	compiledPattern             *regexp.Regexp
 	MaxLength                   *uint64        `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
 	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"`

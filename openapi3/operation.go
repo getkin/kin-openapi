@@ -13,19 +13,19 @@ import (
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
-	RequestBody *RequestBodyRef       `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
-	Servers     *Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Security    *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Callbacks   Callbacks             `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
-	Responses   Responses             `json:"responses" yaml:"responses"`
 	ExtensionProps
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	OperationID  string        `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Summary      string        `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Tags         []string      `json:"tags,omitempty" yaml:"tags,omitempty"`
-	Parameters   Parameters    `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Deprecated   bool          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	RequestBody  *RequestBodyRef       `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	Servers      *Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Security     *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Callbacks    Callbacks             `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Responses    Responses             `json:"responses" yaml:"responses"`
+	ExternalDocs *ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	OperationID  string                `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	Description  string                `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary      string                `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Tags         []string              `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Parameters   Parameters            `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Deprecated   bool                  `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Operation)(nil)
