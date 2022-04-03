@@ -83,6 +83,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 	return nil
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":

@@ -13,6 +13,7 @@ type Headers map[string]*HeaderRef
 
 var _ jsonpointer.JSONPointable = (*Headers)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (h Headers) JSONLookup(token string) (interface{}, error) {
 	ref, ok := h[token]
 	if ref == nil || !ok {
@@ -90,6 +91,7 @@ func (header *Header) Validate(ctx context.Context) error {
 	return nil
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (header Header) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":

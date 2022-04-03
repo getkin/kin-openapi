@@ -13,6 +13,7 @@ type RequestBodies map[string]*RequestBodyRef
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (r RequestBodies) JSONLookup(token string) (interface{}, error) {
 	ref, ok := r[token]
 	if ok == false {

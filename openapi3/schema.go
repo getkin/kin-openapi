@@ -67,6 +67,7 @@ type Schemas map[string]*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s Schemas) JSONLookup(token string) (interface{}, error) {
 	ref, ok := s[token]
 	if ref == nil || ok == false {
@@ -83,6 +84,7 @@ type SchemaRefs []*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 	i, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
@@ -174,6 +176,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, schema)
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (schema Schema) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "additionalProperties":

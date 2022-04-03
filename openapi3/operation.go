@@ -66,6 +66,7 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (operation Operation) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "requestBody":
