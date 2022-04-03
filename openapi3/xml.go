@@ -28,6 +28,7 @@ func (value *XML) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// Validate returns an error if XML does not comply with the OpenAPI spec.
 func (value *XML) Validate(ctx context.Context) error {
 	return nil // TODO
 }

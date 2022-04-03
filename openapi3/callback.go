@@ -27,6 +27,7 @@ func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#callbackObject
 type Callback map[string]*PathItem
 
+// Validate returns an error if Callback does not comply with the OpenAPI spec.
 func (value Callback) Validate(ctx context.Context) error {
 	for _, v := range value {
 		if err := v.Validate(ctx); err != nil {

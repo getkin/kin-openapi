@@ -70,6 +70,7 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, mediaType)
 }
 
+// Validate returns an error if MediaType does not comply with the OpenAPI spec.
 func (value *MediaType) Validate(ctx context.Context) error {
 	if value == nil {
 		return nil

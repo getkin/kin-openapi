@@ -51,6 +51,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, example)
 }
 
+// Validate returns an error if Example does not comply with the OpenAPI spec.
 func (value *Example) Validate(ctx context.Context) error {
 	return nil // TODO
 }

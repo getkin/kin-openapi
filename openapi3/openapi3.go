@@ -51,6 +51,7 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
+// Validate returns an error if T does not comply with the OpenAPI spec.
 func (value *T) Validate(ctx context.Context) error {
 	if value.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")

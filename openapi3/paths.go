@@ -10,6 +10,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
 type Paths map[string]*PathItem
 
+// Validate returns an error if Paths does not comply with the OpenAPI spec.
 func (value Paths) Validate(ctx context.Context) error {
 	normalizedPaths := make(map[string]string)
 	for path, pathItem := range value {

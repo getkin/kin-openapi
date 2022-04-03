@@ -51,6 +51,7 @@ func (value *Header) SerializationMethod() (*SerializationMethod, error) {
 	return &SerializationMethod{Style: style, Explode: explode}, nil
 }
 
+// Validate returns an error if Header does not comply with the OpenAPI spec.
 func (value *Header) Validate(ctx context.Context) error {
 	if value.Name != "" {
 		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")

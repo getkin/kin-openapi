@@ -102,6 +102,7 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
 }
 
+// Validate returns an error if RequestBody does not comply with the OpenAPI spec.
 func (value *RequestBody) Validate(ctx context.Context) error {
 	if value.Content == nil {
 		return errors.New("content of the request body is required")

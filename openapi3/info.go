@@ -30,6 +30,7 @@ func (value *Info) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// Validate returns an error if Info does not comply with the OpenAPI spec.
 func (value *Info) Validate(ctx context.Context) error {
 	if contact := value.Contact; contact != nil {
 		if err := contact.Validate(ctx); err != nil {
@@ -74,6 +75,7 @@ func (value *Contact) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// Validate returns an error if Contact does not comply with the OpenAPI spec.
 func (value *Contact) Validate(ctx context.Context) error {
 	return nil
 }
@@ -97,6 +99,7 @@ func (value *License) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// Validate returns an error if License does not comply with the OpenAPI spec.
 func (value *License) Validate(ctx context.Context) error {
 	if value.Name == "" {
 		return errors.New("value of license name must be a non-empty string")

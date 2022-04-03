@@ -107,6 +107,7 @@ func (ss *SecurityScheme) WithBearerFormat(value string) *SecurityScheme {
 	return ss
 }
 
+// Validate returns an error if SecurityScheme does not comply with the OpenAPI spec.
 func (value *SecurityScheme) Validate(ctx context.Context) error {
 	hasIn := false
 	hasBearerFormat := false
@@ -200,6 +201,7 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flows)
 }
 
+// Validate returns an error if OAuthFlows does not comply with the OpenAPI spec.
 func (flows *OAuthFlows) Validate(ctx context.Context) error {
 	if v := flows.Implicit; v != nil {
 		return v.Validate(ctx, oAuthFlowTypeImplicit)
@@ -237,6 +239,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }
 
+// Validate returns an error if OAuthFlow does not comply with the OpenAPI spec.
 func (flow *OAuthFlow) Validate(ctx context.Context, typ oAuthFlowType) error {
 	if typ == oAuthFlowAuthorizationCode || typ == oAuthFlowTypeImplicit {
 		if v := flow.AuthorizationURL; v == "" {

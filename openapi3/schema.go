@@ -590,6 +590,7 @@ func (schema *Schema) IsEmpty() bool {
 	return true
 }
 
+// Validate returns an error if Schema does not comply with the OpenAPI spec.
 func (value *Schema) Validate(ctx context.Context) error {
 	return value.validate(ctx, []*Schema{})
 }

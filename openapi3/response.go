@@ -30,6 +30,7 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
+// Validate returns an error if Responses does not comply with the OpenAPI spec.
 func (value Responses) Validate(ctx context.Context) error {
 	if len(value) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
@@ -99,6 +100,7 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
+// Validate returns an error if Response does not comply with the OpenAPI spec.
 func (value *Response) Validate(ctx context.Context) error {
 	if value.Description == nil {
 		return errors.New("a short description of the response is required")

@@ -25,6 +25,7 @@ func (value *Discriminator) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
+// Validate returns an error if Discriminator does not comply with the OpenAPI spec.
 func (value *Discriminator) Validate(ctx context.Context) error {
 	return nil
 }

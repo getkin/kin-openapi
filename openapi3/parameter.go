@@ -64,6 +64,7 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 	return nil
 }
 
+// Validate returns an error if Parameters does not comply with the OpenAPI spec.
 func (value Parameters) Validate(ctx context.Context) error {
 	dupes := make(map[string]struct{})
 	for _, item := range value {
@@ -240,6 +241,7 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 	}
 }
 
+// Validate returns an error if Parameter does not comply with the OpenAPI spec.
 func (value *Parameter) Validate(ctx context.Context) error {
 	if value.Name == "" {
 		return errors.New("parameter name can't be blank")

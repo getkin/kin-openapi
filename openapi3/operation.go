@@ -124,6 +124,7 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 	}
 }
 
+// Validate returns an error if Operation does not comply with the OpenAPI spec.
 func (value *Operation) Validate(ctx context.Context) error {
 	if v := value.Parameters; v != nil {
 		if err := v.Validate(ctx); err != nil {

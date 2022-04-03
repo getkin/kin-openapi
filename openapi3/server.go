@@ -14,7 +14,7 @@ import (
 // Servers is specified by OpenAPI/Swagger standard version 3.
 type Servers []*Server
 
-// Validate ensures servers are per the OpenAPIv3 specification.
+// Validate returns an error if Servers does not comply with the OpenAPI spec.
 func (value Servers) Validate(ctx context.Context) error {
 	for _, v := range value {
 		if err := v.Validate(ctx); err != nil {
@@ -129,6 +129,7 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 	return params, input, true
 }
 
+// Validate returns an error if Server does not comply with the OpenAPI spec.
 func (value *Server) Validate(ctx context.Context) (err error) {
 	if value.URL == "" {
 		return errors.New("value of url must be a non-empty string")
@@ -171,6 +172,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, serverVariable)
 }
 
+// Validate returns an error if ServerVariable does not comply with the OpenAPI spec.
 func (value *ServerVariable) Validate(ctx context.Context) error {
 	if value.Default == "" {
 		data, err := value.MarshalJSON()

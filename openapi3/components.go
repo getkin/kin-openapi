@@ -38,6 +38,7 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, components)
 }
 
+// Validate returns an error if Components does not comply with the OpenAPI spec.
 func (components *Components) Validate(ctx context.Context) (err error) {
 	for k, v := range components.Schemas {
 		if err = ValidateIdentifier(k); err != nil {

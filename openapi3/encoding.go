@@ -64,6 +64,7 @@ func (encoding *Encoding) SerializationMethod() *SerializationMethod {
 	return sm
 }
 
+// Validate returns an error if Encoding does not comply with the OpenAPI spec.
 func (value *Encoding) Validate(ctx context.Context) error {
 	if value == nil {
 		return nil
