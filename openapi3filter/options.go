@@ -21,4 +21,7 @@ type Options struct {
 
 	// See NoopAuthenticationFunc
 	AuthenticationFunc AuthenticationFunc
+
+	// See EndpointType
+	EndpointType EndpointType
 }

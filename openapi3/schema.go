@@ -547,10 +547,14 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 	return schema
 }
 
-func (schema *Schema) IsEmpty() bool {
+func (schema *Schema) IsEmpty(settings *schemaValidationSettings) bool {
+	if (schema.ReadOnly && settings.writeEp) || (schema.WriteOnly && settings.readEp) {
+		return true
+	}
+
 	if schema.Type != "" || schema.Format != "" || len(schema.Enum) != 0 ||
 		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
-		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
+		schema.Nullable || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
 		schema.MinItems != 0 || schema.MaxItems != nil ||
@@ -558,35 +562,35 @@ func (schema *Schema) IsEmpty() bool {
 		schema.MinProps != 0 || schema.MaxProps != nil {
 		return false
 	}
-	if n := schema.Not; n != nil && !n.Value.IsEmpty() {
+	if n := schema.Not; n != nil && !n.Value.IsEmpty(settings) {
 		return false
 	}
-	if ap := schema.AdditionalProperties; ap != nil && !ap.Value.IsEmpty() {
+	if ap := schema.AdditionalProperties; ap != nil && !ap.Value.IsEmpty(settings) {
 		return false
 	}
 	if apa := schema.AdditionalPropertiesAllowed; apa != nil && !*apa {
 		return false
 	}
-	if items := schema.Items; items != nil && !items.Value.IsEmpty() {
+	if items := schema.Items; items != nil && !items.Value.IsEmpty(settings) {
 		return false
 	}
 	for _, s := range schema.Properties {
-		if !s.Value.IsEmpty() {
+		if !s.Value.IsEmpty(settings) {
 			return false
 		}
 	}
 	for _, s := range schema.OneOf {
-		if !s.Value.IsEmpty() {
+		if !s.Value.IsEmpty(settings) {
 			return false
 		}
 	}
 	for _, s := range schema.AnyOf {
-		if !s.Value.IsEmpty() {
+		if !s.Value.IsEmpty(settings) {
 			return false
 		}
 	}
 	for _, s := range schema.AllOf {
-		if !s.Value.IsEmpty() {
+		if !s.Value.IsEmpty(settings) {
 			return false
 		}
 	}
@@ -797,7 +801,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 		}
 	}
 
-	if schema.IsEmpty() {
+	if schema.IsEmpty(settings) {
 		return
 	}
 	if err = schema.visitSetOperations(settings, value); err != nil {

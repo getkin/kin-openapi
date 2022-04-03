@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
+func TestValidatingWriteRequestBodyWithWriteOnlyProperty(t *testing.T) {
 	const spec = `{
   "openapi": "3.0.3",
   "info": {
@@ -24,8 +24,8 @@ func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
   },
   "paths": {
     "/accounts": {
-      "get": {
-        "description": "Get an account",
+      "post": {
+        "description": "Create a new account",
         "requestBody": {
           "required": true,
           "content": {
@@ -40,7 +40,7 @@ func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
                     "pattern": "[0-9a-v]+$",
                     "minLength": 20,
                     "maxLength": 20,
-                    "readOnly": true
+                    "writeOnly": true
                   }
                 }
               }
@@ -76,7 +76,7 @@ func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
 	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
 	require.NoError(t, err)
 
-	httpReq, err := http.NewRequest(http.MethodGet, "/accounts", bytes.NewReader(b))
+	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
 	require.NoError(t, err)
 	httpReq.Header.Add(headerCT, "application/json")
 
@@ -87,7 +87,7 @@ func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
 		Request:    httpReq,
 		PathParams: pathParams,
 		Route:      route,
-		Options:    &Options{EndpointType: ReadEndpoint},
+		Options:    &Options{EndpointType: WriteEndpoint},
 	})
 	require.NoError(t, err)
 
@@ -95,7 +95,7 @@ func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
 	b, err = json.Marshal(Request{ID: "0cvp6u8u3ft0"})
 	require.NoError(t, err)
 
-	httpReq, err = http.NewRequest(http.MethodGet, "/accounts", bytes.NewReader(b))
+	httpReq, err = http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
 	require.NoError(t, err)
 	httpReq.Header.Add(headerCT, "application/json")
 
@@ -103,12 +103,12 @@ func TestValidatingReadRequestBodyWithReadOnlyProperty(t *testing.T) {
 		Request:    httpReq,
 		PathParams: pathParams,
 		Route:      route,
-		Options:    &Options{EndpointType: ReadEndpoint},
+		Options:    &Options{EndpointType: WriteEndpoint},
 	})
 	require.Error(t, err)
 }
 
-func TestValidatingIfReadOrWriteEndpointIsNotKnownDefaultValidatesProperty(t *testing.T) {
+func TestValidatingReadRequestOnRequiredWriteOnlyProperty(t *testing.T) {
 	const spec = `{
   "openapi": "3.0.3",
   "info": {
@@ -121,7 +121,7 @@ func TestValidatingIfReadOrWriteEndpointIsNotKnownDefaultValidatesProperty(t *te
   },
   "paths": {
     "/accounts": {
-      "post": {
+      "get": {
         "description": "Get an account",
         "requestBody": {
           "required": true,
@@ -137,7 +137,7 @@ func TestValidatingIfReadOrWriteEndpointIsNotKnownDefaultValidatesProperty(t *te
                     "pattern": "[0-9a-v]+$",
                     "minLength": 20,
                     "maxLength": 20,
-                    "readOnly": true
+                    "writeOnly": true
                   }
                 }
               }
@@ -170,91 +170,11 @@ func TestValidatingIfReadOrWriteEndpointIsNotKnownDefaultValidatesProperty(t *te
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
-	b, err := json.Marshal(Request{ID: ""})
-	require.NoError(t, err)
-
-	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
-	require.NoError(t, err)
-	httpReq.Header.Add(headerCT, "application/json")
-
-	route, pathParams, err := router.FindRoute(httpReq)
-	require.NoError(t, err)
-
-	err = ValidateRequest(sl.Context, &RequestValidationInput{
-		Request:    httpReq,
-		PathParams: pathParams,
-		Route:      route,
-	})
-	require.Error(t, err)
-}
-
-func TestValidatingWriteRequestOnRequiredReadOnlyProperty(t *testing.T) {
-	const spec = `{
-  "openapi": "3.0.3",
-  "info": {
-    "version": "1.0.0",
-    "title": "title",
-    "description": "desc",
-    "contact": {
-      "email": "email"
-    }
-  },
-  "paths": {
-    "/accounts": {
-      "post": {
-        "description": "Create a new account",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["_id"],
-                "properties": {
-                  "_id": {
-                    "type": "string",
-                    "description": "Unique identifier for this object.",
-                    "pattern": "[0-9a-v]+$",
-                    "minLength": 20,
-                    "maxLength": 20,
-                    "readOnly": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successfully created an account"
-          },
-          "400": {
-            "description": "The server could not understand the request due to invalid syntax",
-          }
-        }
-      }
-    }
-  }
-}
-`
-
-	type Request struct {
-		ID string `json:"_id"`
-	}
-
-	sl := openapi3.NewLoader()
-	doc, err := sl.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	err = doc.Validate(sl.Context)
-	require.NoError(t, err)
-	router, err := legacyrouter.NewRouter(doc)
-	require.NoError(t, err)
-
 	// Set no id because id is a required readonly field, but this is a write request
 	b, err := json.Marshal(Request{ID: ""})
 	require.NoError(t, err)
 
-	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
+	httpReq, err := http.NewRequest(http.MethodGet, "/accounts", bytes.NewReader(b))
 	require.NoError(t, err)
 	httpReq.Header.Add(headerCT, "application/json")
 
@@ -265,7 +185,7 @@ func TestValidatingWriteRequestOnRequiredReadOnlyProperty(t *testing.T) {
 		Request:    httpReq,
 		PathParams: pathParams,
 		Route:      route,
-		Options:    &Options{EndpointType: WriteEndpoint},
+		Options:    &Options{EndpointType: ReadEndpoint},
 	})
 	require.NoError(t, err)
 }
