@@ -18,26 +18,21 @@ import (
 func ExampleGenerator_SchemaRefs() {
 	type SomeOtherType string
 	type SomeStruct struct {
-		Bool    bool                      `json:"bool"`
-		Int     int                       `json:"int"`
-		Int64   int64                     `json:"int64"`
-		Float64 float64                   `json:"float64"`
-		String  string                    `json:"string"`
-		Bytes   []byte                    `json:"bytes"`
-		JSON    json.RawMessage           `json:"json"`
-		Time    time.Time                 `json:"time"`
-		Slice   []SomeOtherType           `json:"slice"`
-		Map     map[string]*SomeOtherType `json:"map"`
-
-		Struct struct {
+		Time        time.Time                 `json:"time"`
+		Ptr         *SomeOtherType            `json:"ptr"`
+		Map         map[string]*SomeOtherType `json:"map"`
+		EmptyStruct struct{ Y string }        `json:"structWithoutFields"`
+		Struct      struct {
 			X string `json:"x"`
 		} `json:"struct"`
-
-		EmptyStruct struct {
-			Y string
-		} `json:"structWithoutFields"`
-
-		Ptr *SomeOtherType `json:"ptr"`
+		String  string          `json:"string"`
+		JSON    json.RawMessage `json:"json"`
+		Bytes   []byte          `json:"bytes"`
+		Slice   []SomeOtherType `json:"slice"`
+		Float64 float64         `json:"float64"`
+		Int64   int64           `json:"int64"`
+		Int     int             `json:"int"`
+		Bool    bool            `json:"bool"`
 	}
 
 	g := openapi3gen.NewGenerator()
@@ -270,8 +265,8 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 	}
 
 	type ContainerStruct struct {
-		Name string
 		*EmbeddedStruct
+		Name string
 	}
 
 	instance := &ContainerStruct{
@@ -301,8 +296,8 @@ func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 	}
 
 	type ContainerStruct struct {
-		Name string
 		*EmbeddedStruct
+		Name string
 	}
 
 	instance := &ContainerStruct{
@@ -333,8 +328,8 @@ func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 func TestCyclicReferences(t *testing.T) {
 	type ObjectDiff struct {
 		FieldCycle *ObjectDiff
-		SliceCycle []*ObjectDiff
 		MapCycle   map[*ObjectDiff]*ObjectDiff
+		SliceCycle []*ObjectDiff
 	}
 
 	instance := &ObjectDiff{
@@ -368,9 +363,9 @@ func ExampleSchemaCustomizer() {
 	type InnerBla struct {
 		UntaggedStringField string
 		AnonStruct          struct {
+			NestedInnerBla
 			InnerFieldWithoutTag int
 			InnerFieldWithTag    int `mymintag:"-1" mymaxtag:"50"`
-			NestedInnerBla
 		}
 		Enum2Field string `json:"enum2" myenumtag:"c,d"`
 	}

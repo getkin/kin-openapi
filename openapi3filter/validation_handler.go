@@ -17,10 +17,10 @@ var _ AuthenticationFunc = NoopAuthenticationFunc
 
 type ValidationHandler struct {
 	Handler            http.Handler
-	AuthenticationFunc AuthenticationFunc
-	File               string
-	ErrorEncoder       ErrorEncoder
 	router             routers.Router
+	AuthenticationFunc AuthenticationFunc
+	ErrorEncoder       ErrorEncoder
+	File               string
 }
 
 func (h *ValidationHandler) Load() error {

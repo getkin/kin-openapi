@@ -11,16 +11,15 @@ import (
 // T is the root of an OpenAPI v3 document
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oasObject
 type T struct {
+	Components Components `json:"components,omitempty" yaml:"components,omitempty"`
 	ExtensionProps
-
-	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
-	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
-	Info         *Info                `json:"info" yaml:"info"`   // Required
-	Paths        Paths                `json:"paths" yaml:"paths"` // Required
+	Info         *Info                `json:"info" yaml:"info"`
+	Paths        Paths                `json:"paths" yaml:"paths"`
+	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	OpenAPI      string               `json:"openapi" yaml:"openapi"`
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
-	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of T.

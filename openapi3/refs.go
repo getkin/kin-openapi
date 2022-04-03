@@ -16,8 +16,8 @@ type Ref struct {
 // CallbackRef represents either a Callback or a $ref to a Callback.
 // When serializing and both fields are set, Ref is preferred over Value.
 type CallbackRef struct {
-	Ref   string
 	Value *Callback
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
@@ -53,8 +53,8 @@ func (value CallbackRef) JSONLookup(token string) (interface{}, error) {
 // ExampleRef represents either a Example or a $ref to a Example.
 // When serializing and both fields are set, Ref is preferred over Value.
 type ExampleRef struct {
-	Ref   string
 	Value *Example
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
@@ -90,8 +90,8 @@ func (value ExampleRef) JSONLookup(token string) (interface{}, error) {
 // HeaderRef represents either a Header or a $ref to a Header.
 // When serializing and both fields are set, Ref is preferred over Value.
 type HeaderRef struct {
-	Ref   string
 	Value *Header
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
@@ -127,8 +127,8 @@ func (value HeaderRef) JSONLookup(token string) (interface{}, error) {
 // LinkRef represents either a Link or a $ref to a Link.
 // When serializing and both fields are set, Ref is preferred over Value.
 type LinkRef struct {
-	Ref   string
 	Value *Link
+	Ref   string
 }
 
 // MarshalJSON returns the JSON encoding of LinkRef.
@@ -152,8 +152,8 @@ func (value *LinkRef) Validate(ctx context.Context) error {
 // ParameterRef represents either a Parameter or a $ref to a Parameter.
 // When serializing and both fields are set, Ref is preferred over Value.
 type ParameterRef struct {
-	Ref   string
 	Value *Parameter
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
@@ -189,8 +189,8 @@ func (value ParameterRef) JSONLookup(token string) (interface{}, error) {
 // ResponseRef represents either a Response or a $ref to a Response.
 // When serializing and both fields are set, Ref is preferred over Value.
 type ResponseRef struct {
-	Ref   string
 	Value *Response
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
@@ -226,8 +226,8 @@ func (value ResponseRef) JSONLookup(token string) (interface{}, error) {
 // RequestBodyRef represents either a RequestBody or a $ref to a RequestBody.
 // When serializing and both fields are set, Ref is preferred over Value.
 type RequestBodyRef struct {
-	Ref   string
 	Value *RequestBody
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
@@ -263,8 +263,8 @@ func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 // SchemaRef represents either a Schema or a $ref to a Schema.
 // When serializing and both fields are set, Ref is preferred over Value.
 type SchemaRef struct {
-	Ref   string
 	Value *Schema
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
@@ -307,8 +307,8 @@ func (value SchemaRef) JSONLookup(token string) (interface{}, error) {
 // SecuritySchemeRef represents either a SecurityScheme or a $ref to a SecurityScheme.
 // When serializing and both fields are set, Ref is preferred over Value.
 type SecuritySchemeRef struct {
-	Ref   string
 	Value *SecurityScheme
+	Ref   string
 }
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)

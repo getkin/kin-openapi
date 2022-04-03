@@ -8,11 +8,11 @@ import (
 )
 
 type ResponseValidationInput struct {
-	RequestValidationInput *RequestValidationInput
-	Status                 int
-	Header                 http.Header
 	Body                   io.ReadCloser
+	RequestValidationInput *RequestValidationInput
+	Header                 http.Header
 	Options                *Options
+	Status                 int
 }
 
 func (input *ResponseValidationInput) SetBodyBytes(value []byte) *ResponseValidationInput {
