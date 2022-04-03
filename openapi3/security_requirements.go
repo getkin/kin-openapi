@@ -16,8 +16,8 @@ func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *
 }
 
 // Validate returns an error if SecurityRequirements does not comply with the OpenAPI spec.
-func (value SecurityRequirements) Validate(ctx context.Context) error {
-	for _, item := range value {
+func (srs SecurityRequirements) Validate(ctx context.Context) error {
+	for _, item := range srs {
 		if err := item.Validate(ctx); err != nil {
 			return err
 		}
@@ -42,6 +42,6 @@ func (security SecurityRequirement) Authenticate(provider string, scopes ...stri
 }
 
 // Validate returns an error if SecurityRequirement does not comply with the OpenAPI spec.
-func (value SecurityRequirement) Validate(ctx context.Context) error {
+func (security *SecurityRequirement) Validate(ctx context.Context) error {
 	return nil
 }

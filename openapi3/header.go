@@ -34,34 +34,34 @@ type Header struct {
 var _ jsonpointer.JSONPointable = (*Header)(nil)
 
 // UnmarshalJSON sets Header to a copy of data.
-func (value *Header) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (header *Header) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, header)
 }
 
 // SerializationMethod returns a header's serialization method.
-func (value *Header) SerializationMethod() (*SerializationMethod, error) {
-	style := value.Style
+func (header *Header) SerializationMethod() (*SerializationMethod, error) {
+	style := header.Style
 	if style == "" {
 		style = SerializationSimple
 	}
 	explode := false
-	if value.Explode != nil {
-		explode = *value.Explode
+	if header.Explode != nil {
+		explode = *header.Explode
 	}
 	return &SerializationMethod{Style: style, Explode: explode}, nil
 }
 
 // Validate returns an error if Header does not comply with the OpenAPI spec.
-func (value *Header) Validate(ctx context.Context) error {
-	if value.Name != "" {
+func (header *Header) Validate(ctx context.Context) error {
+	if header.Name != "" {
 		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")
 	}
-	if value.In != "" {
+	if header.In != "" {
 		return errors.New("header 'in' MUST NOT be specified, it is implicitly in header")
 	}
 
 	// Validate a parameter's serialization method.
-	sm, err := value.SerializationMethod()
+	sm, err := header.SerializationMethod()
 	if err != nil {
 		return err
 	}
@@ -72,17 +72,17 @@ func (value *Header) Validate(ctx context.Context) error {
 		return fmt.Errorf("header schema is invalid: %v", e)
 	}
 
-	if (value.Schema == nil) == (value.Content == nil) {
-		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", value)
+	if (header.Schema == nil) == (header.Content == nil) {
+		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", header)
 		return fmt.Errorf("header schema is invalid: %v", e)
 	}
-	if schema := value.Schema; schema != nil {
+	if schema := header.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
 			return fmt.Errorf("header schema is invalid: %v", err)
 		}
 	}
 
-	if content := value.Content; content != nil {
+	if content := header.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("header content is invalid: %v", err)
 		}
@@ -90,41 +90,41 @@ func (value *Header) Validate(ctx context.Context) error {
 	return nil
 }
 
-func (value Header) JSONLookup(token string) (interface{}, error) {
+func (header Header) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":
-		if value.Schema != nil {
-			if value.Schema.Ref != "" {
-				return &Ref{Ref: value.Schema.Ref}, nil
+		if header.Schema != nil {
+			if header.Schema.Ref != "" {
+				return &Ref{Ref: header.Schema.Ref}, nil
 			}
-			return value.Schema.Value, nil
+			return header.Schema.Value, nil
 		}
 	case "name":
-		return value.Name, nil
+		return header.Name, nil
 	case "in":
-		return value.In, nil
+		return header.In, nil
 	case "description":
-		return value.Description, nil
+		return header.Description, nil
 	case "style":
-		return value.Style, nil
+		return header.Style, nil
 	case "explode":
-		return value.Explode, nil
+		return header.Explode, nil
 	case "allowEmptyValue":
-		return value.AllowEmptyValue, nil
+		return header.AllowEmptyValue, nil
 	case "allowReserved":
-		return value.AllowReserved, nil
+		return header.AllowReserved, nil
 	case "deprecated":
-		return value.Deprecated, nil
+		return header.Deprecated, nil
 	case "required":
-		return value.Required, nil
+		return header.Required, nil
 	case "example":
-		return value.Example, nil
+		return header.Example, nil
 	case "examples":
-		return value.Examples, nil
+		return header.Examples, nil
 	case "content":
-		return value.Content, nil
+		return header.Content, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(value.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(header.ExtensionProps, token)
 	return v, err
 }

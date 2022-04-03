@@ -31,11 +31,11 @@ func (responses Responses) Get(status int) *ResponseRef {
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
-func (value Responses) Validate(ctx context.Context) error {
-	if len(value) == 0 {
+func (responses Responses) Validate(ctx context.Context) error {
+	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
-	for _, v := range value {
+	for _, v := range responses {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -101,23 +101,23 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Response does not comply with the OpenAPI spec.
-func (value *Response) Validate(ctx context.Context) error {
-	if value.Description == nil {
+func (response *Response) Validate(ctx context.Context) error {
+	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
 
-	if content := value.Content; content != nil {
+	if content := response.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	for _, header := range value.Headers {
+	for _, header := range response.Headers {
 		if err := header.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
-	for _, link := range value.Links {
+	for _, link := range response.Links {
 		if err := link.Validate(ctx); err != nil {
 			return err
 		}

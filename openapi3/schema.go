@@ -591,8 +591,8 @@ func (schema *Schema) IsEmpty() bool {
 }
 
 // Validate returns an error if Schema does not comply with the OpenAPI spec.
-func (value *Schema) Validate(ctx context.Context) error {
-	return value.validate(ctx, []*Schema{})
+func (schema *Schema) Validate(ctx context.Context) error {
+	return schema.validate(ctx, []*Schema{})
 }
 
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {

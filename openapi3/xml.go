@@ -19,16 +19,16 @@ type XML struct {
 }
 
 // MarshalJSON returns the JSON encoding of XML.
-func (value *XML) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (xml *XML) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(xml)
 }
 
 // UnmarshalJSON sets XML to a copy of data.
-func (value *XML) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (xml *XML) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, xml)
 }
 
 // Validate returns an error if XML does not comply with the OpenAPI spec.
-func (value *XML) Validate(ctx context.Context) error {
+func (xml *XML) Validate(ctx context.Context) error {
 	return nil // TODO
 }

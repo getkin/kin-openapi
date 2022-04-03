@@ -71,11 +71,11 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if MediaType does not comply with the OpenAPI spec.
-func (value *MediaType) Validate(ctx context.Context) error {
-	if value == nil {
+func (mediaType *MediaType) Validate(ctx context.Context) error {
+	if mediaType == nil {
 		return nil
 	}
-	if schema := value.Schema; schema != nil {
+	if schema := mediaType.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
 			return err
 		}

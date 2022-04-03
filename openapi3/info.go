@@ -21,34 +21,34 @@ type Info struct {
 }
 
 // MarshalJSON returns the JSON encoding of Info.
-func (value *Info) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (info *Info) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(info)
 }
 
 // UnmarshalJSON sets Info to a copy of data.
-func (value *Info) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (info *Info) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, info)
 }
 
 // Validate returns an error if Info does not comply with the OpenAPI spec.
-func (value *Info) Validate(ctx context.Context) error {
-	if contact := value.Contact; contact != nil {
+func (info *Info) Validate(ctx context.Context) error {
+	if contact := info.Contact; contact != nil {
 		if err := contact.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
-	if license := value.License; license != nil {
+	if license := info.License; license != nil {
 		if err := license.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
-	if value.Version == "" {
+	if info.Version == "" {
 		return errors.New("value of version must be a non-empty string")
 	}
 
-	if value.Title == "" {
+	if info.Title == "" {
 		return errors.New("value of title must be a non-empty string")
 	}
 
@@ -66,17 +66,17 @@ type Contact struct {
 }
 
 // MarshalJSON returns the JSON encoding of Contact.
-func (value *Contact) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (contact *Contact) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(contact)
 }
 
 // UnmarshalJSON sets Contact to a copy of data.
-func (value *Contact) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (contact *Contact) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, contact)
 }
 
 // Validate returns an error if Contact does not comply with the OpenAPI spec.
-func (value *Contact) Validate(ctx context.Context) error {
+func (contact *Contact) Validate(ctx context.Context) error {
 	return nil
 }
 
@@ -90,18 +90,18 @@ type License struct {
 }
 
 // MarshalJSON returns the JSON encoding of License.
-func (value *License) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (license *License) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(license)
 }
 
 // UnmarshalJSON sets License to a copy of data.
-func (value *License) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (license *License) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, license)
 }
 
 // Validate returns an error if License does not comply with the OpenAPI spec.
-func (value *License) Validate(ctx context.Context) error {
-	if value.Name == "" {
+func (license *License) Validate(ctx context.Context) error {
+	if license.Name == "" {
 		return errors.New("value of license name must be a non-empty string")
 	}
 	return nil

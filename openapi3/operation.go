@@ -125,25 +125,25 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 }
 
 // Validate returns an error if Operation does not comply with the OpenAPI spec.
-func (value *Operation) Validate(ctx context.Context) error {
-	if v := value.Parameters; v != nil {
+func (operation *Operation) Validate(ctx context.Context) error {
+	if v := operation.Parameters; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	if v := value.RequestBody; v != nil {
+	if v := operation.RequestBody; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	if v := value.Responses; v != nil {
+	if v := operation.Responses; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	} else {
 		return errors.New("value of responses must be an object")
 	}
-	if v := value.ExternalDocs; v != nil {
+	if v := operation.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return fmt.Errorf("invalid external docs: %w", err)
 		}

@@ -122,8 +122,8 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 }
 
 // Validate returns an error if PathItem does not comply with the OpenAPI spec.
-func (value *PathItem) Validate(ctx context.Context) error {
-	for _, operation := range value.Operations() {
+func (pathItem *PathItem) Validate(ctx context.Context) error {
+	for _, operation := range pathItem.Operations() {
 		if err := operation.Validate(ctx); err != nil {
 			return err
 		}

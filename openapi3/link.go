@@ -11,8 +11,8 @@ import (
 
 type Links map[string]*LinkRef
 
-func (l Links) JSONLookup(token string) (interface{}, error) {
-	ref, ok := l[token]
+func (links Links) JSONLookup(token string) (interface{}, error) {
+	ref, ok := links[token]
 	if ok == false {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
@@ -39,22 +39,22 @@ type Link struct {
 }
 
 // MarshalJSON returns the JSON encoding of Link.
-func (value *Link) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (link *Link) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(link)
 }
 
 // UnmarshalJSON sets Link to a copy of data.
-func (value *Link) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (link *Link) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, link)
 }
 
 // Validate returns an error if Link does not comply with the OpenAPI spec.
-func (value *Link) Validate(ctx context.Context) error {
-	if value.OperationID == "" && value.OperationRef == "" {
+func (link *Link) Validate(ctx context.Context) error {
+	if link.OperationID == "" && link.OperationRef == "" {
 		return errors.New("missing operationId or operationRef on link")
 	}
-	if value.OperationID != "" && value.OperationRef != "" {
-		return fmt.Errorf("operationId %q and operationRef %q are mutually exclusive", value.OperationID, value.OperationRef)
+	if link.OperationID != "" && link.OperationRef != "" {
+		return fmt.Errorf("operationId %q and operationRef %q are mutually exclusive", link.OperationID, link.OperationRef)
 	}
 	return nil
 }

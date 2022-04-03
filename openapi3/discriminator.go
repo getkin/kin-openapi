@@ -16,16 +16,16 @@ type Discriminator struct {
 }
 
 // MarshalJSON returns the JSON encoding of Discriminator.
-func (value *Discriminator) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+func (discriminator *Discriminator) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(discriminator)
 }
 
 // UnmarshalJSON sets Discriminator to a copy of data.
-func (value *Discriminator) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, discriminator)
 }
 
 // Validate returns an error if Discriminator does not comply with the OpenAPI spec.
-func (value *Discriminator) Validate(ctx context.Context) error {
+func (discriminator *Discriminator) Validate(ctx context.Context) error {
 	return nil
 }
