@@ -15,14 +15,17 @@ type Discriminator struct {
 	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
-func (value *Discriminator) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+// MarshalJSON returns the JSON encoding of Discriminator.
+func (discriminator *Discriminator) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(discriminator)
 }
 
-func (value *Discriminator) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+// UnmarshalJSON sets Discriminator to a copy of data.
+func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, discriminator)
 }
 
-func (value *Discriminator) Validate(ctx context.Context) error {
+// Validate returns an error if Discriminator does not comply with the OpenAPI spec.
+func (discriminator *Discriminator) Validate(ctx context.Context) error {
 	return nil
 }

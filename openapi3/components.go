@@ -28,14 +28,17 @@ func NewComponents() Components {
 	return Components{}
 }
 
+// MarshalJSON returns the JSON encoding of Components.
 func (components *Components) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(components)
 }
 
+// UnmarshalJSON sets Components to a copy of data.
 func (components *Components) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, components)
 }
 
+// Validate returns an error if Components does not comply with the OpenAPI spec.
 func (components *Components) Validate(ctx context.Context) (err error) {
 	for k, v := range components.Schemas {
 		if err = ValidateIdentifier(k); err != nil {
