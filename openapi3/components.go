@@ -33,6 +33,7 @@ func (components *Components) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(components)
 }
 
+// UnmarshalJSON sets Components to a copy of data.
 func (components *Components) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, components)
 }

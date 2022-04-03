@@ -33,6 +33,7 @@ type Header struct {
 
 var _ jsonpointer.JSONPointable = (*Header)(nil)
 
+// UnmarshalJSON sets Header to a copy of data.
 func (value *Header) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }

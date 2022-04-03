@@ -46,6 +46,7 @@ func (example *Example) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(example)
 }
 
+// UnmarshalJSON sets Example to a copy of data.
 func (example *Example) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, example)
 }

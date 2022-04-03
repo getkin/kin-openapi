@@ -23,6 +23,7 @@ func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(e)
 }
 
+// UnmarshalJSON sets ExternalDocs to a copy of data.
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, e)
 }

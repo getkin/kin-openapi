@@ -97,6 +97,7 @@ func (requestBody *RequestBody) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(requestBody)
 }
 
+// UnmarshalJSON sets RequestBody to a copy of data.
 func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
 }

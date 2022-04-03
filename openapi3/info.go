@@ -25,6 +25,7 @@ func (value *Info) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
 
+// UnmarshalJSON sets Info to a copy of data.
 func (value *Info) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
@@ -68,6 +69,7 @@ func (value *Contact) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
 
+// UnmarshalJSON sets Contact to a copy of data.
 func (value *Contact) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
@@ -90,6 +92,7 @@ func (value *License) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
 
+// UnmarshalJSON sets License to a copy of data.
 func (value *License) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }

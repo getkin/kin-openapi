@@ -72,6 +72,7 @@ func (ss *SecurityScheme) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(ss)
 }
 
+// UnmarshalJSON sets SecurityScheme to a copy of data.
 func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, ss)
 }
@@ -194,6 +195,7 @@ func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(flows)
 }
 
+// UnmarshalJSON sets OAuthFlows to a copy of data.
 func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flows)
 }
@@ -230,6 +232,7 @@ func (flow *OAuthFlow) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(flow)
 }
 
+// UnmarshalJSON sets OAuthFlow to a copy of data.
 func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }

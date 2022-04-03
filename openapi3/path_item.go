@@ -34,6 +34,7 @@ func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(pathItem)
 }
 
+// UnmarshalJSON sets PathItem to a copy of data.
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, pathItem)
 }

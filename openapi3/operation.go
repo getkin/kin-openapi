@@ -61,6 +61,7 @@ func (operation *Operation) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(operation)
 }
 
+// UnmarshalJSON sets Operation to a copy of data.
 func (operation *Operation) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }

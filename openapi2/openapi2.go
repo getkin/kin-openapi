@@ -34,6 +34,7 @@ func (doc *T) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(doc)
 }
 
+// UnmarshalJSON sets T to a copy of data.
 func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
@@ -70,6 +71,7 @@ func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(pathItem)
 }
 
+// UnmarshalJSON sets PathItem to a copy of data.
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, pathItem)
 }
@@ -162,6 +164,7 @@ func (operation *Operation) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(operation)
 }
 
+// UnmarshalJSON sets Operation to a copy of data.
 func (operation *Operation) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }
@@ -215,6 +218,7 @@ func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(parameter)
 }
 
+// UnmarshalJSON sets Parameter to a copy of data.
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
@@ -233,6 +237,7 @@ func (response *Response) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(response)
 }
 
+// UnmarshalJSON sets Response to a copy of data.
 func (response *Response) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
@@ -246,6 +251,7 @@ func (header *Header) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(header)
 }
 
+// UnmarshalJSON sets Header to a copy of data.
 func (header *Header) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, header)
 }
@@ -271,6 +277,7 @@ func (securityScheme *SecurityScheme) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(securityScheme)
 }
 
+// UnmarshalJSON sets SecurityScheme to a copy of data.
 func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, securityScheme)
 }

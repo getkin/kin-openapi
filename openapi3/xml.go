@@ -23,6 +23,7 @@ func (value *XML) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
 
+// UnmarshalJSON sets XML to a copy of data.
 func (value *XML) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }

@@ -44,6 +44,7 @@ func (encoding *Encoding) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(encoding)
 }
 
+// UnmarshalJSON sets Encoding to a copy of data.
 func (encoding *Encoding) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, encoding)
 }

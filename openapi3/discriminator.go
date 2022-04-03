@@ -20,6 +20,7 @@ func (value *Discriminator) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
 
+// UnmarshalJSON sets Discriminator to a copy of data.
 func (value *Discriminator) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }

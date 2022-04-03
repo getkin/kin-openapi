@@ -166,6 +166,7 @@ func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(parameter)
 }
 
+// UnmarshalJSON sets Parameter to a copy of data.
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }

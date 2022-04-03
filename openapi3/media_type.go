@@ -65,6 +65,7 @@ func (mediaType *MediaType) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(mediaType)
 }
 
+// UnmarshalJSON sets MediaType to a copy of data.
 func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, mediaType)
 }

@@ -43,6 +43,7 @@ func (t *Tag) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(t)
 }
 
+// UnmarshalJSON sets Tag to a copy of data.
 func (t *Tag) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, t)
 }

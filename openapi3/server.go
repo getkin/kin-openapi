@@ -53,6 +53,7 @@ func (server *Server) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(server)
 }
 
+// UnmarshalJSON sets Server to a copy of data.
 func (server *Server) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, server)
 }
@@ -165,6 +166,7 @@ func (serverVariable *ServerVariable) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(serverVariable)
 }
 
+// UnmarshalJSON sets ServerVariable to a copy of data.
 func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, serverVariable)
 }

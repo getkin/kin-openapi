@@ -27,6 +27,7 @@ func (value *CallbackRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets CallbackRef to a copy of data.
 func (value *CallbackRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -61,6 +62,7 @@ func (value *ExampleRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets ExampleRef to a copy of data.
 func (value *ExampleRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -95,6 +97,7 @@ func (value *HeaderRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets HeaderRef to a copy of data.
 func (value *HeaderRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -127,6 +130,7 @@ func (value *LinkRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets LinkRef to a copy of data.
 func (value *LinkRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -152,6 +156,7 @@ func (value *ParameterRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets ParameterRef to a copy of data.
 func (value *ParameterRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -186,6 +191,7 @@ func (value *ResponseRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets ResponseRef to a copy of data.
 func (value *ResponseRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -220,6 +226,7 @@ func (value *RequestBodyRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets RequestBodyRef to a copy of data.
 func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -261,6 +268,7 @@ func (value *SchemaRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets SchemaRef to a copy of data.
 func (value *SchemaRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }
@@ -295,6 +303,7 @@ func (value *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalRef(value.Ref, value.Value)
 }
 
+// UnmarshalJSON sets SecuritySchemeRef to a copy of data.
 func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalRef(data, &value.Ref, &value.Value)
 }

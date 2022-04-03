@@ -43,6 +43,7 @@ func (value *Link) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(value)
 }
 
+// UnmarshalJSON sets Link to a copy of data.
 func (value *Link) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
