@@ -7,6 +7,7 @@ import (
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/getkin/kin-openapi/openapi3"
+	"sigs.k8s.io/yaml"
 )
 
 // T is the root of an OpenAPI v2 document
@@ -29,6 +30,13 @@ type T struct {
 	Tags                openapi3.Tags                  `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
+type SupportedUnmarshalType uint8
+
+const (
+	JSON SupportedUnmarshalType = iota
+	YAML
+)
+
 // MarshalJSON returns the JSON encoding of T.
 func (doc *T) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(doc)
@@ -37,6 +45,11 @@ func (doc *T) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets T to a copy of data.
 func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
+}
+
+func (doc *T) UnmarshalYAML(data []byte) error {
+	json, _ := yaml.YAMLToJSON(data)
+	return doc.UnmarshalJSON(json)
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {

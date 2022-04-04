@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/ghodss/yaml"
@@ -49,4 +52,20 @@ func Example() {
 	}
 
 	// Output:
+}
+
+func TestUnmarshalYAML(t *testing.T) {
+	input, err := ioutil.ReadFile("testdata/swagger.json")
+	if err != nil {
+		panic(err)
+	}
+
+	yaml, _ := yaml.JSONToYAML(input)
+
+	docUnmarshalJson := openapi2.T{}
+	docUnmarshal := openapi2.T{}
+	docUnmarshalJson.UnmarshalJSON(input)
+	docUnmarshal.UnmarshalYAML(yaml)
+
+	assert.Equal(t, docUnmarshal, docUnmarshalJson)
 }
