@@ -18,6 +18,11 @@ type CycleError struct{}
 
 func (err *CycleError) Error() string { return "detected cycle" }
 
+// ExcludeSchemaSentinel indicates that the schema for a specific field should not be included in the final output.
+type ExcludeSchemaSentinel struct{}
+
+func (err *ExcludeSchemaSentinel) Error() string { return "schema excluded" }
+
 // Option allows tweaking SchemaRef generation
 type Option func(*generatorOpt)
 
@@ -25,7 +30,10 @@ type Option func(*generatorOpt)
 // the OpenAPI schema definition to be updated with additional
 // properties during the generation process, based on the
 // name of the field, the Go type, and the struct tags.
-// name will be "_root" for the top level object, and tag will be ""
+// name will be "_root" for the top level object, and tag will be "".
+// A SchemaCustomizerFn can return an ExcludeSchemaSentinel error to
+// indicate that the schema for this field should not be included in
+// the final output
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
 type generatorOpt struct {
@@ -117,6 +125,10 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 		return ref, nil
 	}
 	ref, err := g.generateWithoutSaving(parents, t, name, tag)
+	if _, ok := err.(*ExcludeSchemaSentinel); ok {
+		// This schema should not be included in the final output
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +145,9 @@ func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.Struct
 	for i := 0; i < len(fieldInfo.Index); i++ {
 		ff = t.Field(fieldInfo.Index[i])
 		t = ff.Type
+		for t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
 	}
 	return ff
 }

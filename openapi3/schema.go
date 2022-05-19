@@ -67,6 +67,7 @@ type Schemas map[string]*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s Schemas) JSONLookup(token string) (interface{}, error) {
 	ref, ok := s[token]
 	if ref == nil || ok == false {
@@ -83,6 +84,7 @@ type SchemaRefs []*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 	i, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
@@ -102,6 +104,7 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 }
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject
 type Schema struct {
 	ExtensionProps
 
@@ -124,12 +127,12 @@ type Schema struct {
 	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
 	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
 	// Properties
-	Nullable        bool        `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	ReadOnly        bool        `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	WriteOnly       bool        `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	XML             interface{} `json:"xml,omitempty" yaml:"xml,omitempty"`
-	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
+	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
+	WriteOnly       bool `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
 
 	// Number
 	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
@@ -163,14 +166,17 @@ func NewSchema() *Schema {
 	return &Schema{}
 }
 
+// MarshalJSON returns the JSON encoding of Schema.
 func (schema *Schema) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(schema)
 }
 
+// UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, schema)
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (schema Schema) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "additionalProperties":
@@ -587,8 +593,9 @@ func (schema *Schema) IsEmpty() bool {
 	return true
 }
 
-func (value *Schema) Validate(ctx context.Context) error {
-	return value.validate(ctx, []*Schema{})
+// Validate returns an error if Schema does not comply with the OpenAPI spec.
+func (schema *Schema) Validate(ctx context.Context) error {
+	return schema.validate(ctx, []*Schema{})
 }
 
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {
@@ -670,14 +677,18 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	case TypeString:
 		if format := schema.Format; len(format) > 0 {
 			switch format {
-			// Supported by OpenAPIv3.0.1:
+			// Supported by OpenAPIv3.0.3:
+			// https://spec.openapis.org/oas/v3.0.3
 			case "byte", "binary", "date", "date-time", "password":
-				// In JSON Draft-07 (not validated yet though):
-			case "regex":
-			case "time", "email", "idn-email":
-			case "hostname", "idn-hostname", "ipv4", "ipv6":
-			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
-			case "json-pointer", "relative-json-pointer":
+			// In JSON Draft-07 (not validated yet though):
+			// https://json-schema.org/draft-07/json-schema-release-notes.html#formats
+			case "iri", "iri-reference", "uri-template", "idn-email", "idn-hostname":
+			case "json-pointer", "relative-json-pointer", "regex", "time":
+			// In JSON Draft 2019-09 (not validated yet though):
+			// https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
+			case "duration", "uuid":
+			// Defined in some other specification
+			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
 				if _, ok := SchemaStringFormats[format]; !ok && !SchemaFormatValidationDisabled {
@@ -726,6 +737,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 		if err = v.validate(ctx, stack); err != nil {
 			return
+		}
+	}
+
+	if v := schema.ExternalDocs; v != nil {
+		if err = v.Validate(ctx); err != nil {
+			return fmt.Errorf("invalid external docs: %w", err)
 		}
 	}
 
@@ -788,8 +805,6 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 
 	switch value := value.(type) {
-	case nil:
-		return schema.visitJSONNull(settings)
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
 	case float64:
@@ -864,7 +879,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 					return errors.New("input does not contain the discriminator property")
 				}
 
-				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorVal.(string)]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+				discriminatorValString, okcheck := discriminatorVal.(string)
+				if !okcheck {
+					return errors.New("descriminator value is not a string")
+				}
+
+				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
 					return errors.New("input does not contain a valid discriminator value")
 				}
 			}
@@ -1422,7 +1442,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			}
 		}
 		allowed := schema.AdditionalPropertiesAllowed
-		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
+		if additionalProperties != nil || allowed == nil || *allowed {
 			if additionalProperties != nil {
 				if err := additionalProperties.visitJSON(settings, v); err != nil {
 					if settings.failfast {

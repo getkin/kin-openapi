@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/stretchr/testify/require"
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
@@ -28,6 +29,26 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 	data, err := json.Marshal(doc2)
 	require.NoError(t, err)
 	require.JSONEq(t, exampleV2, string(data))
+}
+
+func TestConvOpenAPIV3ToV2WithReqBody(t *testing.T) {
+	var doc3 openapi3.T
+	err := json.Unmarshal([]byte(exampleRequestBodyV3), &doc3)
+	require.NoError(t, err)
+	{
+		// Refs need resolving before we can Validate
+		sl := openapi3.NewLoader()
+		err = sl.ResolveRefsIn(&doc3, nil)
+		require.NoError(t, err)
+		err = doc3.Validate(context.Background())
+		require.NoError(t, err)
+	}
+
+	doc2, err := FromV3(&doc3)
+	require.NoError(t, err)
+	data, err := json.Marshal(doc2)
+	require.NoError(t, err)
+	require.JSONEq(t, exampleRequestBodyV2, string(data))
 }
 
 func TestConvOpenAPIV2ToV3(t *testing.T) {
@@ -179,6 +200,13 @@ const exampleV2 = `
 								"$ref": "#/definitions/Item"
 							},
 							"type": "array"
+						},
+						"headers": {
+							"ETag": {
+								"description": "The ETag (or entity tag) HTTP response header is an identifier for a specific version of a resource.",
+								"type": "string",
+								"maxLength": 64
+							}
 						}
 					},
 					"404": {
@@ -543,7 +571,16 @@ const exampleV3 = `
 								}
 							}
 						},
-						"description": "ok"
+						"description": "ok",
+						"headers": {
+							"ETag": {
+								"description": "The ETag (or entity tag) HTTP response header is an identifier for a specific version of a resource.",
+								"schema": {
+									"type": "string",
+									"maxLength": 64
+								}
+							}
+						}
 					},
 					"404": {
 						"description": "404 response"
@@ -747,5 +784,76 @@ const exampleV3 = `
 	],
 	"x-root": "root extension 1",
 	"x-root2": "root extension 2"
+}
+`
+
+const exampleRequestBodyV3 = `{
+	"info": {
+		"description": "Test Spec",
+		"title": "Test Spec",
+		"version": "0.0.0"
+	},
+	"components": {
+		"requestBodies": {
+			"FooBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"properties": { "message": { "type": "string" } },
+							"type": "object"
+			  			}
+					}
+		  		},
+		  		"description": "test spec request body.",
+		  		"required": true
+			}
+		}
+	},
+	"paths": {
+		"/foo-path": {
+			"post": {
+				"requestBody": { "$ref": "#/components/requestBodies/FooBody" },
+				"responses": { "202": { "description": "Test spec post." } },
+				"summary": "Test spec path"
+			}
+		}
+	},
+	"servers": [{ "url": "http://localhost/" }],
+	"openapi": "3.0.3"
+}
+`
+
+const exampleRequestBodyV2 = `{
+	"basePath": "/",
+	"consumes": ["application/json"],
+	"host": "localhost",
+	"info": {
+		"description": "Test Spec",
+		"title": "Test Spec",
+		"version": "0.0.0"
+	},
+	"parameters": {
+		"FooBody": {
+			"description": "test spec request body.",
+			"in": "body",
+			"name": "FooBody",
+			"required": true,
+			"schema": {
+				"properties": { "message": { "type": "string" } },
+				"type": "object"
+			}
+		}
+	},
+	"paths": {
+		"/foo-path": {
+			"post": {
+				"parameters": [{ "$ref": "#/parameters/FooBody" }],
+				"responses": { "202": { "description": "Test spec post." } },
+				"summary": "Test spec path"
+			}
+		}
+	},
+	"schemes": ["http"],
+	"swagger": "2.0"
 }
 `

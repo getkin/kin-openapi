@@ -182,6 +182,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParam:   "status",
 			wantErrParamIn: "query",
 			wantErrBody:    `parameter "status" in query has an error: value is required but missing`,
+			wantErrReason:  "value is required but missing",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "status" in query is required`},
 		},
@@ -203,7 +204,25 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "success - ignores unknown query string parameter",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/findByStatus?wat=isdis", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/findByStatus?status=available&wat=isdis", nil),
+			},
+		},
+		{
+			name: "error - non required query string has empty value",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pets/?tags=", nil),
+			},
+			wantErrParam:   "tags",
+			wantErrParamIn: "query",
+			wantErrBody:    `parameter "tags" in query has an error: empty value is not allowed`,
+			wantErrReason:  "empty value is not allowed",
+			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
+				Title: `parameter "tags" in query is not allowed to be empty`},
+		},
+		{
+			name: "success - non required query string has empty value, but has AllowEmptyValue",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pets/?status=", nil),
 			},
 		},
 		{
@@ -426,6 +445,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParam:   "petId",
 			wantErrParamIn: "path",
 			wantErrBody:    `parameter "petId" in path has an error: value is required but missing`,
+			wantErrReason:  "value is required but missing",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "petId" in path is required`},
 		},

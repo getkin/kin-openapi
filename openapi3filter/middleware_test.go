@@ -383,7 +383,6 @@ func ExampleValidator() {
 	// OpenAPI specification for a simple service that squares integers, with
 	// some limitations.
 	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
-info:
 openapi: 3.0.0
 info:
   title: 'Validator - square example'
@@ -420,7 +419,7 @@ paths:
 	// requests.
 	squareHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		xParam := path.Base(r.URL.Path)
-		x, err := strconv.Atoi(xParam)
+		x, err := strconv.ParseInt(xParam, 10, 64)
 		if err != nil {
 			panic(err)
 		}

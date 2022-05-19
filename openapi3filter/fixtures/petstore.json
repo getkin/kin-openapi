@@ -121,7 +121,7 @@
         ],
         "summary": "Add a new pet to the store",
         "description": "",
-        "operationId": "addPet",
+        "operationId": "addPet2",
         "responses": {
           "405": {
             "description": "Invalid input"
@@ -165,6 +165,111 @@
                   "sold"
                 ],
                 "default": "available"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {"$ref": "#/components/schemas/Pet"},
+                      {"$ref": "#/components/schemas/PetRequiredProperties"}
+                    ]
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {"$ref": "#/components/schemas/Pet"},
+                      {"$ref": "#/components/schemas/PetRequiredProperties"}
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value"
+          }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      }
+    },
+    "/pets/": {
+      "get": {
+        "tags": [
+          "pet"
+        ],
+        "summary": "Find pets by the specified filters",
+        "description": "Returns a list of pets that comply with the specified filters",
+        "operationId": "findPets",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status values that need to be considered for filter",
+            "required": false,
+            "explode": true,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "pending",
+                  "sold"
+                ],
+                "default": "available"
+              }
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "Tags to filter by",
+            "required": false,
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "description": "Kinds to filter by",
+            "required": false,
+            "explode": false,
+            "style": "pipeDelimited",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "dog",
+                  "cat",
+                  "turtle",
+                  "bird,with,commas"
+                ]
               }
             }
           }
