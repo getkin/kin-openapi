@@ -3,7 +3,6 @@ package openapi3filter
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -27,16 +26,6 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
     "/accounts": {
       "post": {
         "description": "Create a new account",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "q",
-            "schema": {
-              "type": "string",
-              "default": "Q"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -45,10 +34,6 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
                 "type": "object",
                 "required": ["_id"],
                 "properties": {
-                  "_": {
-                    "type": "boolean",
-                    "default": false
-                  },
                   "_id": {
                     "type": "string",
                     "description": "Unique identifier for this object.",
@@ -76,6 +61,10 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 }
 `
 
+	type Request struct {
+		ID string `json:"_id"`
+	}
+
 	sl := openapi3.NewLoader()
 	doc, err := sl.LoadFromData([]byte(spec))
 	require.NoError(t, err)
@@ -84,12 +73,7 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
 
-	b, err := json.Marshal(struct {
-		Blank bool   `json:"_,omitempty"`
-		ID    string `json:"_id"`
-	}{
-		ID: "bt6kdc3d0cvp6u8u3ft0",
-	})
+	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
 	require.NoError(t, err)
 
 	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
@@ -105,12 +89,4 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 		Route:      route,
 	})
 	require.NoError(t, err)
-
-	// Unset default values in body were set
-	validatedReqBody, err := ioutil.ReadAll(httpReq.Body)
-	require.NoError(t, err)
-	require.JSONEq(t, `{"_":false,"_id":"bt6kdc3d0cvp6u8u3ft0"}`, string(validatedReqBody))
-	// Unset default values in URL were set
-	// Unset default values in headers were set
-	// Unset default values in cookies were set
 }

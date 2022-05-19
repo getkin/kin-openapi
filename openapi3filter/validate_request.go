@@ -134,10 +134,28 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		schema = parameter.Schema.Value
 	}
 
-	// // Maybe use default value
-	// if value == nil && schema != nil {
-	// 	value = schema.Default
-	// }
+	// Set default value if needed
+	if value == nil && schema != nil && schema.Default != nil {
+		value = schema.Default
+		req := input.Request
+		switch parameter.In {
+		case openapi3.ParameterInPath:
+			// TODO: no idea how to handle this
+		case openapi3.ParameterInQuery:
+			q := req.URL.Query()
+			q.Add(parameter.Name, fmt.Sprintf("%v", value))
+			req.URL.RawQuery = q.Encode()
+		case openapi3.ParameterInHeader:
+			req.Header.Add(parameter.Name, fmt.Sprintf("%v", value))
+		case openapi3.ParameterInCookie:
+			req.AddCookie(&http.Cookie{
+				Name:  parameter.Name,
+				Value: fmt.Sprintf("%v", value),
+			})
+		default:
+			return fmt.Errorf("unsupported parameter's 'in': %s", parameter.In)
+		}
+	}
 
 	// Validate a parameter's value.
 	if value == nil {
