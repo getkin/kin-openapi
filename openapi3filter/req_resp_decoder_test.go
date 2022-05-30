@@ -1280,7 +1280,7 @@ func TestDecodeBody(t *testing.T) {
 				}
 				return tc.encoding[name]
 			}
-			got, err := decodeBody(tc.body, h, schemaRef, encFn)
+			_, got, err := decodeBody(tc.body, h, schemaRef, encFn)
 
 			if tc.wantErr != nil {
 				require.Error(t, err)
@@ -1350,7 +1350,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	body := strings.NewReader("foo,bar")
 	schema := openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()
 	encFn := func(string) *openapi3.Encoding { return nil }
-	got, err := decodeBody(body, h, schema, encFn)
+	_, got, err := decodeBody(body, h, schema, encFn)
 
 	require.NoError(t, err)
 	require.Equal(t, []string{"foo", "bar"}, got)
@@ -1360,7 +1360,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	originalDecoder = RegisteredBodyDecoder(contentType)
 	require.Nil(t, originalDecoder)
 
-	_, err = decodeBody(body, h, schema, encFn)
+	_, _, err = decodeBody(body, h, schema, encFn)
 	require.Equal(t, &ParseError{
 		Kind:   KindUnsupportedFormat,
 		Reason: prefixUnsupportedCT + ` "text/csv"`,
