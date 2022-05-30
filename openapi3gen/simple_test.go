@@ -10,26 +10,21 @@ import (
 
 type (
 	SomeStruct struct {
-		Bool    bool                      `json:"bool"`
-		Int     int                       `json:"int"`
-		Int64   int64                     `json:"int64"`
-		Float64 float64                   `json:"float64"`
-		String  string                    `json:"string"`
-		Bytes   []byte                    `json:"bytes"`
-		JSON    json.RawMessage           `json:"json"`
-		Time    time.Time                 `json:"time"`
-		Slice   []SomeOtherType           `json:"slice"`
-		Map     map[string]*SomeOtherType `json:"map"`
-
-		Struct struct {
+		Time        time.Time                 `json:"time"`
+		Ptr         *SomeOtherType            `json:"ptr"`
+		Map         map[string]*SomeOtherType `json:"map"`
+		EmptyStruct struct{ Y string }        `json:"structWithoutFields"`
+		Struct      struct {
 			X string `json:"x"`
 		} `json:"struct"`
-
-		EmptyStruct struct {
-			Y string
-		} `json:"structWithoutFields"`
-
-		Ptr *SomeOtherType `json:"ptr"`
+		String  string          `json:"string"`
+		JSON    json.RawMessage `json:"json"`
+		Bytes   []byte          `json:"bytes"`
+		Slice   []SomeOtherType `json:"slice"`
+		Float64 float64         `json:"float64"`
+		Int64   int64           `json:"int64"`
+		Int     int             `json:"int"`
+		Bool    bool            `json:"bool"`
 	}
 
 	SomeOtherType string

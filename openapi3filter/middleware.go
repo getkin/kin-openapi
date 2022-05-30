@@ -171,10 +171,10 @@ type responseWrapper interface {
 
 type warnResponseWrapper struct {
 	w             http.ResponseWriter
-	headerWritten bool
-	status        int
-	body          bytes.Buffer
 	tee           io.Writer
+	body          bytes.Buffer
+	status        int
+	headerWritten bool
 }
 
 func newWarnResponseWrapper(w http.ResponseWriter) *warnResponseWrapper {
@@ -232,9 +232,9 @@ func (wr *warnResponseWrapper) bodyContents() []byte {
 
 type strictResponseWrapper struct {
 	w             http.ResponseWriter
-	headerWritten bool
-	status        int
 	body          bytes.Buffer
+	status        int
+	headerWritten bool
 }
 
 // Write implements http.ResponseWriter.

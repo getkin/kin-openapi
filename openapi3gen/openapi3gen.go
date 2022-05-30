@@ -37,9 +37,9 @@ type Option func(*generatorOpt)
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
 type generatorOpt struct {
+	schemaCustomizer     SchemaCustomizerFn
 	useAllExportedFields bool
 	throwErrorOnCycle    bool
-	schemaCustomizer     SchemaCustomizerFn
 }
 
 // UseAllExportedFields changes the default behavior of only

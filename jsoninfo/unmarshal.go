@@ -18,8 +18,8 @@ func UnmarshalStrictStruct(data []byte, value StrictStruct) error {
 }
 
 type ObjectDecoder struct {
-	Data            []byte
 	remainingFields map[string]json.RawMessage
+	Data            []byte
 }
 
 func NewObjectDecoder(data []byte) (*ObjectDecoder, error) {

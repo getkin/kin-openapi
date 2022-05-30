@@ -88,21 +88,20 @@ func (parameters Parameters) Validate(ctx context.Context) error {
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
 type Parameter struct {
+	Example  interface{} `json:"example,omitempty" yaml:"example,omitempty"`
+	Explode  *bool       `json:"explode,omitempty" yaml:"explode,omitempty"`
+	Examples Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Schema   *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
 	ExtensionProps
-
-	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Style           string      `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode         *bool       `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	AllowReserved   bool        `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
-	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required        bool        `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema          *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         interface{} `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples        Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content         Content     `json:"content,omitempty" yaml:"content,omitempty"`
+	Content         Content `json:"content,omitempty" yaml:"content,omitempty"`
+	Name            string  `json:"name,omitempty" yaml:"name,omitempty"`
+	Style           string  `json:"style,omitempty" yaml:"style,omitempty"`
+	Description     string  `json:"description,omitempty" yaml:"description,omitempty"`
+	In              string  `json:"in,omitempty" yaml:"in,omitempty"`
+	Deprecated      bool    `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Required        bool    `json:"required,omitempty" yaml:"required,omitempty"`
+	AllowEmptyValue bool    `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Parameter)(nil)

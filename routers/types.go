@@ -22,10 +22,10 @@ type Router interface {
 type Route struct {
 	Spec      *openapi3.T
 	Server    *openapi3.Server
-	Path      string
 	PathItem  *openapi3.PathItem
-	Method    string
 	Operation *openapi3.Operation
+	Path      string
+	Method    string
 }
 
 // ErrPathNotFound is returned when no route match is found

@@ -146,17 +146,17 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 
 type Operation struct {
 	openapi3.ExtensionProps
-	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
-	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Parameters   Parameters             `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Responses    map[string]*Response   `json:"responses" yaml:"responses"`
+	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Security     *SecurityRequirements  `json:"security,omitempty" yaml:"security,omitempty"`
+	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
+	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Parameters   Parameters             `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Consumes     []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
 	Produces     []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
 	Schemes      []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
-	Security     *SecurityRequirements  `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Operation.
@@ -186,31 +186,31 @@ func (ps Parameters) Less(i, j int) bool {
 }
 
 type Parameter struct {
+	Default    interface{}         `json:"default,omitempty" yaml:"default,omitempty"`
+	MaxItems   *uint64             `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	MaxLength  *uint64             `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	Maximum    *float64            `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	Minimum    *float64            `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	MultipleOf *float64            `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Items      *openapi3.SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
+	Schema     *openapi3.SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
 	openapi3.ExtensionProps
-	Ref              string              `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	In               string              `json:"in,omitempty" yaml:"in,omitempty"`
-	Name             string              `json:"name,omitempty" yaml:"name,omitempty"`
-	Description      string              `json:"description,omitempty" yaml:"description,omitempty"`
-	CollectionFormat string              `json:"collectionFormat,omitempty" yaml:"collectionFormat,omitempty"`
-	Type             string              `json:"type,omitempty" yaml:"type,omitempty"`
-	Format           string              `json:"format,omitempty" yaml:"format,omitempty"`
-	Pattern          string              `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	AllowEmptyValue  bool                `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	Required         bool                `json:"required,omitempty" yaml:"required,omitempty"`
-	UniqueItems      bool                `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	ExclusiveMin     bool                `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax     bool                `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	Schema           *openapi3.SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Items            *openapi3.SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
-	Enum             []interface{}       `json:"enum,omitempty" yaml:"enum,omitempty"`
-	MultipleOf       *float64            `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
-	Minimum          *float64            `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Maximum          *float64            `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	MaxLength        *uint64             `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MaxItems         *uint64             `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	MinLength        uint64              `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MinItems         uint64              `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	Default          interface{}         `json:"default,omitempty" yaml:"default,omitempty"`
+	In               string        `json:"in,omitempty" yaml:"in,omitempty"`
+	CollectionFormat string        `json:"collectionFormat,omitempty" yaml:"collectionFormat,omitempty"`
+	Pattern          string        `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Ref              string        `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Format           string        `json:"format,omitempty" yaml:"format,omitempty"`
+	Type             string        `json:"type,omitempty" yaml:"type,omitempty"`
+	Description      string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Name             string        `json:"name,omitempty" yaml:"name,omitempty"`
+	Enum             []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
+	MinItems         uint64        `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MinLength        uint64        `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	AllowEmptyValue  bool          `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	ExclusiveMax     bool          `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	UniqueItems      bool          `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	Required         bool          `json:"required,omitempty" yaml:"required,omitempty"`
+	ExclusiveMin     bool          `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Parameter.
@@ -225,11 +225,11 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 
 type Response struct {
 	openapi3.ExtensionProps
-	Ref         string                 `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Schema      *openapi3.SchemaRef    `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Headers     map[string]*Header     `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Examples    map[string]interface{} `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Ref         string                 `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Response.

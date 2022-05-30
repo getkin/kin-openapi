@@ -7,18 +7,9 @@ var DefaultOptions = &Options{}
 
 // Options used by ValidateRequest and ValidateResponse
 type Options struct {
-	// Set ExcludeRequestBody so ValidateRequest skips request body validation
-	ExcludeRequestBody bool
-
-	// Set ExcludeResponseBody so ValidateResponse skips response body validation
-	ExcludeResponseBody bool
-
-	// Set IncludeResponseStatus so ValidateResponse fails on response
-	// status not defined in OpenAPI spec
+	AuthenticationFunc    AuthenticationFunc
+	ExcludeRequestBody    bool
+	ExcludeResponseBody   bool
 	IncludeResponseStatus bool
-
-	MultiError bool
-
-	// See NoopAuthenticationFunc
-	AuthenticationFunc AuthenticationFunc
+	MultiError            bool
 }

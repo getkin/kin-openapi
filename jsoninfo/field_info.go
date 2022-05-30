@@ -9,15 +9,15 @@ import (
 
 // FieldInfo contains information about JSON serialization of a field.
 type FieldInfo struct {
-	MultipleFields     bool // Whether multiple Go fields share this JSON name
-	HasJSONTag         bool
-	TypeIsMarshaller   bool
+	Type               reflect.Type
+	JSONName           string
+	Index              []int
 	TypeIsUnmarshaller bool
 	JSONOmitEmpty      bool
 	JSONString         bool
-	Index              []int
-	Type               reflect.Type
-	JSONName           string
+	MultipleFields     bool
+	HasJSONTag         bool
+	TypeIsMarshaller   bool
 }
 
 func AppendFields(fields []FieldInfo, parentIndex []int, t reflect.Type) []FieldInfo {

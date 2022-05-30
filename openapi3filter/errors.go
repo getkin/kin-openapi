@@ -10,11 +10,11 @@ var _ error = &RequestError{}
 
 // RequestError is returned by ValidateRequest when request does not match OpenAPI spec
 type RequestError struct {
+	Err         error
 	Input       *RequestValidationInput
 	Parameter   *openapi3.Parameter
 	RequestBody *openapi3.RequestBody
 	Reason      string
-	Err         error
 }
 
 var _ interface{ Unwrap() error } = RequestError{}
@@ -45,9 +45,9 @@ var _ error = &ResponseError{}
 
 // ResponseError is returned by ValidateResponse when response does not match OpenAPI spec
 type ResponseError struct {
+	Err    error
 	Input  *ResponseValidationInput
 	Reason string
-	Err    error
 }
 
 var _ interface{ Unwrap() error } = ResponseError{}
