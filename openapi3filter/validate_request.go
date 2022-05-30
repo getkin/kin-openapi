@@ -148,8 +148,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		value = schema.Default
 		req := input.Request
 		switch parameter.In {
-		case openapi3.ParameterInPath:
-			// TODO: no idea how to handle this
+		// case openapi3.ParameterInPath: TODO: no idea how to handle this
 		case openapi3.ParameterInQuery:
 			q := req.URL.Query()
 			q.Add(parameter.Name, fmt.Sprintf("%v", value))

@@ -19,9 +19,5 @@ func encodeBody(body interface{}, mediaType string) ([]byte, error) {
 type bodyEncoder func(body interface{}) ([]byte, error)
 
 var bodyEncoders = map[string]bodyEncoder{
-	"application/json": jsonBodyEncoder,
-}
-
-func jsonBodyEncoder(body interface{}) ([]byte, error) {
-	return json.Marshal(body)
+	"application/json": json.Marshal,
 }
