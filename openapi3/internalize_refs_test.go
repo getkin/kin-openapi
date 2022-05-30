@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"io/ioutil"
 	"regexp"
 	"testing"
 
@@ -9,8 +10,10 @@ import (
 )
 
 func TestInternalizeRefs(t *testing.T) {
-	var regexpRef = regexp.MustCompile(`"\$ref":`)
-	var regexpRefInternal = regexp.MustCompile(`"\$ref":"\#`)
+	ctx := context.Background()
+
+	regexpRef := regexp.MustCompile(`"\$ref":`)
+	regexpRefInternal := regexp.MustCompile(`"\$ref":"#`)
 
 	tests := []struct {
 		filename string
@@ -28,13 +31,15 @@ func TestInternalizeRefs(t *testing.T) {
 			sl.IsExternalRefsAllowed = true
 			doc, err := sl.LoadFromFile(test.filename)
 			require.NoError(t, err, "loading test file")
+			err = doc.Validate(ctx)
+			require.NoError(t, err, "validating spec")
 
 			// Internalize the references
-			doc.InternalizeRefs(context.Background(), DefaultRefNameResolver)
+			doc.InternalizeRefs(ctx, nil)
 
 			// Validate the internalized spec
-			err = doc.Validate(context.Background())
-			require.Nil(t, err, "validating internalized spec")
+			err = doc.Validate(ctx)
+			require.NoError(t, err, "validating internalized spec")
 
 			data, err := doc.MarshalJSON()
 			require.NoError(t, err, "marshalling internalized spec")
@@ -48,8 +53,13 @@ func TestInternalizeRefs(t *testing.T) {
 			// load from data, but with the path set to the current directory
 			doc2, err := sl.LoadFromData(data)
 			require.NoError(t, err, "reloading spec")
-			err = doc2.Validate(context.Background())
-			require.Nil(t, err, "validating reloaded spec")
+			err = doc2.Validate(ctx)
+			require.NoError(t, err, "validating reloaded spec")
+
+			// compare with expected
+			data0, err := ioutil.ReadFile(test.filename + ".internalized.yml")
+			require.NoError(t, err)
+			require.JSONEq(t, string(data), string(data0))
 		})
 	}
 }
