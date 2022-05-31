@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/ghodss/yaml"
+	"github.com/invopop/yaml"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi2"
@@ -163,7 +163,7 @@ paths:
         "200":
           description: description
 `
-	require.Equal(t, string(spec3), expected)
+	require.YAMLEq(t, string(spec3), expected)
 
 	err = doc3.Validate(context.Background())
 	require.NoError(t, err)
