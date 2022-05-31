@@ -187,6 +187,17 @@ func TestRouter(t *testing.T) {
 		"port": "8000",
 	})
 
+	doc.Servers = []*openapi3.Server{
+		{URL: "{server}", Variables: map[string]*openapi3.ServerVariable{
+			"server": {Default: "/api/v1"},
+		}},
+	}
+	err = doc.Validate(context.Background())
+	require.NoError(t, err)
+	r, err = NewRouter(doc)
+	require.NoError(t, err)
+	expect(r, http.MethodGet, "https://myserver/api/v1/hello", helloGET, nil)
+
 	{
 		uri := "https://www.example.com/api/v1/onlyGET"
 		expect(r, http.MethodGet, uri, helloGET, nil)

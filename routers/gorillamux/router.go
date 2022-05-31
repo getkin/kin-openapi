@@ -9,6 +9,7 @@ package gorillamux
 import (
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -32,6 +33,8 @@ type routeMux struct {
 	varsUpdater varsf
 }
 
+var singleVariableMatcher = regexp.MustCompile(`^\{([^{}]+)\}$`)
+
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
 
 // NewRouter creates a gorilla/mux router.
@@ -47,6 +50,22 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	servers := make([]srv, 0, len(doc.Servers))
 	for _, server := range doc.Servers {
 		serverURL := server.URL
+		if submatch := singleVariableMatcher.FindStringSubmatch(serverURL); submatch != nil {
+			sVar := submatch[1]
+			sVal := server.Variables[sVar].Default
+			serverURL = strings.ReplaceAll(serverURL, "{"+sVar+"}", sVal)
+			var varsUpdater varsf
+			if lhs := strings.TrimSuffix(serverURL, server.Variables[sVar].Default); lhs != "" {
+				varsUpdater = func(vars map[string]string) { vars[sVar] = lhs }
+			}
+			servers = append(servers, srv{
+				base:        server.Variables[sVar].Default,
+				server:      server,
+				varsUpdater: varsUpdater,
+			})
+			continue
+		}
+
 		var schemes []string
 		if strings.Contains(serverURL, "://") {
 			scheme0 := strings.Split(serverURL, "://")[0]
