@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
+
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 type ParametersMap map[string]*ParameterRef
