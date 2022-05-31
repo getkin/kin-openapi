@@ -13,6 +13,9 @@ func TestIssue430(t *testing.T) {
 		NewStringSchema().WithFormat("ipv6"),
 	)
 
+	delete(SchemaStringFormats, "ipv4")
+	delete(SchemaStringFormats, "ipv6")
+
 	err := schema.Validate(context.Background())
 	require.NoError(t, err)
 
