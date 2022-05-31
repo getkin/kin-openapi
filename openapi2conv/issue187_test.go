@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/invopop/yaml"
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/ghodss/yaml"
-	"github.com/stretchr/testify/require"
 )
 
 func v2v3JSON(spec2 []byte) (doc3 *openapi3.T, err error) {
@@ -162,7 +163,7 @@ paths:
         "200":
           description: description
 `
-	require.Equal(t, string(spec3), expected)
+	require.YAMLEq(t, string(spec3), expected)
 
 	err = doc3.Validate(context.Background())
 	require.NoError(t, err)

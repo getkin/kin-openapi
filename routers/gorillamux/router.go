@@ -12,9 +12,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/gorilla/mux"
 )
 
 var _ routers.Router = &Router{}
