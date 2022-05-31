@@ -65,23 +65,22 @@ route, pathParams, _ := router.FindRoute(httpRequest)
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
-	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func main() {
 	ctx := context.Background()
-	loader := openapi3.Loader{Context: ctx}
-	doc, _ := loader.LoadFromFile("openapi3_spec.json")
-	_ = doc.Validate(ctx)
-	router, _ := legacyrouter.NewRouter(doc)
+	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
+	doc, _ := loader.LoadFromFile(".../My-OpenAPIv3-API.yml")
+	// Validate document
+	_ := doc.Validate(ctx)
+	router, _ := gorillamux.NewRouter(doc)
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
 	// Find route
@@ -93,31 +92,22 @@ func main() {
 		PathParams: pathParams,
 		Route:      route,
 	}
-	if err := openapi3filter.ValidateRequest(ctx, requestValidationInput); err != nil {
-		panic(err)
-	}
+	_ := openapi3filter.ValidateRequest(ctx, requestValidationInput)
 
-	var (
-		respStatus      = 200
-		respContentType = "application/json"
-		respBody        = bytes.NewBufferString(`{}`)
-	)
+	// Handle that request
+	// --> YOUR CODE GOES HERE <--
+	responseHeaders := http.Header{"Content-Type": []string{"application/json"}}
+	responseCode := 200
+	responseBody := []byte(`{}`)
 
-	log.Println("Response:", respStatus)
+	// Validate response
 	responseValidationInput := &openapi3filter.ResponseValidationInput{
 		RequestValidationInput: requestValidationInput,
-		Status:                 respStatus,
-		Header:                 http.Header{"Content-Type": []string{respContentType}},
+		Status:                 responseCode,
+		Header:                 responseHeaders,
 	}
-	if respBody != nil {
-		data, _ := json.Marshal(respBody)
-		responseValidationInput.SetBodyBytes(data)
-	}
-
-	// Validate response.
-	if err := openapi3filter.ValidateResponse(ctx, responseValidationInput); err != nil {
-		panic(err)
-	}
+	responseValidationInput.SetBodyBytes(responseBody)
+	_ := openapi3filter.ValidateResponse(ctx, responseValidationInput)
 }
 ```
 
