@@ -18,14 +18,17 @@ type XML struct {
 	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
 }
 
-func (value *XML) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+// MarshalJSON returns the JSON encoding of XML.
+func (xml *XML) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(xml)
 }
 
-func (value *XML) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+// UnmarshalJSON sets XML to a copy of data.
+func (xml *XML) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, xml)
 }
 
-func (value *XML) Validate(ctx context.Context) error {
+// Validate returns an error if XML does not comply with the OpenAPI spec.
+func (xml *XML) Validate(ctx context.Context) error {
 	return nil // TODO
 }

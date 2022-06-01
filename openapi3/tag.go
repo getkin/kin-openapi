@@ -19,6 +19,7 @@ func (tags Tags) Get(name string) *Tag {
 	return nil
 }
 
+// Validate returns an error if Tags does not comply with the OpenAPI spec.
 func (tags Tags) Validate(ctx context.Context) error {
 	for _, v := range tags {
 		if err := v.Validate(ctx); err != nil {
@@ -38,14 +39,17 @@ type Tag struct {
 	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Tag.
 func (t *Tag) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(t)
 }
 
+// UnmarshalJSON sets Tag to a copy of data.
 func (t *Tag) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, t)
 }
 
+// Validate returns an error if Tag does not comply with the OpenAPI spec.
 func (t *Tag) Validate(ctx context.Context) error {
 	if v := t.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {

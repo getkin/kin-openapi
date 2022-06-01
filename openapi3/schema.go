@@ -12,8 +12,9 @@ import (
 	"strconv"
 	"unicode/utf16"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
+
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 const (
@@ -67,6 +68,7 @@ type Schemas map[string]*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s Schemas) JSONLookup(token string) (interface{}, error) {
 	ref, ok := s[token]
 	if ref == nil || ok == false {
@@ -83,6 +85,7 @@ type SchemaRefs []*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 	i, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
@@ -164,14 +167,17 @@ func NewSchema() *Schema {
 	return &Schema{}
 }
 
+// MarshalJSON returns the JSON encoding of Schema.
 func (schema *Schema) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(schema)
 }
 
+// UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, schema)
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (schema Schema) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "additionalProperties":
@@ -588,8 +594,9 @@ func (schema *Schema) IsEmpty() bool {
 	return true
 }
 
-func (value *Schema) Validate(ctx context.Context) error {
-	return value.validate(ctx, []*Schema{})
+// Validate returns an error if Schema does not comply with the OpenAPI spec.
+func (schema *Schema) Validate(ctx context.Context) error {
+	return schema.validate(ctx, []*Schema{})
 }
 
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {
@@ -1350,6 +1357,19 @@ func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
 func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]interface{}) error {
 	if schemaType := schema.Type; schemaType != "" && schemaType != TypeObject {
 		return schema.expectedType(settings, TypeObject)
+	}
+
+	if settings.asreq || settings.asrep {
+		for propName, propSchema := range schema.Properties {
+			if value[propName] == nil {
+				if dlft := propSchema.Value.Default; dlft != nil {
+					value[propName] = dlft
+					if f := settings.defaultsSet; f != nil {
+						settings.onceSettingDefaults.Do(f)
+					}
+				}
+			}
+		}
 	}
 
 	var me MultiError

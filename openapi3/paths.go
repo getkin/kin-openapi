@@ -10,16 +10,17 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
 type Paths map[string]*PathItem
 
-func (value Paths) Validate(ctx context.Context) error {
+// Validate returns an error if Paths does not comply with the OpenAPI spec.
+func (paths Paths) Validate(ctx context.Context) error {
 	normalizedPaths := make(map[string]string)
-	for path, pathItem := range value {
+	for path, pathItem := range paths {
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
 
 		if pathItem == nil {
-			value[path] = &PathItem{}
-			pathItem = value[path]
+			paths[path] = &PathItem{}
+			pathItem = paths[path]
 		}
 
 		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
@@ -84,7 +85,7 @@ func (value Paths) Validate(ctx context.Context) error {
 		}
 	}
 
-	if err := value.validateUniqueOperationIDs(); err != nil {
+	if err := paths.validateUniqueOperationIDs(); err != nil {
 		return err
 	}
 
@@ -120,9 +121,9 @@ func (paths Paths) Find(key string) *PathItem {
 	return nil
 }
 
-func (value Paths) validateUniqueOperationIDs() error {
+func (paths Paths) validateUniqueOperationIDs() error {
 	operationIDs := make(map[string]string)
-	for urlPath, pathItem := range value {
+	for urlPath, pathItem := range paths {
 		if pathItem == nil {
 			continue
 		}

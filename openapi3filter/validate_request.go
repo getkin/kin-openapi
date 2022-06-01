@@ -142,6 +142,29 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		}
 		schema = parameter.Schema.Value
 	}
+
+	// Set default value if needed
+	if value == nil && schema != nil && schema.Default != nil {
+		value = schema.Default
+		req := input.Request
+		switch parameter.In {
+		// case openapi3.ParameterInPath: TODO: no idea how to handle this
+		case openapi3.ParameterInQuery:
+			q := req.URL.Query()
+			q.Add(parameter.Name, fmt.Sprintf("%v", value))
+			req.URL.RawQuery = q.Encode()
+		case openapi3.ParameterInHeader:
+			req.Header.Add(parameter.Name, fmt.Sprintf("%v", value))
+		case openapi3.ParameterInCookie:
+			req.AddCookie(&http.Cookie{
+				Name:  parameter.Name,
+				Value: fmt.Sprintf("%v", value),
+			})
+		default:
+			return fmt.Errorf("unsupported parameter's 'in': %s", parameter.In)
+		}
+	}
+
 	// Validate a parameter's value and presence.
 	if parameter.Required && !found {
 		return &RequestError{Input: input, Parameter: parameter, Reason: ErrInvalidRequired.Error(), Err: ErrInvalidRequired}
@@ -230,7 +253,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
-	value, err := decodeBody(bytes.NewReader(data), req.Header, contentType.Schema, encFn)
+	mediaType, value, err := decodeBody(bytes.NewReader(data), req.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &RequestError{
 			Input:       input,
@@ -240,8 +263,10 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		}
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
+	defaultsSet := false
+	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
+	opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
@@ -255,6 +280,21 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			Err:         err,
 		}
 	}
+
+	if defaultsSet {
+		var err error
+		if data, err = encodeBody(value, mediaType); err != nil {
+			return &RequestError{
+				Input:       input,
+				RequestBody: requestBody,
+				Reason:      "rewriting failed",
+				Err:         err,
+			}
+		}
+		// Put the data back into the input
+		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+	}
+
 	return nil
 }
 

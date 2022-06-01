@@ -14,9 +14,9 @@ import (
 // Servers is specified by OpenAPI/Swagger standard version 3.
 type Servers []*Server
 
-// Validate ensures servers are per the OpenAPIv3 specification.
-func (value Servers) Validate(ctx context.Context) error {
-	for _, v := range value {
+// Validate returns an error if Servers does not comply with the OpenAPI spec.
+func (servers Servers) Validate(ctx context.Context) error {
+	for _, v := range servers {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -48,10 +48,12 @@ type Server struct {
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Server.
 func (server *Server) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(server)
 }
 
+// UnmarshalJSON sets Server to a copy of data.
 func (server *Server) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, server)
 }
@@ -127,19 +129,20 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 	return params, input, true
 }
 
-func (value *Server) Validate(ctx context.Context) (err error) {
-	if value.URL == "" {
+// Validate returns an error if Server does not comply with the OpenAPI spec.
+func (server *Server) Validate(ctx context.Context) (err error) {
+	if server.URL == "" {
 		return errors.New("value of url must be a non-empty string")
 	}
-	opening, closing := strings.Count(value.URL, "{"), strings.Count(value.URL, "}")
+	opening, closing := strings.Count(server.URL, "{"), strings.Count(server.URL, "}")
 	if opening != closing {
 		return errors.New("server URL has mismatched { and }")
 	}
-	if opening != len(value.Variables) {
+	if opening != len(server.Variables) {
 		return errors.New("server has undeclared variables")
 	}
-	for name, v := range value.Variables {
-		if !strings.Contains(value.URL, fmt.Sprintf("{%s}", name)) {
+	for name, v := range server.Variables {
+		if !strings.Contains(server.URL, fmt.Sprintf("{%s}", name)) {
 			return errors.New("server has undeclared variables")
 		}
 		if err = v.Validate(ctx); err != nil {
@@ -159,17 +162,20 @@ type ServerVariable struct {
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of ServerVariable.
 func (serverVariable *ServerVariable) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(serverVariable)
 }
 
+// UnmarshalJSON sets ServerVariable to a copy of data.
 func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, serverVariable)
 }
 
-func (value *ServerVariable) Validate(ctx context.Context) error {
-	if value.Default == "" {
-		data, err := value.MarshalJSON()
+// Validate returns an error if ServerVariable does not comply with the OpenAPI spec.
+func (serverVariable *ServerVariable) Validate(ctx context.Context) error {
+	if serverVariable.Default == "" {
+		data, err := serverVariable.MarshalJSON()
 		if err != nil {
 			return err
 		}

@@ -1,3 +1,5 @@
+parameters:
+  - $ref: ../parameters/number.yml
 get:
   responses:
     "200":

@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
-	"github.com/stretchr/testify/require"
 )
 
 func ExampleGenerator_SchemaRefs() {
@@ -466,6 +467,30 @@ func TestSchemaCustomizerError(t *testing.T) {
 	type Bla struct{}
 	_, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
 	require.EqualError(t, err, "test error")
+}
+
+func TestSchemaCustomizerExcludeSchema(t *testing.T) {
+	type Bla struct {
+		Str string
+	}
+
+	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return nil
+	})
+	schema, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	require.NoError(t, err)
+	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
+		Type: "object",
+		Properties: map[string]*openapi3.SchemaRef{
+			"Str": {Value: &openapi3.Schema{Type: "string"}},
+		}}}, schema)
+
+	customizer = openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return &openapi3gen.ExcludeSchemaSentinel{}
+	})
+	schema, err = openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	require.NoError(t, err)
+	require.Nil(t, schema)
 }
 
 func ExampleNewSchemaRefForValue_recursive() {

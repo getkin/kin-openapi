@@ -18,14 +18,17 @@ type ExternalDocs struct {
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of ExternalDocs.
 func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(e)
 }
 
+// UnmarshalJSON sets ExternalDocs to a copy of data.
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, e)
 }
 
+// Validate returns an error if ExternalDocs does not comply with the OpenAPI spec.
 func (e *ExternalDocs) Validate(ctx context.Context) error {
 	if e.URL == "" {
 		return errors.New("url is required")

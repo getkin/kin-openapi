@@ -66,6 +66,7 @@ jobs:
       env:
         GOARCH: '386'
     - run: go test ./...
+    - run: go test -count=2 ./...
     - run: go test -v -run TestRaceyPatternSchema -race ./...
       env:
         CGO_ENABLED: '1'
@@ -142,3 +143,15 @@ jobs:
           T
           Tag
           XML
+
+  check-goimports:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '>=1.17.0'
+    - run: go install github.com/incu6us/goimports-reviser/v2@v2.5.1
+    - run: which goimports-reviser
+    - run: find . -type f -iname '*.go' ! -iname '*.pb.go' -exec goimports-reviser -file-path {} \;
+    - run: git --no-pager diff --exit-code

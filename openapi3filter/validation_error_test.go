@@ -10,9 +10,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/stretchr/testify/require"
 )
 
 func newPetstoreRequest(t *testing.T, method, path string, body io.Reader) *http.Request {
@@ -187,7 +188,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 				Title: `parameter "status" in query is required`},
 		},
 		{
-			name: "error - wrong query string parameter type",
+			name: "error - wrong query string parameter type as integer",
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodGet, "/pet/findByIds?ids=1,notAnInt", nil),
 			},
@@ -195,8 +196,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParamIn: "query",
 			// This is a nested ParseError. The outer error is a KindOther with no details.
 			// So we'd need to look at the inner one which is a KindInvalidFormat. So just check the error body.
-			wantErrBody: `parameter "ids" in query has an error: path 1: value notAnInt: an invalid integer: ` +
-				"strconv.ParseFloat: parsing \"notAnInt\": invalid syntax",
+			wantErrBody: `parameter "ids" in query has an error: path 1: value notAnInt: an invalid integer: invalid syntax`,
 			// TODO: Should we treat query params of the wrong type like a 404 instead of a 400?
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "ids" in query is invalid: notAnInt is an invalid integer`},

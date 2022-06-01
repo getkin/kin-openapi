@@ -11,6 +11,7 @@ type Callbacks map[string]*CallbackRef
 
 var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 	ref, ok := c[token]
 	if ref == nil || !ok {
@@ -27,8 +28,9 @@ func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#callbackObject
 type Callback map[string]*PathItem
 
-func (value Callback) Validate(ctx context.Context) error {
-	for _, v := range value {
+// Validate returns an error if Callback does not comply with the OpenAPI spec.
+func (callback Callback) Validate(ctx context.Context) error {
+	for _, v := range callback {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}

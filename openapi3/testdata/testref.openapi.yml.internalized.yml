@@ -1,0 +1,19 @@
+{
+  "components": {
+    "schemas": {
+      "AnotherTestSchema": {
+        "type": "string"
+      },
+      "CustomTestSchema": {
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "OAI Specification w/ refs in YAML",
+    "version": "1"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+  }
+}

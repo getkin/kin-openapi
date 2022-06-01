@@ -1,0 +1,131 @@
+{
+  "components": {
+    "callbacks": {
+      "MyCallbackEvent": {
+        "{$request.query.queryUrl}": {
+          "post": {
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SomeOtherPayload"
+                  }
+                }
+              },
+              "description": "Callback payload"
+            },
+            "responses": {
+              "200": {
+                "description": "callback successfully processed"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SomeOtherPayload": {
+        "type": "boolean"
+      },
+      "SomePayload": {
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Callback refd",
+    "version": "1.2.3"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/other": {
+      "post": {
+        "callbacks": {
+          "myEvent": {
+            "$ref": "#/components/callbacks/MyCallbackEvent"
+          }
+        },
+        "parameters": [
+          {
+            "description": "bla\nbla\nbla\n",
+            "in": "query",
+            "name": "queryUrl",
+            "required": true,
+            "schema": {
+              "example": "https://example.com",
+              "format": "uri",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/trans": {
+      "post": {
+        "callbacks": {
+          "transactionCallback": {
+            "http://notificationServer.com?transactionId={$request.body#/id}&email={$request.body#/email}": {
+              "post": {
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/SomePayload"
+                      }
+                    }
+                  },
+                  "description": "Callback payload"
+                },
+                "responses": {
+                  "200": {
+                    "description": "callback successfully processed"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "email": {
+                    "format": "email"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "subscription successfully created"
+          }
+        }
+      }
+    }
+  }
+}

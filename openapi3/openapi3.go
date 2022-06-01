@@ -23,10 +23,12 @@ type T struct {
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of T.
 func (doc *T) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(doc)
 }
 
+// UnmarshalJSON sets T to a copy of data.
 func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
@@ -49,8 +51,9 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
-func (value *T) Validate(ctx context.Context) error {
-	if value.OpenAPI == "" {
+// Validate returns an error if T does not comply with the OpenAPI spec.
+func (doc *T) Validate(ctx context.Context) error {
+	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}
 
@@ -58,14 +61,14 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid components: %v", e) }
-		if err := value.Components.Validate(ctx); err != nil {
+		if err := doc.Components.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid info: %v", e) }
-		if v := value.Info; v != nil {
+		if v := doc.Info; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -76,7 +79,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid paths: %v", e) }
-		if v := value.Paths; v != nil {
+		if v := doc.Paths; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -87,7 +90,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid security: %v", e) }
-		if v := value.Security; v != nil {
+		if v := doc.Security; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -96,7 +99,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
-		if v := value.Servers; v != nil {
+		if v := doc.Servers; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -105,7 +108,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid tags: %w", e) }
-		if v := value.Tags; v != nil {
+		if v := doc.Tags; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}
@@ -114,7 +117,7 @@ func (value *T) Validate(ctx context.Context) error {
 
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid external docs: %w", e) }
-		if v := value.ExternalDocs; v != nil {
+		if v := doc.ExternalDocs; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}

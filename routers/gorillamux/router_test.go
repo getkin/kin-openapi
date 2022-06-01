@@ -6,9 +6,10 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRouter(t *testing.T) {
@@ -72,6 +73,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	expect := func(r routers.Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
+		t.Helper()
 		req, err := http.NewRequest(method, uri, nil)
 		require.NoError(t, err)
 		route, pathParams, err := r.FindRoute(req)
@@ -163,6 +165,9 @@ func TestRouter(t *testing.T) {
 			"d1":     {Default: "example", Enum: []string{"example"}},
 			"scheme": {Default: "https", Enum: []string{"https", "http"}},
 		}},
+		{URL: "http://127.0.0.1:{port}/api/v1", Variables: map[string]*openapi3.ServerVariable{
+			"port": {Default: "8000"},
+		}},
 	}
 	err = doc.Validate(context.Background())
 	require.NoError(t, err)
@@ -179,6 +184,20 @@ func TestRouter(t *testing.T) {
 		"d1": "domain1",
 		// "scheme": "https", TODO: https://github.com/gorilla/mux/issues/624
 	})
+	expect(r, http.MethodGet, "http://127.0.0.1:8000/api/v1/hello", helloGET, map[string]string{
+		"port": "8000",
+	})
+
+	doc.Servers = []*openapi3.Server{
+		{URL: "{server}", Variables: map[string]*openapi3.ServerVariable{
+			"server": {Default: "/api/v1"},
+		}},
+	}
+	err = doc.Validate(context.Background())
+	require.NoError(t, err)
+	r, err = NewRouter(doc)
+	require.NoError(t, err)
+	expect(r, http.MethodGet, "https://myserver/api/v1/hello", helloGET, nil)
 
 	{
 		uri := "https://www.example.com/api/v1/onlyGET"
@@ -215,12 +234,7 @@ func TestServerPath(t *testing.T) {
 	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
 		server,
 		&openapi3.Server{URL: "http://example.com/"},
-		&openapi3.Server{URL: "http://example.com/path"},
-		newServerWithVariables(
-			"{scheme}://localhost",
-			map[string]string{
-				"scheme": "https",
-			})},
+		&openapi3.Server{URL: "http://example.com/path"}},
 	})
 	require.NoError(t, err)
 }
@@ -228,6 +242,11 @@ func TestServerPath(t *testing.T) {
 func TestRelativeURL(t *testing.T) {
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "rel",
+			Version: "1",
+		},
 		Servers: openapi3.Servers{
 			&openapi3.Server{
 				URL: "/api/v1",
@@ -239,6 +258,8 @@ func TestRelativeURL(t *testing.T) {
 			},
 		},
 	}
+	err := doc.Validate(context.Background())
+	require.NoError(t, err)
 	router, err := NewRouter(doc)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "https://example.com/api/v1/hello", nil)
@@ -246,83 +267,4 @@ func TestRelativeURL(t *testing.T) {
 	route, _, err := router.FindRoute(req)
 	require.NoError(t, err)
 	require.Equal(t, "/hello", route.Path)
-}
-
-func Test_resolveServerURL(t *testing.T) {
-	type args struct {
-		server *openapi3.Server
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "Test without any variables at all",
-			args: args{
-				server: newServerWithVariables(
-					"http://example.com",
-					nil),
-			},
-			want: "http://example.com",
-		},
-		{
-			name: "Test entire URL is a single variable",
-			args: args{
-				server: newServerWithVariables(
-					"{server}",
-					map[string]string{"server": "/"}),
-			},
-			want: "/",
-		},
-		{
-			name: "Test with variable scheme",
-			args: args{
-				server: newServerWithVariables(
-					"{scheme}://localhost",
-					map[string]string{"scheme": "https"}),
-			},
-			want: "https://localhost",
-		},
-		{
-			name: "Test variable scheme, port, and root-path",
-			args: args{
-				server: newServerWithVariables(
-					"{scheme}://localhost:{port}/{root-path}",
-					map[string]string{"scheme": "https", "port": "8080", "root-path": "api"}),
-			},
-			want: "https://localhost:8080/api",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := resolveServerURL(tt.args.server); got != tt.want {
-				t.Errorf("resolveServerURL() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func newServerWithVariables(url string, variables map[string]string) *openapi3.Server {
-	var serverVariables = map[string]*openapi3.ServerVariable{}
-
-	for key, value := range variables {
-		serverVariables[key] = newServerVariable(value)
-	}
-
-	return &openapi3.Server{
-		ExtensionProps: openapi3.ExtensionProps{},
-		URL:            url,
-		Description:    "",
-		Variables:      serverVariables,
-	}
-}
-
-func newServerVariable(defaultValue string) *openapi3.ServerVariable {
-	return &openapi3.ServerVariable{
-		ExtensionProps: openapi3.ExtensionProps{},
-		Enum:           nil,
-		Default:        defaultValue,
-		Description:    "",
-	}
 }

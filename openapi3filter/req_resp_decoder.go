@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -795,19 +795,19 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 	case "integer":
 		v, err := strconv.ParseFloat(raw, 64)
 		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid integer", Cause: err}
+			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
 		}
 		return v, nil
 	case "number":
 		v, err := strconv.ParseFloat(raw, 64)
 		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid number", Cause: err}
+			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
 		}
 		return v, nil
 	case "boolean":
 		v, err := strconv.ParseBool(raw)
 		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid number", Cause: err}
+			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
 		}
 		return v, nil
 	case "string":
@@ -868,7 +868,11 @@ const prefixUnsupportedCT = "unsupported content type"
 
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
-func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (
+	string,
+	interface{},
+	error,
+) {
 	contentType := header.Get(headerCT)
 	if contentType == "" {
 		if _, ok := body.(*multipart.Part); ok {
@@ -878,16 +882,16 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	mediaType := parseMediaType(contentType)
 	decoder, ok := bodyDecoders[mediaType]
 	if !ok {
-		return nil, &ParseError{
+		return "", nil, &ParseError{
 			Kind:   KindUnsupportedFormat,
 			Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, mediaType),
 		}
 	}
 	value, err := decoder(body, header, schema, encFn)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return value, nil
+	return mediaType, value, nil
 }
 
 func init() {
@@ -1036,7 +1040,7 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		}
 
 		var value interface{}
-		if value, err = decodeBody(part, http.Header(part.Header), valueSchema, subEncFn); err != nil {
+		if _, value, err = decodeBody(part, http.Header(part.Header), valueSchema, subEncFn); err != nil {
 			if v, ok := err.(*ParseError); ok {
 				return nil, &ParseError{path: []interface{}{name}, Cause: v}
 			}
