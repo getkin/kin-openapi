@@ -234,7 +234,22 @@ func TestServerPath(t *testing.T) {
 	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
 		server,
 		&openapi3.Server{URL: "http://example.com/"},
-		&openapi3.Server{URL: "http://example.com/path"}},
+		&openapi3.Server{URL: "http://example.com/path"},
+		newServerWithVariables(
+			"{scheme}://localhost",
+			map[string]string{
+				"scheme": "https",
+			}),
+		newServerWithVariables(
+			"{url}",
+			map[string]string{
+				"url": "http://example.com/path",
+			}),
+		newServerWithVariables(
+			"http://example.com:{port}/path",
+			map[string]string{
+				"port": "8088",
+			})},
 	})
 	require.NoError(t, err)
 }
@@ -267,4 +282,28 @@ func TestRelativeURL(t *testing.T) {
 	route, _, err := router.FindRoute(req)
 	require.NoError(t, err)
 	require.Equal(t, "/hello", route.Path)
+}
+
+func newServerWithVariables(url string, variables map[string]string) *openapi3.Server {
+	var serverVariables = map[string]*openapi3.ServerVariable{}
+
+	for key, value := range variables {
+		serverVariables[key] = newServerVariable(value)
+	}
+
+	return &openapi3.Server{
+		ExtensionProps: openapi3.ExtensionProps{},
+		URL:            url,
+		Description:    "",
+		Variables:      serverVariables,
+	}
+}
+
+func newServerVariable(defaultValue string) *openapi3.ServerVariable {
+	return &openapi3.ServerVariable{
+		ExtensionProps: openapi3.ExtensionProps{},
+		Enum:           nil,
+		Default:        defaultValue,
+		Description:    "",
+	}
 }
