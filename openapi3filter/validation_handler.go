@@ -9,8 +9,12 @@ import (
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
+// AuthenticationFunc allows for custom security requirement validation.
+// A non-nil error fails authentication according to https://spec.openapis.org/oas/v3.1.0#security-requirement-object
+// See ValidateSecurityRequirements
 type AuthenticationFunc func(context.Context, *AuthenticationInput) error
 
+// NoopAuthenticationFunc is an AuthenticationFunc
 func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error { return nil }
 
 var _ AuthenticationFunc = NoopAuthenticationFunc
