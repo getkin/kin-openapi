@@ -148,6 +148,7 @@ type Operation struct {
 	openapi3.ExtensionProps
 	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Deprecated   bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`

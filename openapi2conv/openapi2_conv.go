@@ -155,6 +155,7 @@ func ToV3Operation(doc2 *openapi2.T, components *openapi3.Components, pathItem *
 		OperationID:    operation.OperationID,
 		Summary:        operation.Summary,
 		Description:    operation.Description,
+		Deprecated:     operation.Deprecated,
 		Tags:           operation.Tags,
 		ExtensionProps: operation.ExtensionProps,
 	}
@@ -922,6 +923,7 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 		OperationID:    operation.OperationID,
 		Summary:        operation.Summary,
 		Description:    operation.Description,
+		Deprecated:     operation.Deprecated,
 		Tags:           operation.Tags,
 		ExtensionProps: operation.ExtensionProps,
 	}
