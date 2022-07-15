@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -281,6 +282,63 @@ func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
 	require.NotNil(t, doc.Components.Responses["SomeResponse"])
 	desc := "this is a single response definition"
 	require.Equal(t, &desc, doc.Components.Responses["SomeResponse"].Value.Description)
+}
+
+func TestLoadDataWithDropRefs(t *testing.T) {
+	spec := []byte(`
+openapi: '3.0.0'
+info:
+  title: ''
+  version: '1'
+components:
+  schemas:
+    test:
+      description: 'This is a test description'
+      properties:
+        id:
+          type: string
+        test:
+          $ref: '#/components/schemas/test2'
+      type: object
+      additionalProperties: false
+    test2:
+      description: 'This is a test2 description'
+      properties:
+        id:
+          type: string
+      type: object
+      additionalProperties: false
+paths:
+  '/':
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/test"
+      responses:
+        '200':
+          description: Test call.
+`)
+
+	loader := NewLoader()
+	loader.DropResolvedRefs = false
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+	require.NotNil(t, doc.Components.Schemas["test"])
+	require.NotNil(t, doc.Components.Schemas["test2"])
+	res, err := json.Marshal(doc)
+	require.NoError(t, err)
+	require.Contains(t, string(res), "$ref")
+
+	loader.DropResolvedRefs = true
+	doc, err = loader.LoadFromData(spec)
+	require.NoError(t, err)
+	res, err = json.Marshal(doc)
+	require.NoError(t, err)
+	require.NotNil(t, doc.Components.Schemas["test"])
+	require.NotNil(t, doc.Components.Schemas["test2"])
+	require.NotContains(t, string(res), "$ref")
 }
 
 func TestLoadRequestResponseHeaderRef(t *testing.T) {

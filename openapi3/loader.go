@@ -31,6 +31,9 @@ type Loader struct {
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
 
+	// DropResolvedRefs enables marshalling the (resolved) Value over the Ref
+	DropResolvedRefs bool
+
 	Context context.Context
 
 	rootDir string
@@ -743,6 +746,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
+
+	// Dropping successfully resolved Ref's results into marshalling the (resolved) Value over the Ref
+	if loader.DropResolvedRefs {
+		component.Ref = ""
+	}
+
 	return nil
 }
 
