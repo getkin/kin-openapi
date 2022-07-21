@@ -35,7 +35,8 @@ type Loader struct {
 
 	rootDir string
 
-	visitedPathItemRefs map[string]struct{}
+	visitedPathItemRefs       map[string]struct{}
+	visitedSchemaPathItemRefs map[string]int
 
 	visitedDocuments map[string]*T
 
@@ -679,13 +680,21 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	}
 
 	if component != nil && component.Ref != "" {
-		if loader.visitedPathItemRefs == nil {
-			loader.visitedPathItemRefs = make(map[string]struct{})
+		if loader.visitedSchemaPathItemRefs == nil {
+			loader.visitedSchemaPathItemRefs = make(map[string]int)
 		}
-		if _, ok := loader.visitedPathItemRefs[component.Ref]; ok {
-			return nil
+		// It seems that some amount of recursion is required, as tests are failing if
+		// we simply return. I picked an arbitrarily large number here, but there must
+		// be some better logic to find the problem
+		const maxRecursion = 100
+		recurseCount := 0
+		var ok bool
+		if recurseCount, ok = loader.visitedSchemaPathItemRefs[component.Ref]; ok {
+			if recurseCount > maxRecursion {
+				return errors.New("deep recursion")
+			}
 		}
-		loader.visitedPathItemRefs[component.Ref] = struct{}{}
+		loader.visitedSchemaPathItemRefs[component.Ref] = recurseCount + 1
 	}
 
 	if component == nil {

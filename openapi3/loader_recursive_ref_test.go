@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -46,4 +47,10 @@ components:
 		Value.Properties["parent"].
 		// type
 		Value.Type)
+}
+
+func TestIssue570(t *testing.T) {
+	loader := NewLoader()
+	_, err := loader.LoadFromURI(&url.URL{RawPath: "https://rubrikinc.github.io/api-doc-internal-6.0/openapi.json"})
+	require.Error(t, err, "deep recursion")
 }
