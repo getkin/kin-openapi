@@ -678,6 +678,16 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		loader.visitedSchema[component.Value] = struct{}{}
 	}
 
+	if component != nil && component.Ref != "" {
+		if loader.visitedPathItemRefs == nil {
+			loader.visitedPathItemRefs = make(map[string]struct{})
+		}
+		if _, ok := loader.visitedPathItemRefs[component.Ref]; ok {
+			return nil
+		}
+		loader.visitedPathItemRefs[component.Ref] = struct{}{}
+	}
+
 	if component == nil {
 		return errors.New("invalid schema: value MUST be an object")
 	}
