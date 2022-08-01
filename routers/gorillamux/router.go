@@ -61,8 +61,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 
 		pathItem := doc.Paths[path]
 		if len(pathItem.Servers) > 0 {
-			servers, err = makeServers(pathItem.Servers)
-			if err != nil {
+			if servers, err = makeServers(pathItem.Servers); err != nil {
 				return nil, err
 			}
 		}
