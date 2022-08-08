@@ -13,3 +13,5 @@ components:
       $ref: ./components/Foo/Foo2.yml
     Bar:
       $ref: ./components/Bar.yml
+    Cat:
+      $ref: ./components/Cat.yml
