@@ -22,15 +22,15 @@ type ctxKey struct{}
 // Returned ctx can be passed to children function calls and used to check whether
 // component already visited. For instance:
 //
-//     ctx := context.Background()
-//     ctx = newVisited().withContext(ctx)
-//     ...
-//     doc.deferSchemaRecursively(ctx, schema)
-//     func (doc *T) deferSchemaRecursively(ctx context.Context, s *Schema) {
-//         if s == nil || isVisitedSchema(ctx, s) {
-//             return
-//         }
-//     }
+//	ctx := context.Background()
+//	ctx = newVisited().withContext(ctx)
+//	...
+//	doc.deferSchemaRecursively(ctx, schema)
+//	func (doc *T) deferSchemaRecursively(ctx context.Context, s *Schema) {
+//	    if s == nil || isVisitedSchema(ctx, s) {
+//	        return
+//	    }
+//	}
 func (v *visitedComponent) withContext(ctx context.Context) context.Context {
 	if visited, ok := ctx.Value(ctxKey{}).(*visitedComponent); ok {
 		if visited == v {
