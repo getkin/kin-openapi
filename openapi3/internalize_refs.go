@@ -199,8 +199,8 @@ func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver)
 	c.Ref = "#/components/callbacks/" + name
 }
 
-func (doc *T) derefSchema(ctx context.Context, s *Schema, refNameResolver RefNameResolver) {
-	if s == nil || doc.isVisitedSchema(ctx, s) {
+func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver) {
+	if s == nil || doc.isVisitedSchema(s) {
 		return
 	}
 
@@ -208,32 +208,31 @@ func (doc *T) derefSchema(ctx context.Context, s *Schema, refNameResolver RefNam
 		for _, s2 := range list {
 			doc.addSchemaToSpec(s2, refNameResolver)
 			if s2 != nil {
-				doc.derefSchema(ctx, s2.Value, refNameResolver)
+				doc.derefSchema(s2.Value, refNameResolver)
 			}
 		}
 	}
 	for _, s2 := range s.Properties {
 		doc.addSchemaToSpec(s2, refNameResolver)
-
 		if s2 != nil {
-			doc.derefSchema(ctx, s2.Value, refNameResolver)
+			doc.derefSchema(s2.Value, refNameResolver)
 		}
 	}
 	for _, ref := range []*SchemaRef{s.Not, s.AdditionalProperties, s.Items} {
 		doc.addSchemaToSpec(ref, refNameResolver)
 		if ref != nil {
-			doc.derefSchema(ctx, ref.Value, refNameResolver)
+			doc.derefSchema(ref.Value, refNameResolver)
 		}
 	}
 }
 
-func (doc *T) derefHeaders(ctx context.Context, hs Headers, refNameResolver RefNameResolver) {
+func (doc *T) derefHeaders(hs Headers, refNameResolver RefNameResolver) {
 	for _, h := range hs {
 		doc.addHeaderToSpec(h, refNameResolver)
-		if doc.isVisitedHeader(ctx, h.Value) {
+		if doc.isVisitedHeader(h.Value) {
 			continue
 		}
-		doc.derefParameter(ctx, h.Value.Parameter, refNameResolver)
+		doc.derefParameter(h.Value.Parameter, refNameResolver)
 	}
 }
 
@@ -243,15 +242,15 @@ func (doc *T) derefExamples(es Examples, refNameResolver RefNameResolver) {
 	}
 }
 
-func (doc *T) derefContent(ctx context.Context, c Content, refNameResolver RefNameResolver) {
+func (doc *T) derefContent(c Content, refNameResolver RefNameResolver) {
 	for _, mediatype := range c {
 		doc.addSchemaToSpec(mediatype.Schema, refNameResolver)
 		if mediatype.Schema != nil {
-			doc.derefSchema(ctx, mediatype.Schema.Value, refNameResolver)
+			doc.derefSchema(mediatype.Schema.Value, refNameResolver)
 		}
 		doc.derefExamples(mediatype.Examples, refNameResolver)
 		for _, e := range mediatype.Encoding {
-			doc.derefHeaders(ctx, e.Headers, refNameResolver)
+			doc.derefHeaders(e.Headers, refNameResolver)
 		}
 	}
 }
@@ -262,30 +261,30 @@ func (doc *T) derefLinks(ls Links, refNameResolver RefNameResolver) {
 	}
 }
 
-func (doc *T) derefResponses(ctx context.Context, es Responses, refNameResolver RefNameResolver) {
+func (doc *T) derefResponses(es Responses, refNameResolver RefNameResolver) {
 	for _, e := range es {
 		doc.addResponseToSpec(e, refNameResolver)
 		if e.Value != nil {
-			doc.derefHeaders(ctx, e.Value.Headers, refNameResolver)
-			doc.derefContent(ctx, e.Value.Content, refNameResolver)
+			doc.derefHeaders(e.Value.Headers, refNameResolver)
+			doc.derefContent(e.Value.Content, refNameResolver)
 			doc.derefLinks(e.Value.Links, refNameResolver)
 		}
 	}
 }
 
-func (doc *T) derefParameter(ctx context.Context, p Parameter, refNameResolver RefNameResolver) {
+func (doc *T) derefParameter(p Parameter, refNameResolver RefNameResolver) {
 	doc.addSchemaToSpec(p.Schema, refNameResolver)
-	doc.derefContent(ctx, p.Content, refNameResolver)
+	doc.derefContent(p.Content, refNameResolver)
 	if p.Schema != nil {
-		doc.derefSchema(ctx, p.Schema.Value, refNameResolver)
+		doc.derefSchema(p.Schema.Value, refNameResolver)
 	}
 }
 
-func (doc *T) derefRequestBody(ctx context.Context, r RequestBody, refNameResolver RefNameResolver) {
-	doc.derefContent(ctx, r.Content, refNameResolver)
+func (doc *T) derefRequestBody(r RequestBody, refNameResolver RefNameResolver) {
+	doc.derefContent(r.Content, refNameResolver)
 }
 
-func (doc *T) derefPaths(ctx context.Context, paths map[string]*PathItem, refNameResolver RefNameResolver) {
+func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameResolver) {
 	for _, ops := range paths {
 		// inline full operations
 		ops.Ref = ""
@@ -297,19 +296,19 @@ func (doc *T) derefPaths(ctx context.Context, paths map[string]*PathItem, refNam
 		for _, op := range ops.Operations() {
 			doc.addRequestBodyToSpec(op.RequestBody, refNameResolver)
 			if op.RequestBody != nil && op.RequestBody.Value != nil {
-				doc.derefRequestBody(ctx, *op.RequestBody.Value, refNameResolver)
+				doc.derefRequestBody(*op.RequestBody.Value, refNameResolver)
 			}
 			for _, cb := range op.Callbacks {
 				doc.addCallbackToSpec(cb, refNameResolver)
 				if cb.Value != nil {
-					doc.derefPaths(ctx, *cb.Value, refNameResolver)
+					doc.derefPaths(*cb.Value, refNameResolver)
 				}
 			}
-			doc.derefResponses(ctx, op.Responses, refNameResolver)
+			doc.derefResponses(op.Responses, refNameResolver)
 			for _, param := range op.Parameters {
 				doc.addParameterToSpec(param, refNameResolver)
 				if param.Value != nil {
-					doc.derefParameter(ctx, *param.Value, refNameResolver)
+					doc.derefParameter(*param.Value, refNameResolver)
 				}
 			}
 		}
@@ -341,7 +340,7 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref stri
 		doc.addSchemaToSpec(schema, refNameResolver)
 		if schema != nil {
 			schema.Ref = "" // always dereference the top level
-			doc.derefSchema(ctx, schema.Value, refNameResolver)
+			doc.derefSchema(schema.Value, refNameResolver)
 		}
 	}
 	names = parametersMapNames(doc.Components.Parameters)
@@ -350,18 +349,18 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref stri
 		doc.addParameterToSpec(p, refNameResolver)
 		if p != nil && p.Value != nil {
 			p.Ref = "" // always dereference the top level
-			doc.derefParameter(ctx, *p.Value, refNameResolver)
+			doc.derefParameter(*p.Value, refNameResolver)
 		}
 	}
-	doc.derefHeaders(ctx, doc.Components.Headers, refNameResolver)
+	doc.derefHeaders(doc.Components.Headers, refNameResolver)
 	for _, req := range doc.Components.RequestBodies {
 		doc.addRequestBodyToSpec(req, refNameResolver)
 		if req != nil && req.Value != nil {
 			req.Ref = "" // always dereference the top level
-			doc.derefRequestBody(ctx, *req.Value, refNameResolver)
+			doc.derefRequestBody(*req.Value, refNameResolver)
 		}
 	}
-	doc.derefResponses(ctx, doc.Components.Responses, refNameResolver)
+	doc.derefResponses(doc.Components.Responses, refNameResolver)
 	for _, ss := range doc.Components.SecuritySchemes {
 		doc.addSecuritySchemeToSpec(ss, refNameResolver)
 	}
@@ -371,9 +370,9 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref stri
 		doc.addCallbackToSpec(cb, refNameResolver)
 		if cb != nil && cb.Value != nil {
 			cb.Ref = "" // always dereference the top level
-			doc.derefPaths(ctx, *cb.Value, refNameResolver)
+			doc.derefPaths(*cb.Value, refNameResolver)
 		}
 	}
 
-	doc.derefPaths(ctx, doc.Paths, refNameResolver)
+	doc.derefPaths(doc.Paths, refNameResolver)
 }

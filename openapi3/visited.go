@@ -1,7 +1,5 @@
 package openapi3
 
-import "context"
-
 func newVisited() visitedComponent {
 	return visitedComponent{
 		header: make(map[*Header]struct{}),
@@ -22,7 +20,7 @@ func (doc *T) resetVisited() {
 
 // isVisitedHeader returns `true` if the *Header pointer was already visited
 // otherwise it returns `false`
-func (doc *T) isVisitedHeader(ctx context.Context, h *Header) bool {
+func (doc *T) isVisitedHeader(h *Header) bool {
 	if _, ok := doc.visited.header[h]; ok {
 		return true
 	}
@@ -33,7 +31,7 @@ func (doc *T) isVisitedHeader(ctx context.Context, h *Header) bool {
 
 // isVisitedHeader returns `true` if the *Schema pointer was already visited
 // otherwise it returns `false`
-func (doc *T) isVisitedSchema(ctx context.Context, s *Schema) bool {
+func (doc *T) isVisitedSchema(s *Schema) bool {
 	if _, ok := doc.visited.schema[s]; ok {
 		return true
 	}
