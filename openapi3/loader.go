@@ -699,7 +699,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
+			foundPath := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
+			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
 		}
 	}
 	value := component.Value
@@ -744,6 +745,22 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}
 	}
 	return nil
+}
+
+func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) string {
+	referencedFilename := strings.Split(ref, "#")[0]
+	if referencedFilename == "" {
+		if cur != nil {
+			return path.Base(cur.Path)
+		}
+		return ""
+	}
+	// ref. to external file
+	if resolved.Ref != "" {
+		return resolved.Ref
+	}
+	// found dest spec. file
+	return path.Dir(found.Path)[len(loader.rootDir):]
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
