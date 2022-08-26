@@ -1,11 +1,11 @@
 // Package pathpattern implements path matching.
 //
 // Examples of supported patterns:
-//   * "/"
-//   * "/abc""
-//   * "/abc/{variable}" (matches until next '/' or end-of-string)
-//   * "/abc/{variable*}" (matches everything, including "/abc" if "/abc" has noot)
-//   * "/abc/{ variable | prefix_(.*}_suffix }" (matches regular expressions)
+//   - "/"
+//   - "/abc""
+//   - "/abc/{variable}" (matches until next '/' or end-of-string)
+//   - "/abc/{variable*}" (matches everything, including "/abc" if "/abc" has noot)
+//   - "/abc/{ variable | prefix_(.*}_suffix }" (matches regular expressions)
 package pathpattern
 
 import (
@@ -28,8 +28,8 @@ type Options struct {
 // PathFromHost converts a host pattern to a path pattern.
 //
 // Examples:
-//   * PathFromHost("some-subdomain.domain.com", false) -> "com/./domain/./some-subdomain"
-//   * PathFromHost("some-subdomain.domain.com", true) -> "com/./domain/./subdomain/-/some"
+//   - PathFromHost("some-subdomain.domain.com", false) -> "com/./domain/./some-subdomain"
+//   - PathFromHost("some-subdomain.domain.com", true) -> "com/./domain/./subdomain/-/some"
 func PathFromHost(host string, specialDashes bool) string {
 	buf := make([]byte, 0, len(host))
 	end := len(host)
