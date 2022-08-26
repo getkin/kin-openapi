@@ -322,7 +322,7 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 //
 // Example:
 //
-//   doc.InternalizeRefs(context.Background(), nil)
+//	doc.InternalizeRefs(context.Background(), nil)
 func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) {
 	if refNameResolver == nil {
 		refNameResolver = DefaultRefNameResolver

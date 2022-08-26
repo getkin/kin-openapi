@@ -7,8 +7,8 @@ import (
 )
 
 // UnmarshalStrictStruct function:
-//   * Unmarshals struct fields, ignoring UnmarshalJSON(...) and fields without 'json' tag.
-//   * Correctly handles StrictStruct
+//   - Unmarshals struct fields, ignoring UnmarshalJSON(...) and fields without 'json' tag.
+//   - Correctly handles StrictStruct
 func UnmarshalStrictStruct(data []byte, value StrictStruct) error {
 	decoder, err := NewObjectDecoder(data)
 	if err != nil {
