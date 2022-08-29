@@ -21,6 +21,8 @@ type T struct {
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	visited visitedComponent
 }
 
 // MarshalJSON returns the JSON encoding of T.

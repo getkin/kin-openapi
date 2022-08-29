@@ -29,6 +29,14 @@
           }
         },
         "type": "object"
+      },
+      "Cat": {
+        "properties": {
+          "cat": {
+            "$ref": "#/components/schemas/Cat"
+          }
+        },
+        "type": "object"
       }
     }
   },
