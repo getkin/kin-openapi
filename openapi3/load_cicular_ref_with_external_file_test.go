@@ -5,6 +5,7 @@ package openapi3_test
 
 import (
 	"embed"
+	"encoding/json"
 	"net/url"
 	"testing"
 
@@ -24,38 +25,24 @@ func TestLoadCircularRefFromFile(t *testing.T) {
 	}
 
 	got, err := loader.LoadFromFile("testdata/circularRef/base.yml")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	foo := &openapi3.SchemaRef{
-		Ref: "",
 		Value: &openapi3.Schema{
-			ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
 			Properties: map[string]*openapi3.SchemaRef{
-				"foo2": { // reference to an external file
-					Ref: "other.yml#/components/schemas/Foo2",
+				"foo2": {
+					Ref: "other.yml#/components/schemas/Foo2", // reference to an external file
 					Value: &openapi3.Schema{
-						ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
 						Properties: map[string]*openapi3.SchemaRef{
 							"id": {
-								Value: &openapi3.Schema{
-									Type:           "string",
-									ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
-								}},
+								Value: &openapi3.Schema{Type: "string"}},
 						},
 					},
 				},
 			},
 		},
 	}
-	bar := &openapi3.SchemaRef{
-		Ref: "",
-		Value: &openapi3.Schema{
-			ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
-			Properties:     map[string]*openapi3.SchemaRef{},
-		},
-	}
+	bar := &openapi3.SchemaRef{Value: &openapi3.Schema{Properties: make(map[string]*openapi3.SchemaRef)}}
 	// circular reference
 	bar.Value.Properties["foo"] = &openapi3.SchemaRef{Ref: "#/components/schemas/Foo", Value: foo.Value}
 	foo.Value.Properties["bar"] = &openapi3.SchemaRef{Ref: "#/components/schemas/Bar", Value: bar.Value}
@@ -65,18 +52,19 @@ func TestLoadCircularRefFromFile(t *testing.T) {
 		Info: &openapi3.Info{
 			Title:   "Recursive cyclic refs example",
 			Version: "1.0",
-
-			ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
 		},
 		Components: openapi3.Components{
-			ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
 			Schemas: map[string]*openapi3.SchemaRef{
 				"Foo": foo,
 				"Bar": bar,
 			},
 		},
-		ExtensionProps: openapi3.ExtensionProps{Extensions: map[string]interface{}{}},
 	}
 
-	require.Equal(t, want, got)
+	jsoner := func(doc *openapi3.T) string {
+		data, err := json.Marshal(doc)
+		require.NoError(t, err)
+		return string(data)
+	}
+	require.JSONEq(t, jsoner(want), jsoner(got))
 }

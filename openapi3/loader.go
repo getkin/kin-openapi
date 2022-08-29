@@ -748,8 +748,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 }
 
 func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) string {
-	referencedFilename := strings.Split(ref, "#")[0]
-	if referencedFilename == "" {
+	if referencedFilename := strings.Split(ref, "#")[0]; referencedFilename == "" {
 		if cur != nil {
 			return path.Base(cur.Path)
 		}
