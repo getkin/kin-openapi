@@ -24,6 +24,12 @@ const (
 	TypeNumber  = "number"
 	TypeObject  = "object"
 	TypeString  = "string"
+
+	// constants for integer formats
+	formatMinInt32 = float64(math.MinInt32)
+	formatMaxInt32 = float64(math.MaxInt32)
+	formatMinInt64 = float64(math.MinInt64)
+	formatMaxInt64 = float64(math.MaxInt64)
 )
 
 var (
@@ -808,6 +814,12 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	switch value := value.(type) {
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
+	case int:
+		return schema.visitJSONNumber(settings, float64(value))
+	case int32:
+		return schema.visitJSONNumber(settings, float64(value))
+	case int64:
+		return schema.visitJSONNumber(settings, float64(value))
 	case float64:
 		return schema.visitJSONNumber(settings, value)
 	case string:
@@ -1019,7 +1031,7 @@ func (schema *Schema) VisitJSONNumber(value float64) error {
 func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value float64) error {
 	var me MultiError
 	schemaType := schema.Type
-	if schemaType == "integer" {
+	if schemaType == TypeInteger {
 		if bigFloat := big.NewFloat(value); !bigFloat.IsInt() {
 			if settings.failfast {
 				return errSchema
@@ -1037,6 +1049,39 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 		}
 	} else if schemaType != "" && schemaType != TypeNumber {
 		return schema.expectedType(settings, "number, integer")
+	}
+
+	// formats
+	if schemaType == TypeInteger && schema.Format != "" {
+		formatMin := float64(0)
+		formatMax := float64(0)
+		switch schema.Format {
+		case "int32":
+			formatMin = formatMinInt32
+			formatMax = formatMaxInt32
+		case "int64":
+			formatMin = formatMinInt64
+			formatMax = formatMaxInt64
+		default:
+			if !SchemaFormatValidationDisabled {
+				return unsupportedFormat(schema.Format)
+			}
+		}
+		if formatMin != 0 && formatMax != 0 && !(formatMin <= value && value <= formatMax) {
+			if settings.failfast {
+				return errSchema
+			}
+			err := &SchemaError{
+				Value:       value,
+				Schema:      schema,
+				SchemaField: "format",
+				Reason:      fmt.Sprintf("number must be an %s", schema.Format),
+			}
+			if !settings.multiError {
+				return err
+			}
+			me = append(me, err)
+		}
 	}
 
 	// "exclusiveMinimum"
