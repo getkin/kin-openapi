@@ -254,6 +254,47 @@ func TestServerPath(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestServerOverrideAtPathLevel(t *testing.T) {
+	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "rel",
+			Version: "1",
+		},
+		Servers: openapi3.Servers{
+			&openapi3.Server{
+				URL: "https://example.com",
+			},
+		},
+		Paths: openapi3.Paths{
+			"/hello": &openapi3.PathItem{
+				Servers: openapi3.Servers{
+					&openapi3.Server{
+						URL: "https://another.com",
+					},
+				},
+				Get: helloGET,
+			},
+		},
+	}
+	err := doc.Validate(context.Background())
+	require.NoError(t, err)
+	router, err := NewRouter(doc)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodGet, "https://another.com/hello", nil)
+	require.NoError(t, err)
+	route, _, err := router.FindRoute(req)
+	require.Equal(t, "/hello", route.Path)
+
+	req, err = http.NewRequest(http.MethodGet, "https://example.com/hello", nil)
+	require.NoError(t, err)
+	route, _, err = router.FindRoute(req)
+	require.Nil(t, route)
+	require.Error(t, err)
+}
+
 func TestRelativeURL(t *testing.T) {
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	doc := &openapi3.T{
