@@ -722,7 +722,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	}
 	value := component.Value
 	if value == nil {
-			fmt.Println("    nil .Value")
+		fmt.Println("    nil .Value")
 		return nil
 	}
 
