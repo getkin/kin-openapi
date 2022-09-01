@@ -61,6 +61,8 @@ jobs:
     - run: go fmt ./...
     - run: git --no-pager diff --exit-code
 
+    - run: go test -v -run ssue542 ./openapi3
+
     - if: runner.os == 'Linux'
       run: go test ./...
       env:

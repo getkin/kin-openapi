@@ -6,32 +6,39 @@ info:
     name: MIT
 servers:
   - url: http://petstore.swagger.io/v1
-paths:
-  /pets:
-    patch:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/Cat'
-                - $ref: '#/components/schemas/Kitten'
-              discriminator:
-                propertyName: pet_type
-      responses:
-        '200':
-          description: Updated
+paths: {}
+#paths:
+#  /pets:
+#    patch:
+#      requestBody:
+#        content:
+#          application/json:
+#            schema:
+#              oneOf:
+#                - $ref: '#/components/schemas/Cat'
+#                - $ref: '#/components/schemas/Kitten'
+#              discriminator:
+#                propertyName: pet_type
+#      responses:
+#        '200':
+#          description: Updated
 components:
   schemas:
     Cat:
       anyOf:
         - $ref: '#/components/schemas/Kitten'
         - type: object
-          properties:
-            hunts:
-              type: boolean
-            age:
-              type: integer
-            offspring:
+#          properties:
+#            hunts:
+#              type: boolean
+#            age:
+#              type: integer
+#            offspring:
     Kitten:
-      $ref: '#/components/schemas/Cat'
+
+      $ref: '#/components/schemas/Cat' #ko
+
+#      type: string                     #ok
+
+#      allOf:                               #ko
+#        - $ref: '#/components/schemas/Cat'

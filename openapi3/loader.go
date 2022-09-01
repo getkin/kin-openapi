@@ -667,12 +667,18 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 	return nil
 }
 
+var kount = 0
+
 func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL) (err error) {
+	fmt.Printf(">>> component = %+v\n", component)
+	// fmt.Printf(">>> component.Ref = %+v\n", component.Ref)
+	// fmt.Printf("\n>>> component.Value = %+v\n", component.Value)
 	if component != nil && component.Value != nil {
 		if loader.visitedSchema == nil {
 			loader.visitedSchema = make(map[*Schema]struct{})
 		}
 		if _, ok := loader.visitedSchema[component.Value]; ok {
+			fmt.Println("    cached")
 			return nil
 		}
 		loader.visitedSchema[component.Value] = struct{}{}
@@ -684,27 +690,39 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	ref := component.Ref
 	if ref != "" {
 		if isSingleRefElement(ref) {
+			fmt.Println("    isSingleRefElement")
 			var schema Schema
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
 				return err
 			}
 			component.Value = &schema
 		} else {
+			fmt.Println("    !isSingleRefElement")
 			var resolved SchemaRef
 			componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
+			fmt.Println("    resolveComponent")
+			if ref == "#/components/schemas/Cat" {
+				kount++
+				if kount == 2 {
+					panic(">>>")
+				}
+			}
 			if err := loader.resolveSchemaRef(doc, &resolved, componentPath); err != nil {
 				return err
 			}
+			fmt.Println("    resolveSchemaRef")
 			component.Value = resolved.Value
 			foundPath := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
 			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
+			fmt.Println("    documentPath")
 		}
 	}
 	value := component.Value
 	if value == nil {
+			fmt.Println("    nil .Value")
 		return nil
 	}
 
