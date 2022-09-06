@@ -54,7 +54,13 @@ func (doc *T) AddServer(server *Server) {
 }
 
 // Validate returns an error if T does not comply with the OpenAPI spec.
-func (doc *T) Validate(ctx context.Context) error {
+func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
+	validationOpts := &validationOptions{}
+	for _, opt := range opts {
+		opt(validationOpts)
+	}
+	ctx = withValidationOptions(ctx, validationOpts)
+
 	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
 	}

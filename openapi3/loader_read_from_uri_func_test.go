@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -59,6 +60,7 @@ func TestResolveSchemaExternalRef(t *testing.T) {
 	loader := &Loader{
 		IsExternalRefsAllowed: true,
 		ReadFromURIFunc:       multipleSourceLoader.LoadFromURI,
+		Context:               context.Background(),
 	}
 
 	doc, err := loader.LoadFromURI(rootLocation)

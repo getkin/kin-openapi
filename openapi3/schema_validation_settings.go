@@ -8,9 +8,11 @@ import (
 type SchemaValidationOption func(*schemaValidationSettings)
 
 type schemaValidationSettings struct {
-	failfast     bool
-	multiError   bool
-	asreq, asrep bool // exclusive (XOR) fields
+	failfast                  bool
+	multiError                bool
+	asreq, asrep              bool // exclusive (XOR) fields
+	formatValidationDisabled  bool
+	patternValidationDisabled bool
 
 	onceSettingDefaults sync.Once
 	defaultsSet         func()
@@ -28,8 +30,17 @@ func MultiErrors() SchemaValidationOption {
 func VisitAsRequest() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.asreq, s.asrep = true, false }
 }
+
 func VisitAsResponse() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.asreq, s.asrep = false, true }
+}
+
+func DisableFormatValidation() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.formatValidationDisabled = true }
+}
+
+func DisablePatternValidation() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.patternValidationDisabled = true }
 }
 
 // DefaultsSet executes the given callback (once) IFF schema validation set default values.

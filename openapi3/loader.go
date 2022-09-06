@@ -51,7 +51,9 @@ type Loader struct {
 
 // NewLoader returns an empty Loader
 func NewLoader() *Loader {
-	return &Loader{}
+	return &Loader{
+		Context: context.Background(),
+	}
 }
 
 func (loader *Loader) resetVisitedPathItemRefs() {
@@ -406,7 +408,6 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 		return current
 	}
 	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
-
 }
 
 func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
@@ -837,7 +838,6 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 }
 
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
-
 	if component == nil {
 		return errors.New("invalid callback: value MUST be an object")
 	}
