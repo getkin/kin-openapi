@@ -9,11 +9,20 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func TestIssue409(t *testing.T) {
+func TestIssue409PatternIgnored(t *testing.T) {
 	l := openapi3.NewLoader()
 	s, err := l.LoadFromFile("testdata/issue409.yml")
 	require.NoError(t, err)
 
 	err = s.Validate(l.Context, openapi3.DisableSchemaPatternValidation())
 	assert.NoError(t, err)
+}
+
+func TestIssue409PatternNotIgnored(t *testing.T) {
+	l := openapi3.NewLoader()
+	s, err := l.LoadFromFile("testdata/issue409.yml")
+	require.NoError(t, err)
+
+	err = s.Validate(l.Context)
+	assert.Error(t, err)
 }

@@ -1028,7 +1028,10 @@ func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
 		}
 		for _, typ := range example.AllInvalid {
 			schema := baseSchema.WithFormat(typ)
-			err := schema.Validate(context.Background())
+			ctx := withValidationOptions(context.Background(), &validationOptions{
+				schemaFormatValidationEnabled: true,
+			})
+			err := schema.Validate(ctx)
 			require.Error(t, err)
 		}
 	}
@@ -1308,6 +1311,6 @@ func TestValidationFailsOnInvalidPattern(t *testing.T) {
 		Type:    "string",
 	}
 
-	var err = schema.Validate(context.Background())
+	err := schema.Validate(context.Background())
 	require.Error(t, err)
 }

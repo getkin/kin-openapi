@@ -54,6 +54,7 @@ func (doc *T) AddServer(server *Server) {
 }
 
 // Validate returns an error if T does not comply with the OpenAPI spec.
+// Validations Options can be provided to modify the validation behavior.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	validationOpts := &validationOptions{}
 	for _, opt := range opts {

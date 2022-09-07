@@ -186,6 +186,9 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 
 ## Sub-v0 breaking API changes
 
+### v0.101.0
+* `openapi3.SchemaFormatValidationDisabled` has been removed in favour of an option `openapi3.EnableSchemaFormatValidation()` passed to `openapi3.T.Validate`. The default behaviour is also now to not validate formats, as the OpenAPI spec mentions the `format` is an open value.
+
 ### v0.84.0
 * The prototype of `openapi3gen.NewSchemaRefForValue` changed:
 	* It no longer returns a map but that is still accessible under the field `(*Generator).SchemaRefs`.

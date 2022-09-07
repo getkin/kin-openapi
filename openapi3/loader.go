@@ -51,9 +51,7 @@ type Loader struct {
 
 // NewLoader returns an empty Loader
 func NewLoader() *Loader {
-	return &Loader{
-		Context: context.Background(),
-	}
+	return &Loader{}
 }
 
 func (loader *Loader) resetVisitedPathItemRefs() {
@@ -168,6 +166,10 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
+	if loader.Context == nil {
+		loader.Context = context.Background()
+	}
+
 	if loader.visitedPathItemRefs == nil {
 		loader.resetVisitedPathItemRefs()
 	}

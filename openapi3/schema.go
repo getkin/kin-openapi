@@ -666,7 +666,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "float", "double":
 			default:
-				if !validationOpts.schemaFormatValidationDisabled {
+				if validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -676,7 +676,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "int32", "int64":
 			default:
-				if !validationOpts.schemaFormatValidationDisabled {
+				if validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -698,7 +698,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok && !validationOpts.schemaFormatValidationDisabled {
+				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -1063,7 +1063,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			formatMin = formatMinInt64
 			formatMax = formatMaxInt64
 		default:
-			if !settings.formatValidationDisabled {
+			if settings.formatValidationEnabled {
 				return unsupportedFormat(schema.Format)
 			}
 		}
