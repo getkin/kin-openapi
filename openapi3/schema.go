@@ -666,7 +666,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "float", "double":
 			default:
-				if validationOpts.schemaFormatValidationEnabled {
+				if validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -676,7 +676,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "int32", "int64":
 			default:
-				if validationOpts.schemaFormatValidationEnabled {
+				if validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -698,12 +698,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
+				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
 		}
-		if schema.Pattern != "" && !validationOpts.schemaPatternValidationDisabled {
+		if schema.Pattern != "" && !validationOpts.SchemaPatternValidationDisabled {
 			if err = schema.compilePattern(); err != nil {
 				return err
 			}
