@@ -1028,7 +1028,7 @@ func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
 		}
 		for _, typ := range example.AllInvalid {
 			schema := baseSchema.WithFormat(typ)
-			ctx := withValidationOptions(context.Background(), &validationOptions{
+			ctx := WithValidationOptions(context.Background(), &validationOptions{
 				schemaFormatValidationEnabled: true,
 			})
 			err := schema.Validate(ctx)

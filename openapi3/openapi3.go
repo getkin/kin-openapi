@@ -60,7 +60,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	for _, opt := range opts {
 		opt(validationOpts)
 	}
-	ctx = withValidationOptions(ctx, validationOpts)
+	ctx = WithValidationOptions(ctx, validationOpts)
 
 	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")

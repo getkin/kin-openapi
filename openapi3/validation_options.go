@@ -26,7 +26,8 @@ func DisableSchemaPatternValidation() ValidationOption {
 	}
 }
 
-func withValidationOptions(ctx context.Context, options *validationOptions) context.Context {
+// WithValidationOptions allows adding validation options to a context object that can be used when validationg any OpenAPI type.
+func WithValidationOptions(ctx context.Context, options *validationOptions) context.Context {
 	return context.WithValue(ctx, validationOptionsKey{}, options)
 }
 
