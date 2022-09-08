@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
 
@@ -290,6 +291,12 @@ func (value *SchemaRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if SchemaRef does not comply with the OpenAPI spec.
 func (value *SchemaRef) Validate(ctx context.Context) error {
 	if v := value.Value; v != nil {
+		if x := v.Example; x != nil {
+			if err := ValidateExampleValue(ctx, x, v); err != nil {
+				return fmt.Errorf("invalid schema example: %s", err)
+			}
+		}
+
 		return v.Validate(ctx)
 	}
 	return foundUnresolvedRef(value.Ref)

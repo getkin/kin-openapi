@@ -55,5 +55,9 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Example does not comply with the OpenAPI spec.
 func (example *Example) Validate(ctx context.Context) error {
-	return nil // TODO
+	if v := example.Value; v == nil && example.ExternalValue == "" {
+		return fmt.Errorf("example has no value field")
+	}
+
+	return nil
 }
