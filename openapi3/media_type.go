@@ -81,6 +81,9 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 		if err := schema.Validate(ctx); err != nil {
 			return err
 		}
+		if mediaType.Example != nil && mediaType.Examples != nil {
+			return fmt.Errorf("%s: example and examples are mutually exclusive", schema.Ref)
+		}
 		if example := mediaType.Example; example != nil {
 			if err := ValidateExampleValue(ctx, example, schema.Value); err != nil {
 				return err
