@@ -121,7 +121,7 @@ func TestExamplesValidation(t *testing.T) {
     BadUser:
       description: empty user example
 `,
-			errContains: "example has no value field",
+			errContains: "example has no value or externalValue field",
 		},
 		{
 			name:                  "value_externalValue_mutual_exclusion",
