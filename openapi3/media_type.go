@@ -74,12 +74,17 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if MediaType does not comply with the OpenAPI spec.
 func (mediaType *MediaType) Validate(ctx context.Context) error {
+	validationOpts := getValidationOptions(ctx)
+
 	if mediaType == nil {
 		return nil
 	}
 	if schema := mediaType.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
 			return err
+		}
+		if validationOpts.ExamplesValidationDisabled {
+			return nil
 		}
 		if mediaType.Example != nil && mediaType.Examples != nil {
 			return fmt.Errorf("%s: example and examples are mutually exclusive", schema.Ref)

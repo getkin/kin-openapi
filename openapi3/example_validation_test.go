@@ -8,14 +8,18 @@ import (
 )
 
 func TestExamplesValidation(t *testing.T) {
-	tests := []struct {
+	t.Parallel()
+
+	type testCase struct {
 		name                  string
 		schemaRequestExample  string
 		schemaResponseExample string
 		mediaTypeRequestField string
 		examples              string
 		errContains           string
-	}{
+	}
+
+	tests := []testCase{
 		{
 			name: "invalid_component_examples",
 			schemaRequestExample: `
@@ -136,12 +140,28 @@ func TestExamplesValidation(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			loader := NewLoader()
+	testOptions := []struct {
+		returnsError bool
+		tests        []testCase
+	}{
+		{
+			returnsError: true,
+			tests:        tests,
+		},
+		{
+			returnsError: false,
+			tests:        tests,
+		},
+	}
 
-			spec := bytes.Buffer{}
-			spec.WriteString(`
+	for _, testOption := range testOptions {
+		testOption := testOption
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				loader := NewLoader()
+
+				spec := bytes.Buffer{}
+				spec.WriteString(`
 openapi: 3.0.3
 info:
   title: An API
@@ -157,8 +177,8 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateUserRequest"
 `)
-			spec.WriteString(tt.mediaTypeRequestField)
-			spec.WriteString(`
+				spec.WriteString(tt.mediaTypeRequestField)
+				spec.WriteString(`
         description: Created user object
         required: true
       responses:
@@ -171,8 +191,8 @@ paths:
 components:
   schemas:
     CreateUserRequest:`)
-			spec.WriteString(tt.schemaRequestExample)
-			spec.WriteString(`
+				spec.WriteString(tt.schemaRequestExample)
+				spec.WriteString(`
       required:
         - username
         - email
@@ -190,8 +210,8 @@ components:
           minLength: 7
       type: object
     CreateUserResponse:`)
-			spec.WriteString(tt.schemaResponseExample)
-			spec.WriteString(`
+				spec.WriteString(tt.schemaResponseExample)
+				spec.WriteString(`
       description: represents the response to a User creation
       required:
         - access_token
@@ -204,15 +224,20 @@ components:
           type: integer
       type: object
 `)
-			spec.WriteString(tt.examples)
+				spec.WriteString(tt.examples)
 
-			doc, err := loader.LoadFromData(spec.Bytes())
-			require.NoError(t, err)
+				doc, err := loader.LoadFromData(spec.Bytes())
+				require.NoError(t, err)
 
-			err = doc.Validate(loader.Context)
-
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.errContains)
-		})
+				if testOption.returnsError {
+					err = doc.Validate(loader.Context)
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tt.errContains)
+				} else {
+					err = doc.Validate(loader.Context, DisableExamplesValidation())
+					require.NoError(t, err)
+				}
+			})
+		}
 	}
 }

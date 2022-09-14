@@ -56,6 +56,11 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Example does not comply with the OpenAPI spec.
 func (example *Example) Validate(ctx context.Context) error {
+	validationOpts := getValidationOptions(ctx)
+
+	if validationOpts.ExamplesValidationDisabled {
+		return nil
+	}
 	if example.Value != nil && example.ExternalValue != "" {
 		return errors.New("value and externalValue are mutually exclusive")
 	}

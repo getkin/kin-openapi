@@ -9,6 +9,7 @@ type ValidationOption func(options *ValidationOptions)
 type ValidationOptions struct {
 	SchemaFormatValidationEnabled   bool
 	SchemaPatternValidationDisabled bool
+	ExamplesValidationDisabled      bool
 }
 
 type validationOptionsKey struct{}
@@ -24,6 +25,13 @@ func EnableSchemaFormatValidation() ValidationOption {
 func DisableSchemaPatternValidation() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.SchemaPatternValidationDisabled = true
+	}
+}
+
+// DisableExamplesValidation disables all example schema validation.
+func DisableExamplesValidation() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.ExamplesValidationDisabled = true
 	}
 }
 
