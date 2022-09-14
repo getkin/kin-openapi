@@ -56,7 +56,6 @@ func TestExamplesValidation(t *testing.T) {
               email: bad
               password: short
    `,
-			examples: ``,
 		},
 		{
 			name: "invalid_schema_request_example",
@@ -72,11 +71,9 @@ func TestExamplesValidation(t *testing.T) {
               email: real@email
               password: validpassword
    `,
-			examples: ``,
 		},
 		{
-			name:                 "invalid_schema_response_example",
-			schemaRequestExample: ``,
+			name: "invalid_schema_response_example",
 			schemaResponseExample: `
       example:
         user_id: 1
@@ -88,11 +85,9 @@ func TestExamplesValidation(t *testing.T) {
               email: real@email
               password: validpassword
    `,
-			examples: ``,
 		},
 		{
-			name:                 "example_examples_mutually_exclusive",
-			schemaRequestExample: ``,
+			name: "example_examples_mutually_exclusive",
 			mediaTypeRequestField: `
             examples:
               BadUser:
@@ -113,9 +108,7 @@ func TestExamplesValidation(t *testing.T) {
 `,
 		},
 		{
-			name:                  "example_without_value",
-			schemaRequestExample:  ``,
-			mediaTypeRequestField: ``,
+			name: "example_without_value",
 			examples: `
   examples:
     BadUser:
@@ -124,9 +117,7 @@ func TestExamplesValidation(t *testing.T) {
 			errContains: "example has no value or externalValue field",
 		},
 		{
-			name:                  "value_externalValue_mutual_exclusion",
-			schemaRequestExample:  ``,
-			mediaTypeRequestField: ``,
+			name: "value_externalValue_mutual_exclusion",
 			examples: `
   examples:
     BadUser:
@@ -141,16 +132,13 @@ func TestExamplesValidation(t *testing.T) {
 	}
 
 	testOptions := []struct {
-		returnsError bool
-		tests        []testCase
+		disableExamplesValidation bool
 	}{
 		{
-			returnsError: true,
-			tests:        tests,
+			disableExamplesValidation: true,
 		},
 		{
-			returnsError: false,
-			tests:        tests,
+			disableExamplesValidation: false,
 		},
 	}
 
@@ -229,13 +217,13 @@ components:
 				doc, err := loader.LoadFromData(spec.Bytes())
 				require.NoError(t, err)
 
-				if testOption.returnsError {
+				if testOption.disableExamplesValidation {
+					err = doc.Validate(loader.Context, DisableExamplesValidation())
+					require.NoError(t, err)
+				} else {
 					err = doc.Validate(loader.Context)
 					require.Error(t, err)
 					require.Contains(t, err.Error(), tt.errContains)
-				} else {
-					err = doc.Validate(loader.Context, DisableExamplesValidation())
-					require.NoError(t, err)
 				}
 			})
 		}
