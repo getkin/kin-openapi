@@ -36,9 +36,6 @@ var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
 	SchemaErrorDetailsDisabled = false
 
-	//SchemaFormatValidationDisabled disables validation of schema type formats.
-	SchemaFormatValidationDisabled = false
-
 	errSchema = errors.New("input does not match the schema")
 
 	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
@@ -403,6 +400,7 @@ func (schema *Schema) WithMax(value float64) *Schema {
 	schema.Max = &value
 	return schema
 }
+
 func (schema *Schema) WithExclusiveMin(value bool) *Schema {
 	schema.ExclusiveMin = value
 	return schema
@@ -606,6 +604,8 @@ func (schema *Schema) Validate(ctx context.Context) error {
 }
 
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {
+	validationOpts := getValidationOptions(ctx)
+
 	for _, existing := range stack {
 		if existing == schema {
 			return
@@ -666,7 +666,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "float", "double":
 			default:
-				if !SchemaFormatValidationDisabled {
+				if validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -676,7 +676,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "int32", "int64":
 			default:
-				if !SchemaFormatValidationDisabled {
+				if validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -698,12 +698,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok && !SchemaFormatValidationDisabled {
+				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
 		}
-		if schema.Pattern != "" {
+		if schema.Pattern != "" && !validationOpts.SchemaPatternValidationDisabled {
 			if err = schema.compilePattern(); err != nil {
 				return err
 			}
@@ -1063,7 +1063,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			formatMin = formatMinInt64
 			formatMax = formatMaxInt64
 		default:
-			if !SchemaFormatValidationDisabled {
+			if settings.formatValidationEnabled {
 				return unsupportedFormat(schema.Format)
 			}
 		}
@@ -1237,7 +1237,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	}
 
 	// "pattern"
-	if schema.Pattern != "" && schema.compiledPattern == nil {
+	if schema.Pattern != "" && schema.compiledPattern == nil && !settings.patternValidationDisabled {
 		var err error
 		if err = schema.compilePattern(); err != nil {
 			if !settings.multiError {
