@@ -11,29 +11,24 @@ func TestExamplesValidation(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
-		name                  string
-		schemaRequestExample  string
-		schemaResponseExample string
-		mediaTypeRequestField string
-		examples              string
-		errContains           string
+		name                   string
+		requestSchemaExample   string
+		responseSchemaExample  string
+		mediaTypeRequestFields string
+		componentExamples      string
+		errContains            string
+		raisesValidationErr    bool
 	}
 
 	testCases := []testCase{
 		{
 			name: "invalid_component_examples",
-			schemaRequestExample: `
-      example:
-        username: good
-        email: real@email
-        password: validpassword
-   `,
-			mediaTypeRequestField: `
+			mediaTypeRequestFields: `
             examples:
               BadUser:
                 $ref: '#/components/examples/BadUser'
    `,
-			examples: `
+			componentExamples: `
   examples:
     BadUser:
       value:
@@ -41,54 +36,86 @@ func TestExamplesValidation(t *testing.T) {
         email: bad
         password: short
    `,
+			raisesValidationErr: true,
+		},
+		{
+			name: "valid_component_examples",
+			mediaTypeRequestFields: `
+            examples:
+              BadUser:
+                $ref: '#/components/examples/BadUser'
+   `,
+			componentExamples: `
+  examples:
+    BadUser:
+      value:
+        username: good
+        email: good@mail.com
+        password: password
+   `,
+			raisesValidationErr: false,
 		},
 		{
 			name: "invalid_mediatype_examples",
-			schemaRequestExample: `
-      example:
-        username: good
-        email: real@email
-        password: validpassword
-   `,
-			mediaTypeRequestField: `
+			mediaTypeRequestFields: `
             example:
               username: "]bad["
               email: bad
               password: short
    `,
+			raisesValidationErr: true,
+		},
+		{
+			name: "valid_mediatype_examples",
+			mediaTypeRequestFields: `
+            example:
+              username: good
+              email: good@mail.com
+              password: password
+   `,
+			raisesValidationErr: false,
 		},
 		{
 			name: "invalid_schema_request_example",
-			schemaRequestExample: `
+			requestSchemaExample: `
       example:
         username: good
         email: good@email.com
         # missing password
    `,
-			mediaTypeRequestField: `
-            example:
-              username: good
-              email: real@email
-              password: validpassword
+			raisesValidationErr: true,
+		},
+		{
+			name: "valid_schema_request_example",
+			requestSchemaExample: `
+      example:
+        username: good
+        email: good@email.com
+        password: password
    `,
+			raisesValidationErr: false,
 		},
 		{
 			name: "invalid_schema_response_example",
-			schemaResponseExample: `
+			responseSchemaExample: `
       example:
         user_id: 1
         # missing access_token
    `,
-			mediaTypeRequestField: `
-            example:
-              username: good
-              email: real@email
-              password: validpassword
+			raisesValidationErr: true,
+		},
+		{
+			name: "valid_schema_response_example",
+			responseSchemaExample: `
+      example:
+        user_id: 1
+        access_token: "abcd"
    `,
+			raisesValidationErr: false,
 		},
 		{
 			name: "example_examples_mutually_exclusive",
-			mediaTypeRequestField: `
+			mediaTypeRequestFields: `
             examples:
               BadUser:
                 $ref: '#/components/examples/BadUser'
@@ -98,7 +125,7 @@ func TestExamplesValidation(t *testing.T) {
               password: validpassword
 `,
 			errContains: "example and examples are mutually exclusive",
-			examples: `
+			componentExamples: `
   examples:
     BadUser:
       value:
@@ -106,19 +133,21 @@ func TestExamplesValidation(t *testing.T) {
         email: bad
         password: short
 `,
+			raisesValidationErr: true,
 		},
 		{
 			name: "example_without_value",
-			examples: `
+			componentExamples: `
   examples:
     BadUser:
       description: empty user example
 `,
-			errContains: "example has no value or externalValue field",
+			errContains:         "example has no value or externalValue field",
+			raisesValidationErr: true,
 		},
 		{
 			name: "value_externalValue_mutual_exclusion",
-			examples: `
+			componentExamples: `
   examples:
     BadUser:
       value:
@@ -127,7 +156,8 @@ func TestExamplesValidation(t *testing.T) {
         password: validpassword
       externalValue: 'http://example.com/examples/example'
 `,
-			errContains: "value and externalValue are mutually exclusive",
+			errContains:         "value and externalValue are mutually exclusive",
+			raisesValidationErr: true,
 		},
 	}
 
@@ -170,7 +200,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateUserRequest"
 `)
-					spec.WriteString(tc.mediaTypeRequestField)
+					spec.WriteString(tc.mediaTypeRequestFields)
 					spec.WriteString(`
         description: Created user object
         required: true
@@ -184,7 +214,7 @@ paths:
 components:
   schemas:
     CreateUserRequest:`)
-					spec.WriteString(tc.schemaRequestExample)
+					spec.WriteString(tc.requestSchemaExample)
 					spec.WriteString(`
       required:
         - username
@@ -203,7 +233,7 @@ components:
           minLength: 7
       type: object
     CreateUserResponse:`)
-					spec.WriteString(tc.schemaResponseExample)
+					spec.WriteString(tc.responseSchemaExample)
 					spec.WriteString(`
       description: represents the response to a User creation
       required:
@@ -217,18 +247,22 @@ components:
           type: integer
       type: object
 `)
-					spec.WriteString(tc.examples)
+					spec.WriteString(tc.componentExamples)
 
 					doc, err := loader.LoadFromData(spec.Bytes())
 					require.NoError(t, err)
 
 					if testOption.disableExamplesValidation {
 						err = doc.Validate(loader.Context, DisableExamplesValidation())
-						require.NoError(t, err)
 					} else {
 						err = doc.Validate(loader.Context)
+					}
+
+					if tc.raisesValidationErr && !testOption.disableExamplesValidation {
 						require.Error(t, err)
 						require.Contains(t, err.Error(), tc.errContains)
+					} else {
+						require.NoError(t, err)
 					}
 				})
 			}
