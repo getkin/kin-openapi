@@ -4,10 +4,8 @@ import (
 	"context"
 )
 
-func ValidateExampleValue(ctx context.Context, input interface{}, schema *Schema) error {
-	opts := make([]SchemaValidationOption, 0, 3) // 3 potential opts here
-	opts = append(opts, VisitAsResponse())
-	opts = append(opts, VisitAsRequest())
+func validateExampleValue(ctx context.Context, input interface{}, schema *Schema) error {
+	opts := make([]SchemaValidationOption, 0, 1)
 	opts = append(opts, MultiErrors())
 
 	// Validate input with the schema

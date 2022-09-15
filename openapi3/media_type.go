@@ -74,8 +74,6 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if MediaType does not comply with the OpenAPI spec.
 func (mediaType *MediaType) Validate(ctx context.Context) error {
-	validationOpts := getValidationOptions(ctx)
-
 	if mediaType == nil {
 		return nil
 	}
@@ -83,14 +81,14 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 		if err := schema.Validate(ctx); err != nil {
 			return err
 		}
-		if validationOpts.ExamplesValidationDisabled {
-			return nil
-		}
 		if mediaType.Example != nil && mediaType.Examples != nil {
 			return fmt.Errorf("%s: example and examples are mutually exclusive", schema.Ref)
 		}
+		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+			return nil
+		}
 		if example := mediaType.Example; example != nil {
-			if err := ValidateExampleValue(ctx, example, schema.Value); err != nil {
+			if err := validateExampleValue(ctx, example, schema.Value); err != nil {
 				return err
 			}
 		} else if examples := mediaType.Examples; examples != nil {
@@ -98,7 +96,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 				if err := v.Validate(ctx); err != nil {
 					return fmt.Errorf("%s: %s", k, err)
 				}
-				if err := ValidateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
+				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
 					return fmt.Errorf("%s: %s", k, err)
 				}
 			}

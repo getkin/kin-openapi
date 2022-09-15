@@ -8,22 +8,51 @@ import (
 )
 
 func TestExamplesValidation(t *testing.T) {
-	t.Parallel()
-
 	type testCase struct {
-		name                   string
-		requestSchemaExample   string
-		responseSchemaExample  string
-		mediaTypeRequestFields string
-		componentExamples      string
-		errContains            string
-		raisesValidationErr    bool
+		name                    string
+		requestSchemaExample    string
+		responseSchemaExample   string
+		mediaTypeRequestExample string
+		parametersExample       string
+		componentExamples       string
+		errContains             string
+		mustErr                 bool
 	}
 
 	testCases := []testCase{
 		{
+			name: "invalid_parameter_examples",
+			parametersExample: `
+          examples:
+            param1example:
+              value: abcd
+   `,
+			errContains: "invalid paths: param1example",
+		},
+		{
+			name: "valid_parameter_examples",
+			parametersExample: `
+          examples:
+            param1example:
+              value: 1
+   `,
+		},
+		{
+			name: "invalid_parameter_example",
+			parametersExample: `
+          example: abcd
+   `,
+			errContains: "invalid paths",
+		},
+		{
+			name: "valid_parameter_example",
+			parametersExample: `
+          example: 1
+   `,
+		},
+		{
 			name: "invalid_component_examples",
-			mediaTypeRequestFields: `
+			mediaTypeRequestExample: `
             examples:
               BadUser:
                 $ref: '#/components/examples/BadUser'
@@ -36,11 +65,11 @@ func TestExamplesValidation(t *testing.T) {
         email: bad
         password: short
    `,
-			raisesValidationErr: true,
+			errContains: "invalid paths: BadUser",
 		},
 		{
 			name: "valid_component_examples",
-			mediaTypeRequestFields: `
+			mediaTypeRequestExample: `
             examples:
               BadUser:
                 $ref: '#/components/examples/BadUser'
@@ -53,27 +82,25 @@ func TestExamplesValidation(t *testing.T) {
         email: good@mail.com
         password: password
    `,
-			raisesValidationErr: false,
 		},
 		{
 			name: "invalid_mediatype_examples",
-			mediaTypeRequestFields: `
+			mediaTypeRequestExample: `
             example:
               username: "]bad["
               email: bad
               password: short
    `,
-			raisesValidationErr: true,
+			errContains: "invalid paths",
 		},
 		{
 			name: "valid_mediatype_examples",
-			mediaTypeRequestFields: `
+			mediaTypeRequestExample: `
             example:
               username: good
               email: good@mail.com
               password: password
    `,
-			raisesValidationErr: false,
 		},
 		{
 			name: "invalid_schema_request_example",
@@ -83,7 +110,7 @@ func TestExamplesValidation(t *testing.T) {
         email: good@email.com
         # missing password
    `,
-			raisesValidationErr: true,
+			errContains: "invalid schema example",
 		},
 		{
 			name: "valid_schema_request_example",
@@ -93,7 +120,6 @@ func TestExamplesValidation(t *testing.T) {
         email: good@email.com
         password: password
    `,
-			raisesValidationErr: false,
 		},
 		{
 			name: "invalid_schema_response_example",
@@ -102,7 +128,7 @@ func TestExamplesValidation(t *testing.T) {
         user_id: 1
         # missing access_token
    `,
-			raisesValidationErr: true,
+			errContains: "invalid schema example",
 		},
 		{
 			name: "valid_schema_response_example",
@@ -111,11 +137,10 @@ func TestExamplesValidation(t *testing.T) {
         user_id: 1
         access_token: "abcd"
    `,
-			raisesValidationErr: false,
 		},
 		{
 			name: "example_examples_mutually_exclusive",
-			mediaTypeRequestFields: `
+			mediaTypeRequestExample: `
             examples:
               BadUser:
                 $ref: '#/components/examples/BadUser'
@@ -125,6 +150,7 @@ func TestExamplesValidation(t *testing.T) {
               password: validpassword
 `,
 			errContains: "example and examples are mutually exclusive",
+			mustErr:     true,
 			componentExamples: `
   examples:
     BadUser:
@@ -133,7 +159,6 @@ func TestExamplesValidation(t *testing.T) {
         email: bad
         password: short
 `,
-			raisesValidationErr: true,
 		},
 		{
 			name: "example_without_value",
@@ -142,8 +167,8 @@ func TestExamplesValidation(t *testing.T) {
     BadUser:
       description: empty user example
 `,
-			errContains:         "example has no value or externalValue field",
-			raisesValidationErr: true,
+			errContains: "example has no value or externalValue field",
+			mustErr:     true,
 		},
 		{
 			name: "value_externalValue_mutual_exclusion",
@@ -156,8 +181,8 @@ func TestExamplesValidation(t *testing.T) {
         password: validpassword
       externalValue: 'http://example.com/examples/example'
 `,
-			errContains:         "value and externalValue are mutually exclusive",
-			raisesValidationErr: true,
+			errContains: "value and externalValue are mutually exclusive",
+			mustErr:     true,
 		},
 	}
 
@@ -174,6 +199,8 @@ func TestExamplesValidation(t *testing.T) {
 			disableExamplesValidation: false,
 		},
 	}
+
+	t.Parallel()
 
 	for _, testOption := range testOptions {
 		testOption := testOption
@@ -194,13 +221,21 @@ paths:
     post:
       description: User creation.
       operationId: createUser
+      parameters:
+        - name: param1
+          in: 'query'
+          schema:
+            format: int64
+            type: integer`)
+					spec.WriteString(tc.parametersExample)
+					spec.WriteString(`
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateUserRequest"
 `)
-					spec.WriteString(tc.mediaTypeRequestFields)
+					spec.WriteString(tc.mediaTypeRequestExample)
 					spec.WriteString(`
         description: Created user object
         required: true
@@ -258,7 +293,7 @@ components:
 						err = doc.Validate(loader.Context)
 					}
 
-					if tc.raisesValidationErr && !testOption.disableExamplesValidation {
+					if tc.errContains != "" && !testOption.disableExamplesValidation || tc.mustErr {
 						require.Error(t, err)
 						require.Contains(t, err.Error(), tc.errContains)
 					} else {
