@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
@@ -82,7 +83,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 			return err
 		}
 		if mediaType.Example != nil && mediaType.Examples != nil {
-			return fmt.Errorf("%s: example and examples are mutually exclusive", schema.Ref)
+			return errors.New("example and examples are mutually exclusive")
 		}
 		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
 			return nil

@@ -303,12 +303,19 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		e := errors.New("parameter must contain exactly one of content and schema")
 		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
 	}
+
+	if content := parameter.Content; content != nil {
+		if err := content.Validate(ctx); err != nil {
+			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
+		}
+	}
+
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
 			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
 		}
 		if parameter.Example != nil && parameter.Examples != nil {
-			return fmt.Errorf("%s: example and examples are mutually exclusive", schema.Ref)
+			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
 		}
 		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
 			return nil
@@ -329,10 +336,5 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		}
 	}
 
-	if content := parameter.Content; content != nil {
-		if err := content.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
-		}
-	}
 	return nil
 }
