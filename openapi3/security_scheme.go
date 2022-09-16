@@ -165,7 +165,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context) error {
 			return fmt.Errorf("security scheme of type %q should have 'flows'", ss.Type)
 		}
 		if err := flow.Validate(ctx); err != nil {
-			return fmt.Errorf("security scheme 'flow' is invalid: %v", err)
+			return fmt.Errorf("security scheme 'flow' is invalid: %w", err)
 		}
 	} else if ss.Flows != nil {
 		return fmt.Errorf("security scheme of type %q can't have 'flows'", ss.Type)

@@ -60,7 +60,7 @@ type Router struct {
 // All operations of the document will be added to the router.
 func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	if err := doc.Validate(context.Background()); err != nil {
-		return nil, fmt.Errorf("validating OpenAPI failed: %v", err)
+		return nil, fmt.Errorf("validating OpenAPI failed: %w", err)
 	}
 	router := &Router{doc: doc}
 	root := router.node()
