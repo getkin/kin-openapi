@@ -321,7 +321,7 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 			return nil
 		}
 		if example := parameter.Example; example != nil {
-			if err := validateExampleValue(ctx, example, schema.Value); err != nil {
+			if err := validateExampleValue(example, schema.Value); err != nil {
 				return err
 			}
 		} else if examples := parameter.Examples; examples != nil {
@@ -329,7 +329,7 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 				if err := v.Validate(ctx); err != nil {
 					return fmt.Errorf("%s: %s", k, err)
 				}
-				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
+				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
 					return fmt.Errorf("%s: %s", k, err)
 				}
 			}
