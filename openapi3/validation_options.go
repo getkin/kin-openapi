@@ -7,9 +7,8 @@ type ValidationOption func(options *ValidationOptions)
 
 // ExamplesValidation provides configuration for validating examples against their schema.
 type ExamplesValidation struct {
-	Disabled bool
-	AsReq    bool
-	AsRes    bool
+	Disabled     bool
+	AsReq, AsRes bool
 }
 
 // ValidationOptions provides configuration for validating OpenAPI documents.

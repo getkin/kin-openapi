@@ -754,6 +754,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	}
 
 	if x := schema.Example; x != nil && !validationOpts.ExamplesValidation.Disabled {
+		fmt.Printf("validating schema %v with opts: %#v\n", schema.Example, validationOpts.ExamplesValidation)
+
 		if err := validateExampleValue(x, schema, validationOpts); err != nil {
 			return fmt.Errorf("invalid schema example: %s", err)
 		}
@@ -1410,6 +1412,8 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		return schema.expectedType(settings, TypeObject)
 	}
 
+	var me MultiError
+
 	if settings.asreq || settings.asrep {
 		for propName, propSchema := range schema.Properties {
 			if value[propName] == nil {
@@ -1419,11 +1423,16 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 						settings.onceSettingDefaults.Do(f)
 					}
 				}
+			} else {
+				if settings.asreq && propSchema.Value.ReadOnly {
+					me = append(me, fmt.Errorf("readOnly property %q in request example", propName))
+				}
+				if settings.asrep && propSchema.Value.WriteOnly {
+					me = append(me, fmt.Errorf("writeOnly property %q in response example", propName))
+				}
 			}
 		}
 	}
-
-	var me MultiError
 
 	// "properties"
 	properties := schema.Properties

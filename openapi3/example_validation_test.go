@@ -138,19 +138,19 @@ func TestExamplesSchemaValidation(t *testing.T) {
       example:
         user_id: 1
         access_token: "abcd"
-   `,
+  `,
 		},
 		{
 			name: "valid_readonly_writeonly_examples",
 			readWriteOnlyMediaTypeRequestExample: `
             examples:
-              BadUser:
+              ReadWriteOnlyRequest:
                 $ref: '#/components/examples/ReadWriteOnlyRequestData'
 `,
 			readWriteOnlyMediaTypeResponseExample: `
-         examples:
-           BadUser:
-             $ref: '#/components/examples/ReadWriteOnlyResponseData'
+              examples:
+                ReadWriteOnlyResponse:
+                  $ref: '#/components/examples/ReadWriteOnlyResponseData'
 `,
 			componentExamples: `
   examples:
@@ -161,33 +161,41 @@ func TestExamplesSchemaValidation(t *testing.T) {
     ReadWriteOnlyResponseData:
       value:
         user_id: 1
-   `,
+  `,
 		},
 		{
-			name: "invalid_readonly_writeonly_examples",
+			name: "invalid_readonly_request_examples",
 			readWriteOnlyMediaTypeRequestExample: `
-              examples:
-                ReadWriteOnlyRequest:
-                  $ref: '#/components/examples/ReadWriteOnlyRequestData'
-		`,
-			readWriteOnlyMediaTypeResponseExample: `
             examples:
-              ReadWriteOnlyResponse:
-                $ref: '#/components/examples/ReadWriteOnlyResponseData'
-		`,
+              ReadWriteOnlyRequest:
+                $ref: '#/components/examples/ReadWriteOnlyRequestData'
+`,
 			componentExamples: `
-    examples:
-      ReadWriteOnlyRequestData:
-        value:
-          username: user
-          password: password
-          user_id: 1
-      ReadWriteOnlyResponseData:
-        value:
-          password: password
-          user_id: 1
-      `,
-			errContains: "readOnly writeOnly error",
+  examples:
+    ReadWriteOnlyRequestData:
+      value:
+        username: user
+        password: password
+        user_id: 4321
+`,
+			errContains: "ReadWriteOnlyRequest: readOnly property",
+		},
+		{
+			name: "invalid_writeonly_response_examples",
+			readWriteOnlyMediaTypeResponseExample: `
+              examples:
+                ReadWriteOnlyResponse:
+                  $ref: '#/components/examples/ReadWriteOnlyResponseData'
+`,
+			componentExamples: `
+  examples:
+    ReadWriteOnlyResponseData:
+      value:
+        password: password
+        user_id: 0987
+`,
+
+			errContains: "ReadWriteOnlyResponse: writeOnly property",
 		},
 	}
 
@@ -260,14 +268,18 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/ReadWriteOnlyData"
-            required: true
+            required: true`)
+					spec.WriteString(tc.readWriteOnlyMediaTypeRequestExample)
+					spec.WriteString(`
       responses:
         '201':
           description: a response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReadWriteOnlyData"
+                $ref: "#/components/schemas/ReadWriteOnlyData"`)
+					spec.WriteString(tc.readWriteOnlyMediaTypeResponseExample)
+					spec.WriteString(`
 components:
   schemas:
     CreateUserRequest:`)
@@ -303,12 +315,12 @@ components:
           type: integer
       type: object
     ReadWriteOnlyData:
-      required:
-        # only required in request
-        - username
-        - password
-        # only required in response
-        - user_id
+      #required:
+      #  # only required in request
+      #  - username
+      #  - password
+      #  # only required in response
+      #  - user_id
       properties:
         username:
           type: string
