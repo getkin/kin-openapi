@@ -99,7 +99,7 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 			return
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("%s: %s", k, err)
 		}
 	}
 

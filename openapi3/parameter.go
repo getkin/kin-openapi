@@ -303,16 +303,38 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		e := errors.New("parameter must contain exactly one of content and schema")
 		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
 	}
-	if schema := parameter.Schema; schema != nil {
-		if err := schema.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
-		}
-	}
 
 	if content := parameter.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
 		}
 	}
+
+	if schema := parameter.Schema; schema != nil {
+		if err := schema.Validate(ctx); err != nil {
+			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
+		}
+		if parameter.Example != nil && parameter.Examples != nil {
+			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
+		}
+		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+			return nil
+		}
+		if example := parameter.Example; example != nil {
+			if err := validateExampleValue(example, schema.Value); err != nil {
+				return err
+			}
+		} else if examples := parameter.Examples; examples != nil {
+			for k, v := range examples {
+				if err := v.Validate(ctx); err != nil {
+					return fmt.Errorf("%s: %s", k, err)
+				}
+				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+					return fmt.Errorf("%s: %s", k, err)
+				}
+			}
+		}
+	}
+
 	return nil
 }

@@ -2,6 +2,8 @@ package openapi3
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
 
@@ -80,7 +82,28 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 		if err := schema.Validate(ctx); err != nil {
 			return err
 		}
+		if mediaType.Example != nil && mediaType.Examples != nil {
+			return errors.New("example and examples are mutually exclusive")
+		}
+		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+			return nil
+		}
+		if example := mediaType.Example; example != nil {
+			if err := validateExampleValue(example, schema.Value); err != nil {
+				return err
+			}
+		} else if examples := mediaType.Examples; examples != nil {
+			for k, v := range examples {
+				if err := v.Validate(ctx); err != nil {
+					return fmt.Errorf("%s: %s", k, err)
+				}
+				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+					return fmt.Errorf("%s: %s", k, err)
+				}
+			}
+		}
 	}
+
 	return nil
 }
 
