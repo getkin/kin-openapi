@@ -5,11 +5,24 @@ import "context"
 // ValidationOption allows the modification of how the OpenAPI document is validated.
 type ValidationOption func(options *ValidationOptions)
 
-// ValidationOptions provide configuration for validating OpenAPI documents.
+// ExamplesValidation provides configuration for validating examples against their schema.
+type ExamplesValidation struct {
+	Disabled bool
+	AsReq    bool
+	AsRes    bool
+}
+
+// ValidationOptions provides configuration for validating OpenAPI documents.
 type ValidationOptions struct {
 	SchemaFormatValidationEnabled   bool
 	SchemaPatternValidationDisabled bool
-	ExamplesValidationDisabled      bool
+	ExamplesValidation              *ExamplesValidation
+}
+
+func NewValidationOptions() *ValidationOptions {
+	return &ValidationOptions{
+		ExamplesValidation: &ExamplesValidation{},
+	}
 }
 
 type validationOptionsKey struct{}
@@ -31,7 +44,7 @@ func DisableSchemaPatternValidation() ValidationOption {
 // DisableExamplesValidation disables all example schema validation.
 func DisableExamplesValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.ExamplesValidationDisabled = true
+		options.ExamplesValidation.Disabled = true
 	}
 }
 
@@ -44,5 +57,5 @@ func getValidationOptions(ctx context.Context) *ValidationOptions {
 	if options, ok := ctx.Value(validationOptionsKey{}).(*ValidationOptions); ok {
 		return options
 	}
-	return &ValidationOptions{}
+	return NewValidationOptions()
 }

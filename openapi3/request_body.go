@@ -109,5 +109,14 @@ func (requestBody *RequestBody) Validate(ctx context.Context) error {
 	if requestBody.Content == nil {
 		return errors.New("content of the request body is required")
 	}
-	return requestBody.Content.Validate(ctx)
+
+	newCtx := ctx
+	// TODO validate writeonly
+	if validationOpts := getValidationOptions(ctx); !validationOpts.ExamplesValidation.Disabled {
+		vo := NewValidationOptions()
+		vo.ExamplesValidation.AsReq = true
+		newCtx = WithValidationOptions(context.Background(), vo)
+	}
+
+	return requestBody.Content.Validate(newCtx)
 }

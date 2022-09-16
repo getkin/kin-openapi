@@ -9,13 +9,16 @@ import (
 
 func TestExamplesSchemaValidation(t *testing.T) {
 	type testCase struct {
-		name                    string
-		requestSchemaExample    string
-		responseSchemaExample   string
-		mediaTypeRequestExample string
-		parametersExample       string
-		componentExamples       string
-		errContains             string
+		name                                  string
+		requestSchemaExample                  string
+		responseSchemaExample                 string
+		mediaTypeRequestExample               string
+		mediaTypeResponseExample              string
+		readWriteOnlyMediaTypeRequestExample  string
+		readWriteOnlyMediaTypeResponseExample string
+		parametersExample                     string
+		componentExamples                     string
+		errContains                           string
 	}
 
 	testCases := []testCase{
@@ -137,6 +140,55 @@ func TestExamplesSchemaValidation(t *testing.T) {
         access_token: "abcd"
    `,
 		},
+		{
+			name: "valid_readonly_writeonly_examples",
+			readWriteOnlyMediaTypeRequestExample: `
+            examples:
+              BadUser:
+                $ref: '#/components/examples/ReadWriteOnlyRequestData'
+`,
+			readWriteOnlyMediaTypeResponseExample: `
+         examples:
+           BadUser:
+             $ref: '#/components/examples/ReadWriteOnlyResponseData'
+`,
+			componentExamples: `
+  examples:
+    ReadWriteOnlyRequestData:
+      value:
+        username: user
+        password: password
+    ReadWriteOnlyResponseData:
+      value:
+        user_id: 1
+   `,
+		},
+		{
+			name: "invalid_readonly_writeonly_examples",
+			readWriteOnlyMediaTypeRequestExample: `
+              examples:
+                ReadWriteOnlyRequest:
+                  $ref: '#/components/examples/ReadWriteOnlyRequestData'
+		`,
+			readWriteOnlyMediaTypeResponseExample: `
+            examples:
+              ReadWriteOnlyResponse:
+                $ref: '#/components/examples/ReadWriteOnlyResponseData'
+		`,
+			componentExamples: `
+    examples:
+      ReadWriteOnlyRequestData:
+        value:
+          username: user
+          password: password
+          user_id: 1
+      ReadWriteOnlyResponseData:
+        value:
+          password: password
+          user_id: 1
+      `,
+			errContains: "readOnly writeOnly error",
+		},
 	}
 
 	testOptions := []struct {
@@ -198,7 +250,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateUserResponse"
+                $ref: "#/components/schemas/CreateUserResponse"`)
+					spec.WriteString(tc.mediaTypeResponseExample)
+					spec.WriteString(`
+  /readWriteOnly:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadWriteOnlyData"
+            required: true
+      responses:
+        '201':
+          description: a response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadWriteOnlyData"
 components:
   schemas:
     CreateUserRequest:`)
@@ -223,7 +292,6 @@ components:
     CreateUserResponse:`)
 					spec.WriteString(tc.responseSchemaExample)
 					spec.WriteString(`
-      description: represents the response to a User creation
       required:
         - access_token
         - user_id
@@ -233,6 +301,25 @@ components:
         user_id:
           format: int64
           type: integer
+      type: object
+    ReadWriteOnlyData:
+      required:
+        # only required in request
+        - username
+        - password
+        # only required in response
+        - user_id
+      properties:
+        username:
+          type: string
+          writeOnly: true # only sent in a request
+        password:
+          type: string
+          writeOnly: true # only sent in a request
+        user_id:
+          format: int64
+          type: integer
+          readOnly: true # only returned in a response
       type: object
 `)
 					spec.WriteString(tc.componentExamples)
