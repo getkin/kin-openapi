@@ -108,11 +108,8 @@ func (response *Response) Validate(ctx context.Context) error {
 		return errors.New("a short description of the response is required")
 	}
 	newCtx := ctx
-	// TODO validate readonly
-	if validationOpts := getValidationOptions(ctx); !validationOpts.ExamplesValidation.Disabled {
-
-		vo := NewValidationOptions()
-		vo.ExamplesValidation.AsRes = true
+	if vo := getValidationOptions(ctx); !vo.ExamplesValidation.Disabled {
+		vo.ExamplesValidation.AsReq, vo.ExamplesValidation.AsRes = false, true
 		newCtx = WithValidationOptions(context.Background(), vo)
 	}
 

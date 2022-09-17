@@ -160,7 +160,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         password: password
     ReadWriteOnlyResponseData:
       value:
-        user_id: 1
+        user_id: 4321
   `,
 		},
 		{
@@ -178,7 +178,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         password: password
         user_id: 4321
 `,
-			errContains: "ReadWriteOnlyRequest: readOnly property",
+			errContains: "ReadWriteOnlyRequest: readOnly property \"user_id\" in request",
 		},
 		{
 			name: "invalid_writeonly_response_examples",
@@ -192,10 +192,10 @@ func TestExamplesSchemaValidation(t *testing.T) {
     ReadWriteOnlyResponseData:
       value:
         password: password
-        user_id: 0987
+        user_id: 4321
 `,
 
-			errContains: "ReadWriteOnlyResponse: writeOnly property",
+			errContains: "ReadWriteOnlyResponse: writeOnly property \"password\" in response",
 		},
 	}
 
@@ -315,12 +315,12 @@ components:
           type: integer
       type: object
     ReadWriteOnlyData:
-      #required:
-      #  # only required in request
-      #  - username
-      #  - password
-      #  # only required in response
-      #  - user_id
+      required:
+        # only required in request
+        - username
+        - password
+        # only required in response
+        - user_id
       properties:
         username:
           type: string

@@ -111,10 +111,8 @@ func (requestBody *RequestBody) Validate(ctx context.Context) error {
 	}
 
 	newCtx := ctx
-	// TODO validate writeonly
-	if validationOpts := getValidationOptions(ctx); !validationOpts.ExamplesValidation.Disabled {
-		vo := NewValidationOptions()
-		vo.ExamplesValidation.AsReq = true
+	if vo := getValidationOptions(ctx); !vo.ExamplesValidation.Disabled {
+		vo.ExamplesValidation.AsReq, vo.ExamplesValidation.AsRes = true, false
 		newCtx = WithValidationOptions(context.Background(), vo)
 	}
 

@@ -754,9 +754,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	}
 
 	if x := schema.Example; x != nil && !validationOpts.ExamplesValidation.Disabled {
-		fmt.Printf("validating schema %v with opts: %#v\n", schema.Example, validationOpts.ExamplesValidation)
-
-		if err := validateExampleValue(x, schema, validationOpts); err != nil {
+		if err := validateExampleValue(ctx, x, schema); err != nil {
 			return fmt.Errorf("invalid schema example: %s", err)
 		}
 	}
@@ -1414,7 +1412,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 	var me MultiError
 
-	if settings.asreq || settings.asrep {
+	if settings.asReq || settings.asRes {
 		for propName, propSchema := range schema.Properties {
 			if value[propName] == nil {
 				if dlft := propSchema.Value.Default; dlft != nil {
@@ -1424,10 +1422,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 					}
 				}
 			} else {
-				if settings.asreq && propSchema.Value.ReadOnly {
+				if settings.asReq && propSchema.Value.ReadOnly {
 					me = append(me, fmt.Errorf("readOnly property %q in request example", propName))
-				}
-				if settings.asrep && propSchema.Value.WriteOnly {
+				} else if settings.asRes && propSchema.Value.WriteOnly {
 					me = append(me, fmt.Errorf("writeOnly property %q in response example", propName))
 				}
 			}
@@ -1540,10 +1537,10 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	// "required"
 	for _, k := range schema.Required {
 		if _, ok := value[k]; !ok {
-			if s := schema.Properties[k]; s != nil && s.Value.ReadOnly && settings.asreq {
+			if s := schema.Properties[k]; s != nil && s.Value.ReadOnly && settings.asReq {
 				continue
 			}
-			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asrep {
+			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asRes {
 				continue
 			}
 			if settings.failfast {
