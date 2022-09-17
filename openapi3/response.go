@@ -107,25 +107,23 @@ func (response *Response) Validate(ctx context.Context) error {
 	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
-	newCtx := ctx
 	if vo := getValidationOptions(ctx); !vo.ExamplesValidation.Disabled {
 		vo.ExamplesValidation.AsReq, vo.ExamplesValidation.AsRes = false, true
-		newCtx = WithValidationOptions(context.Background(), vo)
 	}
 
 	if content := response.Content; content != nil {
-		if err := content.Validate(newCtx); err != nil {
+		if err := content.Validate(ctx); err != nil {
 			return err
 		}
 	}
 	for _, header := range response.Headers {
-		if err := header.Validate(newCtx); err != nil {
+		if err := header.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
 	for _, link := range response.Links {
-		if err := link.Validate(newCtx); err != nil {
+		if err := link.Validate(ctx); err != nil {
 			return err
 		}
 	}
