@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
@@ -325,7 +326,13 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 				return err
 			}
 		} else if examples := parameter.Examples; examples != nil {
-			for k, v := range examples {
+			names := make([]string, 0, len(examples))
+			for name := range examples {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, k := range names {
+				v := examples[k]
 				if err := v.Validate(ctx); err != nil {
 					return fmt.Errorf("%s: %w", k, err)
 				}
