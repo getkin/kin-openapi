@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -94,7 +95,13 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 		}
 	}
 
-	for k, v := range components.Examples {
+	examples := make([]string, 0, len(components.Examples))
+	for name := range components.Examples {
+		examples = append(examples, name)
+	}
+	sort.Strings(examples)
+	for _, k := range examples {
+		v := components.Examples[k]
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
