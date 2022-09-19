@@ -296,23 +296,23 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 	}
 	if !smSupported {
 		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
-		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
 	if (parameter.Schema == nil) == (parameter.Content == nil) {
 		e := errors.New("parameter must contain exactly one of content and schema")
-		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
 	if content := parameter.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
+			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name, err)
 		}
 	}
 
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
+			return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, err)
 		}
 		if parameter.Example != nil && parameter.Examples != nil {
 			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
@@ -327,10 +327,10 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		} else if examples := parameter.Examples; examples != nil {
 			for k, v := range examples {
 				if err := v.Validate(ctx); err != nil {
-					return fmt.Errorf("%s: %s", k, err)
+					return fmt.Errorf("%s: %w", k, err)
 				}
 				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
-					return fmt.Errorf("%s: %s", k, err)
+					return fmt.Errorf("%s: %w", k, err)
 				}
 			}
 		}

@@ -69,14 +69,14 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	// NOTE: only mention info/components/paths/... key in this func's errors.
 
 	{
-		wrap := func(e error) error { return fmt.Errorf("invalid components: %v", e) }
+		wrap := func(e error) error { return fmt.Errorf("invalid components: %w", e) }
 		if err := doc.Components.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
 	{
-		wrap := func(e error) error { return fmt.Errorf("invalid info: %v", e) }
+		wrap := func(e error) error { return fmt.Errorf("invalid info: %w", e) }
 		if v := doc.Info; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
@@ -87,7 +87,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	}
 
 	{
-		wrap := func(e error) error { return fmt.Errorf("invalid paths: %v", e) }
+		wrap := func(e error) error { return fmt.Errorf("invalid paths: %w", e) }
 		if v := doc.Paths; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
@@ -98,7 +98,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	}
 
 	{
-		wrap := func(e error) error { return fmt.Errorf("invalid security: %v", e) }
+		wrap := func(e error) error { return fmt.Errorf("invalid security: %w", e) }
 		if v := doc.Security; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
@@ -107,7 +107,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	}
 
 	{
-		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
+		wrap := func(e error) error { return fmt.Errorf("invalid servers: %w", e) }
 		if v := doc.Servers; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)

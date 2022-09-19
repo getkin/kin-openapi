@@ -101,7 +101,7 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 
 	resolvedPath, err := resolvePath(rootPath, parsedURL)
 	if err != nil {
-		return nil, fmt.Errorf("could not resolve path: %v", err)
+		return nil, fmt.Errorf("could not resolve path: %w", err)
 	}
 
 	data, err := loader.readURL(resolvedPath)
@@ -285,7 +285,7 @@ func (loader *Loader) resolveComponent(
 
 			if cursor, err = drillIntoField(cursor, pathPart); err != nil {
 				e := failedToResolveRefFragmentPart(ref, pathPart)
-				return nil, fmt.Errorf("%s: %s", e.Error(), err.Error())
+				return nil, fmt.Errorf("%s: %w", e, err)
 			}
 			if cursor == nil {
 				return nil, failedToResolveRefFragmentPart(ref, pathPart)
@@ -430,11 +430,11 @@ func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string,
 
 	var resolvedPath *url.URL
 	if resolvedPath, err = resolvePath(path, parsedURL); err != nil {
-		return nil, "", nil, fmt.Errorf("error resolving path: %v", err)
+		return nil, "", nil, fmt.Errorf("error resolving path: %w", err)
 	}
 
 	if doc, err = loader.loadFromURIInternal(resolvedPath); err != nil {
-		return nil, "", nil, fmt.Errorf("error resolving reference %q: %v", ref, err)
+		return nil, "", nil, fmt.Errorf("error resolving reference %q: %w", ref, err)
 	}
 
 	return doc, "#" + fragment, resolvedPath, nil

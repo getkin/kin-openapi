@@ -28,7 +28,7 @@ var SchemaStringFormats = make(map[string]Format, 4)
 func DefineStringFormat(name string, pattern string) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		err := fmt.Errorf("format %q has invalid pattern %q: %v", name, pattern, err)
+		err := fmt.Errorf("format %q has invalid pattern %q: %w", name, pattern, err)
 		panic(err)
 	}
 	SchemaStringFormats[name] = Format{regexp: re}
