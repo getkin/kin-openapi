@@ -15,6 +15,8 @@ import (
 	"github.com/invopop/yaml"
 )
 
+var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
+
 func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
 }
@@ -696,7 +698,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		} else {
 			if visitedLimit(visited, ref, 3) {
 				visited = append(visited, ref)
-				return fmt.Errorf("invalid schema: circular schema reference detected - %s", strings.Join(visited, " -> "))
+				return fmt.Errorf("%s - %s", CircularReferenceError, strings.Join(visited, " -> "))
 			}
 			visited = append(visited, ref)
 

@@ -11,5 +11,5 @@ func TestIssue542(t *testing.T) {
 
 	_, err := sl.LoadFromFile("testdata/issue542.yml")
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "invalid schema: circular schema reference detected")
+	require.Contains(t, err.Error(), CircularReferenceError)
 }

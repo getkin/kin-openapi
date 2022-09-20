@@ -11,5 +11,5 @@ func TestIssue570(t *testing.T) {
 	loader := NewLoader()
 	_, err := loader.LoadFromFile("testdata/issue570.json")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid schema: circular schema reference detected")
+	assert.Contains(t, err.Error(), CircularReferenceError)
 }
