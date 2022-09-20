@@ -26,7 +26,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
             param1example:
               value: abcd
    `,
-			errContains: "invalid paths: param1example",
+			errContains: "param1example",
 		},
 		{
 			name: "valid_parameter_examples",
@@ -64,7 +64,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: bad
         password: short
    `,
-			errContains: "invalid paths: BadUser",
+			errContains: "BadUser",
 		},
 		{
 			name: "valid_component_examples",

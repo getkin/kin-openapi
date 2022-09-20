@@ -91,12 +91,12 @@ func TestResolveSchemaRef(t *testing.T) {
 }
 
 func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
-	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
+	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"summary":"Create Foo","requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
-	require.EqualError(t, err, `invalid paths: found unresolved ref: ""`)
+	require.EqualError(t, err, `invalid paths: path /foo failed validation for operation POST: found unresolved ref: ""`)
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {
