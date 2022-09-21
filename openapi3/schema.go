@@ -13,6 +13,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
+	"github.com/mohae/deepcopy"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -915,9 +916,17 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			}
 		}
 
-		ok := 0
-		validationErrors := []error{}
-		for _, item := range v {
+		var (
+			ok               = 0
+			validationErrors = []error{}
+			matchedOneOfIdx  = 0
+			tempValue        = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
+		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
@@ -927,11 +936,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				continue
 			}
 
-			if err := v.visitJSON(settings, value); err != nil {
+			if err := v.visitJSON(settings, tempValue); err != nil {
 				validationErrors = append(validationErrors, err)
 				continue
 			}
 
+			matchedOneOfIdx = idx
 			ok++
 		}
 
@@ -962,17 +972,30 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 			return e
 		}
+
+		if settings.asreq || settings.asrep {
+			_ = v[matchedOneOfIdx].Value.visitJSON(settings, value)
+		}
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
-		ok := false
-		for _, item := range v {
+		var (
+			ok              = false
+			matchedAnyOfIdx = 0
+			tempValue       = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
+		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			if err := v.visitJSON(settings, value); err == nil {
+			if err := v.visitJSON(settings, tempValue); err == nil {
 				ok = true
+				matchedAnyOfIdx = idx
 				break
 			}
 		}
@@ -986,6 +1009,8 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				SchemaField: "anyOf",
 			}
 		}
+
+		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
 	}
 
 	for _, item := range schema.AllOf {
