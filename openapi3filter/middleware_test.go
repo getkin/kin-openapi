@@ -328,6 +328,27 @@ func TestValidator(t *testing.T) {
 			body:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
 		},
 		strict: false,
+	}, {
+		name: "POST response status code not in spec (return 200, spec only has 201)",
+		handler: validatorTestHandler{
+			postBody:      `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
+			errStatusCode: 200,
+			errBody:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
+		}.withDefaults(),
+		options: []openapi3filter.ValidatorOption{openapi3filter.ValidationOptions(openapi3filter.Options{
+			IncludeResponseStatus: true,
+		})},
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			statusCode: 200,
+			body:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
+		},
+		strict: false,
 	}}
 	for i, test := range tests {
 		t.Logf("test#%d: %s", i, test.name)
