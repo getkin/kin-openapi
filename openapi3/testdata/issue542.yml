@@ -1,0 +1,43 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+servers:
+  - url: http://petstore.swagger.io/v1
+paths: {}
+#paths:
+#  /pets:
+#    patch:
+#      requestBody:
+#        content:
+#          application/json:
+#            schema:
+#              oneOf:
+#                - $ref: '#/components/schemas/Cat'
+#                - $ref: '#/components/schemas/Kitten'
+#              discriminator:
+#                propertyName: pet_type
+#      responses:
+#        '200':
+#          description: Updated
+components:
+  schemas:
+    Cat:
+      anyOf:
+        - $ref: "#/components/schemas/Kitten"
+        - type: object
+    #          properties:
+    #            hunts:
+    #              type: boolean
+    #            age:
+    #              type: integer
+    #            offspring:
+    Kitten:
+      $ref: "#/components/schemas/Cat" #ko
+
+#      type: string                     #ok
+
+#      allOf:                               #ko
+#        - $ref: '#/components/schemas/Cat'
