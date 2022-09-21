@@ -910,9 +910,16 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			}
 		}
 
-		ok := 0
-		validationErrors := []error{}
-		matchedOneOfIdx := 0
+		var (
+			ok               = 0
+			validationErrors = []error{}
+			matchedOneOfIdx  = 0
+			tempValue        = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
@@ -923,7 +930,6 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				continue
 			}
 
-			tempValue := deepcopy.Copy(value)
 			if err := v.visitJSON(settings, tempValue); err != nil {
 				validationErrors = append(validationErrors, err)
 				continue
@@ -961,18 +967,26 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			return e
 		}
 
-		_ = v[matchedOneOfIdx].Value.visitJSON(settings, value)
+		if settings.asreq || settings.asrep {
+			_ = v[matchedOneOfIdx].Value.visitJSON(settings, value)
+		}
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
-		ok := false
-		matchedAnyOfIdx := 0
+		var (
+			ok              = false
+			matchedAnyOfIdx = 0
+			tempValue       = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			tempValue := deepcopy.Copy(value)
 			if err := v.visitJSON(settings, tempValue); err == nil {
 				ok = true
 				matchedAnyOfIdx = idx
