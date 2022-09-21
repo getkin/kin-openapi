@@ -91,7 +91,7 @@ func TestResolveSchemaRef(t *testing.T) {
 }
 
 func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
-	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"summary":"Create Foo","requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
+	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
