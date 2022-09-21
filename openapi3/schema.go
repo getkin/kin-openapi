@@ -753,6 +753,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
+	if v := schema.Default; v != nil {
+		if err := schema.VisitJSON(v); err != nil {
+			return fmt.Errorf("invalid schema default: %w", err)
+		}
+	}
+
 	if x := schema.Example; x != nil && !validationOpts.ExamplesValidationDisabled {
 		if err := validateExampleValue(x, schema); err != nil {
 			return fmt.Errorf("invalid schema example: %w", err)
