@@ -134,7 +134,7 @@ func (pathItem *PathItem) Validate(ctx context.Context) error {
 	for _, method := range methods {
 		operation := operations[method]
 		if err := operation.Validate(ctx); err != nil {
-			return fmt.Errorf("path %s failed validation for operation %s: %v", path, method, err)
+			return fmt.Errorf("invalid operation %s: %v", method, err)
 		}
 	}
 	return nil
