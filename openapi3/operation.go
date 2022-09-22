@@ -133,11 +133,13 @@ func (operation *Operation) Validate(ctx context.Context) error {
 			return err
 		}
 	}
+
 	if v := operation.RequestBody; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
+
 	if v := operation.Responses; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
@@ -145,10 +147,12 @@ func (operation *Operation) Validate(ctx context.Context) error {
 	} else {
 		return errors.New("value of responses must be an object")
 	}
+
 	if v := operation.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return fmt.Errorf("invalid external docs: %w", err)
 		}
 	}
+
 	return nil
 }

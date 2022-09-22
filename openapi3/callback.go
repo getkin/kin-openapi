@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -30,7 +31,13 @@ type Callback map[string]*PathItem
 
 // Validate returns an error if Callback does not comply with the OpenAPI spec.
 func (callback Callback) Validate(ctx context.Context) error {
-	for _, v := range callback {
+	keys := make([]string, 0, len(callback))
+	for key := range callback {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		v := callback[key]
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}

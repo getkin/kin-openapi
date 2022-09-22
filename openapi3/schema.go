@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/big"
 	"regexp"
+	"sort"
 	"strconv"
 	"unicode/utf16"
 
@@ -728,7 +729,13 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	for _, ref := range schema.Properties {
+	properties := make([]string, 0, len(schema.Properties))
+	for name := range schema.Properties {
+		properties = append(properties, name)
+	}
+	sort.Strings(properties)
+	for _, name := range properties {
+		ref := schema.Properties[name]
 		v := ref.Value
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
@@ -1442,7 +1449,13 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	}
 
 	if settings.asreq || settings.asrep {
-		for propName, propSchema := range schema.Properties {
+		properties := make([]string, 0, len(schema.Properties))
+		for propName := range schema.Properties {
+			properties = append(properties, propName)
+		}
+		sort.Strings(properties)
+		for _, propName := range properties {
+			propSchema := schema.Properties[propName]
 			if value[propName] == nil {
 				if dlft := propSchema.Value.Default; dlft != nil {
 					value[propName] = dlft
@@ -1499,7 +1512,13 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if ref := schema.AdditionalProperties; ref != nil {
 		additionalProperties = ref.Value
 	}
-	for k, v := range value {
+	keys := make([]string, 0, len(value))
+	for k := range value {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := value[k]
 		if properties != nil {
 			propertyRef := properties[k]
 			if propertyRef != nil {

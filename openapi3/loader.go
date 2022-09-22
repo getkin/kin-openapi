@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -208,11 +209,19 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 			return
 		}
 	}
-	for _, component := range components.Examples {
+
+	examples := make([]string, 0, len(components.Examples))
+	for name := range components.Examples {
+		examples = append(examples, name)
+	}
+	sort.Strings(examples)
+	for _, name := range examples {
+		component := components.Examples[name]
 		if err = loader.resolveExampleRef(doc, component, location); err != nil {
 			return
 		}
 	}
+
 	for _, component := range components.Callbacks {
 		if err = loader.resolveCallbackRef(doc, component, location); err != nil {
 			return
@@ -587,7 +596,13 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	for _, contentType := range value.Content {
-		for name, example := range contentType.Examples {
+		examples := make([]string, 0, len(contentType.Examples))
+		for name := range contentType.Examples {
+			examples = append(examples, name)
+		}
+		sort.Strings(examples)
+		for _, name := range examples {
+			example := contentType.Examples[name]
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
 			}
@@ -651,7 +666,13 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		if contentType == nil {
 			continue
 		}
-		for name, example := range contentType.Examples {
+		examples := make([]string, 0, len(contentType.Examples))
+		for name := range contentType.Examples {
+			examples = append(examples, name)
+		}
+		sort.Strings(examples)
+		for _, name := range examples {
+			example := contentType.Examples[name]
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
 			}
