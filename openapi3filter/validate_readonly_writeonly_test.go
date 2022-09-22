@@ -12,6 +12,8 @@ import (
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
+// TODO writeOnly response validation
+
 func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 	const spec = `{
   "openapi": "3.0.3",
@@ -89,5 +91,5 @@ func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
 		PathParams: pathParams,
 		Route:      route,
 	})
-	require.NoError(t, err)
+	require.Error(t, err)
 }
