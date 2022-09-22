@@ -96,7 +96,7 @@ func (paths Paths) Validate(ctx context.Context) error {
 		}
 
 		if err := pathItem.Validate(ctx); err != nil {
-			return err
+			return fmt.Errorf("invalid path %s: %v", path, err)
 		}
 	}
 
