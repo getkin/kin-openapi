@@ -21,6 +21,9 @@ func TestIssue601(t *testing.T) {
 	require.Contains(t, err.Error(), `invalid components: invalid schema example: Error at "/type": property "type" is missing`)
 	require.Contains(t, err.Error(), `| Error at "/nsid": property "nsid" is missing`)
 
+	err = doc.Validate(sl.Context, DisableExamplesValidation())
+	require.NoError(t, err)
+
 	// Now let's remove all the invalid parts
 	for _, schema := range doc.Components.Schemas {
 		schema.Value.Example = nil
