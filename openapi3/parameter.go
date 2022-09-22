@@ -71,8 +71,8 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 // Validate returns an error if Parameters does not comply with the OpenAPI spec.
 func (parameters Parameters) Validate(ctx context.Context) error {
 	dupes := make(map[string]struct{})
-	for _, item := range parameters {
-		if v := item.Value; v != nil {
+	for _, parameterRef := range parameters {
+		if v := parameterRef.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
 				return fmt.Errorf("more than one %q parameter has name %q", v.In, v.Name)
@@ -80,7 +80,7 @@ func (parameters Parameters) Validate(ctx context.Context) error {
 			dupes[key] = struct{}{}
 		}
 
-		if err := item.Validate(ctx); err != nil {
+		if err := parameterRef.Validate(ctx); err != nil {
 			return err
 		}
 	}

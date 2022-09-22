@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/big"
 	"regexp"
+	"sort"
 	"strconv"
 	"unicode/utf16"
 
@@ -727,7 +728,13 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	for _, ref := range schema.Properties {
+	properties := make([]string, 0, len(schema.Properties))
+	for name := range schema.Properties {
+		properties = append(properties, name)
+	}
+	sort.Strings(properties)
+	for _, name := range properties {
+		ref := schema.Properties[name]
 		v := ref.Value
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)

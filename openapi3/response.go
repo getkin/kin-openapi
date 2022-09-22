@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
@@ -36,7 +37,14 @@ func (responses Responses) Validate(ctx context.Context) error {
 	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
-	for _, v := range responses {
+
+	keys := make([]string, 0, len(responses))
+	for key := range responses {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		v := responses[key]
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -113,13 +121,26 @@ func (response *Response) Validate(ctx context.Context) error {
 			return err
 		}
 	}
-	for _, header := range response.Headers {
+
+	headers := make([]string, 0, len(response.Headers))
+	for name := range response.Headers {
+		headers = append(headers, name)
+	}
+	sort.Strings(headers)
+	for _, name := range headers {
+		header := response.Headers[name]
 		if err := header.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
-	for _, link := range response.Links {
+	links := make([]string, 0, len(response.Links))
+	for name := range response.Links {
+		links = append(links, name)
+	}
+	sort.Strings(links)
+	for _, name := range links {
+		link := response.Links[name]
 		if err := link.Validate(ctx); err != nil {
 			return err
 		}
