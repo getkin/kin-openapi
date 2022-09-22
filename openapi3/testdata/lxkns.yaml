@@ -562,7 +562,7 @@ components:
                         type: integer
             example:
                 '4026532338':
-                    nsid: 4026532338 # | Error at "/nsid": property "nsid" is missing
+                    nsid: 4026532338
                     type: pid
                     owner: 4026531837
                     reference: /proc/33536/ns/pid
