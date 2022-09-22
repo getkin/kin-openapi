@@ -36,7 +36,8 @@ type Loader struct {
 
 	Context context.Context
 
-	rootDir string
+	rootDir      string
+	rootLocation string
 
 	visitedPathItemRefs map[string]struct{}
 
@@ -148,6 +149,7 @@ func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, 
 func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.URL) (*T, error) {
 	if loader.visitedDocuments == nil {
 		loader.visitedDocuments = make(map[string]*T)
+		loader.rootLocation = location.Path
 	}
 	uri := location.String()
 	if doc, ok := loader.visitedDocuments[uri]; ok {
@@ -420,6 +422,11 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 	if loader.rootDir == "" {
 		return current
 	}
+
+	if resolvedRef == "" {
+		return &url.URL{Path: loader.rootLocation}
+	}
+
 	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
 }
 
