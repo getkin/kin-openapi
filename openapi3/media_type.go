@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/go-openapi/jsonpointer"
 
@@ -82,6 +83,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 		if err := schema.Validate(ctx); err != nil {
 			return err
 		}
+
 		if mediaType.Example != nil && mediaType.Examples != nil {
 			return errors.New("example and examples are mutually exclusive")
 		}
@@ -89,17 +91,26 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 		if vo := getValidationOptions(ctx); vo.ExamplesValidation.Disabled {
 			return nil
 		}
+
 		if example := mediaType.Example; example != nil {
 			if err := validateExampleValue(ctx, example, schema.Value); err != nil {
 				return err
 			}
-		} else if examples := mediaType.Examples; examples != nil {
-			for k, v := range examples {
+		}
+
+		if examples := mediaType.Examples; examples != nil {
+			names := make([]string, 0, len(examples))
+			for name := range examples {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, k := range names {
+				v := examples[k]
 				if err := v.Validate(ctx); err != nil {
-					return fmt.Errorf("%s: %s", k, err)
+					return fmt.Errorf("%s: %w", k, err)
 				}
 				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
-					return fmt.Errorf("%s: %s", k, err)
+					return fmt.Errorf("%s: %w", k, err)
 				}
 			}
 		}
