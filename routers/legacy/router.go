@@ -58,14 +58,7 @@ type Router struct {
 //
 // If the given OpenAPIv3 document has servers, router will use them.
 // All operations of the document will be added to the router.
-func NewRouter(doc *openapi3.T) (routers.Router, error) {
-	return NewRouterWithValidationOptions(doc)
-}
-
-// NewRouterWithValidationOptions creates a new router with specific validation options before creation.
-//
-// Does the same thing as NewRouter, but when calling `doc.Validate()`, the validation options `opts` will be provided.
-func NewRouterWithValidationOptions(doc *openapi3.T, opts ...openapi3.ValidationOption) (routers.Router, error) {
+func NewRouter(doc *openapi3.T, opts ...openapi3.ValidationOption) (routers.Router, error) {
 	if err := doc.Validate(context.Background(), opts...); err != nil {
 		return nil, fmt.Errorf("validating OpenAPI failed: %w", err)
 	}

@@ -208,6 +208,6 @@ func TestRouter(t *testing.T) {
 	require.Error(t, err)
 	r, err = NewRouter(doc)
 	require.Error(t, err)
-	r, err = NewRouterWithValidationOptions(doc, openapi3.DisableExamplesValidation())
+	r, err = NewRouter(doc, openapi3.DisableExamplesValidation())
 	require.NoError(t, err)
 }
