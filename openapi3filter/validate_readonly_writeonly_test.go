@@ -2,8 +2,9 @@ package openapi3filter
 
 import (
 	"bytes"
-	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,30 +15,18 @@ import (
 
 func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 	type testCase struct {
-		name           string
-		requestSchema  string
-		responseSchema string
-		errContains    string
+		name                string
+		requestSchema       string
+		responseSchema      string
+		requestBody         string
+		responseBody        string
+		responseErrContains string
+		requestErrContains  string
 	}
 
 	testCases := []testCase{
 		{
-			name: "invalid_readonly_in_request",
-			requestSchema: `
-			"schema":{
-				"type": "object",
-				"required": ["_id"],
-				"properties": {
-					"_id": {
-						"type": "string",
-						"readOnly": true
-					}
-				}
-			}`,
-			errContains: "readOnly property \"_id\" in request",
-		},
-		{
-			name: "valid_writeonly_in_request",
+			name: "valid_readonly_in_response_and_valid_writeonly_in_request",
 			requestSchema: `
 			"schema":{
 				"type": "object",
@@ -49,25 +38,23 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 					}
 				}
 			}`,
-		},
-		{
-			name: "invalid_writeonly_in_response",
 			responseSchema: `
 			"schema":{
 				"type": "object",
-				"required": ["_id"],
+				"required": ["access_token"],
 				"properties": {
-					"_id": {
+					"access_token": {
 						"type": "string",
-						"writeOnly": true
+						"readOnly": true
 					}
 				}
 			}`,
-			errContains: "writeOnly property \"_id\" in response",
+			requestBody:  `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody: `{"access_token": "abcd"}`,
 		},
 		{
-			name: "valid_readonly_in_response",
-			responseSchema: `
+			name: "valid_readonly_in_response_and_invalid_readonly_in_request",
+			requestSchema: `
 			"schema":{
 				"type": "object",
 				"required": ["_id"],
@@ -78,6 +65,77 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 					}
 				}
 			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"readOnly": true
+					}
+				}
+			}`,
+			requestBody:        `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody:       `{"access_token": "abcd"}`,
+			requestErrContains: "readOnly property \"_id\" in request",
+		},
+		{
+			name: "invalid_writeonly_in_response_and_valid_writeonly_in_request",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id"],
+				"properties": {
+					"_id": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			requestBody:         `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody:        `{"access_token": "abcd"}`,
+			responseErrContains: "writeOnly property \"access_token\" in response",
+		},
+		{
+			name: "invalid_writeonly_in_response_and_invalid_readonly_in_request",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id"],
+				"properties": {
+					"_id": {
+						"type": "string",
+						"readOnly": true
+					}
+				}
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			requestBody:         `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody:        `{"access_token": "abcd"}`,
+			responseErrContains: "writeOnly property \"access_token\" in response",
+			requestErrContains:  "readOnly property \"_id\" in request",
 		},
 	}
 
@@ -88,11 +146,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 				"openapi": "3.0.3",
 				"info": {
 					"version": "1.0.0",
-					"title": "title",
-					"description": "desc",
-					"contact": {
-						"email": "email"
-					}
+					"title": "title"
 				},
 				"paths": {
 					"/accounts": {
@@ -124,10 +178,6 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 				}
 				}`)
 
-			type Request struct {
-				ID string `json:"_id"`
-			}
-
 			sl := openapi3.NewLoader()
 			doc, err := sl.LoadFromData(spec.Bytes())
 			require.NoError(t, err)
@@ -136,10 +186,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 			router, err := legacyrouter.NewRouter(doc)
 			require.NoError(t, err)
 
-			b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
-			require.NoError(t, err)
-
-			httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
+			httpReq, err := http.NewRequest(http.MethodPost, "/accounts", strings.NewReader(tc.requestBody))
 			require.NoError(t, err)
 			httpReq.Header.Add(headerCT, "application/json")
 
@@ -151,22 +198,32 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 				PathParams: pathParams,
 				Route:      route,
 			}
+
 			if tc.requestSchema != "" {
 				err = ValidateRequest(sl.Context, reqValidationInput)
-			} else if tc.responseSchema != "" {
+
+				if tc.requestErrContains != "" {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.requestErrContains)
+				} else {
+					require.NoError(t, err)
+				}
+			}
+
+			if tc.responseSchema != "" {
 				err = ValidateResponse(sl.Context, &ResponseValidationInput{
 					RequestValidationInput: reqValidationInput,
 					Status:                 201,
 					Header:                 httpReq.Header,
-					Body:                   httpReq.Body,
+					Body:                   io.NopCloser(strings.NewReader(tc.responseBody)),
 				})
-			}
 
-			if tc.errContains != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errContains)
-			} else {
-				require.NoError(t, err)
+				if tc.responseErrContains != "" {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.responseErrContains)
+				} else {
+					require.NoError(t, err)
+				}
 			}
 		})
 	}
