@@ -1467,9 +1467,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				}
 			} else {
 				if settings.asReq && propSchema.Value.ReadOnly {
-					me = append(me, fmt.Errorf("readOnly property %q in request example", propName))
+					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
 				} else if settings.asRes && propSchema.Value.WriteOnly {
-					me = append(me, fmt.Errorf("writeOnly property %q in response example", propName))
+					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
 				}
 			}
 		}
