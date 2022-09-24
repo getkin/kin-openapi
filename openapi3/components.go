@@ -49,10 +49,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range schemas {
 		v := components.Schemas[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("%s: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("%s: %w", k, err)
 		}
 	}
 
@@ -139,10 +139,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range examples {
 		v := components.Examples[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("example %s: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return fmt.Errorf("%s: %w", k, err)
+			return fmt.Errorf("example %s: %w", k, err)
 		}
 	}
 

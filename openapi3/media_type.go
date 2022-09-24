@@ -94,7 +94,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 
 		if example := mediaType.Example; example != nil {
 			if err := validateExampleValue(example, schema.Value); err != nil {
-				return err
+				return fmt.Errorf("invalid example: %w", err)
 			}
 		}
 
@@ -107,10 +107,10 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 			for _, k := range names {
 				v := examples[k]
 				if err := v.Validate(ctx); err != nil {
-					return fmt.Errorf("%s: %w", k, err)
+					return fmt.Errorf("example %s: %w", k, err)
 				}
 				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
-					return fmt.Errorf("%s: %w", k, err)
+					return fmt.Errorf("example %s: %w", k, err)
 				}
 			}
 		}

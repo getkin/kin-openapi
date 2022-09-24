@@ -323,7 +323,7 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		}
 		if example := parameter.Example; example != nil {
 			if err := validateExampleValue(example, schema.Value); err != nil {
-				return err
+				return fmt.Errorf("invalid example: %w", err)
 			}
 		} else if examples := parameter.Examples; examples != nil {
 			names := make([]string, 0, len(examples))
