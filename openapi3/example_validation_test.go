@@ -109,7 +109,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: good@email.com
         # missing password
    `,
-			errContains: "CreateUserRequest: invalid schema example",
+			errContains: "schema \"CreateUserRequest\": invalid example",
 		},
 		{
 			name: "valid_schema_request_example",
@@ -127,7 +127,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         user_id: 1
         # missing access_token
    `,
-			errContains: "CreateUserResponse: invalid schema example",
+			errContains: "schema \"CreateUserResponse\": invalid example",
 		},
 		{
 			name: "valid_schema_response_example",
@@ -295,7 +295,7 @@ func TestExampleObjectValidation(t *testing.T) {
     BadUser:
       description: empty user example
 `,
-			errContains: "invalid components: example BadUser: example has no value or externalValue field",
+			errContains: "invalid components: example \"BadUser\": no value or externalValue field",
 		},
 		{
 			name: "value_externalValue_mutual_exclusion",
@@ -308,7 +308,7 @@ func TestExampleObjectValidation(t *testing.T) {
         password: validpassword
       externalValue: 'http://example.com/examples/example'
 `,
-			errContains: "invalid components: example BadUser: value and externalValue are mutually exclusive",
+			errContains: "invalid components: example \"BadUser\": value and externalValue are mutually exclusive",
 		},
 	}
 
