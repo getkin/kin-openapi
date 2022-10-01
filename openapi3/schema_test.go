@@ -416,7 +416,7 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
-		Title:  "STRING: format 'date-time'",
+		Title:  "STRING: format 'byte'",
 		Schema: NewBytesSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
