@@ -368,6 +368,13 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
+func NewHostnameSchema() *Schema {
+	return &Schema{
+		Type:   TypeString,
+		Format: "hostname",
+	}
+}
+
 func NewUUIDSchema() *Schema {
 	return &Schema{
 		Type:   TypeString,

@@ -99,6 +99,9 @@ func init() {
 	// ipv4/v6
 	DefineIPv4Format()
 	DefineIPv6Format()
+
+	// hostname as defined in https://www.rfc-editor.org/rfc/rfc1123#section-2.1
+	DefineStringFormat(`hostname`, `^[a-zA-Z0-9][a-zA-Z0-9-.]+[a-zA-Z0-9]$`)
 }
 
 // DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
