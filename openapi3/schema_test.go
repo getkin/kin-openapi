@@ -366,6 +366,27 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title:  "STRING: format 'date'",
+		Schema: NewDateSchema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "date",
+		},
+		AllValid: []interface{}{
+			"2017-12-31",
+			"2017-01-01",
+		},
+		AllInvalid: []interface{}{
+			nil,
+			3.14,
+			"2017-12-00",
+			"2017-12-32",
+			"2017-13-01",
+			"2017-00-31",
+		},
+	},
+
+	{
 		Title:  "STRING: format 'date-time'",
 		Schema: NewDateTimeSchema(),
 		Serialization: map[string]interface{}{
@@ -387,6 +408,10 @@ var schemaExamples = []schemaExample{
 			"2017-12-31T11:59:59\n",
 			"2017-12-31T11:59:59.+11:30",
 			"2017-12-31T11:59:59.Z",
+			"2017-12-00T11:59:59",
+			"2017-12-31T23:59:60",
+			"2017-12-31T23:60:00",
+			"2017-12-31T24:00:00",
 		},
 	},
 
