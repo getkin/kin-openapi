@@ -354,6 +354,13 @@ func NewStringSchema() *Schema {
 	}
 }
 
+func NewDateSchema() *Schema {
+	return &Schema{
+		Type:   TypeString,
+		Format: "date",
+	}
+}
+
 func NewDateTimeSchema() *Schema {
 	return &Schema{
 		Type:   TypeString,
