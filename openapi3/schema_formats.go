@@ -93,6 +93,12 @@ func init() {
 	// date-time
 	DefineStringFormat("date-time", `^[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3])(:[0-5][0-9]){2}(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
 
+	// uuid
+	DefineStringFormat(`uuid`, FormatOfStringForUUIDOfRFC4122)
+
+	// ipv4/v6
+	DefineIPv4Format()
+	DefineIPv6Format()
 }
 
 // DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
