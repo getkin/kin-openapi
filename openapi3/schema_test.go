@@ -448,6 +448,33 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title:  "STRING: format 'hostname'",
+		Schema: NewHostnameSchema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "hostname",
+		},
+		AllValid: []interface{}{
+			"abc",
+			"a-b",
+			"a0b",
+			"ab9",
+			"0ab9",
+			"a-b.domain",
+			"a-b.sub-domain.domain",
+			"0.1",
+		},
+		AllInvalid: []interface{}{
+			nil,
+			3.14,
+			"a",
+			"ab",
+			"a_b",
+			"~test",
+		},
+	},
+
+	{
 		Title: "ARRAY",
 		Schema: &Schema{
 			Type:        "array",
