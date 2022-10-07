@@ -17,6 +17,7 @@ import (
 )
 
 var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
+var CircularReferenceCounter = 3
 
 func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
@@ -724,7 +725,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			component.Value = &schema
 		} else {
-			if visitedLimit(visited, ref, 3) {
+			if visitedLimit(visited, ref) {
 				visited = append(visited, ref)
 				return fmt.Errorf("%s - %s", CircularReferenceError, strings.Join(visited, " -> "))
 			}
@@ -1088,12 +1089,12 @@ func unescapeRefString(ref string) string {
 	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
 
-func visitedLimit(visited []string, ref string, limit int) bool {
+func visitedLimit(visited []string, ref string) bool {
 	visitedCount := 0
 	for _, v := range visited {
 		if v == ref {
 			visitedCount++
-			if visitedCount >= limit {
+			if visitedCount >= CircularReferenceCounter {
 				return true
 			}
 		}
