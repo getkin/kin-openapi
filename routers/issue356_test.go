@@ -68,8 +68,11 @@ paths:
 		require.NoError(t, err)
 		err = doc.Validate(context.Background())
 		require.NoError(t, err)
+		gorillamuxNewRouterWrapped := func(doc *openapi3.T, opts ...openapi3.ValidationOption) (routers.Router, error) {
+			return gorillamux.NewRouter(doc)
+		}
 
-		for i, newRouter := range []func(*openapi3.T) (routers.Router, error){gorillamux.NewRouter, legacy.NewRouter} {
+		for i, newRouter := range []func(*openapi3.T, ...openapi3.ValidationOption) (routers.Router, error){gorillamuxNewRouterWrapped, legacy.NewRouter} {
 			t.Logf("using NewRouter from %s", map[int]string{0: "gorillamux", 1: "legacy"}[i])
 			router, err := newRouter(doc)
 			require.NoError(t, err)
