@@ -13,12 +13,13 @@ func TestIssue615(t *testing.T) {
 		loader := openapi3.NewLoader()
 		loader.IsExternalRefsAllowed = true
 		_, err := loader.LoadFromFile("testdata/recursiveRef/issue615.yml")
+		if err == nil {
+			continue
+		}
 		// Test currently reproduces the issue 615: failure to load a valid spec
 		// Upon issue resolution, this check should be changed to require.NoError
 		require.Error(t, err, openapi3.CircularReferenceError)
-		if err != nil {
-			break
-		}
+		break
 	}
 
 	var old int
