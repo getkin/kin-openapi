@@ -11,9 +11,11 @@ type MultiError []error
 
 func (me MultiError) Error() string {
 	buff := &bytes.Buffer{}
-	for _, e := range me {
+	for i, e := range me {
 		buff.WriteString(e.Error())
-		buff.WriteString(" | ")
+		if i != len(me)-1 {
+			buff.WriteString(" | ")
+		}
 	}
 	return buff.String()
 }
