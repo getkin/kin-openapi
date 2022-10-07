@@ -18,6 +18,15 @@ func TestLoaderSupportsRecursiveReference(t *testing.T) {
 	require.Equal(t, "ErrorDetails", doc.Paths["/double-ref-foo"].Get.Responses.Get(400).Value.Content.Get("application/json").Schema.Value.Title)
 }
 
+func TestIssue615(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	_, err := loader.LoadFromFile("testdata/recursiveRef/issue615.yml")
+	// Test currently reproduces the issue 615: failure to load a valid spec
+	// Upon issue resolution, this check should be changed to require.NoError
+	require.Error(t, err)
+}
+
 func TestIssue447(t *testing.T) {
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
