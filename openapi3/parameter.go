@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
@@ -70,8 +71,8 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 // Validate returns an error if Parameters does not comply with the OpenAPI spec.
 func (parameters Parameters) Validate(ctx context.Context) error {
 	dupes := make(map[string]struct{})
-	for _, item := range parameters {
-		if v := item.Value; v != nil {
+	for _, parameterRef := range parameters {
+		if v := parameterRef.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
 				return fmt.Errorf("more than one %q parameter has name %q", v.In, v.Name)
@@ -79,7 +80,7 @@ func (parameters Parameters) Validate(ctx context.Context) error {
 			dupes[key] = struct{}{}
 		}
 
-		if err := item.Validate(ctx); err != nil {
+		if err := parameterRef.Validate(ctx); err != nil {
 			return err
 		}
 	}
@@ -296,23 +297,51 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 	}
 	if !smSupported {
 		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
-		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
 	if (parameter.Schema == nil) == (parameter.Content == nil) {
 		e := errors.New("parameter must contain exactly one of content and schema")
-		return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, e)
-	}
-	if schema := parameter.Schema; schema != nil {
-		if err := schema.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q schema is invalid: %v", parameter.Name, err)
-		}
+		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
 	if content := parameter.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q content is invalid: %v", parameter.Name, err)
+			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name, err)
 		}
 	}
+
+	if schema := parameter.Schema; schema != nil {
+		if err := schema.Validate(ctx); err != nil {
+			return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, err)
+		}
+		if parameter.Example != nil && parameter.Examples != nil {
+			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
+		}
+		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+			return nil
+		}
+		if example := parameter.Example; example != nil {
+			if err := validateExampleValue(example, schema.Value); err != nil {
+				return fmt.Errorf("invalid example: %w", err)
+			}
+		} else if examples := parameter.Examples; examples != nil {
+			names := make([]string, 0, len(examples))
+			for name := range examples {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, k := range names {
+				v := examples[k]
+				if err := v.Validate(ctx); err != nil {
+					return fmt.Errorf("%s: %w", k, err)
+				}
+				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+					return fmt.Errorf("%s: %w", k, err)
+				}
+			}
+		}
+	}
+
 	return nil
 }

@@ -11,3 +11,5 @@ get:
             properties:
               foo2:
                 $ref: ../openapi.yml#/components/schemas/Foo2
+    "400":
+      $ref: "../openapi.yml#/components/responses/400"

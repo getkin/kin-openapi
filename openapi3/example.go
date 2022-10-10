@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
@@ -55,5 +56,12 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Example does not comply with the OpenAPI spec.
 func (example *Example) Validate(ctx context.Context) error {
-	return nil // TODO
+	if example.Value != nil && example.ExternalValue != "" {
+		return errors.New("value and externalValue are mutually exclusive")
+	}
+	if example.Value == nil && example.ExternalValue == "" {
+		return errors.New("no value or externalValue field")
+	}
+
+	return nil
 }

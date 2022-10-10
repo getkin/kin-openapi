@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -123,9 +124,17 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 
 // Validate returns an error if PathItem does not comply with the OpenAPI spec.
 func (pathItem *PathItem) Validate(ctx context.Context) error {
-	for _, operation := range pathItem.Operations() {
+	operations := pathItem.Operations()
+
+	methods := make([]string, 0, len(operations))
+	for method := range operations {
+		methods = append(methods, method)
+	}
+	sort.Strings(methods)
+	for _, method := range methods {
+		operation := operations[method]
 		if err := operation.Validate(ctx); err != nil {
-			return err
+			return fmt.Errorf("invalid operation %s: %v", method, err)
 		}
 	}
 	return nil

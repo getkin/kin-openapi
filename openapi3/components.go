@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -40,84 +41,138 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Components does not comply with the OpenAPI spec.
 func (components *Components) Validate(ctx context.Context) (err error) {
-	for k, v := range components.Schemas {
+	schemas := make([]string, 0, len(components.Schemas))
+	for name := range components.Schemas {
+		schemas = append(schemas, name)
+	}
+	sort.Strings(schemas)
+	for _, k := range schemas {
+		v := components.Schemas[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("schema %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("schema %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.Parameters {
+	parameters := make([]string, 0, len(components.Parameters))
+	for name := range components.Parameters {
+		parameters = append(parameters, name)
+	}
+	sort.Strings(parameters)
+	for _, k := range parameters {
+		v := components.Parameters[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("parameter %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("parameter %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.RequestBodies {
+	requestBodies := make([]string, 0, len(components.RequestBodies))
+	for name := range components.RequestBodies {
+		requestBodies = append(requestBodies, name)
+	}
+	sort.Strings(requestBodies)
+	for _, k := range requestBodies {
+		v := components.RequestBodies[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("request body %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("request body %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.Responses {
+	responses := make([]string, 0, len(components.Responses))
+	for name := range components.Responses {
+		responses = append(responses, name)
+	}
+	sort.Strings(responses)
+	for _, k := range responses {
+		v := components.Responses[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("response %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("response %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.Headers {
+	headers := make([]string, 0, len(components.Headers))
+	for name := range components.Headers {
+		headers = append(headers, name)
+	}
+	sort.Strings(headers)
+	for _, k := range headers {
+		v := components.Headers[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("header %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("header %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.SecuritySchemes {
+	securitySchemes := make([]string, 0, len(components.SecuritySchemes))
+	for name := range components.SecuritySchemes {
+		securitySchemes = append(securitySchemes, name)
+	}
+	sort.Strings(securitySchemes)
+	for _, k := range securitySchemes {
+		v := components.SecuritySchemes[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("security scheme %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("security scheme %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.Examples {
+	examples := make([]string, 0, len(components.Examples))
+	for name := range components.Examples {
+		examples = append(examples, name)
+	}
+	sort.Strings(examples)
+	for _, k := range examples {
+		v := components.Examples[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("example %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("example %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.Links {
+	links := make([]string, 0, len(components.Links))
+	for name := range components.Links {
+		links = append(links, name)
+	}
+	sort.Strings(links)
+	for _, k := range links {
+		v := components.Links[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("link %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("link %q: %w", k, err)
 		}
 	}
 
-	for k, v := range components.Callbacks {
+	callbacks := make([]string, 0, len(components.Callbacks))
+	for name := range components.Callbacks {
+		callbacks = append(callbacks, name)
+	}
+	sort.Strings(callbacks)
+	for _, k := range callbacks {
+		v := components.Callbacks[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("callback %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("callback %q: %w", k, err)
 		}
 	}
 

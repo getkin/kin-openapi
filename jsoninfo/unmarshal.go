@@ -7,8 +7,8 @@ import (
 )
 
 // UnmarshalStrictStruct function:
-//   * Unmarshals struct fields, ignoring UnmarshalJSON(...) and fields without 'json' tag.
-//   * Correctly handles StrictStruct
+//   - Unmarshals struct fields, ignoring UnmarshalJSON(...) and fields without 'json' tag.
+//   - Correctly handles StrictStruct
 func UnmarshalStrictStruct(data []byte, value StrictStruct) error {
 	decoder, err := NewObjectDecoder(data)
 	if err != nil {
@@ -25,7 +25,7 @@ type ObjectDecoder struct {
 func NewObjectDecoder(data []byte) (*ObjectDecoder, error) {
 	var remainingFields map[string]json.RawMessage
 	if err := json.Unmarshal(data, &remainingFields); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal extension properties: %v (%s)", err, data)
+		return nil, fmt.Errorf("failed to unmarshal extension properties: %w (%s)", err, data)
 	}
 	return &ObjectDecoder{
 		Data:            data,
@@ -87,7 +87,7 @@ func (decoder *ObjectDecoder) DecodeStructFieldsAndExtensions(value interface{})
 						continue
 					}
 				}
-				return fmt.Errorf("failed to unmarshal property %q (%s): %v",
+				return fmt.Errorf("failed to unmarshal property %q (%s): %w",
 					field.JSONName, fieldValue.Type().String(), err)
 			}
 			if !isPtr {
@@ -109,7 +109,7 @@ func (decoder *ObjectDecoder) DecodeStructFieldsAndExtensions(value interface{})
 						continue
 					}
 				}
-				return fmt.Errorf("failed to unmarshal property %q (%s): %v",
+				return fmt.Errorf("failed to unmarshal property %q (%s): %w",
 					field.JSONName, fieldPtr.Type().String(), err)
 			}
 

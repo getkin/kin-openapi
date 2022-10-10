@@ -34,6 +34,13 @@ type routeMux struct {
 	varsUpdater varsf
 }
 
+type srv struct {
+	schemes     []string
+	host, base  string
+	server      *openapi3.Server
+	varsUpdater varsf
+}
+
 var singleVariableMatcher = regexp.MustCompile(`^\{([^{}]+)\}$`)
 
 // TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
@@ -42,78 +49,22 @@ var singleVariableMatcher = regexp.MustCompile(`^\{([^{}]+)\}$`)
 // Assumes spec is .Validate()d
 // Note that a variable for the port number MUST have a default value and only this value will match as the port (see issue #367).
 func NewRouter(doc *openapi3.T) (routers.Router, error) {
-	type srv struct {
-		schemes     []string
-		host, base  string
-		server      *openapi3.Server
-		varsUpdater varsf
+	servers, err := makeServers(doc.Servers)
+	if err != nil {
+		return nil, err
 	}
-	servers := make([]srv, 0, len(doc.Servers))
-	for _, server := range doc.Servers {
-		serverURL := server.URL
-		if submatch := singleVariableMatcher.FindStringSubmatch(serverURL); submatch != nil {
-			sVar := submatch[1]
-			sVal := server.Variables[sVar].Default
-			serverURL = strings.ReplaceAll(serverURL, "{"+sVar+"}", sVal)
-			var varsUpdater varsf
-			if lhs := strings.TrimSuffix(serverURL, server.Variables[sVar].Default); lhs != "" {
-				varsUpdater = func(vars map[string]string) { vars[sVar] = lhs }
-			}
-			servers = append(servers, srv{
-				base:        server.Variables[sVar].Default,
-				server:      server,
-				varsUpdater: varsUpdater,
-			})
-			continue
-		}
 
-		var schemes []string
-		if strings.Contains(serverURL, "://") {
-			scheme0 := strings.Split(serverURL, "://")[0]
-			schemes = permutePart(scheme0, server)
-			serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
-		}
-
-		// If a variable represents the port "http://domain.tld:{port}/bla"
-		// then url.Parse() cannot parse "http://domain.tld:`bEncode({port})`/bla"
-		// and mux is not able to set the {port} variable
-		// So we just use the default value for this variable.
-		// See https://github.com/getkin/kin-openapi/issues/367
-		var varsUpdater varsf
-		if lhs := strings.Index(serverURL, ":{"); lhs > 0 {
-			rest := serverURL[lhs+len(":{"):]
-			rhs := strings.Index(rest, "}")
-			portVariable := rest[:rhs]
-			portValue := server.Variables[portVariable].Default
-			serverURL = strings.ReplaceAll(serverURL, "{"+portVariable+"}", portValue)
-			varsUpdater = func(vars map[string]string) {
-				vars[portVariable] = portValue
-			}
-		}
-
-		u, err := url.Parse(bEncode(serverURL))
-		if err != nil {
-			return nil, err
-		}
-		path := bDecode(u.EscapedPath())
-		if len(path) > 0 && path[len(path)-1] == '/' {
-			path = path[:len(path)-1]
-		}
-		servers = append(servers, srv{
-			host:        bDecode(u.Host), //u.Hostname()?
-			base:        path,
-			schemes:     schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
-			server:      server,
-			varsUpdater: varsUpdater,
-		})
-	}
-	if len(servers) == 0 {
-		servers = append(servers, srv{})
-	}
 	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
+		servers := servers
+
 		pathItem := doc.Paths[path]
+		if len(pathItem.Servers) > 0 {
+			if servers, err = makeServers(pathItem.Servers); err != nil {
+				return nil, err
+			}
+		}
 
 		operations := pathItem.Operations()
 		methods := make([]string, 0, len(operations))
@@ -175,6 +126,73 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 		}
 	}
 	return nil, nil, routers.ErrPathNotFound
+}
+
+func makeServers(in openapi3.Servers) ([]srv, error) {
+	servers := make([]srv, 0, len(in))
+	for _, server := range in {
+		serverURL := server.URL
+		if submatch := singleVariableMatcher.FindStringSubmatch(serverURL); submatch != nil {
+			sVar := submatch[1]
+			sVal := server.Variables[sVar].Default
+			serverURL = strings.ReplaceAll(serverURL, "{"+sVar+"}", sVal)
+			var varsUpdater varsf
+			if lhs := strings.TrimSuffix(serverURL, server.Variables[sVar].Default); lhs != "" {
+				varsUpdater = func(vars map[string]string) { vars[sVar] = lhs }
+			}
+			servers = append(servers, srv{
+				base:        server.Variables[sVar].Default,
+				server:      server,
+				varsUpdater: varsUpdater,
+			})
+			continue
+		}
+
+		var schemes []string
+		if strings.Contains(serverURL, "://") {
+			scheme0 := strings.Split(serverURL, "://")[0]
+			schemes = permutePart(scheme0, server)
+			serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
+		}
+
+		// If a variable represents the port "http://domain.tld:{port}/bla"
+		// then url.Parse() cannot parse "http://domain.tld:`bEncode({port})`/bla"
+		// and mux is not able to set the {port} variable
+		// So we just use the default value for this variable.
+		// See https://github.com/getkin/kin-openapi/issues/367
+		var varsUpdater varsf
+		if lhs := strings.Index(serverURL, ":{"); lhs > 0 {
+			rest := serverURL[lhs+len(":{"):]
+			rhs := strings.Index(rest, "}")
+			portVariable := rest[:rhs]
+			portValue := server.Variables[portVariable].Default
+			serverURL = strings.ReplaceAll(serverURL, "{"+portVariable+"}", portValue)
+			varsUpdater = func(vars map[string]string) {
+				vars[portVariable] = portValue
+			}
+		}
+
+		u, err := url.Parse(bEncode(serverURL))
+		if err != nil {
+			return nil, err
+		}
+		path := bDecode(u.EscapedPath())
+		if len(path) > 0 && path[len(path)-1] == '/' {
+			path = path[:len(path)-1]
+		}
+		servers = append(servers, srv{
+			host:        bDecode(u.Host), //u.Hostname()?
+			base:        path,
+			schemes:     schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
+			server:      server,
+			varsUpdater: varsUpdater,
+		})
+	}
+	if len(servers) == 0 {
+		servers = append(servers, srv{})
+	}
+
+	return servers, nil
 }
 
 func orderedPaths(paths map[string]*openapi3.PathItem) []string {

@@ -8,8 +8,14 @@ A [Go](https://golang.org) project for handling [OpenAPI](https://www.openapis.o
 
 Licensed under the [MIT License](./LICENSE).
 
-## Contributors and users
-The project has received pull requests from many people. Thanks to everyone!
+## Contributors, users and sponsors
+The project has received pull requests [from many people](https://github.com/getkin/kin-openapi/graphs/contributors). Thanks to everyone!
+
+Be sure to [give back to this project](https://github.com/sponsors/fenollp) like our sponsors:
+
+<p align="center">
+	<a href="//www.speakeasyapi.dev"><img src=".github/sponsors/speakeasy.png" alt="Speakeasy" height="100px"/></a>
+</p>
 
 Here's some projects that depend on _kin-openapi_:
   * [github.com/Tufin/oasdiff](https://github.com/Tufin/oasdiff) - "A diff tool for OpenAPI Specification 3"
@@ -20,6 +26,7 @@ Here's some projects that depend on _kin-openapi_:
   * [github.com/goadesign/goa](https://github.com/goadesign/goa) - "Design-based APIs and microservices in Go"
   * [github.com/hashicorp/nomad-openapi](https://github.com/hashicorp/nomad-openapi) - "Nomad is an easy-to-use, flexible, and performant workload orchestrator that can deploy a mix of microservice, batch, containerized, and non-containerized applications. Nomad is easy to operate and scale and has native Consul and Vault integrations."
   * [gitlab.com/jamietanna/httptest-openapi](https://gitlab.com/jamietanna/httptest-openapi) ([*blog post*](https://www.jvt.me/posts/2022/05/22/go-openapi-contract-test/)) - "Go OpenAPI Contract Verification for use with `net/http`"
+  * [github.com/SIMITGROUP/openapigenerator](https://github.com/SIMITGROUP/openapigenerator) - "Openapi v3 microservices generator"
   * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
 ## Alternatives
@@ -185,6 +192,9 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 ```
 
 ## Sub-v0 breaking API changes
+
+### v0.101.0
+* `openapi3.SchemaFormatValidationDisabled` has been removed in favour of an option `openapi3.EnableSchemaFormatValidation()` passed to `openapi3.T.Validate`. The default behaviour is also now to not validate formats, as the OpenAPI spec mentions the `format` is an open value.
 
 ### v0.84.0
 * The prototype of `openapi3gen.NewSchemaRefForValue` changed:

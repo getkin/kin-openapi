@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -12,8 +13,15 @@ type Paths map[string]*PathItem
 
 // Validate returns an error if Paths does not comply with the OpenAPI spec.
 func (paths Paths) Validate(ctx context.Context) error {
-	normalizedPaths := make(map[string]string)
-	for path, pathItem := range paths {
+	normalizedPaths := make(map[string]string, len(paths))
+
+	keys := make([]string, 0, len(paths))
+	for key := range paths {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, path := range keys {
+		pathItem := paths[path]
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
@@ -37,7 +45,14 @@ func (paths Paths) Validate(ctx context.Context) error {
 				}
 			}
 		}
-		for method, operation := range pathItem.Operations() {
+		operations := pathItem.Operations()
+		methods := make([]string, 0, len(operations))
+		for method := range operations {
+			methods = append(methods, method)
+		}
+		sort.Strings(methods)
+		for _, method := range methods {
+			operation := operations[method]
 			var setParams []string
 			for _, parameterRef := range operation.Parameters {
 				if parameterRef != nil {
@@ -81,7 +96,7 @@ func (paths Paths) Validate(ctx context.Context) error {
 		}
 
 		if err := pathItem.Validate(ctx); err != nil {
-			return err
+			return fmt.Errorf("invalid path %s: %v", path, err)
 		}
 	}
 
@@ -98,10 +113,10 @@ func (paths Paths) Validate(ctx context.Context) error {
 //
 // For example:
 //
-//   paths := openapi3.Paths {
-//     "/person/{personName}": &openapi3.PathItem{},
-//   }
-//   pathItem := path.Find("/person/{name}")
+//	paths := openapi3.Paths {
+//	  "/person/{personName}": &openapi3.PathItem{},
+//	}
+//	pathItem := path.Find("/person/{name}")
 //
 // would return the correct path item.
 func (paths Paths) Find(key string) *PathItem {

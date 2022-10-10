@@ -9,10 +9,26 @@
         }
       }
     },
+    "responses": {
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "400 Bad Request"
+      }
+    },
     "schemas": {
       "Bar": {
         "example": "bar",
         "type": "string"
+      },
+      "Error":{
+        "title":"ErrorDetails",
+        "type":"object"
       },
       "Foo": {
         "properties": {
@@ -29,6 +45,18 @@
           }
         },
         "type": "object"
+      },
+      "error":{
+        "title":"ErrorDetails",
+        "type":"object"
+      },
+      "Cat": {
+        "properties": {
+          "cat": {
+            "$ref": "#/components/schemas/Cat"
+          }
+        },
+        "type": "object"
       }
     }
   },
@@ -38,6 +66,17 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/double-ref-foo": {
+      "get": {
+        "description": "Reference response with double reference.",
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        },
+        "summary": "Double ref response"
+      }
+    },
     "/foo": {
       "get": {
         "responses": {
@@ -55,6 +94,9 @@
               }
             },
             "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
           }
         }
       },
