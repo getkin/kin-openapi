@@ -35,11 +35,14 @@ iteration:
 
 		// See whether this is an embedded field
 		if f.Anonymous {
-			if f.Tag.Get("json") == "-" {
+			jsonTag := f.Tag.Get("json")
+			if jsonTag == "-" {
 				continue
 			}
-			fields = AppendFields(fields, index, f.Type)
-			continue iteration
+			if jsonTag == "" {
+				fields = AppendFields(fields, index, f.Type)
+				continue iteration
+			}
 		}
 
 		// Ignore certain types
