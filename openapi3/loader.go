@@ -56,7 +56,9 @@ type Loader struct {
 
 // NewLoader returns an empty Loader
 func NewLoader() *Loader {
-	return &Loader{}
+	return &Loader{
+		Context: context.Background(),
+	}
 }
 
 func (loader *Loader) resetVisitedPathItemRefs() {

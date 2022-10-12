@@ -1,7 +1,6 @@
 package openapi3filter
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -12,8 +11,8 @@ import (
 )
 
 func TestIssue624(t *testing.T) {
-	ctx := context.Background()
-	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
+	loader := openapi3.NewLoader()
+	ctx := loader.Context
 	spec := `
 openapi: 3.0.0
 info:
