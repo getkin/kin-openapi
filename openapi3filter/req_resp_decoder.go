@@ -158,7 +158,10 @@ func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationI
 }
 
 func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) (
-	outValue interface{}, outSchema *openapi3.Schema, err error) {
+	outValue interface{},
+	outSchema *openapi3.Schema,
+	err error,
+) {
 	// Only query parameters can have multiple values.
 	if len(values) > 1 && param.In != openapi3.ParameterInQuery {
 		err = fmt.Errorf("%s parameter %q cannot have multiple values", param.In, param.Name)
@@ -170,7 +173,6 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 		err = fmt.Errorf("parameter %q expected to have content", param.Name)
 		return
 	}
-
 	// We only know how to decode a parameter if it has one content, application/json
 	if len(content) != 1 {
 		err = fmt.Errorf("multiple content types for parameter %q", param.Name)
@@ -184,8 +186,20 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 	}
 	outSchema = mt.Schema.Value
 
+	unmarshal := func(encoded string) (decoded interface{}, err error) {
+		if err = json.Unmarshal([]byte(encoded), &decoded); err != nil {
+			const specialJSONChars = `[]{}":,`
+			if !strings.ContainsAny(encoded, specialJSONChars) {
+				// A string in a query parameter is not serialized with (double) quotes
+				// as JSON would expect, so let's fallback to that.
+				decoded, err = encoded, nil
+			}
+		}
+		return
+	}
+
 	if len(values) == 1 {
-		if err = json.Unmarshal([]byte(values[0]), &outValue); err != nil {
+		if outValue, err = unmarshal(values[0]); err != nil {
 			err = fmt.Errorf("error unmarshaling parameter %q", param.Name)
 			return
 		}
@@ -193,7 +207,7 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 		outArray := make([]interface{}, 0, len(values))
 		for _, v := range values {
 			var item interface{}
-			if err = json.Unmarshal([]byte(v), &item); err != nil {
+			if item, err = unmarshal(v); err != nil {
 				err = fmt.Errorf("error unmarshaling parameter %q", param.Name)
 				return
 			}
