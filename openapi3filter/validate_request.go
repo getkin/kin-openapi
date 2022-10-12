@@ -148,7 +148,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		value = schema.Default
 		req := input.Request
 		switch parameter.In {
-		// case openapi3.ParameterInPath: TODO: no idea how to handle this
+		case openapi3.ParameterInPath:
+			// Path parameters are required.
+			// Next check `parameter.Required && !found` will catch this.
 		case openapi3.ParameterInQuery:
 			q := req.URL.Query()
 			q.Add(parameter.Name, fmt.Sprintf("%v", value))
@@ -160,8 +162,6 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				Name:  parameter.Name,
 				Value: fmt.Sprintf("%v", value),
 			})
-		default:
-			return fmt.Errorf("unsupported parameter's 'in': %s", parameter.In)
 		}
 	}
 
