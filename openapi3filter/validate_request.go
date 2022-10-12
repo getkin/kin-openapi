@@ -28,11 +28,8 @@ var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
 //
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
-func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
-	var (
-		err error
-		me  openapi3.MultiError
-	)
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error) {
+	var me openapi3.MultiError
 
 	options := input.Options
 	if options == nil {
@@ -52,9 +49,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	}
 	if security != nil {
 		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -70,9 +66,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 		}
 
 		if err = ValidateParameter(ctx, input, parameter); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -81,9 +76,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
 		if err = ValidateParameter(ctx, input, parameter.Value); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -93,9 +87,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
 		if err = ValidateRequestBody(ctx, input, requestBody.Value); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -104,8 +97,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	if len(me) > 0 {
 		return me
 	}
-
-	return nil
+	return
 }
 
 // ValidateParameter validates a parameter's value by JSON schema.
