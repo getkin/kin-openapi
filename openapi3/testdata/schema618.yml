@@ -1,0 +1,62 @@
+components:
+  schemas:
+    Account:
+      required:
+        - name
+        - nature
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - assets
+            - liabilities
+        nature:
+          type: string
+          enum:
+            - asset
+            - liability
+    Record:
+      required:
+        - account
+        - concept
+      type: object
+      properties:
+        account:
+          $ref: "#/components/schemas/Account"
+        concept:
+          type: string
+        partial:
+          type: number
+        credit:
+          type: number
+        debit:
+          type: number
+    JournalEntry:
+      required:
+        - type
+        - creationDate
+        - records
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - daily
+            - ingress
+            - egress
+        creationDate:
+          type: string
+          format: date
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Record"
