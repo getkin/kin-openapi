@@ -38,7 +38,7 @@ paths:
           minimum: 1
       requestBody:
         required: true
-        content: 
+        content:
           'application/json':
             schema:
               $ref: '#/components/schemas/Pet'
