@@ -48,17 +48,22 @@ paths:
 
 	router, err := gorillamux.NewRouter(doc)
 	require.NoError(t, err)
-	httpReq, err := http.NewRequest(http.MethodGet, `/items?test=test1`, nil)
-	require.NoError(t, err)
 
-	route, pathParams, err := router.FindRoute(httpReq)
-	require.NoError(t, err)
+	for _, testcase := range []string{`test1`, `test[1`} {
+		t.Run(testcase, func(t *testing.T) {
+			httpReq, err := http.NewRequest(http.MethodGet, `/items?test=`+testcase, nil)
+			require.NoError(t, err)
 
-	requestValidationInput := &RequestValidationInput{
-		Request:    httpReq,
-		PathParams: pathParams,
-		Route:      route,
+			route, pathParams, err := router.FindRoute(httpReq)
+			require.NoError(t, err)
+
+			requestValidationInput := &RequestValidationInput{
+				Request:    httpReq,
+				PathParams: pathParams,
+				Route:      route,
+			}
+			err = ValidateRequest(ctx, requestValidationInput)
+			require.NoError(t, err)
+		})
 	}
-	err = ValidateRequest(ctx, requestValidationInput)
-	require.NoError(t, err)
 }
