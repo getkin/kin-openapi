@@ -1,6 +1,6 @@
 # https://raw.githubusercontent.com/thediveo/lxkns/71e8fb5e40c612ecc89d972d211221137e92d5f0/api/openapi-spec/lxkns.yaml
 openapi: 3.0.2
-security: 
+security:
     -  {}
 info:
     title: lxkns
