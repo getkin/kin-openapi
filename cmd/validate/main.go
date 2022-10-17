@@ -12,6 +12,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+var argN = flag.Int("n", 1, "times ")
+
 var (
 	defaultCircular = openapi3.CircularReferenceCounter
 	circular        = flag.Int("circular", defaultCircular, "bump this (upper) limit when there's trouble with cyclic schema references")
@@ -44,11 +46,15 @@ func main() {
 		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
 	}
 
+	n := *argN
+	if n <= 0 {
+		n = 1
+	}
+
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	var vd struct {
 		OpenAPI string `json:"openapi" yaml:"openapi"`
 		Swagger string `json:"swagger" yaml:"swagger"`
@@ -57,6 +63,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var realErr error
 	switch {
 	case vd.OpenAPI == "3" || strings.HasPrefix(vd.OpenAPI, "3."):
 		openapi3.CircularReferenceCounter = *circular
@@ -73,6 +80,16 @@ func main() {
 			log.Fatalln("Loading error:", err)
 		}
 
+		for range make([]struct{}, n) {
+			if doc, err = loader.LoadFromFile(filename); err == nil {
+				break
+			}
+			realErr = err
+		}
+		if err = realErr; err != nil {
+			log.Fatalln("Loading error:", err)
+		}
+
 		var opts []openapi3.ValidationOption
 		if !*defaults {
 			opts = append(opts, openapi3.DisableSchemaDefaultsValidation())
@@ -84,7 +101,13 @@ func main() {
 			opts = append(opts, openapi3.DisableSchemaPatternValidation())
 		}
 
-		if err = doc.Validate(loader.Context, opts...); err != nil {
+		for range make([]struct{}, n) {
+			if err = doc.Validate(loader.Context, opts...); err == nil {
+				break
+			}
+			realErr = err
+		}
+		if err = realErr; err != nil {
 			log.Fatalln("Validation error:", err)
 		}
 
@@ -107,7 +130,13 @@ func main() {
 		}
 
 		var doc openapi2.T
-		if err := yaml.Unmarshal(data, &doc); err != nil {
+		for range make([]struct{}, n) {
+			if err := yaml.Unmarshal(data, &doc); err == nil {
+				break
+			}
+			realErr = err
+		}
+		if err = realErr; err != nil {
 			log.Fatalln("Loading error:", err)
 		}
 
