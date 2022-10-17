@@ -19,3 +19,10 @@
  # IntelliJ / GoLand
 .idea
 .vscode
+
+# Test suite data
+/APIs-guru-openapi-directory-*
+/OAI-OpenAPI-Specification-*
+
+# Binaries
+/validate
