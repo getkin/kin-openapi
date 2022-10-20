@@ -29,7 +29,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
             param1example:
               value: abcd
    `,
-			errContains: "invalid paths: invalid path /user: invalid operation POST: param1example",
+			errContains: `invalid paths: invalid path /user: invalid operation POST: param1example`,
 		},
 		{
 			name: "valid_parameter_examples",
@@ -44,7 +44,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
 			parametersExample: `
           example: abcd
    `,
-			errContains: "invalid paths",
+			errContains: `invalid path /user: invalid operation POST: invalid example`,
 		},
 		{
 			name: "valid_parameter_example",
@@ -67,7 +67,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: bad
         password: short
    `,
-			errContains: "invalid paths: invalid path /user: invalid operation POST: BadUser",
+			errContains: `invalid paths: invalid path /user: invalid operation POST: example BadUser`,
 		},
 		{
 			name: "valid_component_examples",
@@ -93,7 +93,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
               email: bad
               password: short
    `,
-			errContains: "invalid paths",
+			errContains: `invalid path /user: invalid operation POST: invalid example`,
 		},
 		{
 			name: "valid_mediatype_examples",
@@ -112,7 +112,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: good@email.com
         # missing password
    `,
-			errContains: "invalid schema example",
+			errContains: `schema "CreateUserRequest": invalid example`,
 		},
 		{
 			name: "valid_schema_request_example",
@@ -130,7 +130,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         user_id: 1
         # missing access_token
    `,
-			errContains: "invalid schema example",
+			errContains: `schema "CreateUserResponse": invalid example`,
 		},
 		{
 			name: "valid_schema_response_example",
@@ -178,7 +178,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         password: password
         user_id: 4321
 `,
-			errContains: "ReadWriteOnlyRequest: readOnly property \"user_id\" in request",
+			errContains: `ReadWriteOnlyRequest: readOnly property "user_id" in request`,
 		},
 		{
 			name: "invalid_writeonly_response_examples",
@@ -195,7 +195,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         user_id: 4321
 `,
 
-			errContains: "ReadWriteOnlyResponse: writeOnly property \"password\" in response",
+			errContains: `ReadWriteOnlyResponse: writeOnly property "password" in response`,
 		},
 	}
 
@@ -377,7 +377,7 @@ func TestExampleObjectValidation(t *testing.T) {
               email: real@email.com
               password: validpassword
 `,
-			errContains: "example and examples are mutually exclusive",
+			errContains: `invalid path /user: invalid operation POST: example and examples are mutually exclusive`,
 			componentExamples: `
   examples:
     BadUser:
@@ -394,7 +394,7 @@ func TestExampleObjectValidation(t *testing.T) {
     BadUser:
       description: empty user example
 `,
-			errContains: "example has no value or externalValue field",
+			errContains: `invalid components: example "BadUser": no value or externalValue field`,
 		},
 		{
 			name: "value_externalValue_mutual_exclusion",
@@ -407,7 +407,7 @@ func TestExampleObjectValidation(t *testing.T) {
         password: validpassword
       externalValue: 'http://example.com/examples/example'
 `,
-			errContains: "value and externalValue are mutually exclusive",
+			errContains: `invalid components: example "BadUser": value and externalValue are mutually exclusive`,
 		},
 	}
 

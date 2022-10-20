@@ -17,6 +17,7 @@ import (
 )
 
 var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
+var CircularReferenceCounter = 3
 
 func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
@@ -36,7 +37,8 @@ type Loader struct {
 
 	Context context.Context
 
-	rootDir string
+	rootDir      string
+	rootLocation string
 
 	visitedPathItemRefs map[string]struct{}
 
@@ -54,7 +56,9 @@ type Loader struct {
 
 // NewLoader returns an empty Loader
 func NewLoader() *Loader {
-	return &Loader{}
+	return &Loader{
+		Context: context.Background(),
+	}
 }
 
 func (loader *Loader) resetVisitedPathItemRefs() {
@@ -148,6 +152,7 @@ func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, 
 func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.URL) (*T, error) {
 	if loader.visitedDocuments == nil {
 		loader.visitedDocuments = make(map[string]*T)
+		loader.rootLocation = location.Path
 	}
 	uri := location.String()
 	if doc, ok := loader.visitedDocuments[uri]; ok {
@@ -420,6 +425,11 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 	if loader.rootDir == "" {
 		return current
 	}
+
+	if resolvedRef == "" {
+		return &url.URL{Path: loader.rootLocation}
+	}
+
 	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
 }
 
@@ -717,7 +727,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			component.Value = &schema
 		} else {
-			if visitedLimit(visited, ref, 3) {
+			if visitedLimit(visited, ref) {
 				visited = append(visited, ref)
 				return fmt.Errorf("%s - %s", CircularReferenceError, strings.Join(visited, " -> "))
 			}
@@ -783,6 +793,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) string {
 	if referencedFilename := strings.Split(ref, "#")[0]; referencedFilename == "" {
 		if cur != nil {
+			if loader.rootDir != "" && strings.HasPrefix(cur.Path, loader.rootDir) {
+				return cur.Path[len(loader.rootDir)+1:]
+			}
+
 			return path.Base(cur.Path)
 		}
 		return ""
@@ -1077,12 +1091,12 @@ func unescapeRefString(ref string) string {
 	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
 
-func visitedLimit(visited []string, ref string, limit int) bool {
+func visitedLimit(visited []string, ref string) bool {
 	visitedCount := 0
 	for _, v := range visited {
 		if v == ref {
 			visitedCount++
-			if visitedCount >= limit {
+			if visitedCount >= CircularReferenceCounter {
 				return true
 			}
 		}

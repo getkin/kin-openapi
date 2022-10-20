@@ -263,6 +263,17 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
+func TestLoadWithReferenceInReferenceInProperty(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInRefInProperty/openapi.yaml")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "Problem details", doc.Paths["/api/test/ref/in/ref/in/property"].Post.Responses["401"].Value.Content["application/json"].Schema.Value.Properties["error"].Value.Title)
+}
+
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true

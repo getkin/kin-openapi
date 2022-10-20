@@ -60,7 +60,7 @@ func (example *Example) Validate(ctx context.Context) error {
 		return errors.New("value and externalValue are mutually exclusive")
 	}
 	if example.Value == nil && example.ExternalValue == "" {
-		return errors.New("example has no value or externalValue field")
+		return errors.New("no value or externalValue field")
 	}
 
 	return nil

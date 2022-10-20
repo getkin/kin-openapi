@@ -1,0 +1,66 @@
+components:
+  schemas:
+    Error:
+      type: object
+      description: Error info in problem-details-0.0.1 format
+      properties:
+        error:
+          $ref: "../common-data-objects/problem-details-0.0.1.schema.json"
+
+  responses:
+    400:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            json:
+              $ref: "#/components/examples/BadRequest"
+    401:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            json:
+              $ref: "#/components/examples/Unauthorized"
+    500:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            json:
+              $ref: "#/components/examples/InternalServerError"
+
+  examples:
+    BadRequest:
+      summary: Wrong format
+      value:
+        error:
+          type: validation-error
+          title: Your request parameters didn't validate.
+          status: 400
+          invalid-params:
+            - name: age
+              reason: must be a positive integer
+            - name: color
+              reason: must be 'green', 'red' or 'blue'
+    Unauthorized:
+      summary: Not authenticated
+      value:
+        error:
+          type: unauthorized
+          title: The request has not been applied because it lacks valid authentication credentials
+            for the target resource.
+          status: 401
+    InternalServerError:
+      summary: Not handled internal server error
+      value:
+        error:
+          type: internal-server-error
+          title: Internal server error.
+          status: 500

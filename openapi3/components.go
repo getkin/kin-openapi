@@ -49,10 +49,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range schemas {
 		v := components.Schemas[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("schema %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("schema %q: %w", k, err)
 		}
 	}
 
@@ -64,10 +64,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range parameters {
 		v := components.Parameters[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("parameter %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("parameter %q: %w", k, err)
 		}
 	}
 
@@ -79,10 +79,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range requestBodies {
 		v := components.RequestBodies[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("request body %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("request body %q: %w", k, err)
 		}
 	}
 
@@ -94,10 +94,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range responses {
 		v := components.Responses[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("response %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("response %q: %w", k, err)
 		}
 	}
 
@@ -109,10 +109,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range headers {
 		v := components.Headers[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("header %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("header %q: %w", k, err)
 		}
 	}
 
@@ -124,10 +124,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range securitySchemes {
 		v := components.SecuritySchemes[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("security scheme %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("security scheme %q: %w", k, err)
 		}
 	}
 
@@ -139,10 +139,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range examples {
 		v := components.Examples[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("example %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return fmt.Errorf("%s: %w", k, err)
+			return fmt.Errorf("example %q: %w", k, err)
 		}
 	}
 
@@ -154,10 +154,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range links {
 		v := components.Links[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("link %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("link %q: %w", k, err)
 		}
 	}
 
@@ -169,10 +169,10 @@ func (components *Components) Validate(ctx context.Context) (err error) {
 	for _, k := range callbacks {
 		v := components.Callbacks[k]
 		if err = ValidateIdentifier(k); err != nil {
-			return
+			return fmt.Errorf("callback %q: %w", k, err)
 		}
 		if err = v.Validate(ctx); err != nil {
-			return
+			return fmt.Errorf("callback %q: %w", k, err)
 		}
 	}
 

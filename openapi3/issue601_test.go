@@ -18,7 +18,7 @@ func TestIssue601(t *testing.T) {
 	require.NoError(t, err)
 
 	err = doc.Validate(sl.Context)
-	require.Contains(t, err.Error(), `invalid components: invalid schema example: Error at "/type": property "type" is missing`)
+	require.Contains(t, err.Error(), `invalid components: schema "DiscoveryResult": invalid example: Error at "/type": property "type" is missing`)
 	require.Contains(t, err.Error(), `| Error at "/nsid": property "nsid" is missing`)
 
 	err = doc.Validate(sl.Context, DisableExamplesValidation())
