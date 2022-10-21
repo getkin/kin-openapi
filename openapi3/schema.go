@@ -1458,11 +1458,11 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		sort.Strings(properties)
 		for _, propName := range properties {
 			propSchema := schema.Properties[propName]
+			reqRO := settings.asreq && propSchema.Value.ReadOnly
+			repWO := settings.asrep && propSchema.Value.WriteOnly
 
 			if value[propName] == nil {
-				if dlft := propSchema.Value.Default; dlft != nil &&
-					!(settings.asreq && propSchema.Value.ReadOnly) &&
-					!(settings.asrep && propSchema.Value.WriteOnly) {
+				if dlft := propSchema.Value.Default; dlft != nil && !reqRO && !repWO {
 					value[propName] = dlft
 					if f := settings.defaultsSet; f != nil {
 						settings.onceSettingDefaults.Do(f)
@@ -1471,9 +1471,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			}
 
 			if value[propName] != nil {
-				if settings.asreq && propSchema.Value.ReadOnly {
+				if reqRO {
 					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
-				} else if settings.asrep && propSchema.Value.WriteOnly {
+				} else if repWO {
 					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
 				}
 			}

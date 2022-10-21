@@ -324,12 +324,15 @@ components:
       properties:
         username:
           type: string
+          default: default
           writeOnly: true # only sent in a request
         password:
           type: string
+          default: default
           writeOnly: true # only sent in a request
         user_id:
           format: int64
+          default: 1
           type: integer
           readOnly: true # only returned in a response
       type: object
