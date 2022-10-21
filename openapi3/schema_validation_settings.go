@@ -10,7 +10,7 @@ type SchemaValidationOption func(*schemaValidationSettings)
 type schemaValidationSettings struct {
 	failfast                  bool
 	multiError                bool
-	asReq, asRes              bool // exclusive (XOR) fields
+	asreq, asrep              bool // exclusive (XOR) fields
 	formatValidationEnabled   bool
 	patternValidationDisabled bool
 
@@ -28,11 +28,11 @@ func MultiErrors() SchemaValidationOption {
 }
 
 func VisitAsRequest() SchemaValidationOption {
-	return func(s *schemaValidationSettings) { s.asReq, s.asRes = true, false }
+	return func(s *schemaValidationSettings) { s.asreq, s.asrep = true, false }
 }
 
 func VisitAsResponse() SchemaValidationOption {
-	return func(s *schemaValidationSettings) { s.asReq, s.asRes = false, true }
+	return func(s *schemaValidationSettings) { s.asreq, s.asrep = false, true }
 }
 
 // EnableFormatValidation setting makes Validate not return an error when validating documents that mention schema formats that are not defined by the OpenAPIv3 specification.

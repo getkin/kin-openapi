@@ -319,7 +319,7 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
 		}
 
-		if vo := getValidationOptions(ctx); vo.ExamplesValidation.Disabled {
+		if vo := getValidationOptions(ctx); vo.examplesValidationDisabled {
 			return nil
 		}
 		if example := parameter.Example; example != nil {

@@ -110,8 +110,8 @@ func (requestBody *RequestBody) Validate(ctx context.Context) error {
 		return errors.New("content of the request body is required")
 	}
 
-	if xv := getValidationOptions(ctx).ExamplesValidation; !xv.Disabled {
-		xv.AsReq, xv.AsRes = true, false
+	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
+		vo.examplesValidationAsReq, vo.examplesValidationAsRes = true, false
 	}
 
 	return requestBody.Content.Validate(ctx)

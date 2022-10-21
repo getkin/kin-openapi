@@ -115,8 +115,8 @@ func (response *Response) Validate(ctx context.Context) error {
 	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
-	if xv := getValidationOptions(ctx).ExamplesValidation; !xv.Disabled {
-		xv.AsReq, xv.AsRes = false, true
+	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
+		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, true
 	}
 
 	if content := response.Content; content != nil {

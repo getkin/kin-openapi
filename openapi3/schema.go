@@ -668,7 +668,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "float", "double":
 			default:
-				if validationOpts.SchemaFormatValidationEnabled {
+				if validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -678,7 +678,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "int32", "int64":
 			default:
-				if validationOpts.SchemaFormatValidationEnabled {
+				if validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -700,12 +700,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.SchemaFormatValidationEnabled {
+				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
 		}
-		if schema.Pattern != "" && !validationOpts.SchemaPatternValidationDisabled {
+		if schema.Pattern != "" && !validationOpts.schemaPatternValidationDisabled {
 			if err = schema.compilePattern(); err != nil {
 				return err
 			}
@@ -767,7 +767,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	if x := schema.Example; x != nil && !validationOpts.ExamplesValidation.Disabled {
+	if x := schema.Example; x != nil && !validationOpts.examplesValidationDisabled {
 		if err := validateExampleValue(ctx, x, schema); err != nil {
 			return fmt.Errorf("invalid example: %w", err)
 		}
@@ -930,7 +930,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			tempValue        = value
 		)
 		// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
-		if settings.asReq || settings.asRes {
+		if settings.asreq || settings.asrep {
 			tempValue = deepcopy.Copy(value)
 		}
 		for idx, item := range v {
@@ -980,7 +980,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			return e
 		}
 
-		if settings.asReq || settings.asRes {
+		if settings.asreq || settings.asrep {
 			_ = v[matchedOneOfIdx].Value.visitJSON(settings, value)
 		}
 	}
@@ -992,7 +992,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			tempValue       = value
 		)
 		// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
-		if settings.asReq || settings.asRes {
+		if settings.asreq || settings.asrep {
 			tempValue = deepcopy.Copy(value)
 		}
 		for idx, item := range v {
@@ -1450,7 +1450,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 	var me MultiError
 
-	if settings.asReq || settings.asRes {
+	if settings.asreq || settings.asrep {
 		properties := make([]string, 0, len(schema.Properties))
 		for propName := range schema.Properties {
 			properties = append(properties, propName)
@@ -1458,17 +1458,22 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		sort.Strings(properties)
 		for _, propName := range properties {
 			propSchema := schema.Properties[propName]
+
 			if value[propName] == nil {
-				if dlft := propSchema.Value.Default; dlft != nil {
+				if dlft := propSchema.Value.Default; dlft != nil &&
+					!(settings.asreq && propSchema.Value.ReadOnly) &&
+					!(settings.asrep && propSchema.Value.WriteOnly) {
 					value[propName] = dlft
 					if f := settings.defaultsSet; f != nil {
 						settings.onceSettingDefaults.Do(f)
 					}
 				}
-			} else {
-				if settings.asReq && propSchema.Value.ReadOnly {
+			}
+
+			if value[propName] != nil {
+				if settings.asreq && propSchema.Value.ReadOnly {
 					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
-				} else if settings.asRes && propSchema.Value.WriteOnly {
+				} else if settings.asrep && propSchema.Value.WriteOnly {
 					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
 				}
 			}
@@ -1587,10 +1592,10 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	// "required"
 	for _, k := range schema.Required {
 		if _, ok := value[k]; !ok {
-			if s := schema.Properties[k]; s != nil && s.Value.ReadOnly && settings.asReq {
+			if s := schema.Properties[k]; s != nil && s.Value.ReadOnly && settings.asreq {
 				continue
 			}
-			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asRes {
+			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asrep {
 				continue
 			}
 			if settings.failfast {

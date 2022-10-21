@@ -78,7 +78,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 			}`,
 			requestBody:        `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
 			responseBody:       `{"access_token": "abcd"}`,
-			requestErrContains: "readOnly property \"_id\" in request",
+			requestErrContains: `readOnly property "_id" in request`,
 		},
 		{
 			name: "invalid_writeonly_in_response_and_valid_writeonly_in_request",
@@ -106,7 +106,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 			}`,
 			requestBody:         `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
 			responseBody:        `{"access_token": "abcd"}`,
-			responseErrContains: "writeOnly property \"access_token\" in response",
+			responseErrContains: `writeOnly property "access_token" in response`,
 		},
 		{
 			name: "invalid_writeonly_in_response_and_invalid_readonly_in_request",
@@ -134,8 +134,8 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 			}`,
 			requestBody:         `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
 			responseBody:        `{"access_token": "abcd"}`,
-			responseErrContains: "writeOnly property \"access_token\" in response",
-			requestErrContains:  "readOnly property \"_id\" in request",
+			responseErrContains: `writeOnly property "access_token" in response`,
+			requestErrContains:  `readOnly property "_id" in request`,
 		},
 	}
 
