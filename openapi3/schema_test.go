@@ -1314,3 +1314,45 @@ func TestValidationFailsOnInvalidPattern(t *testing.T) {
 	err := schema.Validate(context.Background())
 	require.Error(t, err)
 }
+
+func TestIssue646(t *testing.T) {
+	data := []byte(`
+enum:
+- 42
+- []
+- [a]
+- {}
+- {b: c}
+`[1:])
+
+	var schema Schema
+	err := yaml.Unmarshal(data, &schema)
+	require.NoError(t, err)
+
+	err = schema.Validate(context.Background())
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(42)
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(1337)
+	require.Error(t, err)
+
+	err = schema.VisitJSON([]interface{}{})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON([]interface{}{"a"})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON([]interface{}{"b"})
+	require.Error(t, err)
+
+	err = schema.VisitJSON(map[string]interface{}{})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(map[string]interface{}{"b": "c"})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(map[string]interface{}{"d": "e"})
+	require.Error(t, err)
+}

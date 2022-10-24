@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -870,7 +871,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
-			if value == v {
+			if reflect.DeepEqual(v, value) {
 				return
 			}
 		}
