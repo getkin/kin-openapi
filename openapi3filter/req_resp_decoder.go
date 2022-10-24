@@ -999,6 +999,7 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 func init() {
 	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 	RegisterBodyDecoder("application/json", jsonBodyDecoder)
+	RegisterBodyDecoder("application/json-patch+json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/problem+json", jsonBodyDecoder)
