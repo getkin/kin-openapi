@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -216,7 +217,19 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			}
 		}
 		// Put the data back into the input
-		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		req.Body = nil
+		if req.GetBody != nil {
+			if req.Body, err = req.GetBody(); err != nil {
+				req.Body = nil
+			}
+		}
+		if req.Body == nil {
+			req.ContentLength = int64(len(data))
+			req.GetBody = func() (io.ReadCloser, error) {
+				return io.NopCloser(bytes.NewReader(data)), nil
+			}
+			req.Body, _ = req.GetBody() // no error return
+		}
 	}
 
 	if len(data) == 0 {
@@ -292,8 +305,14 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			}
 		}
 		// Put the data back into the input
-		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		if req.Body != nil {
+			req.Body.Close()
+		}
 		req.ContentLength = int64(len(data))
+		req.GetBody = func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(data)), nil
+		}
+		req.Body, _ = req.GetBody() // no error return
 	}
 
 	return nil
