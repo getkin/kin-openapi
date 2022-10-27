@@ -373,15 +373,6 @@ func getValidationTests(t *testing.T) []*validationTest {
 				Source: &ValidationErrorSource{Pointer: "/category/tags/0/name"}},
 		},
 		{
-			// TODO: Add support for validating readonly properties to upstream validator.
-			name: "error - readonly object attribute",
-			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodPost, "/pet",
-					bytes.NewBufferString(`{"id":213,"name":"Bahama","photoUrls":[]}}`)),
-			},
-			//wantErr: true,
-		},
-		{
 			name: "error - wrong attribute type",
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodPost, "/pet",

@@ -769,7 +769,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	}
 
 	if x := schema.Example; x != nil && !validationOpts.ExamplesValidationDisabled {
-		if err := validateExampleValue(x, schema); err != nil {
+		if err := validateExampleValue(ctx, x, schema); err != nil {
 			return fmt.Errorf("invalid example: %w", err)
 		}
 	}
@@ -1449,6 +1449,8 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		return schema.expectedType(settings, TypeObject)
 	}
 
+	var me MultiError
+
 	if settings.asreq || settings.asrep {
 		properties := make([]string, 0, len(schema.Properties))
 		for propName := range schema.Properties {
@@ -1457,18 +1459,27 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		sort.Strings(properties)
 		for _, propName := range properties {
 			propSchema := schema.Properties[propName]
+			reqRO := settings.asreq && propSchema.Value.ReadOnly
+			repWO := settings.asrep && propSchema.Value.WriteOnly
+
 			if value[propName] == nil {
-				if dlft := propSchema.Value.Default; dlft != nil {
+				if dlft := propSchema.Value.Default; dlft != nil && !reqRO && !repWO {
 					value[propName] = dlft
 					if f := settings.defaultsSet; f != nil {
 						settings.onceSettingDefaults.Do(f)
 					}
 				}
 			}
+
+			if value[propName] != nil {
+				if reqRO {
+					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
+				} else if repWO {
+					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
+				}
+			}
 		}
 	}
-
-	var me MultiError
 
 	// "properties"
 	properties := schema.Properties

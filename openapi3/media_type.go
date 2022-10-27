@@ -88,12 +88,12 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 			return errors.New("example and examples are mutually exclusive")
 		}
 
-		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+		if vo := getValidationOptions(ctx); vo.ExamplesValidationDisabled {
 			return nil
 		}
 
 		if example := mediaType.Example; example != nil {
-			if err := validateExampleValue(example, schema.Value); err != nil {
+			if err := validateExampleValue(ctx, example, schema.Value); err != nil {
 				return fmt.Errorf("invalid example: %w", err)
 			}
 		}
@@ -109,7 +109,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 				if err := v.Validate(ctx); err != nil {
 					return fmt.Errorf("example %s: %w", k, err)
 				}
-				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
 					return fmt.Errorf("example %s: %w", k, err)
 				}
 			}

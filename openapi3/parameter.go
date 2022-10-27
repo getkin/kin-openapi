@@ -318,11 +318,12 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		if parameter.Example != nil && parameter.Examples != nil {
 			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
 		}
-		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+
+		if vo := getValidationOptions(ctx); vo.ExamplesValidationDisabled {
 			return nil
 		}
 		if example := parameter.Example; example != nil {
-			if err := validateExampleValue(example, schema.Value); err != nil {
+			if err := validateExampleValue(ctx, example, schema.Value); err != nil {
 				return fmt.Errorf("invalid example: %w", err)
 			}
 		} else if examples := parameter.Examples; examples != nil {
@@ -336,7 +337,7 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 				if err := v.Validate(ctx); err != nil {
 					return fmt.Errorf("%s: %w", k, err)
 				}
-				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
 					return fmt.Errorf("%s: %w", k, err)
 				}
 			}
