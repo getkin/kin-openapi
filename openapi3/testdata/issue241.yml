@@ -1,0 +1,15 @@
+openapi: 3.0.3
+components:
+  schemas:
+    FooBar:
+      type: object
+      properties:
+        type_url:
+          type: string
+        value:
+          type: string
+          format: byte
+info:
+  title: sample
+  version: version not set
+paths: {}

@@ -30,7 +30,7 @@ func (e Examples) JSONLookup(token string) (interface{}, error) {
 // Example is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#exampleObject
 type Example struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Summary       string      `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description   string      `json:"description,omitempty" yaml:"description,omitempty"`

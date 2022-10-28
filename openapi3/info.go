@@ -10,7 +10,7 @@ import (
 // Info is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#infoObject
 type Info struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Title          string   `json:"title" yaml:"title"` // Required
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
@@ -58,7 +58,7 @@ func (info *Info) Validate(ctx context.Context) error {
 // Contact is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contactObject
 type Contact struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -83,7 +83,7 @@ func (contact *Contact) Validate(ctx context.Context) error {
 // License is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#licenseObject
 type License struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
