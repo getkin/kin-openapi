@@ -1,0 +1,93 @@
+{
+    "title": "Problem details",
+    "description": "Common data object for describing an error details",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "title",
+        "status"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "description": "Unique error code",
+            "minLength": 1,
+            "example": "unauthorized",
+            "x-docs-examples": [
+                "validation-error",
+                "unauthorized",
+                "forbidden",
+                "internal-server-error",
+                "wrong-basket",
+                "not-found"
+            ]
+        },
+        "title": {
+            "type": "string",
+            "description": "Human readable error message",
+            "minLength": 1,
+            "example": "Your request parameters didn't validate",
+            "x-docs-examples": [
+                "Your request parameters didn't validate",
+                "Requested resource is not available",
+                "Internal server error"
+            ]
+        },
+        "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "maximum": 599,
+            "minimum": 100,
+            "example": 200,
+            "x-docs-examples": [
+                "200",
+                "201",
+                "400",
+                "503"
+            ]
+        },
+        "detail": {
+            "type": "string",
+            "description": "Human readable error description. Only for human",
+            "example": "Basket must have more then 1 item",
+            "x-docs-examples": [
+                "Basket must have more then 1 item"
+            ]
+        },
+        "invalid-params": {
+            "type": "array",
+            "description": "Param list with errors",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "name",
+                    "reason"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "field name",
+                        "minLength": 1,
+                        "example": "age",
+                        "x-docs-examples": [
+                            "age",
+                            "color"
+                        ]
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Field validation error text",
+                        "minLength": 1,
+                        "example": "must be a positive integer",
+                        "x-docs-examples": [
+                            "must be a positive integer",
+                            "must be 'green', 'red' or 'blue'"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

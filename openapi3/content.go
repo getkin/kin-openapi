@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"sort"
 	"strings"
 )
 
@@ -104,9 +105,15 @@ func (content Content) Get(mime string) *MediaType {
 	return content["*/*"]
 }
 
-func (value Content) Validate(ctx context.Context) error {
-	for _, v := range value {
-		// Validate MediaType
+// Validate returns an error if Content does not comply with the OpenAPI spec.
+func (content Content) Validate(ctx context.Context) error {
+	keys := make([]string, 0, len(content))
+	for key := range content {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := content[k]
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}

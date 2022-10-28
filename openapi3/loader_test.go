@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -97,7 +96,7 @@ func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
 	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
-	require.EqualError(t, err, `invalid paths: found unresolved ref: ""`)
+	require.EqualError(t, err, `invalid paths: invalid path /foo: invalid operation POST: found unresolved ref: ""`)
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {
@@ -264,6 +263,17 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
+func TestLoadWithReferenceInReferenceInProperty(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInRefInProperty/openapi.yaml")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "Problem details", doc.Paths["/api/test/ref/in/ref/in/property"].Post.Responses["401"].Value.Content["application/json"].Schema.Value.Properties["error"].Value.Title)
+}
+
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
@@ -412,6 +422,7 @@ paths:
       parameters:
         - name: id,
           in: path
+          required: true
           schema:
             type: string
       responses:
@@ -435,6 +446,20 @@ paths:
 	require.NotNil(t, link)
 	require.Equal(t, "getUserById", link.OperationID)
 	require.Equal(t, "link to to the father", link.Description)
+}
+
+func TestLinksFromOAISpec(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromFile("testdata/link-example.yaml")
+	require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	response := doc.Paths[`/2.0/repositories/{username}/{slug}`].Get.Responses.Get(200).Value
+	link := response.Links[`repositoryPullRequests`].Value
+	require.Equal(t, map[string]interface{}{
+		"username": "$response.body#/owner/username",
+		"slug":     "$response.body#/slug",
+	}, link.Parameters)
 }
 
 func TestResolveNonComponentsRef(t *testing.T) {
@@ -509,23 +534,27 @@ paths: {}
 servers:
 - @@@
 `
-	for value, expected := range map[string]error{
-		`{url: /}`:                            nil,
-		`{url: "http://{x}.{y}.example.com"}`: errors.New("invalid servers: server has undeclared variables"),
-		`{url: "http://{x}.y}.example.com"}`:  errors.New("invalid servers: server URL has mismatched { and }"),
-		`{url: "http://{x.example.com"}`:      errors.New("invalid servers: server URL has mismatched { and }"),
-		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                nil,
-		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: nil,
-		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New(`invalid servers: field default is required in {"enum":["www"]}`),
-		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
-		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
+	for value, expected := range map[string]string{
+		`{url: /}`:                            "",
+		`{url: "http://{x}.{y}.example.com"}`: "invalid servers: server has undeclared variables",
+		`{url: "http://{x}.y}.example.com"}`:  "invalid servers: server URL has mismatched { and }",
+		`{url: "http://{x.example.com"}`:      "invalid servers: server URL has mismatched { and }",
+		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                "",
+		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: "",
+		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 `invalid servers: field default is required in {"enum":["www"]}`,
+		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
+		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
 	} {
 		t.Run(value, func(t *testing.T) {
 			loader := NewLoader()
 			doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "@@@", value, 1)))
 			require.NoError(t, err)
 			err = doc.Validate(loader.Context)
-			require.Equal(t, expected, err)
+			if expected == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, expected)
+			}
 		})
 	}
 }

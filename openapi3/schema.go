@@ -8,12 +8,16 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"unicode/utf16"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
+	"github.com/mohae/deepcopy"
+
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 const (
@@ -23,14 +27,17 @@ const (
 	TypeNumber  = "number"
 	TypeObject  = "object"
 	TypeString  = "string"
+
+	// constants for integer formats
+	formatMinInt32 = float64(math.MinInt32)
+	formatMaxInt32 = float64(math.MaxInt32)
+	formatMinInt64 = float64(math.MinInt64)
+	formatMaxInt64 = float64(math.MaxInt64)
 )
 
 var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
 	SchemaErrorDetailsDisabled = false
-
-	//SchemaFormatValidationDisabled disables validation of schema type formats.
-	SchemaFormatValidationDisabled = false
 
 	errSchema = errors.New("input does not match the schema")
 
@@ -67,6 +74,7 @@ type Schemas map[string]*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s Schemas) JSONLookup(token string) (interface{}, error) {
 	ref, ok := s[token]
 	if ref == nil || ok == false {
@@ -83,6 +91,7 @@ type SchemaRefs []*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 	i, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
@@ -102,8 +111,9 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 }
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject
 type Schema struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
@@ -124,12 +134,12 @@ type Schema struct {
 	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
 	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
 	// Properties
-	Nullable        bool        `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	ReadOnly        bool        `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	WriteOnly       bool        `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	XML             interface{} `json:"xml,omitempty" yaml:"xml,omitempty"`
-	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
+	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
+	WriteOnly       bool `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
 
 	// Number
 	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
@@ -163,14 +173,17 @@ func NewSchema() *Schema {
 	return &Schema{}
 }
 
+// MarshalJSON returns the JSON encoding of Schema.
 func (schema *Schema) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(schema)
 }
 
+// UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, schema)
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (schema Schema) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "additionalProperties":
@@ -390,6 +403,7 @@ func (schema *Schema) WithMax(value float64) *Schema {
 	schema.Max = &value
 	return schema
 }
+
 func (schema *Schema) WithExclusiveMin(value bool) *Schema {
 	schema.ExclusiveMin = value
 	return schema
@@ -587,11 +601,14 @@ func (schema *Schema) IsEmpty() bool {
 	return true
 }
 
-func (value *Schema) Validate(ctx context.Context) error {
-	return value.validate(ctx, []*Schema{})
+// Validate returns an error if Schema does not comply with the OpenAPI spec.
+func (schema *Schema) Validate(ctx context.Context) error {
+	return schema.validate(ctx, []*Schema{})
 }
 
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error) {
+	validationOpts := getValidationOptions(ctx)
+
 	for _, existing := range stack {
 		if existing == schema {
 			return
@@ -652,7 +669,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "float", "double":
 			default:
-				if !SchemaFormatValidationDisabled {
+				if validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -662,7 +679,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "int32", "int64":
 			default:
-				if !SchemaFormatValidationDisabled {
+				if validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -670,22 +687,26 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 	case TypeString:
 		if format := schema.Format; len(format) > 0 {
 			switch format {
-			// Supported by OpenAPIv3.0.1:
+			// Supported by OpenAPIv3.0.3:
+			// https://spec.openapis.org/oas/v3.0.3
 			case "byte", "binary", "date", "date-time", "password":
-				// In JSON Draft-07 (not validated yet though):
-			case "regex":
-			case "time", "email", "idn-email":
-			case "hostname", "idn-hostname", "ipv4", "ipv6":
-			case "uri", "uri-reference", "iri", "iri-reference", "uri-template":
-			case "json-pointer", "relative-json-pointer":
+			// In JSON Draft-07 (not validated yet though):
+			// https://json-schema.org/draft-07/json-schema-release-notes.html#formats
+			case "iri", "iri-reference", "uri-template", "idn-email", "idn-hostname":
+			case "json-pointer", "relative-json-pointer", "regex", "time":
+			// In JSON Draft 2019-09 (not validated yet though):
+			// https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
+			case "duration", "uuid":
+			// Defined in some other specification
+			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok && !SchemaFormatValidationDisabled {
+				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.SchemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
 		}
-		if schema.Pattern != "" {
+		if schema.Pattern != "" && !validationOpts.SchemaPatternValidationDisabled {
 			if err = schema.compilePattern(); err != nil {
 				return err
 			}
@@ -709,7 +730,13 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	for _, ref := range schema.Properties {
+	properties := make([]string, 0, len(schema.Properties))
+	for name := range schema.Properties {
+		properties = append(properties, name)
+	}
+	sort.Strings(properties)
+	for _, name := range properties {
+		ref := schema.Properties[name]
 		v := ref.Value
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
@@ -726,6 +753,24 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 		if err = v.validate(ctx, stack); err != nil {
 			return
+		}
+	}
+
+	if v := schema.ExternalDocs; v != nil {
+		if err = v.Validate(ctx); err != nil {
+			return fmt.Errorf("invalid external docs: %w", err)
+		}
+	}
+
+	if v := schema.Default; v != nil {
+		if err := schema.VisitJSON(v); err != nil {
+			return fmt.Errorf("invalid default: %w", err)
+		}
+	}
+
+	if x := schema.Example; x != nil && !validationOpts.ExamplesValidationDisabled {
+		if err := validateExampleValue(ctx, x, schema); err != nil {
+			return fmt.Errorf("invalid example: %w", err)
 		}
 	}
 
@@ -788,10 +833,14 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 
 	switch value := value.(type) {
-	case nil:
-		return schema.visitJSONNull(settings)
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
+	case int:
+		return schema.visitJSONNumber(settings, float64(value))
+	case int32:
+		return schema.visitJSONNumber(settings, float64(value))
+	case int64:
+		return schema.visitJSONNumber(settings, float64(value))
 	case float64:
 		return schema.visitJSONNumber(settings, value)
 	case string:
@@ -822,7 +871,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
-			if value == v {
+			if reflect.DeepEqual(v, value) {
 				return
 			}
 		}
@@ -864,15 +913,28 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 					return errors.New("input does not contain the discriminator property")
 				}
 
-				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorVal.(string)]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+				discriminatorValString, okcheck := discriminatorVal.(string)
+				if !okcheck {
+					return errors.New("descriminator value is not a string")
+				}
+
+				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
 					return errors.New("input does not contain a valid discriminator value")
 				}
 			}
 		}
 
-		ok := 0
-		validationErrors := []error{}
-		for _, item := range v {
+		var (
+			ok               = 0
+			validationErrors = []error{}
+			matchedOneOfIdx  = 0
+			tempValue        = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
+		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
@@ -882,11 +944,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				continue
 			}
 
-			if err := v.visitJSON(settings, value); err != nil {
+			if err := v.visitJSON(settings, tempValue); err != nil {
 				validationErrors = append(validationErrors, err)
 				continue
 			}
 
+			matchedOneOfIdx = idx
 			ok++
 		}
 
@@ -917,17 +980,30 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 			return e
 		}
+
+		if settings.asreq || settings.asrep {
+			_ = v[matchedOneOfIdx].Value.visitJSON(settings, value)
+		}
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
-		ok := false
-		for _, item := range v {
+		var (
+			ok              = false
+			matchedAnyOfIdx = 0
+			tempValue       = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
+		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			if err := v.visitJSON(settings, value); err == nil {
+			if err := v.visitJSON(settings, tempValue); err == nil {
 				ok = true
+				matchedAnyOfIdx = idx
 				break
 			}
 		}
@@ -941,6 +1017,8 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				SchemaField: "anyOf",
 			}
 		}
+
+		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
 	}
 
 	for _, item := range schema.AllOf {
@@ -998,7 +1076,7 @@ func (schema *Schema) VisitJSONNumber(value float64) error {
 func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value float64) error {
 	var me MultiError
 	schemaType := schema.Type
-	if schemaType == "integer" {
+	if schemaType == TypeInteger {
 		if bigFloat := big.NewFloat(value); !bigFloat.IsInt() {
 			if settings.failfast {
 				return errSchema
@@ -1016,6 +1094,39 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 		}
 	} else if schemaType != "" && schemaType != TypeNumber {
 		return schema.expectedType(settings, "number, integer")
+	}
+
+	// formats
+	if schemaType == TypeInteger && schema.Format != "" {
+		formatMin := float64(0)
+		formatMax := float64(0)
+		switch schema.Format {
+		case "int32":
+			formatMin = formatMinInt32
+			formatMax = formatMaxInt32
+		case "int64":
+			formatMin = formatMinInt64
+			formatMax = formatMaxInt64
+		default:
+			if settings.formatValidationEnabled {
+				return unsupportedFormat(schema.Format)
+			}
+		}
+		if formatMin != 0 && formatMax != 0 && !(formatMin <= value && value <= formatMax) {
+			if settings.failfast {
+				return errSchema
+			}
+			err := &SchemaError{
+				Value:       value,
+				Schema:      schema,
+				SchemaField: "format",
+				Reason:      fmt.Sprintf("number must be an %s", schema.Format),
+			}
+			if !settings.multiError {
+				return err
+			}
+			me = append(me, err)
+		}
 	}
 
 	// "exclusiveMinimum"
@@ -1171,7 +1282,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	}
 
 	// "pattern"
-	if schema.Pattern != "" && schema.compiledPattern == nil {
+	if schema.Pattern != "" && schema.compiledPattern == nil && !settings.patternValidationDisabled {
 		var err error
 		if err = schema.compilePattern(); err != nil {
 			if !settings.multiError {
@@ -1340,6 +1451,36 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 	var me MultiError
 
+	if settings.asreq || settings.asrep {
+		properties := make([]string, 0, len(schema.Properties))
+		for propName := range schema.Properties {
+			properties = append(properties, propName)
+		}
+		sort.Strings(properties)
+		for _, propName := range properties {
+			propSchema := schema.Properties[propName]
+			reqRO := settings.asreq && propSchema.Value.ReadOnly
+			repWO := settings.asrep && propSchema.Value.WriteOnly
+
+			if value[propName] == nil {
+				if dlft := propSchema.Value.Default; dlft != nil && !reqRO && !repWO {
+					value[propName] = dlft
+					if f := settings.defaultsSet; f != nil {
+						settings.onceSettingDefaults.Do(f)
+					}
+				}
+			}
+
+			if value[propName] != nil {
+				if reqRO {
+					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
+				} else if repWO {
+					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
+				}
+			}
+		}
+	}
+
 	// "properties"
 	properties := schema.Properties
 	lenValue := int64(len(value))
@@ -1383,7 +1524,13 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if ref := schema.AdditionalProperties; ref != nil {
 		additionalProperties = ref.Value
 	}
-	for k, v := range value {
+	keys := make([]string, 0, len(value))
+	for k := range value {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := value[k]
 		if properties != nil {
 			propertyRef := properties[k]
 			if propertyRef != nil {
@@ -1409,7 +1556,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			}
 		}
 		allowed := schema.AdditionalPropertiesAllowed
-		if additionalProperties != nil || allowed == nil || (allowed != nil && *allowed) {
+		if additionalProperties != nil || allowed == nil || *allowed {
 			if additionalProperties != nil {
 				if err := additionalProperties.visitJSON(settings, v); err != nil {
 					if settings.failfast {

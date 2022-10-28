@@ -3,22 +3,32 @@ package openapi3
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 )
 
-// Paths is specified by OpenAPI/Swagger standard version 3.0.
+// Paths is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
 type Paths map[string]*PathItem
 
-func (value Paths) Validate(ctx context.Context) error {
-	normalizedPaths := make(map[string]string)
-	for path, pathItem := range value {
+// Validate returns an error if Paths does not comply with the OpenAPI spec.
+func (paths Paths) Validate(ctx context.Context) error {
+	normalizedPaths := make(map[string]string, len(paths))
+
+	keys := make([]string, 0, len(paths))
+	for key := range paths {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, path := range keys {
+		pathItem := paths[path]
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
 
 		if pathItem == nil {
-			value[path] = &PathItem{}
-			pathItem = value[path]
+			paths[path] = &PathItem{}
+			pathItem = paths[path]
 		}
 
 		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
@@ -35,7 +45,14 @@ func (value Paths) Validate(ctx context.Context) error {
 				}
 			}
 		}
-		for method, operation := range pathItem.Operations() {
+		operations := pathItem.Operations()
+		methods := make([]string, 0, len(operations))
+		for method := range operations {
+			methods = append(methods, method)
+		}
+		sort.Strings(methods)
+		for _, method := range methods {
+			operation := operations[method]
 			var setParams []string
 			for _, parameterRef := range operation.Parameters {
 				if parameterRef != nil {
@@ -79,9 +96,14 @@ func (value Paths) Validate(ctx context.Context) error {
 		}
 
 		if err := pathItem.Validate(ctx); err != nil {
-			return err
+			return fmt.Errorf("invalid path %s: %v", path, err)
 		}
 	}
+
+	if err := paths.validateUniqueOperationIDs(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -91,10 +113,10 @@ func (value Paths) Validate(ctx context.Context) error {
 //
 // For example:
 //
-//   paths := openapi3.Paths {
-//     "/person/{personName}": &openapi3.PathItem{},
-//   }
-//   pathItem := path.Find("/person/{name}")
+//	paths := openapi3.Paths {
+//	  "/person/{personName}": &openapi3.PathItem{},
+//	}
+//	pathItem := path.Find("/person/{name}")
 //
 // would return the correct path item.
 func (paths Paths) Find(key string) *PathItem {
@@ -109,6 +131,30 @@ func (paths Paths) Find(key string) *PathItem {
 		pathNormalized, got, _ := normalizeTemplatedPath(path)
 		if got == expected && pathNormalized == normalizedPath {
 			return pathItem
+		}
+	}
+	return nil
+}
+
+func (paths Paths) validateUniqueOperationIDs() error {
+	operationIDs := make(map[string]string)
+	for urlPath, pathItem := range paths {
+		if pathItem == nil {
+			continue
+		}
+		for httpMethod, operation := range pathItem.Operations() {
+			if operation == nil || operation.OperationID == "" {
+				continue
+			}
+			endpoint := httpMethod + " " + urlPath
+			if endpointDup, ok := operationIDs[operation.OperationID]; ok {
+				if endpoint > endpointDup { // For make error message a bit more deterministic. May be useful for tests.
+					endpoint, endpointDup = endpointDup, endpoint
+				}
+				return fmt.Errorf("operations %q and %q have the same operation id %q",
+					endpoint, endpointDup, operation.OperationID)
+			}
+			operationIDs[operation.OperationID] = endpoint
 		}
 	}
 	return nil

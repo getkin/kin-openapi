@@ -9,65 +9,62 @@ package gorillamux
 import (
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/gorilla/mux"
 )
 
 var _ routers.Router = &Router{}
 
 // Router helps link http.Request.s and an OpenAPIv3 spec
 type Router struct {
-	muxes  []*mux.Route
+	muxes  []routeMux
 	routes []*routers.Route
 }
 
+type varsf func(vars map[string]string)
+
+type routeMux struct {
+	muxRoute    *mux.Route
+	varsUpdater varsf
+}
+
+type srv struct {
+	schemes     []string
+	host, base  string
+	server      *openapi3.Server
+	varsUpdater varsf
+}
+
+var singleVariableMatcher = regexp.MustCompile(`^\{([^{}]+)\}$`)
+
+// TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
+
 // NewRouter creates a gorilla/mux router.
 // Assumes spec is .Validate()d
-// TODO: Handle/HandlerFunc + ServeHTTP (When there is a match, the route variables can be retrieved calling mux.Vars(request))
+// Note that a variable for the port number MUST have a default value and only this value will match as the port (see issue #367).
 func NewRouter(doc *openapi3.T) (routers.Router, error) {
-	type srv struct {
-		schemes    []string
-		host, base string
-		server     *openapi3.Server
+	servers, err := makeServers(doc.Servers)
+	if err != nil {
+		return nil, err
 	}
-	servers := make([]srv, 0, len(doc.Servers))
-	for _, server := range doc.Servers {
-		serverURL := server.URL
-		var schemes []string
-		var u *url.URL
-		var err error
-		if strings.Contains(serverURL, "://") {
-			scheme0 := strings.Split(serverURL, "://")[0]
-			schemes = permutePart(scheme0, server)
-			u, err = url.Parse(bEncode(strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)))
-		} else {
-			u, err = url.Parse(bEncode(serverURL))
-		}
-		if err != nil {
-			return nil, err
-		}
-		path := bDecode(u.EscapedPath())
-		if len(path) > 0 && path[len(path)-1] == '/' {
-			path = path[:len(path)-1]
-		}
-		servers = append(servers, srv{
-			host:    bDecode(u.Host), //u.Hostname()?
-			base:    path,
-			schemes: schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
-			server:  server,
-		})
-	}
-	if len(servers) == 0 {
-		servers = append(servers, srv{})
-	}
+
 	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
+		servers := servers
+
 		pathItem := doc.Paths[path]
+		if len(pathItem.Servers) > 0 {
+			if servers, err = makeServers(pathItem.Servers); err != nil {
+				return nil, err
+			}
+		}
 
 		operations := pathItem.Operations()
 		methods := make([]string, 0, len(operations))
@@ -87,7 +84,10 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 			if err := muxRoute.GetError(); err != nil {
 				return nil, err
 			}
-			r.muxes = append(r.muxes, muxRoute)
+			r.muxes = append(r.muxes, routeMux{
+				muxRoute:    muxRoute,
+				varsUpdater: s.varsUpdater,
+			})
 			r.routes = append(r.routes, &routers.Route{
 				Spec:      doc,
 				Server:    s.server,
@@ -103,16 +103,20 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 
 // FindRoute extracts the route and parameters of an http.Request
 func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string, error) {
-	for i, muxRoute := range r.muxes {
+	for i, m := range r.muxes {
 		var match mux.RouteMatch
-		if muxRoute.Match(req, &match) {
+		if m.muxRoute.Match(req, &match) {
 			if err := match.MatchErr; err != nil {
 				// What then?
+			}
+			vars := match.Vars
+			if f := m.varsUpdater; f != nil {
+				f(vars)
 			}
 			route := *r.routes[i]
 			route.Method = req.Method
 			route.Operation = route.Spec.Paths[route.Path].GetOperation(route.Method)
-			return &route, match.Vars, nil
+			return &route, vars, nil
 		}
 		switch match.MatchErr {
 		case nil:
@@ -124,11 +128,78 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 	return nil, nil, routers.ErrPathNotFound
 }
 
+func makeServers(in openapi3.Servers) ([]srv, error) {
+	servers := make([]srv, 0, len(in))
+	for _, server := range in {
+		serverURL := server.URL
+		if submatch := singleVariableMatcher.FindStringSubmatch(serverURL); submatch != nil {
+			sVar := submatch[1]
+			sVal := server.Variables[sVar].Default
+			serverURL = strings.ReplaceAll(serverURL, "{"+sVar+"}", sVal)
+			var varsUpdater varsf
+			if lhs := strings.TrimSuffix(serverURL, server.Variables[sVar].Default); lhs != "" {
+				varsUpdater = func(vars map[string]string) { vars[sVar] = lhs }
+			}
+			servers = append(servers, srv{
+				base:        server.Variables[sVar].Default,
+				server:      server,
+				varsUpdater: varsUpdater,
+			})
+			continue
+		}
+
+		var schemes []string
+		if strings.Contains(serverURL, "://") {
+			scheme0 := strings.Split(serverURL, "://")[0]
+			schemes = permutePart(scheme0, server)
+			serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
+		}
+
+		// If a variable represents the port "http://domain.tld:{port}/bla"
+		// then url.Parse() cannot parse "http://domain.tld:`bEncode({port})`/bla"
+		// and mux is not able to set the {port} variable
+		// So we just use the default value for this variable.
+		// See https://github.com/getkin/kin-openapi/issues/367
+		var varsUpdater varsf
+		if lhs := strings.Index(serverURL, ":{"); lhs > 0 {
+			rest := serverURL[lhs+len(":{"):]
+			rhs := strings.Index(rest, "}")
+			portVariable := rest[:rhs]
+			portValue := server.Variables[portVariable].Default
+			serverURL = strings.ReplaceAll(serverURL, "{"+portVariable+"}", portValue)
+			varsUpdater = func(vars map[string]string) {
+				vars[portVariable] = portValue
+			}
+		}
+
+		u, err := url.Parse(bEncode(serverURL))
+		if err != nil {
+			return nil, err
+		}
+		path := bDecode(u.EscapedPath())
+		if len(path) > 0 && path[len(path)-1] == '/' {
+			path = path[:len(path)-1]
+		}
+		servers = append(servers, srv{
+			host:        bDecode(u.Host), //u.Hostname()?
+			base:        path,
+			schemes:     schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
+			server:      server,
+			varsUpdater: varsUpdater,
+		})
+	}
+	if len(servers) == 0 {
+		servers = append(servers, srv{})
+	}
+
+	return servers, nil
+}
+
 func orderedPaths(paths map[string]*openapi3.PathItem) []string {
 	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#pathsObject
 	// When matching URLs, concrete (non-templated) paths would be matched
 	// before their templated counterparts.
-	// NOTE: sorting by number of variables ASC then by lexicographical
+	// NOTE: sorting by number of variables ASC then by descending lexicographical
 	// order seems to be a good heuristic.
 	vars := make(map[int][]string)
 	max := 0
@@ -142,7 +213,7 @@ func orderedPaths(paths map[string]*openapi3.PathItem) []string {
 	ordered := make([]string, 0, len(paths))
 	for c := 0; c <= max; c++ {
 		if ps, ok := vars[c]; ok {
-			sort.Strings(ps)
+			sort.Sort(sort.Reverse(sort.StringSlice(ps)))
 			ordered = append(ordered, ps...)
 		}
 	}

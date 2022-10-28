@@ -10,13 +10,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
-	"github.com/stretchr/testify/require"
 )
 
 func ExampleGenerator_SchemaRefs() {
 	type SomeOtherType string
+	type Embedded struct {
+		Z string `json:"z"`
+	}
+	type Embedded2 struct {
+		A string `json:"a"`
+	}
 	type SomeStruct struct {
 		Bool    bool                      `json:"bool"`
 		Int     int                       `json:"int"`
@@ -37,6 +44,10 @@ func ExampleGenerator_SchemaRefs() {
 			Y string
 		} `json:"structWithoutFields"`
 
+		Embedded `json:"embedded"`
+
+		Embedded2
+
 		Ptr *SomeOtherType `json:"ptr"`
 	}
 
@@ -53,15 +64,26 @@ func ExampleGenerator_SchemaRefs() {
 	}
 	fmt.Printf("schemaRef: %s\n", data)
 	// Output:
-	// g.SchemaRefs: 15
+	// g.SchemaRefs: 16
 	// schemaRef: {
 	//   "properties": {
+	//     "a": {
+	//       "type": "string"
+	//     },
 	//     "bool": {
 	//       "type": "boolean"
 	//     },
 	//     "bytes": {
 	//       "format": "byte",
 	//       "type": "string"
+	//     },
+	//     "embedded": {
+	//       "properties": {
+	//         "z": {
+	//           "type": "string"
+	//         }
+	//       },
+	//       "type": "object"
 	//     },
 	//     "float64": {
 	//       "format": "double",
@@ -294,6 +316,42 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 	require.Equal(t, true, ok)
 }
 
+// See: https://github.com/getkin/kin-openapi/issues/500
+func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
+	type EmbeddedStruct struct {
+		ID string
+	}
+
+	type ContainerStruct struct {
+		Name string
+		*EmbeddedStruct
+	}
+
+	instance := &ContainerStruct{
+		Name: "Container",
+		EmbeddedStruct: &EmbeddedStruct{
+			ID: "Embedded",
+		},
+	}
+
+	customizerFn := func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return nil
+	}
+	customizerOpt := openapi3gen.SchemaCustomizer(customizerFn)
+
+	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields(), customizerOpt)
+
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	require.NoError(t, err)
+
+	var ok bool
+	_, ok = schemaRef.Value.Properties["Name"]
+	require.Equal(t, true, ok)
+
+	_, ok = schemaRef.Value.Properties["ID"]
+	require.Equal(t, true, ok)
+}
+
 func TestCyclicReferences(t *testing.T) {
 	type ObjectDiff struct {
 		FieldCycle *ObjectDiff
@@ -430,6 +488,30 @@ func TestSchemaCustomizerError(t *testing.T) {
 	type Bla struct{}
 	_, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
 	require.EqualError(t, err, "test error")
+}
+
+func TestSchemaCustomizerExcludeSchema(t *testing.T) {
+	type Bla struct {
+		Str string
+	}
+
+	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return nil
+	})
+	schema, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	require.NoError(t, err)
+	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
+		Type: "object",
+		Properties: map[string]*openapi3.SchemaRef{
+			"Str": {Value: &openapi3.Schema{Type: "string"}},
+		}}}, schema)
+
+	customizer = openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		return &openapi3gen.ExcludeSchemaSentinel{}
+	})
+	schema, err = openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
+	require.NoError(t, err)
+	require.Nil(t, schema)
 }
 
 func ExampleNewSchemaRefForValue_recursive() {

@@ -2,91 +2,229 @@ package openapi3filter
 
 import (
 	"bytes"
-	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
-	"github.com/stretchr/testify/require"
 )
 
-func TestValidatingRequestBodyWithReadOnlyProperty(t *testing.T) {
-	const spec = `{
-  "openapi": "3.0.3",
-  "info": {
-    "version": "1.0.0",
-    "title": "title",
-    "description": "desc",
-    "contact": {
-      "email": "email"
-    }
-  },
-  "paths": {
-    "/accounts": {
-      "post": {
-        "description": "Create a new account",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["_id"],
-                "properties": {
-                  "_id": {
-                    "type": "string",
-                    "description": "Unique identifier for this object.",
-                    "pattern": "[0-9a-v]+$",
-                    "minLength": 20,
-                    "maxLength": 20,
-                    "readOnly": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successfully created a new account"
-          },
-          "400": {
-            "description": "The server could not understand the request due to invalid syntax",
-          }
-        }
-      }
-    }
-  }
-}
-`
-
-	type Request struct {
-		ID string `json:"_id"`
+func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
+	type testCase struct {
+		name                string
+		requestSchema       string
+		responseSchema      string
+		requestBody         string
+		responseBody        string
+		responseErrContains string
+		requestErrContains  string
 	}
 
-	sl := openapi3.NewLoader()
-	doc, err := sl.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	err = doc.Validate(sl.Context)
-	require.NoError(t, err)
-	router, err := legacyrouter.NewRouter(doc)
-	require.NoError(t, err)
+	testCases := []testCase{
+		{
+			name: "valid_readonly_in_response_and_valid_writeonly_in_request",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id"],
+				"properties": {
+					"_id": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"readOnly": true
+					}
+				}
+			}`,
+			requestBody:  `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody: `{"access_token": "abcd"}`,
+		},
+		{
+			name: "valid_readonly_in_response_and_invalid_readonly_in_request",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id"],
+				"properties": {
+					"_id": {
+						"type": "string",
+						"readOnly": true
+					}
+				}
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"readOnly": true
+					}
+				}
+			}`,
+			requestBody:        `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody:       `{"access_token": "abcd"}`,
+			requestErrContains: `readOnly property "_id" in request`,
+		},
+		{
+			name: "invalid_writeonly_in_response_and_valid_writeonly_in_request",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id"],
+				"properties": {
+					"_id": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			requestBody:         `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody:        `{"access_token": "abcd"}`,
+			responseErrContains: `writeOnly property "access_token" in response`,
+		},
+		{
+			name: "invalid_writeonly_in_response_and_invalid_readonly_in_request",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id"],
+				"properties": {
+					"_id": {
+						"type": "string",
+						"readOnly": true
+					}
+				}
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["access_token"],
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"writeOnly": true
+					}
+				}
+			}`,
+			requestBody:         `{"_id": "bt6kdc3d0cvp6u8u3ft0"}`,
+			responseBody:        `{"access_token": "abcd"}`,
+			responseErrContains: `writeOnly property "access_token" in response`,
+			requestErrContains:  `readOnly property "_id" in request`,
+		},
+	}
 
-	b, err := json.Marshal(Request{ID: "bt6kdc3d0cvp6u8u3ft0"})
-	require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			spec := bytes.Buffer{}
+			spec.WriteString(`{
+				"openapi": "3.0.3",
+				"info": {
+					"version": "1.0.0",
+					"title": "title"
+				},
+				"paths": {
+					"/accounts": {
+						"post": {
+							"description": "Create a new account",
+							"requestBody": {
+								"required": true,
+								"content": {
+									"application/json": {`)
+			spec.WriteString(tc.requestSchema)
+			spec.WriteString(`}
+								}
+							},
+							"responses": {
+								"201": {
+									"description": "Successfully created a new account",
+									"content": {
+										"application/json": {`)
+			spec.WriteString(tc.responseSchema)
+			spec.WriteString(`}
+									}
+								},
+								"400": {
+									"description": "The server could not understand the request due to invalid syntax",
+								}
+							}
+						}
+					}
+				}
+				}`)
 
-	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(b))
-	require.NoError(t, err)
-	httpReq.Header.Add(headerCT, "application/json")
+			sl := openapi3.NewLoader()
+			doc, err := sl.LoadFromData(spec.Bytes())
+			require.NoError(t, err)
+			err = doc.Validate(sl.Context)
+			require.NoError(t, err)
+			router, err := legacyrouter.NewRouter(doc)
+			require.NoError(t, err)
 
-	route, pathParams, err := router.FindRoute(httpReq)
-	require.NoError(t, err)
+			httpReq, err := http.NewRequest(http.MethodPost, "/accounts", strings.NewReader(tc.requestBody))
+			require.NoError(t, err)
+			httpReq.Header.Add(headerCT, "application/json")
 
-	err = ValidateRequest(sl.Context, &RequestValidationInput{
-		Request:    httpReq,
-		PathParams: pathParams,
-		Route:      route,
-	})
-	require.NoError(t, err)
+			route, pathParams, err := router.FindRoute(httpReq)
+			require.NoError(t, err)
+
+			reqValidationInput := &RequestValidationInput{
+				Request:    httpReq,
+				PathParams: pathParams,
+				Route:      route,
+			}
+
+			if tc.requestSchema != "" {
+				err = ValidateRequest(sl.Context, reqValidationInput)
+
+				if tc.requestErrContains != "" {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.requestErrContains)
+				} else {
+					require.NoError(t, err)
+				}
+			}
+
+			if tc.responseSchema != "" {
+				err = ValidateResponse(sl.Context, &ResponseValidationInput{
+					RequestValidationInput: reqValidationInput,
+					Status:                 201,
+					Header:                 httpReq.Header,
+					Body:                   io.NopCloser(strings.NewReader(tc.responseBody)),
+				})
+
+				if tc.responseErrContains != "" {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.responseErrContains)
+				} else {
+					require.NoError(t, err)
+				}
+			}
+		})
+	}
 }

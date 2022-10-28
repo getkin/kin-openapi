@@ -111,7 +111,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	input.SetBodyBytes(data)
 
 	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
-	value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
+	_, value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
@@ -121,7 +121,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	}
 
 	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
-	opts = append(opts, openapi3.VisitAsRequest())
+	opts = append(opts, openapi3.VisitAsResponse())
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}

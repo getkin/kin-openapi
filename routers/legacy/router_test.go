@@ -6,9 +6,10 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRouter(t *testing.T) {
@@ -192,4 +193,21 @@ func TestRouter(t *testing.T) {
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}
+
+	schema := &openapi3.Schema{
+		Type:    "string",
+		Example: 3,
+	}
+	content := openapi3.NewContentWithJSONSchema(schema)
+	responses := openapi3.NewResponses()
+	responses["default"].Value.Content = content
+	doc.Paths["/withExamples"] = &openapi3.PathItem{
+		Get: &openapi3.Operation{Responses: responses},
+	}
+	err = doc.Validate(context.Background())
+	require.Error(t, err)
+	r, err = NewRouter(doc)
+	require.Error(t, err)
+	r, err = NewRouter(doc, openapi3.DisableExamplesValidation())
+	require.NoError(t, err)
 }

@@ -21,18 +21,20 @@ type T struct {
 	Host                string                         `json:"host,omitempty" yaml:"host,omitempty"`
 	BasePath            string                         `json:"basePath,omitempty" yaml:"basePath,omitempty"`
 	Paths               map[string]*PathItem           `json:"paths,omitempty" yaml:"paths,omitempty"`
-	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty,noref" yaml:"definitions,omitempty,noref"`
-	Parameters          map[string]*Parameter          `json:"parameters,omitempty,noref" yaml:"parameters,omitempty,noref"`
-	Responses           map[string]*Response           `json:"responses,omitempty,noref" yaml:"responses,omitempty,noref"`
+	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty" yaml:"definitions,omitempty"`
+	Parameters          map[string]*Parameter          `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Responses           map[string]*Response           `json:"responses,omitempty" yaml:"responses,omitempty"`
 	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
 	Security            SecurityRequirements           `json:"security,omitempty" yaml:"security,omitempty"`
 	Tags                openapi3.Tags                  `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of T.
 func (doc *T) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(doc)
 }
 
+// UnmarshalJSON sets T to a copy of data.
 func (doc *T) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, doc)
 }
@@ -64,10 +66,12 @@ type PathItem struct {
 	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(pathItem)
 }
 
+// UnmarshalJSON sets PathItem to a copy of data.
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, pathItem)
 }
@@ -144,6 +148,7 @@ type Operation struct {
 	openapi3.ExtensionProps
 	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Deprecated   bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
@@ -151,13 +156,16 @@ type Operation struct {
 	Responses    map[string]*Response   `json:"responses" yaml:"responses"`
 	Consumes     []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
 	Produces     []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
+	Schemes      []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
 	Security     *SecurityRequirements  `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Operation.
 func (operation *Operation) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(operation)
 }
 
+// UnmarshalJSON sets Operation to a copy of data.
 func (operation *Operation) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }
@@ -206,10 +214,12 @@ type Parameter struct {
 	Default          interface{}         `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Parameter.
 func (parameter *Parameter) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(parameter)
 }
 
+// UnmarshalJSON sets Parameter to a copy of data.
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
@@ -223,25 +233,26 @@ type Response struct {
 	Examples    map[string]interface{} `json:"examples,omitempty" yaml:"examples,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of Response.
 func (response *Response) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(response)
 }
 
+// UnmarshalJSON sets Response to a copy of data.
 func (response *Response) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
 type Header struct {
-	openapi3.ExtensionProps
-	Ref         string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Type        string `json:"type,omitempty" yaml:"type,omitempty"`
+	Parameter
 }
 
+// MarshalJSON returns the JSON encoding of Header.
 func (header *Header) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(header)
 }
 
+// UnmarshalJSON sets Header to a copy of data.
 func (header *Header) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, header)
 }
@@ -262,10 +273,12 @@ type SecurityScheme struct {
 	Tags             openapi3.Tags     `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
+// MarshalJSON returns the JSON encoding of SecurityScheme.
 func (securityScheme *SecurityScheme) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(securityScheme)
 }
 
+// UnmarshalJSON sets SecurityScheme to a copy of data.
 func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, securityScheme)
 }

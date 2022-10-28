@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"reflect"
 
+	"github.com/invopop/yaml"
+
 	"github.com/getkin/kin-openapi/openapi2"
-	"github.com/ghodss/yaml"
 )
 
 func Example() {

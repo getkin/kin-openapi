@@ -200,7 +200,7 @@ func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver)
 }
 
 func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver) {
-	if s == nil {
+	if s == nil || doc.isVisitedSchema(s) {
 		return
 	}
 
@@ -229,6 +229,9 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver) {
 func (doc *T) derefHeaders(hs Headers, refNameResolver RefNameResolver) {
 	for _, h := range hs {
 		doc.addHeaderToSpec(h, refNameResolver)
+		if doc.isVisitedHeader(h.Value) {
+			continue
+		}
 		doc.derefParameter(h.Value.Parameter, refNameResolver)
 	}
 }
@@ -286,6 +289,10 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 		// inline full operations
 		ops.Ref = ""
 
+		for _, param := range ops.Parameters {
+			doc.addParameterToSpec(param, refNameResolver)
+		}
+
 		for _, op := range ops.Operations() {
 			doc.addRequestBodyToSpec(op.RequestBody, refNameResolver)
 			if op.RequestBody != nil && op.RequestBody.Value != nil {
@@ -318,8 +325,10 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 //
 // Example:
 //
-//   doc.InternalizeRefs(context.Background(), nil)
+//	doc.InternalizeRefs(context.Background(), nil)
 func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) {
+	doc.resetVisited()
+
 	if refNameResolver == nil {
 		refNameResolver = DefaultRefNameResolver
 	}

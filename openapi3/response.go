@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
+
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responsesObject
 type Responses map[string]*ResponseRef
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -29,11 +32,19 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
-func (value Responses) Validate(ctx context.Context) error {
-	if len(value) == 0 {
+// Validate returns an error if Responses does not comply with the OpenAPI spec.
+func (responses Responses) Validate(ctx context.Context) error {
+	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
-	for _, v := range value {
+
+	keys := make([]string, 0, len(responses))
+	for key := range responses {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		v := responses[key]
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -41,6 +52,7 @@ func (value Responses) Validate(ctx context.Context) error {
 	return nil
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (responses Responses) JSONLookup(token string) (interface{}, error) {
 	ref, ok := responses[token]
 	if ok == false {
@@ -54,8 +66,10 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responseObject
 type Response struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
+
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
@@ -86,21 +100,51 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 	return response
 }
 
+// MarshalJSON returns the JSON encoding of Response.
 func (response *Response) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(response)
 }
 
+// UnmarshalJSON sets Response to a copy of data.
 func (response *Response) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
-func (value *Response) Validate(ctx context.Context) error {
-	if value.Description == nil {
+// Validate returns an error if Response does not comply with the OpenAPI spec.
+func (response *Response) Validate(ctx context.Context) error {
+	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
+	if vo := getValidationOptions(ctx); !vo.ExamplesValidationDisabled {
+		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, true
+	}
 
-	if content := value.Content; content != nil {
+	if content := response.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
+			return err
+		}
+	}
+
+	headers := make([]string, 0, len(response.Headers))
+	for name := range response.Headers {
+		headers = append(headers, name)
+	}
+	sort.Strings(headers)
+	for _, name := range headers {
+		header := response.Headers[name]
+		if err := header.Validate(ctx); err != nil {
+			return err
+		}
+	}
+
+	links := make([]string, 0, len(response.Links))
+	for name := range response.Links {
+		links = append(links, name)
+	}
+	sort.Strings(links)
+	for _, name := range links {
+		link := response.Links[name]
+		if err := link.Validate(ctx); err != nil {
 			return err
 		}
 	}

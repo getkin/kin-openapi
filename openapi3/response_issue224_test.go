@@ -457,5 +457,5 @@ func TestEmptyResponsesAreInvalid(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, doc.ExternalDocs.Description, "See AsyncAPI example")
 	err = doc.Validate(context.Background())
-	require.EqualError(t, err, `invalid paths: the responses object MUST contain at least one response code`)
+	require.EqualError(t, err, `invalid paths: invalid path /pet: invalid operation POST: the responses object MUST contain at least one response code`)
 }

@@ -7,8 +7,8 @@ import (
 )
 
 // MarshalStrictStruct function:
-//   * Marshals struct fields, ignoring MarshalJSON() and fields without 'json' tag.
-//   * Correctly handles StrictStruct semantics.
+//   - Marshals struct fields, ignoring MarshalJSON() and fields without 'json' tag.
+//   - Correctly handles StrictStruct semantics.
 func MarshalStrictStruct(value StrictStruct) ([]byte, error) {
 	encoder := NewObjectEncoder()
 	if err := value.EncodeWith(encoder, value); err != nil {

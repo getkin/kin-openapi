@@ -10,9 +10,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/stretchr/testify/require"
 )
 
 func newPetstoreRequest(t *testing.T, method, path string, body io.Reader) *http.Request {
@@ -182,11 +183,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParam:   "status",
 			wantErrParamIn: "query",
 			wantErrBody:    `parameter "status" in query has an error: value is required but missing`,
+			wantErrReason:  "value is required but missing",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "status" in query is required`},
 		},
 		{
-			name: "error - wrong query string parameter type",
+			name: "error - wrong query string parameter type as integer",
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodGet, "/pet/findByIds?ids=1,notAnInt", nil),
 			},
@@ -194,8 +196,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParamIn: "query",
 			// This is a nested ParseError. The outer error is a KindOther with no details.
 			// So we'd need to look at the inner one which is a KindInvalidFormat. So just check the error body.
-			wantErrBody: `parameter "ids" in query has an error: path 1: value notAnInt: an invalid integer: ` +
-				"strconv.ParseFloat: parsing \"notAnInt\": invalid syntax",
+			wantErrBody: `parameter "ids" in query has an error: path 1: value notAnInt: an invalid integer: invalid syntax`,
 			// TODO: Should we treat query params of the wrong type like a 404 instead of a 400?
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "ids" in query is invalid: notAnInt is an invalid integer`},
@@ -203,7 +204,25 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "success - ignores unknown query string parameter",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/findByStatus?wat=isdis", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/findByStatus?status=available&wat=isdis", nil),
+			},
+		},
+		{
+			name: "error - non required query string has empty value",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pets/?tags=", nil),
+			},
+			wantErrParam:   "tags",
+			wantErrParamIn: "query",
+			wantErrBody:    `parameter "tags" in query has an error: empty value is not allowed`,
+			wantErrReason:  "empty value is not allowed",
+			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
+				Title: `parameter "tags" in query is not allowed to be empty`},
+		},
+		{
+			name: "success - non required query string has empty value, but has AllowEmptyValue",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pets/?status=", nil),
 			},
 		},
 		{
@@ -354,15 +373,6 @@ func getValidationTests(t *testing.T) []*validationTest {
 				Source: &ValidationErrorSource{Pointer: "/category/tags/0/name"}},
 		},
 		{
-			// TODO: Add support for validating readonly properties to upstream validator.
-			name: "error - readonly object attribute",
-			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodPost, "/pet",
-					bytes.NewBufferString(`{"id":213,"name":"Bahama","photoUrls":[]}}`)),
-			},
-			//wantErr: true,
-		},
-		{
 			name: "error - wrong attribute type",
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodPost, "/pet",
@@ -426,6 +436,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParam:   "petId",
 			wantErrParamIn: "path",
 			wantErrBody:    `parameter "petId" in path has an error: value is required but missing`,
+			wantErrReason:  "value is required but missing",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
 				Title: `parameter "petId" in path is required`},
 		},
