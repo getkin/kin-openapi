@@ -272,8 +272,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			Err:         err,
 		}
 	}
-
-	if defaultsSet {
+	// only encode defaults for existing encoders
+	_, ok := bodyEncoders[mediaType]
+	if defaultsSet && ok {
 		var err error
 		if data, err = encodeBody(value, mediaType); err != nil {
 			return &RequestError{
