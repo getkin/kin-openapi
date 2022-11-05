@@ -810,7 +810,7 @@ func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, f
 	}
 
 	if loader.rootDir == "" {
-		return path.Dir(found.Path), nil
+		return found.Path, nil
 	}
 
 	// found dest spec. file
