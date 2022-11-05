@@ -1,0 +1,7 @@
+components:
+    schemas:
+        TestObject:
+            type: object
+            properties:
+                reference_to_parent_directory:
+                    $ref: "../definitions.yml#/components/schemas/TestSchema"

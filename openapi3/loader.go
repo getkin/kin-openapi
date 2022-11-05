@@ -742,7 +742,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			foundPath := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
+			foundPath, rerr := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
+			if rerr != nil {
+				return fmt.Errorf("failed to resolve file for reference %q: %w", ref, rerr)
+			}
 			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
 		}
 	}
@@ -790,23 +793,28 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	return nil
 }
 
-func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) string {
+func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) (string, error) {
 	if referencedFilename := strings.Split(ref, "#")[0]; referencedFilename == "" {
 		if cur != nil {
 			if loader.rootDir != "" && strings.HasPrefix(cur.Path, loader.rootDir) {
-				return cur.Path[len(loader.rootDir)+1:]
+				return cur.Path[len(loader.rootDir)+1:], nil
 			}
 
-			return path.Base(cur.Path)
+			return path.Base(cur.Path), nil
 		}
-		return ""
+		return "", nil
 	}
 	// ref. to external file
 	if resolved.Ref != "" {
-		return resolved.Ref
+		return resolved.Ref, nil
 	}
+
+	if loader.rootDir == "" {
+		return path.Dir(found.Path), nil
+	}
+
 	// found dest spec. file
-	return path.Dir(found.Path)[len(loader.rootDir):]
+	return filepath.Rel(loader.rootDir, found.Path)
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
