@@ -744,7 +744,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			component.Value = resolved.Value
 			foundPath, rerr := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
 			if rerr != nil {
-				return fmt.Errorf("failed to resolve file for reference %q: %w", ref, rerr)
+				return fmt.Errorf("failed to resolve file from reference %q: %w", ref, rerr)
 			}
 			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
 		}
