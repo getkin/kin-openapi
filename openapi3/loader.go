@@ -745,6 +745,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			foundPath := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
 			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
 		}
+		if loader.visitedSchema == nil {
+			loader.visitedSchema = make(map[*Schema]struct{})
+		}
+		loader.visitedSchema[component.Value] = struct{}{}
 	}
 	value := component.Value
 	if value == nil {
