@@ -263,6 +263,29 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
+func TestLoadWithRecursiveReferenceInLocalReferenceInParentSubdir(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInLocalRefInParentsSubdir/spec/openapi.json")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "object", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
+}
+
+func TestLoadWithRecursiveReferenceInRefrerenceInLocalReference(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInLocalRef/openapi.json")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "integer", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["data"].Value.Properties["definition_reference"].Value.Properties["ref_prop_part"].Value.Properties["idPart"].Value.Type)
+	require.Equal(t, "int64", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["data"].Value.Properties["definition_reference"].Value.Properties["ref_prop_part"].Value.Properties["idPart"].Value.Format)
+}
+
 func TestLoadWithReferenceInReferenceInProperty(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
