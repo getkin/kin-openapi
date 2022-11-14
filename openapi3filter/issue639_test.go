@@ -33,7 +33,7 @@ func TestIssue639(t *testing.T) {
                   default: false
                   type: boolean
                 testNoDefault:
-                  type: boolean	 
+                  type: boolean
               type: object
         responses:
           '200':
