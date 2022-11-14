@@ -258,7 +258,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	defaultsSet := false
 	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
-	opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
+	if !options.SkipDefaultValueSet {
+		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
+	}
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
