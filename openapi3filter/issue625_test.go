@@ -197,13 +197,13 @@ paths:
 			isErr: true,
 		},
 		{
-			name:  "success anyof object array",
+			name:  "success oneof object array",
 			spec:  oneOfArraySpec,
 			req:   `/items?test=true,3`,
 			isErr: false,
 		},
 		{
-			name:  "faled anyof object array",
+			name:  "faled oneof object array",
 			spec:  oneOfArraySpec,
 			req:   `/items?test="val1","val2"`,
 			isErr: true,
