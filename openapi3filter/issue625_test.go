@@ -1,4 +1,4 @@
-package openapi3_test
+package openapi3filter_test
 
 import (
 	"net/http"
