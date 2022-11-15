@@ -256,12 +256,10 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 	return decodeValue(dec, param.Name, sm, param.Schema, param.Required)
 }
 
-/**
-addSchemaTypeIfNeeded add the schema type to the schema if
-it can be concluded.
-If the schema contain "pattern" without type and the parent has a string type,
-then the type of the schema must be string as well
-*/
+// addSchemaTypeIfNeeded add the schema type to the schema if
+// it can be concluded.
+// If the schema contain pattern without type and the parent has a string type,
+// then the type of the schema must be string as well
 func addSchemaTypeIfNeeded(parentType string, schema *openapi3.SchemaRef) {
 	if (schema != nil) && (parentType == "string") {
 
