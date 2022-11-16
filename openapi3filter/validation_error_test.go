@@ -379,13 +379,13 @@ func getValidationTests(t *testing.T) []*validationTest {
 					bytes.NewBufferString(`{"name":"Bahama","photoUrls":"http://cat"}`)),
 			},
 			wantErrReason:       "doesn't match the schema",
-			wantErrSchemaReason: "Field must be set to array or not be present",
+			wantErrSchemaReason: "Field must be set to array",
 			wantErrSchemaPath:   "/photoUrls",
 			wantErrSchemaValue:  "string",
 			// TODO: this shouldn't say "or not be present", but this requires recursively resolving
 			//  innerErr.JSONPointer() against e.RequestBody.Content["application/json"].Schema.Value (.Required, .Properties)
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title:  "Field must be set to array or not be present",
+				Title:  "Field must be set to array",
 				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
 		},
 		{
@@ -659,7 +659,7 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-		require.Equal(t, "[422][][] Field must be set to array or not be present [source pointer=/photoUrls]", string(body))
+		require.Equal(t, "[422][][] Field must be set to array [source pointer=/photoUrls]", string(body))
 	})
 }
 
@@ -701,6 +701,6 @@ func TestValidationHandler_Middleware(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-		require.Equal(t, "[422][][] Field must be set to array or not be present [source pointer=/photoUrls]", string(body))
+		require.Equal(t, "[422][][] Field must be set to array [source pointer=/photoUrls]", string(body))
 	})
 }

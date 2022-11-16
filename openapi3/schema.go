@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
@@ -165,6 +166,8 @@ type Schema struct {
 	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // In this order...
 	AdditionalProperties        *SchemaRef     `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // ...for multijson
 	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+
+	isThisRequired bool
 }
 
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
@@ -1619,11 +1622,20 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, typ strin
 	if settings.failfast {
 		return errSchema
 	}
+
+	msg := strings.Builder{}
+	msg.WriteString("Field must be set to ")
+	msg.WriteString(schema.Type)
+
+	if !schema.isThisRequired {
+		msg.WriteString(" or not be present")
+	}
+
 	return &SchemaError{
 		Value:       typ,
 		Schema:      schema,
 		SchemaField: "type",
-		Reason:      "Field must be set to " + schema.Type + " or not be present",
+		Reason:      msg.String(),
 	}
 }
 

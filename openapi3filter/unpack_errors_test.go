@@ -81,7 +81,7 @@ func Example() {
 	// Output:
 	// ===== Start New Error =====
 	// @body.name:
-	// 	Error at "/name": Field must be set to string or not be present
+	// 	Error at "/name": Field must be set to string
 	// Schema:
 	//   {
 	//     "example": "doggie",

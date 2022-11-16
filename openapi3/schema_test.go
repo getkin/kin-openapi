@@ -1356,3 +1356,105 @@ enum:
 	err = schema.VisitJSON(map[string]interface{}{"d": "e"})
 	require.Error(t, err)
 }
+
+// Message of the error type in required fields can't contain "or not to be present".
+// See: https://github.com/getkin/kin-openapi/issues/666
+func TestIssue666(t *testing.T) {
+	t.Parallel()
+
+	loader := NewLoader()
+
+	tests := [...]struct {
+		name, spec string
+		value      interface{}
+		checkErr   require.ErrorAssertionFunc
+	}{
+		{
+			name: "correct value",
+			spec: `
+components:
+  schemas:
+    Something:
+      type: object
+      required: [field]
+      properties:
+        field:
+          title: Some field
+          type: string
+`[1:],
+			value:    map[string]interface{}{"field": "boobar"},
+			checkErr: require.NoError,
+		},
+		{
+			name: "incorrect value type for required property",
+			spec: `
+components:
+  schemas:
+    Something:
+      type: object
+      required: [field]
+      properties:
+        field:
+          title: Some field
+          type: string
+`[1:],
+			value: map[string]interface{}{"field": 123},
+			checkErr: func(t require.TestingT, err error, i ...interface{}) {
+				require.NotContains(t, err.Error(), "or not be present")
+				require.Contains(t, err.Error(), "Field must be set to")
+			},
+		},
+		{
+			name: "incorrect value type for required property according to anyOf",
+			spec: `
+components:
+  schemas:
+    Something:
+      type: object
+      anyOf:
+        - required: [field]
+      properties:
+        field:
+          title: Some field
+          type: string
+`[1:],
+			value: map[string]interface{}{"field": 123},
+			checkErr: func(t require.TestingT, err error, i ...interface{}) {
+				require.NotContains(t, err.Error(), "or not be present")
+				require.Contains(t, err.Error(), "Field must be set to")
+			},
+		},
+		{
+			name: "incorrect value type for not required property",
+			spec: `
+components:
+  schemas:
+    Something:
+      type: object
+      properties:
+        field:
+          title: Some field
+          type: string
+`[1:],
+			value: map[string]interface{}{"field": 123},
+			checkErr: func(t require.TestingT, err error, i ...interface{}) {
+				require.Contains(t, err.Error(), "or not be present")
+				require.Contains(t, err.Error(), "Field must be set to")
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc, err := loader.LoadFromData([]byte(test.spec))
+			require.NoError(t, err)
+
+			err = doc.Components.Schemas["Something"].Value.VisitJSON(test.value)
+
+			test.checkErr(t, err)
+		})
+	}
+}

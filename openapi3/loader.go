@@ -44,14 +44,15 @@ type Loader struct {
 
 	visitedDocuments map[string]*T
 
-	visitedExample        map[*Example]struct{}
-	visitedHeader         map[*Header]struct{}
-	visitedLink           map[*Link]struct{}
-	visitedParameter      map[*Parameter]struct{}
-	visitedRequestBody    map[*RequestBody]struct{}
-	visitedResponse       map[*Response]struct{}
-	visitedSchema         map[*Schema]struct{}
-	visitedSecurityScheme map[*SecurityScheme]struct{}
+	visitedExample         map[*Example]struct{}
+	visitedHeader          map[*Header]struct{}
+	visitedLink            map[*Link]struct{}
+	visitedParameter       map[*Parameter]struct{}
+	visitedRequestBody     map[*RequestBody]struct{}
+	visitedResponse        map[*Response]struct{}
+	visitedSchema          map[*Schema]struct{}
+	visitedRequireProperty map[*Schema]struct{}
+	visitedSecurityScheme  map[*SecurityScheme]struct{}
 }
 
 // NewLoader returns an empty Loader
@@ -241,6 +242,10 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		if err = loader.resolvePathItemRef(doc, entrypoint, pathItem, location); err != nil {
 			return
 		}
+	}
+
+	for _, r := range doc.Components.Schemas {
+		loader.resolveRequiredProperties(doc, r.Value)
 	}
 
 	return
@@ -1097,6 +1102,52 @@ func (loader *Loader) resolvePathItemRefContinued(doc *T, pathItem *PathItem, do
 		}
 	}
 	return
+}
+
+func (loader *Loader) resolveRequiredProperties(doc *T, schema *Schema) {
+	if schema == nil {
+		return
+	}
+
+	if loader.visitedRequireProperty == nil {
+		loader.visitedRequireProperty = make(map[*Schema]struct{})
+	}
+
+	if _, ok := loader.visitedRequireProperty[schema]; ok {
+		return
+	}
+
+	loader.visitedRequireProperty[schema] = struct{}{}
+
+	for k, r := range schema.Properties {
+		if r.Value == nil {
+			continue
+		}
+
+		if !markRequiredProperty(r.Value, k, schema.Required) {
+			for _, a := range schema.AnyOf {
+				if a.Value == nil {
+					continue
+				}
+
+				markRequiredProperty(r.Value, k, a.Value.Required)
+			}
+		}
+
+		loader.resolveRequiredProperties(doc, r.Value)
+	}
+}
+
+func markRequiredProperty(property *Schema, key string, requires []string) bool {
+	for _, p := range requires {
+		if p == key {
+			property.isThisRequired = true
+
+			return true
+		}
+	}
+
+	return false
 }
 
 func unescapeRefString(ref string) string {
