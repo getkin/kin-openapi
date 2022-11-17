@@ -256,20 +256,6 @@ func decodeStyledParameter(param *openapi3.Parameter, input *RequestValidationIn
 	return decodeValue(dec, param.Name, sm, param.Schema, param.Required)
 }
 
-// addSchemaTypeIfNeeded adds the schema type to the schema if
-// it can be concluded.
-// If the schema contain pattern without type and the parent has a string type,
-// then the type of the schema must be string as well
-func addSchemaTypeIfNeeded(parentType string, schema *openapi3.SchemaRef) {
-	if (schema != nil) && (parentType == "string") {
-
-		if (schema.Value.Pattern != "") &&
-			(schema.Value.Type == "") {
-			schema.Value.Type = "string"
-		}
-	}
-}
-
 func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef, required bool) (interface{}, bool, error) {
 	var found bool
 
@@ -278,7 +264,6 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		var err error
 		for _, sr := range schema.Value.AllOf {
 			var f bool
-			addSchemaTypeIfNeeded(schema.Value.Type, sr)
 			value, f, err = decodeValue(dec, param, sm, sr, required)
 			found = found || f
 			if value == nil || err != nil {
@@ -290,7 +275,6 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 
 	if len(schema.Value.AnyOf) > 0 {
 		for _, sr := range schema.Value.AnyOf {
-			addSchemaTypeIfNeeded(schema.Value.Type, sr)
 			value, f, _ := decodeValue(dec, param, sm, sr, required)
 			found = found || f
 			if value != nil {
@@ -350,6 +334,9 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 	case *pathParamDecoder:
 		_, found = vDecoder.pathParams[param]
 	case *urlValuesDecoder:
+		if schema.Value.Pattern != "" {
+			return dec.DecodePrimitive(param, sm, schema)
+		}
 		_, found = vDecoder.values[param]
 	case *headerParamDecoder:
 		_, found = vDecoder.header[param]
@@ -515,6 +502,10 @@ func (d *urlValuesDecoder) DecodePrimitive(param string, sm *openapi3.Serializat
 	if len(values) == 0 {
 		// HTTP request does not contain a value of the target query parameter.
 		return nil, ok, nil
+	}
+
+	if schema.Value.Type == "" && schema.Value.Pattern != "" {
+		return values[0], ok, nil
 	}
 	val, err := parsePrimitive(values[0], schema)
 	return val, ok, err

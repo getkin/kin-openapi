@@ -2,6 +2,7 @@ package openapi3filter_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
-func TestIssue625(t *testing.T) {
+func TestIssue641(t *testing.T) {
 
 	anyOfSpec := `
 openapi: 3.0.0
@@ -38,62 +39,37 @@ paths:
         description: Successful response
 `[1:]
 
-	allOfSpec := `
-openapi: 3.0.0
-info:
-  version: 1.0.0
-  title: Sample API
-paths:
- /items:
-  get:
-    description: Returns a list of stuff
-    parameters:
-    - description: test object
-      explode: false
-      in: query
-      name: test
-      required: false
-      schema:
-         allOf:
-         - pattern: "^[0-9]{1,4}$"
-         - pattern: "^[0-9]{1,4}$"
-         type: string
-    responses:
-      '200':
-        description: Successful response
-`[1:]
+	allOfSpec := strings.ReplaceAll(anyOfSpec, "anyOf", "allOf")
 
 	tests := []struct {
-		name  string
-		spec  string
-		req   string
-		isErr bool
+		name   string
+		spec   string
+		req    string
+		errStr string
 	}{
 
 		{
-			name:  "success anyof pattern",
-			spec:  anyOfSpec,
-			req:   "/items?test=51",
-			isErr: false,
+			name: "success anyof pattern",
+			spec: anyOfSpec,
+			req:  "/items?test=51",
 		},
 		{
-			name:  "failed anyof pattern",
-			spec:  anyOfSpec,
-			req:   "/items?test=999999",
-			isErr: true,
+			name:   "failed anyof pattern",
+			spec:   anyOfSpec,
+			req:    "/items?test=999999",
+			errStr: `parameter "test" in query has an error: Doesn't match schema "anyOf"`,
 		},
 
 		{
-			name:  "success allof pattern",
-			spec:  allOfSpec,
-			req:   `/items?test=51`,
-			isErr: false,
+			name: "success allof pattern",
+			spec: allOfSpec,
+			req:  `/items?test=51`,
 		},
 		{
-			name:  "failed allof pattern",
-			spec:  allOfSpec,
-			req:   `/items?test=999999`,
-			isErr: true,
+			name:   "failed allof pattern",
+			spec:   allOfSpec,
+			req:    `/items?test=999999`,
+			errStr: `parameter "test" in query has an error: string doesn't match the regular expression`,
 		},
 	}
 
@@ -122,7 +98,11 @@ paths:
 				Route:      route,
 			}
 			err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
-			require.Equal(t, testcase.isErr, err != nil)
+			if testcase.errStr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), testcase.errStr)
+			}
 		},
 		)
 	}
