@@ -57,7 +57,7 @@ func TestIssue639(t *testing.T) {
 		{
 			name: "no defaults are added to requests",
 			options: &Options{
-				SkipDefaultValueSet: true, // <== false by default, true means doesn't add default values to request body
+				SkipSettingDefaults: true,
 			},
 			expectedDefaultVal: nil,
 		},
@@ -71,7 +71,8 @@ func TestIssue639(t *testing.T) {
 	for _, testcase := range tests {
 		t.Run(testcase.name, func(t *testing.T) {
 			body := "{\"testNoDefault\": true}"
-			httpReq, _ := http.NewRequest(http.MethodPut, "/items", strings.NewReader(body))
+			httpReq, err := http.NewRequest(http.MethodPut, "/items", strings.NewReader(body))
+			require.NoError(t, err)
 			httpReq.Header.Set("Content-Type", "application/json")
 			require.NoError(t, err)
 

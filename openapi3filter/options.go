@@ -24,5 +24,5 @@ type Options struct {
 
 	// Indicates whether default values are set in the
 	// request. If true, then they are not set
-	SkipDefaultValueSet bool
+	SkipSettingDefaults bool
 }
