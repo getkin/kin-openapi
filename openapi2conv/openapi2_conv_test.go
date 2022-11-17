@@ -89,7 +89,8 @@ const exampleV2 = `
 			"additionalProperties": true,
 			"properties": {
 				"foo": {
-					"type": "string"
+					"type": "string",
+					"x-nullable": true
 				},
 				"quux": {
 					"$ref": "#/definitions/ItemExtension"
@@ -463,7 +464,8 @@ const exampleV3 = `
 				"additionalProperties": true,
 				"properties": {
 					"foo": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"quux": {
 						"$ref": "#/components/schemas/ItemExtension"

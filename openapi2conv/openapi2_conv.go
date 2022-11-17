@@ -485,6 +485,16 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	for i, v := range schema.Value.AllOf {
 		schema.Value.AllOf[i] = ToV3SchemaRef(v)
 	}
+	if val, ok := schema.Value.Extensions["x-nullable"]; ok {
+		var nullable bool
+
+		if err := json.Unmarshal(val.(json.RawMessage), &nullable); err == nil {
+			schema.Value.Nullable = nullable
+		}
+
+		delete(schema.Value.Extensions, "x-nullable")
+	}
+
 	return schema
 }
 
@@ -824,6 +834,11 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	for i, v := range schema.Value.AllOf {
 		schema.Value.AllOf[i], _ = FromV3SchemaRef(v, components)
 	}
+	if schema.Value.Nullable {
+		schema.Value.Nullable = false
+		schema.Value.Extensions["x-nullable"] = true
+	}
+
 	return schema, nil
 }
 
