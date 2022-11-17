@@ -612,18 +612,7 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (int
 		return nil, errors.New("not implemented: decoding 'not'")
 	}
 
-	schemaType := schema.Value.Type
-	isPrimitive := schemaType == "integer" || schemaType == "number" ||
-		schemaType == "boolean" || schemaType == "string"
-	if isPrimitive {
-		return parsePrimitive(v, schema)
-	}
-
-	var value interface{}
-	if err := json.NewDecoder(strings.NewReader(v)).Decode(&value); err != nil {
-		return nil, err
-	}
-	return value, nil
+	return parsePrimitive(v, schema)
 
 }
 

@@ -2,6 +2,7 @@ package openapi3filter_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,56 +13,6 @@ import (
 )
 
 func TestIssue625(t *testing.T) {
-
-	anyItemSpec := `
-openapi: 3.0.0
-info:
-  version: 1.0.0
-  title: Sample API
-paths:
- /items:
-  get:
-    description: Returns a list of stuff
-    parameters:
-    - description: test object
-      explode: false
-      in: query
-      name: test
-      required: false
-      schema:
-        type: array
-        items: {}   ###
-    responses:
-      '200':
-        description: Successful response
-`[1:]
-
-	objectArraySpec := `
-openapi: 3.0.0
-info:
-  version: 1.0.0
-  title: Sample API
-paths:
- /items:
-  get:
-    description: Returns a list of stuff
-    parameters:
-    - description: test object
-      explode: false
-      in: query
-      name: test
-      required: false
-      schema:
-       type: array
-       items:
-         type: object
-         properties:
-           name:
-            type: string
-    responses:
-      '200':
-        description: Successful response
-`[1:]
 
 	anyOfArraySpec := `
 openapi: 3.0.0
@@ -89,124 +40,50 @@ paths:
         description: Successful response
 `[1:]
 
-	allOfArraySpec := `
-openapi: 3.0.0
-info:
-  version: 1.0.0
-  title: Sample API
-paths:
- /items:
-  get:
-    description: Returns a list of stuff
-    parameters:
-    - description: test object
-      explode: false
-      in: query
-      name: test
-      required: false
-      schema:
-        type: array
-        items:
-         allOf:
-          - type: integer
-          - type: number
-    responses:
-      '200':
-        description: Successful response
-`[1:]
+	oneOfArraySpec := strings.ReplaceAll(anyOfArraySpec, "anyOf", "oneOf")
 
-	oneOfArraySpec := `
-openapi: 3.0.0
-info:
-  version: 1.0.0
-  title: Sample API
-paths:
- /items:
-  get:
-    description: Returns a list of stuff
-    parameters:
-    - description: test object
-      explode: false
-      in: query
-      name: test
-      required: false
-      schema:
-        type: array
-        items:
-         oneOf:
-          - type: integer
-          - type: boolean
-    responses:
-      '200':
-        description: Successful response
-`[1:]
+	allOfArraySpec := strings.ReplaceAll(strings.ReplaceAll(anyOfArraySpec, "anyOf", "allOf"),
+		"type: boolean", "type: number")
 
 	tests := []struct {
-		name  string
-		spec  string
-		req   string
-		isErr bool
+		name   string
+		spec   string
+		req    string
+		errStr string
 	}{
 		{
-			name:  "successful any item array",
-			spec:  anyItemSpec,
-			req:   "/items?test=3",
-			isErr: false,
+			name: "success anyof object array",
+			spec: anyOfArraySpec,
+			req:  "/items?test=3,7",
 		},
 		{
-			name:  "successful any item object array",
-			spec:  anyItemSpec,
-			req:   `/items?test={"name": "test1"}`,
-			isErr: false,
-		},
-		{
-			name:  "successful object array",
-			spec:  objectArraySpec,
-			req:   `/items?test={"name": "test1"}`,
-			isErr: false,
-		},
-		{
-			name:  "failed object array",
-			spec:  objectArraySpec,
-			req:   "/items?test=3",
-			isErr: true,
-		},
-		{
-			name:  "success anyof object array",
-			spec:  anyOfArraySpec,
-			req:   "/items?test=3,7",
-			isErr: false,
-		},
-		{
-			name:  "failed anyof object array",
-			spec:  anyOfArraySpec,
-			req:   "/items?test=s1,s2",
-			isErr: true,
+			name:   "failed anyof object array",
+			spec:   anyOfArraySpec,
+			req:    "/items?test=s1,s2",
+			errStr: `parameter "test" in query has an error: path 0: value s1: an invalid boolean: invalid syntax`,
 		},
 
 		{
-			name:  "success allof object array",
-			spec:  allOfArraySpec,
-			req:   `/items?test=1,3`,
-			isErr: false,
+			name: "success allof object array",
+			spec: allOfArraySpec,
+			req:  `/items?test=1,3`,
 		},
 		{
-			name:  "failed allof object array",
-			spec:  allOfArraySpec,
-			req:   `/items?test=1.2,3.1`,
-			isErr: true,
+			name:   "failed allof object array",
+			spec:   allOfArraySpec,
+			req:    `/items?test=1.2,3.1`,
+			errStr: `parameter "test" in query has an error: Value must be an integer`,
 		},
 		{
-			name:  "success oneof object array",
-			spec:  oneOfArraySpec,
-			req:   `/items?test=true,3`,
-			isErr: false,
+			name: "success oneof object array",
+			spec: oneOfArraySpec,
+			req:  `/items?test=true,3`,
 		},
 		{
-			name:  "faled oneof object array",
-			spec:  oneOfArraySpec,
-			req:   `/items?test="val1","val2"`,
-			isErr: true,
+			name:   "faled oneof object array",
+			spec:   oneOfArraySpec,
+			req:    `/items?test="val1","val2"`,
+			errStr: `parameter "test" in query has an error: item 0: decoding oneOf failed: 0 schemas matched`,
 		},
 	}
 
@@ -235,7 +112,11 @@ paths:
 				Route:      route,
 			}
 			err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
-			require.Equal(t, testcase.isErr, err != nil)
+			if testcase.errStr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), testcase.errStr)
+			}
 		},
 		)
 	}
