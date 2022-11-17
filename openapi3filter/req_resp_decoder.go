@@ -556,15 +556,11 @@ func (d *urlValuesDecoder) parseArray(raw []string, sm *openapi3.SerializationMe
 }
 
 func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (interface{}, error) {
-	var found bool
-
 	if len(schema.Value.AllOf) > 0 {
 		var value interface{}
 		var err error
 		for _, sr := range schema.Value.AllOf {
-			var f bool
 			value, err = d.parseValue(v, sr)
-			found = found || f
 			if value == nil || err != nil {
 				break
 			}
