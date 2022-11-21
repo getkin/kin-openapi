@@ -1650,6 +1650,12 @@ type SchemaError struct {
 var _ interface{ Unwrap() error } = SchemaError{}
 
 func markSchemaErrorKey(err error, key string) error {
+	var me multiErrorForOneOf
+
+	if errors.As(err, &me) {
+		err = me.Unwrap()
+	}
+
 	if v, ok := err.(*SchemaError); ok {
 		v.reversePath = append(v.reversePath, key)
 		return v
@@ -1664,17 +1670,7 @@ func markSchemaErrorKey(err error, key string) error {
 }
 
 func markSchemaErrorIndex(err error, index int) error {
-	if v, ok := err.(*SchemaError); ok {
-		v.reversePath = append(v.reversePath, strconv.FormatInt(int64(index), 10))
-		return v
-	}
-	if v, ok := err.(MultiError); ok {
-		for _, e := range v {
-			_ = markSchemaErrorIndex(e, index)
-		}
-		return v
-	}
-	return err
+	return markSchemaErrorKey(err, strconv.FormatInt(int64(index), 10))
 }
 
 func (err *SchemaError) JSONPointer() []string {
