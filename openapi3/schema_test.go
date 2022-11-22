@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
@@ -1087,6 +1088,33 @@ func TestSchemaErrors(t *testing.T) {
 	for _, example := range schemaErrorExamples {
 		t.Run(example.Title, testSchemaError(t, example))
 	}
+}
+
+func TestSchemaError_CustomMessage(t *testing.T) {
+	t.Parallel()
+
+	loader := NewLoader()
+	spc := `
+components:
+  schemas:
+    Something:
+      type: object
+      properties:
+        field:
+          title: Some field
+          type: string
+`[1:]
+
+	doc, err := loader.LoadFromData([]byte(spc))
+	require.NoError(t, err)
+
+	opt := SetSchemaErrorCustomMessage(func(err *SchemaError) string {
+		return fmt.Sprintf("foobar: %s", err.Schema.Title)
+	})
+
+	err = doc.Components.Schemas["Something"].Value.Properties["field"].Value.VisitJSON(123, opt)
+
+	require.EqualError(t, err, "foobar: Some field")
 }
 
 func testSchemaError(t *testing.T, example schemaErrorExample) func(*testing.T) {

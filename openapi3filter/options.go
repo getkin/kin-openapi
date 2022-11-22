@@ -1,5 +1,7 @@
 package openapi3filter
 
+import "github.com/getkin/kin-openapi/openapi3"
+
 // DefaultOptions do not set an AuthenticationFunc.
 // A spec with security schemes defined will not pass validation
 // unless an AuthenticationFunc is defined.
@@ -21,4 +23,7 @@ type Options struct {
 
 	// See NoopAuthenticationFunc
 	AuthenticationFunc AuthenticationFunc
+
+	// Sets a function to override the schema error message.
+	CustomSchemaErrorFunc func(err *openapi3.SchemaError) string
 }

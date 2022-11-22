@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -214,4 +215,54 @@ components:
 			assert.Equal(t, bodyModified, tc.expectedModification, "expect request body modification happened: %t, expected %t", bodyModified, tc.expectedModification)
 		})
 	}
+}
+
+func TestValidateRequest_CustomSchemaErrorMessage(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /some:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                field:
+                  title: Some field
+                  type: string
+      responses:
+        '200':
+          description: Created
+`
+	router := setupTestRouter(t, spec)
+
+	req, err := http.NewRequest(http.MethodPost, "/some", strings.NewReader(`{"field":123}`))
+	require.NoError(t, err)
+
+	req.Header.Add("Content-Type", "application/json")
+
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	validationInput := &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			CustomSchemaErrorFunc: func(err *openapi3.SchemaError) string {
+				return fmt.Sprintf("foobar: %s", err.Schema.Title)
+			},
+		},
+	}
+	err = ValidateRequest(context.Background(), validationInput)
+
+	require.ErrorContains(t, err, "foobar: Some field")
 }

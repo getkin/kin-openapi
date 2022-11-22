@@ -16,6 +16,8 @@ type schemaValidationSettings struct {
 
 	onceSettingDefaults sync.Once
 	defaultsSet         func()
+
+	customizeMessageError func(err *SchemaError) string
 }
 
 // FailFast returns schema validation errors quicker.
@@ -48,6 +50,11 @@ func DisablePatternValidation() SchemaValidationOption {
 // DefaultsSet executes the given callback (once) IFF schema validation set default values.
 func DefaultsSet(f func()) SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.defaultsSet = f }
+}
+
+// SetSchemaErrorCustomMessage allows to override the schema error message.
+func SetSchemaErrorCustomMessage(f func(err *SchemaError) string) SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.customizeMessageError = f }
 }
 
 func newSchemaValidationSettings(opts ...SchemaValidationOption) *schemaValidationSettings {
