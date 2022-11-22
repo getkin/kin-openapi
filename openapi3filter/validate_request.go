@@ -178,6 +178,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		opts = make([]openapi3.SchemaValidationOption, 0, 1)
 		opts = append(opts, openapi3.MultiErrors())
 	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
 	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
@@ -263,6 +266,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
+	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
 
 	// Validate JSON with the schema
