@@ -52,8 +52,9 @@ func DefaultsSet(f func()) SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.defaultsSet = f }
 }
 
-// SetSchemaErrorCustomMessage allows to override the schema error message.
-func SetSchemaErrorCustomMessage(f func(err *SchemaError) string) SchemaValidationOption {
+// SetSchemaErrorMessageCustomizer allows to override the schema error message.
+// If the passed function returns an empty string, it returns to the previous Error() implementation.
+func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.customizeMessageError = f }
 }
 
