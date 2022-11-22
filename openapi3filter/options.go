@@ -24,6 +24,14 @@ type Options struct {
 	// See NoopAuthenticationFunc
 	AuthenticationFunc AuthenticationFunc
 
-	// Sets a function to override the schema error message.
-	CustomSchemaErrorFunc func(err *openapi3.SchemaError) string
+	customSchemaErrorFunc CustomSchemaErrorFunc
+}
+
+// CustomSchemaErrorFunc allows for custom the schema error message.
+type CustomSchemaErrorFunc func(err *openapi3.SchemaError) string
+
+// WithCustomSchemaErrorFunc sets a function to override the schema error message.
+// If the passed function returns an empty string, it returns to the previous Error() implementation.
+func (o *Options) WithCustomSchemaErrorFunc(f CustomSchemaErrorFunc) {
+	o.customSchemaErrorFunc = f
 }
