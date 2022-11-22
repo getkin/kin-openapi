@@ -1315,29 +1315,31 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	}
 
 	// "format"
-	var formatErr string
+	var formatStrErr string
+	var formatErr error
 	if format := schema.Format; format != "" {
 		if f, ok := SchemaStringFormats[format]; ok {
 			switch {
 			case f.regexp != nil && f.callback == nil:
 				if cp := f.regexp; !cp.MatchString(value) {
-					formatErr = fmt.Sprintf(`string doesn't match the format %q (regular expression "%s")`, format, cp.String())
+					formatStrErr = fmt.Sprintf(`string doesn't match the format %q (regular expression "%s")`, format, cp.String())
 				}
 			case f.regexp == nil && f.callback != nil:
 				if err := f.callback(value); err != nil {
-					formatErr = err.Error()
+					formatErr = err
 				}
 			default:
-				formatErr = fmt.Sprintf("corrupted entry %q in SchemaStringFormats", format)
+				formatStrErr = fmt.Sprintf("corrupted entry %q in SchemaStringFormats", format)
 			}
 		}
 	}
-	if formatErr != "" {
+	if formatStrErr != "" || formatErr != nil {
 		err := &SchemaError{
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "format",
-			Reason:                formatErr,
+			Reason:                formatStrErr,
+			Origin:                formatErr,
 			customizeMessageError: settings.customizeMessageError,
 		}
 		if !settings.multiError {
