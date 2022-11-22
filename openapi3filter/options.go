@@ -24,6 +24,10 @@ type Options struct {
 	// See NoopAuthenticationFunc
 	AuthenticationFunc AuthenticationFunc
 
+	// Indicates whether default values are set in the
+	// request. If true, then they are not set
+	SkipSettingDefaults bool
+
 	customSchemaErrorFunc CustomSchemaErrorFunc
 }
 
