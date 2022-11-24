@@ -526,8 +526,90 @@ func (d *urlValuesDecoder) DecodeArray(param string, sm *openapi3.SerializationM
 		}
 		values = strings.Split(values[0], delim)
 	}
-	val, err := parseArray(values, schema)
+	val, err := d.parseArray(values, sm, schema)
 	return val, ok, err
+}
+
+// parseArray returns an array that contains items from a raw array.
+// Every item is parsed as a primitive value.
+// The function returns an error when an error happened while parse array's items.
+func (d *urlValuesDecoder) parseArray(raw []string, sm *openapi3.SerializationMethod, schemaRef *openapi3.SchemaRef) ([]interface{}, error) {
+	var value []interface{}
+
+	for i, v := range raw {
+		item, err := d.parseValue(v, schemaRef.Value.Items)
+		if err != nil {
+			if v, ok := err.(*ParseError); ok {
+				return nil, &ParseError{path: []interface{}{i}, Cause: v}
+			}
+			return nil, fmt.Errorf("item %d: %w", i, err)
+		}
+
+		// If the items are nil, then the array is nil. There shouldn't be case where some values are actual primitive
+		// values and some are nil values.
+		if item == nil {
+			return nil, nil
+		}
+		value = append(value, item)
+	}
+	return value, nil
+}
+
+func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (interface{}, error) {
+	if len(schema.Value.AllOf) > 0 {
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.AllOf {
+			value, err = d.parseValue(v, sr)
+			if value == nil || err != nil {
+				break
+			}
+		}
+		return value, err
+	}
+
+	if len(schema.Value.AnyOf) > 0 {
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.AnyOf {
+			value, err = d.parseValue(v, sr)
+			if err == nil {
+				return value, nil
+			}
+		}
+
+		return nil, err
+	}
+
+	if len(schema.Value.OneOf) > 0 {
+		isMatched := 0
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.OneOf {
+			result, err := d.parseValue(v, sr)
+			if err == nil {
+				value = result
+				isMatched++
+			}
+		}
+		if isMatched == 1 {
+			return value, nil
+		} else if isMatched > 1 {
+			return nil, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
+		} else if isMatched == 0 {
+			return nil, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
+		}
+
+		return nil, err
+	}
+
+	if schema.Value.Not != nil {
+		// TODO(decode not): handle decoding "not" JSON Schema
+		return nil, errors.New("not implemented: decoding 'not'")
+	}
+
+	return parsePrimitive(v, schema)
+
 }
 
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, bool, error) {
