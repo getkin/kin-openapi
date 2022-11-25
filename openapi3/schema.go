@@ -1722,11 +1722,8 @@ func (err *SchemaError) Error() string {
 		}
 	}
 
-	if err.Origin != nil {
-		return err.Origin.Error()
-	}
-
 	buf := bytes.NewBuffer(make([]byte, 0, 256))
+
 	if len(err.reversePath) > 0 {
 		buf.WriteString(`Error at "`)
 		reversePath := err.reversePath
@@ -1736,6 +1733,13 @@ func (err *SchemaError) Error() string {
 		}
 		buf.WriteString(`": `)
 	}
+
+	if err.Origin != nil {
+		buf.WriteString(err.Origin.Error())
+
+		return buf.String()
+	}
+
 	reason := err.Reason
 	if reason == "" {
 		buf.WriteString(`Doesn't match schema "`)
@@ -1744,6 +1748,7 @@ func (err *SchemaError) Error() string {
 	} else {
 		buf.WriteString(reason)
 	}
+
 	if !SchemaErrorDetailsDisabled {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
@@ -1756,6 +1761,7 @@ func (err *SchemaError) Error() string {
 			panic(err)
 		}
 	}
+
 	return buf.String()
 }
 

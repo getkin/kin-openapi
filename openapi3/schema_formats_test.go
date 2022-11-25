@@ -75,3 +75,33 @@ func TestFormatCallback_WrapError(t *testing.T) {
 
 	delete(SchemaStringFormats, "foobar")
 }
+
+func TestReversePathInMessageSchemaError(t *testing.T) {
+	DefineIPv4Format()
+
+	SchemaErrorDetailsDisabled = true
+
+	const spc = `
+components:
+  schemas:
+    Something:
+      type: object
+      properties:
+        ip:
+          type: string
+          format: ipv4
+`
+	l := NewLoader()
+
+	doc, err := l.LoadFromData([]byte(spc))
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Something"].Value.VisitJSON(map[string]interface{}{
+		`ip`: `123.0.0.11111`,
+	})
+
+	require.EqualError(t, err, `Error at "/ip": Not an IP address`)
+
+	delete(SchemaStringFormats, "ipv4")
+	SchemaErrorDetailsDisabled = false
+}
