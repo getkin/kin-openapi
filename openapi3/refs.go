@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-openapi/jsonpointer"
 
@@ -299,8 +300,15 @@ func (value RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 // SchemaRef represents either a Schema or a $ref to a Schema.
 // When serializing and both fields are set, Ref is preferred over Value.
 type SchemaRef struct {
-	Ref   string
-	Value *Schema
+	// A short summary which by default SHOULD override that of the referenced component.
+	// If the referenced object-type does not allow a summary field, then this field has no effect.
+	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	// A description which by default SHOULD override that of the referenced component.
+	// CommonMark syntax MAY be used for rich text representation.
+	// If the referenced object-type does not allow a description field, then this field has no effect.
+	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
+	Ref         string  `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Value       *Schema `json:"-" yaml:"-"`
 }
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
@@ -314,12 +322,18 @@ func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (value *SchemaRef) MarshalYAML() (interface{}, error) {
-	return marshalRefYAML(value.Ref, value.Value)
+	if value.Ref != "" {
+		return value, nil
+	}
+	return value.Value, nil
 }
 
 // MarshalJSON returns the JSON encoding of SchemaRef.
 func (value *SchemaRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	if value.Ref != "" {
+		return json.Marshal(value)
+	}
+	return json.Marshal(value.Value)
 }
 
 // UnmarshalJSON sets SchemaRef to a copy of data.
