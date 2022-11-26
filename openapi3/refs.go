@@ -303,8 +303,7 @@ type SchemaRef struct {
 	// A short summary which by default SHOULD override that of the referenced component.
 	// If the referenced object-type does not allow a summary field, then this field has no effect.
 	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	// A description which by default SHOULD override that of the referenced component.
-	// CommonMark syntax MAY be used for rich text representation.
+	// A description which by default SHOULD override that of the referenced component. CommonMark's syntax MAY be used for rich text representation.
 	// If the referenced object-type does not allow a description field, then this field has no effect.
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Ref         string  `json:"$ref,omitempty" yaml:"$ref,omitempty"`
@@ -320,10 +319,20 @@ func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 	}
 }
 
+type schemaRef struct {
+	Summary     string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Ref         string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+}
+
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (value *SchemaRef) MarshalYAML() (interface{}, error) {
 	if value.Ref != "" {
-		return value, nil
+		return schemaRef{
+			Summary:     value.Summary,
+			Description: value.Description,
+			Ref:         value.Ref,
+		}, nil
 	}
 	return value.Value, nil
 }
@@ -331,7 +340,11 @@ func (value *SchemaRef) MarshalYAML() (interface{}, error) {
 // MarshalJSON returns the JSON encoding of SchemaRef.
 func (value *SchemaRef) MarshalJSON() ([]byte, error) {
 	if value.Ref != "" {
-		return json.Marshal(value)
+		return json.Marshal(schemaRef{
+			Summary:     value.Summary,
+			Description: value.Description,
+			Ref:         value.Ref,
+		})
 	}
 	return json.Marshal(value.Value)
 }
