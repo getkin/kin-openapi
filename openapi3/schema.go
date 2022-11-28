@@ -883,7 +883,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "enum",
-			Reason:                "value is not one of the allowed values",
+			Reason:                fmt.Sprintf("value %q is not one of the allowed values", value),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
@@ -1085,7 +1085,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				Value:                 value,
 				Schema:                schema,
 				SchemaField:           "type",
-				Reason:                "Value must be an integer",
+				Reason:                fmt.Sprintf("value \"%g\" must be an integer", value),
 				customizeMessageError: settings.customizeMessageError,
 			}
 			if !settings.multiError {
@@ -1305,7 +1305,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "pattern",
-			Reason:                fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern),
+			Reason:                fmt.Sprintf(`string %q doesn't match the regular expression "%s"`, value, schema.Pattern),
 			customizeMessageError: settings.customizeMessageError,
 		}
 		if !settings.multiError {
@@ -1650,7 +1650,7 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, typ strin
 		Value:                 typ,
 		Schema:                schema,
 		SchemaField:           "type",
-		Reason:                "Field must be set to " + schema.Type + " or not be present",
+		Reason:                fmt.Sprintf("field must be set to %s or not be present", schema.Type),
 		customizeMessageError: settings.customizeMessageError,
 	}
 }
