@@ -72,7 +72,7 @@ paths:
 			name:   "failed allof object array",
 			spec:   allOfArraySpec,
 			req:    `/items?test=1.2,3.1`,
-			errStr: `parameter "test" in query has an error: Value must be an integer`,
+			errStr: `parameter "test" in query has an error: Error at "/0": Value must be an integer`,
 		},
 		{
 			name: "success oneof object array",
