@@ -41,8 +41,7 @@ paths:
 		panic(err)
 	}
 
-	err = doc.Validate(loader.Context)
-	if err != nil {
+	if err = doc.Validate(loader.Context); err != nil {
 		panic(err)
 	}
 
