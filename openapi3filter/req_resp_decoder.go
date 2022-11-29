@@ -334,6 +334,9 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 	case *pathParamDecoder:
 		_, found = vDecoder.pathParams[param]
 	case *urlValuesDecoder:
+		if schema.Value.Pattern != "" {
+			return dec.DecodePrimitive(param, sm, schema)
+		}
 		_, found = vDecoder.values[param]
 	case *headerParamDecoder:
 		_, found = vDecoder.header[param]
@@ -499,6 +502,10 @@ func (d *urlValuesDecoder) DecodePrimitive(param string, sm *openapi3.Serializat
 	if len(values) == 0 {
 		// HTTP request does not contain a value of the target query parameter.
 		return nil, ok, nil
+	}
+
+	if schema.Value.Type == "" && schema.Value.Pattern != "" {
+		return values[0], ok, nil
 	}
 	val, err := parsePrimitive(values[0], schema)
 	return val, ok, err
