@@ -3,6 +3,7 @@ package openapi3
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -133,4 +134,51 @@ func TestVisitJSON_OneOf_BadDescriminatorType(t *testing.T) {
 		"$type": nil,
 	})
 	require.EqualError(t, err, "descriminator value is not a string")
+}
+
+func TestVisitJSON_OneOf_Path(t *testing.T) {
+	t.Parallel()
+
+	loader := NewLoader()
+	spc := `
+components:
+  schemas:
+    Something:
+      type: object
+      properties:
+        first:
+          type: object
+          properties:
+            second:
+              type: object
+              properties:
+                third:
+                  oneOf:
+                   - title: First rule
+                     type: string
+                     minLength: 5
+                     maxLength: 5
+                   - title: Second rule
+                     type: string
+                     minLength: 10
+                     maxLength: 10
+`[1:]
+
+	doc, err := loader.LoadFromData([]byte(spc))
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Something"].Value.VisitJSON(map[string]interface{}{
+		"first": map[string]interface{}{
+			"second": map[string]interface{}{
+				"third": "123456789",
+			},
+		},
+	})
+
+	assert.Contains(t, err.Error(), `Error at "/first/second/third"`)
+
+	var sErr *SchemaError
+
+	assert.ErrorAs(t, err, &sErr)
+	assert.Equal(t, []string{"first", "second", "third"}, sErr.JSONPointer())
 }
