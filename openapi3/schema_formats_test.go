@@ -2,8 +2,10 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,4 +59,49 @@ func TestIssue430(t *testing.T) {
 			require.Nil(t, validateIPv6(datum), "%q should be IPv6", datum)
 		}
 	}
+}
+
+func TestFormatCallback_WrapError(t *testing.T) {
+	var errSomething = errors.New("something error")
+
+	DefineStringFormatCallback("foobar", func(value string) error {
+		return errSomething
+	})
+
+	s := &Schema{Format: "foobar"}
+	err := s.VisitJSONString("blablabla")
+
+	assert.ErrorIs(t, err, errSomething)
+
+	delete(SchemaStringFormats, "foobar")
+}
+
+func TestReversePathInMessageSchemaError(t *testing.T) {
+	DefineIPv4Format()
+
+	SchemaErrorDetailsDisabled = true
+
+	const spc = `
+components:
+  schemas:
+    Something:
+      type: object
+      properties:
+        ip:
+          type: string
+          format: ipv4
+`
+	l := NewLoader()
+
+	doc, err := l.LoadFromData([]byte(spc))
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Something"].Value.VisitJSON(map[string]interface{}{
+		`ip`: `123.0.0.11111`,
+	})
+
+	require.EqualError(t, err, `Error at "/ip": Not an IP address`)
+
+	delete(SchemaStringFormats, "ipv4")
+	SchemaErrorDetailsDisabled = false
 }

@@ -30,7 +30,7 @@ var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
 // SecurityScheme is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#securitySchemeObject
 type SecurityScheme struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
 	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
@@ -176,7 +176,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context) error {
 // OAuthFlows is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauthFlowsObject
 type OAuthFlows struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
@@ -223,7 +223,7 @@ func (flows *OAuthFlows) Validate(ctx context.Context) error {
 // OAuthFlow is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauthFlowObject
 type OAuthFlow struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`

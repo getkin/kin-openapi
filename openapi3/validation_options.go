@@ -5,11 +5,12 @@ import "context"
 // ValidationOption allows the modification of how the OpenAPI document is validated.
 type ValidationOption func(options *ValidationOptions)
 
-// ValidationOptions provide configuration for validating OpenAPI documents.
+// ValidationOptions provides configuration for validating OpenAPI documents.
 type ValidationOptions struct {
-	SchemaFormatValidationEnabled   bool
-	SchemaPatternValidationDisabled bool
-	ExamplesValidationDisabled      bool
+	SchemaFormatValidationEnabled                    bool
+	SchemaPatternValidationDisabled                  bool
+	ExamplesValidationDisabled                       bool
+	examplesValidationAsReq, examplesValidationAsRes bool
 }
 
 type validationOptionsKey struct{}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -59,6 +60,42 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	response := responseRef.Value
 	if response == nil {
 		return &ResponseError{Input: input, Reason: "response has not been resolved"}
+	}
+
+	opts := make([]openapi3.SchemaValidationOption, 0, 2)
+	if options.MultiError {
+		opts = append(opts, openapi3.MultiErrors())
+	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
+
+	headers := make([]string, 0, len(response.Headers))
+	for k := range response.Headers {
+		if k != headerCT {
+			headers = append(headers, k)
+		}
+	}
+	sort.Strings(headers)
+	for _, k := range headers {
+		s := response.Headers[k]
+		h := input.Header.Get(k)
+		if h == "" {
+			if s.Value.Required {
+				return &ResponseError{
+					Input:  input,
+					Reason: fmt.Sprintf("response header %q missing", k),
+				}
+			}
+			continue
+		}
+		if err := s.Value.Schema.Value.VisitJSON(h, opts...); err != nil {
+			return &ResponseError{
+				Input:  input,
+				Reason: fmt.Sprintf("response header %q doesn't match the schema", k),
+				Err:    err,
+			}
+		}
 	}
 
 	if options.ExcludeResponseBody {
@@ -120,14 +157,8 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		}
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 2) // 2 potential opts here
-	opts = append(opts, openapi3.VisitAsRequest())
-	if options.MultiError {
-		opts = append(opts, openapi3.MultiErrors())
-	}
-
 	// Validate data with the schema.
-	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, append(opts, openapi3.VisitAsResponse())...); err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: "response body doesn't match the schema",

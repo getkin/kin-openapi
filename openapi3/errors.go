@@ -10,11 +10,15 @@ import (
 type MultiError []error
 
 func (me MultiError) Error() string {
+	return spliceErr(" | ", me)
+}
+
+func spliceErr(sep string, errs []error) string {
 	buff := &bytes.Buffer{}
-	for i, e := range me {
+	for i, e := range errs {
 		buff.WriteString(e.Error())
-		if i != len(me)-1 {
-			buff.WriteString(" | ")
+		if i != len(errs)-1 {
+			buff.WriteString(sep)
 		}
 	}
 	return buff.String()
@@ -42,4 +46,14 @@ func (me MultiError) As(target interface{}) bool {
 		}
 	}
 	return false
+}
+
+type multiErrorForOneOf MultiError
+
+func (meo multiErrorForOneOf) Error() string {
+	return spliceErr(" Or ", meo)
+}
+
+func (meo multiErrorForOneOf) Unwrap() error {
+	return MultiError(meo)
 }

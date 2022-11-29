@@ -68,7 +68,7 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responseObject
 type Response struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -114,6 +114,9 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 func (response *Response) Validate(ctx context.Context) error {
 	if response.Description == nil {
 		return errors.New("a short description of the response is required")
+	}
+	if vo := getValidationOptions(ctx); !vo.ExamplesValidationDisabled {
+		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, true
 	}
 
 	if content := response.Content; content != nil {

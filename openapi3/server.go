@@ -25,6 +25,14 @@ func (servers Servers) Validate(ctx context.Context) error {
 	return nil
 }
 
+// BasePath returns the base path of the first server in the list, or /.
+func (servers Servers) BasePath() (string, error) {
+	for _, server := range servers {
+		return server.BasePath()
+	}
+	return "/", nil
+}
+
 func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) {
 	rawURL := parsedURL.String()
 	if i := strings.IndexByte(rawURL, '?'); i >= 0 {
@@ -42,11 +50,35 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 // Server is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#serverObject
 type Server struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	URL         string                     `json:"url" yaml:"url"`
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+}
+
+// BasePath returns the base path extracted from the default values of variables, if any.
+// Assumes a valid struct (per Validate()).
+func (server *Server) BasePath() (string, error) {
+	if server == nil {
+		return "/", nil
+	}
+
+	uri := server.URL
+	for name, svar := range server.Variables {
+		uri = strings.ReplaceAll(uri, "{"+name+"}", svar.Default)
+	}
+
+	u, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return "", err
+	}
+
+	if bp := u.Path; bp != "" {
+		return bp, nil
+	}
+
+	return "/", nil
 }
 
 // MarshalJSON returns the JSON encoding of Server.
@@ -165,7 +197,7 @@ func (server *Server) Validate(ctx context.Context) (err error) {
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`

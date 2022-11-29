@@ -1,6 +1,7 @@
 package openapi3filter
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -78,5 +79,14 @@ type SecurityRequirementsError struct {
 }
 
 func (err *SecurityRequirementsError) Error() string {
-	return "Security requirements failed"
+	buff := &bytes.Buffer{}
+	buff.WriteString("security requirements failed: ")
+	for i, e := range err.Errors {
+		buff.WriteString(e.Error())
+		if i != len(err.Errors)-1 {
+			buff.WriteString(" | ")
+		}
+	}
+
+	return buff.String()
 }

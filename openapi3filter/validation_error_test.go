@@ -244,11 +244,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "status",
 			wantErrParamIn:      "query",
-			wantErrSchemaReason: "value is not one of the allowed values",
+			wantErrSchemaReason: "value \"available,sold\" is not one of the allowed values",
 			wantErrSchemaPath:   "/0",
 			wantErrSchemaValue:  "available,sold",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "value is not one of the allowed values",
+				Title: "value \"available,sold\" is not one of the allowed values",
 				Detail: "value available,sold at /0 must be one of: available, pending, sold; " +
 					// TODO: do we really want to use this heuristic to guess
 					//  that they're using the wrong serialization?
@@ -262,11 +262,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "status",
 			wantErrParamIn:      "query",
-			wantErrSchemaReason: "value is not one of the allowed values",
+			wantErrSchemaReason: "value \"watdis\" is not one of the allowed values",
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "watdis",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title:  "value is not one of the allowed values",
+				Title:  "value \"watdis\" is not one of the allowed values",
 				Detail: "value watdis at /1 must be one of: available, pending, sold",
 				Source: &ValidationErrorSource{Parameter: "status"}},
 		},
@@ -278,11 +278,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "kind",
 			wantErrParamIn:      "query",
-			wantErrSchemaReason: "value is not one of the allowed values",
+			wantErrSchemaReason: "value \"fish,with,commas\" is not one of the allowed values",
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "fish,with,commas",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title:  "value is not one of the allowed values",
+				Title:  "value \"fish,with,commas\" is not one of the allowed values",
 				Detail: "value fish,with,commas at /1 must be one of: dog, cat, turtle, bird,with,commas",
 				// No 'perhaps you intended' because its the right serialization format
 				Source: &ValidationErrorSource{Parameter: "kind"}},
@@ -304,11 +304,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "x-environment",
 			wantErrParamIn:      "header",
-			wantErrSchemaReason: "value is not one of the allowed values",
+			wantErrSchemaReason: "value \"watdis\" is not one of the allowed values",
 			wantErrSchemaPath:   "/",
 			wantErrSchemaValue:  "watdis",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title:  "value is not one of the allowed values",
+				Title:  "value \"watdis\" is not one of the allowed values",
 				Detail: "value watdis at / must be one of: demo, prod",
 				Source: &ValidationErrorSource{Parameter: "x-environment"}},
 		},
@@ -323,11 +323,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 				r: newPetstoreRequest(t, http.MethodPost, "/pet", bytes.NewBufferString(`{"status":"watdis"}`)),
 			},
 			wantErrReason:       "doesn't match the schema",
-			wantErrSchemaReason: "value is not one of the allowed values",
+			wantErrSchemaReason: "value \"watdis\" is not one of the allowed values",
 			wantErrSchemaValue:  "watdis",
 			wantErrSchemaPath:   "/status",
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title:  "value is not one of the allowed values",
+				Title:  "value \"watdis\" is not one of the allowed values",
 				Detail: "value watdis at /status must be one of: available, pending, sold",
 				Source: &ValidationErrorSource{Pointer: "/status"}},
 		},
@@ -373,28 +373,19 @@ func getValidationTests(t *testing.T) []*validationTest {
 				Source: &ValidationErrorSource{Pointer: "/category/tags/0/name"}},
 		},
 		{
-			// TODO: Add support for validating readonly properties to upstream validator.
-			name: "error - readonly object attribute",
-			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodPost, "/pet",
-					bytes.NewBufferString(`{"id":213,"name":"Bahama","photoUrls":[]}}`)),
-			},
-			//wantErr: true,
-		},
-		{
 			name: "error - wrong attribute type",
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodPost, "/pet",
 					bytes.NewBufferString(`{"name":"Bahama","photoUrls":"http://cat"}`)),
 			},
 			wantErrReason:       "doesn't match the schema",
-			wantErrSchemaReason: "Field must be set to array or not be present",
+			wantErrSchemaReason: "field must be set to array or not be present",
 			wantErrSchemaPath:   "/photoUrls",
 			wantErrSchemaValue:  "string",
 			// TODO: this shouldn't say "or not be present", but this requires recursively resolving
 			//  innerErr.JSONPointer() against e.RequestBody.Content["application/json"].Schema.Value (.Required, .Properties)
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title:  "Field must be set to array or not be present",
+				Title:  "field must be set to array or not be present",
 				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
 		},
 		{
@@ -668,7 +659,7 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-		require.Equal(t, "[422][][] Field must be set to array or not be present [source pointer=/photoUrls]", string(body))
+		require.Equal(t, "[422][][] field must be set to array or not be present [source pointer=/photoUrls]", string(body))
 	})
 }
 
@@ -710,6 +701,6 @@ func TestValidationHandler_Middleware(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-		require.Equal(t, "[422][][] Field must be set to array or not be present [source pointer=/photoUrls]", string(body))
+		require.Equal(t, "[422][][] field must be set to array or not be present [source pointer=/photoUrls]", string(body))
 	})
 }

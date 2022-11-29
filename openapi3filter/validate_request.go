@@ -28,11 +28,8 @@ var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
 //
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
-func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
-	var (
-		err error
-		me  openapi3.MultiError
-	)
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error) {
+	var me openapi3.MultiError
 
 	options := input.Options
 	if options == nil {
@@ -52,9 +49,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	}
 	if security != nil {
 		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -70,9 +66,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 		}
 
 		if err = ValidateParameter(ctx, input, parameter); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -81,9 +76,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
 		if err = ValidateParameter(ctx, input, parameter.Value); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -93,9 +87,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
 		if err = ValidateRequestBody(ctx, input, requestBody.Value); err != nil && !options.MultiError {
-			return err
+			return
 		}
-
 		if err != nil {
 			me = append(me, err)
 		}
@@ -104,8 +97,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	if len(me) > 0 {
 		return me
 	}
-
-	return nil
+	return
 }
 
 // ValidateParameter validates a parameter's value by JSON schema.
@@ -148,7 +140,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		value = schema.Default
 		req := input.Request
 		switch parameter.In {
-		// case openapi3.ParameterInPath: TODO: no idea how to handle this
+		case openapi3.ParameterInPath:
+			// Path parameters are required.
+			// Next check `parameter.Required && !found` will catch this.
 		case openapi3.ParameterInQuery:
 			q := req.URL.Query()
 			q.Add(parameter.Name, fmt.Sprintf("%v", value))
@@ -160,8 +154,6 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				Name:  parameter.Name,
 				Value: fmt.Sprintf("%v", value),
 			})
-		default:
-			return fmt.Errorf("unsupported parameter's 'in': %s", parameter.In)
 		}
 	}
 
@@ -185,6 +177,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	if options.MultiError {
 		opts = make([]openapi3.SchemaValidationOption, 0, 1)
 		opts = append(opts, openapi3.MultiErrors())
+	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
 	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
@@ -266,9 +261,14 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	defaultsSet := false
 	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
-	opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
+	if !options.SkipSettingDefaults {
+		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
+	}
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
+	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
 
 	// Validate JSON with the schema
@@ -293,6 +293,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		}
 		// Put the data back into the input
 		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		req.ContentLength = int64(len(data))
 	}
 
 	return nil

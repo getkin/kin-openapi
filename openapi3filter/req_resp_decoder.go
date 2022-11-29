@@ -110,8 +110,11 @@ func invalidSerializationMethodErr(sm *openapi3.SerializationMethod) error {
 // Decodes a parameter defined via the content property as an object. It uses
 // the user specified decoder, or our build-in decoder for application/json
 func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationInput) (
-	value interface{}, schema *openapi3.Schema, found bool, err error) {
-
+	value interface{},
+	schema *openapi3.Schema,
+	found bool,
+	err error,
+) {
 	var paramValues []string
 	switch param.In {
 	case openapi3.ParameterInPath:
@@ -158,7 +161,10 @@ func decodeContentParameter(param *openapi3.Parameter, input *RequestValidationI
 }
 
 func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) (
-	outValue interface{}, outSchema *openapi3.Schema, err error) {
+	outValue interface{},
+	outSchema *openapi3.Schema,
+	err error,
+) {
 	// Only query parameters can have multiple values.
 	if len(values) > 1 && param.In != openapi3.ParameterInQuery {
 		err = fmt.Errorf("%s parameter %q cannot have multiple values", param.In, param.Name)
@@ -170,7 +176,6 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 		err = fmt.Errorf("parameter %q expected to have content", param.Name)
 		return
 	}
-
 	// We only know how to decode a parameter if it has one content, application/json
 	if len(content) != 1 {
 		err = fmt.Errorf("multiple content types for parameter %q", param.Name)
@@ -184,8 +189,17 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 	}
 	outSchema = mt.Schema.Value
 
+	unmarshal := func(encoded string, paramSchema *openapi3.SchemaRef) (decoded interface{}, err error) {
+		if err = json.Unmarshal([]byte(encoded), &decoded); err != nil {
+			if paramSchema != nil && paramSchema.Value.Type != "object" {
+				decoded, err = encoded, nil
+			}
+		}
+		return
+	}
+
 	if len(values) == 1 {
-		if err = json.Unmarshal([]byte(values[0]), &outValue); err != nil {
+		if outValue, err = unmarshal(values[0], mt.Schema); err != nil {
 			err = fmt.Errorf("error unmarshaling parameter %q", param.Name)
 			return
 		}
@@ -193,7 +207,7 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 		outArray := make([]interface{}, 0, len(values))
 		for _, v := range values {
 			var item interface{}
-			if err = json.Unmarshal([]byte(v), &item); err != nil {
+			if item, err = unmarshal(v, outSchema.Items); err != nil {
 				err = fmt.Errorf("error unmarshaling parameter %q", param.Name)
 				return
 			}
@@ -320,6 +334,9 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 	case *pathParamDecoder:
 		_, found = vDecoder.pathParams[param]
 	case *urlValuesDecoder:
+		if schema.Value.Pattern != "" {
+			return dec.DecodePrimitive(param, sm, schema)
+		}
 		_, found = vDecoder.values[param]
 	case *headerParamDecoder:
 		_, found = vDecoder.header[param]
@@ -486,6 +503,10 @@ func (d *urlValuesDecoder) DecodePrimitive(param string, sm *openapi3.Serializat
 		// HTTP request does not contain a value of the target query parameter.
 		return nil, ok, nil
 	}
+
+	if schema.Value.Type == "" && schema.Value.Pattern != "" {
+		return values[0], ok, nil
+	}
 	val, err := parsePrimitive(values[0], schema)
 	return val, ok, err
 }
@@ -512,8 +533,89 @@ func (d *urlValuesDecoder) DecodeArray(param string, sm *openapi3.SerializationM
 		}
 		values = strings.Split(values[0], delim)
 	}
-	val, err := parseArray(values, schema)
+	val, err := d.parseArray(values, sm, schema)
 	return val, ok, err
+}
+
+// parseArray returns an array that contains items from a raw array.
+// Every item is parsed as a primitive value.
+// The function returns an error when an error happened while parse array's items.
+func (d *urlValuesDecoder) parseArray(raw []string, sm *openapi3.SerializationMethod, schemaRef *openapi3.SchemaRef) ([]interface{}, error) {
+	var value []interface{}
+
+	for i, v := range raw {
+		item, err := d.parseValue(v, schemaRef.Value.Items)
+		if err != nil {
+			if v, ok := err.(*ParseError); ok {
+				return nil, &ParseError{path: []interface{}{i}, Cause: v}
+			}
+			return nil, fmt.Errorf("item %d: %w", i, err)
+		}
+
+		// If the items are nil, then the array is nil. There shouldn't be case where some values are actual primitive
+		// values and some are nil values.
+		if item == nil {
+			return nil, nil
+		}
+		value = append(value, item)
+	}
+	return value, nil
+}
+
+func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (interface{}, error) {
+	if len(schema.Value.AllOf) > 0 {
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.AllOf {
+			value, err = d.parseValue(v, sr)
+			if value == nil || err != nil {
+				break
+			}
+		}
+		return value, err
+	}
+
+	if len(schema.Value.AnyOf) > 0 {
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.AnyOf {
+			if value, err = d.parseValue(v, sr); err == nil {
+				return value, nil
+			}
+		}
+
+		return nil, err
+	}
+
+	if len(schema.Value.OneOf) > 0 {
+		isMatched := 0
+		var value interface{}
+		var err error
+		for _, sr := range schema.Value.OneOf {
+			result, err := d.parseValue(v, sr)
+			if err == nil {
+				value = result
+				isMatched++
+			}
+		}
+		if isMatched == 1 {
+			return value, nil
+		} else if isMatched > 1 {
+			return nil, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
+		} else if isMatched == 0 {
+			return nil, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
+		}
+
+		return nil, err
+	}
+
+	if schema.Value.Not != nil {
+		// TODO(decode not): handle decoding "not" JSON Schema
+		return nil, errors.New("not implemented: decoding 'not'")
+	}
+
+	return parsePrimitive(v, schema)
+
 }
 
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, bool, error) {

@@ -32,7 +32,7 @@ func (tags Tags) Validate(ctx context.Context) error {
 // Tag is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#tagObject
 type Tag struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`

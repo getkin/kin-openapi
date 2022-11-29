@@ -35,5 +35,5 @@ openapi: "3.0.1"
 		"name":    "kin-openapi",
 		"address": "127.0.0.1",
 	})
-	require.EqualError(t, err, ErrOneOfConflict.Error())
+	require.ErrorIs(t, err, ErrOneOfConflict)
 }

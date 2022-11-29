@@ -12,7 +12,7 @@ import (
 // ExternalDocs is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#external-documentation-object
 type ExternalDocs struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`

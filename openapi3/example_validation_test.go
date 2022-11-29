@@ -9,13 +9,16 @@ import (
 
 func TestExamplesSchemaValidation(t *testing.T) {
 	type testCase struct {
-		name                    string
-		requestSchemaExample    string
-		responseSchemaExample   string
-		mediaTypeRequestExample string
-		parametersExample       string
-		componentExamples       string
-		errContains             string
+		name                                  string
+		requestSchemaExample                  string
+		responseSchemaExample                 string
+		mediaTypeRequestExample               string
+		mediaTypeResponseExample              string
+		readWriteOnlyMediaTypeRequestExample  string
+		readWriteOnlyMediaTypeResponseExample string
+		parametersExample                     string
+		componentExamples                     string
+		errContains                           string
 	}
 
 	testCases := []testCase{
@@ -26,7 +29,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
             param1example:
               value: abcd
    `,
-			errContains: "invalid paths: invalid path /user: invalid operation POST: param1example",
+			errContains: `invalid paths: invalid path /user: invalid operation POST: param1example`,
 		},
 		{
 			name: "valid_parameter_examples",
@@ -41,7 +44,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
 			parametersExample: `
           example: abcd
    `,
-			errContains: "invalid path /user: invalid operation POST: invalid example",
+			errContains: `invalid path /user: invalid operation POST: invalid example`,
 		},
 		{
 			name: "valid_parameter_example",
@@ -64,7 +67,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: bad
         password: short
    `,
-			errContains: "invalid paths: invalid path /user: invalid operation POST: example BadUser",
+			errContains: `invalid paths: invalid path /user: invalid operation POST: example BadUser`,
 		},
 		{
 			name: "valid_component_examples",
@@ -90,7 +93,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
               email: bad
               password: short
    `,
-			errContains: "invalid path /user: invalid operation POST: invalid example",
+			errContains: `invalid path /user: invalid operation POST: invalid example`,
 		},
 		{
 			name: "valid_mediatype_examples",
@@ -109,7 +112,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: good@email.com
         # missing password
    `,
-			errContains: "schema \"CreateUserRequest\": invalid example",
+			errContains: `schema "CreateUserRequest": invalid example`,
 		},
 		{
 			name: "valid_schema_request_example",
@@ -127,7 +130,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         user_id: 1
         # missing access_token
    `,
-			errContains: "schema \"CreateUserResponse\": invalid example",
+			errContains: `schema "CreateUserResponse": invalid example`,
 		},
 		{
 			name: "valid_schema_response_example",
@@ -135,7 +138,64 @@ func TestExamplesSchemaValidation(t *testing.T) {
       example:
         user_id: 1
         access_token: "abcd"
-   `,
+  `,
+		},
+		{
+			name: "valid_readonly_writeonly_examples",
+			readWriteOnlyMediaTypeRequestExample: `
+            examples:
+              ReadWriteOnlyRequest:
+                $ref: '#/components/examples/ReadWriteOnlyRequestData'
+`,
+			readWriteOnlyMediaTypeResponseExample: `
+              examples:
+                ReadWriteOnlyResponse:
+                  $ref: '#/components/examples/ReadWriteOnlyResponseData'
+`,
+			componentExamples: `
+  examples:
+    ReadWriteOnlyRequestData:
+      value:
+        username: user
+        password: password
+    ReadWriteOnlyResponseData:
+      value:
+        user_id: 4321
+  `,
+		},
+		{
+			name: "invalid_readonly_request_examples",
+			readWriteOnlyMediaTypeRequestExample: `
+            examples:
+              ReadWriteOnlyRequest:
+                $ref: '#/components/examples/ReadWriteOnlyRequestData'
+`,
+			componentExamples: `
+  examples:
+    ReadWriteOnlyRequestData:
+      value:
+        username: user
+        password: password
+        user_id: 4321
+`,
+			errContains: `ReadWriteOnlyRequest: readOnly property "user_id" in request`,
+		},
+		{
+			name: "invalid_writeonly_response_examples",
+			readWriteOnlyMediaTypeResponseExample: `
+              examples:
+                ReadWriteOnlyResponse:
+                  $ref: '#/components/examples/ReadWriteOnlyResponseData'
+`,
+			componentExamples: `
+  examples:
+    ReadWriteOnlyResponseData:
+      value:
+        password: password
+        user_id: 4321
+`,
+
+			errContains: `ReadWriteOnlyResponse: writeOnly property "password" in response`,
 		},
 	}
 
@@ -198,7 +258,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateUserResponse"
+                $ref: "#/components/schemas/CreateUserResponse"`)
+					spec.WriteString(tc.mediaTypeResponseExample)
+					spec.WriteString(`
+  /readWriteOnly:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadWriteOnlyData"
+            required: true`)
+					spec.WriteString(tc.readWriteOnlyMediaTypeRequestExample)
+					spec.WriteString(`
+      responses:
+        '201':
+          description: a response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadWriteOnlyData"`)
+					spec.WriteString(tc.readWriteOnlyMediaTypeResponseExample)
+					spec.WriteString(`
 components:
   schemas:
     CreateUserRequest:`)
@@ -223,7 +304,6 @@ components:
     CreateUserResponse:`)
 					spec.WriteString(tc.responseSchemaExample)
 					spec.WriteString(`
-      description: represents the response to a User creation
       required:
         - access_token
         - user_id
@@ -233,6 +313,28 @@ components:
         user_id:
           format: int64
           type: integer
+      type: object
+    ReadWriteOnlyData:
+      required:
+        # only required in request
+        - username
+        - password
+        # only required in response
+        - user_id
+      properties:
+        username:
+          type: string
+          default: default
+          writeOnly: true # only sent in a request
+        password:
+          type: string
+          default: default
+          writeOnly: true # only sent in a request
+        user_id:
+          format: int64
+          default: 1
+          type: integer
+          readOnly: true # only returned in a response
       type: object
 `)
 					spec.WriteString(tc.componentExamples)
@@ -278,7 +380,7 @@ func TestExampleObjectValidation(t *testing.T) {
               email: real@email.com
               password: validpassword
 `,
-			errContains: "invalid path /user: invalid operation POST: example and examples are mutually exclusive",
+			errContains: `invalid path /user: invalid operation POST: example and examples are mutually exclusive`,
 			componentExamples: `
   examples:
     BadUser:
@@ -295,7 +397,7 @@ func TestExampleObjectValidation(t *testing.T) {
     BadUser:
       description: empty user example
 `,
-			errContains: "invalid components: example \"BadUser\": no value or externalValue field",
+			errContains: `invalid components: example "BadUser": no value or externalValue field`,
 		},
 		{
 			name: "value_externalValue_mutual_exclusion",
@@ -308,7 +410,7 @@ func TestExampleObjectValidation(t *testing.T) {
         password: validpassword
       externalValue: 'http://example.com/examples/example'
 `,
-			errContains: "invalid components: example \"BadUser\": value and externalValue are mutually exclusive",
+			errContains: `invalid components: example "BadUser": value and externalValue are mutually exclusive`,
 		},
 	}
 

@@ -198,7 +198,7 @@ func TestFilter(t *testing.T) {
 		}
 		err = ValidateResponse(context.Background(), responseValidationInput)
 		require.NoError(t, err)
-		return err
+		return nil
 	}
 	expect := func(req ExampleRequest, resp ExampleResponse) error {
 		return expectWithDecoder(req, resp, nil)
@@ -207,13 +207,12 @@ func TestFilter(t *testing.T) {
 	resp := ExampleResponse{
 		Status: 200,
 	}
-	// Test paths
 
+	// Test paths
 	req := ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix",
 	}
-
 	err = expect(req, resp)
 	require.NoError(t, err)
 
@@ -328,7 +327,7 @@ func TestFilter(t *testing.T) {
 	// enough.
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?contentArg={\"name\":\"bob\", \"id\":\"a\"}",
+		URL:    `http://example.com/api/prefix/v/suffix?contentArg={"name":"bob", "id":"a"}`,
 	}
 	err = expect(req, resp)
 	require.NoError(t, err)
@@ -336,7 +335,7 @@ func TestFilter(t *testing.T) {
 	// Now it should fail due the ID being too long
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?contentArg={\"name\":\"bob\", \"id\":\"EXCEEDS_MAX_LENGTH\"}",
+		URL:    `http://example.com/api/prefix/v/suffix?contentArg={"name":"bob", "id":"EXCEEDS_MAX_LENGTH"}`,
 	}
 	err = expect(req, resp)
 	require.IsType(t, &RequestError{}, err)
@@ -351,7 +350,7 @@ func TestFilter(t *testing.T) {
 
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?contentArg2={\"name\":\"bob\", \"id\":\"a\"}",
+		URL:    `http://example.com/api/prefix/v/suffix?contentArg2={"name":"bob", "id":"a"}`,
 	}
 	err = expectWithDecoder(req, resp, customDecoder)
 	require.NoError(t, err)
@@ -359,7 +358,7 @@ func TestFilter(t *testing.T) {
 	// Now it should fail due the ID being too long
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?contentArg2={\"name\":\"bob\", \"id\":\"EXCEEDS_MAX_LENGTH\"}",
+		URL:    `http://example.com/api/prefix/v/suffix?contentArg2={"name":"bob", "id":"EXCEEDS_MAX_LENGTH"}`,
 	}
 	err = expectWithDecoder(req, resp, customDecoder)
 	require.IsType(t, &RequestError{}, err)
