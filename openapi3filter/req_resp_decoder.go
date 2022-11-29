@@ -579,8 +579,7 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (int
 		var value interface{}
 		var err error
 		for _, sr := range schema.Value.AnyOf {
-			value, err = d.parseValue(v, sr)
-			if err == nil {
+			if value, err = d.parseValue(v, sr); err == nil {
 				return value, nil
 			}
 		}
