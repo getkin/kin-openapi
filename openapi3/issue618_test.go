@@ -33,8 +33,6 @@ paths:
 
 	doc.InternalizeRefs(ctx, nil)
 
-	t.Logf(">>> %+v", doc.Components.Schemas)
-
 	require.Contains(t, doc.Components.Schemas, "JournalEntry")
 	require.Contains(t, doc.Components.Schemas, "Record")
 	require.Contains(t, doc.Components.Schemas, "Account")
