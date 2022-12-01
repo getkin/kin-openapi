@@ -262,7 +262,8 @@ func TestValidateRequestBodyAndSetDefault(t *testing.T) {
                             "type": "string",
                             "default": "www.twitter.com"
                           }
-                        }
+                        },
+                        "additionalProperties": false
                       },
                       {
                         "type": "object",
@@ -278,7 +279,8 @@ func TestValidateRequestBodyAndSetDefault(t *testing.T) {
                             "type": "string",
                             "default": "www.facebook.com"
                           }
-                        }
+                        },
+                        "additionalProperties": false
                       }
                     ]
                   },

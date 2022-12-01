@@ -933,10 +933,6 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			matchedOneOfIdx  = 0
 			tempValue        = value
 		)
-		// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
-		if settings.asreq || settings.asrep {
-			tempValue = deepcopy.Copy(value)
-		}
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
@@ -945,6 +941,11 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 			if discriminatorRef != "" && discriminatorRef != item.Ref {
 				continue
+			}
+
+			// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
+			if settings.asreq || settings.asrep {
+				tempValue = deepcopy.Copy(value)
 			}
 
 			if err := v.visitJSON(settings, tempValue); err != nil {
@@ -989,14 +990,14 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			matchedAnyOfIdx = 0
 			tempValue       = value
 		)
-		// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
-		if settings.asreq || settings.asrep {
-			tempValue = deepcopy.Copy(value)
-		}
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
+			}
+			// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
+			if settings.asreq || settings.asrep {
+				tempValue = deepcopy.Copy(value)
 			}
 			if err := v.visitJSON(settings, tempValue); err == nil {
 				ok = true
