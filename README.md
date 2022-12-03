@@ -196,6 +196,10 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 
 ## Sub-v0 breaking API changes
 
+### v0.111.0
+* Changed `func (*_) Validate(ctx context.Context) error` to `func (*_) Validate(ctx context.Context, opts ...ValidationOption) error`.
+* `openapi3.WithValidationOptions(ctx context.Context, opts *ValidationOptions) context.Context` prototype changed to `openapi3.WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context`.
+
 ### v0.101.0
 * `openapi3.SchemaFormatValidationDisabled` has been removed in favour of an option `openapi3.EnableSchemaFormatValidation()` passed to `openapi3.T.Validate`. The default behaviour is also now to not validate formats, as the OpenAPI spec mentions the `format` is an open value.
 
