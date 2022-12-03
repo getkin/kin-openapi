@@ -2,8 +2,8 @@ package openapi3
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,7 +14,7 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *Loader, url *url.URL) ([]byte, error) {
-		return ioutil.ReadFile(filepath.Join("testdata", url.Path))
+		return os.ReadFile(filepath.Join("testdata", url.Path))
 	}
 	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	require.NoError(t, err)
