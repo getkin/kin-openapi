@@ -39,7 +39,8 @@ func (value *CallbackRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if CallbackRef does not comply with the OpenAPI spec.
-func (value *CallbackRef) Validate(ctx context.Context) error {
+func (value *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -81,7 +82,8 @@ func (value *ExampleRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if ExampleRef does not comply with the OpenAPI spec.
-func (value *ExampleRef) Validate(ctx context.Context) error {
+func (value *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -123,7 +125,8 @@ func (value *HeaderRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if HeaderRef does not comply with the OpenAPI spec.
-func (value *HeaderRef) Validate(ctx context.Context) error {
+func (value *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -163,7 +166,8 @@ func (value *LinkRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if LinkRef does not comply with the OpenAPI spec.
-func (value *LinkRef) Validate(ctx context.Context) error {
+func (value *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -195,7 +199,8 @@ func (value *ParameterRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if ParameterRef does not comply with the OpenAPI spec.
-func (value *ParameterRef) Validate(ctx context.Context) error {
+func (value *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -237,7 +242,8 @@ func (value *ResponseRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if ResponseRef does not comply with the OpenAPI spec.
-func (value *ResponseRef) Validate(ctx context.Context) error {
+func (value *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -279,7 +285,8 @@ func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if RequestBodyRef does not comply with the OpenAPI spec.
-func (value *RequestBodyRef) Validate(ctx context.Context) error {
+func (value *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -328,7 +335,8 @@ func (value *SchemaRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if SchemaRef does not comply with the OpenAPI spec.
-func (value *SchemaRef) Validate(ctx context.Context) error {
+func (value *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}
@@ -370,7 +378,8 @@ func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if SecuritySchemeRef does not comply with the OpenAPI spec.
-func (value *SecuritySchemeRef) Validate(ctx context.Context) error {
+func (value *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	if v := value.Value; v != nil {
 		return v.Validate(ctx)
 	}

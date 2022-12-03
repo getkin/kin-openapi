@@ -33,7 +33,9 @@ func (responses Responses) Get(status int) *ResponseRef {
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
-func (responses Responses) Validate(ctx context.Context) error {
+func (responses Responses) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
@@ -111,7 +113,9 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Response does not comply with the OpenAPI spec.
-func (response *Response) Validate(ctx context.Context) error {
+func (response *Response) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}

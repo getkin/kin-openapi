@@ -16,7 +16,9 @@ import (
 type Servers []*Server
 
 // Validate returns an error if Servers does not comply with the OpenAPI spec.
-func (servers Servers) Validate(ctx context.Context) error {
+func (servers Servers) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	for _, v := range servers {
 		if err := v.Validate(ctx); err != nil {
 			return err
@@ -163,7 +165,9 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 }
 
 // Validate returns an error if Server does not comply with the OpenAPI spec.
-func (server *Server) Validate(ctx context.Context) (err error) {
+func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (err error) {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if server.URL == "" {
 		return errors.New("value of url must be a non-empty string")
 	}
@@ -215,7 +219,9 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if ServerVariable does not comply with the OpenAPI spec.
-func (serverVariable *ServerVariable) Validate(ctx context.Context) error {
+func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	if serverVariable.Default == "" {
 		data, err := serverVariable.MarshalJSON()
 		if err != nil {

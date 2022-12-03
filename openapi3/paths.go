@@ -12,7 +12,9 @@ import (
 type Paths map[string]*PathItem
 
 // Validate returns an error if Paths does not comply with the OpenAPI spec.
-func (paths Paths) Validate(ctx context.Context) error {
+func (paths Paths) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	normalizedPaths := make(map[string]string, len(paths))
 
 	keys := make([]string, 0, len(paths))

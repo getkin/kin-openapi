@@ -106,7 +106,9 @@ func (content Content) Get(mime string) *MediaType {
 }
 
 // Validate returns an error if Content does not comply with the OpenAPI spec.
-func (content Content) Validate(ctx context.Context) error {
+func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	keys := make([]string, 0, len(content))
 	for key := range content {
 		keys = append(keys, key)

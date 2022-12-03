@@ -29,6 +29,8 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if XML does not comply with the OpenAPI spec.
-func (xml *XML) Validate(ctx context.Context) error {
+func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	return nil // TODO
 }

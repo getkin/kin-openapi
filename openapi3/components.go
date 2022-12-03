@@ -40,7 +40,9 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Components does not comply with the OpenAPI spec.
-func (components *Components) Validate(ctx context.Context) (err error) {
+func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) (err error) {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	schemas := make([]string, 0, len(components.Schemas))
 	for name := range components.Schemas {
 		schemas = append(schemas, name)
