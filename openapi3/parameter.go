@@ -69,7 +69,9 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 }
 
 // Validate returns an error if Parameters does not comply with the OpenAPI spec.
-func (parameters Parameters) Validate(ctx context.Context) error {
+func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	dupes := make(map[string]struct{})
 	for _, parameterRef := range parameters {
 		if v := parameterRef.Value; v != nil {
@@ -247,7 +249,9 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 }
 
 // Validate returns an error if Parameter does not comply with the OpenAPI spec.
-func (parameter *Parameter) Validate(ctx context.Context) error {
+func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if parameter.Name == "" {
 		return errors.New("parameter name can't be blank")
 	}

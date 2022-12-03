@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/go-openapi/jsonpointer"
 
@@ -110,7 +111,9 @@ func (ss *SecurityScheme) WithBearerFormat(value string) *SecurityScheme {
 }
 
 // Validate returns an error if SecurityScheme does not comply with the OpenAPI spec.
-func (ss *SecurityScheme) Validate(ctx context.Context) error {
+func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	hasIn := false
 	hasBearerFormat := false
 	hasFlow := false
@@ -204,20 +207,30 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if OAuthFlows does not comply with the OpenAPI spec.
-func (flows *OAuthFlows) Validate(ctx context.Context) error {
+func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if v := flows.Implicit; v != nil {
-		return v.Validate(ctx, oAuthFlowTypeImplicit)
+		if err := v.validate(ctx, oAuthFlowTypeImplicit, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'implicit' is invalid: %w", err)
+		}
 	}
 	if v := flows.Password; v != nil {
-		return v.Validate(ctx, oAuthFlowTypePassword)
+		if err := v.validate(ctx, oAuthFlowTypePassword, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'password' is invalid: %w", err)
+		}
 	}
 	if v := flows.ClientCredentials; v != nil {
-		return v.Validate(ctx, oAuthFlowTypeClientCredentials)
+		if err := v.validate(ctx, oAuthFlowTypeClientCredentials, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'clientCredentials' is invalid: %w", err)
+		}
 	}
 	if v := flows.AuthorizationCode; v != nil {
-		return v.Validate(ctx, oAuthFlowAuthorizationCode)
+		if err := v.validate(ctx, oAuthFlowAuthorizationCode, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'authorizationCode' is invalid: %w", err)
+		}
 	}
-	return errors.New("no OAuth flow is defined")
+	return nil
 }
 
 // OAuthFlow is specified by OpenAPI/Swagger standard version 3.
@@ -241,20 +254,60 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, flow)
 }
 
-// Validate returns an error if OAuthFlow does not comply with the OpenAPI spec.
-func (flow *OAuthFlow) Validate(ctx context.Context, typ oAuthFlowType) error {
-	if typ == oAuthFlowAuthorizationCode || typ == oAuthFlowTypeImplicit {
-		if v := flow.AuthorizationURL; v == "" {
-			return errors.New("an OAuth flow is missing 'authorizationUrl in authorizationCode or implicit '")
+// Validate returns an error if OAuthFlows does not comply with the OpenAPI spec.
+func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
+	if v := flow.RefreshURL; v != "" {
+		if _, err := url.Parse(v); err != nil {
+			return fmt.Errorf("field 'refreshUrl' is invalid: %w", err)
 		}
 	}
-	if typ != oAuthFlowTypeImplicit {
-		if v := flow.TokenURL; v == "" {
-			return errors.New("an OAuth flow is missing 'tokenUrl in not implicit'")
-		}
+
+	if v := flow.Scopes; len(v) == 0 {
+		return errors.New("field 'scopes' is empty or missing")
 	}
-	if v := flow.Scopes; v == nil {
-		return errors.New("an OAuth flow is missing 'scopes'")
-	}
+
 	return nil
+}
+
+func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
+	typeIn := func(types ...oAuthFlowType) bool {
+		for _, ty := range types {
+			if ty == typ {
+				return true
+			}
+		}
+		return false
+	}
+
+	if in := typeIn(oAuthFlowTypeImplicit, oAuthFlowAuthorizationCode); true {
+		switch {
+		case flow.AuthorizationURL == "" && in:
+			return errors.New("field 'authorizationUrl' is empty or missing")
+		case flow.AuthorizationURL != "" && !in:
+			return errors.New("field 'authorizationUrl' should not be set")
+		case flow.AuthorizationURL != "":
+			if _, err := url.Parse(flow.AuthorizationURL); err != nil {
+				return fmt.Errorf("field 'authorizationUrl' is invalid: %w", err)
+			}
+		}
+	}
+
+	if in := typeIn(oAuthFlowTypePassword, oAuthFlowTypeClientCredentials, oAuthFlowAuthorizationCode); true {
+		switch {
+		case flow.TokenURL == "" && in:
+			return errors.New("field 'tokenUrl' is empty or missing")
+		case flow.TokenURL != "" && !in:
+			return errors.New("field 'tokenUrl' should not be set")
+		case flow.TokenURL != "":
+			if _, err := url.Parse(flow.TokenURL); err != nil {
+				return fmt.Errorf("field 'tokenUrl' is invalid: %w", err)
+			}
+		}
+	}
+
+	return flow.Validate(ctx, opts...)
 }

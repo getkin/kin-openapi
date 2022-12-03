@@ -51,7 +51,9 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Link does not comply with the OpenAPI spec.
-func (link *Link) Validate(ctx context.Context) error {
+func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	if link.OperationID == "" && link.OperationRef == "" {
 		return errors.New("missing operationId or operationRef on link")
 	}

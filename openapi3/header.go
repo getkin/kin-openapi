@@ -54,7 +54,9 @@ func (header *Header) SerializationMethod() (*SerializationMethod, error) {
 }
 
 // Validate returns an error if Header does not comply with the OpenAPI spec.
-func (header *Header) Validate(ctx context.Context) error {
+func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if header.Name != "" {
 		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")
 	}

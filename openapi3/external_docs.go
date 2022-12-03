@@ -29,7 +29,9 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if ExternalDocs does not comply with the OpenAPI spec.
-func (e *ExternalDocs) Validate(ctx context.Context) error {
+func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	if e.URL == "" {
 		return errors.New("url is required")
 	}

@@ -31,7 +31,9 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Info does not comply with the OpenAPI spec.
-func (info *Info) Validate(ctx context.Context) error {
+func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if contact := info.Contact; contact != nil {
 		if err := contact.Validate(ctx); err != nil {
 			return err
@@ -76,7 +78,9 @@ func (contact *Contact) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Contact does not comply with the OpenAPI spec.
-func (contact *Contact) Validate(ctx context.Context) error {
+func (contact *Contact) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	return nil
 }
 
@@ -100,7 +104,9 @@ func (license *License) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if License does not comply with the OpenAPI spec.
-func (license *License) Validate(ctx context.Context) error {
+func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	if license.Name == "" {
 		return errors.New("value of license name must be a non-empty string")
 	}

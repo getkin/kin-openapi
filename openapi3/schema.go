@@ -602,7 +602,8 @@ func (schema *Schema) IsEmpty() bool {
 }
 
 // Validate returns an error if Schema does not comply with the OpenAPI spec.
-func (schema *Schema) Validate(ctx context.Context) error {
+func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
 	return schema.validate(ctx, []*Schema{})
 }
 
