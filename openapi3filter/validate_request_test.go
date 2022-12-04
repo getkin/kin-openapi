@@ -172,6 +172,17 @@ components:
 			expectedErrRegexp:    regexp.MustCompile(`security.*Api-Key not found in header.*tok not found in query`),
 		},
 		{
+			name: "Invalid security (header only)",
+			args: args{
+				requestBody: &testRequestBody{SubCategory: "Chocolate"},
+				url:         "/category?category=cookies&tok=a",
+				apiKey:      "",
+			},
+			expectedModification: false,
+			expectedErr:          &SecurityRequirementsError{},
+			expectedErrRegexp:    regexp.MustCompile(`security.*Api-Key not found in header`),
+		},
+		{
 			name: "Invalid request body and security (header and query)",
 			args: args{
 				requestBody: nil,

@@ -315,8 +315,13 @@ func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationI
 			errs = append(errs, err)
 			continue
 		}
+	}
+	if len(errs) == 0 {
+		// all security requirements have been met: success
 		return nil
 	}
+
+	// at least one security requirement was not met: fail
 	return &SecurityRequirementsError{
 		SecurityRequirements: srs,
 		Errors:               errs,
