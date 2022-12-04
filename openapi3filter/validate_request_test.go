@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -110,6 +111,7 @@ components:
 		args                 args
 		expectedModification bool
 		expectedErr          error
+		expectedErrRegexp    *regexp.Regexp
 	}{
 		{
 			name: "Valid request with all fields set",
@@ -140,6 +142,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          &RequestError{},
+			expectedErrRegexp:    regexp.MustCompile(`parameter.*\bcategory\b.*query.*value is required but missing`),
 		},
 		{
 			name: "Invalid request body",
@@ -150,6 +153,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          &RequestError{},
+			expectedErrRegexp:    regexp.MustCompile(`value is required but missing`),
 		},
 		{
 			name: "Invalid security",
@@ -160,6 +164,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          &SecurityRequirementsError{},
+			expectedErrRegexp:    regexp.MustCompile(`security.*Api-Key not found in header`),
 		},
 		{
 			name: "Invalid request body and security",
@@ -170,6 +175,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          &SecurityRequirementsError{},
+			expectedErrRegexp:    regexp.MustCompile(`security.*Api-Key not found in header`),
 		},
 	}
 	for _, tc := range tests {
@@ -202,6 +208,9 @@ components:
 			}
 			err = ValidateRequest(context.Background(), validationInput)
 			assert.IsType(t, tc.expectedErr, err, "ValidateRequest(): error = %v, expectedError %v", err, tc.expectedErr)
+			if tc.expectedErrRegexp != nil {
+				require.Regexp(t, tc.expectedErrRegexp, err.Error())
+			}
 			if tc.expectedErr != nil {
 				return
 			}
