@@ -67,13 +67,18 @@ paths:
         '201':
           description: Created
       security:
-      - apiKey: []
+        - apiKey: []
+        - queryToken: []
 components:
   securitySchemes:
     apiKey:
       type: apiKey
       name: Api-Key
       in: header
+    queryToken:
+      type: apiKey
+      name: tok
+      in: query
 `
 
 	router := setupTestRouter(t, spec)
@@ -117,7 +122,7 @@ components:
 			name: "Valid request with all fields set",
 			args: args{
 				requestBody: &testRequestBody{SubCategory: "Chocolate", Category: "Food"},
-				url:         "/category?category=cookies",
+				url:         "/category?category=cookies&tok=a",
 				apiKey:      "SomeKey",
 			},
 			expectedModification: false,
@@ -127,7 +132,7 @@ components:
 			name: "Valid request without certain fields",
 			args: args{
 				requestBody: &testRequestBody{SubCategory: "Chocolate"},
-				url:         "/category?category=cookies",
+				url:         "/category?category=cookies&tok=a",
 				apiKey:      "SomeKey",
 			},
 			expectedModification: true,
@@ -137,7 +142,7 @@ components:
 			name: "Invalid operation params",
 			args: args{
 				requestBody: &testRequestBody{SubCategory: "Chocolate"},
-				url:         "/category?invalidCategory=badCookie",
+				url:         "/category?invalidCategory=badCookie&tok=a",
 				apiKey:      "SomeKey",
 			},
 			expectedModification: false,
@@ -148,7 +153,7 @@ components:
 			name: "Invalid request body",
 			args: args{
 				requestBody: nil,
-				url:         "/category?category=cookies",
+				url:         "/category?category=cookies&tok=a",
 				apiKey:      "SomeKey",
 			},
 			expectedModification: false,
@@ -156,7 +161,7 @@ components:
 			expectedErrRegexp:    regexp.MustCompile(`value is required but missing`),
 		},
 		{
-			name: "Invalid security",
+			name: "Invalid security (header and query)",
 			args: args{
 				requestBody: &testRequestBody{SubCategory: "Chocolate"},
 				url:         "/category?category=cookies",
@@ -164,10 +169,10 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          &SecurityRequirementsError{},
-			expectedErrRegexp:    regexp.MustCompile(`security.*Api-Key not found in header`),
+			expectedErrRegexp:    regexp.MustCompile(`security.*Api-Key not found in header.*tok not found in query`),
 		},
 		{
-			name: "Invalid request body and security",
+			name: "Invalid request body and security (header and query)",
 			args: args{
 				requestBody: nil,
 				url:         "/category?category=cookies",
