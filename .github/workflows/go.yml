@@ -98,6 +98,11 @@ jobs:
         ! grep -IErn '\s$' --exclude-dir={.git,target,pgdata}
 
     - if: runner.os == 'Linux'
+      name: Ensure use of unmarshal
+      run: |
+        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | wc -l)" = 1 ]]
+
+    - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
         [[ 30 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
