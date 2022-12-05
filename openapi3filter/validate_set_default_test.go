@@ -262,8 +262,7 @@ func TestValidateRequestBodyAndSetDefault(t *testing.T) {
                             "type": "string",
                             "default": "www.twitter.com"
                           }
-                        },
-                        "additionalProperties": false
+                        }
                       },
                       {
                         "type": "object",
