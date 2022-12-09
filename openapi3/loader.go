@@ -115,7 +115,7 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 	if err != nil {
 		return nil, err
 	}
-	if err := yaml.Unmarshal(data, element); err != nil {
+	if err := unmarshal(data, element); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
-	if err := yaml.Unmarshal(data, doc); err != nil {
+	if err := unmarshal(data, doc); err != nil {
 		return nil, err
 	}
 	if err := loader.ResolveRefsIn(doc, nil); err != nil {
@@ -162,7 +162,7 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	doc := &T{}
 	loader.visitedDocuments[uri] = doc
 
-	if err := yaml.Unmarshal(data, doc); err != nil {
+	if err := unmarshal(data, doc); err != nil {
 		return nil, err
 	}
 	if err := loader.ResolveRefsIn(doc, location); err != nil {
@@ -170,6 +170,14 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	}
 
 	return doc, nil
+}
+
+func unmarshal(data []byte, v interface{}) error {
+	// See https://github.com/getkin/kin-openapi/issues/680
+	if err := json.Unmarshal(data, v); err != nil {
+		return yaml.Unmarshal(data, v)
+	}
+	return nil
 }
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
@@ -319,7 +327,7 @@ func (loader *Loader) resolveComponent(
 		if err2 != nil {
 			return nil, err
 		}
-		if err2 = yaml.Unmarshal(data, &cursor); err2 != nil {
+		if err2 = unmarshal(data, &cursor); err2 != nil {
 			return nil, err
 		}
 		if cursor, err2 = drill(cursor); err2 != nil || cursor == nil {

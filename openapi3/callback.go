@@ -30,7 +30,9 @@ func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 type Callback map[string]*PathItem
 
 // Validate returns an error if Callback does not comply with the OpenAPI spec.
-func (callback Callback) Validate(ctx context.Context) error {
+func (callback Callback) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	keys := make([]string, 0, len(callback))
 	for key := range callback {
 		keys = append(keys, key)

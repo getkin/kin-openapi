@@ -221,8 +221,6 @@ func TestExamplesSchemaValidation(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					loader := NewLoader()
-
 					spec := bytes.Buffer{}
 					spec.WriteString(`
 openapi: 3.0.3
@@ -339,13 +337,14 @@ components:
 `)
 					spec.WriteString(tc.componentExamples)
 
+					loader := NewLoader()
 					doc, err := loader.LoadFromData(spec.Bytes())
 					require.NoError(t, err)
 
 					if testOption.disableExamplesValidation {
 						err = doc.Validate(loader.Context, DisableExamplesValidation())
 					} else {
-						err = doc.Validate(loader.Context)
+						err = doc.Validate(loader.Context, EnableExamplesValidation())
 					}
 
 					if tc.errContains != "" && !testOption.disableExamplesValidation {
@@ -436,8 +435,6 @@ func TestExampleObjectValidation(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					loader := NewLoader()
-
 					spec := bytes.Buffer{}
 					spec.WriteString(`
 openapi: 3.0.3
@@ -506,6 +503,7 @@ components:
 `)
 					spec.WriteString(tc.componentExamples)
 
+					loader := NewLoader()
 					doc, err := loader.LoadFromData(spec.Bytes())
 					require.NoError(t, err)
 

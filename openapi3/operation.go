@@ -127,7 +127,9 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 }
 
 // Validate returns an error if Operation does not comply with the OpenAPI spec.
-func (operation *Operation) Validate(ctx context.Context) error {
+func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if v := operation.Parameters; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err

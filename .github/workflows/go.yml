@@ -36,13 +36,13 @@ jobs:
     - run: echo ${{ steps.go-cache-paths.outputs.go-mod }}
 
     - name: Go Build Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ steps.go-cache-paths.outputs.go-build }}
         key: ${{ runner.os }}-go-${{ matrix.go }}-build-${{ hashFiles('**/go.sum') }}
 
     - name: Go Mod Cache (go>=1.15)
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ steps.go-cache-paths.outputs.go-mod }}
         key: ${{ runner.os }}-go-${{ matrix.go }}-mod-${{ hashFiles('**/go.sum') }}
@@ -61,6 +61,7 @@ jobs:
     - run: go fmt ./...
     - run: git --no-pager diff --exit-code
 
+    - run: go test ./...
     - if: runner.os == 'Linux'
       run: go test -count=10 ./...
       env:
@@ -97,6 +98,11 @@ jobs:
         ! grep -IErn '\s$' --exclude-dir={.git,target,pgdata}
 
     - if: runner.os == 'Linux'
+      name: Ensure use of unmarshal
+      run: |
+        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | wc -l)" = 1 ]]
+
+    - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
         [[ 30 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
@@ -116,7 +122,7 @@ jobs:
           fi
 
           # Ensure impl Validate()
-          if ! git grep -InE 'func [(].+Schema[)] Validate[(]ctx context.Context[)].+error.+[{]'; then
+          if ! git grep -InE 'func [(].+'"$ty"'[)] Validate[(]ctx context.Context, opts [.][.][.]ValidationOption[)].+error.+[{]'; then
             echo "OAI type $ty does not implement Validate()" && exit 1
           fi
 
