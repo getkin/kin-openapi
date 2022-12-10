@@ -273,10 +273,11 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
+		schemaId := getSchemaIdentifier(contentType.Schema)
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "doesn't match the schema",
+			Reason:      fmt.Sprintf("doesn't match the schema %s", schemaId),
 			Err:         err,
 		}
 	}

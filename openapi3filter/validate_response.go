@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -159,11 +160,29 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 
 	// Validate data with the schema.
 	if err := contentType.Schema.Value.VisitJSON(value, append(opts, openapi3.VisitAsResponse())...); err != nil {
+		schemaId := getSchemaIdentifier(contentType.Schema)
 		return &ResponseError{
 			Input:  input,
-			Reason: "response body doesn't match the schema",
+			Reason: fmt.Sprintf("response body doesn't match the schema %s", schemaId),
 			Err:    err,
+			// TODO: add an error message customizer function similar to SchemaError
 		}
 	}
 	return nil
+}
+
+func getSchemaIdentifier(schema *openapi3.SchemaRef) string {
+	var id string
+
+	if schema != nil {
+		id = schema.Ref
+	}
+	if strings.TrimSpace(id) == "" && schema.Value != nil {
+		id = schema.Value.Title
+	}
+	if strings.TrimSpace(id) == "" && schema.Value != nil {
+		id = schema.Value.Description
+	}
+
+	return id
 }
