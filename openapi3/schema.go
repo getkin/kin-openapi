@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
@@ -180,7 +181,14 @@ func (schema *Schema) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, schema)
+	err := jsoninfo.UnmarshalStrictStruct(data, schema)
+	if schema.Format == "date" {
+		if eg, ok := schema.Example.(string); ok {
+			eg = strings.TrimSuffix(eg, "T00:00:00Z")
+			schema.Example = eg
+		}
+	}
+	return err
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
