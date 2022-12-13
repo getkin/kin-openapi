@@ -10,6 +10,5 @@ func TestIssue542(t *testing.T) {
 	sl := NewLoader()
 
 	_, err := sl.LoadFromFile("testdata/issue542.yml")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), CircularReferenceError)
+	require.NoError(t, err)
 }
