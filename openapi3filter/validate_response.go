@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -159,11 +160,36 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 
 	// Validate data with the schema.
 	if err := contentType.Schema.Value.VisitJSON(value, append(opts, openapi3.VisitAsResponse())...); err != nil {
+		schemaId := getSchemaIdentifier(contentType.Schema)
+		schemaId = prependSpaceIfNeeded(schemaId)
 		return &ResponseError{
 			Input:  input,
-			Reason: "response body doesn't match the schema",
+			Reason: fmt.Sprintf("response body doesn't match schema%s", schemaId),
 			Err:    err,
 		}
 	}
 	return nil
+}
+
+// getSchemaIdentifier gets something by which a schema could be identified.
+// A schema by itself doesn't have a true identity field. This function makes
+// a best effort to get a value that can fill that void.
+func getSchemaIdentifier(schema *openapi3.SchemaRef) string {
+	var id string
+
+	if schema != nil {
+		id = strings.TrimSpace(schema.Ref)
+	}
+	if id == "" && schema.Value != nil {
+		id = strings.TrimSpace(schema.Value.Title)
+	}
+
+	return id
+}
+
+func prependSpaceIfNeeded(value string) string {
+	if len(value) > 0 {
+		value = " " + value
+	}
+	return value
 }

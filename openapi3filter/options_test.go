@@ -78,5 +78,5 @@ paths:
 
 	fmt.Println(err.Error())
 
-	// Output: request body has an error: doesn't match the schema: field "Some field" must be an integer
+	// Output: request body has an error: doesn't match schema: field "Some field" must be an integer
 }
