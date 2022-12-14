@@ -12,6 +12,48 @@ import (
 	"github.com/getkin/kin-openapi/routers"
 )
 
+func TestRouter_Servers(t *testing.T) {
+	tests := []struct {
+		name   string
+		server *openapi3.Server
+	}{
+		{
+			name:   "server url is /",
+			server: newServerWithVariables("/", nil),
+		},
+		{
+			name:   "server url is variable that evaluates to /",
+			server: newServerWithVariables("{server}", map[string]string{"server": "/"}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
+			doc := &openapi3.T{
+				OpenAPI: "3.0.0",
+				Info: &openapi3.Info{
+					Title:   "MyAPI",
+					Version: "0.1",
+				},
+				Servers: []*openapi3.Server{
+					tt.server,
+				},
+				Paths: openapi3.Paths{
+					"/hello": &openapi3.PathItem{
+						Get: helloGET,
+					},
+				},
+			}
+
+			err := doc.Validate(context.Background())
+			require.NoError(t, err)
+			r, err := NewRouter(doc)
+			require.NoError(t, err)
+			expect(t, doc, r, http.MethodGet, "/hello", nil, nil)
+		})
+	}
+}
+
 func TestRouter(t *testing.T) {
 	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses()}
 	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses()}
