@@ -291,7 +291,16 @@ func TestServerPath(t *testing.T) {
 			"http://example.com:{port}/path",
 			map[string]string{
 				"port": "8088",
-			})},
+			}),
+		newServerWithVariables(
+			"{server}",
+			map[string]string{
+				"server": "/",
+			}),
+		newServerWithVariables(
+			"/",
+			nil,
+		)},
 	})
 	require.NoError(t, err)
 }
