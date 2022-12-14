@@ -72,91 +72,35 @@ func TestRouter(t *testing.T) {
 		},
 	}
 
-	expect := func(r routers.Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
-		t.Helper()
-		req, err := http.NewRequest(method, uri, nil)
-		require.NoError(t, err)
-		route, pathParams, err := r.FindRoute(req)
-		if err != nil {
-			if operation == nil {
-				pathItem := doc.Paths[uri]
-				if pathItem == nil {
-					if err.Error() != routers.ErrPathNotFound.Error() {
-						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrPathNotFound, err)
-					}
-					return
-				}
-				if pathItem.GetOperation(method) == nil {
-					if err.Error() != routers.ErrMethodNotAllowed.Error() {
-						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrMethodNotAllowed, err)
-					}
-				}
-			} else {
-				t.Fatalf("'%s %s': should have returned an operation, but it returned an error: %v", method, uri, err)
-			}
-		}
-		if operation == nil && err == nil {
-			t.Fatalf("'%s %s': should have failed, but returned\nroute = %+v\npathParams = %+v", method, uri, route, pathParams)
-		}
-		if route == nil {
-			return
-		}
-		if route.Operation != operation {
-			t.Fatalf("'%s %s': Returned wrong operation (%v)",
-				method, uri, route.Operation)
-		}
-		if len(params) == 0 {
-			if len(pathParams) != 0 {
-				t.Fatalf("'%s %s': should return no path arguments, but found %+v", method, uri, pathParams)
-			}
-		} else {
-			names := make([]string, 0, len(params))
-			for name := range params {
-				names = append(names, name)
-			}
-			sort.Strings(names)
-			for _, name := range names {
-				expected := params[name]
-				actual, exists := pathParams[name]
-				if !exists {
-					t.Fatalf("'%s %s': path parameter %q should be %q, but it's not defined.", method, uri, name, expected)
-				}
-				if actual != expected {
-					t.Fatalf("'%s %s': path parameter %q should be %q, but it's %q", method, uri, name, expected, actual)
-				}
-			}
-		}
-	}
-
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
 	r, err := NewRouter(doc)
 	require.NoError(t, err)
 
-	expect(r, http.MethodGet, "/not_existing", nil, nil)
-	expect(r, http.MethodDelete, "/hello", helloDELETE, nil)
-	expect(r, http.MethodGet, "/hello", helloGET, nil)
-	expect(r, http.MethodHead, "/hello", helloHEAD, nil)
-	expect(r, http.MethodPatch, "/hello", helloPATCH, nil)
-	expect(r, http.MethodPost, "/hello", helloPOST, nil)
-	expect(r, http.MethodPut, "/hello", helloPUT, nil)
-	expect(r, http.MethodGet, "/params/a/b/", paramsGET, map[string]string{
+	expect(t, doc, r, http.MethodGet, "/not_existing", nil, nil)
+	expect(t, doc, r, http.MethodDelete, "/hello", helloDELETE, nil)
+	expect(t, doc, r, http.MethodGet, "/hello", helloGET, nil)
+	expect(t, doc, r, http.MethodHead, "/hello", helloHEAD, nil)
+	expect(t, doc, r, http.MethodPatch, "/hello", helloPATCH, nil)
+	expect(t, doc, r, http.MethodPost, "/hello", helloPOST, nil)
+	expect(t, doc, r, http.MethodPut, "/hello", helloPUT, nil)
+	expect(t, doc, r, http.MethodGet, "/params/a/b/", paramsGET, map[string]string{
 		"x": "a",
 		"y": "b",
 		"z": "",
 	})
-	expect(r, http.MethodGet, "/params/a/b/c%2Fd", paramsGET, map[string]string{
+	expect(t, doc, r, http.MethodGet, "/params/a/b/c%2Fd", paramsGET, map[string]string{
 		"x": "a",
 		"y": "b",
 		"z": "c%2Fd",
 	})
-	expect(r, http.MethodGet, "/books/War.and.Peace", paramsGET, map[string]string{
+	expect(t, doc, r, http.MethodGet, "/books/War.and.Peace", paramsGET, map[string]string{
 		"bookid": "War.and.Peace",
 	})
-	expect(r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
+	expect(t, doc, r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
 		"bookid": "War.and.Peace",
 	})
-	expect(r, http.MethodPost, "/partial", nil, nil)
+	expect(t, doc, r, http.MethodPost, "/partial", nil, nil)
 
 	doc.Servers = []*openapi3.Server{
 		{URL: "https://www.example.com/api/v1"},
@@ -173,18 +117,18 @@ func TestRouter(t *testing.T) {
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)
-	expect(r, http.MethodGet, "/hello", nil, nil)
-	expect(r, http.MethodGet, "/api/v1/hello", nil, nil)
-	expect(r, http.MethodGet, "www.example.com/api/v1/hello", nil, nil)
-	expect(r, http.MethodGet, "https:///api/v1/hello", nil, nil)
-	expect(r, http.MethodGet, "https://www.example.com/hello", nil, nil)
-	expect(r, http.MethodGet, "https://www.example.com/api/v1/hello", helloGET, nil)
-	expect(r, http.MethodGet, "https://domain0.domain1.com/api/v1/hello", helloGET, map[string]string{
+	expect(t, doc, r, http.MethodGet, "/hello", nil, nil)
+	expect(t, doc, r, http.MethodGet, "/api/v1/hello", nil, nil)
+	expect(t, doc, r, http.MethodGet, "www.example.com/api/v1/hello", nil, nil)
+	expect(t, doc, r, http.MethodGet, "https:///api/v1/hello", nil, nil)
+	expect(t, doc, r, http.MethodGet, "https://www.example.com/hello", nil, nil)
+	expect(t, doc, r, http.MethodGet, "https://www.example.com/api/v1/hello", helloGET, nil)
+	expect(t, doc, r, http.MethodGet, "https://domain0.domain1.com/api/v1/hello", helloGET, map[string]string{
 		"d0": "domain0",
 		"d1": "domain1",
 		// "scheme": "https", TODO: https://github.com/gorilla/mux/issues/624
 	})
-	expect(r, http.MethodGet, "http://127.0.0.1:8000/api/v1/hello", helloGET, map[string]string{
+	expect(t, doc, r, http.MethodGet, "http://127.0.0.1:8000/api/v1/hello", helloGET, map[string]string{
 		"port": "8000",
 	})
 
@@ -197,11 +141,11 @@ func TestRouter(t *testing.T) {
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)
-	expect(r, http.MethodGet, "https://myserver/api/v1/hello", helloGET, nil)
+	expect(t, doc, r, http.MethodGet, "https://myserver/api/v1/hello", helloGET, nil)
 
 	{
 		uri := "https://www.example.com/api/v1/onlyGET"
-		expect(r, http.MethodGet, uri, helloGET, nil)
+		expect(t, doc, r, http.MethodGet, uri, helloGET, nil)
 		req, err := http.NewRequest(http.MethodDelete, uri, nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
@@ -209,6 +153,62 @@ func TestRouter(t *testing.T) {
 		require.EqualError(t, err, routers.ErrMethodNotAllowed.Error())
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
+	}
+}
+
+func expect(t *testing.T, doc *openapi3.T, r routers.Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
+	t.Helper()
+	req, err := http.NewRequest(method, uri, nil)
+	require.NoError(t, err)
+	route, pathParams, err := r.FindRoute(req)
+	if err != nil {
+		if operation == nil {
+			pathItem := doc.Paths[uri]
+			if pathItem == nil {
+				if err.Error() != routers.ErrPathNotFound.Error() {
+					t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrPathNotFound, err)
+				}
+				return
+			}
+			if pathItem.GetOperation(method) == nil {
+				if err.Error() != routers.ErrMethodNotAllowed.Error() {
+					t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrMethodNotAllowed, err)
+				}
+			}
+		} else {
+			t.Fatalf("'%s %s': should have returned an operation, but it returned an error: %v", method, uri, err)
+		}
+	}
+	if operation == nil && err == nil {
+		t.Fatalf("'%s %s': should have failed, but returned\nroute = %+v\npathParams = %+v", method, uri, route, pathParams)
+	}
+	if route == nil {
+		return
+	}
+	if route.Operation != operation {
+		t.Fatalf("'%s %s': Returned wrong operation (%v)",
+			method, uri, route.Operation)
+	}
+	if len(params) == 0 {
+		if len(pathParams) != 0 {
+			t.Fatalf("'%s %s': should return no path arguments, but found %+v", method, uri, pathParams)
+		}
+	} else {
+		names := make([]string, 0, len(params))
+		for name := range params {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			expected := params[name]
+			actual, exists := pathParams[name]
+			if !exists {
+				t.Fatalf("'%s %s': path parameter %q should be %q, but it's not defined.", method, uri, name, expected)
+			}
+			if actual != expected {
+				t.Fatalf("'%s %s': path parameter %q should be %q, but it's %q", method, uri, name, expected, actual)
+			}
+		}
 	}
 }
 
