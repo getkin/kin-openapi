@@ -49,7 +49,7 @@ func TestRouter_Servers(t *testing.T) {
 			require.NoError(t, err)
 			r, err := NewRouter(doc)
 			require.NoError(t, err)
-			expect(t, doc, r, http.MethodGet, "/hello", nil, nil)
+			expect(t, doc, r, http.MethodGet, "/hello", helloGET, nil)
 		})
 	}
 }
