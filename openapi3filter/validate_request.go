@@ -66,7 +66,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 			}
 		}
 
-		if err = ValidateParameter(ctx, input, parameter); err != nil && !options.MultiError {
+		if err = ValidateParameter(ctx, input, parameter, options.SkipSettingDefaults); err != nil && !options.MultiError {
 			return
 		}
 		if err != nil {
@@ -76,7 +76,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
-		if err = ValidateParameter(ctx, input, parameter.Value); err != nil && !options.MultiError {
+		if err = ValidateParameter(ctx, input, parameter.Value, options.SkipSettingDefaults); err != nil && !options.MultiError {
 			return
 		}
 		if err != nil {
@@ -106,7 +106,8 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
 // The function returns RequestError with ErrInvalidEmptyValue cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
+func ValidateParameter(ctx context.Context, input *RequestValidationInput,
+	parameter *openapi3.Parameter, skipSettingDefaults bool) error {
 	if parameter.Schema == nil && parameter.Content == nil {
 		// We have no schema for the parameter. Assume that everything passes
 		// a schema-less check, but this could also be an error. The OpenAPI
@@ -137,7 +138,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	}
 
 	// Set default value if needed
-	if value == nil && schema != nil && schema.Default != nil {
+	if !skipSettingDefaults && value == nil && schema != nil && schema.Default != nil {
 		value = schema.Default
 		req := input.Request
 		switch parameter.In {
