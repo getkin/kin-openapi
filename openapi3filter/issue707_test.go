@@ -31,7 +31,7 @@ func TestIssue707(t *testing.T) {
           schema:
            default: 124
            type: integer
-           style: form 
+           style: form
           required: false
        responses:
         '200':
