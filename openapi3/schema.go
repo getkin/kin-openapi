@@ -183,6 +183,7 @@ func (schema *Schema) MarshalJSON() ([]byte, error) {
 func (schema *Schema) UnmarshalJSON(data []byte) error {
 	err := jsoninfo.UnmarshalStrictStruct(data, schema)
 	if schema.Format == "date" {
+		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
 		if eg, ok := schema.Example.(string); ok {
 			eg = strings.TrimSuffix(eg, "T00:00:00Z")
 			schema.Example = eg
