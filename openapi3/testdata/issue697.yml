@@ -1,0 +1,14 @@
+openapi: 3.0.1
+components:
+  schemas:
+    API:
+      properties:
+        dateExample:
+          type: string
+          format: date
+          example: 2019-09-12
+info:
+  title: sample
+  version: version not set
+paths: {}
+
