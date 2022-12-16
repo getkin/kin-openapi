@@ -10,7 +10,7 @@ import (
 )
 
 // PathItem is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#pathItemObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
 type PathItem struct {
 	ExtensionProps `json:"-" yaml:"-"`
 

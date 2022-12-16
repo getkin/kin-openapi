@@ -12,7 +12,7 @@ import (
 )
 
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
 type MediaType struct {
 	ExtensionProps `json:"-" yaml:"-"`
 

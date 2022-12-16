@@ -175,7 +175,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
 					path:  "/1",
-					want:  float64(1),
+					want:  int64(1),
 					found: true,
 				},
 				{
@@ -456,7 +456,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
 					query: "param=1",
-					want:  float64(1),
+					want:  int64(1),
 					found: true,
 				},
 				{
@@ -522,7 +522,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "anyofSchema integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
 					query: "param=1",
-					want:  float64(1),
+					want:  int64(1),
 					found: true,
 				},
 				{
@@ -548,7 +548,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "oneofSchema int",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
 					query: "param=1122",
-					want:  float64(1122),
+					want:  int64(1122),
 					found: true,
 				},
 				{
@@ -724,7 +724,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:   "integer",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
 					header: "X-Param:1",
-					want:   float64(1),
+					want:   int64(1),
 					found:  true,
 				},
 				{
@@ -836,6 +836,13 @@ func TestDecodeParameter(t *testing.T) {
 					found:  true,
 				},
 				{
+					name:   "valid integer prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
+					header: "X-Param:88",
+					found:  true,
+					want:   int64(88),
+				},
+				{
 					name:   "invalid integer prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", integerSchema)},
 					header: "X-Param:foo,bar",
@@ -893,7 +900,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:   "integer",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
 					cookie: "X-Param:1",
-					want:   float64(1),
+					want:   int64(1),
 					found:  true,
 				},
 				{
@@ -1180,7 +1187,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("a", openapi3.NewStringSchema()).
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
+			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
 		{
 			name: "urlencoded space delimited",
@@ -1193,7 +1200,7 @@ func TestDecodeBody(t *testing.T) {
 			encoding: map[string]*openapi3.Encoding{
 				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
 			},
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
+			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
 		{
 			name: "urlencoded pipe delimited",
@@ -1206,7 +1213,7 @@ func TestDecodeBody(t *testing.T) {
 			encoding: map[string]*openapi3.Encoding{
 				"c": {Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
 			},
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
+			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
 		{
 			name: "multipart",

@@ -50,7 +50,7 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 }
 
 // Server is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#serverObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
 type Server struct {
 	ExtensionProps `json:"-" yaml:"-"`
 

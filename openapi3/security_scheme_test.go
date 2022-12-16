@@ -30,7 +30,7 @@ func TestSecuritySchemaExample(t *testing.T) {
 	}
 }
 
-// from https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#fixed-fields-23
+// from https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#fixed-fields-23
 var securitySchemeExamples = []securitySchemeExample{
 	{
 		title: "Basic Authentication Sample",

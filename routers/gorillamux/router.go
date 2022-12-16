@@ -57,8 +57,6 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range orderedPaths(doc.Paths) {
-		servers := servers
-
 		pathItem := doc.Paths[path]
 		if len(pathItem.Servers) > 0 {
 			if servers, err = makeServers(pathItem.Servers); err != nil {
@@ -140,19 +138,13 @@ func makeServers(in openapi3.Servers) ([]srv, error) {
 			if lhs := strings.TrimSuffix(serverURL, server.Variables[sVar].Default); lhs != "" {
 				varsUpdater = func(vars map[string]string) { vars[sVar] = lhs }
 			}
-			servers = append(servers, srv{
-				base:        server.Variables[sVar].Default,
-				server:      server,
-				varsUpdater: varsUpdater,
-			})
-			continue
-		}
+			svr, err := newSrv(serverURL, server, varsUpdater)
+			if err != nil {
+				return nil, err
+			}
 
-		var schemes []string
-		if strings.Contains(serverURL, "://") {
-			scheme0 := strings.Split(serverURL, "://")[0]
-			schemes = permutePart(scheme0, server)
-			serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
+			servers = append(servers, svr)
+			continue
 		}
 
 		// If a variable represents the port "http://domain.tld:{port}/bla"
@@ -172,27 +164,43 @@ func makeServers(in openapi3.Servers) ([]srv, error) {
 			}
 		}
 
-		u, err := url.Parse(bEncode(serverURL))
+		svr, err := newSrv(serverURL, server, varsUpdater)
 		if err != nil {
 			return nil, err
 		}
-		path := bDecode(u.EscapedPath())
-		if len(path) > 0 && path[len(path)-1] == '/' {
-			path = path[:len(path)-1]
-		}
-		servers = append(servers, srv{
-			host:        bDecode(u.Host), //u.Hostname()?
-			base:        path,
-			schemes:     schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
-			server:      server,
-			varsUpdater: varsUpdater,
-		})
+		servers = append(servers, svr)
 	}
 	if len(servers) == 0 {
 		servers = append(servers, srv{})
 	}
 
 	return servers, nil
+}
+
+func newSrv(serverURL string, server *openapi3.Server, varsUpdater varsf) (srv, error) {
+	var schemes []string
+	if strings.Contains(serverURL, "://") {
+		scheme0 := strings.Split(serverURL, "://")[0]
+		schemes = permutePart(scheme0, server)
+		serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
+	}
+
+	u, err := url.Parse(bEncode(serverURL))
+	if err != nil {
+		return srv{}, err
+	}
+	path := bDecode(u.EscapedPath())
+	if len(path) > 0 && path[len(path)-1] == '/' {
+		path = path[:len(path)-1]
+	}
+	svr := srv{
+		host:        bDecode(u.Host), //u.Hostname()?
+		base:        path,
+		schemes:     schemes, // scheme: []string{scheme0}, TODO: https://github.com/gorilla/mux/issues/624
+		server:      server,
+		varsUpdater: varsUpdater,
+	}
+	return svr, nil
 }
 
 func orderedPaths(paths map[string]*openapi3.PathItem) []string {
