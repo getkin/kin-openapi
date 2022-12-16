@@ -895,7 +895,14 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 	}
 	switch schema.Value.Type {
 	case "integer":
-		v, err := strconv.ParseFloat(raw, 64)
+		if schema.Value.Format == "int32" {
+			v, err := strconv.ParseInt(raw, 0, 32)
+			if err != nil {
+				return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
+			}
+			return int32(v), nil
+		}
+		v, err := strconv.ParseInt(raw, 0, 64)
 		if err != nil {
 			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
 		}
