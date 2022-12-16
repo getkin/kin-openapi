@@ -94,7 +94,7 @@ paths:
 		},
 
 		"invalid required header": {
-			err: `response header "X-Blup" doesn't match the schema: string "bluuuuuup" doesn't match the regular expression "^blup$"`,
+			err: `response header "X-Blup" doesn't match schema: string "bluuuuuup" doesn't match the regular expression "^blup$"`,
 			headers: map[string]string{
 				"X-Blip": "blip",
 				"x-blop": "blop",

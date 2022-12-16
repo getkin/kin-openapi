@@ -81,21 +81,9 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	for _, k := range headers {
 		s := response.Headers[k]
 		h := input.Header.Get(k)
-		if h == "" {
-			if s.Value.Required {
-				return &ResponseError{
-					Input:  input,
-					Reason: fmt.Sprintf("response header %q missing", k),
-				}
-			}
-			continue
-		}
-		if err := s.Value.Schema.Value.VisitJSON(h, opts...); err != nil {
-			return &ResponseError{
-				Input:  input,
-				Reason: fmt.Sprintf("response header %q doesn't match the schema", k),
-				Err:    err,
-			}
+		err := validateResponseHeader(k, h, s, input, opts)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -166,6 +154,58 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 			Input:  input,
 			Reason: fmt.Sprintf("response body doesn't match schema%s", schemaId),
 			Err:    err,
+		}
+	}
+	return nil
+}
+
+func validateResponseHeader(
+	headerName string,
+	headerVal string,
+	s *openapi3.HeaderRef,
+	input *ResponseValidationInput,
+	opts []openapi3.SchemaValidationOption,
+) error {
+	if headerVal == "" && s.Value.Required {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("response header %q missing", headerName),
+		}
+	}
+
+	sm, err := s.Value.SerializationMethod()
+	if err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
+			Err:    err,
+		}
+	}
+
+	var decodedValue interface{}
+	dec := &headerParamDecoder{header: input.Header}
+	found := false
+	if decodedValue, found, err = decodeValue(dec, headerName, sm, s.Value.Schema, s.Value.Required); err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to decode header %q value", headerName),
+			Err:    err,
+		}
+	}
+
+	if found {
+		// If the value was found but not decoded it means there is no
+		// schema.Type defining how to interpret the header value
+		if decodedValue == nil {
+			// revert to the header's original value
+			decodedValue = headerVal
+		}
+		if err := s.Value.Schema.Value.VisitJSON(decodedValue, opts...); err != nil {
+			return &ResponseError{
+				Input:  input,
+				Reason: fmt.Sprintf("response header %q doesn't match schema", headerName),
+				Err:    err,
+			}
 		}
 	}
 	return nil
