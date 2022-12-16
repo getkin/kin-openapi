@@ -185,8 +185,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
 		if eg, ok := schema.Example.(string); ok {
-			eg = strings.TrimSuffix(eg, "T00:00:00Z")
-			schema.Example = eg
+			schema.Example = strings.TrimSuffix(eg, "T00:00:00Z")
 		}
 	}
 	return err
