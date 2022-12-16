@@ -111,7 +111,7 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 }
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
 type Schema struct {
 	ExtensionProps `json:"-" yaml:"-"`
 

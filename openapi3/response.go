@@ -13,7 +13,7 @@ import (
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responsesObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
 type Responses map[string]*ResponseRef
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -68,7 +68,7 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responseObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
