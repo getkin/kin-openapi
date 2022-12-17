@@ -339,7 +339,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		}
 		_, found = vDecoder.values[param]
 	case *headerParamDecoder:
-		_, found = vDecoder.header[param]
+		_, found = vDecoder.header[http.CanonicalHeaderKey(param)]
 	case *cookieParamDecoder:
 		_, err := vDecoder.req.Cookie(param)
 		found = err != http.ErrNoCookie
@@ -888,7 +888,7 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]interface{}, err
 
 // parsePrimitive returns a value that is created by parsing a source string to a primitive type
 // that is specified by a schema. The function returns nil when the source string is empty.
-// The function panics when a schema has a non primitive type.
+// The function panics when a schema has a non-primitive type.
 func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error) {
 	if raw == "" {
 		return nil, nil

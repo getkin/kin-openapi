@@ -1042,6 +1042,10 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 	return
 }
 
+// The value is not considered in visitJSONNull because according to the spec
+// "null is not supported as a type" unless `nullable` is also set to true
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
 func (schema *Schema) visitJSONNull(settings *schemaValidationSettings) (err error) {
 	if schema.Nullable {
 		return

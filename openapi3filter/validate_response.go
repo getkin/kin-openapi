@@ -78,10 +78,9 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		}
 	}
 	sort.Strings(headers)
-	for _, k := range headers {
-		s := response.Headers[k]
-		h := input.Header.Get(k)
-		err := validateResponseHeader(k, h, s, input, opts)
+	for _, headerName := range headers {
+		headerRef := response.Headers[headerName]
+		err := validateResponseHeader(headerName, headerRef, input, opts)
 		if err != nil {
 			return err
 		}
@@ -159,33 +158,14 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	return nil
 }
 
-func validateResponseHeader(
-	headerName string,
-	headerVal string,
-	s *openapi3.HeaderRef,
-	input *ResponseValidationInput,
-	opts []openapi3.SchemaValidationOption,
-) error {
-	if headerVal == "" && s.Value.Required {
-		return &ResponseError{
-			Input:  input,
-			Reason: fmt.Sprintf("response header %q missing", headerName),
-		}
-	}
-
-	sm, err := s.Value.SerializationMethod()
-	if err != nil {
-		return &ResponseError{
-			Input:  input,
-			Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
-			Err:    err,
-		}
-	}
-
+func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, input *ResponseValidationInput, opts []openapi3.SchemaValidationOption, ) error {
+	var err error
 	var decodedValue interface{}
+	var found bool
 	dec := &headerParamDecoder{header: input.Header}
-	found := false
-	if decodedValue, found, err = decodeValue(dec, headerName, sm, s.Value.Schema, s.Value.Required); err != nil {
+	sm, _ := headerRef.Value.SerializationMethod() // ignore error return because a header's serialization method getter does not return an error
+
+	if decodedValue, found, err = decodeValue(dec, headerName, sm, headerRef.Value.Schema, headerRef.Value.Required); err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: fmt.Sprintf("unable to decode header %q value", headerName),
@@ -194,18 +174,17 @@ func validateResponseHeader(
 	}
 
 	if found {
-		// If the value was found but not decoded it means there is no
-		// schema.Type defining how to interpret the header value
-		if decodedValue == nil {
-			// revert to the header's original value
-			decodedValue = headerVal
-		}
-		if err := s.Value.Schema.Value.VisitJSON(decodedValue, opts...); err != nil {
+		if err = headerRef.Value.Schema.Value.VisitJSON(decodedValue, opts...); err != nil {
 			return &ResponseError{
 				Input:  input,
 				Reason: fmt.Sprintf("response header %q doesn't match schema", headerName),
 				Err:    err,
 			}
+		}
+	} else if headerRef.Value.Required {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("response header %q missing", headerName),
 		}
 	}
 	return nil
