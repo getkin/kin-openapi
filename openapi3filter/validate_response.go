@@ -161,8 +161,16 @@ func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, in
 	var err error
 	var decodedValue interface{}
 	var found bool
+	var sm *openapi3.SerializationMethod
 	dec := &headerParamDecoder{header: input.Header}
-	sm, _ := headerRef.Value.SerializationMethod() // ignore error return because a header's serialization method getter does not return an error
+
+	if sm, err = headerRef.Value.SerializationMethod(); err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
+			Err:    err,
+		}
+	}
 
 	if decodedValue, found, err = decodeValue(dec, headerName, sm, headerRef.Value.Schema, headerRef.Value.Required); err != nil {
 		return &ResponseError{
