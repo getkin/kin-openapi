@@ -10,7 +10,7 @@ import (
 type Content map[string]*MediaType
 
 func NewContent() Content {
-	return make(map[string]*MediaType, 4)
+	return make(map[string]*MediaType)
 }
 
 func NewContentWithSchema(schema *Schema, consumes []string) Content {
