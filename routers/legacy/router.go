@@ -124,7 +124,7 @@ func (router *Router) FindRoute(req *http.Request) (*routers.Route, map[string]s
 				Reason: routers.ErrPathNotFound.Error(),
 			}
 		}
-		pathParams = make(map[string]string, 8)
+		pathParams = make(map[string]string)
 		paramNames, err := server.ParameterNames()
 		if err != nil {
 			return nil, nil, err

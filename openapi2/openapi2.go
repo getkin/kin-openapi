@@ -42,7 +42,7 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 func (doc *T) AddOperation(path string, method string, operation *Operation) {
 	paths := doc.Paths
 	if paths == nil {
-		paths = make(map[string]*PathItem, 8)
+		paths = make(map[string]*PathItem)
 		doc.Paths = paths
 	}
 	pathItem := paths[path]
@@ -77,7 +77,7 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
-	operations := make(map[string]*Operation, 8)
+	operations := make(map[string]*Operation)
 	if v := pathItem.Delete; v != nil {
 		operations[http.MethodDelete] = v
 	}

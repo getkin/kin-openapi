@@ -41,7 +41,7 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
-	operations := make(map[string]*Operation, 4)
+	operations := make(map[string]*Operation)
 	if v := pathItem.Connect; v != nil {
 		operations[http.MethodConnect] = v
 	}

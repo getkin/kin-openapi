@@ -23,7 +23,7 @@ type ObjectEncoder struct {
 
 func NewObjectEncoder() *ObjectEncoder {
 	return &ObjectEncoder{
-		result: make(map[string]json.RawMessage, 8),
+		result: make(map[string]json.RawMessage),
 	}
 }
 
