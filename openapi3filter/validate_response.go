@@ -78,24 +78,10 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		}
 	}
 	sort.Strings(headers)
-	for _, k := range headers {
-		s := response.Headers[k]
-		h := input.Header.Get(k)
-		if h == "" {
-			if s.Value.Required {
-				return &ResponseError{
-					Input:  input,
-					Reason: fmt.Sprintf("response header %q missing", k),
-				}
-			}
-			continue
-		}
-		if err := s.Value.Schema.Value.VisitJSON(h, opts...); err != nil {
-			return &ResponseError{
-				Input:  input,
-				Reason: fmt.Sprintf("response header %q doesn't match the schema", k),
-				Err:    err,
-			}
+	for _, headerName := range headers {
+		headerRef := response.Headers[headerName]
+		if err := validateResponseHeader(headerName, headerRef, input, opts); err != nil {
+			return err
 		}
 	}
 
@@ -166,6 +152,46 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 			Input:  input,
 			Reason: fmt.Sprintf("response body doesn't match schema%s", schemaId),
 			Err:    err,
+		}
+	}
+	return nil
+}
+
+func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, input *ResponseValidationInput, opts []openapi3.SchemaValidationOption) error {
+	var err error
+	var decodedValue interface{}
+	var found bool
+	var sm *openapi3.SerializationMethod
+	dec := &headerParamDecoder{header: input.Header}
+
+	if sm, err = headerRef.Value.SerializationMethod(); err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
+			Err:    err,
+		}
+	}
+
+	if decodedValue, found, err = decodeValue(dec, headerName, sm, headerRef.Value.Schema, headerRef.Value.Required); err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to decode header %q value", headerName),
+			Err:    err,
+		}
+	}
+
+	if found {
+		if err = headerRef.Value.Schema.Value.VisitJSON(decodedValue, opts...); err != nil {
+			return &ResponseError{
+				Input:  input,
+				Reason: fmt.Sprintf("response header %q doesn't match schema", headerName),
+				Err:    err,
+			}
+		}
+	} else if headerRef.Value.Required {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("response header %q missing", headerName),
 		}
 	}
 	return nil
