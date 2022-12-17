@@ -80,8 +80,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	sort.Strings(headers)
 	for _, headerName := range headers {
 		headerRef := response.Headers[headerName]
-		err := validateResponseHeader(headerName, headerRef, input, opts)
-		if err != nil {
+		if err := validateResponseHeader(headerName, headerRef, input, opts); err != nil {
 			return err
 		}
 	}
@@ -158,7 +157,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	return nil
 }
 
-func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, input *ResponseValidationInput, opts []openapi3.SchemaValidationOption, ) error {
+func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, input *ResponseValidationInput, opts []openapi3.SchemaValidationOption) error {
 	var err error
 	var decodedValue interface{}
 	var found bool
