@@ -196,6 +196,11 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 
 ## Sub-v0 breaking API changes
 
+### v0.112.0
+* `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.
+* `(openapi3.ValidationOptions).SchemaFormatValidationEnabled` has been unexported.
+* `(openapi3.ValidationOptions).SchemaPatternValidationDisabled` has been unexported.
+
 ### v0.111.0
 * Changed `func (*_) Validate(ctx context.Context) error` to `func (*_) Validate(ctx context.Context, opts ...ValidationOption) error`.
 * `openapi3.WithValidationOptions(ctx context.Context, opts *ValidationOptions) context.Context` prototype changed to `openapi3.WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context`.

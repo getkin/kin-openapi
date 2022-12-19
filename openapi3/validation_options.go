@@ -7,10 +7,11 @@ type ValidationOption func(options *ValidationOptions)
 
 // ValidationOptions provides configuration for validating OpenAPI documents.
 type ValidationOptions struct {
-	SchemaFormatValidationEnabled                    bool
-	SchemaPatternValidationDisabled                  bool
-	ExamplesValidationDisabled                       bool
 	examplesValidationAsReq, examplesValidationAsRes bool
+	examplesValidationDisabled                       bool
+	schemaDefaultsValidationDisabled                 bool
+	schemaFormatValidationEnabled                    bool
+	schemaPatternValidationDisabled                  bool
 }
 
 type validationOptionsKey struct{}
@@ -19,7 +20,7 @@ type validationOptionsKey struct{}
 // By default, schema format validation is disabled.
 func EnableSchemaFormatValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.SchemaFormatValidationEnabled = true
+		options.schemaFormatValidationEnabled = true
 	}
 }
 
@@ -27,7 +28,7 @@ func EnableSchemaFormatValidation() ValidationOption {
 // By default, schema format validation is disabled.
 func DisableSchemaFormatValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.SchemaFormatValidationEnabled = false
+		options.schemaFormatValidationEnabled = false
 	}
 }
 
@@ -35,14 +36,30 @@ func DisableSchemaFormatValidation() ValidationOption {
 // By default, schema pattern validation is enabled.
 func EnableSchemaPatternValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.SchemaPatternValidationDisabled = false
+		options.schemaPatternValidationDisabled = false
 	}
 }
 
 // DisableSchemaPatternValidation makes Validate not return an error when validating patterns that are not supported by the Go regexp engine.
 func DisableSchemaPatternValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.SchemaPatternValidationDisabled = true
+		options.schemaPatternValidationDisabled = true
+	}
+}
+
+// EnableSchemaDefaultsValidation does the opposite of DisableSchemaDefaultsValidation.
+// By default, schema default values are validated against their schema.
+func EnableSchemaDefaultsValidation() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.schemaDefaultsValidationDisabled = false
+	}
+}
+
+// DisableSchemaDefaultsValidation disables schemas' default field validation.
+// By default, schema default values are validated against their schema.
+func DisableSchemaDefaultsValidation() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.schemaDefaultsValidationDisabled = true
 	}
 }
 
@@ -50,7 +67,7 @@ func DisableSchemaPatternValidation() ValidationOption {
 // By default, all schema examples are validated.
 func EnableExamplesValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.ExamplesValidationDisabled = false
+		options.examplesValidationDisabled = false
 	}
 }
 
@@ -58,7 +75,7 @@ func EnableExamplesValidation() ValidationOption {
 // By default, all schema examples are validated.
 func DisableExamplesValidation() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.ExamplesValidationDisabled = true
+		options.examplesValidationDisabled = true
 	}
 }
 
