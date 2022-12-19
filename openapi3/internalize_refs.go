@@ -193,14 +193,11 @@ func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver,
 		return false
 	}
 	name := refNameResolver(c.Ref)
-	if _, ok := doc.Components.Callbacks[name]; ok {
-		c.Ref = "#/components/callbacks/" + name
-	}
 	if doc.Components.Callbacks == nil {
 		doc.Components.Callbacks = make(Callbacks)
 	}
-	doc.Components.Callbacks[name] = &CallbackRef{Value: c.Value}
 	c.Ref = "#/components/callbacks/" + name
+	doc.Components.Callbacks[name] = &CallbackRef{Value: c.Value}
 	return true
 }
 

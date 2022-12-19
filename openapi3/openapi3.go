@@ -36,15 +36,13 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {
-	paths := doc.Paths
-	if paths == nil {
-		paths = make(Paths)
-		doc.Paths = paths
+	if doc.Paths == nil {
+		doc.Paths = make(Paths)
 	}
-	pathItem := paths[path]
+	pathItem := doc.Paths[path]
 	if pathItem == nil {
 		pathItem = &PathItem{}
-		paths[path] = pathItem
+		doc.Paths[path] = pathItem
 	}
 	pathItem.SetOperation(method, operation)
 }

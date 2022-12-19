@@ -29,8 +29,8 @@ func (paths Paths) Validate(ctx context.Context, opts ...ValidationOption) error
 		}
 
 		if pathItem == nil {
-			paths[path] = &PathItem{}
-			pathItem = paths[path]
+			pathItem = &PathItem{}
+			paths[path] = pathItem
 		}
 
 		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)

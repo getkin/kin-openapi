@@ -281,12 +281,7 @@ func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
 
-func (loader *Loader) resolveComponent(
-	doc *T,
-	ref string,
-	path *url.URL,
-	resolved interface{},
-) (
+func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolved interface{}) (
 	componentDoc *T,
 	componentPath *url.URL,
 	err error,
@@ -928,11 +923,10 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 					}
 					id := unescapeRefString(rest)
 
-					definitions := doc.Components.Callbacks
-					if definitions == nil {
+					if doc.Components.Callbacks == nil {
 						return failedToResolveRefFragmentPart(ref, "callbacks")
 					}
-					resolved := definitions[id]
+					resolved := doc.Components.Callbacks[id]
 					if resolved == nil {
 						return failedToResolveRefFragmentPart(ref, id)
 					}
@@ -1022,15 +1016,13 @@ func (loader *Loader) resolvePathItemRef(doc *T, entrypoint string, pathItem *Pa
 			}
 			id := unescapeRefString(rest)
 
-			definitions := doc.Paths
-			if definitions == nil {
+			if doc.Paths == nil {
 				return failedToResolveRefFragmentPart(ref, "paths")
 			}
-			resolved := definitions[id]
+			resolved := doc.Paths[id]
 			if resolved == nil {
 				return failedToResolveRefFragmentPart(ref, id)
 			}
-
 			*pathItem = *resolved
 		}
 	}
