@@ -105,7 +105,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
-        [[ 30 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
+        [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
 
     - if: runner.os == 'Linux'
       name: Style around ExtensionProps embedding

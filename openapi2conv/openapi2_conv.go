@@ -1204,15 +1204,13 @@ func stripNonCustomExtensions(extensions map[string]interface{}) {
 }
 
 func addPathExtensions(doc2 *openapi2.T, path string, extensionProps openapi3.ExtensionProps) {
-	paths := doc2.Paths
-	if paths == nil {
-		paths = make(map[string]*openapi2.PathItem)
-		doc2.Paths = paths
+	if doc2.Paths == nil {
+		doc2.Paths = make(map[string]*openapi2.PathItem)
 	}
-	pathItem := paths[path]
+	pathItem := doc2.Paths[path]
 	if pathItem == nil {
 		pathItem = &openapi2.PathItem{}
-		paths[path] = pathItem
+		doc2.Paths[path] = pathItem
 	}
 	pathItem.ExtensionProps = extensionProps
 }
