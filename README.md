@@ -55,6 +55,11 @@ Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling l
     * Generates `*openapi3.Schema` values for Go types.
 
 # Some recipes
+## Validating an OpenAPI document
+```shell
+go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
+```
+
 ## Loading OpenAPI document
 Use `openapi3.Loader`, which resolves all references:
 ```go
