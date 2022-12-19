@@ -56,7 +56,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 
 	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
-	for _, path := range orderedPaths(doc.Paths) {
+	for _, path := range doc.Paths.InMatchingOrder() {
 		pathItem := doc.Paths[path]
 		if len(pathItem.Servers) > 0 {
 			if servers, err = makeServers(pathItem.Servers); err != nil {
@@ -201,31 +201,6 @@ func newSrv(serverURL string, server *openapi3.Server, varsUpdater varsf) (srv, 
 		varsUpdater: varsUpdater,
 	}
 	return svr, nil
-}
-
-func orderedPaths(paths map[string]*openapi3.PathItem) []string {
-	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#pathsObject
-	// When matching URLs, concrete (non-templated) paths would be matched
-	// before their templated counterparts.
-	// NOTE: sorting by number of variables ASC then by descending lexicographical
-	// order seems to be a good heuristic.
-	vars := make(map[int][]string)
-	max := 0
-	for path := range paths {
-		count := strings.Count(path, "}")
-		vars[count] = append(vars[count], path)
-		if count > max {
-			max = count
-		}
-	}
-	ordered := make([]string, 0, len(paths))
-	for c := 0; c <= max; c++ {
-		if ps, ok := vars[c]; ok {
-			sort.Sort(sort.Reverse(sort.StringSlice(ps)))
-			ordered = append(ordered, ps...)
-		}
-	}
-	return ordered
 }
 
 // Magic strings that temporarily replace "{}" so net/url.Parse() works
