@@ -55,6 +55,11 @@ Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling l
     * Generates `*openapi3.Schema` values for Go types.
 
 # Some recipes
+## Validating an OpenAPI document
+```shell
+go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
+```
+
 ## Loading OpenAPI document
 Use `openapi3.Loader`, which resolves all references:
 ```go
@@ -195,6 +200,11 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 ```
 
 ## Sub-v0 breaking API changes
+
+### v0.112.0
+* `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.
+* `(openapi3.ValidationOptions).SchemaFormatValidationEnabled` has been unexported.
+* `(openapi3.ValidationOptions).SchemaPatternValidationDisabled` has been unexported.
 
 ### v0.111.0
 * Changed `func (*_) Validate(ctx context.Context) error` to `func (*_) Validate(ctx context.Context, opts ...ValidationOption) error`.

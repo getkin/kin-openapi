@@ -90,7 +90,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 			return errors.New("example and examples are mutually exclusive")
 		}
 
-		if vo := getValidationOptions(ctx); vo.ExamplesValidationDisabled {
+		if vo := getValidationOptions(ctx); vo.examplesValidationDisabled {
 			return nil
 		}
 

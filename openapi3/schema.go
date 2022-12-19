@@ -678,7 +678,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "float", "double":
 			default:
-				if validationOpts.SchemaFormatValidationEnabled {
+				if validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -688,7 +688,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			switch format {
 			case "int32", "int64":
 			default:
-				if validationOpts.SchemaFormatValidationEnabled {
+				if validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
@@ -710,12 +710,12 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 			case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 			default:
 				// Try to check for custom defined formats
-				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.SchemaFormatValidationEnabled {
+				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 					return unsupportedFormat(format)
 				}
 			}
 		}
-		if schema.Pattern != "" && !validationOpts.SchemaPatternValidationDisabled {
+		if schema.Pattern != "" && !validationOpts.schemaPatternValidationDisabled {
 			if err = schema.compilePattern(); err != nil {
 				return err
 			}
@@ -771,13 +771,13 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	if v := schema.Default; v != nil {
+	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
 		if err := schema.VisitJSON(v); err != nil {
 			return fmt.Errorf("invalid default: %w", err)
 		}
 	}
 
-	if x := schema.Example; x != nil && !validationOpts.ExamplesValidationDisabled {
+	if x := schema.Example; x != nil && !validationOpts.examplesValidationDisabled {
 		if err := validateExampleValue(ctx, x, schema); err != nil {
 			return fmt.Errorf("invalid example: %w", err)
 		}
