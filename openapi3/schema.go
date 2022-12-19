@@ -634,7 +634,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		if v == nil {
 			return foundUnresolvedRef(item.Ref)
 		}
-		if err = v.validate(ctx, stack); err == nil {
+		if err = v.validate(ctx, stack); err != nil {
 			return
 		}
 	}
