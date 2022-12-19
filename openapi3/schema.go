@@ -922,16 +922,35 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			if valuemap, okcheck := value.(map[string]interface{}); okcheck {
 				discriminatorVal, okcheck := valuemap[pn]
 				if !okcheck {
-					return errors.New("input does not contain the discriminator property")
+					return &SchemaError{
+						Schema:      schema,
+						SchemaField: "discriminator",
+						Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
+					}
 				}
 
 				discriminatorValString, okcheck := discriminatorVal.(string)
 				if !okcheck {
-					return errors.New("descriminator value is not a string")
+					valStr := "null"
+					if discriminatorVal != nil {
+						valStr = fmt.Sprintf("%v", discriminatorVal)
+					}
+
+					return &SchemaError{
+						Value:       discriminatorVal,
+						Schema:      schema,
+						SchemaField: "discriminator",
+						Reason:      fmt.Sprintf("value of discriminator property %q is not a string: %v", pn, valStr),
+					}
 				}
 
 				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
-					return errors.New("input does not contain a valid discriminator value")
+					return &SchemaError{
+						Value:       discriminatorVal,
+						Schema:      schema,
+						SchemaField: "discriminator",
+						Reason:      fmt.Sprintf("discriminator property %q has invalid value: %q", pn, discriminatorVal),
+					}
 				}
 			}
 		}
