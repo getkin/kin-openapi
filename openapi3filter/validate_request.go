@@ -137,7 +137,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	}
 
 	// Set default value if needed
-	if value == nil && schema != nil && schema.Default != nil {
+	if !options.SkipSettingDefaults && value == nil && schema != nil && schema.Default != nil {
 		value = schema.Default
 		req := input.Request
 		switch parameter.In {
