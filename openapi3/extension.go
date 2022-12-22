@@ -8,6 +8,9 @@ import (
 // It reads/writes all properties that begin with "x-".
 type Extensions map[string]interface{}
 
+// AsMap returns the underlying map structure
+func (props Extensions) AsMap() map[string]interface{} { return props }
+
 // Assert that the type implements the interface
 var _ jsoninfo.StrictStruct = &Extensions{}
 

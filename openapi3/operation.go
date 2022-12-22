@@ -101,7 +101,7 @@ func (operation Operation) JSONLookup(token string) (interface{}, error) {
 		return operation.ExternalDocs, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(operation.Extensions, token)
+	v, _, err := jsonpointer.GetForToken(operation.Extensions.AsMap(), token)
 	return v, err
 }
 

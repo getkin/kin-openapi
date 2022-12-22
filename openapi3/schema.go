@@ -285,7 +285,7 @@ func (schema Schema) JSONLookup(token string) (interface{}, error) {
 		return schema.Discriminator, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(schema.Extensions, token)
+	v, _, err := jsonpointer.GetForToken(schema.Extensions.AsMap(), token)
 	return v, err
 }
 

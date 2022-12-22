@@ -214,7 +214,7 @@ func (parameter Parameter) JSONLookup(token string) (interface{}, error) {
 		return parameter.Content, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(parameter.Extensions, token)
+	v, _, err := jsonpointer.GetForToken(parameter.Extensions.AsMap(), token)
 	return v, err
 }
 

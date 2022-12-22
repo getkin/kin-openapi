@@ -138,6 +138,6 @@ func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
 	case "encoding":
 		return mediaType.Encoding, nil
 	}
-	v, _, err := jsonpointer.GetForToken(mediaType.Extensions, token)
+	v, _, err := jsonpointer.GetForToken(mediaType.Extensions.AsMap(), token)
 	return v, err
 }
