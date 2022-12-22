@@ -4,18 +4,16 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// ExtensionProps provides support for OpenAPI extensions.
+// Extensions provides support for OpenAPI extensions.
 // It reads/writes all properties that begin with "x-".
-type ExtensionProps struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
-}
+type Extensions map[string]interface{}
 
 // Assert that the type implements the interface
-var _ jsoninfo.StrictStruct = &ExtensionProps{}
+var _ jsoninfo.StrictStruct = &Extensions{}
 
 // EncodeWith will be invoked by package "jsoninfo"
-func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
-	for k, v := range props.Extensions {
+func (props Extensions) EncodeWith(encoder *jsoninfo.ObjectEncoder, value interface{}) error {
+	for k, v := range props {
 		if err := encoder.EncodeExtension(k, v); err != nil {
 			return err
 		}
@@ -24,7 +22,7 @@ func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value i
 }
 
 // DecodeWith will be invoked by package "jsoninfo"
-func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
+func (props *Extensions) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
 	if err := decoder.DecodeStructFieldsAndExtensions(value); err != nil {
 		return err
 	}
@@ -33,6 +31,6 @@ func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value i
 	for k, v := range source {
 		result[k] = v
 	}
-	props.Extensions = result
+	*props = result
 	return nil
 }

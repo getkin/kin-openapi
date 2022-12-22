@@ -42,17 +42,6 @@ func (encoder *ObjectEncoder) EncodeExtension(key string, value interface{}) err
 	return nil
 }
 
-// EncodeExtensionMap adds all properties to the result.
-func (encoder *ObjectEncoder) EncodeExtensionMap(value map[string]json.RawMessage) error {
-	if value != nil {
-		result := encoder.result
-		for k, v := range value {
-			result[k] = v
-		}
-	}
-	return nil
-}
-
 func (encoder *ObjectEncoder) EncodeStructFieldsAndExtensions(value interface{}) error {
 	reflection := reflect.ValueOf(value)
 

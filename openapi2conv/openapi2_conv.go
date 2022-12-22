@@ -17,12 +17,12 @@ func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 	stripNonCustomExtensions(doc2.Extensions)
 
 	doc3 := &openapi3.T{
-		OpenAPI:        "3.0.3",
-		Info:           &doc2.Info,
-		Components:     openapi3.Components{},
-		Tags:           doc2.Tags,
-		ExtensionProps: doc2.ExtensionProps,
-		ExternalDocs:   doc2.ExternalDocs,
+		OpenAPI:      "3.0.3",
+		Info:         &doc2.Info,
+		Components:   openapi3.Components{},
+		Tags:         doc2.Tags,
+		Extensions:   doc2.Extensions,
+		ExternalDocs: doc2.ExternalDocs,
 	}
 
 	if host := doc2.Host; host != "" {
@@ -121,7 +121,7 @@ func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, consumes []string) (*openapi3.PathItem, error) {
 	stripNonCustomExtensions(pathItem.Extensions)
 	doc3 := &openapi3.PathItem{
-		ExtensionProps: pathItem.ExtensionProps,
+		Extensions: pathItem.Extensions,
 	}
 	for method, operation := range pathItem.Operations() {
 		doc3Operation, err := ToV3Operation(doc2, components, pathItem, operation, consumes)
@@ -152,12 +152,12 @@ func ToV3Operation(doc2 *openapi2.T, components *openapi3.Components, pathItem *
 	}
 	stripNonCustomExtensions(operation.Extensions)
 	doc3 := &openapi3.Operation{
-		OperationID:    operation.OperationID,
-		Summary:        operation.Summary,
-		Description:    operation.Description,
-		Deprecated:     operation.Deprecated,
-		Tags:           operation.Tags,
-		ExtensionProps: operation.ExtensionProps,
+		OperationID: operation.OperationID,
+		Summary:     operation.Summary,
+		Description: operation.Description,
+		Deprecated:  operation.Deprecated,
+		Tags:        operation.Tags,
+		Extensions:  operation.Extensions,
 	}
 	if v := operation.Security; v != nil {
 		doc3Security := ToV3SecurityRequirements(*v)
@@ -235,9 +235,9 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 	switch parameter.In {
 	case "body":
 		result := &openapi3.RequestBody{
-			Description:    parameter.Description,
-			Required:       parameter.Required,
-			ExtensionProps: parameter.ExtensionProps,
+			Description: parameter.Description,
+			Required:    parameter.Required,
+			Extensions:  parameter.Extensions,
 		}
 		if parameter.Name != "" {
 			if result.Extensions == nil {
@@ -257,10 +257,10 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 		if typ == "file" {
 			format, typ = "binary", "string"
 		}
-		if parameter.ExtensionProps.Extensions == nil {
-			parameter.ExtensionProps.Extensions = make(map[string]interface{})
+		if parameter.Extensions == nil {
+			parameter.Extensions = make(map[string]interface{})
 		}
-		parameter.ExtensionProps.Extensions["x-formData-name"] = parameter.Name
+		parameter.Extensions["x-formData-name"] = parameter.Name
 		var required []string
 		if parameter.Required {
 			required = []string{parameter.Name}
@@ -269,7 +269,7 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			Value: &openapi3.Schema{
 				Description:     parameter.Description,
 				Type:            typ,
-				ExtensionProps:  parameter.ExtensionProps,
+				Extensions:      parameter.Extensions,
 				Format:          format,
 				Enum:            parameter.Enum,
 				Min:             parameter.Minimum,
@@ -304,11 +304,11 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			schemaRefRef = schemaRef.Ref
 		}
 		result := &openapi3.Parameter{
-			In:             parameter.In,
-			Name:           parameter.Name,
-			Description:    parameter.Description,
-			Required:       required,
-			ExtensionProps: parameter.ExtensionProps,
+			In:          parameter.In,
+			Name:        parameter.Name,
+			Description: parameter.Description,
+			Required:    required,
+			Extensions:  parameter.Extensions,
 			Schema: ToV3SchemaRef(&openapi3.SchemaRef{Value: &openapi3.Schema{
 				Type:            parameter.Type,
 				Format:          parameter.Format,
@@ -419,8 +419,8 @@ func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.Res
 	}
 	stripNonCustomExtensions(response.Extensions)
 	result := &openapi3.Response{
-		Description:    &response.Description,
-		ExtensionProps: response.ExtensionProps,
+		Description: &response.Description,
+		Extensions:  response.Extensions,
 	}
 
 	// Default to "application/json" if "produces" is not specified.
@@ -541,8 +541,8 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 	}
 	stripNonCustomExtensions(securityScheme.Extensions)
 	result := &openapi3.SecurityScheme{
-		Description:    securityScheme.Description,
-		ExtensionProps: securityScheme.ExtensionProps,
+		Description: securityScheme.Description,
+		Extensions:  securityScheme.Extensions,
 	}
 	switch securityScheme.Type {
 	case "basic":
@@ -593,14 +593,14 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 	stripNonCustomExtensions(doc3.Extensions)
 	schemas, parameters := FromV3Schemas(doc3.Components.Schemas, &doc3.Components)
 	doc2 := &openapi2.T{
-		Swagger:        "2.0",
-		Info:           *doc3.Info,
-		Definitions:    schemas,
-		Parameters:     parameters,
-		Responses:      doc2Responses,
-		Tags:           doc3.Tags,
-		ExtensionProps: doc3.ExtensionProps,
-		ExternalDocs:   doc3.ExternalDocs,
+		Swagger:      "2.0",
+		Info:         *doc3.Info,
+		Definitions:  schemas,
+		Parameters:   parameters,
+		Responses:    doc2Responses,
+		Tags:         doc3.Tags,
+		Extensions:   doc3.Extensions,
+		ExternalDocs: doc3.ExternalDocs,
 	}
 
 	isHTTPS := false
@@ -634,7 +634,7 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		}
 		doc2.AddOperation(path, "GET", nil)
 		stripNonCustomExtensions(pathItem.Extensions)
-		addPathExtensions(doc2, path, pathItem.ExtensionProps)
+		addPathExtensions(doc2, path, pathItem.Extensions)
 		for method, operation := range pathItem.Operations() {
 			if operation == nil {
 				continue
@@ -812,7 +812,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 				AllowEmptyValue: schema.Value.AllowEmptyValue,
 				UniqueItems:     schema.Value.UniqueItems,
 				MultipleOf:      schema.Value.MultipleOf,
-				ExtensionProps:  schema.Value.ExtensionProps,
+				Extensions:      schema.Value.Extensions,
 				Required:        required,
 			}
 		}
@@ -856,7 +856,7 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 func FromV3PathItem(doc3 *openapi3.T, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
 	stripNonCustomExtensions(pathItem.Extensions)
 	result := &openapi2.PathItem{
-		ExtensionProps: pathItem.ExtensionProps,
+		Extensions: pathItem.Extensions,
 	}
 	for method, operation := range pathItem.Operations() {
 		r, err := FromV3Operation(doc3, operation)
@@ -910,23 +910,23 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			}
 		}
 		parameter := &openapi2.Parameter{
-			Name:           propName,
-			Description:    val.Description,
-			Type:           typ,
-			In:             "formData",
-			ExtensionProps: val.ExtensionProps,
-			Enum:           val.Enum,
-			ExclusiveMin:   val.ExclusiveMin,
-			ExclusiveMax:   val.ExclusiveMax,
-			MinLength:      val.MinLength,
-			MaxLength:      val.MaxLength,
-			Default:        val.Default,
-			Items:          val.Items,
-			MinItems:       val.MinItems,
-			MaxItems:       val.MaxItems,
-			Maximum:        val.Max,
-			Minimum:        val.Min,
-			Pattern:        val.Pattern,
+			Name:         propName,
+			Description:  val.Description,
+			Type:         typ,
+			In:           "formData",
+			Extensions:   val.Extensions,
+			Enum:         val.Enum,
+			ExclusiveMin: val.ExclusiveMin,
+			ExclusiveMax: val.ExclusiveMax,
+			MinLength:    val.MinLength,
+			MaxLength:    val.MaxLength,
+			Default:      val.Default,
+			Items:        val.Items,
+			MinItems:     val.MinItems,
+			MaxItems:     val.MaxItems,
+			Maximum:      val.Max,
+			Minimum:      val.Min,
+			Pattern:      val.Pattern,
 			// CollectionFormat: val.CollectionFormat,
 			// Format:          val.Format,
 			AllowEmptyValue: val.AllowEmptyValue,
@@ -945,12 +945,12 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 	}
 	stripNonCustomExtensions(operation.Extensions)
 	result := &openapi2.Operation{
-		OperationID:    operation.OperationID,
-		Summary:        operation.Summary,
-		Description:    operation.Description,
-		Deprecated:     operation.Deprecated,
-		Tags:           operation.Tags,
-		ExtensionProps: operation.ExtensionProps,
+		OperationID: operation.OperationID,
+		Summary:     operation.Summary,
+		Description: operation.Description,
+		Deprecated:  operation.Deprecated,
+		Tags:        operation.Tags,
+		Extensions:  operation.Extensions,
 	}
 	if v := operation.Security; v != nil {
 		resultSecurity := FromV3SecurityRequirements(*v)
@@ -1005,11 +1005,11 @@ func FromV3RequestBody(name string, requestBodyRef *openapi3.RequestBodyRef, med
 
 	stripNonCustomExtensions(requestBody.Extensions)
 	result := &openapi2.Parameter{
-		In:             "body",
-		Name:           name,
-		Description:    requestBody.Description,
-		Required:       requestBody.Required,
-		ExtensionProps: requestBody.ExtensionProps,
+		In:          "body",
+		Name:        name,
+		Description: requestBody.Description,
+		Required:    requestBody.Required,
+		Extensions:  requestBody.Extensions,
 	}
 
 	if mediaType != nil {
@@ -1028,11 +1028,11 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	}
 	stripNonCustomExtensions(parameter.Extensions)
 	result := &openapi2.Parameter{
-		Description:    parameter.Description,
-		In:             parameter.In,
-		Name:           parameter.Name,
-		Required:       parameter.Required,
-		ExtensionProps: parameter.ExtensionProps,
+		Description: parameter.Description,
+		In:          parameter.In,
+		Name:        parameter.Name,
+		Required:    parameter.Required,
+		Extensions:  parameter.Extensions,
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRef, _ = FromV3SchemaRef(schemaRef, components)
@@ -1090,8 +1090,8 @@ func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) 
 	}
 	stripNonCustomExtensions(response.Extensions)
 	result := &openapi2.Response{
-		Description:    description,
-		ExtensionProps: response.ExtensionProps,
+		Description: description,
+		Extensions:  response.Extensions,
 	}
 	if content := response.Content; content != nil {
 		if ct := content["application/json"]; ct != nil {
@@ -1129,9 +1129,9 @@ func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*o
 	}
 	stripNonCustomExtensions(securityScheme.Extensions)
 	result := &openapi2.SecurityScheme{
-		Ref:            FromV3Ref(ref.Ref),
-		Description:    securityScheme.Description,
-		ExtensionProps: securityScheme.ExtensionProps,
+		Ref:         FromV3Ref(ref.Ref),
+		Description: securityScheme.Description,
+		Extensions:  securityScheme.Extensions,
 	}
 	switch securityScheme.Type {
 	case "http":
@@ -1203,7 +1203,7 @@ func stripNonCustomExtensions(extensions map[string]interface{}) {
 	}
 }
 
-func addPathExtensions(doc2 *openapi2.T, path string, extensionProps openapi3.ExtensionProps) {
+func addPathExtensions(doc2 *openapi2.T, path string, extensions openapi3.Extensions) {
 	if doc2.Paths == nil {
 		doc2.Paths = make(map[string]*openapi2.PathItem)
 	}
@@ -1212,5 +1212,5 @@ func addPathExtensions(doc2 *openapi2.T, path string, extensionProps openapi3.Ex
 		pathItem = &openapi2.PathItem{}
 		doc2.Paths[path] = pathItem
 	}
-	pathItem.ExtensionProps = extensionProps
+	pathItem.Extensions = extensions
 }

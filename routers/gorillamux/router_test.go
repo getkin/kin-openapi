@@ -494,18 +494,18 @@ func newServerWithVariables(url string, variables map[string]string) *openapi3.S
 	}
 
 	return &openapi3.Server{
-		ExtensionProps: openapi3.ExtensionProps{},
-		URL:            url,
-		Description:    "",
-		Variables:      serverVariables,
+		Extensions:  openapi3.Extensions{},
+		URL:         url,
+		Description: "",
+		Variables:   serverVariables,
 	}
 }
 
 func newServerVariable(defaultValue string) *openapi3.ServerVariable {
 	return &openapi3.ServerVariable{
-		ExtensionProps: openapi3.ExtensionProps{},
-		Enum:           nil,
-		Default:        defaultValue,
-		Description:    "",
+		Extensions:  openapi3.Extensions{},
+		Enum:        nil,
+		Default:     defaultValue,
+		Description: "",
 	}
 }

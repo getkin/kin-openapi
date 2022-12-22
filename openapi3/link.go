@@ -30,7 +30,7 @@ var _ jsonpointer.JSONPointable = (*Links)(nil)
 // Link is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#link-object
 type Link struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions `json:"-" yaml:"-"`
 
 	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`

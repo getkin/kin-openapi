@@ -108,16 +108,16 @@ jobs:
         [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
 
     - if: runner.os == 'Linux'
-      name: Style around ExtensionProps embedding
+      name: Style around Extensions embedding
       run: |
-        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+ExtensionProps\n[^\n]' openapi3/*.go
+        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+Extensions\n[^\n]' openapi3/*.go
 
     - if: runner.os == 'Linux'
       name: Ensure all exported fields are mentioned in Validate() impls
       run: |
         for ty in $TYPES; do
           # Ensure definition
-          if ! ag 'type.[A-Z].+struct..\n.+ExtensionProps' openapi3/*.go | grep -F "type $ty struct"; then
+          if ! ag 'type.[A-Z].+struct..\n.+Extensions' openapi3/*.go | grep -F "type $ty struct"; then
             echo "OAI type $ty is not defined" && exit 1
           fi
 

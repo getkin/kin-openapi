@@ -14,7 +14,7 @@ import (
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
 type MediaType struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions `json:"-" yaml:"-"`
 
 	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Example  interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
@@ -138,6 +138,6 @@ func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
 	case "encoding":
 		return mediaType.Encoding, nil
 	}
-	v, _, err := jsonpointer.GetForToken(mediaType.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(mediaType.Extensions, token)
 	return v, err
 }

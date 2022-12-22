@@ -14,7 +14,7 @@ import (
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -101,7 +101,7 @@ func (operation Operation) JSONLookup(token string) (interface{}, error) {
 		return operation.ExternalDocs, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(operation.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(operation.Extensions, token)
 	return v, err
 }
 

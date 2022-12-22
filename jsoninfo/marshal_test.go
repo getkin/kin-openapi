@@ -10,7 +10,8 @@ import (
 )
 
 type Simple struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	Bool    bool      `json:"bool"`
 	Int     int       `json:"int"`
 	Int64   int64     `json:"int64"`
@@ -21,7 +22,8 @@ type Simple struct {
 }
 
 type SimpleOmitEmpty struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	Bool    bool      `json:"bool,omitempty"`
 	Int     int       `json:"int,omitempty"`
 	Int64   int64     `json:"int64,omitempty"`
@@ -32,7 +34,8 @@ type SimpleOmitEmpty struct {
 }
 
 type SimplePtrOmitEmpty struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	Bool    *bool      `json:"bool,omitempty"`
 	Int     *int       `json:"int,omitempty"`
 	Int64   *int64     `json:"int64,omitempty"`
@@ -43,23 +46,27 @@ type SimplePtrOmitEmpty struct {
 }
 
 type OriginalNameType struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	Field string `json:",omitempty"`
 }
 
 type RootType struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	EmbeddedType0
 	EmbeddedType1
 }
 
 type EmbeddedType0 struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	Field0 string `json:"embedded0,omitempty"`
 }
 
 type EmbeddedType1 struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
+
 	Field1 string `json:"embedded1,omitempty"`
 }
 

@@ -10,7 +10,7 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-func ExampleExtensionProps_DecodeWith() {
+func ExampleExtensions_DecodeWith() {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	spec, err := loader.LoadFromFile("testdata/testref.openapi.json")
@@ -32,13 +32,11 @@ func ExampleExtensionProps_DecodeWith() {
 	// Output: 42
 }
 
-func TestExtensionProps_EncodeWith(t *testing.T) {
+func TestExtensions_EncodeWith(t *testing.T) {
 	t.Run("successfully encoded", func(t *testing.T) {
 		encoder := jsoninfo.NewObjectEncoder()
-		var extensionProps = ExtensionProps{
-			Extensions: map[string]interface{}{
-				"field1": "value1",
-			},
+		var extensionProps = Extensions{
+			"field1": "value1",
 		}
 
 		var value = struct {
@@ -51,7 +49,7 @@ func TestExtensionProps_EncodeWith(t *testing.T) {
 	})
 }
 
-func TestExtensionProps_DecodeWith(t *testing.T) {
+func TestExtensions_DecodeWith(t *testing.T) {
 	data := []byte(`
 	{
 		"field1": "value1",
@@ -61,11 +59,9 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 	t.Run("successfully decode all the fields", func(t *testing.T) {
 		decoder, err := jsoninfo.NewObjectDecoder(data)
 		require.NoError(t, err)
-		var extensionProps = &ExtensionProps{
-			Extensions: map[string]interface{}{
-				"field1": "value1",
-				"field2": "value1",
-			},
+		var extensionProps = Extensions{
+			"field1": "value1",
+			"field2": "value1",
 		}
 
 		var value = struct {
@@ -75,7 +71,7 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 
 		err = extensionProps.DecodeWith(decoder, &value)
 		require.NoError(t, err)
-		require.Equal(t, 0, len(extensionProps.Extensions))
+		require.Equal(t, 0, len(extensionProps))
 		require.Equal(t, "value1", value.Field1)
 		require.Equal(t, "value2", value.Field2)
 	})
@@ -83,11 +79,9 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 	t.Run("successfully decode some of the fields", func(t *testing.T) {
 		decoder, err := jsoninfo.NewObjectDecoder(data)
 		require.NoError(t, err)
-		var extensionProps = &ExtensionProps{
-			Extensions: map[string]interface{}{
-				"field1": "value1",
-				"field2": "value2",
-			},
+		var extensionProps = Extensions{
+			"field1": "value1",
+			"field2": "value2",
 		}
 
 		var value = &struct {
@@ -96,7 +90,7 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 
 		err = extensionProps.DecodeWith(decoder, value)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(extensionProps.Extensions))
+		require.Equal(t, 1, len(extensionProps))
 		require.Equal(t, "value1", value.Field1)
 	})
 
@@ -104,11 +98,9 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 		decoder, err := jsoninfo.NewObjectDecoder(data)
 		require.NoError(t, err)
 
-		var extensionProps = &ExtensionProps{
-			Extensions: map[string]interface{}{
-				"field1": "value1",
-				"field2": "value2",
-			},
+		var extensionProps = Extensions{
+			"field1": "value1",
+			"field2": "value2",
 		}
 
 		var value = struct {
@@ -118,7 +110,7 @@ func TestExtensionProps_DecodeWith(t *testing.T) {
 
 		err = extensionProps.DecodeWith(decoder, &value)
 		require.NoError(t, err)
-		require.Equal(t, 2, len(extensionProps.Extensions))
+		require.Equal(t, 2, len(extensionProps))
 		require.Empty(t, value.Field3)
 		require.Empty(t, value.Field4)
 	})

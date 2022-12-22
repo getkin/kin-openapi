@@ -205,6 +205,8 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 * `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.
 * `(openapi3.ValidationOptions).SchemaFormatValidationEnabled` has been unexported.
 * `(openapi3.ValidationOptions).SchemaPatternValidationDisabled` has been unexported.
+* `func (*jsoninfo.ObjectEncoder) jsoninfo.EncodeExtensionMap(map[string]json.RawMessage) error` has been deleted. Use `EncodeExtension` instead.
+* `openapi3.ExtensionProps` has been renamed `openapi3.Extensions` and its contents are directly accessible. No more `x.ExtensionProps.Extensions`, just `x.Extensions`.
 
 ### v0.111.0
 * Changed `func (*_) Validate(ctx context.Context) error` to `func (*_) Validate(ctx context.Context, opts ...ValidationOption) error`.

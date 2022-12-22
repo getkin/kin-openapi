@@ -407,8 +407,8 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 			return drillIntoField(val.FieldByName("Value").Interface(), fieldName)
 		}
 		if hasFields {
-			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "ExtensionProps" {
-				extensions := val.Field(0).Interface().(ExtensionProps).Extensions
+			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "Extensions" {
+				extensions := val.Field(0).Interface().(Extensions)
 				if enc, ok := extensions[fieldName]; ok {
 					var dec interface{}
 					if err := json.Unmarshal(enc.(json.RawMessage), &dec); err != nil {

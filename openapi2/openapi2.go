@@ -11,7 +11,7 @@ import (
 
 // T is the root of an OpenAPI v2 document
 type T struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
 	Swagger             string                         `json:"swagger" yaml:"swagger"`
 	Info                openapi3.Info                  `json:"info" yaml:"info"`
 	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
@@ -52,7 +52,7 @@ func (doc *T) AddOperation(path string, method string, operation *Operation) {
 }
 
 type PathItem struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
 	Ref        string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Delete     *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
 	Get        *Operation `json:"get,omitempty" yaml:"get,omitempty"`
@@ -143,7 +143,7 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 }
 
 type Operation struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
 	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Deprecated   bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
@@ -185,7 +185,7 @@ func (ps Parameters) Less(i, j int) bool {
 }
 
 type Parameter struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
 	Ref              string              `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	In               string              `json:"in,omitempty" yaml:"in,omitempty"`
 	Name             string              `json:"name,omitempty" yaml:"name,omitempty"`
@@ -223,7 +223,7 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 }
 
 type Response struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
 	Ref         string                 `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Schema      *openapi3.SchemaRef    `json:"schema,omitempty" yaml:"schema,omitempty"`
@@ -258,7 +258,7 @@ func (header *Header) UnmarshalJSON(data []byte) error {
 type SecurityRequirements []map[string][]string
 
 type SecurityScheme struct {
-	openapi3.ExtensionProps
+	openapi3.Extensions
 	Ref              string            `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Description      string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Type             string            `json:"type,omitempty" yaml:"type,omitempty"`

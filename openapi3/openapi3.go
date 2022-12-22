@@ -11,7 +11,7 @@ import (
 // T is the root of an OpenAPI v3 document
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#openapi-object
 type T struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions `json:"-" yaml:"-"`
 
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`

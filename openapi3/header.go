@@ -130,6 +130,6 @@ func (header Header) JSONLookup(token string) (interface{}, error) {
 		return header.Content, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(header.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(header.Extensions, token)
 	return v, err
 }
