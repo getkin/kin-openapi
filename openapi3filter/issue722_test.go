@@ -71,7 +71,6 @@ components:
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-
 	{ // Add file data
 		fw, err := writer.CreateFormFile("file", "hello.txt")
 		if err != nil {
