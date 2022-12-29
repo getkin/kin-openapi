@@ -22,7 +22,6 @@ type schemaExample struct {
 }
 
 func TestSchemas(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
 	for _, example := range schemaExamples {
 		t.Run(example.Title, testSchema(t, example))
 	}
