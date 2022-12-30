@@ -201,6 +201,9 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 
 ## Sub-v0 breaking API changes
 
+### v0.113.0
+* The string format `email` has been removed by default. To use it please call `openapi3.DefineStringFormat("email", openapi3.FormatOfStringForEmail)`.
+
 ### v0.112.0
 * `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.
 * `(openapi3.ValidationOptions).SchemaFormatValidationEnabled` has been unexported.

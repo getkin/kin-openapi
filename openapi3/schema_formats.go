@@ -10,6 +10,10 @@ import (
 const (
 	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
 	FormatOfStringForUUIDOfRFC4122 = `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`
+
+	// FormatOfStringForEmail pattern catches only some suspiciously wrong-looking email addresses.
+	// Use DefineStringFormat(...) if you need something stricter.
+	FormatOfStringForEmail = `^[^@]+@[^@<>",\s]+$`
 )
 
 // FormatCallback performs custom checks on exotic formats
@@ -79,10 +83,6 @@ func validateIPv6(ip string) error {
 }
 
 func init() {
-	// This pattern catches only some suspiciously wrong-looking email addresses.
-	// Use DefineStringFormat(...) if you need something stricter.
-	DefineStringFormat("email", `^[^@]+@[^@<>",\s]+$`)
-
 	// Base64
 	// The pattern supports base64 and b./ase64url. Padding ('=') is supported.
 	DefineStringFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
