@@ -120,7 +120,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Missing validation of unknown fields in extensions
       run: |
-        [[ $(( 1 + $(git grep -InF 'return validateExtensions' -- openapi3 | wc -l) )) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]
+        [[ $(git grep -InF 'return validateExtensions' -- openapi3 | wc -l) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]
 
     - if: runner.os == 'Linux'
       name: Style around Extensions embedding

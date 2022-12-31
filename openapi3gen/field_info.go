@@ -9,7 +9,6 @@ import (
 
 // theFieldInfo contains information about JSON serialization of a field.
 type theFieldInfo struct {
-	MultipleFields     bool // Whether multiple Go fields share this JSON name
 	HasJSONTag         bool
 	TypeIsMarshaller   bool
 	TypeIsUnmarshaller bool
@@ -66,13 +65,6 @@ iteration:
 
 		// Read "json" tag
 		jsonTag := f.Tag.Get("json")
-
-		// Read our custom "multijson" tag that
-		// allows multiple fields with the same name.
-		if v := f.Tag.Get("multijson"); v != "" {
-			field.MultipleFields = true
-			jsonTag = v
-		}
 
 		// Handle "-"
 		if jsonTag == "-" {
