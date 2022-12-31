@@ -42,7 +42,7 @@ func NewExample(value interface{}) *Example {
 }
 
 // MarshalJSON returns the JSON encoding of Example.
-func (example *Example) MarshalJSON() ([]byte, error) {
+func (example Example) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(example.Extensions))
 	for k, v := range example.Extensions {
 		m[k] = v

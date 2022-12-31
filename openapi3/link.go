@@ -40,7 +40,7 @@ type Link struct {
 }
 
 // MarshalJSON returns the JSON encoding of Link.
-func (link *Link) MarshalJSON() ([]byte, error) {
+func (link Link) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 6+len(link.Extensions))
 	for k, v := range link.Extensions {
 		m[k] = v

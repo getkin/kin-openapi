@@ -15,7 +15,7 @@ type Discriminator struct {
 }
 
 // MarshalJSON returns the JSON encoding of Discriminator.
-func (discriminator *Discriminator) MarshalJSON() ([]byte, error) {
+func (discriminator Discriminator) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 2+len(discriminator.Extensions))
 	for k, v := range discriminator.Extensions {
 		m[k] = v

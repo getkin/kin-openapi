@@ -31,7 +31,7 @@ type T struct {
 }
 
 // MarshalJSON returns the JSON encoding of T.
-func (doc *T) MarshalJSON() ([]byte, error) {
+func (doc T) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 15+len(doc.Extensions))
 	for k, v := range doc.Extensions {
 		m[k] = v
@@ -135,7 +135,7 @@ type PathItem struct {
 }
 
 // MarshalJSON returns the JSON encoding of PathItem.
-func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
+func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 	if ref := pathItem.Ref; ref != "" {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
@@ -278,7 +278,7 @@ type Operation struct {
 }
 
 // MarshalJSON returns the JSON encoding of Operation.
-func (operation *Operation) MarshalJSON() ([]byte, error) {
+func (operation Operation) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 12+len(operation.Extensions))
 	for k, v := range operation.Extensions {
 		m[k] = v
@@ -391,7 +391,7 @@ type Parameter struct {
 }
 
 // MarshalJSON returns the JSON encoding of Parameter.
-func (parameter *Parameter) MarshalJSON() ([]byte, error) {
+func (parameter Parameter) MarshalJSON() ([]byte, error) {
 	if ref := parameter.Ref; ref != "" {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
@@ -524,7 +524,7 @@ type Response struct {
 }
 
 // MarshalJSON returns the JSON encoding of Response.
-func (response *Response) MarshalJSON() ([]byte, error) {
+func (response Response) MarshalJSON() ([]byte, error) {
 	if ref := response.Ref; ref != "" {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
@@ -570,7 +570,7 @@ type Header struct {
 }
 
 // MarshalJSON returns the JSON encoding of Header.
-func (header *Header) MarshalJSON() ([]byte, error) {
+func (header Header) MarshalJSON() ([]byte, error) {
 	return header.Parameter.MarshalJSON()
 }
 
@@ -598,7 +598,7 @@ type SecurityScheme struct {
 }
 
 // MarshalJSON returns the JSON encoding of SecurityScheme.
-func (securityScheme *SecurityScheme) MarshalJSON() ([]byte, error) {
+func (securityScheme SecurityScheme) MarshalJSON() ([]byte, error) {
 	if ref := securityScheme.Ref; ref != "" {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}

@@ -102,7 +102,7 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 }
 
 // MarshalJSON returns the JSON encoding of Response.
-func (response *Response) MarshalJSON() ([]byte, error) {
+func (response Response) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(response.Extensions))
 	for k, v := range response.Extensions {
 		m[k] = v

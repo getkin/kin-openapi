@@ -18,7 +18,7 @@ type XML struct {
 }
 
 // MarshalJSON returns the JSON encoding of XML.
-func (xml *XML) MarshalJSON() ([]byte, error) {
+func (xml XML) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 5+len(xml.Extensions))
 	for k, v := range xml.Extensions {
 		m[k] = v

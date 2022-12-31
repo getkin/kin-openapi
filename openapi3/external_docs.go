@@ -18,7 +18,7 @@ type ExternalDocs struct {
 }
 
 // MarshalJSON returns the JSON encoding of ExternalDocs.
-func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
+func (e ExternalDocs) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 2+len(e.Extensions))
 	for k, v := range e.Extensions {
 		m[k] = v

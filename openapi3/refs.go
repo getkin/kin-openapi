@@ -21,7 +21,7 @@ type CallbackRef struct {
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
 // MarshalYAML returns the YAML encoding of CallbackRef.
-func (x *CallbackRef) MarshalYAML() (interface{}, error) {
+func (x CallbackRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -29,7 +29,7 @@ func (x *CallbackRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of CallbackRef.
-func (x *CallbackRef) MarshalJSON() ([]byte, error) {
+func (x CallbackRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -85,7 +85,7 @@ type ExampleRef struct {
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
-func (x *ExampleRef) MarshalYAML() (interface{}, error) {
+func (x ExampleRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -93,7 +93,7 @@ func (x *ExampleRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of ExampleRef.
-func (x *ExampleRef) MarshalJSON() ([]byte, error) {
+func (x ExampleRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -149,7 +149,7 @@ type HeaderRef struct {
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
 // MarshalYAML returns the YAML encoding of HeaderRef.
-func (x *HeaderRef) MarshalYAML() (interface{}, error) {
+func (x HeaderRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -157,7 +157,7 @@ func (x *HeaderRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of HeaderRef.
-func (x *HeaderRef) MarshalJSON() ([]byte, error) {
+func (x HeaderRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -213,7 +213,7 @@ type LinkRef struct {
 var _ jsonpointer.JSONPointable = (*LinkRef)(nil)
 
 // MarshalYAML returns the YAML encoding of LinkRef.
-func (x *LinkRef) MarshalYAML() (interface{}, error) {
+func (x LinkRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -221,7 +221,7 @@ func (x *LinkRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of LinkRef.
-func (x *LinkRef) MarshalJSON() ([]byte, error) {
+func (x LinkRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -277,7 +277,7 @@ type ParameterRef struct {
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
 
 // MarshalYAML returns the YAML encoding of ParameterRef.
-func (x *ParameterRef) MarshalYAML() (interface{}, error) {
+func (x ParameterRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -285,7 +285,7 @@ func (x *ParameterRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of ParameterRef.
-func (x *ParameterRef) MarshalJSON() ([]byte, error) {
+func (x ParameterRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -341,7 +341,7 @@ type RequestBodyRef struct {
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
-func (x *RequestBodyRef) MarshalYAML() (interface{}, error) {
+func (x RequestBodyRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -349,7 +349,7 @@ func (x *RequestBodyRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of RequestBodyRef.
-func (x *RequestBodyRef) MarshalJSON() ([]byte, error) {
+func (x RequestBodyRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -405,7 +405,7 @@ type ResponseRef struct {
 var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
 
 // MarshalYAML returns the YAML encoding of ResponseRef.
-func (x *ResponseRef) MarshalYAML() (interface{}, error) {
+func (x ResponseRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -413,7 +413,7 @@ func (x *ResponseRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of ResponseRef.
-func (x *ResponseRef) MarshalJSON() ([]byte, error) {
+func (x ResponseRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -469,7 +469,7 @@ type SchemaRef struct {
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
 // MarshalYAML returns the YAML encoding of SchemaRef.
-func (x *SchemaRef) MarshalYAML() (interface{}, error) {
+func (x SchemaRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -477,7 +477,7 @@ func (x *SchemaRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of SchemaRef.
-func (x *SchemaRef) MarshalJSON() ([]byte, error) {
+func (x SchemaRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
@@ -533,7 +533,7 @@ type SecuritySchemeRef struct {
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
-func (x *SecuritySchemeRef) MarshalYAML() (interface{}, error) {
+func (x SecuritySchemeRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -541,7 +541,7 @@ func (x *SecuritySchemeRef) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of SecuritySchemeRef.
-func (x *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
+func (x SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}

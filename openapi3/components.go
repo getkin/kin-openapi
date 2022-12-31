@@ -29,7 +29,7 @@ func NewComponents() Components {
 }
 
 // MarshalJSON returns the JSON encoding of Components.
-func (components *Components) MarshalJSON() ([]byte, error) {
+func (components Components) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 9+len(components.Extensions))
 	for k, v := range components.Extensions {
 		m[k] = v

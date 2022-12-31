@@ -57,7 +57,7 @@ func NewOperation() *Operation {
 }
 
 // MarshalJSON returns the JSON encoding of Operation.
-func (operation *Operation) MarshalJSON() ([]byte, error) {
+func (operation Operation) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 12+len(operation.Extensions))
 	for k, v := range operation.Extensions {
 		m[k] = v

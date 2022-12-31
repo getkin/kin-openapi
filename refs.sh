@@ -40,7 +40,7 @@ type ${type}Ref struct {
 var _ jsonpointer.JSONPointable = (*${type}Ref)(nil)
 
 // MarshalYAML returns the YAML encoding of ${type}Ref.
-func (x *${type}Ref) MarshalYAML() (interface{}, error) {
+func (x ${type}Ref) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -48,7 +48,7 @@ func (x *${type}Ref) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of ${type}Ref.
-func (x *${type}Ref) MarshalJSON() ([]byte, error) {
+func (x ${type}Ref) MarshalJSON() ([]byte, error) {
 	if ref := x.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}

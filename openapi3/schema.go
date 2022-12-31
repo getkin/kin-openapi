@@ -179,7 +179,7 @@ type AdditionalProperties struct {
 }
 
 // MarshalJSON returns the JSON encoding of AdditionalProperties.
-func (addProps *AdditionalProperties) MarshalJSON() ([]byte, error) {
+func (addProps AdditionalProperties) MarshalJSON() ([]byte, error) {
 	if x := addProps.Has; x != nil {
 		if *x {
 			return []byte("true"), nil
@@ -225,7 +225,7 @@ func NewSchema() *Schema {
 }
 
 // MarshalJSON returns the JSON encoding of Schema.
-func (schema *Schema) MarshalJSON() ([]byte, error) {
+func (schema Schema) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 36+len(schema.Extensions))
 	for k, v := range schema.Extensions {
 		m[k] = v

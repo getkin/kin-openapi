@@ -64,7 +64,7 @@ func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType 
 }
 
 // MarshalJSON returns the JSON encoding of MediaType.
-func (mediaType *MediaType) MarshalJSON() ([]byte, error) {
+func (mediaType MediaType) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(mediaType.Extensions))
 	for k, v := range mediaType.Extensions {
 		m[k] = v

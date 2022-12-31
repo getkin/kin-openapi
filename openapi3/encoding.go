@@ -40,7 +40,7 @@ func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding {
 }
 
 // MarshalJSON returns the JSON encoding of Encoding.
-func (encoding *Encoding) MarshalJSON() ([]byte, error) {
+func (encoding Encoding) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 5+len(encoding.Extensions))
 	for k, v := range encoding.Extensions {
 		m[k] = v

@@ -94,7 +94,7 @@ func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType {
 }
 
 // MarshalJSON returns the JSON encoding of RequestBody.
-func (requestBody *RequestBody) MarshalJSON() ([]byte, error) {
+func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 3+len(requestBody.Extensions))
 	for k, v := range requestBody.Extensions {
 		m[k] = v

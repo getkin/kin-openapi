@@ -83,7 +83,7 @@ func (server *Server) BasePath() (string, error) {
 }
 
 // MarshalJSON returns the JSON encoding of Server.
-func (server *Server) MarshalJSON() ([]byte, error) {
+func (server Server) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 3+len(server.Extensions))
 	for k, v := range server.Extensions {
 		m[k] = v
@@ -230,7 +230,7 @@ type ServerVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of ServerVariable.
-func (serverVariable *ServerVariable) MarshalJSON() ([]byte, error) {
+func (serverVariable ServerVariable) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(serverVariable.Extensions))
 	for k, v := range serverVariable.Extensions {
 		m[k] = v

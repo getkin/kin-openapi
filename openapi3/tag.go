@@ -41,7 +41,7 @@ type Tag struct {
 }
 
 // MarshalJSON returns the JSON encoding of Tag.
-func (t *Tag) MarshalJSON() ([]byte, error) {
+func (t Tag) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 3+len(t.Extensions))
 	for k, v := range t.Extensions {
 		m[k] = v

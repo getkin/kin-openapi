@@ -20,7 +20,7 @@ type Info struct {
 }
 
 // MarshalJSON returns the JSON encoding of Info.
-func (info *Info) MarshalJSON() ([]byte, error) {
+func (info Info) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 6+len(info.Extensions))
 	for k, v := range info.Extensions {
 		m[k] = v
@@ -98,7 +98,7 @@ type Contact struct {
 }
 
 // MarshalJSON returns the JSON encoding of Contact.
-func (contact *Contact) MarshalJSON() ([]byte, error) {
+func (contact Contact) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 3+len(contact.Extensions))
 	for k, v := range contact.Extensions {
 		m[k] = v
@@ -147,7 +147,7 @@ type License struct {
 }
 
 // MarshalJSON returns the JSON encoding of License.
-func (license *License) MarshalJSON() ([]byte, error) {
+func (license License) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 2+len(license.Extensions))
 	for k, v := range license.Extensions {
 		m[k] = v

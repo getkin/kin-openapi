@@ -39,7 +39,7 @@ func (header Header) JSONLookup(token string) (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of Header.
-func (header *Header) MarshalJSON() ([]byte, error) {
+func (header Header) MarshalJSON() ([]byte, error) {
 	return header.Parameter.MarshalJSON()
 }
 

@@ -70,7 +70,7 @@ func NewJWTSecurityScheme() *SecurityScheme {
 }
 
 // MarshalJSON returns the JSON encoding of SecurityScheme.
-func (ss *SecurityScheme) MarshalJSON() ([]byte, error) {
+func (ss SecurityScheme) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 8+len(ss.Extensions))
 	for k, v := range ss.Extensions {
 		m[k] = v
@@ -240,7 +240,7 @@ const (
 )
 
 // MarshalJSON returns the JSON encoding of OAuthFlows.
-func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
+func (flows OAuthFlows) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(flows.Extensions))
 	for k, v := range flows.Extensions {
 		m[k] = v
@@ -319,7 +319,7 @@ type OAuthFlow struct {
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.
-func (flow *OAuthFlow) MarshalJSON() ([]byte, error) {
+func (flow OAuthFlow) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(flow.Extensions))
 	for k, v := range flow.Extensions {
 		m[k] = v

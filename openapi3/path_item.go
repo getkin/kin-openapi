@@ -30,7 +30,7 @@ type PathItem struct {
 }
 
 // MarshalJSON returns the JSON encoding of PathItem.
-func (pathItem *PathItem) MarshalJSON() ([]byte, error) {
+func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 	if ref := pathItem.Ref; ref != "" {
 		return json.Marshal(Ref{Ref: ref})
 	}
