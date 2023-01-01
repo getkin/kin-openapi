@@ -377,9 +377,9 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "externalDocs")
 
-	// Array-related, here for struct compactness
+	// Array-related
 	delete(x.Extensions, "uniqueItems")
-	// Number-related, here for struct compactness
+	// Number-related
 	delete(x.Extensions, "exclusiveMinimum")
 	delete(x.Extensions, "exclusiveMaximum")
 	// Properties
@@ -792,6 +792,7 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 	return schema
 }
 
+// IsEmpty tells whether schema is equivalent to the empty schema `{}`.
 func (schema *Schema) IsEmpty() bool {
 	if schema.Type != "" || schema.Format != "" || len(schema.Enum) != 0 ||
 		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
@@ -806,10 +807,10 @@ func (schema *Schema) IsEmpty() bool {
 	if n := schema.Not; n != nil && !n.Value.IsEmpty() {
 		return false
 	}
-	if ap := schema.AdditionalProperties.Schema; ap != nil {
+	if ap := schema.AdditionalProperties.Schema; ap != nil && !ap.Value.IsEmpty() {
 		return false
 	}
-	if apa := schema.AdditionalProperties.Has; apa != nil && !*apa {
+	if apa := schema.AdditionalProperties.Has; apa != nil && *apa {
 		return false
 	}
 	if items := schema.Items; items != nil && !items.Value.IsEmpty() {
