@@ -203,6 +203,9 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 
 ### v0.113.0
 * The string format `email` has been removed by default. To use it please call `openapi3.DefineStringFormat("email", openapi3.FormatOfStringForEmail)`.
+* Field `openapi3.T.Components` is now a pointer.
+* Fields `openapi3.Schema.AdditionalProperties` and `openapi3.Schema.AdditionalPropertiesAllowed` are replaced by `openapi3.Schema.AdditionalProperties.Schema` and `openapi3.Schema.AdditionalProperties.Has` respectively.
+* Type `openapi3.ExtensionProps` is now just `map[string]interface{}` and extensions are accessible through the `Extensions` field.
 
 ### v0.112.0
 * `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.
