@@ -43,7 +43,7 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Discriminator does not comply with the OpenAPI spec.
 func (discriminator *Discriminator) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
-	return validateExtensions(discriminator.Extensions)
+	return validateExtensions(ctx, discriminator.Extensions)
 }

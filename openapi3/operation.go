@@ -212,5 +212,5 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	return validateExtensions(operation.Extensions)
+	return validateExtensions(ctx, operation.Extensions)
 }

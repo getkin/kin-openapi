@@ -179,5 +179,5 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
-	return validateExtensions(response.Extensions)
+	return validateExtensions(ctx, response.Extensions)
 }

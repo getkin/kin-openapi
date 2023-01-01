@@ -414,5 +414,5 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	return validateExtensions(parameter.Extensions)
+	return validateExtensions(ctx, parameter.Extensions)
 }

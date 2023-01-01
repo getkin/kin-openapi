@@ -91,7 +91,20 @@ func (x *${type}Ref) Validate(ctx context.Context, opts ...ValidationOption) err
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)

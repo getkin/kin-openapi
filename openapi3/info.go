@@ -84,7 +84,7 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error 
 		return errors.New("value of title must be a non-empty string")
 	}
 
-	return validateExtensions(info.Extensions)
+	return validateExtensions(ctx, info.Extensions)
 }
 
 // Contact is specified by OpenAPI/Swagger standard version 3.
@@ -132,9 +132,9 @@ func (contact *Contact) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Contact does not comply with the OpenAPI spec.
 func (contact *Contact) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
-	return validateExtensions(contact.Extensions)
+	return validateExtensions(ctx, contact.Extensions)
 }
 
 // License is specified by OpenAPI/Swagger standard version 3.
@@ -175,11 +175,11 @@ func (license *License) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if License does not comply with the OpenAPI spec.
 func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
 	if license.Name == "" {
 		return errors.New("value of license name must be a non-empty string")
 	}
 
-	return validateExtensions(license.Extensions)
+	return validateExtensions(ctx, license.Extensions)
 }

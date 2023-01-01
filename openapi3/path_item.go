@@ -207,5 +207,5 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
-	return validateExtensions(pathItem.Extensions)
+	return validateExtensions(ctx, pathItem.Extensions)
 }

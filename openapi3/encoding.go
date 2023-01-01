@@ -132,5 +132,5 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 		return fmt.Errorf("serialization method with style=%q and explode=%v is not supported by media type", sm.Style, sm.Explode)
 	}
 
-	return validateExtensions(encoding.Extensions)
+	return validateExtensions(ctx, encoding.Extensions)
 }

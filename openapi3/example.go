@@ -80,7 +80,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if Example does not comply with the OpenAPI spec.
 func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
 	if example.Value != nil && example.ExternalValue != "" {
 		return errors.New("value and externalValue are mutually exclusive")
@@ -89,5 +89,5 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 		return errors.New("no value or externalValue field")
 	}
 
-	return validateExtensions(example.Extensions)
+	return validateExtensions(ctx, example.Extensions)
 }

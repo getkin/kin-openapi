@@ -216,7 +216,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 		}
 	}
 
-	return validateExtensions(server.Extensions)
+	return validateExtensions(ctx, server.Extensions)
 }
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.
@@ -264,7 +264,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if ServerVariable does not comply with the OpenAPI spec.
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
 	if serverVariable.Default == "" {
 		data, err := serverVariable.MarshalJSON()
@@ -274,5 +274,5 @@ func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...Vali
 		return fmt.Errorf("field default is required in %s", data)
 	}
 
-	return validateExtensions(serverVariable.Extensions)
+	return validateExtensions(ctx, serverVariable.Extensions)
 }

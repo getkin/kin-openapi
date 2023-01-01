@@ -1016,7 +1016,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
 		}
 	}
 
-	return validateExtensions(schema.Extensions)
+	return validateExtensions(ctx, schema.Extensions)
 }
 
 func (schema *Schema) IsMatching(value interface{}) bool {

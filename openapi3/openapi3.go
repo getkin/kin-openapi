@@ -152,5 +152,5 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	return validateExtensions(doc.Extensions)
+	return validateExtensions(ctx, doc.Extensions)
 }

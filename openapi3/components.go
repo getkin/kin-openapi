@@ -224,7 +224,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 		}
 	}
 
-	return validateExtensions(components.Extensions)
+	return validateExtensions(ctx, components.Extensions)
 }
 
 const identifierPattern = `^[a-zA-Z0-9._-]+$`

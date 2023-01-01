@@ -216,7 +216,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 		return fmt.Errorf("security scheme of type %q can't have 'flows'", ss.Type)
 	}
 
-	return validateExtensions(ss.Extensions)
+	return validateExtensions(ctx, ss.Extensions)
 }
 
 // OAuthFlows is specified by OpenAPI/Swagger standard version 3.
@@ -304,7 +304,7 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 		}
 	}
 
-	return validateExtensions(flows.Extensions)
+	return validateExtensions(ctx, flows.Extensions)
 }
 
 // OAuthFlow is specified by OpenAPI/Swagger standard version 3.
@@ -355,7 +355,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if OAuthFlows does not comply with the OpenAPI spec.
 func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
 	if v := flow.RefreshURL; v != "" {
 		if _, err := url.Parse(v); err != nil {
@@ -367,7 +367,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
 		return errors.New("field 'scopes' is empty or missing")
 	}
 
-	return validateExtensions(flow.Extensions)
+	return validateExtensions(ctx, flow.Extensions)
 }
 
 func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...ValidationOption) error {

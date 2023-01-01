@@ -142,5 +142,5 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 		return err
 	}
 
-	return validateExtensions(requestBody.Extensions)
+	return validateExtensions(ctx, requestBody.Extensions)
 }

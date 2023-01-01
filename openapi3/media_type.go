@@ -142,7 +142,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	return validateExtensions(mediaType.Extensions)
+	return validateExtensions(ctx, mediaType.Extensions)
 }
 
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable

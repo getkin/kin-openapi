@@ -83,5 +83,5 @@ func (t *Tag) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	return validateExtensions(t.Extensions)
+	return validateExtensions(ctx, t.Extensions)
 }

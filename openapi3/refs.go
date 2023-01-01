@@ -57,7 +57,20 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -121,7 +134,20 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -185,7 +211,20 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -249,7 +288,20 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error 
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -313,7 +365,20 @@ func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) e
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -377,7 +442,20 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -441,7 +519,20 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -505,7 +596,20 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
@@ -569,7 +673,20 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		sort.Strings(extra)
-		return fmt.Errorf("extra sibling fields: %+v", extra)
+
+		extras := make([]string, 0, len(extra))
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		if allowed == nil {
+			allowed = make(map[string]struct{}, 0)
+		}
+		for _, ex := range extra {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
+			}
+		}
+		if len(extras) != 0 {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
