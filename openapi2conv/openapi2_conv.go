@@ -983,7 +983,6 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 func FromV3RequestBody(name string, requestBodyRef *openapi3.RequestBodyRef, mediaType *openapi3.MediaType, components *openapi3.Components) (*openapi2.Parameter, error) {
 	requestBody := requestBodyRef.Value
 
-	stripNonCustomExtensions(requestBody.Extensions)
 	result := &openapi2.Parameter{
 		In:          "body",
 		Name:        name,
@@ -1172,16 +1171,8 @@ var attemptedBodyParameterNames = []string{
 	"requestBody",
 }
 
-func stripNonCustomExtensions(extensions map[string]interface{}) { // FIXME: delete
-	for extName := range extensions {
-		if !strings.HasPrefix(extName, "x-") {
-			delete(extensions, extName)
-		}
-	}
-}
-
 // stripNonExtensions removes invalid extensions: those not prefixed by "x-" and returns them
-func stripNonExtensions(extensions map[string]interface{}) map[string]interface{} { // FIXME: export in another package?
+func stripNonExtensions(extensions map[string]interface{}) map[string]interface{} {
 	for extName := range extensions {
 		if !strings.HasPrefix(extName, "x-") {
 			delete(extensions, extName)
