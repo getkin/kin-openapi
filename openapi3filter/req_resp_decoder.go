@@ -1120,33 +1120,47 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			enc = encFn(name)
 		}
 		subEncFn := func(string) *openapi3.Encoding { return enc }
-		// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
-		// Every such part has a type that is defined by an items schema in the property's schema.
+
 		var valueSchema *openapi3.SchemaRef
-		var exists bool
-		valueSchema, exists = schema.Value.Properties[name]
-		if !exists {
-			anyProperties := schema.Value.AdditionalPropertiesAllowed
-			if anyProperties != nil {
-				switch *anyProperties {
-				case true:
-					//additionalProperties: true
-					continue
-				default:
-					//additionalProperties: false
-					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+		if len(schema.Value.AllOf) > 0 {
+			var exists bool
+			for _, sr := range schema.Value.AllOf {
+				valueSchema, exists = sr.Value.Properties[name] 
+				if exists {
+					break
 				}
 			}
-			if schema.Value.AdditionalProperties == nil {
-				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
-			}
-			valueSchema, exists = schema.Value.AdditionalProperties.Value.Properties[name]
 			if !exists {
 				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 			}
-		}
-		if valueSchema.Value.Type == "array" {
-			valueSchema = valueSchema.Value.Items
+		} else {
+			// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
+			// Every such part has a type that is defined by an items schema in the property's schema.
+			var exists bool
+			valueSchema, exists = schema.Value.Properties[name]
+			if !exists {
+				anyProperties := schema.Value.AdditionalPropertiesAllowed
+				if anyProperties != nil {
+					switch *anyProperties {
+					case true:
+						//additionalProperties: true
+						continue
+					default:
+						//additionalProperties: false
+						return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+					}
+				}
+				if schema.Value.AdditionalProperties == nil {
+					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+				}
+				valueSchema, exists = schema.Value.AdditionalProperties.Value.Properties[name]
+				if !exists {
+					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+				}
+			}
+			if valueSchema.Value.Type == "array" {
+				valueSchema = valueSchema.Value.Items
+			}
 		}
 
 		var value interface{}
@@ -1160,14 +1174,28 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 	}
 
 	allTheProperties := make(map[string]*openapi3.SchemaRef)
-	for k, v := range schema.Value.Properties {
-		allTheProperties[k] = v
-	}
-	if schema.Value.AdditionalProperties != nil {
-		for k, v := range schema.Value.AdditionalProperties.Value.Properties {
+	if len(schema.Value.AllOf) > 0 {
+		for _, sr := range schema.Value.AllOf {
+			for k, v := range sr.Value.Properties {
+				allTheProperties[k] = v
+			}
+			if sr.Value.AdditionalProperties != nil {
+				for k, v := range sr.Value.AdditionalProperties.Value.Properties {
+					allTheProperties[k] = v
+				}
+			}
+		}
+	} else {
+		for k, v := range schema.Value.Properties {
 			allTheProperties[k] = v
 		}
+		if schema.Value.AdditionalProperties != nil {
+			for k, v := range schema.Value.AdditionalProperties.Value.Properties {
+				allTheProperties[k] = v
+			}
+		}
 	}
+
 	// Make an object value from form values.
 	obj := make(map[string]interface{})
 	for name, prop := range allTheProperties {
