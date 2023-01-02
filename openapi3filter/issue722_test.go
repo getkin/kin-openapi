@@ -58,15 +58,15 @@ components:
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(spec))
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	if err = doc.Validate(loader.Context); err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	router, err := gorillamux.NewRouter(doc)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	body := &bytes.Buffer{}
@@ -75,10 +75,10 @@ components:
 	{ // Add file data
 		fw, err := writer.CreateFormFile("file", "hello.txt")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		if _, err = io.Copy(fw, strings.NewReader("hello")); err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 	}
 
@@ -87,10 +87,10 @@ components:
 		h.Set("Content-Disposition", `form-data; name="name"`)
 		fw, err := writer.CreatePart(h)
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		if _, err = io.Copy(fw, strings.NewReader(`foo`)); err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 	}
 
@@ -99,10 +99,10 @@ components:
 		h.Set("Content-Disposition", `form-data; name="description"`)
 		fw, err := writer.CreatePart(h)
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		if _, err = io.Copy(fw, strings.NewReader(`description note`)); err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 	}
 
@@ -110,13 +110,13 @@ components:
 
 	req, err := http.NewRequest(http.MethodPost, "/test", bytes.NewReader(body.Bytes()))
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	if err = openapi3filter.ValidateRequestBody(
@@ -128,7 +128,6 @@ components:
 		},
 		route.Operation.RequestBody.Value,
 	); err != nil {
-		panic(err)
+		t.Error(err)
 	}
-	// Output:
 }
