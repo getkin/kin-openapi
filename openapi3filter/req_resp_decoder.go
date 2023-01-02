@@ -1125,7 +1125,7 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		if len(schema.Value.AllOf) > 0 {
 			var exists bool
 			for _, sr := range schema.Value.AllOf {
-				valueSchema, exists = sr.Value.Properties[name] 
+				valueSchema, exists = sr.Value.Properties[name]
 				if exists {
 					break
 				}
