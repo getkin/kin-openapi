@@ -8,13 +8,14 @@ import (
 	"net/http"
 	"net/textproto"
 	"strings"
+	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
-func Example_validateMultipartFormDataContainingAllOf() {
+func TestValidateMultipartFormDataContainingAllOf(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
 info:
@@ -81,28 +82,14 @@ components:
 		}
 	}
 
-	{ // Add a single "categories" item as part data
+	{ // Add a single "name" item as part data
 		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition", `form-data; name="categories"`)
-		h.Set("Content-Type", "application/json")
+		h.Set("Content-Disposition", `form-data; name="name"`)
 		fw, err := writer.CreatePart(h)
 		if err != nil {
 			panic(err)
 		}
-		if _, err = io.Copy(fw, strings.NewReader(`{"name": "foo"}`)); err != nil {
-			panic(err)
-		}
-	}
-
-	{ // Add a single "categories" item as part data, again
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition", `form-data; name="categories"`)
-		h.Set("Content-Type", "application/json")
-		fw, err := writer.CreatePart(h)
-		if err != nil {
-			panic(err)
-		}
-		if _, err = io.Copy(fw, strings.NewReader(`{"name": "bar"}`)); err != nil {
+		if _, err = io.Copy(fw, strings.NewReader(`foo`)); err != nil {
 			panic(err)
 		}
 	}
