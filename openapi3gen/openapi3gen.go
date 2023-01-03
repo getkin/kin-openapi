@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -119,7 +118,7 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 	return ref, nil
 }
 
-func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
+func (g *Generator) generateSchemaRefFor(parents []*theTypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
 	if ref := g.Types[t]; ref != nil && g.opts.schemaCustomizer == nil {
 		g.SchemaRefs[ref]++
 		return ref, nil
@@ -139,7 +138,7 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 	return ref, nil
 }
 
-func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.StructField {
+func getStructField(t reflect.Type, fieldInfo theFieldInfo) reflect.StructField {
 	var ff reflect.StructField
 	// fieldInfo.Index is an array of indexes starting from the root of the type
 	for i := 0; i < len(fieldInfo.Index); i++ {
@@ -152,8 +151,8 @@ func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.Struct
 	return ff
 }
 
-func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
-	typeInfo := jsoninfo.GetTypeInfo(t)
+func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
+	typeInfo := getTypeInfo(t)
 	for _, parent := range parents {
 		if parent == typeInfo {
 			return nil, &CycleError{}
@@ -161,7 +160,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	}
 
 	if cap(parents) == 0 {
-		parents = make([]*jsoninfo.TypeInfo, 0, 4)
+		parents = make([]*theTypeInfo, 0, 4)
 	}
 	parents = append(parents, typeInfo)
 
@@ -284,7 +283,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		}
 		if additionalProperties != nil {
 			g.SchemaRefs[additionalProperties]++
-			schema.AdditionalProperties = additionalProperties
+			schema.AdditionalProperties = openapi3.AdditionalProperties{Schema: additionalProperties}
 		}
 
 	case reflect.Struct:
@@ -374,7 +373,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 		ref := g.generateCycleSchemaRef(t.Elem(), schema)
 		mapSchema := openapi3.NewSchema()
 		mapSchema.Type = "object"
-		mapSchema.AdditionalProperties = ref
+		mapSchema.AdditionalProperties = openapi3.AdditionalProperties{Schema: ref}
 		return openapi3.NewSchemaRef("", mapSchema)
 	default:
 		typeName = t.Name()

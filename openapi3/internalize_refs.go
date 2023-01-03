@@ -55,11 +55,16 @@ func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver, par
 	}
 
 	name := refNameResolver(s.Ref)
-	if _, ok := doc.Components.Schemas[name]; ok {
-		s.Ref = "#/components/schemas/" + name
-		return true
+	if doc.Components != nil {
+		if _, ok := doc.Components.Schemas[name]; ok {
+			s.Ref = "#/components/schemas/" + name
+			return true
+		}
 	}
 
+	if doc.Components == nil {
+		doc.Components = &Components{}
+	}
 	if doc.Components.Schemas == nil {
 		doc.Components.Schemas = make(Schemas)
 	}
@@ -220,7 +225,7 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 			doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
 		}
 	}
-	for _, ref := range []*SchemaRef{s.Not, s.AdditionalProperties, s.Items} {
+	for _, ref := range []*SchemaRef{s.Not, s.AdditionalProperties.Schema, s.Items} {
 		isExternal := doc.addSchemaToSpec(ref, refNameResolver, parentIsExternal)
 		if ref != nil {
 			doc.derefSchema(ref.Value, refNameResolver, isExternal || parentIsExternal)
@@ -335,44 +340,45 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref stri
 		refNameResolver = DefaultRefNameResolver
 	}
 
-	// Handle components section
-	names := schemaNames(doc.Components.Schemas)
-	for _, name := range names {
-		schema := doc.Components.Schemas[name]
-		isExternal := doc.addSchemaToSpec(schema, refNameResolver, false)
-		if schema != nil {
-			schema.Ref = "" // always dereference the top level
-			doc.derefSchema(schema.Value, refNameResolver, isExternal)
+	if components := doc.Components; components != nil {
+		names := schemaNames(components.Schemas)
+		for _, name := range names {
+			schema := components.Schemas[name]
+			isExternal := doc.addSchemaToSpec(schema, refNameResolver, false)
+			if schema != nil {
+				schema.Ref = "" // always dereference the top level
+				doc.derefSchema(schema.Value, refNameResolver, isExternal)
+			}
 		}
-	}
-	names = parametersMapNames(doc.Components.Parameters)
-	for _, name := range names {
-		p := doc.Components.Parameters[name]
-		isExternal := doc.addParameterToSpec(p, refNameResolver, false)
-		if p != nil && p.Value != nil {
-			p.Ref = "" // always dereference the top level
-			doc.derefParameter(*p.Value, refNameResolver, isExternal)
+		names = parametersMapNames(components.Parameters)
+		for _, name := range names {
+			p := components.Parameters[name]
+			isExternal := doc.addParameterToSpec(p, refNameResolver, false)
+			if p != nil && p.Value != nil {
+				p.Ref = "" // always dereference the top level
+				doc.derefParameter(*p.Value, refNameResolver, isExternal)
+			}
 		}
-	}
-	doc.derefHeaders(doc.Components.Headers, refNameResolver, false)
-	for _, req := range doc.Components.RequestBodies {
-		isExternal := doc.addRequestBodyToSpec(req, refNameResolver, false)
-		if req != nil && req.Value != nil {
-			req.Ref = "" // always dereference the top level
-			doc.derefRequestBody(*req.Value, refNameResolver, isExternal)
+		doc.derefHeaders(components.Headers, refNameResolver, false)
+		for _, req := range components.RequestBodies {
+			isExternal := doc.addRequestBodyToSpec(req, refNameResolver, false)
+			if req != nil && req.Value != nil {
+				req.Ref = "" // always dereference the top level
+				doc.derefRequestBody(*req.Value, refNameResolver, isExternal)
+			}
 		}
-	}
-	doc.derefResponses(doc.Components.Responses, refNameResolver, false)
-	for _, ss := range doc.Components.SecuritySchemes {
-		doc.addSecuritySchemeToSpec(ss, refNameResolver, false)
-	}
-	doc.derefExamples(doc.Components.Examples, refNameResolver, false)
-	doc.derefLinks(doc.Components.Links, refNameResolver, false)
-	for _, cb := range doc.Components.Callbacks {
-		isExternal := doc.addCallbackToSpec(cb, refNameResolver, false)
-		if cb != nil && cb.Value != nil {
-			cb.Ref = "" // always dereference the top level
-			doc.derefPaths(*cb.Value, refNameResolver, isExternal)
+		doc.derefResponses(components.Responses, refNameResolver, false)
+		for _, ss := range components.SecuritySchemes {
+			doc.addSecuritySchemeToSpec(ss, refNameResolver, false)
+		}
+		doc.derefExamples(components.Examples, refNameResolver, false)
+		doc.derefLinks(components.Links, refNameResolver, false)
+		for _, cb := range components.Callbacks {
+			isExternal := doc.addCallbackToSpec(cb, refNameResolver, false)
+			if cb != nil && cb.Value != nil {
+				cb.Ref = "" // always dereference the top level
+				doc.derefPaths(*cb.Value, refNameResolver, isExternal)
+			}
 		}
 	}
 

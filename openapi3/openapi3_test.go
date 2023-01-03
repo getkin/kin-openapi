@@ -299,28 +299,28 @@ func spec() *T {
 				},
 			},
 		},
-		Components: Components{
-			Parameters: map[string]*ParameterRef{
+		Components: &Components{
+			Parameters: ParametersMap{
 				"someParameter": {
 					Value: parameter,
 				},
 			},
-			RequestBodies: map[string]*RequestBodyRef{
+			RequestBodies: RequestBodies{
 				"someRequestBody": {
 					Value: requestBody,
 				},
 			},
-			Responses: map[string]*ResponseRef{
+			Responses: Responses{
 				"someResponse": {
 					Value: response,
 				},
 			},
-			Schemas: map[string]*SchemaRef{
+			Schemas: Schemas{
 				"someSchema": {
 					Value: schema,
 				},
 			},
-			Headers: map[string]*HeaderRef{
+			Headers: Headers{
 				"someHeader": {
 					Ref: "#/components/headers/otherHeader",
 				},
@@ -328,7 +328,7 @@ func spec() *T {
 					Value: &Header{Parameter{Schema: &SchemaRef{Value: NewStringSchema()}}},
 				},
 			},
-			Examples: map[string]*ExampleRef{
+			Examples: Examples{
 				"someExample": {
 					Ref: "#/components/examples/otherExample",
 				},
@@ -336,7 +336,7 @@ func spec() *T {
 					Value: NewExample(example),
 				},
 			},
-			SecuritySchemes: map[string]*SecuritySchemeRef{
+			SecuritySchemes: SecuritySchemes{
 				"someSecurityScheme": {
 					Ref: "#/components/securitySchemes/otherSecurityScheme",
 				},

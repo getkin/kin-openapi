@@ -2,14 +2,13 @@ package openapi3
 
 import (
 	"context"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
+	"encoding/json"
 )
 
 // XML is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object
 type XML struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
@@ -19,18 +18,49 @@ type XML struct {
 }
 
 // MarshalJSON returns the JSON encoding of XML.
-func (xml *XML) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(xml)
+func (xml XML) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 5+len(xml.Extensions))
+	for k, v := range xml.Extensions {
+		m[k] = v
+	}
+	if x := xml.Name; x != "" {
+		m["name"] = x
+	}
+	if x := xml.Namespace; x != "" {
+		m["namespace"] = x
+	}
+	if x := xml.Prefix; x != "" {
+		m["prefix"] = x
+	}
+	if x := xml.Attribute; x {
+		m["attribute"] = x
+	}
+	if x := xml.Wrapped; x {
+		m["wrapped"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets XML to a copy of data.
 func (xml *XML) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, xml)
+	type XMLBis XML
+	var x XMLBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "name")
+	delete(x.Extensions, "namespace")
+	delete(x.Extensions, "prefix")
+	delete(x.Extensions, "attribute")
+	delete(x.Extensions, "wrapped")
+	*xml = XML(x)
+	return nil
 }
 
 // Validate returns an error if XML does not comply with the OpenAPI spec.
 func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// ctx = WithValidationOptions(ctx, opts...)
+	ctx = WithValidationOptions(ctx, opts...)
 
-	return nil // TODO
+	return validateExtensions(ctx, xml.Extensions)
 }

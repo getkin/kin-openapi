@@ -379,7 +379,7 @@ func TestCyclicReferences(t *testing.T) {
 
 	require.NotNil(t, schemaRef.Value.Properties["MapCycle"])
 	require.Equal(t, "object", schemaRef.Value.Properties["MapCycle"].Value.Type)
-	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Ref)
+	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Schema.Ref)
 }
 
 func ExampleSchemaCustomizer() {

@@ -2,14 +2,13 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
@@ -70,7 +69,7 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -103,13 +102,40 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 }
 
 // MarshalJSON returns the JSON encoding of Response.
-func (response *Response) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(response)
+func (response Response) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 4+len(response.Extensions))
+	for k, v := range response.Extensions {
+		m[k] = v
+	}
+	if x := response.Description; x != nil {
+		m["description"] = x
+	}
+	if x := response.Headers; len(x) != 0 {
+		m["headers"] = x
+	}
+	if x := response.Content; len(x) != 0 {
+		m["content"] = x
+	}
+	if x := response.Links; len(x) != 0 {
+		m["links"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets Response to a copy of data.
 func (response *Response) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, response)
+	type ResponseBis Response
+	var x ResponseBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "headers")
+	delete(x.Extensions, "content")
+	delete(x.Extensions, "links")
+	*response = Response(x)
+	return nil
 }
 
 // Validate returns an error if Response does not comply with the OpenAPI spec.
@@ -152,5 +178,6 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 			return err
 		}
 	}
-	return nil
+
+	return validateExtensions(ctx, response.Extensions)
 }

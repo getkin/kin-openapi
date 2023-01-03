@@ -1,52 +1,37 @@
-package openapi3
+package openapi2
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// PathItem is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
 type PathItem struct {
 	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
-	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
-	Connect     *Operation `json:"connect,omitempty" yaml:"connect,omitempty"`
-	Delete      *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
-	Get         *Operation `json:"get,omitempty" yaml:"get,omitempty"`
-	Head        *Operation `json:"head,omitempty" yaml:"head,omitempty"`
-	Options     *Operation `json:"options,omitempty" yaml:"options,omitempty"`
-	Patch       *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
-	Post        *Operation `json:"post,omitempty" yaml:"post,omitempty"`
-	Put         *Operation `json:"put,omitempty" yaml:"put,omitempty"`
-	Trace       *Operation `json:"trace,omitempty" yaml:"trace,omitempty"`
-	Servers     Servers    `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+
+	Delete     *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
+	Get        *Operation `json:"get,omitempty" yaml:"get,omitempty"`
+	Head       *Operation `json:"head,omitempty" yaml:"head,omitempty"`
+	Options    *Operation `json:"options,omitempty" yaml:"options,omitempty"`
+	Patch      *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
+	Post       *Operation `json:"post,omitempty" yaml:"post,omitempty"`
+	Put        *Operation `json:"put,omitempty" yaml:"put,omitempty"`
+	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 	if ref := pathItem.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
 
-	m := make(map[string]interface{}, 13+len(pathItem.Extensions))
+	m := make(map[string]interface{}, 8+len(pathItem.Extensions))
 	for k, v := range pathItem.Extensions {
 		m[k] = v
-	}
-	if x := pathItem.Summary; x != "" {
-		m["summary"] = x
-	}
-	if x := pathItem.Description; x != "" {
-		m["description"] = x
-	}
-	if x := pathItem.Connect; x != nil {
-		m["connect"] = x
 	}
 	if x := pathItem.Delete; x != nil {
 		m["delete"] = x
@@ -69,12 +54,6 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 	if x := pathItem.Put; x != nil {
 		m["put"] = x
 	}
-	if x := pathItem.Trace; x != nil {
-		m["trace"] = x
-	}
-	if x := pathItem.Servers; len(x) != 0 {
-		m["servers"] = x
-	}
 	if x := pathItem.Parameters; len(x) != 0 {
 		m["parameters"] = x
 	}
@@ -90,9 +69,6 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
-	delete(x.Extensions, "summary")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "connect")
 	delete(x.Extensions, "delete")
 	delete(x.Extensions, "get")
 	delete(x.Extensions, "head")
@@ -100,8 +76,6 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "patch")
 	delete(x.Extensions, "post")
 	delete(x.Extensions, "put")
-	delete(x.Extensions, "trace")
-	delete(x.Extensions, "servers")
 	delete(x.Extensions, "parameters")
 	*pathItem = PathItem(x)
 	return nil
@@ -109,9 +83,6 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
 	operations := make(map[string]*Operation)
-	if v := pathItem.Connect; v != nil {
-		operations[http.MethodConnect] = v
-	}
 	if v := pathItem.Delete; v != nil {
 		operations[http.MethodDelete] = v
 	}
@@ -133,16 +104,11 @@ func (pathItem *PathItem) Operations() map[string]*Operation {
 	if v := pathItem.Put; v != nil {
 		operations[http.MethodPut] = v
 	}
-	if v := pathItem.Trace; v != nil {
-		operations[http.MethodTrace] = v
-	}
 	return operations
 }
 
 func (pathItem *PathItem) GetOperation(method string) *Operation {
 	switch method {
-	case http.MethodConnect:
-		return pathItem.Connect
 	case http.MethodDelete:
 		return pathItem.Delete
 	case http.MethodGet:
@@ -157,8 +123,6 @@ func (pathItem *PathItem) GetOperation(method string) *Operation {
 		return pathItem.Post
 	case http.MethodPut:
 		return pathItem.Put
-	case http.MethodTrace:
-		return pathItem.Trace
 	default:
 		panic(fmt.Errorf("unsupported HTTP method %q", method))
 	}
@@ -166,8 +130,6 @@ func (pathItem *PathItem) GetOperation(method string) *Operation {
 
 func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	switch method {
-	case http.MethodConnect:
-		pathItem.Connect = operation
 	case http.MethodDelete:
 		pathItem.Delete = operation
 	case http.MethodGet:
@@ -182,30 +144,7 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 		pathItem.Post = operation
 	case http.MethodPut:
 		pathItem.Put = operation
-	case http.MethodTrace:
-		pathItem.Trace = operation
 	default:
 		panic(fmt.Errorf("unsupported HTTP method %q", method))
 	}
-}
-
-// Validate returns an error if PathItem does not comply with the OpenAPI spec.
-func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error {
-	ctx = WithValidationOptions(ctx, opts...)
-
-	operations := pathItem.Operations()
-
-	methods := make([]string, 0, len(operations))
-	for method := range operations {
-		methods = append(methods, method)
-	}
-	sort.Strings(methods)
-	for _, method := range methods {
-		operation := operations[method]
-		if err := operation.Validate(ctx); err != nil {
-			return fmt.Errorf("invalid operation %s: %v", method, err)
-		}
-	}
-
-	return validateExtensions(ctx, pathItem.Extensions)
 }

@@ -2,17 +2,16 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Components is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#components-object
 type Components struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -30,13 +29,60 @@ func NewComponents() Components {
 }
 
 // MarshalJSON returns the JSON encoding of Components.
-func (components *Components) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(components)
+func (components Components) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 9+len(components.Extensions))
+	for k, v := range components.Extensions {
+		m[k] = v
+	}
+	if x := components.Schemas; len(x) != 0 {
+		m["schemas"] = x
+	}
+	if x := components.Parameters; len(x) != 0 {
+		m["parameters"] = x
+	}
+	if x := components.Headers; len(x) != 0 {
+		m["headers"] = x
+	}
+	if x := components.RequestBodies; len(x) != 0 {
+		m["requestBodies"] = x
+	}
+	if x := components.Responses; len(x) != 0 {
+		m["responses"] = x
+	}
+	if x := components.SecuritySchemes; len(x) != 0 {
+		m["securitySchemes"] = x
+	}
+	if x := components.Examples; len(x) != 0 {
+		m["examples"] = x
+	}
+	if x := components.Links; len(x) != 0 {
+		m["links"] = x
+	}
+	if x := components.Callbacks; len(x) != 0 {
+		m["callbacks"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets Components to a copy of data.
 func (components *Components) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, components)
+	type ComponentsBis Components
+	var x ComponentsBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "schemas")
+	delete(x.Extensions, "parameters")
+	delete(x.Extensions, "headers")
+	delete(x.Extensions, "requestBodies")
+	delete(x.Extensions, "responses")
+	delete(x.Extensions, "securitySchemes")
+	delete(x.Extensions, "examples")
+	delete(x.Extensions, "links")
+	delete(x.Extensions, "callbacks")
+	*components = Components(x)
+	return nil
 }
 
 // Validate returns an error if Components does not comply with the OpenAPI spec.
@@ -178,7 +224,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 		}
 	}
 
-	return
+	return validateExtensions(ctx, components.Extensions)
 }
 
 const identifierPattern = `^[a-zA-Z0-9._-]+$`

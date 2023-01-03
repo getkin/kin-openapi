@@ -801,11 +801,11 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &Schema{
 			Type: "object",
-			AdditionalProperties: &SchemaRef{
+			AdditionalProperties: AdditionalProperties{Schema: &SchemaRef{
 				Value: &Schema{
 					Type: "number",
 				},
-			},
+			}},
 		},
 		Serialization: map[string]interface{}{
 			"type": "object",
@@ -828,8 +828,8 @@ var schemaExamples = []schemaExample{
 	},
 	{
 		Schema: &Schema{
-			Type:                        "object",
-			AdditionalPropertiesAllowed: BoolPtr(true),
+			Type:                 "object",
+			AdditionalProperties: AdditionalProperties{Has: BoolPtr(true)},
 		},
 		Serialization: map[string]interface{}{
 			"type":                 "object",

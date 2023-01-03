@@ -15,27 +15,26 @@ func TestIssue707(t *testing.T) {
 	loader := openapi3.NewLoader()
 	ctx := loader.Context
 	spec := `
-    openapi: 3.0.0
-    info:
-     version: 1.0.0
-     title: Sample API
-    paths:
-     /items:
-      get:
-       description: Returns a list of stuff
-       parameters:
-        - description: parameter with a default value
-          explode: true
-          in: query
-          name: param-with-default
-          schema:
-           default: 124
-           type: integer
-           style: form
-          required: false
-       responses:
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Sample API
+paths:
+  /items:
+    get:
+      description: Returns a list of stuff
+      parameters:
+      - description: parameter with a default value
+        explode: true
+        in: query
+        name: param-with-default
+        schema:
+          default: 124
+          type: integer
+        required: false
+      responses:
         '200':
-           description: Successful response
+          description: Successful response
 `[1:]
 
 	doc, err := loader.LoadFromData([]byte(spec))

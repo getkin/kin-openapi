@@ -1,4 +1,4 @@
-package jsoninfo
+package openapi3gen
 
 import (
 	"reflect"
@@ -7,9 +7,8 @@ import (
 	"unicode/utf8"
 )
 
-// FieldInfo contains information about JSON serialization of a field.
-type FieldInfo struct {
-	MultipleFields     bool // Whether multiple Go fields share this JSON name
+// theFieldInfo contains information about JSON serialization of a field.
+type theFieldInfo struct {
 	HasJSONTag         bool
 	TypeIsMarshaller   bool
 	TypeIsUnmarshaller bool
@@ -20,7 +19,7 @@ type FieldInfo struct {
 	JSONName           string
 }
 
-func AppendFields(fields []FieldInfo, parentIndex []int, t reflect.Type) []FieldInfo {
+func appendFields(fields []theFieldInfo, parentIndex []int, t reflect.Type) []theFieldInfo {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
@@ -40,7 +39,7 @@ iteration:
 				continue
 			}
 			if jsonTag == "" {
-				fields = AppendFields(fields, index, f.Type)
+				fields = appendFields(fields, index, f.Type)
 				continue iteration
 			}
 		}
@@ -58,7 +57,7 @@ iteration:
 		}
 
 		// Declare a field
-		field := FieldInfo{
+		field := theFieldInfo{
 			Index:    index,
 			Type:     f.Type,
 			JSONName: f.Name,
@@ -66,13 +65,6 @@ iteration:
 
 		// Read "json" tag
 		jsonTag := f.Tag.Get("json")
-
-		// Read our custom "multijson" tag that
-		// allows multiple fields with the same name.
-		if v := f.Tag.Get("multijson"); v != "" {
-			field.MultipleFields = true
-			jsonTag = v
-		}
 
 		// Handle "-"
 		if jsonTag == "-" {
@@ -108,7 +100,7 @@ iteration:
 	return fields
 }
 
-type sortableFieldInfos []FieldInfo
+type sortableFieldInfos []theFieldInfo
 
 func (list sortableFieldInfos) Len() int {
 	return len(list)

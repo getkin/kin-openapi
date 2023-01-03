@@ -12,9 +12,22 @@ type ValidationOptions struct {
 	schemaDefaultsValidationDisabled                 bool
 	schemaFormatValidationEnabled                    bool
 	schemaPatternValidationDisabled                  bool
+	extraSiblingFieldsAllowed                        map[string]struct{}
 }
 
 type validationOptionsKey struct{}
+
+// AllowExtraSiblingFields called as AllowExtraSiblingFields("description") makes Validate not return an error when said field appears next to a $ref.
+func AllowExtraSiblingFields(fields ...string) ValidationOption {
+	return func(options *ValidationOptions) {
+		for _, field := range fields {
+			if options.extraSiblingFieldsAllowed == nil {
+				options.extraSiblingFieldsAllowed = make(map[string]struct{}, len(fields))
+			}
+			options.extraSiblingFieldsAllowed[field] = struct{}{}
+		}
+	}
+}
 
 // EnableSchemaFormatValidation makes Validate not return an error when validating documents that mention schema formats that are not defined by the OpenAPIv3 specification.
 // By default, schema format validation is disabled.

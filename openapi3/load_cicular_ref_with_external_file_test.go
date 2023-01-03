@@ -53,8 +53,8 @@ func TestLoadCircularRefFromFile(t *testing.T) {
 			Title:   "Recursive cyclic refs example",
 			Version: "1.0",
 		},
-		Components: openapi3.Components{
-			Schemas: map[string]*openapi3.SchemaRef{
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
 				"Foo": foo,
 				"Bar": bar,
 			},

@@ -20,7 +20,7 @@ func TestIssue341(t *testing.T) {
 
 	bs, err := doc.MarshalJSON()
 	require.NoError(t, err)
-	require.Equal(t, []byte(`{"components":{},"info":{"title":"test file","version":"n/a"},"openapi":"3.0.0","paths":{"/testpath":{"get":{"responses":{"200":{"$ref":"#/components/responses/testpath_200_response"}}}}}}`), bs)
+	require.JSONEq(t, `{"info":{"title":"test file","version":"n/a"},"openapi":"3.0.0","paths":{"/testpath":{"get":{"responses":{"200":{"$ref":"#/components/responses/testpath_200_response"}}}}}}`, string(bs))
 
 	require.Equal(t, "string", doc.Paths["/testpath"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 }
