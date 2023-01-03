@@ -1239,7 +1239,7 @@ func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 	}
 
 	const bufferSize = 256
-	var content []byte
+	content := make([]byte, 0, bufferSize*len(zr.File))
 	buffer := make([]byte, bufferSize)
 
 	for _, f := range zr.File {
