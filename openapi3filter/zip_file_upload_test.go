@@ -44,17 +44,13 @@ paths:
 
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(spec))
-	if err != nil {
-		require.NoError(t, err)
-	}
-	if err = doc.Validate(loader.Context); err != nil {
-		require.NoError(t, err)
-	}
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
 
 	router, err := gorillamux.NewRouter(doc)
-	if err != nil {
-		require.NoError(t, err)
-	}
+	require.NoError(t, err)
 
 	tests := []struct {
 		zipData []byte
@@ -83,26 +79,21 @@ paths:
 			h.Set("Content-Type", "application/zip")
 
 			fw, err := writer.CreatePart(h)
-			if err != nil {
-				require.NoError(t, err)
-			}
-			if _, err = io.Copy(fw, bytes.NewReader(tt.zipData)); err != nil {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
+			_, err = io.Copy(fw, bytes.NewReader(tt.zipData))
+
+			require.NoError(t, err)
 		}
 
 		writer.Close()
 
 		req, err := http.NewRequest(http.MethodPost, "/test", bytes.NewReader(body.Bytes()))
-		if err != nil {
-			require.NoError(t, err)
-		}
+		require.NoError(t, err)
+
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 
 		route, pathParams, err := router.FindRoute(req)
-		if err != nil {
-			require.NoError(t, err)
-		}
+		require.NoError(t, err)
 
 		if err = openapi3filter.ValidateRequestBody(
 			context.Background(),
