@@ -1225,7 +1225,7 @@ func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 	return string(data), nil
 }
 
-// ZipFileBodyDecoder is a body decoder that decodes a zip file body to a *Reader.
+// ZipFileBodyDecoder is a body decoder that decodes a zip file body to a string.
 func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	buff := bytes.NewBuffer([]byte{})
 	size, err := io.Copy(buff, body)
