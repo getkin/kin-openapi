@@ -7,7 +7,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
-	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
