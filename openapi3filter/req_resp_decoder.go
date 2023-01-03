@@ -1006,16 +1006,16 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 }
 
 func init() {
-	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 	RegisterBodyDecoder("application/json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/json-patch+json", jsonBodyDecoder)
-	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
-	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
 	RegisterBodyDecoder("application/problem+json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
-	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
-	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
+	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/zip", ZipFileBodyDecoder)
+	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
+	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 }
 
 func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
