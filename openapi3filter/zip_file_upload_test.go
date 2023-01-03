@@ -31,10 +31,10 @@ paths:
               type: object
               required:
                 - file
-              - properties:
-                  file:
-                    type: string
-                    format: binary
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         '200':
           description: Created
