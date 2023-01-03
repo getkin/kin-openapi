@@ -1013,6 +1013,7 @@ func init() {
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
 	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
+	RegisterBodyDecoder("application/zip", FileBodyDecoder)
 }
 
 func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
