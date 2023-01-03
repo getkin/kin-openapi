@@ -12,6 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateZipFileUpload(t *testing.T) {
@@ -43,15 +44,15 @@ paths:
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(spec))
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	if err = doc.Validate(loader.Context); err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 
 	router, err := gorillamux.NewRouter(doc)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 
 	tests := []struct {
@@ -82,10 +83,10 @@ paths:
 
 			fw, err := writer.CreatePart(h)
 			if err != nil {
-				t.Fatal(err)
+				require.NoError(t, err)
 			}
 			if _, err = io.Copy(fw, bytes.NewReader(tt.zipData)); err != nil {
-				t.Fatal(err)
+				require.NoError(t, err)
 			}
 		}
 
@@ -93,13 +94,13 @@ paths:
 
 		req, err := http.NewRequest(http.MethodPost, "/test", bytes.NewReader(body.Bytes()))
 		if err != nil {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 
 		route, pathParams, err := router.FindRoute(req)
 		if err != nil {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 
 		if err = openapi3filter.ValidateRequestBody(
