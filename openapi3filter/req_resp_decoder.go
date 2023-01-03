@@ -1,6 +1,7 @@
 package openapi3filter
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1013,7 +1014,7 @@ func init() {
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
 	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
-	RegisterBodyDecoder("application/zip", FileBodyDecoder)
+	RegisterBodyDecoder("application/zip", ZipFileBodyDecoder)
 }
 
 func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
@@ -1221,4 +1222,14 @@ func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 		return nil, err
 	}
 	return string(data), nil
+}
+
+// ZipFileBodyDecoder is a body decoder that decodes a zip file body to a *Reader.
+func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+	r, err := zip.NewReader(body, body.Size())
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
