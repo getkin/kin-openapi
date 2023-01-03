@@ -1243,24 +1243,28 @@ func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 	buffer := make([]byte, bufferSize)
 
 	for _, f := range zr.File {
-		rc, err := f.Open()
-		if err != nil {
-			return nil, err
-		}
-		defer rc.Close()
-
-		for {
-			n, err := rc.Read(buffer)
-			if 0 < n {
-				content = append(content, buffer...)
-			}
-			if err == io.EOF {
-				break
-			}
+		func() {
+			rc, err := f.Open()
 			if err != nil {
-				return nil, err
+				panic(err)
 			}
-		}
+			defer func() {
+				_ = rc.Close()
+			}()
+
+			for {
+				n, err := rc.Read(buffer)
+				if 0 < n {
+					content = append(content, buffer...)
+				}
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					panic(err)
+				}
+			}
+		}()
 	}
 
 	return string(content), nil
