@@ -1,0 +1,2 @@
+func NewRouter(doc *openapi3.T) (routers.Router, error)
+type Router struct{ ... }

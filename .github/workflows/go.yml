@@ -57,6 +57,9 @@ jobs:
         ./refs.sh | tee openapi3/refs.go
         git --no-pager diff --exit-code
 
+    - name: Check docsgen
+      run: ./docs.sh
+
     - run: go mod download && go mod tidy && go mod verify
     - run: git --no-pager diff --exit-code
 

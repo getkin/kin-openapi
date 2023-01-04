@@ -556,7 +556,7 @@ func TestValidationErrorEncoder(t *testing.T) {
 
 func buildValidationHandler(tt *validationTest) (*ValidationHandler, error) {
 	if tt.fields.File == "" {
-		tt.fields.File = "fixtures/petstore.json"
+		tt.fields.File = "testdata/fixtures/petstore.json"
 	}
 	h := &ValidationHandler{
 		Handler:      tt.fields.Handler,
@@ -600,7 +600,7 @@ func runTest_ServeHTTP(t *testing.T, handler http.Handler, encoder ErrorEncoder,
 	h := &ValidationHandler{
 		Handler:      handler,
 		ErrorEncoder: encoder,
-		File:         "fixtures/petstore.json",
+		File:         "testdata/fixtures/petstore.json",
 	}
 	err := h.Load()
 	require.NoError(t, err)
@@ -612,7 +612,7 @@ func runTest_ServeHTTP(t *testing.T, handler http.Handler, encoder ErrorEncoder,
 func runTest_Middleware(t *testing.T, handler http.Handler, encoder ErrorEncoder, req *http.Request) *http.Response {
 	h := &ValidationHandler{
 		ErrorEncoder: encoder,
-		File:         "fixtures/petstore.json",
+		File:         "testdata/fixtures/petstore.json",
 	}
 	err := h.Load()
 	require.NoError(t, err)

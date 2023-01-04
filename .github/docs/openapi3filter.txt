@@ -1,0 +1,55 @@
+const ErrCodeOK = 0 ...
+var DefaultOptions = &Options{}
+var ErrAuthenticationServiceMissing = errors.New("missing AuthenticationFunc")
+var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
+var ErrInvalidRequired = errors.New("value is required but missing")
+var JSONPrefixes = []string{ ... }
+func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter)
+func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, ...) (interface{}, error)
+func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error
+func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
+func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
+func TrimJSONPrefix(data []byte) []byte
+func UnregisterBodyDecoder(contentType string)
+func UnregisterBodyEncoder(contentType string)
+func ValidateParameter(ctx context.Context, input *RequestValidationInput, ...) error
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error)
+func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, ...) error
+func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
+func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationInput, ...) error
+func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, ...) (interface{}, error)
+type AuthenticationFunc func(context.Context, *AuthenticationInput) error
+type AuthenticationInput struct{ ... }
+type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (interface{}, error)
+    func RegisteredBodyDecoder(contentType string) BodyDecoder
+type BodyEncoder func(body interface{}) ([]byte, error)
+    func RegisteredBodyEncoder(contentType string) BodyEncoder
+type ContentParameterDecoder func(param *openapi3.Parameter, values []string) (interface{}, *openapi3.Schema, error)
+type CustomSchemaErrorFunc func(err *openapi3.SchemaError) string
+type EncodingFn func(partName string) *openapi3.Encoding
+type ErrCode int
+type ErrFunc func(w http.ResponseWriter, status int, code ErrCode, err error)
+type ErrorEncoder func(ctx context.Context, err error, w http.ResponseWriter)
+type Headerer interface{ ... }
+type LogFunc func(message string, err error)
+type Options struct{ ... }
+type ParseError struct{ ... }
+type ParseErrorKind int
+    const KindOther ParseErrorKind = iota ...
+type RequestError struct{ ... }
+type RequestValidationInput struct{ ... }
+type ResponseError struct{ ... }
+type ResponseValidationInput struct{ ... }
+type SecurityRequirementsError struct{ ... }
+type StatusCoder interface{ ... }
+type ValidationError struct{ ... }
+type ValidationErrorEncoder struct{ ... }
+type ValidationErrorSource struct{ ... }
+type ValidationHandler struct{ ... }
+type Validator struct{ ... }
+    func NewValidator(router routers.Router, options ...ValidatorOption) *Validator
+type ValidatorOption func(*Validator)
+    func OnErr(f ErrFunc) ValidatorOption
+    func OnLog(f LogFunc) ValidatorOption
+    func Strict(strict bool) ValidatorOption
+    func ValidationOptions(options Options) ValidatorOption
