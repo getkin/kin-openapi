@@ -1243,10 +1243,10 @@ func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 	buffer := make([]byte, bufferSize)
 
 	for _, f := range zr.File {
-		func() {
+		err := func() error {
 			rc, err := f.Open()
 			if err != nil {
-				panic(err)
+				return err
 			}
 			defer func() {
 				_ = rc.Close()
@@ -1261,10 +1261,16 @@ func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 					break
 				}
 				if err != nil {
-					panic(err)
+					return err
 				}
 			}
+
+			return nil
 		}()
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return string(content), nil
