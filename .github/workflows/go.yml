@@ -58,9 +58,7 @@ jobs:
         git --no-pager diff --exit-code
 
     - name: Check docsgen
-      run: |
-        ./docs.sh
-        git --no-pager diff --exit-code
+      run: ./docs.sh
 
     - run: go mod download && go mod tidy && go mod verify
     - run: git --no-pager diff --exit-code
