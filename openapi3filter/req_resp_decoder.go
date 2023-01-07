@@ -3,6 +3,7 @@ package openapi3filter
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1015,6 +1016,7 @@ func init() {
 	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/zip", zipFileBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
+	RegisterBodyDecoder("text/csv", csvBodyDecoder)
 	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 }
 
@@ -1270,4 +1272,24 @@ func zipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 	}
 
 	return string(content), nil
+}
+
+// csvBodyDecoder is a body decoder that decodes a csv body to a string.
+func csvBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+	r := csv.NewReader(body)
+
+	var content string
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		content += strings.Join(record, ",") + "\n"
+	}
+
+	return content, nil
 }
