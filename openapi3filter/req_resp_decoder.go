@@ -1013,7 +1013,7 @@ func init() {
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
-	RegisterBodyDecoder("application/zip", ZipFileBodyDecoder)
+	RegisterBodyDecoder("application/zip", zipFileBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
 	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 }
@@ -1221,8 +1221,8 @@ func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 	return string(data), nil
 }
 
-// ZipFileBodyDecoder is a body decoder that decodes a zip file body to a string.
-func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+// zipFileBodyDecoder is a body decoder that decodes a zip file body to a string.
+func zipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	buff := bytes.NewBuffer([]byte{})
 	size, err := io.Copy(buff, body)
 	if err != nil {
