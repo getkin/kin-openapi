@@ -65,6 +65,20 @@ paths:
 			`"foo","bar"`,
 			false,
 		},
+		{
+			`foo,bar
+baz,qux`,
+			false,
+		},
+		{
+			`foo,bar
+baz,qux,quux`,
+			true,
+		},
+		{
+			`"""`,
+			true,
+		},
 	}
 	for _, tt := range tests {
 		body := &bytes.Buffer{}
