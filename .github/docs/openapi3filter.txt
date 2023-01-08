@@ -17,7 +17,6 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, ...) error
 func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationInput, ...) error
-func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, ...) (interface{}, error)
 type AuthenticationFunc func(context.Context, *AuthenticationInput) error
 type AuthenticationInput struct{ ... }
 type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (interface{}, error)

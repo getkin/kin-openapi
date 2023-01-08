@@ -1345,7 +1345,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 		}
 		return strings.Split(string(data), ","), nil
 	}
-	contentType := "text/csv"
+	contentType := "application/csv"
 	h := make(http.Header)
 	h.Set(headerCT, contentType)
 
@@ -1371,7 +1371,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	_, _, err = decodeBody(body, h, schema, encFn)
 	require.Equal(t, &ParseError{
 		Kind:   KindUnsupportedFormat,
-		Reason: prefixUnsupportedCT + ` "text/csv"`,
+		Reason: prefixUnsupportedCT + ` "application/csv"`,
 	}, err)
 }
 
