@@ -93,7 +93,7 @@ func Example() {
 	//
 	// ===== Start New Error =====
 	// @body.status:
-	// 	Error at "/status": value "invalidStatus" is not one of the allowed values
+	// 	Error at "/status": value is not one of the allowed values ["available" "pending" "sold"]
 	// Schema:
 	//   {
 	//     "description": "pet status in the store",

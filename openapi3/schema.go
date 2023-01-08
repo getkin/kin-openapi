@@ -1125,7 +1125,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "enum",
-			Reason:                fmt.Sprintf("value is not one of the allowed values %v", schema.enum),
+			Reason:                fmt.Sprintf("value is not one of the allowed values %q", schema.Enum),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
@@ -1164,11 +1164,6 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 				discriminatorValString, okcheck := discriminatorVal.(string)
 				if !okcheck {
-					valStr := "null"
-					if discriminatorVal != nil {
-						valStr = fmt.Sprintf("%v", discriminatorVal)
-					}
-
 					return &SchemaError{
 						Value:       discriminatorVal,
 						Schema:      schema,
