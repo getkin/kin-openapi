@@ -232,7 +232,26 @@ Value:
 
 Including the original value in the error message can be helpful for debugging, but it may not be appropriate for sensitive information such as secrets.
 
-To control the error message that is returned, you can pass a custom `openapi3filter.Options` object to `openapi3filter.RequestValidationInput` that includes a `openapi3filter.CustomSchemaErrorFunc`.
+To disable the extra details in the schema error message, you can set the `openapi3.SchemaErrorDetailsDisabled` option to `true`:
+
+```go
+func main() {
+	// ...
+
+	// Disable schema error detailed error messages
+	openapi3.SchemaErrorDetailsDisabled = true
+
+	// ... other validate codes
+}
+```
+
+This will shorten the error message to present only the reason:
+
+```
+string doesn't match the regular expression "[A-Z]"
+```
+
+For more fine-grained control over the error message, you can pass a custom `openapi3filter.Options` object to `openapi3filter.RequestValidationInput` that includes a `openapi3filter.CustomSchemaErrorFunc`.
 
 ```go
 func validationOptions() *openapi3filter.Options {
@@ -247,12 +266,6 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 ```
 
 This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
-
-The same error above will become:
-
-```
-string doesn't match the regular expression "[A-Z]"
-```
 
 ## Sub-v0 breaking API changes
 
