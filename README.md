@@ -199,6 +199,61 @@ func arrayUniqueItemsChecker(items []interface{}) bool {
 }
 ```
 
+## Custom function to change schema error messages
+
+By default, the error message returned when validating a value includes the error reason, the schema, and the input value.
+
+For example, given the following schema:
+
+```json
+{
+  "type": "string",
+  "allOf": [
+    { "pattern": "[A-Z]" },
+    { "pattern": "[a-z]" },
+    { "pattern": "[0-9]" },
+    { "pattern": "[!@#$%^&*()_+=-?~]" }
+  ]
+}
+```
+
+Passing the input value `"secret"` to this schema will produce the following error message:
+
+```
+string doesn't match the regular expression "[A-Z]"
+Schema:
+  {
+    "pattern": "[A-Z]"
+  }
+
+Value:
+  "secret"
+```
+
+Including the original value in the error message can be helpful for debugging, but it may not be appropriate for sensitive information such as secrets.
+
+To control the error message that is returned, you can pass a custom `openapi3filter.Options` object to `openapi3filter.RequestValidationInput` that includes a `openapi3filter.CustomSchemaErrorFunc`.
+
+```go
+func validationOptions() *openapi3filter.Options {
+	options := openapi3filter.DefaultOptions
+	options.WithCustomSchemaErrorFunc(safeErrorMessage)
+	return options
+}
+
+func safeErrorMessage(err *openapi3.SchemaError) string {
+	return err.Reason
+}
+```
+
+This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
+
+The same error above will become:
+
+```
+string doesn't match the regular expression "[A-Z]"
+```
+
 ## Sub-v0 breaking API changes
 
 ### v0.113.0
