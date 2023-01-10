@@ -1077,6 +1077,19 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	switch value := value.(type) {
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
+	case json.Number:
+		valueFloat64, err := value.Float64()
+		if err != nil {
+			return &SchemaError{
+				Value:                 value,
+				Schema:                schema,
+				SchemaField:           "type",
+				Reason:                "cannot convert json.Number to float64",
+				customizeMessageError: settings.customizeMessageError,
+				Origin:                err,
+			}
+		}
+		return schema.visitJSONNumber(settings, valueFloat64)
 	case int:
 		return schema.visitJSONNumber(settings, float64(value))
 	case int32:
