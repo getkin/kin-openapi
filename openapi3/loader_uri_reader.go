@@ -7,11 +7,14 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"sync"
 )
 
 // ReadFromURIFunc defines a function which reads the contents of a resource
 // located at a URI.
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
+
+var uriMu = &sync.RWMutex{}
 
 // ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle a
 // given URI.
@@ -92,12 +95,17 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc {
 		}
 		uri := location.String()
 		var ok bool
+		uriMu.RLock()
 		if buf, ok = cache[uri]; ok {
+			uriMu.RUnlock()
 			return
 		}
+		uriMu.RUnlock()
 		if buf, err = reader(loader, location); err != nil {
 			return
 		}
+		uriMu.Lock()
+		defer uriMu.Unlock()
 		cache[uri] = buf
 		return
 	}
