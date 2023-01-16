@@ -1927,10 +1927,12 @@ func (schema *Schema) compilePattern() (err error) {
 }
 
 type SchemaError struct {
-	Value                 interface{}
-	reversePath           []string
-	Schema                *Schema
-	SchemaField           string
+	Value       interface{}
+	reversePath []string
+	Schema      *Schema
+	SchemaField string
+	// Reason is a human-readable message describing the error.
+	// The message should never include the original value to prevent leakage of potentially sensitive inputs in error messages.
 	Reason                string
 	Origin                error
 	customizeMessageError func(err *SchemaError) string
