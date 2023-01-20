@@ -194,7 +194,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 	} else if len(ss.In) > 0 {
 		return fmt.Errorf("security scheme of type %q can't have 'in'", ss.Type)
 	} else if len(ss.Name) > 0 {
-		return errors.New("security scheme of type %q can't have 'name'", ss.Type)
+		return fmt.Errorf("security scheme of type %q can't have 'name'", ss.Type)
 	}
 
 	// Validate "format"
