@@ -1226,7 +1226,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("d", openapi3.NewObjectSchema().WithProperty("d1", openapi3.NewStringSchema())).
 				WithProperty("f", openapi3.NewStringSchema().WithFormat("binary")).
 				WithProperty("g", openapi3.NewStringSchema()),
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo", "g": "g1"},
+			want: map[string]interface{}{"a": "a1", "b": json.Number("10"), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo", "g": "g1"},
 		},
 		{
 			name: "multipartExtraPart",
