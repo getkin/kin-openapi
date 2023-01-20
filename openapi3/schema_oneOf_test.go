@@ -96,7 +96,7 @@ func TestVisitJSON_OneOf_MissingDiscriptorValue(t *testing.T) {
 		"name":  "snoopy",
 		"$type": "snake",
 	})
-	require.ErrorContains(t, err, "discriminator property \"$type\" has invalid value: \"snake\"")
+	require.ErrorContains(t, err, "discriminator property \"$type\" has invalid value")
 }
 
 func TestVisitJSON_OneOf_MissingField(t *testing.T) {
@@ -126,14 +126,14 @@ func TestVisitJSON_OneOf_BadDescriminatorType(t *testing.T) {
 		"scratches": true,
 		"$type":     1,
 	})
-	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string: 1")
+	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string")
 
 	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name":  "snoopy",
 		"barks": true,
 		"$type": nil,
 	})
-	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string: null")
+	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string")
 }
 
 func TestVisitJSON_OneOf_Path(t *testing.T) {

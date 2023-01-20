@@ -1138,7 +1138,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "enum",
-			Reason:                fmt.Sprintf("value %q is not one of the allowed values", value),
+			Reason:                fmt.Sprintf("value is not one of the allowed values %q", schema.Enum),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
@@ -1177,16 +1177,11 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 				discriminatorValString, okcheck := discriminatorVal.(string)
 				if !okcheck {
-					valStr := "null"
-					if discriminatorVal != nil {
-						valStr = fmt.Sprintf("%v", discriminatorVal)
-					}
-
 					return &SchemaError{
 						Value:       discriminatorVal,
 						Schema:      schema,
 						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("value of discriminator property %q is not a string: %v", pn, valStr),
+						Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
 					}
 				}
 
@@ -1195,7 +1190,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 						Value:       discriminatorVal,
 						Schema:      schema,
 						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("discriminator property %q has invalid value: %q", pn, discriminatorVal),
+						Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
 					}
 				}
 			}
@@ -1364,7 +1359,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				Value:                 value,
 				Schema:                schema,
 				SchemaField:           "type",
-				Reason:                fmt.Sprintf("value \"%g\" must be an integer", value),
+				Reason:                fmt.Sprintf("value must be an integer"),
 				customizeMessageError: settings.customizeMessageError,
 			}
 			if !settings.multiError {
@@ -1584,7 +1579,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "pattern",
-			Reason:                fmt.Sprintf(`string %q doesn't match the regular expression "%s"`, value, schema.Pattern),
+			Reason:                fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern),
 			customizeMessageError: settings.customizeMessageError,
 		}
 		if !settings.multiError {
@@ -1945,10 +1940,12 @@ func (schema *Schema) compilePattern() (err error) {
 }
 
 type SchemaError struct {
-	Value                 interface{}
-	reversePath           []string
-	Schema                *Schema
-	SchemaField           string
+	Value       interface{}
+	reversePath []string
+	Schema      *Schema
+	SchemaField string
+	// Reason is a human-readable message describing the error.
+	// The message should never include the original value to prevent leakage of potentially sensitive inputs in error messages.
 	Reason                string
 	Origin                error
 	customizeMessageError func(err *SchemaError) string
