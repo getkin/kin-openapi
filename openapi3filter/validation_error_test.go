@@ -244,11 +244,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "status",
 			wantErrParamIn:      "query",
-			wantErrSchemaReason: "value is not one of the allowed values [\"available\" \"pending\" \"sold\"]",
+			wantErrSchemaReason: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 			wantErrSchemaPath:   "/0",
 			wantErrSchemaValue:  "available,sold",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "value is not one of the allowed values [\"available\" \"pending\" \"sold\"]",
+				Title: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 				Detail: "value available,sold at /0 must be one of: available, pending, sold; " +
 					// TODO: do we really want to use this heuristic to guess
 					//  that they're using the wrong serialization?
@@ -262,11 +262,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "status",
 			wantErrParamIn:      "query",
-			wantErrSchemaReason: "value is not one of the allowed values [\"available\" \"pending\" \"sold\"]",
+			wantErrSchemaReason: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "watdis",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title:  "value is not one of the allowed values [\"available\" \"pending\" \"sold\"]",
+				Title:  "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 				Detail: "value watdis at /1 must be one of: available, pending, sold",
 				Source: &ValidationErrorSource{Parameter: "status"}},
 		},
@@ -278,11 +278,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "kind",
 			wantErrParamIn:      "query",
-			wantErrSchemaReason: "value is not one of the allowed values [\"dog\" \"cat\" \"turtle\" \"bird,with,commas\"]",
+			wantErrSchemaReason: "value is not one of the allowed values [\"dog\",\"cat\",\"turtle\",\"bird,with,commas\"]",
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "fish,with,commas",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title:  "value is not one of the allowed values [\"dog\" \"cat\" \"turtle\" \"bird,with,commas\"]",
+				Title:  "value is not one of the allowed values [\"dog\",\"cat\",\"turtle\",\"bird,with,commas\"]",
 				Detail: "value fish,with,commas at /1 must be one of: dog, cat, turtle, bird,with,commas",
 				// No 'perhaps you intended' because its the right serialization format
 				Source: &ValidationErrorSource{Parameter: "kind"}},
@@ -304,11 +304,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			},
 			wantErrParam:        "x-environment",
 			wantErrParamIn:      "header",
-			wantErrSchemaReason: "value is not one of the allowed values [\"demo\" \"prod\"]",
+			wantErrSchemaReason: "value is not one of the allowed values [\"demo\",\"prod\"]",
 			wantErrSchemaPath:   "/",
 			wantErrSchemaValue:  "watdis",
 			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title:  "value is not one of the allowed values [\"demo\" \"prod\"]",
+				Title:  "value is not one of the allowed values [\"demo\",\"prod\"]",
 				Detail: "value watdis at / must be one of: demo, prod",
 				Source: &ValidationErrorSource{Parameter: "x-environment"}},
 		},
@@ -323,11 +323,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 				r: newPetstoreRequest(t, http.MethodPost, "/pet", bytes.NewBufferString(`{"status":"watdis"}`)),
 			},
 			wantErrReason:       "doesn't match schema #/components/schemas/PetWithRequired",
-			wantErrSchemaReason: "value is not one of the allowed values [\"available\" \"pending\" \"sold\"]",
+			wantErrSchemaReason: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 			wantErrSchemaValue:  "watdis",
 			wantErrSchemaPath:   "/status",
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title:  "value is not one of the allowed values [\"available\" \"pending\" \"sold\"]",
+				Title:  "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 				Detail: "value watdis at /status must be one of: available, pending, sold",
 				Source: &ValidationErrorSource{Pointer: "/status"}},
 		},
@@ -379,13 +379,13 @@ func getValidationTests(t *testing.T) []*validationTest {
 					bytes.NewBufferString(`{"name":"Bahama","photoUrls":"http://cat"}`)),
 			},
 			wantErrReason:       "doesn't match schema #/components/schemas/PetWithRequired",
-			wantErrSchemaReason: "field must be set to array or not be present",
+			wantErrSchemaReason: "value must be an array",
 			wantErrSchemaPath:   "/photoUrls",
-			wantErrSchemaValue:  "string",
+			wantErrSchemaValue:  "http://cat",
 			// TODO: this shouldn't say "or not be present", but this requires recursively resolving
 			//  innerErr.JSONPointer() against e.RequestBody.Content["application/json"].Schema.Value (.Required, .Properties)
 			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title:  "field must be set to array or not be present",
+				Title:  "value must be an array",
 				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
 		},
 		{
@@ -396,6 +396,7 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrReason:             "doesn't match schema",
 			wantErrSchemaPath:         "/",
 			wantErrSchemaValue:        map[string]string{"name": "Bahama"},
+			wantErrSchemaReason:       `doesn't match all schemas from "allOf"`,
 			wantErrSchemaOriginReason: `property "photoUrls" is missing`,
 			wantErrSchemaOriginValue:  map[string]string{"name": "Bahama"},
 			wantErrSchemaOriginPath:   "/photoUrls",
@@ -659,7 +660,7 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-		require.Equal(t, "[422][][] field must be set to array or not be present [source pointer=/photoUrls]", string(body))
+		require.Equal(t, "[422][][] value must be an array [source pointer=/photoUrls]", string(body))
 	})
 }
 
@@ -701,6 +702,6 @@ func TestValidationHandler_Middleware(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-		require.Equal(t, "[422][][] field must be set to array or not be present [source pointer=/photoUrls]", string(body))
+		require.Equal(t, "[422][][] value must be an array [source pointer=/photoUrls]", string(body))
 	})
 }
