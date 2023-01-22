@@ -784,7 +784,7 @@ func (schema *Schema) WithAnyAdditionalProperties() *Schema {
 	return schema
 }
 
-func (schema *Schema) WithNoAdditionalProperties() *Schema {
+func (schema *Schema) WithoutAdditionalProperties() *Schema {
 	schema.AdditionalProperties = AdditionalProperties{Has: BoolPtr(false)}
 	return schema
 }
@@ -1936,7 +1936,8 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, value int
 	}
 
 	a := "a"
-	if strings.Trim(schema.Type[:1], "aeiou") == "" {
+	switch schema.Type {
+	case TypeArray, TypeObject, TypeInteger:
 		a = "an"
 	}
 	return &SchemaError{

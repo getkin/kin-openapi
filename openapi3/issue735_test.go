@@ -139,15 +139,14 @@ func TestIssue735(t *testing.T) {
 			value:            map[string]interface{}{"foo": 42},
 			extraNotContains: []interface{}{42},
 		},
-		// TODO: uncomment when https://github.com/getkin/kin-openapi/pull/747 is merged
-		//{
-		//	name: "additional properties false",
-		//	schema: &Schema{AdditionalProperties: AdditionalProperties{
-		//		Has: BoolPtr(false),
-		//	}},
-		//	value:            map[string]interface{}erface{}{"foo": 42},
-		//	extraNotContains: []interface{}{42},
-		//},
+		{
+			name: "additional properties false",
+			schema: &Schema{AdditionalProperties: AdditionalProperties{
+				Has: BoolPtr(false),
+			}},
+			value:            map[string]interface{}{"foo": 42},
+			extraNotContains: []interface{}{42},
+		},
 		{
 			name: "invalid properties schema",
 			schema: NewSchema().WithProperties(map[string]*Schema{
@@ -161,7 +160,7 @@ func TestIssue735(t *testing.T) {
 		//	name: "read only properties",
 		//	schema: NewSchema().WithProperties(map[string]*Schema{
 		//		"foo": {ReadOnly: true},
-		//	}).WithNoAdditionalProperties(),
+		//	}).WithoutAdditionalProperties(),
 		//	value:            map[string]interface{}{"foo": 42},
 		//	extraNotContains: []interface{}{42},
 		//	options:          []SchemaValidationOption{VisitAsRequest()},
@@ -170,7 +169,7 @@ func TestIssue735(t *testing.T) {
 		//	name: "write only properties",
 		//	schema: NewSchema().WithProperties(map[string]*Schema{
 		//		"foo": {WriteOnly: true},
-		//	}).WithNoAdditionalProperties(),
+		//	}).WithoutAdditionalProperties(),
 		//	value:            map[string]interface{}{"foo": 42},
 		//	extraNotContains: []interface{}{42},
 		//	options:          []SchemaValidationOption{VisitAsResponse()},
