@@ -810,7 +810,7 @@ func (schema *Schema) IsEmpty() bool {
 	if ap := schema.AdditionalProperties.Schema; ap != nil && !ap.Value.IsEmpty() {
 		return false
 	}
-	if apa := schema.AdditionalProperties.Has; apa != nil && *apa {
+	if apa := schema.AdditionalProperties.Has; apa != nil && !*apa {
 		return false
 	}
 	if items := schema.Items; items != nil && !items.Value.IsEmpty() {
