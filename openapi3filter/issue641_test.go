@@ -57,7 +57,7 @@ paths:
 			name:   "failed anyof pattern",
 			spec:   anyOfSpec,
 			req:    "/items?test=999999",
-			errStr: `parameter "test" in query has an error: Doesn't match schema "anyOf"`,
+			errStr: `parameter "test" in query has an error: doesn't match any schema from "anyOf"`,
 		},
 
 		{

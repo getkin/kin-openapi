@@ -81,7 +81,7 @@ func Example() {
 	// Output:
 	// ===== Start New Error =====
 	// @body.name:
-	// 	Error at "/name": field must be set to string or not be present
+	// 	Error at "/name": value must be a string
 	// Schema:
 	//   {
 	//     "example": "doggie",
@@ -89,11 +89,11 @@ func Example() {
 	//   }
 	//
 	// Value:
-	//   "number, integer"
+	//   100
 	//
 	// ===== Start New Error =====
 	// @body.status:
-	// 	Error at "/status": value is not one of the allowed values ["available" "pending" "sold"]
+	// 	Error at "/status": value is not one of the allowed values ["available","pending","sold"]
 	// Schema:
 	//   {
 	//     "description": "pet status in the store",

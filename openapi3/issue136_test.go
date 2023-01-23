@@ -31,7 +31,7 @@ components:
 		},
 		{
 			dflt: `1`,
-			err:  "invalid components: invalid schema default: field must be set to string or not be present",
+			err:  "invalid components: invalid schema default: value must be a string",
 		},
 	} {
 		t.Run(testcase.dflt, func(t *testing.T) {
