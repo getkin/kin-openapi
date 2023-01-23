@@ -71,19 +71,18 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 	}
 
 	if paths := doc2.Paths; len(paths) != 0 {
-		doc3Paths := make(map[string]*openapi3.PathItem, len(paths))
+		doc3.Paths = openapi3.NewPathsWithCapacity(len(paths))
 		for path, pathItem := range paths {
 			r, err := ToV3PathItem(doc2, doc3.Components, pathItem, doc2.Consumes)
 			if err != nil {
 				return nil, err
 			}
-			doc3Paths[path] = r
+			doc3.Paths.Set(path, r)
 		}
-		doc3.Paths = doc3Paths
 	}
 
 	if responses := doc2.Responses; len(responses) != 0 {
-		doc3.Components.Responses = make(map[string]*openapi3.ResponseRef, len(responses))
+		doc3.Components.Responses = make(openapi3.ResponseBodies, len(responses))
 		for k, response := range responses {
 			r, err := ToV3Response(response, doc2.Produces)
 			if err != nil {
@@ -189,15 +188,14 @@ func ToV3Operation(doc2 *openapi2.T, components *openapi3.Components, pathItem *
 	}
 
 	if responses := operation.Responses; responses != nil {
-		doc3Responses := make(openapi3.Responses, len(responses))
+		doc3.Responses = openapi3.NewResponsesWithCapacity(len(responses))
 		for k, response := range responses {
-			doc3, err := ToV3Response(response, operation.Produces)
+			responseRef3, err := ToV3Response(response, operation.Produces)
 			if err != nil {
 				return nil, err
 			}
-			doc3Responses[k] = doc3
+			doc3.Responses.Set(k, responseRef3)
 		}
-		doc3.Responses = doc3Responses
 	}
 	return doc3, nil
 }
@@ -614,13 +612,15 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 			}
 		}
 	}
+
 	if isHTTPS {
 		doc2.Schemes = append(doc2.Schemes, "https")
 	}
 	if isHTTP {
 		doc2.Schemes = append(doc2.Schemes, "http")
 	}
-	for path, pathItem := range doc3.Paths {
+
+	for path, pathItem := range doc3.Paths.Map() {
 		if pathItem == nil {
 			continue
 		}
@@ -983,7 +983,7 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 	sort.Sort(result.Parameters)
 
 	if responses := operation.Responses; responses != nil {
-		resultResponses, err := FromV3Responses(responses, doc3.Components)
+		resultResponses, err := FromV3Responses(responses.Map(), doc3.Components)
 		if err != nil {
 			return nil, err
 		}

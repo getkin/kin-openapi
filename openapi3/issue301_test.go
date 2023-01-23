@@ -16,13 +16,19 @@ func TestIssue301(t *testing.T) {
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
-	transCallbacks := doc.Paths["/trans"].Post.Callbacks["transactionCallback"].Value
-	require.Equal(t, "object", (*transCallbacks)["http://notificationServer.com?transactionId={$request.body#/id}&email={$request.body#/email}"].Post.RequestBody.
-		Value.Content["application/json"].Schema.
-		Value.Type)
+	require.Equal(t, "object", doc.
+		Paths.Value("/trans").
+		Post.Callbacks["transactionCallback"].Value.
+		Value("http://notificationServer.com?transactionId={$request.body#/id}&email={$request.body#/email}").
+		Post.RequestBody.Value.
+		Content["application/json"].Schema.Value.
+		Type)
 
-	otherCallbacks := doc.Paths["/other"].Post.Callbacks["myEvent"].Value
-	require.Equal(t, "boolean", (*otherCallbacks)["{$request.query.queryUrl}"].Post.RequestBody.
-		Value.Content["application/json"].Schema.
-		Value.Type)
+	require.Equal(t, "boolean", doc.
+		Paths.Value("/other").
+		Post.Callbacks["myEvent"].Value.
+		Value("{$request.query.queryUrl}").
+		Post.RequestBody.Value.
+		Content["application/json"].Schema.Value.
+		Type)
 }

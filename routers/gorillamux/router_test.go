@@ -32,8 +32,8 @@ func TestRouter(t *testing.T) {
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-		Paths: openapi3.Paths{
-			"/hello": &openapi3.PathItem{
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/hello", &openapi3.PathItem{
 				Connect: helloCONNECT,
 				Delete:  helloDELETE,
 				Get:     helloGET,
@@ -43,34 +43,34 @@ func TestRouter(t *testing.T) {
 				Post:    helloPOST,
 				Put:     helloPUT,
 				Trace:   helloTRACE,
-			},
-			"/onlyGET": &openapi3.PathItem{
+			}),
+			openapi3.WithPath("/onlyGET", &openapi3.PathItem{
 				Get: helloGET,
-			},
-			"/params/{x}/{y}/{z:.*}": &openapi3.PathItem{
+			}),
+			openapi3.WithPath("/params/{x}/{y}/{z:.*}", &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x").WithSchema(openapi3.NewStringSchema())},
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("y").WithSchema(openapi3.NewFloat64Schema())},
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("z").WithSchema(openapi3.NewIntegerSchema())},
 				},
-			},
-			"/books/{bookid}": &openapi3.PathItem{
+			}),
+			openapi3.WithPath("/books/{bookid}", &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid").WithSchema(openapi3.NewStringSchema())},
 				},
-			},
-			"/books/{bookid}.json": &openapi3.PathItem{
+			}),
+			openapi3.WithPath("/books/{bookid}.json", &openapi3.PathItem{
 				Post: booksPOST,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid2").WithSchema(openapi3.NewStringSchema())},
 				},
-			},
-			"/partial": &openapi3.PathItem{
+			}),
+			openapi3.WithPath("/partial", &openapi3.PathItem{
 				Get: partialGET,
-			},
-		},
+			}),
+		),
 	}
 
 	expect := func(r routers.Router, method string, uri string, operation *openapi3.Operation, params map[string]string) {
@@ -80,7 +80,7 @@ func TestRouter(t *testing.T) {
 		route, pathParams, err := r.FindRoute(req)
 		if err != nil {
 			if operation == nil {
-				pathItem := doc.Paths[uri]
+				pathItem := doc.Paths.Value(uri)
 				if pathItem == nil {
 					if err.Error() != routers.ErrPathNotFound.Error() {
 						t.Fatalf("'%s %s': should have returned %q, but it returned an error: %v", method, uri, routers.ErrPathNotFound, err)
@@ -259,7 +259,9 @@ func TestServerPath(t *testing.T) {
 		newServerWithVariables(
 			"/",
 			nil,
-		)},
+		),
+	},
+		Paths: openapi3.NewPaths(),
 	})
 	require.NoError(t, err)
 }
@@ -277,16 +279,16 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 				URL: "https://example.com",
 			},
 		},
-		Paths: openapi3.Paths{
-			"/hello": &openapi3.PathItem{
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/hello", &openapi3.PathItem{
 				Servers: openapi3.Servers{
 					&openapi3.Server{
 						URL: "https://another.com",
 					},
 				},
 				Get: helloGET,
-			},
-		},
+			}),
+		),
 	}
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
@@ -318,11 +320,11 @@ func TestRelativeURL(t *testing.T) {
 				URL: "/api/v1",
 			},
 		},
-		Paths: openapi3.Paths{
-			"/hello": &openapi3.PathItem{
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/hello", &openapi3.PathItem{
 				Get: helloGET,
-			},
-		},
+			}),
+		),
 	}
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)

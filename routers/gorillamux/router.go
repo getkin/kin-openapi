@@ -57,7 +57,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	muxRouter := mux.NewRouter().UseEncodedPath()
 	r := &Router{}
 	for _, path := range doc.Paths.InMatchingOrder() {
-		pathItem := doc.Paths[path]
+		pathItem := doc.Paths.Value(path)
 		if len(pathItem.Servers) > 0 {
 			if servers, err = makeServers(pathItem.Servers); err != nil {
 				return nil, err
@@ -113,7 +113,7 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 			}
 			route := *r.routes[i]
 			route.Method = req.Method
-			route.Operation = route.Spec.Paths[route.Path].GetOperation(route.Method)
+			route.Operation = route.Spec.Paths.Value(route.Path).GetOperation(route.Method)
 			return &route, vars, nil
 		}
 		switch match.MatchErr {

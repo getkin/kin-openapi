@@ -272,8 +272,8 @@ func spec() *T {
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-		Paths: Paths{
-			"/hello": &PathItem{
+		Paths: NewPaths(
+			WithPath("/hello", &PathItem{
 				Post: &Operation{
 					Parameters: Parameters{
 						{
@@ -285,12 +285,12 @@ func spec() *T {
 						Ref:   "#/components/requestBodies/someRequestBody",
 						Value: requestBody,
 					},
-					Responses: Responses{
-						"200": &ResponseRef{
+					Responses: NewResponses(
+						WithStatus(200, &ResponseRef{
 							Ref:   "#/components/responses/someResponse",
 							Value: response,
-						},
-					},
+						}),
+					),
 				},
 				Parameters: Parameters{
 					{
@@ -298,8 +298,8 @@ func spec() *T {
 						Value: parameter,
 					},
 				},
-			},
-		},
+			}),
+		),
 		Components: &Components{
 			Parameters: ParametersMap{
 				"someParameter": {Value: parameter},

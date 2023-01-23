@@ -38,7 +38,7 @@ info:
 
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
-	require.Equal(t, 0, len(doc.Paths))
+	require.Equal(t, 0, doc.Paths.Len())
 
 	require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }

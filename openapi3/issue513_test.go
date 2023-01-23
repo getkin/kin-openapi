@@ -152,7 +152,7 @@ components:
 	sl := NewLoader()
 	doc, err := sl.LoadFromData([]byte(spec))
 	require.NoError(t, err)
-	require.Contains(t, doc.Paths["/v1/operation"].Delete.Responses["default"].Value.Extensions, `x-my-extension`)
+	require.Contains(t, doc.Paths.Value("/v1/operation").Delete.Responses.Default().Value.Extensions, `x-my-extension`)
 	err = doc.Validate(sl.Context)
 	require.ErrorContains(t, err, `extra sibling fields: [schema]`)
 }

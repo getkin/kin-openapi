@@ -71,7 +71,7 @@ go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--default
 Use `openapi3.Loader`, which resolves all references:
 ```go
 loader := openapi3.NewLoader()
-doc, err := loader.LoadFromFile("swagger.json")
+doc, err := loader.LoadFromFile("my-openapi-spec.json")
 ```
 
 ## Getting OpenAPI operation that matches request
@@ -275,7 +275,15 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 
 This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
 
-## CHANGELOG: Sub-v0 breaking API changes
+## CHANGELOG: Sub-v1 breaking API changes
+
+### v0.122.0
+* `Paths` field of `openapi3.T` is now a pointer
+* `Responses` field of `openapi3.Operation` is now a pointer
+* `openapi3.Paths` went from `map[string]*PathItem` to a struct with an `Extensions` field and methods: `Set`, `Value`, `Len`, `Map`, and `New*`.
+* `openapi3.Callback` went from `map[string]*PathItem` to a struct with an `Extensions` field and methods: `Set`, `Value`, `Len`, `Map`, and `New*`.
+* `openapi3.Responses` went from `map[string]*ResponseRef` to a struct with an `Extensions` field and methods: `Set`, `Value`, `Len`, `Map`, and `New*`.
+* `(openapi3.Responses).Get(int)` renamed to `(*openapi3.Responses).Status(int)`
 
 ### v0.121.0
 * Introduce `openapi3.RequestBodies` (an alias on `map[string]*openapi3.ResponseRef`) and use it in place of `openapi3.Responses` for field `openapi3.Components.Responses`.

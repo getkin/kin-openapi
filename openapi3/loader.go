@@ -238,7 +238,7 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	}
 
 	// Visit all operations
-	for _, pathItem := range doc.Paths {
+	for _, pathItem := range doc.Paths.Map() {
 		if pathItem == nil {
 			continue
 		}
@@ -311,21 +311,32 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			pathPart = unescapeRefString(pathPart)
 			attempted := false
 
+			switch c := cursor.(type) {
 			// Special case of T
 			// See issue856: a ref to doc => we assume that doc is a T => things live in T.Extensions
-			if t, ok := cursor.(*T); ok && pathPart == "" {
-				cursor = t.Extensions
-				attempted = true
-			}
+			case *T:
+				if pathPart == "" {
+					cursor = c.Extensions
+					attempted = true
+				}
 
 			// Special case due to multijson
-			if s, ok := cursor.(*SchemaRef); ok && pathPart == "additionalProperties" {
-				if ap := s.Value.AdditionalProperties.Has; ap != nil {
-					cursor = *ap
-				} else {
-					cursor = s.Value.AdditionalProperties.Schema
+			case *SchemaRef:
+				if pathPart == "additionalProperties" {
+					if ap := c.Value.AdditionalProperties.Has; ap != nil {
+						cursor = *ap
+					} else {
+						cursor = c.Value.AdditionalProperties.Schema
+					}
+					attempted = true
 				}
-				attempted = true
+
+			case *Responses:
+				cursor = c.m // m map[string]*ResponseRef
+			case *Callback:
+				cursor = c.m // m map[string]*PathItem
+			case *Paths:
+				cursor = c.m // m map[string]*PathItem
 			}
 
 			if !attempted {
@@ -417,6 +428,7 @@ func readableType(x interface{}) string {
 
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
+
 	case reflect.Map:
 		elementValue := val.MapIndex(reflect.ValueOf(fieldName))
 		if !elementValue.IsValid() {
@@ -972,7 +984,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		return nil
 	}
 
-	for _, pathItem := range *value {
+	for _, pathItem := range value.Map() {
 		if err = loader.resolvePathItemRef(doc, pathItem, documentPath); err != nil {
 			return err
 		}
@@ -1065,7 +1077,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 				return
 			}
 		}
-		for _, response := range operation.Responses {
+		for _, response := range operation.Responses.Map() {
 			if err = loader.resolveResponseRef(doc, response, documentPath); err != nil {
 				return
 			}
