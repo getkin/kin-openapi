@@ -1354,3 +1354,15 @@ enum:
 	err = schema.VisitJSON(map[string]interface{}{"d": "e"})
 	require.Error(t, err)
 }
+
+func TestStringSliceIssue(t *testing.T) {
+	schema := &Schema{
+		Type:        "array",
+		UniqueItems: true,
+		Items: NewStringSchema().NewRef(),
+	}
+	validData := []string{"foo", "bar"}
+	invalidData := []string{"foo", "foo"}
+	require.NoError(t, schema.VisitJSON(validData))
+	require.NoError(t, schema.VisitJSON(invalidData)) // TODO:
+}
