@@ -1120,6 +1120,17 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 			return schema.visitJSONObject(settings, values)
 		}
 	}
+
+	// Catch slice of non-empty interface type
+	if reflect.TypeOf(value).Kind() == reflect.Slice {
+		valueR := reflect.ValueOf(value)
+		newValue := make([]interface{}, valueR.Len())
+		for i := 0; i < valueR.Len(); i++ {
+			newValue[i] = valueR.Index(i).Interface()
+		}
+		return schema.visitJSONArray(settings, newValue)
+	}
+
 	return &SchemaError{
 		Value:                 value,
 		Schema:                schema,

@@ -1364,5 +1364,5 @@ func TestStringSliceIssue(t *testing.T) {
 	validData := []string{"foo", "bar"}
 	invalidData := []string{"foo", "foo"}
 	require.NoError(t, schema.VisitJSON(validData))
-	require.NoError(t, schema.VisitJSON(invalidData)) // TODO:
+	require.ErrorContains(t, schema.VisitJSON(invalidData), "duplicate items found")
 }
