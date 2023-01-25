@@ -1359,7 +1359,7 @@ func TestIssue751(t *testing.T) {
 	schema := &Schema{
 		Type:        "array",
 		UniqueItems: true,
-		Items: NewStringSchema().NewRef(),
+		Items:       NewStringSchema().NewRef(),
 	}
 	validData := []string{"foo", "bar"}
 	invalidData := []string{"foo", "foo"}
