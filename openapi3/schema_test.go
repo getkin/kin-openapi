@@ -1355,7 +1355,7 @@ enum:
 	require.Error(t, err)
 }
 
-func TestStringSliceIssue(t *testing.T) {
+func TestIssue751(t *testing.T) {
 	schema := &Schema{
 		Type:        "array",
 		UniqueItems: true,
