@@ -197,7 +197,7 @@ var securitySchemeExamples = []securitySchemeExample{
     }
   }
 }`),
-		valid: false,
+		valid: true,
 	},
 
 	{
