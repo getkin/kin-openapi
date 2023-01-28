@@ -1143,8 +1143,20 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
-			if reflect.DeepEqual(v, value) {
-				return
+			switch c := value.(type) {
+			case json.Number:
+				var f float64
+				f, err = strconv.ParseFloat(c.String(), 64)
+				if err != nil {
+					return err
+				}
+				if v == f {
+					return
+				}
+			default:
+				if reflect.DeepEqual(v, value) {
+					return
+				}
 			}
 		}
 		if settings.failfast {
