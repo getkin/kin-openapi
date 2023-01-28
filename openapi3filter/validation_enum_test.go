@@ -61,6 +61,10 @@ paths:
 			true,
 		},
 		{
+			[]byte(`{"exenum": null}`),
+			false,
+		},
+		{
 			[]byte(`{}`),
 			false,
 		},
@@ -113,7 +117,6 @@ paths:
                     - "2"
                     - "3"
                   example: "0"
-                  nullable: true
       responses:
         '200':
           description: Ok
@@ -136,6 +139,10 @@ paths:
 		},
 		{
 			[]byte(`{"exenum": 1}`),
+			true,
+		},
+		{
+			[]byte(`{"exenum": null}`),
 			true,
 		},
 		{
