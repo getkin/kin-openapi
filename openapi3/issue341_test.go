@@ -1,6 +1,10 @@
 package openapi3
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,7 +24,47 @@ func TestIssue341(t *testing.T) {
 
 	bs, err := doc.MarshalJSON()
 	require.NoError(t, err)
-	require.JSONEq(t, `{"info":{"title":"test file","version":"n/a"},"openapi":"3.0.0","paths":{"/testpath":{"get":{"responses":{"200":{"$ref":"#/components/responses/testpath_200_response"}}}}}}`, string(bs))
+	require.JSONEq(t, `{"info":{"title":"test file","version":"n/a"},"openapi":"3.0.0","paths":{"/testpath":{"$ref":"testpath.yaml#/paths/~1testpath"}}}`, string(bs))
 
 	require.Equal(t, "string", doc.Paths["/testpath"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+
+	doc.InternalizeRefs(context.Background(), nil)
+	bs, err = doc.MarshalJSON()
+	require.NoError(t, err)
+	var dst bytes.Buffer
+	err = json.Indent(&dst, bs, "", "  ")
+	require.NoError(t, err)
+	fmt.Println(dst.String())
+	require.JSONEq(t, `{
+		"components": {
+		  "responses": {
+			"testpath_200_response": {
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"type": "string"
+				  }
+				}
+			  },
+			  "description": "a custom response"
+			}
+		  }
+		},
+		"info": {
+		  "title": "test file",
+		  "version": "n/a"
+		},
+		"openapi": "3.0.0",
+		"paths": {
+		  "/testpath": {
+			"get": {
+			  "responses": {
+				"200": {
+				  "$ref": "#/components/responses/testpath_200_response"
+				}
+			  }
+			}
+		  }
+		}
+	  }`, string(bs))
 }
