@@ -15,6 +15,12 @@ type Options struct {
 	// Set ExcludeResponseBody so ValidateResponse skips response body validation
 	ExcludeResponseBody bool
 
+	// Set ExcludeReadOnlyValidations so ValidateRequest skips read-only validations
+	ExcludeReadOnlyValidations bool
+
+	// Set ExcludeWriteOnlyValidations so ValidateResponse skips write-only validations
+	ExcludeWriteOnlyValidations bool
+
 	// Set IncludeResponseStatus so ValidateResponse fails on response
 	// status not defined in OpenAPI spec
 	IncludeResponseStatus bool

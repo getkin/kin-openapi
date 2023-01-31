@@ -272,7 +272,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	defaultsSet := false
-	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
+	opts := make([]openapi3.SchemaValidationOption, 0, 4) // 4 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
 	if !options.SkipSettingDefaults {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
@@ -282,6 +282,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
+	if options.ExcludeReadOnlyValidations {
+		opts = append(opts, openapi3.DisableReadOnlyValidation())
 	}
 
 	// Validate JSON with the schema

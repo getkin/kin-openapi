@@ -113,6 +113,8 @@ type SchemaRefs []*SchemaRef
 type SchemaValidationOption func(*schemaValidationSettings)
     func DefaultsSet(f func()) SchemaValidationOption
     func DisablePatternValidation() SchemaValidationOption
+    func DisableReadOnlyValidation() SchemaValidationOption
+    func DisableWriteOnlyValidation() SchemaValidationOption
     func EnableFormatValidation() SchemaValidationOption
     func FailFast() SchemaValidationOption
     func MultiErrors() SchemaValidationOption
