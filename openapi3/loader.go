@@ -52,6 +52,7 @@ type Loader struct {
 	visitedResponse       map[*Response]struct{}
 	visitedSchema         map[*Schema]struct{}
 	visitedSecurityScheme map[*SecurityScheme]struct{}
+	visitedCallback       map[*Callback]struct{}
 }
 
 // NewLoader returns an empty Loader
@@ -243,11 +244,11 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	}
 
 	// Visit all operations
-	for entrypoint, pathItem := range doc.Paths {
+	for _, pathItem := range doc.Paths {
 		if pathItem == nil {
 			continue
 		}
-		if err = loader.resolvePathItemRef(doc, entrypoint, pathItem, location); err != nil {
+		if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
 			return
 		}
 	}
@@ -850,6 +851,16 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 }
 
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
+	if component != nil && component.Value != nil {
+		if loader.visitedCallback == nil {
+			loader.visitedCallback = make(map[*Callback]struct{})
+		}
+		if _, ok := loader.visitedCallback[component.Value]; ok {
+			return nil
+		}
+		loader.visitedCallback[component.Value] = struct{}{}
+	}
+
 	if component == nil {
 		return errors.New("invalid callback: value MUST be an object")
 	}
@@ -878,57 +889,8 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		return nil
 	}
 
-	for entrypoint, pathItem := range *value {
-		entrypoint, pathItem := entrypoint, pathItem
-		err = func() (err error) {
-			key := "-"
-			if documentPath != nil {
-				key = documentPath.EscapedPath()
-			}
-			key += entrypoint
-			if _, ok := loader.visitedPathItemRefs[key]; ok {
-				return nil
-			}
-			loader.visitedPathItemRefs[key] = struct{}{}
-
-			if pathItem == nil {
-				return errors.New("invalid path item: value MUST be an object")
-			}
-			ref := pathItem.Ref
-			if ref != "" {
-				if isSingleRefElement(ref) {
-					var p PathItem
-					if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
-						return err
-					}
-					*pathItem = p
-				} else {
-					if doc, ref, documentPath, err = loader.resolveRef(doc, ref, documentPath); err != nil {
-						return
-					}
-
-					rest := strings.TrimPrefix(ref, "#/components/callbacks/")
-					if rest == ref {
-						return fmt.Errorf(`expected prefix "#/components/callbacks/" in URI %q`, ref)
-					}
-					id := unescapeRefString(rest)
-
-					if doc.Components == nil || doc.Components.Callbacks == nil {
-						return failedToResolveRefFragmentPart(ref, "callbacks")
-					}
-					resolved := doc.Components.Callbacks[id]
-					if resolved == nil {
-						return failedToResolveRefFragmentPart(ref, id)
-					}
-
-					for _, p := range *resolved.Value {
-						*pathItem = *p
-						break
-					}
-				}
-			}
-			return loader.resolvePathItemRefContinued(doc, pathItem, documentPath)
-		}()
+	for _, pathItem := range *value {
+		err := loader.resolvePathItemRef(doc, pathItem, documentPath)
 		if err != nil {
 			return err
 		}
@@ -973,22 +935,27 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 	return nil
 }
 
-func (loader *Loader) resolvePathItemRef(doc *T, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
-	key := "_"
-	if documentPath != nil {
-		key = documentPath.EscapedPath()
-	}
-	key += entrypoint
-	if _, ok := loader.visitedPathItemRefs[key]; ok {
-		return nil
-	}
-	loader.visitedPathItemRefs[key] = struct{}{}
-
+func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	if pathItem == nil {
 		return errors.New("invalid path item: value MUST be an object")
 	}
 	ref := pathItem.Ref
 	if ref != "" {
+		if pathItem.Summary != "" ||
+			pathItem.Description != "" ||
+			pathItem.Connect != nil ||
+			pathItem.Delete != nil ||
+			pathItem.Get != nil ||
+			pathItem.Head != nil ||
+			pathItem.Options != nil ||
+			pathItem.Patch != nil ||
+			pathItem.Post != nil ||
+			pathItem.Put != nil ||
+			pathItem.Trace != nil ||
+			len(pathItem.Servers) != 0 ||
+			len(pathItem.Parameters) != 0 {
+			return nil
+		}
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
@@ -996,25 +963,14 @@ func (loader *Loader) resolvePathItemRef(doc *T, entrypoint string, pathItem *Pa
 			}
 			*pathItem = p
 		} else {
-			if doc, ref, documentPath, err = loader.resolveRef(doc, ref, documentPath); err != nil {
-				return
+			var resolved PathItem
+			doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved)
+			if err != nil {
+				return err
 			}
-
-			rest := strings.TrimPrefix(ref, "#/paths/")
-			if rest == ref {
-				return fmt.Errorf(`expected prefix "#/paths/" in URI %q`, ref)
-			}
-			id := unescapeRefString(rest)
-
-			if doc.Paths == nil {
-				return failedToResolveRefFragmentPart(ref, "paths")
-			}
-			resolved := doc.Paths[id]
-			if resolved == nil {
-				return failedToResolveRefFragmentPart(ref, id)
-			}
-			*pathItem = *resolved
+			*pathItem = resolved
 		}
+		pathItem.Ref = ref
 	}
 	return loader.resolvePathItemRefContinued(doc, pathItem, documentPath)
 }
