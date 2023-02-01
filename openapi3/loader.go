@@ -351,12 +351,41 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			return nil
 		}
 		if err := codec(cursor, resolved); err != nil {
-			return nil, nil, fmt.Errorf("bad data in %q", ref)
+			return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
 		}
 		return componentDoc, componentPath, nil
 
 	default:
-		return nil, nil, fmt.Errorf("bad data in %q", ref)
+		return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
+	}
+}
+
+func readableType(x interface{}) string {
+	switch x.(type) {
+	case *Callback:
+		return "callback object"
+	case *CallbackRef:
+		return "ref to callback object"
+	case *ExampleRef:
+		return "ref to example object"
+	case *HeaderRef:
+		return "ref to header object"
+	case *LinkRef:
+		return "ref to link object"
+	case *ParameterRef:
+		return "ref to parameter object"
+	case *PathItem:
+		return "pathItem object"
+	case *RequestBodyRef:
+		return "ref to requestBody object"
+	case *ResponseRef:
+		return "ref to response object"
+	case *SchemaRef:
+		return "ref to schema object"
+	case *SecuritySchemeRef:
+		return "ref to securityScheme object"
+	default:
+		panic(fmt.Sprintf("unreachable %T", x))
 	}
 }
 
