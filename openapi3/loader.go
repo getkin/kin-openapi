@@ -877,7 +877,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 			if err != nil {
 				return err
 			}
-			if err := loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
+			if err = loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -890,8 +890,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 	}
 
 	for _, pathItem := range *value {
-		err := loader.resolvePathItemRef(doc, pathItem, documentPath)
-		if err != nil {
+		if err = loader.resolvePathItemRef(doc, pathItem, documentPath); err != nil {
 			return err
 		}
 	}
@@ -964,8 +963,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			*pathItem = p
 		} else {
 			var resolved PathItem
-			doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved)
-			if err != nil {
+			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
 				return err
 			}
 			*pathItem = resolved
