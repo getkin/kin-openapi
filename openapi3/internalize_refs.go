@@ -78,11 +78,16 @@ func (doc *T) addParameterToSpec(p *ParameterRef, refNameResolver RefNameResolve
 		return false
 	}
 	name := refNameResolver(p.Ref)
-	if _, ok := doc.Components.Parameters[name]; ok {
-		p.Ref = "#/components/parameters/" + name
-		return true
+	if doc.Components != nil {
+		if _, ok := doc.Components.Parameters[name]; ok {
+			p.Ref = "#/components/parameters/" + name
+			return true
+		}
 	}
 
+	if doc.Components == nil {
+		doc.Components = &Components{}
+	}
 	if doc.Components.Parameters == nil {
 		doc.Components.Parameters = make(ParametersMap)
 	}
@@ -96,9 +101,15 @@ func (doc *T) addHeaderToSpec(h *HeaderRef, refNameResolver RefNameResolver, par
 		return false
 	}
 	name := refNameResolver(h.Ref)
-	if _, ok := doc.Components.Headers[name]; ok {
-		h.Ref = "#/components/headers/" + name
-		return true
+	if doc.Components != nil {
+		if _, ok := doc.Components.Headers[name]; ok {
+			h.Ref = "#/components/headers/" + name
+			return true
+		}
+	}
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
 	}
 	if doc.Components.Headers == nil {
 		doc.Components.Headers = make(Headers)
@@ -113,9 +124,15 @@ func (doc *T) addRequestBodyToSpec(r *RequestBodyRef, refNameResolver RefNameRes
 		return false
 	}
 	name := refNameResolver(r.Ref)
-	if _, ok := doc.Components.RequestBodies[name]; ok {
-		r.Ref = "#/components/requestBodies/" + name
-		return true
+	if doc.Components != nil {
+		if _, ok := doc.Components.RequestBodies[name]; ok {
+			r.Ref = "#/components/requestBodies/" + name
+			return true
+		}
+	}
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
 	}
 	if doc.Components.RequestBodies == nil {
 		doc.Components.RequestBodies = make(RequestBodies)
@@ -130,9 +147,15 @@ func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver,
 		return false
 	}
 	name := refNameResolver(r.Ref)
-	if _, ok := doc.Components.Responses[name]; ok {
-		r.Ref = "#/components/responses/" + name
-		return true
+	if doc.Components != nil {
+		if _, ok := doc.Components.Responses[name]; ok {
+			r.Ref = "#/components/responses/" + name
+			return true
+		}
+	}
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
 	}
 	if doc.Components.Responses == nil {
 		doc.Components.Responses = make(Responses)
@@ -147,9 +170,15 @@ func (doc *T) addSecuritySchemeToSpec(ss *SecuritySchemeRef, refNameResolver Ref
 		return
 	}
 	name := refNameResolver(ss.Ref)
-	if _, ok := doc.Components.SecuritySchemes[name]; ok {
-		ss.Ref = "#/components/securitySchemes/" + name
-		return
+	if doc.Components != nil {
+		if _, ok := doc.Components.SecuritySchemes[name]; ok {
+			ss.Ref = "#/components/securitySchemes/" + name
+			return
+		}
+	}
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
 	}
 	if doc.Components.SecuritySchemes == nil {
 		doc.Components.SecuritySchemes = make(SecuritySchemes)
@@ -164,9 +193,15 @@ func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver, p
 		return
 	}
 	name := refNameResolver(e.Ref)
-	if _, ok := doc.Components.Examples[name]; ok {
-		e.Ref = "#/components/examples/" + name
-		return
+	if doc.Components != nil {
+		if _, ok := doc.Components.Examples[name]; ok {
+			e.Ref = "#/components/examples/" + name
+			return
+		}
+	}
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
 	}
 	if doc.Components.Examples == nil {
 		doc.Components.Examples = make(Examples)
@@ -181,9 +216,15 @@ func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver, parentI
 		return
 	}
 	name := refNameResolver(l.Ref)
-	if _, ok := doc.Components.Links[name]; ok {
-		l.Ref = "#/components/links/" + name
-		return
+	if doc.Components != nil {
+		if _, ok := doc.Components.Links[name]; ok {
+			l.Ref = "#/components/links/" + name
+			return
+		}
+	}
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
 	}
 	if doc.Components.Links == nil {
 		doc.Components.Links = make(Links)
@@ -198,6 +239,10 @@ func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver,
 		return false
 	}
 	name := refNameResolver(c.Ref)
+
+	if doc.Components == nil {
+		doc.Components = &Components{}
+	}
 	if doc.Components.Callbacks == nil {
 		doc.Components.Callbacks = make(Callbacks)
 	}
@@ -293,6 +338,9 @@ func (doc *T) derefRequestBody(r RequestBody, refNameResolver RefNameResolver, p
 
 func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameResolver, parentIsExternal bool) {
 	for _, ops := range paths {
+		if isExternalRef(ops.Ref, parentIsExternal) {
+			parentIsExternal = true
+		}
 		// inline full operations
 		ops.Ref = ""
 
