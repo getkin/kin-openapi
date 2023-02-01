@@ -44,6 +44,7 @@ type Loader struct {
 
 	visitedDocuments map[string]*T
 
+	visitedCallback       map[*Callback]struct{}
 	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
 	visitedLink           map[*Link]struct{}
@@ -52,7 +53,6 @@ type Loader struct {
 	visitedResponse       map[*Response]struct{}
 	visitedSchema         map[*Schema]struct{}
 	visitedSecurityScheme map[*SecurityScheme]struct{}
-	visitedCallback       map[*Callback]struct{}
 }
 
 // NewLoader returns an empty Loader
