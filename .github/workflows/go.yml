@@ -176,6 +176,24 @@ jobs:
           Tag
           XML
 
+    - if: runner.os == 'Linux'
+      name: Ensure readableType() covers all possible values of resolved var
+      run: |
+        [[ "$(git grep -F 'var resolved ' -- openapi3/loader.go | awk '{print $4}' | sort | tr '\n' ' ')" = "$(echo "$RESOLVEDS" | tr '\n' ' ')" ]]
+      env:
+        RESOLVEDS: >
+          Callback
+          CallbackRef
+          ExampleRef
+          HeaderRef
+          LinkRef
+          ParameterRef
+          PathItem
+          RequestBodyRef
+          ResponseRef
+          SchemaRef
+          SecuritySchemeRef
+
   check-goimports:
     runs-on: ubuntu-latest
     steps:
