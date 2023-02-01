@@ -1787,8 +1787,8 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		sort.Strings(properties)
 		for _, propName := range properties {
 			propSchema := schema.Properties[propName]
-			reqRO := settings.asreq && propSchema.Value.ReadOnly
-			repWO := settings.asrep && propSchema.Value.WriteOnly
+			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
+			repWO := settings.asrep && propSchema.Value.WriteOnly && !settings.writeOnlyValidationDisabled
 
 			if value[propName] == nil {
 				if dlft := propSchema.Value.Default; dlft != nil && !reqRO && !repWO {
