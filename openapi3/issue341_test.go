@@ -1,10 +1,7 @@
 package openapi3
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,10 +28,6 @@ func TestIssue341(t *testing.T) {
 	doc.InternalizeRefs(context.Background(), nil)
 	bs, err = doc.MarshalJSON()
 	require.NoError(t, err)
-	var dst bytes.Buffer
-	err = json.Indent(&dst, bs, "", "  ")
-	require.NoError(t, err)
-	fmt.Println(dst.String())
 	require.JSONEq(t, `{
 		"components": {
 		  "responses": {
