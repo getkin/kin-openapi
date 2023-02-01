@@ -1124,9 +1124,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	// Catch slice of non-empty interface type
 	if reflect.TypeOf(value).Kind() == reflect.Slice {
 		valueR := reflect.ValueOf(value)
-		newValue := make([]interface{}, valueR.Len())
+		newValue := make([]interface{}, 0, valueR.Len())
 		for i := 0; i < valueR.Len(); i++ {
-			newValue[i] = valueR.Index(i).Interface()
+			newValue = append(newValue, valueR.Index(i).Interface())
 		}
 		return schema.visitJSONArray(settings, newValue)
 	}
@@ -1146,8 +1146,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			switch c := value.(type) {
 			case json.Number:
 				var f float64
-				f, err = strconv.ParseFloat(c.String(), 64)
-				if err != nil {
+				if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
 					return err
 				}
 				if v == f {
