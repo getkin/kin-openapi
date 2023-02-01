@@ -181,7 +181,7 @@ jobs:
       run: |
         [[ "$(git grep -F 'var resolved ' -- openapi3/loader.go | awk '{print $4}' | sort | tr '\n' ' ')" = "$RESOLVEDS" ]]
       env:
-        RESOLVEDS: 'Callback CallbackRef ExampleRef HeaderRef LinkRef ParameterRef PathItem RequestBodyRef ResponseRef SchemaRef SecuritySchemeRef'
+        RESOLVEDS: 'Callback CallbackRef ExampleRef HeaderRef LinkRef ParameterRef PathItem RequestBodyRef ResponseRef SchemaRef SecuritySchemeRef '
 
   check-goimports:
     runs-on: ubuntu-latest
