@@ -55,16 +55,51 @@ paths:
 `)
 
 	loader := NewLoader()
+
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
 	require.Equal(t, 1, len(doc.Paths))
-	def := doc.Paths["/items"].Put.Responses.Default().Value
-	desc := "unexpected error"
-	require.Equal(t, &desc, def.Description)
+	require.Equal(t, "unexpected error", *doc.Paths["/items"].Put.Responses.Default().Value.Description)
+
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+}
+
+func TestIssue731(t *testing.T) {
+	spec := []byte(`
+openapi: 3.0.0
+info:
+  title: An API
+  version: v1
+paths:
+  /items:
+    put:
+      description: ''
+      requestBody:
+        required: true
+      # Note mis-indented content block
+      content:
+        application/json:
+          schema:
+            type: object
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+`[1:])
+
+	loader := NewLoader()
+
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.ErrorContains(t, err, `content of the request body is required`)
 }
 
 func ExampleLoader() {
