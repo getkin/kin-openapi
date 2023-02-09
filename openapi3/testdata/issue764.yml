@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: API
+  version: 1.0.0
+paths: { }
+components:
+  schemas:
+    QueryComponent:
+      oneOf:
+        - $ref: '#/components/schemas/AndQuery'
+        - $ref: '#/components/schemas/OrQuery'
+
+    OrQuery:
+      required:
+        - dis_max
+      properties:
+        dis_max:
+          $ref: '#/components/schemas/OrQueryGroup'
+
+    OrQueryGroup:
+      description: A query that returns the OR of the child queries
+      required:
+        - queries
+      properties:
+        queries:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryComponent'
+
+    AndQuery:
+      required:
+        - bool
+      properties:
+        bool:
+          $ref: '#/components/schemas/AndQueryGroup'
+
+    AndQueryGroup:
+      description: A query that returns the AND of the child queries
+      properties:
+        filter:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryComponent'
+        must_not:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryComponent'
+
+    Request:
+      properties:
+        query:
+          $ref: '#/components/schemas/QueryComponent'
