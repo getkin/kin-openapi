@@ -12,6 +12,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+var argN = flag.Int("n", 1, "times ")
+
 var (
 	defaultDefaults = true
 	defaults        = flag.Bool("defaults", defaultDefaults, "when false, disables schemas' default field validation")
@@ -39,6 +41,11 @@ func main() {
 		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
 	}
 
+	n := *argN
+	if n <= 0 {
+		n = 1
+	}
+
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -57,9 +64,13 @@ func main() {
 		loader := openapi3.NewLoader()
 		loader.IsExternalRefsAllowed = *ext
 
-		doc, err := loader.LoadFromFile(filename)
-		if err != nil {
-			log.Fatal(err)
+		var doc *openapi3.T
+		for i := range make([]struct{}, n) {
+			if doc, err = loader.LoadFromFile(filename); err != nil {
+				if !(i != n && strings.HasPrefix(err.Error(), openapi3.CircularReferenceError)) {
+					log.Fatal(err)
+				}
+			}
 		}
 
 		var opts []openapi3.ValidationOption
@@ -73,8 +84,12 @@ func main() {
 			opts = append(opts, openapi3.DisableSchemaPatternValidation())
 		}
 
-		if err = doc.Validate(loader.Context, opts...); err != nil {
-			log.Fatal(err)
+		for i := range make([]struct{}, n) {
+			if err = doc.Validate(loader.Context, opts...); err != nil {
+				if !(i != n && strings.HasPrefix(err.Error(), openapi3.CircularReferenceError)) {
+					log.Fatal(err)
+				}
+			}
 		}
 
 	case vd.Swagger == "2" || strings.HasPrefix(vd.Swagger, "2."):
@@ -91,9 +106,13 @@ func main() {
 			log.Fatal("Flag --patterns is only for OpenAPIv3")
 		}
 
-		var doc openapi2.T
-		if err := yaml.Unmarshal(data, &doc); err != nil {
-			log.Fatal(err)
+		for i := range make([]struct{}, n) {
+			var doc openapi2.T
+			if err := yaml.Unmarshal(data, &doc); err != nil {
+				if !(i != n && strings.HasPrefix(err.Error(), openapi3.CircularReferenceError)) {
+					log.Fatal(err)
+				}
+			}
 		}
 
 	default:

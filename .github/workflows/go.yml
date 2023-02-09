@@ -84,6 +84,8 @@ jobs:
         CGO_ENABLED: '1'
     - run: git --no-pager diff --exit-code
 
+    - run: go run ./cmd/validate -n=999999 -- openapi3/testdata/issue764.yml
+
     - if: runner.os == 'Linux'
       name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
       run: |
