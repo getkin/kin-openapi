@@ -1789,12 +1789,10 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
 			repWO := settings.asrep && propSchema.Value.WriteOnly && !settings.writeOnlyValidationDisabled
 
-			if value[propName] == nil {
-				if dlft := propSchema.Value.Default; dlft != nil && !reqRO && !repWO {
-					value[propName] = dlft
-					if f := settings.defaultsSet; f != nil {
-						settings.onceSettingDefaults.Do(f)
-					}
+			if f := settings.defaultsSet; f != nil && value[propName] == nil {
+				if dflt := propSchema.Value.Default; dflt != nil && !reqRO && !repWO {
+					value[propName] = dflt
+					settings.onceSettingDefaults.Do(f)
 				}
 			}
 
