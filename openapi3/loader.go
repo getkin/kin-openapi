@@ -504,7 +504,6 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	value := component.Value
@@ -552,7 +551,6 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	value := component.Value
@@ -609,7 +607,6 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	value := component.Value
@@ -671,7 +668,6 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	value := component.Value
@@ -754,7 +750,6 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 		if loader.visitedSchema == nil {
 			loader.visitedSchema = make(map[*Schema]struct{})
@@ -836,7 +831,6 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	return nil
@@ -873,7 +867,6 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	return nil
@@ -910,7 +903,6 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	value := component.Value
@@ -957,7 +949,6 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 				return err
 			}
 			component.Value = resolved.Value
-			return nil
 		}
 	}
 	return nil
@@ -999,10 +990,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		}
 		pathItem.Ref = ref
 	}
-	return loader.resolvePathItemRefContinued(doc, pathItem, documentPath)
-}
 
-func (loader *Loader) resolvePathItemRefContinued(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	for _, parameter := range pathItem.Parameters {
 		if err = loader.resolveParameterRef(doc, parameter, documentPath); err != nil {
 			return
