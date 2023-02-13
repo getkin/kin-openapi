@@ -59,7 +59,7 @@ func main() {
 
 		doc, err := loader.LoadFromFile(filename)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln("Loading error:", err)
 		}
 
 		var opts []openapi3.ValidationOption
@@ -74,7 +74,7 @@ func main() {
 		}
 
 		if err = doc.Validate(loader.Context, opts...); err != nil {
-			log.Fatal(err)
+			log.Fatalln("Validation error:", err)
 		}
 
 	case vd.Swagger == "2" || strings.HasPrefix(vd.Swagger, "2."):
@@ -93,7 +93,7 @@ func main() {
 
 		var doc openapi2.T
 		if err := yaml.Unmarshal(data, &doc); err != nil {
-			log.Fatal(err)
+			log.Fatalln("Loading error:", err)
 		}
 
 	default:
