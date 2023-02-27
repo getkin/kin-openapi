@@ -46,6 +46,7 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -56,8 +57,6 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -123,6 +122,7 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -133,8 +133,6 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -200,6 +198,7 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -210,8 +209,6 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -277,6 +274,7 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -287,8 +285,6 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -354,6 +350,7 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -364,8 +361,6 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -431,6 +426,7 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -441,8 +437,6 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -508,6 +502,7 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -518,8 +513,6 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -585,6 +578,7 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -595,8 +589,6 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
@@ -662,6 +654,7 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -672,8 +665,6 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
