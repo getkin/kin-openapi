@@ -80,6 +80,7 @@ func (x *${type}Ref) UnmarshalJSON(data []byte) error {
 			for key := range extra {
 				x.extra = append(x.extra, key)
 			}
+			sort.Strings(x.extra)
 		}
 		return nil
 	}
@@ -90,8 +91,6 @@ func (x *${type}Ref) UnmarshalJSON(data []byte) error {
 func (x *${type}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
-		sort.Strings(extra)
-
 		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		if allowed == nil {
