@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"path/filepath"
 	"strings"
 )
@@ -188,10 +187,15 @@ func (doc *T) addSecuritySchemeToSpec(ss *SecuritySchemeRef, refNameResolver Ref
 
 }
 
-func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver, parentIsExternal bool) {
-	if e == nil || !isExternalRef(e.Ref, parentIsExternal) {
+func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver) {
+	if e == nil {
 		return
 	}
+
+	doc.addRefExampleToSpec(e, refNameResolver)
+}
+
+func (doc *T) addRefExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver) {
 	name := refNameResolver(e.Ref)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Examples[name]; ok {
@@ -208,7 +212,6 @@ func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver, p
 	}
 	doc.Components.Examples[name] = &ExampleRef{Value: e.Value}
 	e.Ref = "#/components/examples/" + name
-
 }
 
 func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver, parentIsExternal bool) {
@@ -288,9 +291,9 @@ func (doc *T) derefHeaders(hs Headers, refNameResolver RefNameResolver, parentIs
 	}
 }
 
-func (doc *T) derefExamples(es Examples, refNameResolver RefNameResolver, parentIsExternal bool) {
+func (doc *T) derefExamples(es Examples, refNameResolver RefNameResolver) {
 	for _, e := range es {
-		doc.addExampleToSpec(e, refNameResolver, parentIsExternal)
+		doc.addExampleToSpec(e, refNameResolver)
 	}
 }
 
@@ -300,7 +303,7 @@ func (doc *T) derefContent(c Content, refNameResolver RefNameResolver, parentIsE
 		if mediatype.Schema != nil {
 			doc.derefSchema(mediatype.Schema.Value, refNameResolver, isExternal || parentIsExternal)
 		}
-		doc.derefExamples(mediatype.Examples, refNameResolver, parentIsExternal)
+		doc.derefExamples(mediatype.Examples, refNameResolver)
 		for _, e := range mediatype.Encoding {
 			doc.derefHeaders(e.Headers, refNameResolver, parentIsExternal)
 		}
@@ -376,12 +379,12 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 // refNameResolver takes in references to returns a name to store the reference under locally.
 // It MUST return a unique name for each reference type.
 // A default implementation is provided that will suffice for most use cases. See the function
-// documention for more details.
+// documentation for more details.
 //
 // Example:
 //
-//	doc.InternalizeRefs(context.Background(), nil)
-func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) {
+//	doc.InternalizeRefs(func (ref string) { return ref })
+func (doc *T) InternalizeRefs(refNameResolver func(ref string) string) {
 	doc.resetVisited()
 
 	if refNameResolver == nil {
@@ -419,7 +422,7 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref stri
 		for _, ss := range components.SecuritySchemes {
 			doc.addSecuritySchemeToSpec(ss, refNameResolver, false)
 		}
-		doc.derefExamples(components.Examples, refNameResolver, false)
+		doc.derefExamples(components.Examples, refNameResolver)
 		doc.derefLinks(components.Links, refNameResolver, false)
 		for _, cb := range components.Callbacks {
 			isExternal := doc.addCallbackToSpec(cb, refNameResolver, false)

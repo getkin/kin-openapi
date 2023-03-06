@@ -1,0 +1,33 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "OAS with example refs in JSON",
+    "version": "1"
+  },
+  "paths": {
+    "/api/test/ref/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "200 response POST test ref",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "post-test-ref-response": {
+                    "summary": "Example POST test ref response",
+                    "value": {
+                      "$ref": "examples/response-post-test-ref.json"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "response-post-test-ref.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

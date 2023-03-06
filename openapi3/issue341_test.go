@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,7 +24,7 @@ func TestIssue341(t *testing.T) {
 
 	require.Equal(t, "string", doc.Paths["/testpath"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
 
-	doc.InternalizeRefs(context.Background(), nil)
+	doc.InternalizeRefs(nil)
 	bs, err = doc.MarshalJSON()
 	require.NoError(t, err)
 	require.JSONEq(t, `{

@@ -22,6 +22,7 @@ func TestInternalizeRefs(t *testing.T) {
 		{"testdata/recursiveRef/openapi.yml"},
 		{"testdata/spec.yaml"},
 		{"testdata/callbacks.yml"},
+		{"testdata/testexampleref.openapi.json"},
 	}
 
 	for _, test := range tests {
@@ -35,7 +36,7 @@ func TestInternalizeRefs(t *testing.T) {
 			require.NoError(t, err, "validating spec")
 
 			// Internalize the references
-			doc.InternalizeRefs(ctx, nil)
+			doc.InternalizeRefs(nil)
 
 			// Validate the internalized spec
 			err = doc.Validate(ctx)
@@ -57,7 +58,7 @@ func TestInternalizeRefs(t *testing.T) {
 			require.NoError(t, err, "validating reloaded spec")
 
 			// compare with expected
-			expected, err := os.ReadFile(test.filename + ".internalized.yml")
+			expected, err := os.ReadFile(test.filename + ".internalized.json")
 			require.NoError(t, err)
 			require.JSONEq(t, string(expected), string(actual))
 		})

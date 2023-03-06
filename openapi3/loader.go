@@ -868,6 +868,17 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 			}
 			component.Value = resolved.Value
 		}
+	} else if valueRef, ok := component.Value.Value.(map[string]interface{}); ok {
+		if r, refOk := valueRef["$ref"]; refOk && r.(string) != "" {
+			var example interface{}
+			if _, err = loader.loadSingleElementFromURI(r.(string), documentPath, &example); err != nil {
+				return err
+			}
+			component.Ref = r.(string)
+			component.Value = &Example{
+				Value: example,
+			}
+		}
 	}
 	return nil
 }

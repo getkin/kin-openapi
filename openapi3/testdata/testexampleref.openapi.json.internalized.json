@@ -1,0 +1,49 @@
+{
+  "openapi": "3.0.0",
+  "components": {
+    "examples": {
+      "response-post-test-ref": {
+        "value": {
+          "test": 123
+        }
+      }
+    },
+    "schemas": {
+      "response-post-test-ref": {
+        "type": "object",
+        "properties": {
+          "test": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "info": {
+    "title": "OAS with example refs in JSON",
+    "version": "1"
+  },
+  "paths": {
+    "/api/test/ref/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "200 response POST test ref",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "post-test-ref-response": {
+                    "$ref": "#/components/examples/response-post-test-ref"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/response-post-test-ref"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
