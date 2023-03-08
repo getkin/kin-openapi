@@ -26,11 +26,12 @@ paths:
 
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
+	ctx := loader.Context
 
 	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
-	doc.InternalizeRefs(nil)
+	doc.InternalizeRefs(ctx, nil)
 
 	require.Contains(t, doc.Components.Schemas, "JournalEntry")
 	require.Contains(t, doc.Components.Schemas, "Record")

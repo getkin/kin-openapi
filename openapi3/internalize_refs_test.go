@@ -36,7 +36,7 @@ func TestInternalizeRefs(t *testing.T) {
 			require.NoError(t, err, "validating spec")
 
 			// Internalize the references
-			doc.InternalizeRefs(nil)
+			doc.InternalizeRefs(ctx, nil)
 
 			// Validate the internalized spec
 			err = doc.Validate(ctx)

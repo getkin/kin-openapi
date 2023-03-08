@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 )
@@ -383,8 +384,8 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 //
 // Example:
 //
-//	doc.InternalizeRefs(func (ref string) { return ref })
-func (doc *T) InternalizeRefs(refNameResolver func(ref string) string) {
+//	doc.InternalizeRefs(context.Background(), nil)
+func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) {
 	doc.resetVisited()
 
 	if refNameResolver == nil {
