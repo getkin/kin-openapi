@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -104,4 +105,52 @@ components:
 
 	delete(SchemaStringFormats, "ipv4")
 	SchemaErrorDetailsDisabled = false
+}
+
+func TestUuidFormat(t *testing.T) {
+
+	type testCase struct {
+		name    string
+		value   string
+		wantErr bool
+	}
+
+	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
+	testCases := []testCase{
+		{
+			name:    "invalid",
+			value:   "foo",
+			wantErr: true,
+		},
+		{
+			name:    "uuid v1",
+			value:   "77e66540-ca29-11ed-afa1-0242ac120002",
+			wantErr: false,
+		},
+		{
+			name:    "uuid v4",
+			value:   "00f4d301-b9f4-4366-8907-2b5a03430aa1",
+			wantErr: false,
+		},
+		{
+			name:    "uuid nil",
+			value:   "00000000-0000-0000-0000-000000000000",
+			wantErr: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := NewUUIDSchema().VisitJSON(tc.value)
+			var schemaError = &SchemaError{}
+			if tc.wantErr {
+				require.Error(t, err)
+				require.ErrorAs(t, err, &schemaError)
+
+				require.NotZero(t, schemaError.Reason)
+				require.NotContains(t, schemaError.Reason, fmt.Sprint(tc.value))
+			} else {
+				require.Nil(t, err)
+			}
+		})
+	}
 }
