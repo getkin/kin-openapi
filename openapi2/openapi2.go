@@ -1,192 +1,117 @@
-// Package openapi2 parses and writes OpenAPI 2 specifications.
-//
-// Does not cover all elements of OpenAPI 2.
-// When OpenAPI version 3 is backwards-compatible with version 2, version 3 elements have been used.
-//
-// The specification:
-// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md
 package openapi2
 
 import (
-	"fmt"
-	"net/http"
+	"encoding/json"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type Swagger struct {
-	Info                openapi3.Info                  `json:"info"`
-	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty"`
-	Schemes             []string                       `json:"schemes,omitempty"`
-	Host                string                         `json:"host,omitempty"`
-	BasePath            string                         `json:"basePath,omitempty"`
-	Paths               map[string]*PathItem           `json:"paths,omitempty"`
-	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty,noref"`
-	Parameters          map[string]*Parameter          `json:"parameters,omitempty,noref"`
-	Responses           map[string]*Response           `json:"responses,omitempty,noref"`
-	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty"`
-	Security            SecurityRequirements           `json:"security,omitempty"`
-	Tags                openapi3.Tags                  `json:"tags,omitempty"`
+// T is the root of an OpenAPI v2 document
+type T struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Swagger             string                         `json:"swagger" yaml:"swagger"` // required
+	Info                openapi3.Info                  `json:"info" yaml:"info"`       // required
+	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Schemes             []string                       `json:"schemes,omitempty" yaml:"schemes,omitempty"`
+	Consumes            []string                       `json:"consumes,omitempty" yaml:"consumes,omitempty"`
+	Produces            []string                       `json:"produces,omitempty" yaml:"produces,omitempty"`
+	Host                string                         `json:"host,omitempty" yaml:"host,omitempty"`
+	BasePath            string                         `json:"basePath,omitempty" yaml:"basePath,omitempty"`
+	Paths               map[string]*PathItem           `json:"paths,omitempty" yaml:"paths,omitempty"`
+	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty" yaml:"definitions,omitempty"`
+	Parameters          map[string]*Parameter          `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Responses           map[string]*Response           `json:"responses,omitempty" yaml:"responses,omitempty"`
+	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
+	Security            SecurityRequirements           `json:"security,omitempty" yaml:"security,omitempty"`
+	Tags                openapi3.Tags                  `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
-func (swagger *Swagger) AddOperation(path string, method string, operation *Operation) {
-	paths := swagger.Paths
-	if paths == nil {
-		paths = make(map[string]*PathItem, 8)
-		swagger.Paths = paths
+// MarshalJSON returns the JSON encoding of T.
+func (doc T) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 15+len(doc.Extensions))
+	for k, v := range doc.Extensions {
+		m[k] = v
 	}
-	pathItem := paths[path]
+	m["swagger"] = doc.Swagger
+	m["info"] = doc.Info
+	if x := doc.ExternalDocs; x != nil {
+		m["externalDocs"] = x
+	}
+	if x := doc.Schemes; len(x) != 0 {
+		m["schemes"] = x
+	}
+	if x := doc.Consumes; len(x) != 0 {
+		m["consumes"] = x
+	}
+	if x := doc.Produces; len(x) != 0 {
+		m["produces"] = x
+	}
+	if x := doc.Host; x != "" {
+		m["host"] = x
+	}
+	if x := doc.BasePath; x != "" {
+		m["basePath"] = x
+	}
+	if x := doc.Paths; len(x) != 0 {
+		m["paths"] = x
+	}
+	if x := doc.Definitions; len(x) != 0 {
+		m["definitions"] = x
+	}
+	if x := doc.Parameters; len(x) != 0 {
+		m["parameters"] = x
+	}
+	if x := doc.Responses; len(x) != 0 {
+		m["responses"] = x
+	}
+	if x := doc.SecurityDefinitions; len(x) != 0 {
+		m["securityDefinitions"] = x
+	}
+	if x := doc.Security; len(x) != 0 {
+		m["security"] = x
+	}
+	if x := doc.Tags; len(x) != 0 {
+		m["tags"] = x
+	}
+	return json.Marshal(m)
+}
+
+// UnmarshalJSON sets T to a copy of data.
+func (doc *T) UnmarshalJSON(data []byte) error {
+	type TBis T
+	var x TBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "swagger")
+	delete(x.Extensions, "info")
+	delete(x.Extensions, "externalDocs")
+	delete(x.Extensions, "schemes")
+	delete(x.Extensions, "consumes")
+	delete(x.Extensions, "produces")
+	delete(x.Extensions, "host")
+	delete(x.Extensions, "basePath")
+	delete(x.Extensions, "paths")
+	delete(x.Extensions, "definitions")
+	delete(x.Extensions, "parameters")
+	delete(x.Extensions, "responses")
+	delete(x.Extensions, "securityDefinitions")
+	delete(x.Extensions, "security")
+	delete(x.Extensions, "tags")
+	*doc = T(x)
+	return nil
+}
+
+func (doc *T) AddOperation(path string, method string, operation *Operation) {
+	if doc.Paths == nil {
+		doc.Paths = make(map[string]*PathItem)
+	}
+	pathItem := doc.Paths[path]
 	if pathItem == nil {
 		pathItem = &PathItem{}
-		paths[path] = pathItem
+		doc.Paths[path] = pathItem
 	}
 	pathItem.SetOperation(method, operation)
-}
-
-type PathItem struct {
-	Ref        string     `json:"$ref,omitempty"`
-	Delete     *Operation `json:"delete,omitempty"`
-	Get        *Operation `json:"get,omitempty"`
-	Head       *Operation `json:"head,omitempty"`
-	Options    *Operation `json:"options,omitempty"`
-	Patch      *Operation `json:"patch,omitempty"`
-	Post       *Operation `json:"post,omitempty"`
-	Put        *Operation `json:"put,omitempty"`
-	Parameters Parameters `json:"parameters,omitempty"`
-}
-
-func (pathItem *PathItem) Operations() map[string]*Operation {
-	operations := make(map[string]*Operation, 8)
-	if v := pathItem.Delete; v != nil {
-		operations[http.MethodDelete] = v
-	}
-	if v := pathItem.Get; v != nil {
-		operations[http.MethodGet] = v
-	}
-	if v := pathItem.Head; v != nil {
-		operations[http.MethodHead] = v
-	}
-	if v := pathItem.Options; v != nil {
-		operations[http.MethodOptions] = v
-	}
-	if v := pathItem.Patch; v != nil {
-		operations[http.MethodPatch] = v
-	}
-	if v := pathItem.Post; v != nil {
-		operations[http.MethodPost] = v
-	}
-	if v := pathItem.Put; v != nil {
-		operations[http.MethodPut] = v
-	}
-	return operations
-}
-
-func (pathItem *PathItem) GetOperation(method string) *Operation {
-	switch method {
-	case http.MethodDelete:
-		return pathItem.Delete
-	case http.MethodGet:
-		return pathItem.Get
-	case http.MethodHead:
-		return pathItem.Head
-	case http.MethodOptions:
-		return pathItem.Options
-	case http.MethodPatch:
-		return pathItem.Patch
-	case http.MethodPost:
-		return pathItem.Post
-	case http.MethodPut:
-		return pathItem.Put
-	default:
-		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
-	}
-}
-
-func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
-	switch method {
-	case http.MethodDelete:
-		pathItem.Delete = operation
-	case http.MethodGet:
-		pathItem.Get = operation
-	case http.MethodHead:
-		pathItem.Head = operation
-	case http.MethodOptions:
-		pathItem.Options = operation
-	case http.MethodPatch:
-		pathItem.Patch = operation
-	case http.MethodPost:
-		pathItem.Post = operation
-	case http.MethodPut:
-		pathItem.Put = operation
-	default:
-		panic(fmt.Errorf("Unsupported HTTP method '%s'", method))
-	}
-}
-
-type Operation struct {
-	Summary      string                 `json:"summary,omitempty"`
-	Description  string                 `json:"description,omitempty"`
-	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty"`
-	Tags         []string               `json:"tags,omitempty"`
-	OperationID  string                 `json:"operationId,omitempty"`
-	Parameters   Parameters             `json:"parameters,omitempty"`
-	Responses    map[string]*Response   `json:"responses"`
-	Consumes     []string               `json:"consumes,omitempty"`
-	Produces     []string               `json:"produces,omitempty"`
-	Security     *SecurityRequirements  `json:"security,omitempty"`
-}
-
-type Parameters []*Parameter
-
-type Parameter struct {
-	Ref          string              `json:"$ref,omitempty"`
-	In           string              `json:"in,omitempty"`
-	Name         string              `json:"name,omitempty"`
-	Description  string              `json:"description,omitempty"`
-	Required     bool                `json:"required,omitempty"`
-	UniqueItems  bool                `json:"uniqueItems,omitempty"`
-	ExclusiveMin bool                `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMax bool                `json:"exclusiveMaximum,omitempty"`
-	Schema       *openapi3.SchemaRef `json:"schema,omitempty"`
-	Type         string              `json:"type,omitempty"`
-	Format       string              `json:"format,omitempty"`
-	Enum         []interface{}       `json:"enum,omitempty"`
-	Minimum      *float64            `json:"minimum,omitempty"`
-	Maximum      *float64            `json:"maximum,omitempty"`
-	MinLength    uint64              `json:"minLength,omitempty"`
-	MaxLength    *uint64             `json:"maxLength,omitempty"`
-	Pattern      string              `json:"pattern,omitempty"`
-	Items        *openapi3.SchemaRef `json:"items,omitempty"`
-	MinItems     uint64              `json:"minItems,omitempty"`
-	MaxItems     *uint64             `json:"maxItems,omitempty"`
-	Default      interface{}         `json:"default,omitempty"`
-}
-
-type Response struct {
-	Ref         string                 `json:"$ref,omitempty"`
-	Description string                 `json:"description,omitempty"`
-	Schema      *openapi3.SchemaRef    `json:"schema,omitempty"`
-	Headers     map[string]*Header     `json:"headers,omitempty"`
-	Examples    map[string]interface{} `json:"examples,omitempty"`
-}
-
-type Header struct {
-	Ref         string `json:"$ref,omitempty"`
-	Description string `json:"description,omitempty"`
-	Type        string `json:"type,omitempty"`
-}
-
-type SecurityRequirements []map[string][]string
-
-type SecurityScheme struct {
-	Ref              string            `json:"$ref,omitempty"`
-	Description      string            `json:"description,omitempty"`
-	Type             string            `json:"type,omitempty"`
-	In               string            `json:"in,omitempty"`
-	Name             string            `json:"name,omitempty"`
-	Flow             string            `json:"flow,omitempty"`
-	AuthorizationURL string            `json:"authorizationUrl,omitempty"`
-	TokenURL         string            `json:"tokenUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes,omitempty"`
-	Tags             openapi3.Tags     `json:"tags,omitempty"`
 }

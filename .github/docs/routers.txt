@@ -1,0 +1,5 @@
+var ErrMethodNotAllowed error = &RouteError{ ... }
+var ErrPathNotFound error = &RouteError{ ... }
+type Route struct{ ... }
+type RouteError struct{ ... }
+type Router interface{ ... }

@@ -1,0 +1,196 @@
+name: go
+on:
+  pull_request:
+  push:
+
+jobs:
+  build-and-test:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GO111MODULE: 'on'
+      CGO_ENABLED: '0'
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.16', '1.x']
+        os:
+        - ubuntu-latest
+        - windows-latest
+        - macos-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    name: ${{ matrix.go }} on ${{ matrix.os }}
+    steps:
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - id: go-cache-paths
+      run: |
+        echo "::set-output name=go-build::$(go env GOCACHE)"
+        echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+    - run: echo ${{ steps.go-cache-paths.outputs.go-build }}
+    - run: echo ${{ steps.go-cache-paths.outputs.go-mod }}
+
+    - name: Go Build Cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.go-cache-paths.outputs.go-build }}
+        key: ${{ runner.os }}-go-${{ matrix.go }}-build-${{ hashFiles('**/go.sum') }}
+
+    - name: Go Mod Cache (go>=1.15)
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.go-cache-paths.outputs.go-mod }}
+        key: ${{ runner.os }}-go-${{ matrix.go }}-mod-${{ hashFiles('**/go.sum') }}
+
+    - if: runner.os == 'Linux'
+      run: sudo apt install silversearcher-ag
+
+    - uses: actions/checkout@v2
+
+    - name: Check codegen
+      run: |
+        ./refs.sh | tee openapi3/refs.go
+        git --no-pager diff --exit-code
+
+    - name: Check docsgen
+      run: ./docs.sh
+
+    - run: go mod download && go mod tidy && go mod verify
+    - run: git --no-pager diff --exit-code
+
+    - run: go vet ./...
+    - run: git --no-pager diff --exit-code
+
+    - run: go fmt ./...
+    - run: git --no-pager diff --exit-code
+
+    - run: go test ./...
+    - if: runner.os == 'Linux'
+      run: go test -count=10 ./...
+      env:
+        GOARCH: '386'
+    - run: go test -count=10 ./...
+    - run: go test -count=2 -covermode=atomic ./...
+    - run: go test -v -run TestRaceyPatternSchema -race ./...
+      env:
+        CGO_ENABLED: '1'
+    - run: go test -v -run TestIssue741 -race ./...
+      env:
+        CGO_ENABLED: '1'
+    - run: git --no-pager diff --exit-code
+
+    - if: runner.os == 'Linux'
+      name: Errors must not be capitalized https://github.com/golang/go/wiki/CodeReviewComments#error-strings
+      run: |
+        ! git grep -E '(fmt|errors)[^(]+\(.[A-Z]'
+
+    - if: runner.os == 'Linux'
+      name: Did you mean %q
+      run: |
+        ! git grep -E "'[%].'"
+
+    - if: runner.os == 'Linux'
+      name: Also add yaml tags
+      run: |
+        ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
+
+    - if: runner.os == 'Linux' && matrix.go != '1.16'
+      name: nilness
+      run: go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...
+
+    - if: runner.os == 'Linux'
+      name: Check for superfluous trailing whitespace
+      run: |
+        ! grep -IErn '\s$' --exclude-dir={.git,target,pgdata}
+
+    - if: runner.os == 'Linux'
+      name: Ensure use of unmarshal
+      run: |
+        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | wc -l)" = 1 ]]
+
+    - if: runner.os == 'Linux'
+      name: Ensure non-pointer MarshalJSON
+      run: |
+        ! git grep -InE 'func.+[*].+[)].MarshalJSON[(][)]'
+
+    - if: runner.os == 'Linux'
+      name: Missing specification object link to definition
+      run: |
+        [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
+
+    - if: runner.os == 'Linux'
+      name: Missing validation of unknown fields in extensions
+      run: |
+        [[ $(git grep -InF 'return validateExtensions' -- openapi3 | wc -l) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]
+
+    - if: runner.os == 'Linux'
+      name: Style around Extensions embedding
+      run: |
+        ! ag -B2 -A2 'type.[A-Z].+struct..\n.+Extensions\n[^\n]' openapi3/*.go
+
+    - if: runner.os == 'Linux'
+      name: Ensure all exported fields are mentioned in Validate() impls
+      run: |
+        for ty in $TYPES; do
+          # Ensure definition
+          if ! ag 'type.[A-Z].+struct..\n.+Extensions' openapi3/*.go | grep -F "type $ty struct"; then
+            echo "OAI type $ty is not defined" && exit 1
+          fi
+
+          # Ensure impl Validate()
+          if ! git grep -InE 'func [(].+'"$ty"'[)] Validate[(]ctx context.Context, opts [.][.][.]ValidationOption[)].+error.+[{]'; then
+            echo "OAI type $ty does not implement Validate()" && exit 1
+          fi
+
+          # TODO: $ty mention all its exported fields within Validate()
+        done
+      env:
+        TYPES: >
+          Components
+          Contact
+          Discriminator
+          Encoding
+          Example
+          ExternalDocs
+          Info
+          License
+          Link
+          MediaType
+          OAuthFlow
+          OAuthFlows
+          Operation
+          Parameter
+          PathItem
+          RequestBody
+          Response
+          Schema
+          SecurityScheme
+          Server
+          ServerVariable
+          T
+          Tag
+          XML
+
+    - if: runner.os == 'Linux'
+      name: Ensure readableType() covers all possible values of resolved var
+      run: |
+        [[ "$(git grep -F 'var resolved ' -- openapi3/loader.go | awk '{print $4}' | sort | tr '\n' ' ')" = "$RESOLVEDS" ]]
+      env:
+        RESOLVEDS: 'Callback CallbackRef ExampleRef HeaderRef LinkRef ParameterRef PathItem RequestBodyRef ResponseRef SchemaRef SecuritySchemeRef '
+
+  check-goimports:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '>=1.17.0'
+    - run: go install github.com/incu6us/goimports-reviser/v2@latest
+    - run: which goimports-reviser
+    - run: find . -type f -iname '*.go' ! -iname '*.pb.go' -exec goimports-reviser -file-path {} \;
+    - run: git --no-pager diff --exit-code

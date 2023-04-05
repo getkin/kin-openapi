@@ -1,0 +1,988 @@
+# https://raw.githubusercontent.com/thediveo/lxkns/71e8fb5e40c612ecc89d972d211221137e92d5f0/api/openapi-spec/lxkns.yaml
+openapi: 3.0.2
+security:
+    -  {}
+info:
+    title: lxkns
+    version: 0.22.0
+    description: |-
+        Discover Linux-kernel namespaces, almost everywhere in a Linux host. Also look
+        for mount points and their hierarchy, as well as for containers.
+    contact:
+        url: 'https://github.com/thediveo/lxkns'
+    license:
+        name: Apache 2.0
+        url: 'https://www.apache.org/licenses/LICENSE-2.0'
+servers:
+    -
+        url: /api
+        description: lxkns as-a-service
+paths:
+    /processes:
+        summary: Process discovery
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProcessTable'
+                    description: |-
+                        Returns information about all processes and their position within the process
+                        tree.
+            summary: Linux processes
+            description: |-
+                Map of all processes in the process tree, with the keys being the PIDs in
+                decimal string format.
+    /pidmap:
+        summary: Discover the translation of PIDs between PID namespaces
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PIDMap'
+                    description: |-
+                        The namespaced PIDs of processes. For each process, the PIDs in their PID
+                        namespaces along the PID namespace hierarchy are returned.
+            summary: PID translation data
+            description: |
+                Discovers the PIDs that processes have in different PID namespaces,
+                according to the hierarchy of PID namespaces.
+
+                > **IMPORTANT:** The order of processes is undefined. However, the order of
+                > the namespaced PIDs of a particular process is well-defined.
+    /namespaces:
+        summary: Namespace discovery (includes process discovery for technical reasons)
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DiscoveryResult'
+                    description: The discovered namespaces and processes.
+            summary: Linux kernel namespaces
+            description: |-
+                Information about the Linux-kernel namespaces and how they relate to processes
+                and vice versa.
+components:
+    schemas:
+        PIDMap:
+            title: Root Type for PIDMap
+            description: |-
+                A "map" of the PIDs of processes in PID namespaces for translating a specific
+                PID from one PID namespace into another PID namespace.
+
+                > **IMPORTANT:** The order of *processes* is undefined. However, the order of
+                > the namespaced PIDs of a particular process is well-defined: from the PID in
+                > the process' own PID namespace up the hierarchy to the PID in the initial
+                > PID namespace.
+
+                The PID map is represented in a "condensed" format, which is designed to
+                minimize transfer volume. Consuming applications thus might want to transfer
+                this external representation into a performance-optimized internal
+                representation, optimized for translating PIDs.
+            type: array
+            items:
+                $ref: '#/components/schemas/NamespacedPIDs'
+            example:
+                -
+                    -
+                        pid: 12345
+                        nsid: 4026531905
+                    -
+                        pid: 1
+                        nsid: 4026538371
+                -
+                    -
+                        pid: 666
+                        nsid: 4026538371
+        NamespacedPID:
+            title: Root Type for NamespacedPID
+            description: |-
+                A process identifier (PID) valid only in the accompanying PID namespace,
+                referenced by the ID (inode number) of the PID namespace. Outside that PID
+                namespace the PID is invalid and might be confused with some other process that
+                happens to have the same PID in the other PID namespace. For instance, PID 1
+                can be found not only in the initial PID namespace, but usually also in all
+                other PID namespaces, but referencing completely different processes each time.
+            required:
+                - pid
+                - nsid
+            type: object
+            properties:
+                pid:
+                    description: a process identifier
+                    type: integer
+                nsid:
+                    format: int64
+                    description: |-
+                        a PID namespace identified and referenced by its inode number (without any
+                        device number).
+                    type: integer
+            example:
+                pid: 1
+                nsid: 4026531905
+        NamespacedPIDs:
+            description: |-
+                The list of namespaced PIDs of a process, ordered according to the PID
+                namespace hierarchy the process is in. The order is from the "bottom-most" PID
+                namespace a particular process is joined to up to the initial PID namespace.
+                Thus, the PID in the initial PID namespace always comes last.
+            type: array
+            items:
+                $ref: '#/components/schemas/NamespacedPID'
+            example:
+                -
+                    pid: 12345
+                    nsid: 4026531905
+                -
+                    pid: 1
+                    nsid: 4026532382
+        Process:
+            description: |-
+                Information about a specific process, such as its PID, name, and command line
+                arguments, the references (IDs) of the namespaces the process is joined to.
+            required:
+                - pid
+                - ppid
+                - name
+                - cmdline
+                - starttime
+                - namespaces
+                - cpucgroup
+                # - fridgecgroup
+                # - fridgefrozen
+            type: object
+            properties:
+                pid:
+                    format: int32
+                    description: The process identifier (PID) of this process.
+                    type: integer
+                ppid:
+                    format: int32
+                    description: |-
+                        The PID of the parent process, or 0 if there is no parent process. On Linux, the
+                        only processes without a parent are the initial process PID 1 and the PID 2
+                        kthreadd kernel threads "process".
+                    type: integer
+                name:
+                    description: |-
+                        A synthesized name of the process:
+                        - a name set by the process itself,
+                        - a name derived from the command line of the process.
+                    type: string
+                cmdline:
+                    description: |-
+                        The command line arguments of the process, including the process binary file
+                        name. Taken from /proc/$PID/cmdline, see also
+                        [https://man7.org/linux/man-pages/man5/proc.5.html](proc(5)).
+                    type: array
+                    items:
+                        type: string
+                starttime:
+                    format: int64
+                    description: |-
+                        The time this process started after system boot and expressed in clock ticks.
+                        It is taken from /proc/$PID/stat, see also
+                        [https://man7.org/linux/man-pages/man5/proc.5.html](proc(5)).
+                    type: integer
+                cpucgroup:
+                    description: |-
+                        The (CPU) cgroup (control group) path name in the hierarchy this process is in. The
+                        path name does not specify the root mount path of the complete hierarchy, but
+                        only the (pseudo) absolute path starting from the root of the particular (v1) or
+                        unified (v2) cgroup hierarchy.
+                    type: string
+                namespaces:
+                    $ref: '#/components/schemas/NamespacesSet'
+                    description: |-
+                        References the namespaces this process is joined to, in form of the namespace
+                        IDs (inode numbers).
+                fridgecgroup:
+                    description: The freezer cgroup path name in the hierarchy this process is in.
+                    type: string
+                fridgefrozen:
+                    description: The effective freezer state of this process.
+                    type: boolean
+            example:
+                namespaces:
+                    mnt: 4026531840
+                    cgroup: 4026531835
+                    uts: 4026531838
+                    ipc: 4026531839
+                    user: 4026531837
+                    pid: 4026531836
+                    net: 4026531905
+                pid: 1
+                ppid: 0
+                name: systemd
+                cmdline:
+                    - /sbin/init
+                    - fixrtc
+                    - splash
+                starttime: 0
+                cpucgroup: /init.scope
+        ProcessTable:
+            description: |-
+                Information about all processes in the process tree, with each process item
+                being keyed by its PID in string form. Besides information about the process
+                itself and its position in the process tree, the processes also reference the
+                namespaces they are currently joined to.
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/Process'
+            example:
+                '1':
+                    namespaces:
+                        mnt: 4026531840
+                        cgroup: 4026531835
+                        uts: 4026531838
+                        ipc: 4026531839
+                        user: 4026531837
+                        pid: 4026531836
+                        net: 4026531905
+                    pid: 1
+                    ppid: 0
+                    name: systemd
+                    cmdline:
+                        - /sbin/init
+                        - fixrtc
+                        - splash
+                    starttime: 0
+                    cpucgroup: /init.scope
+                '137024':
+                    namespaces:
+                        mnt: 4026532517
+                        cgroup: 4026531835
+                        uts: 4026531838
+                        ipc: 4026531839
+                        user: 4026532518
+                        pid: 4026531836
+                        net: 4026531905
+                    pid: 137024
+                    ppid: 1
+                    name: upowerd
+                    cmdline:
+                        - /usr/lib/upower/upowerd
+                    starttime: 3132568
+                    cpucgroup: /system.slice/upower.service
+        DiscoveryResult:
+            description: |-
+                The discovered namespaces and processes with their mutual relationships, and
+                optionally PID translation data.
+            required:
+                - namespaces
+                - processes
+                - containers
+                - container-engines
+                - container-groups
+            type: object
+            properties:
+                processes:
+                    $ref: '#/components/schemas/ProcessTable'
+                    description: 'Information about all processes, including the process hierarchy.'
+                namespaces:
+                    $ref: '#/components/schemas/NamespacesDict'
+                    description: Map of namespaces.
+                pidmap:
+                    $ref: '#/components/schemas/PIDMap'
+                    description: Data for translating PIDs between different PID namespaces.
+                options:
+                    $ref: '#/components/schemas/DiscoveryOptions'
+                    description: The options specified for discovery.
+                mounts:
+                    $ref: '#/components/schemas/NamespacedMountPaths'
+                    description: Map of mount namespace'd mount paths with mount points.
+                containers:
+                    $ref: '#/components/schemas/ContainerMap'
+                    description: Discovered containers.
+                container-engines:
+                    $ref: '#/components/schemas/ContainerEngineMap'
+                    description: Container engines managing the discovered containers.
+                container-groups:
+                    $ref: '#/components/schemas/ContainerGroupMap'
+                    description: Groups of containers.
+            example:
+                discovery-options:
+                    skipped-procs: false
+                    skipped-tasks: false
+                    skipped-fds: false
+                    skipped-bindmounts: false
+                    skipped-hierarchy: false
+                    skipped-ownership: false
+                    skipped-freezer: false
+                    scanned-namespace-types:
+                        - time
+                        - mnt
+                        - cgroup
+                        - uts
+                        - ipc
+                        - user
+                        - pid
+                        - net
+                namespaces:
+                    '4026531835':
+                        nsid: 4026531835
+                        type: cgroup
+                        owner: 4026531837
+                        reference: /proc/2/ns/cgroup
+                        leaders:
+                            - 2
+                            - 1
+                    '4026531836':
+                        nsid: 4026531836
+                        type: pid
+                        owner: 4026531837
+                        reference: /proc/2/ns/pid
+                        leaders:
+                            - 2
+                            - 1
+                        children:
+                            - 4026532338
+                    '4026531837':
+                        nsid: 4026531837
+                        type: user
+                        reference: /proc/1/ns/user
+                        leaders:
+                            - 1
+                            - 2
+                        children:
+                            - 4026532518
+                        user-id: 0
+                    '4026531838':
+                        nsid: 4026531838
+                        type: uts
+                        owner: 4026531837
+                        reference: /proc/2/ns/uts
+                        leaders:
+                            - 2
+                            - 1
+                    '4026531839':
+                        nsid: 4026531839
+                        type: ipc
+                        owner: 4026531837
+                        reference: /proc/2/ns/ipc
+                        leaders:
+                            - 2
+                            - 1
+                    '4026532268':
+                        nsid: 4026532268
+                        type: mnt
+                        owner: 4026531837
+                        reference: /proc/1761/ns/mnt
+                        leaders:
+                            - 1761
+                    '4026532324':
+                        nsid: 4026532324
+                        type: uts
+                        owner: 4026531837
+                        reference: /proc/1781/ns/uts
+                        leaders:
+                            - 1781
+                    '4026532337':
+                        nsid: 4026532337
+                        type: ipc
+                        owner: 4026531837
+                        reference: /proc/33536/ns/ipc
+                        leaders:
+                            - 33536
+                    '4026532340':
+                        nsid: 4026532340
+                        type: net
+                        owner: 4026531837
+                        reference: /proc/33536/ns/net
+                        leaders:
+                            - 33536
+                    '4026532398':
+                        nsid: 4026532398
+                        type: pid
+                        owner: 4026531837
+                        reference: /proc/34110/ns/pid
+                        leaders:
+                            - 34110
+                        parent: 4026532338
+                    '4026532400':
+                        nsid: 4026532400
+                        type: net
+                        owner: 4026531837
+                        reference: /proc/34110/ns/net
+                        leaders:
+                            - 34110
+                    '4026532517':
+                        nsid: 4026532517
+                        type: mnt
+                        owner: 4026531837
+                        reference: /proc/137024/ns/mnt
+                        leaders:
+                            - 137024
+                    '4026532518':
+                        nsid: 4026532518
+                        type: user
+                        reference: /proc/137024/ns/user
+                        leaders:
+                            - 137024
+                        parent: 4026531837
+                        user-id: 0
+                processes:
+                    '1':
+                        namespaces:
+                            mnt: 4026531840
+                            cgroup: 4026531835
+                            uts: 4026531838
+                            ipc: 4026531839
+                            user: 4026531837
+                            pid: 4026531836
+                            net: 4026531905
+                        pid: 1
+                        ppid: 0
+                        name: systemd
+                        cmdline:
+                            - /sbin/init
+                            - fixrtc
+                            - splash
+                        starttime: 0
+                        cpucgroup: /init.scope
+                    '17':
+                        namespaces:
+                            mnt: 4026531840
+                            cgroup: 4026531835
+                            uts: 4026531838
+                            ipc: 4026531839
+                            user: 4026531837
+                            pid: 4026531836
+                            net: 4026531905
+                        pid: 17
+                        ppid: 2
+                        name: migration/1
+                        cmdline:
+                            - ''
+                        starttime: 0
+                        cpucgroup: ''
+                    '1692':
+                        namespaces:
+                            mnt: 4026532246
+                            cgroup: 4026531835
+                            uts: 4026532247
+                            ipc: 4026531839
+                            user: 4026531837
+                            pid: 4026531836
+                            net: 4026531905
+                        pid: 1692
+                        ppid: 1
+                        name: systemd-timesyn
+                        cmdline:
+                            - /lib/systemd/systemd-timesyncd
+                        starttime: 2032
+                        cpucgroup: /system.slice/systemd-timesyncd.service
+        Namespace:
+            description: |-
+                Information about a single Linux-kernel namespace. Depending on the extent of
+                the discovery, not all namespace types might have been discovered, or data might
+                be missing about the PID and user namespace hierarchies as well as which user
+                namespace owns other namespaces.
+
+                For more details, please see also:
+                https://man7.org/linux/man-pages/man7/namespaces.7.html.
+            required:
+                - type
+                - nsid
+            type: object
+            properties:
+                nsid:
+                    format: int64
+                    description: |-
+                        Identifier of this namespace: an inode number.
+
+                        - lxkns only uses the inode number in the API, following current Linux kernel
+                          and CLI tool practise, which generally identify individual namespaces only by
+                          inode numbers (and leaving out the device number).
+                        - Namespace identifiers are not UUIDs, but instead reused by the kernel after a
+                          namespace has been destroyed.
+                    type: integer
+                type:
+                    $ref: '#/components/schemas/NamespaceType'
+                    description: Type of this namespace.
+                owner:
+                    format: int64
+                    description: The ID of the owning user namespace.
+                    type: integer
+                reference:
+                    description: |-
+                        File system reference to the namespace, if available. The hierarchical PID and
+                        user namespaces can also exist without any file system references, as long as
+                        there are still child namespaces present for such a PID or user namespace.
+                    type: array
+                    items:
+                        type: string
+                leaders:
+                    description: |-
+                        List of PIDs of "leader" processes joined to this namespace.
+
+                        Instead of listing all processes joined to this namespace, lxkns only lists the
+                        "most senior" processes: these processes are the highest processes in the
+                        process tree still joined to a namespace. Child processes also joined to this
+                        namespace can then be found using the child process relations from the process
+                        table information.
+                    type: array
+                    items:
+                        format: int32
+                        type: integer
+                ealdorman:
+                    format: int32
+                    description: PID of the most senior leader process joined to this namespace.
+                    type: integer
+                parent:
+                    format: int64
+                    description: 'Only for PID and user namespaces: the ID of the parent namespace.'
+                    type: integer
+                user-id:
+                    description: |-
+                        Only for user namespaces: the UID of the Linux user who created this user
+                        namespace.
+                    type: integer
+                user-name:
+                    description: |-
+                        Only for user namespaces: the name of the Linux user who created this user
+                        namespace.
+                    type: string
+                children:
+                    description: 'For user and PID namespaces: the list of child namespace IDs.'
+                    type: array
+                    items:
+                        format: int64
+                        type: integer
+                possessions:
+                    description: 'Only user namespaces: list of namespace IDs of owned (non-user) namespaces.'
+                    type: array
+                    items:
+                        format: int64
+                        type: integer
+            example:
+                '4026532338':
+                    nsid: 4026532338
+                    type: pid
+                    owner: 4026531837
+                    reference: /proc/33536/ns/pid
+                    leaders:
+                        - 33536
+                    parent: 4026531836
+                    children:
+                        - 4026532398
+        NamespaceType:
+            description: |-
+                Type of Linux-kernel namespace. For more information about namespaces, please
+                see also: https://man7.org/linux/man-pages/man7/namespaces.7.html.
+            enum:
+                - cgroup
+                - ipc
+                - net
+                - mnt
+                - pid
+                - user
+                - uts
+                - time
+            type: string
+            example: 'net'
+        NamespacesDict:
+            description: |
+                "Dictionary" or "map" of Linux-kernel namespaces, keyed by their namespace IDs in stringified
+                form. Contrary to what the term "namespace" might suggest, namespaces do not
+                have names but are identified by their (transient) inode numbers.
+
+                > **Note:** following current best practice of the Linux kernel and CLI tools,
+                > namespace references are only in the form of the inode number, without the
+                > device number.
+
+                For further details, please see also:
+                https://man7.org/linux/man-pages/man7/namespaces.7.html.
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/Namespace'
+            example:
+                '4026532267':
+                    nsid: 4026532267
+                    type: mnt
+                    owner: 4026531837
+                    reference: /proc/1714/ns/mnt
+                    leaders:
+                        - 1714
+                '4026532268':
+                    nsid: 4026532268
+                    type: mnt
+                    owner: 4026531837
+                    reference: /proc/1761/ns/mnt
+                    leaders:
+                        - 1761
+        DiscoveryOptions:
+            title: Root Type for DiscoveryOptions
+            description: ''
+            required:
+                - scanned-namespace-types
+            type: object
+            properties:
+                from-procs:
+                    type: boolean
+                from-tasks:
+                    type: boolean
+                from-fds:
+                    type: boolean
+                from-bindmounts:
+                    type: boolean
+                with-hierarchy:
+                    type: boolean
+                with-ownership:
+                    type: boolean
+                with-freezer:
+                    description: |-
+                        true if the discovery of the (effective) freezer states of processes has been
+                        skipped, so that all processes always appear to be "thawed" (running).
+                    type: boolean
+                scanned-namespace-types:
+                    description: |-
+                        List of namespace types included in the discovery. This information might help
+                        consuming tools to understand which types of namespaces were scanned and which
+                        were not scanned for at all.
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/NamespaceType'
+                with-mounts:
+                    description: true if mount namespace'd mount paths with mount points were discovered.
+                    type: boolean
+                labels:
+                    description: |-
+                        Dictionary of key=value pairs passed to decorators to optionally control the
+                        decoration of discovered containers.
+            example:
+                skipped-procs: false
+                skipped-tasks: false
+                skipped-fds: false
+                skipped-bindmounts: false
+                skipped-hierarchy: false
+                skipped-ownership: false
+                skipped-freezer: false
+                scanned-namespace-types:
+                    - time
+                    - mnt
+                    - cgroup
+                    - uts
+                    - ipc
+                    - user
+                    - pid
+                    - net
+        NamespacesSet:
+            description: |-
+                The set of 7 namespaces (8 namespaces since Linux 5.6+) every process is always
+                joined to. The namespaces are referenced by their IDs (inode numbers):
+                - cgroup namespace
+                - IPC namespace
+                - network namespace
+                - mount namespace
+                - PID namespace
+                - user namespace
+                - UTS namespace
+                - time namespace (Linux kernel 5.6+)
+
+                > **Note:** Since lxkns doesn't officially support Linux kernels before 4.9
+                > all namespaces except the "time" namespace can safely be assumed to be
+                > always present.
+
+                For more details about namespaces, please see also:
+                https://man7.org/linux/man-pages/man7/namespaces.7.html.
+            type: object
+            properties:
+                cgroup:
+                    format: int64
+                    description: |-
+                        References a cgroup namespace by ID (inode number). Please see also:
+                        https://www.man7.org/linux/man-pages/man7/cgroup_namespaces.7.html.
+                    type: integer
+                ipc:
+                    format: int64
+                    description: |-
+                        References an IPC namespace by ID (inode number). Please see also:
+                        https://www.man7.org/linux/man-pages/man7/ipc_namespaces.7.html.
+                    type: integer
+                net:
+                    format: int64
+                    description: |-
+                        References a network namespace by ID (inode number). Please see also:
+                        https://www.man7.org/linux/man-pages/man7/network_namespaces.7.html.
+                    type: integer
+                mnt:
+                    format: int64
+                    description: |-
+                        References a mount namespace by ID (inode number). Please see also:
+                        https://www.man7.org/linux/man-pages/man7/mount_namespaces.7.html.
+                    type: integer
+                pid:
+                    format: int64
+                    description: |-
+                        References a PID namespace by ID (inode number). Please see also:
+                        https://www.man7.org/linux/man-pages/man7/pid_namespaces.7.html.
+                    type: integer
+                user:
+                    format: int64
+                    description: |-
+                        References a user namespace by ID (inode number). Please see also:
+                        https://www.man7.org/linux/man-pages/man7/user_namespaces.7.html.
+                    type: integer
+                uts:
+                    format: int64
+                    description: |-
+                        References a UTS (*nix timesharing system) namespace by ID (inode number).
+                        Please see also: https://www.man7.org/linux/man-pages/man7/uts_namespaces.7.html.
+                    type: integer
+                time:
+                    format: int64
+                    description: |-
+                        References a (monotonous) time namespace by ID (inode number). Time namespaces
+                        are only supported on Linux kernels 5.6 or later. Please see also:
+                        https://www.man7.org/linux/man-pages/man7/time_namespaces.7.html.
+                    type: integer
+            example:
+                mnt: 4026531840
+                cgroup: 4026531835
+                uts: 4026531838
+                ipc: 4026531839
+                user: 4026531837
+                pid: 4026531836
+                net: 4026531905
+        MountPoint:
+            description: |-
+                Information about a mount point as discovered from the proc filesystem. See also
+                [proc(5)](https://man7.org/linux/man-pages/man5/procfs.5.html), and details about
+                `/proc/[PID]/mountinfo` in particular.
+            required:
+                - mountid
+                - parentid
+                - major
+                - minor
+                - root
+                - mountpoint
+                - mountoptions
+                - tags
+                - source
+                - fstype
+                - superoptions
+                - hidden
+            type: object
+            properties:
+                parentid:
+                    description: |-
+                        ID of the parent mount. Please note that the parent mount might be outside a
+                        mount namespace.
+                    type: integer
+                mountid:
+                    description: 'unique ID for the mount, might be reused after umount(2).'
+                    type: integer
+                major:
+                    description: major ID for the st_dev for files on this filesystem.
+                    type: integer
+                minor:
+                    description: minor ID for the st_dev for filed on this filesystem.
+                    type: integer
+                root:
+                    description: pathname of the directory in the filesystem which forms the root of this mount.
+                    type: string
+                mountpoint:
+                    description: pathname of the mount point relative to root directory of the process.
+                    type: string
+                mountoptions:
+                    description: mount options specific to this mount.
+                    type: array
+                    items:
+                        type: string
+                tags:
+                    $ref: '#/components/schemas/MountTags'
+                    description: |-
+                        optional tags with even more optional values. Tags cannot be a single hyphen
+                        "-".
+                fstype:
+                    description: 'filesystem type in the form "type[.subtype]".'
+                    type: string
+                source:
+                    description: filesystem-specific information or "none".
+                    type: string
+                superoptions:
+                    description: per-superblock options.
+                    type: string
+                hidden:
+                    description: |-
+                        true if this mount point is hidden by an "overmount" either at the same mount
+                        path or higher up the path hierarchy.
+                    type: boolean
+        MountTags:
+            description: |-
+                dictionary of mount point tags with optional values. Tag names cannot be a single
+                hyphen "-".
+            type: object
+            additionalProperties:
+                type: string
+        MountPath:
+            description: |-
+                path of one or more mount points in the Virtual File System (VFS). In case of
+                multiple mount points at the same path, only at most one of them can be visible
+                and all others (or all in case of an overmount higher up the path) will be hidden.
+            required:
+                - mounts
+                - pathid
+                - parentid
+            type: object
+            properties:
+                mounts:
+                    description: one or more mount points at this path in the Virtual File System (VFS).
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/MountPoint'
+                pathid:
+                    description: 'unique mount path identifier, per mount namespace.'
+                    type: integer
+                parentid:
+                    description: 'identifier of parent mount path, if any, otherwise 0.'
+                    type: integer
+        MountPathsDict:
+            description: |-
+                "Dictionary" or "map" of mount paths with their corresponding mount points, keyed
+                by the mount paths.
+
+                Please note that additionally the mount path entries are organized in a "sparse"
+                hierarchy with the help of mount path identifiers (these are user-space generated
+                by lxkns).
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/MountPath'
+        NamespacedMountPaths:
+            description: 'the mount paths of each discovered mount namespace, separated by mount namespace.'
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/MountPathsDict'
+        Container:
+            description: 'Alive container with process(es), either running or paused.'
+            required:
+                - id
+                - name
+                - type
+                - flavor
+                - pid
+                - paused
+                - labels
+                - groups
+                - engine
+            type: object
+            properties:
+                id:
+                    description: Container identifier
+                    type: string
+                name:
+                    description: 'Container name as opposed to its id, might be the same for some container engines.'
+                    type: string
+                type:
+                    description: 'Type of container identifier, such as "docker.com", et cetera.'
+                    type: string
+                flavor:
+                    description: 'Flavor of container, might be the same as the type or different.'
+                    type: string
+                pid:
+                    description: Process ID of initial container process.
+                    type: integer
+                paused:
+                    description: Indicates whether the container is running or paused.
+                    type: boolean
+                labels:
+                    $ref: '#/components/schemas/Labels'
+                    description: Label name=value pairs attached to this container.
+                groups:
+                    description: |-
+                        List of group reference identifiers this container is a member of. For instance,
+                        (Docker) composer projects, Kubernetes pods, ...
+                    type: array
+                    items:
+                        type: integer
+                engine:
+                    description: Reference identifier of the container engine managing this container.
+                    type: integer
+        Labels:
+            description: 'Dictionary (map) of KEY=VALUE pairs, with KEY and VALUE both strings.'
+            type: object
+            additionalProperties:
+                type: string
+        ContainerEngine:
+            description: Information about a container engine managing a set of discovered containers.
+            required:
+                - id
+                - type
+                - version
+                - api
+                - pid
+                - containers
+            type: object
+            properties:
+                id:
+                    description: 'Container engine instance identifier, such as UUID, unique string, et cetera.'
+                    type: string
+                type:
+                    description: 'Engine type identifier, such as "containerd.io", et cetera.'
+                    type: string
+                version:
+                    description: 'Engine version information.'
+                    type: string
+                api:
+                    description: Engine API path.
+                    type: string
+                pid:
+                    description: 'Engine''s PID (in initial PID namespace) when known, otherwise zero.'
+                    type: integer
+                containers:
+                    description: List of reference IDs (=PIDs) of containers managed by this engine.
+                    type: array
+                    items:
+                        type: integer
+        ContainerGroup:
+            description: A group of containers somehow related.
+            required:
+                - name
+                - type
+                - flavor
+                - containers
+                - labels
+            type: object
+            properties:
+                name:
+                    description: |-
+                        Name of group, such as a (Docker) composer project name, Kubernetes pod
+                        namespace/name, et cetera.
+                    type: string
+                type:
+                    description: Group type identifier.
+                    type: string
+                flavor:
+                    description: 'Group flavor identifier, might be identical with group type identifier.'
+                    type: string
+                containers:
+                    description: List of reference IDs (=PIDs) of containers belonging to this group.
+                    type: array
+                    items:
+                        type: integer
+                labels:
+                    $ref: '#/components/schemas/Labels'
+                    description: Additional KEY=VALUE information.
+        ContainerMap:
+            description: |-
+                Maps container PIDs to containers. Container PIDs are the PIDs of initial
+                container processes only, but not any child processes.
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/Container'
+        ContainerEngineMap:
+            description: Maps reference IDs to container engines.
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/ContainerEngine'
+        ContainerGroupMap:
+            description: Maps reference IDs to container groups.
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/ContainerGroup'

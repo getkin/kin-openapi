@@ -1,0 +1,155 @@
+const ParameterInPath = "path" ...
+const TypeArray = "array" ...
+const FormatOfStringForUUIDOfRFC4122 = `^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$` ...
+const SerializationSimple = "simple" ...
+var SchemaErrorDetailsDisabled = false ...
+var CircularReferenceCounter = 3
+var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
+var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
+var ErrURINotSupported = errors.New("unsupported URI")
+var IdentifierRegExp = regexp.MustCompile(identifierPattern)
+var SchemaStringFormats = make(map[string]Format, 4)
+func BoolPtr(value bool) *bool
+func DefaultRefNameResolver(ref string) string
+func DefineIPv4Format()
+func DefineIPv6Format()
+func DefineStringFormat(name string, pattern string)
+func DefineStringFormatCallback(name string, callback FormatCallback)
+func Float64Ptr(value float64) *float64
+func Int64Ptr(value int64) *int64
+func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
+func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
+func Uint64Ptr(value uint64) *uint64
+func ValidateIdentifier(value string) error
+func WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context
+type AdditionalProperties struct{ ... }
+type Callback map[string]*PathItem
+type CallbackRef struct{ ... }
+type Callbacks map[string]*CallbackRef
+type Components struct{ ... }
+    func NewComponents() Components
+type Contact struct{ ... }
+type Content map[string]*MediaType
+    func NewContent() Content
+    func NewContentWithFormDataSchema(schema *Schema) Content
+    func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content
+    func NewContentWithJSONSchema(schema *Schema) Content
+    func NewContentWithJSONSchemaRef(schema *SchemaRef) Content
+    func NewContentWithSchema(schema *Schema, consumes []string) Content
+    func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
+type Discriminator struct{ ... }
+type Encoding struct{ ... }
+    func NewEncoding() *Encoding
+type Example struct{ ... }
+    func NewExample(value interface{}) *Example
+type ExampleRef struct{ ... }
+type Examples map[string]*ExampleRef
+type ExternalDocs struct{ ... }
+type Format struct{ ... }
+type FormatCallback func(value string) error
+type Header struct{ ... }
+type HeaderRef struct{ ... }
+type Headers map[string]*HeaderRef
+type Info struct{ ... }
+type License struct{ ... }
+type Link struct{ ... }
+type LinkRef struct{ ... }
+type Links map[string]*LinkRef
+type Loader struct{ ... }
+    func NewLoader() *Loader
+type MediaType struct{ ... }
+    func NewMediaType() *MediaType
+type MultiError []error
+type OAuthFlow struct{ ... }
+type OAuthFlows struct{ ... }
+type Operation struct{ ... }
+    func NewOperation() *Operation
+type Parameter struct{ ... }
+    func NewCookieParameter(name string) *Parameter
+    func NewHeaderParameter(name string) *Parameter
+    func NewPathParameter(name string) *Parameter
+    func NewQueryParameter(name string) *Parameter
+type ParameterRef struct{ ... }
+type Parameters []*ParameterRef
+    func NewParameters() Parameters
+type ParametersMap map[string]*ParameterRef
+type PathItem struct{ ... }
+type Paths map[string]*PathItem
+type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
+    func ReadFromHTTP(cl *http.Client) ReadFromURIFunc
+    func ReadFromURIs(readers ...ReadFromURIFunc) ReadFromURIFunc
+    func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
+type Ref struct{ ... }
+type RefNameResolver func(string) string
+type RequestBodies map[string]*RequestBodyRef
+type RequestBody struct{ ... }
+    func NewRequestBody() *RequestBody
+type RequestBodyRef struct{ ... }
+type Response struct{ ... }
+    func NewResponse() *Response
+type ResponseRef struct{ ... }
+type Responses map[string]*ResponseRef
+    func NewResponses() Responses
+type Schema struct{ ... }
+    func NewAllOfSchema(schemas ...*Schema) *Schema
+    func NewAnyOfSchema(schemas ...*Schema) *Schema
+    func NewArraySchema() *Schema
+    func NewBoolSchema() *Schema
+    func NewBytesSchema() *Schema
+    func NewDateTimeSchema() *Schema
+    func NewFloat64Schema() *Schema
+    func NewInt32Schema() *Schema
+    func NewInt64Schema() *Schema
+    func NewIntegerSchema() *Schema
+    func NewObjectSchema() *Schema
+    func NewOneOfSchema(schemas ...*Schema) *Schema
+    func NewSchema() *Schema
+    func NewStringSchema() *Schema
+    func NewUUIDSchema() *Schema
+type SchemaError struct{ ... }
+type SchemaRef struct{ ... }
+    func NewSchemaRef(ref string, value *Schema) *SchemaRef
+type SchemaRefs []*SchemaRef
+type SchemaValidationOption func(*schemaValidationSettings)
+    func DefaultsSet(f func()) SchemaValidationOption
+    func DisablePatternValidation() SchemaValidationOption
+    func DisableReadOnlyValidation() SchemaValidationOption
+    func DisableWriteOnlyValidation() SchemaValidationOption
+    func EnableFormatValidation() SchemaValidationOption
+    func FailFast() SchemaValidationOption
+    func MultiErrors() SchemaValidationOption
+    func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption
+    func VisitAsRequest() SchemaValidationOption
+    func VisitAsResponse() SchemaValidationOption
+type Schemas map[string]*SchemaRef
+type SecurityRequirement map[string][]string
+    func NewSecurityRequirement() SecurityRequirement
+type SecurityRequirements []SecurityRequirement
+    func NewSecurityRequirements() *SecurityRequirements
+type SecurityScheme struct{ ... }
+    func NewCSRFSecurityScheme() *SecurityScheme
+    func NewJWTSecurityScheme() *SecurityScheme
+    func NewOIDCSecurityScheme(oidcUrl string) *SecurityScheme
+    func NewSecurityScheme() *SecurityScheme
+type SecuritySchemeRef struct{ ... }
+type SecuritySchemes map[string]*SecuritySchemeRef
+type SerializationMethod struct{ ... }
+type Server struct{ ... }
+type ServerVariable struct{ ... }
+type Servers []*Server
+type SliceUniqueItemsChecker func(items []interface{}) bool
+type T struct{ ... }
+type Tag struct{ ... }
+type Tags []*Tag
+type ValidationOption func(options *ValidationOptions)
+    func AllowExtraSiblingFields(fields ...string) ValidationOption
+    func DisableExamplesValidation() ValidationOption
+    func DisableSchemaDefaultsValidation() ValidationOption
+    func DisableSchemaFormatValidation() ValidationOption
+    func DisableSchemaPatternValidation() ValidationOption
+    func EnableExamplesValidation() ValidationOption
+    func EnableSchemaDefaultsValidation() ValidationOption
+    func EnableSchemaFormatValidation() ValidationOption
+    func EnableSchemaPatternValidation() ValidationOption
+type ValidationOptions struct{ ... }
+type XML struct{ ... }

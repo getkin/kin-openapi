@@ -1,25 +1,53 @@
-package openapi2
+package openapi2_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"testing"
+	"reflect"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/invopop/yaml"
+
+	"github.com/getkin/kin-openapi/openapi2"
 )
 
-func TestReadingSwagger(t *testing.T) {
-	var swagger Swagger
-
+func Example() {
 	input, err := ioutil.ReadFile("testdata/swagger.json")
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	err = json.Unmarshal(input, &swagger)
-	require.NoError(t, err)
+	var doc openapi2.T
+	if err = json.Unmarshal(input, &doc); err != nil {
+		panic(err)
+	}
+	if doc.ExternalDocs.Description != "Find out more about Swagger" {
+		panic(`doc.ExternalDocs was parsed incorrectly!`)
+	}
 
-	output, err := json.Marshal(swagger)
-	require.NoError(t, err)
+	outputJSON, err := json.Marshal(doc)
+	if err != nil {
+		panic(err)
+	}
+	var docAgainFromJSON openapi2.T
+	if err = json.Unmarshal(outputJSON, &docAgainFromJSON); err != nil {
+		panic(err)
+	}
+	if !reflect.DeepEqual(doc, docAgainFromJSON) {
+		fmt.Println("objects doc & docAgainFromJSON should be the same")
+	}
 
-	assert.JSONEq(t, string(input), string(output))
+	outputYAML, err := yaml.Marshal(doc)
+	if err != nil {
+		panic(err)
+	}
+	var docAgainFromYAML openapi2.T
+	if err = yaml.Unmarshal(outputYAML, &docAgainFromYAML); err != nil {
+		panic(err)
+	}
+	if !reflect.DeepEqual(doc, docAgainFromYAML) {
+		fmt.Println("objects doc & docAgainFromYAML should be the same")
+	}
+
+	// Output:
 }

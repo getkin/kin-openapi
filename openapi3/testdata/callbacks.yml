@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: Callback refd
+  version: 1.2.3
+paths:
+  /trans:
+    post:
+      description: ''
+      requestBody:
+        description: ''
+        content:
+          'application/json':
+            schema:
+              properties:
+                id: {type: string}
+                email: {format: email}
+      responses:
+        '201':
+          description: subscription successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+      callbacks:
+        transactionCallback:
+          'http://notificationServer.com?transactionId={$request.body#/id}&email={$request.body#/email}':
+            $ref: callback-transactioned.yml
+
+  /other:
+    post:
+      description: ''
+      parameters:
+      - name: queryUrl
+        in: query
+        required: true
+        description: |
+          bla
+          bla
+          bla
+        schema:
+          type: string
+          format: uri
+          example: https://example.com
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      callbacks:
+        myEvent:
+          $ref: '#/components/callbacks/MyCallbackEvent'
+
+components:
+  schemas:
+    SomePayload: {type: object}
+    SomeOtherPayload: {type: boolean}
+  callbacks:
+    MyCallbackEvent:
+      '{$request.query.queryUrl}':
+        post:
+          requestBody:
+            description: Callback payload
+            content:
+              'application/json':
+                schema:
+                  $ref: '#/components/schemas/SomeOtherPayload'
+          responses:
+            '200':
+              description: callback successfully processed

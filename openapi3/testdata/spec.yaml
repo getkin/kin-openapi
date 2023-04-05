@@ -1,0 +1,14 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: Some Swagger
+  license:
+    name: MIT
+paths: {}
+components:
+  schemas:
+    Test:
+      type: object
+      properties:
+        test:
+          $ref: 'ext.json#/definitions/b'

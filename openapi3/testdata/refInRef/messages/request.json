@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "required": [
+    "definition_reference"
+  ],
+  "properties": {
+    "definition_reference": {
+      "$ref": "definitions.json#/definitions/External"
+    }
+  }
+}

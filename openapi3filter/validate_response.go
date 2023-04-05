@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -17,20 +19,13 @@ import (
 //
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
-func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
+func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error {
 	req := input.RequestValidationInput.Request
 	switch req.Method {
 	case "HEAD":
 		return nil
 	}
 	status := input.Status
-	if status < 100 {
-		return &ResponseError{
-			Input:  input,
-			Reason: "illegal status code",
-			Err:    fmt.Errorf("Status %d", status),
-		}
-	}
 
 	// These status codes will never be validated.
 	// TODO: The list is probably missing some.
@@ -61,12 +56,36 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		if !options.IncludeResponseStatus {
 			return nil
 		}
-
 		return &ResponseError{Input: input, Reason: "status is not supported"}
 	}
 	response := responseRef.Value
 	if response == nil {
 		return &ResponseError{Input: input, Reason: "response has not been resolved"}
+	}
+
+	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential options here
+	if options.MultiError {
+		opts = append(opts, openapi3.MultiErrors())
+	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
+	if options.ExcludeWriteOnlyValidations {
+		opts = append(opts, openapi3.DisableWriteOnlyValidation())
+	}
+
+	headers := make([]string, 0, len(response.Headers))
+	for k := range response.Headers {
+		if k != headerCT {
+			headers = append(headers, k)
+		}
+	}
+	sort.Strings(headers)
+	for _, headerName := range headers {
+		headerRef := response.Headers[headerName]
+		if err := validateResponseHeader(headerName, headerRef, input, opts); err != nil {
+			return err
+		}
 	}
 
 	if options.ExcludeResponseBody {
@@ -80,12 +99,12 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 		return nil
 	}
 
-	inputMIME := input.Header.Get("Content-Type")
+	inputMIME := input.Header.Get(headerCT)
 	contentType := content.Get(inputMIME)
 	if contentType == nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: fmt.Sprintf("input header 'Content-Type' has unexpected value: %q", inputMIME),
+			Reason: fmt.Sprintf("response header Content-Type has unexpected value: %q", inputMIME),
 		}
 	}
 
@@ -119,7 +138,7 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	input.SetBodyBytes(data)
 
 	encFn := func(name string) *openapi3.Encoding { return contentType.Encoding[name] }
-	value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
+	_, value, err := decodeBody(bytes.NewBuffer(data), input.Header, contentType.Schema, encFn)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
@@ -129,12 +148,77 @@ func ValidateResponse(c context.Context, input *ResponseValidationInput) error {
 	}
 
 	// Validate data with the schema.
-	if err := contentType.Schema.Value.VisitJSON(value); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, append(opts, openapi3.VisitAsResponse())...); err != nil {
+		schemaId := getSchemaIdentifier(contentType.Schema)
+		schemaId = prependSpaceIfNeeded(schemaId)
 		return &ResponseError{
 			Input:  input,
-			Reason: "response body doesn't match the schema",
+			Reason: fmt.Sprintf("response body doesn't match schema%s", schemaId),
 			Err:    err,
 		}
 	}
 	return nil
+}
+
+func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, input *ResponseValidationInput, opts []openapi3.SchemaValidationOption) error {
+	var err error
+	var decodedValue interface{}
+	var found bool
+	var sm *openapi3.SerializationMethod
+	dec := &headerParamDecoder{header: input.Header}
+
+	if sm, err = headerRef.Value.SerializationMethod(); err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
+			Err:    err,
+		}
+	}
+
+	if decodedValue, found, err = decodeValue(dec, headerName, sm, headerRef.Value.Schema, headerRef.Value.Required); err != nil {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("unable to decode header %q value", headerName),
+			Err:    err,
+		}
+	}
+
+	if found {
+		if err = headerRef.Value.Schema.Value.VisitJSON(decodedValue, opts...); err != nil {
+			return &ResponseError{
+				Input:  input,
+				Reason: fmt.Sprintf("response header %q doesn't match schema", headerName),
+				Err:    err,
+			}
+		}
+	} else if headerRef.Value.Required {
+		return &ResponseError{
+			Input:  input,
+			Reason: fmt.Sprintf("response header %q missing", headerName),
+		}
+	}
+	return nil
+}
+
+// getSchemaIdentifier gets something by which a schema could be identified.
+// A schema by itself doesn't have a true identity field. This function makes
+// a best effort to get a value that can fill that void.
+func getSchemaIdentifier(schema *openapi3.SchemaRef) string {
+	var id string
+
+	if schema != nil {
+		id = strings.TrimSpace(schema.Ref)
+	}
+	if id == "" && schema.Value != nil {
+		id = strings.TrimSpace(schema.Value.Title)
+	}
+
+	return id
+}
+
+func prependSpaceIfNeeded(value string) string {
+	if len(value) > 0 {
+		value = " " + value
+	}
+	return value
 }

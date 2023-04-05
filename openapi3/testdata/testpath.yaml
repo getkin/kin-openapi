@@ -1,0 +1,15 @@
+paths:
+  /testpath:
+    get:
+      responses:
+        "200":
+          $ref: "#/components/responses/testpath_200_response"
+
+components:
+  responses:
+    testpath_200_response:
+      description: a custom response
+      content:
+        application/json:
+          schema:
+            type: string

@@ -3,13 +3,20 @@ package openapi3filter
 import (
 	"context"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
 	"net/http"
 	"net/url"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
+// AuthenticationFunc allows for custom security requirement validation.
+// A non-nil error fails authentication according to https://spec.openapis.org/oas/v3.1.0#security-requirement-object
+// See ValidateSecurityRequirements
 type AuthenticationFunc func(context.Context, *AuthenticationInput) error
 
+// NoopAuthenticationFunc is an AuthenticationFunc
 func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error { return nil }
 
 var _ AuthenticationFunc = NoopAuthenticationFunc
@@ -17,17 +24,21 @@ var _ AuthenticationFunc = NoopAuthenticationFunc
 type ValidationHandler struct {
 	Handler            http.Handler
 	AuthenticationFunc AuthenticationFunc
-	SwaggerFile        string
+	File               string
 	ErrorEncoder       ErrorEncoder
-	IgnoreServerErrors bool
-	router             *Router
+	router             routers.Router
 }
 
 func (h *ValidationHandler) Load() error {
-	h.router = NewRouter()
-
-	err := h.LoadSwagger()
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromFile(h.File)
 	if err != nil {
+		return err
+	}
+	if err := doc.Validate(loader.Context); err != nil {
+		return err
+	}
+	if h.router, err = legacyrouter.NewRouter(doc); err != nil {
 		return err
 	}
 
@@ -43,21 +54,6 @@ func (h *ValidationHandler) Load() error {
 	}
 
 	return nil
-}
-
-func (h *ValidationHandler) LoadSwagger() error {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile(h.SwaggerFile)
-	if err != nil {
-		return err
-	}
-	if h.IgnoreServerErrors {
-		// remove servers from the OpenAPI spec if we shouldn't validate them
-		swagger, err = h.removeServers(swagger)
-		if err != nil {
-			return err
-		}
-	}
-	return h.router.AddSwagger(swagger)
 }
 
 func (h *ValidationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -80,8 +76,7 @@ func (h *ValidationHandler) Middleware(next http.Handler) http.Handler {
 }
 
 func (h *ValidationHandler) before(w http.ResponseWriter, r *http.Request) (handled bool) {
-	err := h.validateRequest(r)
-	if err != nil {
+	if err := h.validateRequest(r); err != nil {
 		h.ErrorEncoder(r.Context(), err, w)
 		return true
 	}
@@ -90,7 +85,7 @@ func (h *ValidationHandler) before(w http.ResponseWriter, r *http.Request) (hand
 
 func (h *ValidationHandler) validateRequest(r *http.Request) error {
 	// Find route
-	route, pathParams, err := h.router.FindRoute(r.Method, r.URL)
+	route, pathParams, err := h.router.FindRoute(r)
 	if err != nil {
 		return err
 	}
@@ -106,8 +101,7 @@ func (h *ValidationHandler) validateRequest(r *http.Request) error {
 		Route:      route,
 		Options:    options,
 	}
-	err = ValidateRequest(r.Context(), requestValidationInput)
-	if err != nil {
+	if err = ValidateRequest(r.Context(), requestValidationInput); err != nil {
 		return err
 	}
 
@@ -118,7 +112,7 @@ func (h *ValidationHandler) validateRequest(r *http.Request) error {
 //
 // It also rewrites all the paths to begin with the server path, so that the paths still work.
 // This assumes that all servers share the same path (e.g., all have /v1), or return an error.
-func (h *ValidationHandler) removeServers(swagger *openapi3.Swagger) (*openapi3.Swagger, error) {
+func (h *ValidationHandler) removeServers(swagger *openapi3.T) (*openapi3.T, error) {
 	// collect API pathPrefix path prefixes
 	prefixes := make(map[string]struct{}, 0) // a "set"
 	for _, s := range swagger.Servers {

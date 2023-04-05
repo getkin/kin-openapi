@@ -2,6 +2,7 @@ package openapi3filter
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,8 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func TestDecodeParameter(t *testing.T) {
@@ -29,7 +32,7 @@ func TestDecodeParameter(t *testing.T) {
 		objectOf = func(args ...interface{}) *openapi3.SchemaRef {
 			s := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", Properties: make(map[string]*openapi3.SchemaRef)}}
 			if len(args)%2 != 0 {
-				panic("invalid arguments. must be an odd number of arguments")
+				panic("invalid arguments. must be an even number of arguments")
 			}
 			for i := 0; i < len(args)/2; i++ {
 				propName := args[i*2].(string)
@@ -73,6 +76,7 @@ func TestDecodeParameter(t *testing.T) {
 		header string
 		cookie string
 		want   interface{}
+		found  bool
 		err    error
 	}
 
@@ -88,23 +92,27 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: stringSchema},
 					path:  "/foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "simple explode",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: stringSchema},
 					path:  "/foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "label",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringSchema},
 					path:  "/.foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "label invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -112,11 +120,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringSchema},
 					path:  "/.foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "label explode invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -124,11 +134,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringSchema},
 					path:  "/;param=foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "matrix invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -136,11 +148,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringSchema},
 					path:  "/;param=foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "matrix explode invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -148,23 +162,27 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: stringSchema},
 					path:  "/foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "string",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: stringSchema},
 					path:  "/foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
 					path:  "/1",
-					want:  float64(1),
+					want:  int64(1),
+					found: true,
 				},
 				{
 					name:  "integer invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: integerSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -172,11 +190,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: numberSchema},
 					path:  "/1.1",
 					want:  1.1,
+					found: true,
 				},
 				{
 					name:  "number invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: numberSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -184,11 +204,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: booleanSchema},
 					path:  "/true",
 					want:  true,
+					found: true,
 				},
 				{
 					name:  "boolean invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: booleanSchema},
 					path:  "/foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 			},
@@ -201,23 +223,27 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: arraySchema},
 					path:  "/foo,bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "simple explode",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: arraySchema},
 					path:  "/foo,bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "label",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
 					path:  "/.foo,bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "label invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
 					path:  "/foo,bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo,bar"},
 				},
 				{
@@ -225,11 +251,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
 					path:  "/.foo.bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "label explode invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
 					path:  "/foo.bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo.bar"},
 				},
 				{
@@ -237,11 +265,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
 					path:  "/;param=foo,bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "matrix invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
 					path:  "/foo,bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo,bar"},
 				},
 				{
@@ -249,11 +279,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
 					path:  "/;param=foo;param=bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "matrix explode invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
 					path:  "/foo,bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo,bar"},
 				},
 				{
@@ -261,23 +293,27 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arraySchema},
 					path:  "/foo,bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "invalid integer items",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(integerSchema)},
 					path:  "/1,foo",
+					found: true,
 					err:   &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:  "invalid number items",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(numberSchema)},
 					path:  "/1.1,foo",
+					found: true,
 					err:   &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:  "invalid boolean items",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(booleanSchema)},
 					path:  "/true,foo",
+					found: true,
 					err:   &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 			},
@@ -290,23 +326,27 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: objectSchema},
 					path:  "/id,foo,name,bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "simple explode",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: objectSchema},
 					path:  "/id=foo,name=bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "label",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: objectSchema},
 					path:  "/.id,foo,name,bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "label invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: objectSchema},
 					path:  "/id,foo,name,bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "id,foo,name,bar"},
 				},
 				{
@@ -314,11 +354,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: objectSchema},
 					path:  "/.id=foo.name=bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "label explode invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: objectSchema},
 					path:  "/id=foo.name=bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "id=foo.name=bar"},
 				},
 				{
@@ -326,11 +368,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: objectSchema},
 					path:  "/;param=id,foo,name,bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "matrix invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: objectSchema},
 					path:  "/id,foo,name,bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "id,foo,name,bar"},
 				},
 				{
@@ -338,11 +382,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: objectSchema},
 					path:  "/;id=foo;name=bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "matrix explode invalid",
 					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: objectSchema},
 					path:  "/id=foo;name=bar",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "id=foo;name=bar"},
 				},
 				{
@@ -350,23 +396,27 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectSchema},
 					path:  "/id,foo,name,bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "invalid integer prop",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", integerSchema)},
 					path:  "/foo,bar",
+					found: true,
 					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:  "invalid number prop",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", numberSchema)},
 					path:  "/foo,bar",
+					found: true,
 					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:  "invalid boolean prop",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", booleanSchema)},
 					path:  "/foo,bar",
+					found: true,
 					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 			},
@@ -379,35 +429,41 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: stringSchema},
 					query: "param=foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "form explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: stringSchema},
 					query: "param=foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringSchema},
 					query: "param=foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "string",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringSchema},
 					query: "param=foo",
 					want:  "foo",
+					found: true,
 				},
 				{
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
 					query: "param=1",
-					want:  float64(1),
+					want:  int64(1),
+					found: true,
 				},
 				{
 					name:  "integer invalid",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
 					query: "param=foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -415,11 +471,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
 					query: "param=1.1",
 					want:  1.1,
+					found: true,
 				},
 				{
 					name:  "number invalid",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
 					query: "param=foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -427,11 +485,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
 					query: "param=true",
 					want:  true,
+					found: true,
 				},
 				{
 					name:  "boolean invalid",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
 					query: "param=foo",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 			},
@@ -444,11 +504,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: allofSchema},
 					query: "param=1",
 					want:  float64(1),
+					found: true,
 				},
 				{
 					name:  "allofSchema string",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: allofSchema},
 					query: "param=abdf",
+					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "abdf"},
 				},
 			},
@@ -460,13 +522,15 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "anyofSchema integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
 					query: "param=1",
-					want:  float64(1),
+					want:  int64(1),
+					found: true,
 				},
 				{
 					name:  "anyofSchema string",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: anyofSchema},
 					query: "param=abdf",
 					want:  "abdf",
+					found: true,
 				},
 			},
 		},
@@ -478,18 +542,21 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
 					query: "param=true",
 					want:  true,
+					found: true,
 				},
 				{
 					name:  "oneofSchema int",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
 					query: "param=1122",
-					want:  float64(1122),
+					want:  int64(1122),
+					found: true,
 				},
 				{
 					name:  "oneofSchema string",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: oneofSchema},
 					query: "param=abcd",
 					want:  nil,
+					found: true,
 				},
 			},
 		},
@@ -501,59 +568,69 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: arraySchema},
 					query: "param=foo,bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "form explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: arraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "spaceDelimited",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: arraySchema},
 					query: "param=foo bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "spaceDelimited explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: explode, Schema: arraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "pipeDelimited",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: arraySchema},
 					query: "param=foo|bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "pipeDelimited explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: explode, Schema: arraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
+					found: true,
 				},
 				{
 					name:  "invalid integer items",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(integerSchema)},
 					query: "param=1&param=foo",
+					found: true,
 					err:   &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:  "invalid number items",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(numberSchema)},
 					query: "param=1.1&param=foo",
+					found: true,
 					err:   &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:  "invalid boolean items",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arrayOf(booleanSchema)},
 					query: "param=true&param=foo",
+					found: true,
 					err:   &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 			},
@@ -566,41 +643,48 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: objectSchema},
 					query: "param=id,foo,name,bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "form explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: objectSchema},
 					query: "id=foo&name=bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "deepObject explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectSchema},
 					query: "param[id]=foo&param[name]=bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},
 					query: "id=foo&name=bar",
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
+					found: true,
 				},
 				{
 					name:  "invalid integer prop",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", integerSchema)},
 					query: "foo=bar",
+					found: true,
 					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:  "invalid number prop",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", numberSchema)},
 					query: "foo=bar",
+					found: true,
 					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:  "invalid boolean prop",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectOf("foo", booleanSchema)},
 					query: "foo=bar",
+					found: true,
 					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 			},
@@ -613,35 +697,41 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: stringSchema},
 					header: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "simple explode",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: stringSchema},
 					header: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "default",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: stringSchema},
 					header: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "string",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: stringSchema},
 					header: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "integer",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
 					header: "X-Param:1",
-					want:   float64(1),
+					want:   int64(1),
+					found:  true,
 				},
 				{
 					name:   "integer invalid",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
 					header: "X-Param:foo",
+					found:  true,
 					err:    &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -649,11 +739,13 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: numberSchema},
 					header: "X-Param:1.1",
 					want:   1.1,
+					found:  true,
 				},
 				{
 					name:   "number invalid",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: numberSchema},
 					header: "X-Param:foo",
+					found:  true,
 					err:    &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -661,11 +753,13 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: booleanSchema},
 					header: "X-Param:true",
 					want:   true,
+					found:  true,
 				},
 				{
 					name:   "boolean invalid",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: booleanSchema},
 					header: "X-Param:foo",
+					found:  true,
 					err:    &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 			},
@@ -678,35 +772,41 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: arraySchema},
 					header: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
+					found:  true,
 				},
 				{
 					name:   "simple explode",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: arraySchema},
 					header: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
+					found:  true,
 				},
 				{
 					name:   "default",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arraySchema},
 					header: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
+					found:  true,
 				},
 				{
 					name:   "invalid integer items",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(integerSchema)},
 					header: "X-Param:1,foo",
+					found:  true,
 					err:    &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:   "invalid number items",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(numberSchema)},
 					header: "X-Param:1.1,foo",
+					found:  true,
 					err:    &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:   "invalid boolean items",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(booleanSchema)},
 					header: "X-Param:true,foo",
+					found:  true,
 					err:    &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 			},
@@ -719,35 +819,48 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: objectSchema},
 					header: "X-Param:id,foo,name,bar",
 					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+					found:  true,
 				},
 				{
 					name:   "simple explode",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: objectSchema},
 					header: "X-Param:id=foo,name=bar",
 					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+					found:  true,
 				},
 				{
 					name:   "default",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectSchema},
 					header: "X-Param:id,foo,name,bar",
 					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+					found:  true,
+				},
+				{
+					name:   "valid integer prop",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: integerSchema},
+					header: "X-Param:88",
+					found:  true,
+					want:   int64(88),
 				},
 				{
 					name:   "invalid integer prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", integerSchema)},
 					header: "X-Param:foo,bar",
+					found:  true,
 					err:    &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:   "invalid number prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", numberSchema)},
 					header: "X-Param:foo,bar",
+					found:  true,
 					err:    &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:   "invalid boolean prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: objectOf("foo", booleanSchema)},
 					header: "X-Param:foo,bar",
+					found:  true,
 					err:    &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 			},
@@ -760,35 +873,41 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: stringSchema},
 					cookie: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "form explode",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: explode, Schema: stringSchema},
 					cookie: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "default",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: stringSchema},
 					cookie: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "string",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: stringSchema},
 					cookie: "X-Param:foo",
 					want:   "foo",
+					found:  true,
 				},
 				{
 					name:   "integer",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
 					cookie: "X-Param:1",
-					want:   float64(1),
+					want:   int64(1),
+					found:  true,
 				},
 				{
 					name:   "integer invalid",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: integerSchema},
 					cookie: "X-Param:foo",
+					found:  true,
 					err:    &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -796,11 +915,13 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: numberSchema},
 					cookie: "X-Param:1.1",
 					want:   1.1,
+					found:  true,
 				},
 				{
 					name:   "number invalid",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: numberSchema},
 					cookie: "X-Param:foo",
+					found:  true,
 					err:    &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
@@ -808,11 +929,13 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: booleanSchema},
 					cookie: "X-Param:true",
 					want:   true,
+					found:  true,
 				},
 				{
 					name:   "boolean invalid",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Schema: booleanSchema},
 					cookie: "X-Param:foo",
+					found:  true,
 					err:    &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 			},
@@ -825,23 +948,27 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arraySchema},
 					cookie: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
+					found:  true,
 				},
 				{
 					name:   "invalid integer items",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(integerSchema)},
 					cookie: "X-Param:1,foo",
+					found:  true,
 					err:    &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:   "invalid number items",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(numberSchema)},
 					cookie: "X-Param:1.1,foo",
+					found:  true,
 					err:    &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 				{
 					name:   "invalid boolean items",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(booleanSchema)},
 					cookie: "X-Param:true,foo",
+					found:  true,
 					err:    &ParseError{path: []interface{}{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
 			},
@@ -854,23 +981,27 @@ func TestDecodeParameter(t *testing.T) {
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectSchema},
 					cookie: "X-Param:id,foo,name,bar",
 					want:   map[string]interface{}{"id": "foo", "name": "bar"},
+					found:  true,
 				},
 				{
 					name:   "invalid integer prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", integerSchema)},
 					cookie: "X-Param:foo,bar",
+					found:  true,
 					err:    &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:   "invalid number prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", numberSchema)},
 					cookie: "X-Param:foo,bar",
+					found:  true,
 					err:    &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:   "invalid boolean prop",
 					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: objectOf("foo", booleanSchema)},
 					cookie: "X-Param:foo,bar",
+					found:  true,
 					err:    &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 			},
@@ -903,37 +1034,35 @@ func TestDecodeParameter(t *testing.T) {
 						req.AddCookie(&http.Cookie{Name: v[0], Value: v[1]})
 					}
 
-					var path string
+					path := "/test"
 					if tc.path != "" {
-						switch tc.param.Style {
-						case "label":
-							path = "." + tc.param.Name
-						case "matrix":
-							path = ";" + tc.param.Name
-						default:
-							path = tc.param.Name
-						}
-						if tc.param.Explode != nil && *tc.param.Explode {
-							path += "*"
-						}
-						path = "/{" + path + "}"
+						path += "/{" + tc.param.Name + "}"
+						tc.param.Required = true
 					}
 
 					info := &openapi3.Info{
 						Title:   "MyAPI",
 						Version: "0.1",
 					}
-					spec := &openapi3.Swagger{OpenAPI: "3.0.0", Info: info}
-					op := &openapi3.Operation{OperationID: "test", Parameters: []*openapi3.ParameterRef{{Value: tc.param}}, Responses: make(openapi3.Responses)}
-					spec.AddOperation("/test"+path, http.MethodGet, op)
-					router := NewRouter()
-					require.NoError(t, router.AddSwagger(spec), "failed to create a router")
+					spec := &openapi3.T{OpenAPI: "3.0.0", Info: info}
+					op := &openapi3.Operation{
+						OperationID: "test",
+						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
+						Responses:   openapi3.NewResponses(),
+					}
+					spec.AddOperation(path, http.MethodGet, op)
+					err = spec.Validate(context.Background())
+					require.NoError(t, err)
+					router, err := legacyrouter.NewRouter(spec)
+					require.NoError(t, err)
 
-					route, pathParams, err := router.FindRoute(req.Method, req.URL)
-					require.NoError(t, err, "failed to find a route")
+					route, pathParams, err := router.FindRoute(req)
+					require.NoError(t, err)
 
 					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
-					got, err := decodeStyledParameter(tc.param, input)
+					got, found, err := decodeStyledParameter(tc.param, input)
+
+					require.Truef(t, found == tc.found, "got found: %t, want found: %t", found, tc.found)
 
 					if tc.err != nil {
 						require.Error(t, err)
@@ -977,6 +1106,7 @@ func TestDecodeBody(t *testing.T) {
 		{name: "c", contentType: "text/plain", data: strings.NewReader("c2")},
 		{name: "d", contentType: "application/json", data: bytes.NewReader(d)},
 		{name: "f", contentType: "application/octet-stream", data: strings.NewReader("foo"), filename: "f1"},
+		{name: "g", data: strings.NewReader("g1")},
 	})
 	require.NoError(t, err)
 
@@ -990,10 +1120,14 @@ func TestDecodeBody(t *testing.T) {
 		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
 	})
+	require.NoError(t, err)
+
 	multipartAdditionalProps, multipartMimeAdditionalProps, err := newTestMultipartForm([]*testFormPart{
 		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
 	})
+	require.NoError(t, err)
+
 	multipartAdditionalPropsErr, multipartMimeAdditionalPropsErr, err := newTestMultipartForm([]*testFormPart{
 		{name: "a", contentType: "text/plain", data: strings.NewReader("a1")},
 		{name: "x", contentType: "text/plain", data: strings.NewReader("x1")},
@@ -1011,7 +1145,7 @@ func TestDecodeBody(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name:    "unsupported content type",
+			name:    prefixUnsupportedCT,
 			mime:    "application/xml",
 			wantErr: &ParseError{Kind: KindUnsupportedFormat},
 		},
@@ -1034,6 +1168,18 @@ func TestDecodeBody(t *testing.T) {
 			want: "foo",
 		},
 		{
+			name: "x-yaml",
+			mime: "application/x-yaml",
+			body: strings.NewReader("foo"),
+			want: "foo",
+		},
+		{
+			name: "yaml",
+			mime: "application/yaml",
+			body: strings.NewReader("foo"),
+			want: "foo",
+		},
+		{
 			name: "urlencoded form",
 			mime: "application/x-www-form-urlencoded",
 			body: strings.NewReader(urlencodedForm.Encode()),
@@ -1041,7 +1187,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("a", openapi3.NewStringSchema()).
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
+			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
 		{
 			name: "urlencoded space delimited",
@@ -1054,7 +1200,7 @@ func TestDecodeBody(t *testing.T) {
 			encoding: map[string]*openapi3.Encoding{
 				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
 			},
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
+			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
 		{
 			name: "urlencoded pipe delimited",
@@ -1067,7 +1213,7 @@ func TestDecodeBody(t *testing.T) {
 			encoding: map[string]*openapi3.Encoding{
 				"c": {Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
 			},
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}},
+			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
 		{
 			name: "multipart",
@@ -1078,8 +1224,9 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 				WithProperty("d", openapi3.NewObjectSchema().WithProperty("d1", openapi3.NewStringSchema())).
-				WithProperty("f", openapi3.NewStringSchema().WithFormat("binary")),
-			want: map[string]interface{}{"a": "a1", "b": float64(10), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo"},
+				WithProperty("f", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("g", openapi3.NewStringSchema()),
+			want: map[string]interface{}{"a": "a1", "b": json.Number("10"), "c": []interface{}{"c1", "c2"}, "d": map[string]interface{}{"d1": "d1"}, "f": "foo", "g": "g1"},
 		},
 		{
 			name: "multipartExtraPart",
@@ -1130,7 +1277,7 @@ func TestDecodeBody(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			h := make(http.Header)
-			h.Set(http.CanonicalHeaderKey("Content-Type"), tc.mime)
+			h.Set(headerCT, tc.mime)
 			var schemaRef *openapi3.SchemaRef
 			if tc.schema != nil {
 				schemaRef = tc.schema.NewRef()
@@ -1141,7 +1288,7 @@ func TestDecodeBody(t *testing.T) {
 				}
 				return tc.encoding[name]
 			}
-			got, err := decodeBody(tc.body, h, schemaRef, encFn)
+			_, got, err := decodeBody(tc.body, h, schemaRef, encFn)
 
 			if tc.wantErr != nil {
 				require.Error(t, err)
@@ -1176,7 +1323,7 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 		}
 
 		h := make(textproto.MIMEHeader)
-		h.Set("Content-Type", p.contentType)
+		h.Set(headerCT, p.contentType)
 		h.Set("Content-Disposition", disp)
 		pw, err := w.CreatePart(h)
 		if err != nil {
@@ -1190,39 +1337,42 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 }
 
 func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
-	var (
-		contentType = "text/csv"
-		decoder     = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
-			data, err := ioutil.ReadAll(body)
-			if err != nil {
-				return nil, err
-			}
-			var vv []interface{}
-			for _, v := range strings.Split(string(data), ",") {
-				vv = append(vv, v)
-			}
-			return vv, nil
+	var decoder BodyDecoder
+	decoder = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (decoded interface{}, err error) {
+		var data []byte
+		if data, err = ioutil.ReadAll(body); err != nil {
+			return
 		}
-		schema  = openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()
-		encFn   = func(string) *openapi3.Encoding { return nil }
-		body    = strings.NewReader("foo,bar")
-		want    = []interface{}{"foo", "bar"}
-		wantErr = &ParseError{Kind: KindUnsupportedFormat}
-	)
+		return strings.Split(string(data), ","), nil
+	}
+	contentType := "application/csv"
 	h := make(http.Header)
-	h.Set(http.CanonicalHeaderKey("Content-Type"), contentType)
+	h.Set(headerCT, contentType)
+
+	originalDecoder := RegisteredBodyDecoder(contentType)
+	require.Nil(t, originalDecoder)
 
 	RegisterBodyDecoder(contentType, decoder)
-	got, err := decodeBody(body, h, schema, encFn)
+	require.Equal(t, fmt.Sprintf("%v", decoder), fmt.Sprintf("%v", RegisteredBodyDecoder(contentType)))
+
+	body := strings.NewReader("foo,bar")
+	schema := openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+	_, got, err := decodeBody(body, h, schema, encFn)
 
 	require.NoError(t, err)
-	require.Truef(t, reflect.DeepEqual(got, want), "got %v, want %v", got, want)
+	require.Equal(t, []string{"foo", "bar"}, got)
 
 	UnregisterBodyDecoder(contentType)
-	_, err = decodeBody(body, h, schema, encFn)
 
-	require.Error(t, err)
-	require.Truef(t, matchParseError(err, wantErr), "got error:\n%v\nwant error:\n%v", err, wantErr)
+	originalDecoder = RegisteredBodyDecoder(contentType)
+	require.Nil(t, originalDecoder)
+
+	_, _, err = decodeBody(body, h, schema, encFn)
+	require.Equal(t, &ParseError{
+		Kind:   KindUnsupportedFormat,
+		Reason: prefixUnsupportedCT + ` "application/csv"`,
+	}, err)
 }
 
 func matchParseError(got, want error) bool {

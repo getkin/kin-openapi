@@ -2,22 +2,44 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
+	"github.com/go-openapi/jsonpointer"
 )
 
-type SecurityScheme struct {
-	ExtensionProps
+type SecuritySchemes map[string]*SecuritySchemeRef
 
-	Type         string      `json:"type,omitempty" yaml:"type,omitempty"`
-	Description  string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Name         string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In           string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Scheme       string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
-	BearerFormat string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
-	Flows        *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+func (s SecuritySchemes) JSONLookup(token string) (interface{}, error) {
+	ref, ok := s[token]
+	if ref == nil || ok == false {
+		return nil, fmt.Errorf("object has no field %q", token)
+	}
+
+	if ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
+
+var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
+
+// SecurityScheme is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-scheme-object
+type SecurityScheme struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
+	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Name             string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In               string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Scheme           string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
+	BearerFormat     string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
+	Flows            *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
+	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty" yaml:"openIdConnectUrl,omitempty"`
 }
 
 func NewSecurityScheme() *SecurityScheme {
@@ -32,6 +54,13 @@ func NewCSRFSecurityScheme() *SecurityScheme {
 	}
 }
 
+func NewOIDCSecurityScheme(oidcUrl string) *SecurityScheme {
+	return &SecurityScheme{
+		Type:             "openIdConnect",
+		OpenIdConnectUrl: oidcUrl,
+	}
+}
+
 func NewJWTSecurityScheme() *SecurityScheme {
 	return &SecurityScheme{
 		Type:         "http",
@@ -40,12 +69,57 @@ func NewJWTSecurityScheme() *SecurityScheme {
 	}
 }
 
-func (ss *SecurityScheme) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(ss)
+// MarshalJSON returns the JSON encoding of SecurityScheme.
+func (ss SecurityScheme) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 8+len(ss.Extensions))
+	for k, v := range ss.Extensions {
+		m[k] = v
+	}
+	if x := ss.Type; x != "" {
+		m["type"] = x
+	}
+	if x := ss.Description; x != "" {
+		m["description"] = x
+	}
+	if x := ss.Name; x != "" {
+		m["name"] = x
+	}
+	if x := ss.In; x != "" {
+		m["in"] = x
+	}
+	if x := ss.Scheme; x != "" {
+		m["scheme"] = x
+	}
+	if x := ss.BearerFormat; x != "" {
+		m["bearerFormat"] = x
+	}
+	if x := ss.Flows; x != nil {
+		m["flows"] = x
+	}
+	if x := ss.OpenIdConnectUrl; x != "" {
+		m["openIdConnectUrl"] = x
+	}
+	return json.Marshal(m)
 }
 
+// UnmarshalJSON sets SecurityScheme to a copy of data.
 func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, ss)
+	type SecuritySchemeBis SecurityScheme
+	var x SecuritySchemeBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "type")
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "name")
+	delete(x.Extensions, "in")
+	delete(x.Extensions, "scheme")
+	delete(x.Extensions, "bearerFormat")
+	delete(x.Extensions, "flows")
+	delete(x.Extensions, "openIdConnectUrl")
+	*ss = SecurityScheme(x)
+	return nil
 }
 
 func (ss *SecurityScheme) WithType(value string) *SecurityScheme {
@@ -78,7 +152,10 @@ func (ss *SecurityScheme) WithBearerFormat(value string) *SecurityScheme {
 	return ss
 }
 
-func (ss *SecurityScheme) Validate(c context.Context) error {
+// Validate returns an error if SecurityScheme does not comply with the OpenAPI spec.
+func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	hasIn := false
 	hasBearerFormat := false
 	hasFlow := false
@@ -90,16 +167,18 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 		switch scheme {
 		case "bearer":
 			hasBearerFormat = true
-		case "basic":
+		case "basic", "negotiate", "digest":
 		default:
-			return fmt.Errorf("Security scheme of type 'http' has invalid 'scheme' value '%s'", scheme)
+			return fmt.Errorf("security scheme of type 'http' has invalid 'scheme' value %q", scheme)
 		}
 	case "oauth2":
 		hasFlow = true
 	case "openIdConnect":
-		return fmt.Errorf("Support for security schemes with type '%v' has not been implemented", ss.Type)
+		if ss.OpenIdConnectUrl == "" {
+			return fmt.Errorf("no OIDC URL found for openIdConnect security scheme %q", ss.Name)
+		}
 	default:
-		return fmt.Errorf("Security scheme 'type' can't be '%v'", ss.Type)
+		return fmt.Errorf("security scheme 'type' can't be %q", ss.Type)
 	}
 
 	// Validate "in" and "name"
@@ -107,40 +186,44 @@ func (ss *SecurityScheme) Validate(c context.Context) error {
 		switch ss.In {
 		case "query", "header", "cookie":
 		default:
-			return fmt.Errorf("Security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not '%s'", ss.In)
+			return fmt.Errorf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", ss.In)
 		}
 		if ss.Name == "" {
-			return errors.New("Security scheme of type 'apiKey' should have 'name'")
+			return errors.New("security scheme of type 'apiKey' should have 'name'")
 		}
 	} else if len(ss.In) > 0 {
-		return fmt.Errorf("Security scheme of type '%s' can't have 'in'", ss.Type)
+		return fmt.Errorf("security scheme of type %q can't have 'in'", ss.Type)
 	} else if len(ss.Name) > 0 {
-		return errors.New("Security scheme of type 'apiKey' can't have 'name'")
+		return fmt.Errorf("security scheme of type %q can't have 'name'", ss.Type)
 	}
 
 	// Validate "format"
 	// "bearerFormat" is an arbitrary string so we only check if the scheme supports it
 	if !hasBearerFormat && len(ss.BearerFormat) > 0 {
-		return fmt.Errorf("Security scheme of type '%v' can't have 'bearerFormat'", ss.Type)
+		return fmt.Errorf("security scheme of type %q can't have 'bearerFormat'", ss.Type)
 	}
 
 	// Validate "flow"
 	if hasFlow {
 		flow := ss.Flows
 		if flow == nil {
-			return fmt.Errorf("Security scheme of type '%v' should have 'flows'", ss.Type)
+			return fmt.Errorf("security scheme of type %q should have 'flows'", ss.Type)
 		}
-		if err := flow.Validate(c); err != nil {
-			return fmt.Errorf("Security scheme 'flow' is invalid: %v", err)
+		if err := flow.Validate(ctx); err != nil {
+			return fmt.Errorf("security scheme 'flow' is invalid: %w", err)
 		}
 	} else if ss.Flows != nil {
-		return fmt.Errorf("Security scheme of type '%s' can't have 'flows'", ss.Type)
+		return fmt.Errorf("security scheme of type %q can't have 'flows'", ss.Type)
 	}
-	return nil
+
+	return validateExtensions(ctx, ss.Extensions)
 }
 
+// OAuthFlows is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
 type OAuthFlows struct {
-	ExtensionProps
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
 	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
 	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
@@ -156,59 +239,174 @@ const (
 	oAuthFlowAuthorizationCode
 )
 
-func (flows *OAuthFlows) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(flows)
+// MarshalJSON returns the JSON encoding of OAuthFlows.
+func (flows OAuthFlows) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 4+len(flows.Extensions))
+	for k, v := range flows.Extensions {
+		m[k] = v
+	}
+	if x := flows.Implicit; x != nil {
+		m["implicit"] = x
+	}
+	if x := flows.Password; x != nil {
+		m["password"] = x
+	}
+	if x := flows.ClientCredentials; x != nil {
+		m["clientCredentials"] = x
+	}
+	if x := flows.AuthorizationCode; x != nil {
+		m["authorizationCode"] = x
+	}
+	return json.Marshal(m)
 }
 
+// UnmarshalJSON sets OAuthFlows to a copy of data.
 func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, flows)
+	type OAuthFlowsBis OAuthFlows
+	var x OAuthFlowsBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "implicit")
+	delete(x.Extensions, "password")
+	delete(x.Extensions, "clientCredentials")
+	delete(x.Extensions, "authorizationCode")
+	*flows = OAuthFlows(x)
+	return nil
 }
 
-func (flows *OAuthFlows) Validate(c context.Context) error {
+// Validate returns an error if OAuthFlows does not comply with the OpenAPI spec.
+func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if v := flows.Implicit; v != nil {
-		return v.Validate(c, oAuthFlowTypeImplicit)
+		if err := v.validate(ctx, oAuthFlowTypeImplicit, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'implicit' is invalid: %w", err)
+		}
 	}
+
 	if v := flows.Password; v != nil {
-		return v.Validate(c, oAuthFlowTypePassword)
+		if err := v.validate(ctx, oAuthFlowTypePassword, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'password' is invalid: %w", err)
+		}
 	}
+
 	if v := flows.ClientCredentials; v != nil {
-		return v.Validate(c, oAuthFlowTypeClientCredentials)
+		if err := v.validate(ctx, oAuthFlowTypeClientCredentials, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'clientCredentials' is invalid: %w", err)
+		}
 	}
+
 	if v := flows.AuthorizationCode; v != nil {
-		return v.Validate(c, oAuthFlowAuthorizationCode)
+		if err := v.validate(ctx, oAuthFlowAuthorizationCode, opts...); err != nil {
+			return fmt.Errorf("the OAuth flow 'authorizationCode' is invalid: %w", err)
+		}
 	}
-	return errors.New("No OAuth flow is defined")
+
+	return validateExtensions(ctx, flows.Extensions)
 }
 
+// OAuthFlow is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
 type OAuthFlow struct {
-	ExtensionProps
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
 	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes" yaml:"scopes"`
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
 }
 
-func (flow *OAuthFlow) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(flow)
+// MarshalJSON returns the JSON encoding of OAuthFlow.
+func (flow OAuthFlow) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 4+len(flow.Extensions))
+	for k, v := range flow.Extensions {
+		m[k] = v
+	}
+	if x := flow.AuthorizationURL; x != "" {
+		m["authorizationUrl"] = x
+	}
+	if x := flow.TokenURL; x != "" {
+		m["tokenUrl"] = x
+	}
+	if x := flow.RefreshURL; x != "" {
+		m["refreshUrl"] = x
+	}
+	m["scopes"] = flow.Scopes
+	return json.Marshal(m)
 }
 
+// UnmarshalJSON sets OAuthFlow to a copy of data.
 func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, flow)
+	type OAuthFlowBis OAuthFlow
+	var x OAuthFlowBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "authorizationUrl")
+	delete(x.Extensions, "tokenUrl")
+	delete(x.Extensions, "refreshUrl")
+	delete(x.Extensions, "scopes")
+	*flow = OAuthFlow(x)
+	return nil
 }
 
-func (flow *OAuthFlow) Validate(c context.Context, typ oAuthFlowType) error {
-	if typ == oAuthFlowAuthorizationCode || typ == oAuthFlowTypeImplicit {
-		if v := flow.AuthorizationURL; v == "" {
-			return errors.New("An OAuth flow is missing 'authorizationUrl in authorizationCode or implicit '")
+// Validate returns an error if OAuthFlows does not comply with the OpenAPI spec.
+func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
+	if v := flow.RefreshURL; v != "" {
+		if _, err := url.Parse(v); err != nil {
+			return fmt.Errorf("field 'refreshUrl' is invalid: %w", err)
 		}
 	}
-	if typ != oAuthFlowTypeImplicit {
-		if v := flow.TokenURL; v == "" {
-			return errors.New("An OAuth flow is missing 'tokenUrl in not implicit'")
+
+	if flow.Scopes == nil {
+		return errors.New("field 'scopes' is missing")
+	}
+
+	return validateExtensions(ctx, flow.Extensions)
+}
+
+func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
+	typeIn := func(types ...oAuthFlowType) bool {
+		for _, ty := range types {
+			if ty == typ {
+				return true
+			}
+		}
+		return false
+	}
+
+	if in := typeIn(oAuthFlowTypeImplicit, oAuthFlowAuthorizationCode); true {
+		switch {
+		case flow.AuthorizationURL == "" && in:
+			return errors.New("field 'authorizationUrl' is empty or missing")
+		case flow.AuthorizationURL != "" && !in:
+			return errors.New("field 'authorizationUrl' should not be set")
+		case flow.AuthorizationURL != "":
+			if _, err := url.Parse(flow.AuthorizationURL); err != nil {
+				return fmt.Errorf("field 'authorizationUrl' is invalid: %w", err)
+			}
 		}
 	}
-	if v := flow.Scopes; v == nil {
-		return errors.New("An OAuth flow is missing 'scopes'")
+
+	if in := typeIn(oAuthFlowTypePassword, oAuthFlowTypeClientCredentials, oAuthFlowAuthorizationCode); true {
+		switch {
+		case flow.TokenURL == "" && in:
+			return errors.New("field 'tokenUrl' is empty or missing")
+		case flow.TokenURL != "" && !in:
+			return errors.New("field 'tokenUrl' should not be set")
+		case flow.TokenURL != "":
+			if _, err := url.Parse(flow.TokenURL); err != nil {
+				return fmt.Errorf("field 'tokenUrl' is invalid: %w", err)
+			}
+		}
 	}
-	return nil
+
+	return flow.Validate(ctx, opts...)
 }
