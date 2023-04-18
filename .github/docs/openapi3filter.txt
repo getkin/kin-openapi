@@ -4,6 +4,7 @@ var ErrAuthenticationServiceMissing = errors.New("missing AuthenticationFunc")
 var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
 var ErrInvalidRequired = errors.New("value is required but missing")
 var JSONPrefixes = []string{ ... }
+func ConvertErrors(err error) error
 func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter)
 func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, ...) (interface{}, error)
 func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error
