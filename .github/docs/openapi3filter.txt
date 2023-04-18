@@ -1,5 +1,4 @@
 const ErrCodeOK = 0 ...
-var DefaultOptions = &Options{}
 var ErrAuthenticationServiceMissing = errors.New("missing AuthenticationFunc")
 var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
 var ErrInvalidRequired = errors.New("value is required but missing")

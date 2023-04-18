@@ -39,7 +39,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	route := input.RequestValidationInput.Route
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	// Find input for the current status

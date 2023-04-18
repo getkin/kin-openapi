@@ -34,7 +34,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 	route := input.Route
 	operation := route.Operation
@@ -116,7 +116,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	var value interface{}
@@ -202,7 +202,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	if req.Body != http.NoBody && req.Body != nil {
@@ -358,7 +358,7 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 	// Get authentication function
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 	f := options.AuthenticationFunc
 	if f == nil {

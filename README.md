@@ -255,7 +255,7 @@ For more fine-grained control over the error message, you can pass a custom `ope
 
 ```go
 func validationOptions() *openapi3filter.Options {
-	options := openapi3filter.DefaultOptions
+	options := &openapi3filter.Options{}
 	options.WithCustomSchemaErrorFunc(safeErrorMessage)
 	return options
 }
@@ -268,6 +268,9 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
 
 ## Sub-v0 breaking API changes
+
+### v0.116.0
+* Dropped `openapi3filter.DefaultOptions`. Use `&openapi3filter.Options{}` directly instead.
 
 ### v0.113.0
 * The string format `email` has been removed by default. To use it please call `openapi3.DefineStringFormat("email", openapi3.FormatOfStringForEmail)`.
