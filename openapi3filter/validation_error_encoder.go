@@ -17,16 +17,18 @@ type ValidationErrorEncoder struct {
 
 // Encode implements the ErrorEncoder interface for encoding ValidationErrors
 func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http.ResponseWriter) {
+	enc.Encoder(ctx, ConvertErrors(err), w)
+}
+
+// ConvertErrors converts all errors to the appropriate error format.
+func ConvertErrors(err error) error {
 	if e, ok := err.(*routers.RouteError); ok {
-		cErr := convertRouteError(e)
-		enc.Encoder(ctx, cErr, w)
-		return
+		return convertRouteError(e)
 	}
 
 	e, ok := err.(*RequestError)
 	if !ok {
-		enc.Encoder(ctx, err, w)
-		return
+		return err
 	}
 
 	var cErr *ValidationError
@@ -43,10 +45,9 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 	}
 
 	if cErr != nil {
-		enc.Encoder(ctx, cErr, w)
-		return
+		return cErr
 	}
-	enc.Encoder(ctx, err, w)
+	return err
 }
 
 func convertRouteError(e *routers.RouteError) *ValidationError {
