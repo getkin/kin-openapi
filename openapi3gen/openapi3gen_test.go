@@ -25,8 +25,10 @@ func ExampleGenerator_SchemaRefs() {
 		A string `json:"a"`
 	}
 	type EmbeddedNonStruct string
+	type EmbeddedNonStructPtr string
 	type Embedded3 struct {
 		EmbeddedNonStruct
+		*EmbeddedNonStructPtr
 	}
 	type SomeStruct struct {
 		Bool    bool                      `json:"bool"`
