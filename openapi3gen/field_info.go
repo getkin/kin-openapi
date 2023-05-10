@@ -34,6 +34,9 @@ iteration:
 
 		// See whether this is an embedded field
 		if f.Anonymous {
+			if f.Type.Kind() != reflect.Struct {
+				continue iteration
+			}
 			jsonTag := f.Tag.Get("json")
 			if jsonTag == "-" {
 				continue
