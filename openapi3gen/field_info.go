@@ -23,6 +23,10 @@ func appendFields(fields []theFieldInfo, parentIndex []int, t reflect.Type) []th
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
+	if t.Kind() != reflect.Struct {
+		return fields
+	}
+
 	// For each field
 	numField := t.NumField()
 iteration:
