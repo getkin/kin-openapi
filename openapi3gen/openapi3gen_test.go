@@ -24,6 +24,12 @@ func ExampleGenerator_SchemaRefs() {
 	type Embedded2 struct {
 		A string `json:"a"`
 	}
+	type EmbeddedNonStruct string
+	type EmbeddedNonStructPtr string
+	type Embedded3 struct {
+		EmbeddedNonStruct
+		*EmbeddedNonStructPtr
+	}
 	type SomeStruct struct {
 		Bool    bool                      `json:"bool"`
 		Int     int                       `json:"int"`
@@ -48,6 +54,8 @@ func ExampleGenerator_SchemaRefs() {
 
 		Embedded2
 
+		Embedded3 `json:"embedded3"`
+
 		Ptr *SomeOtherType `json:"ptr"`
 	}
 
@@ -64,7 +72,7 @@ func ExampleGenerator_SchemaRefs() {
 	}
 	fmt.Printf("schemaRef: %s\n", data)
 	// Output:
-	// g.SchemaRefs: 16
+	// g.SchemaRefs: 17
 	// schemaRef: {
 	//   "properties": {
 	//     "a": {
@@ -85,6 +93,7 @@ func ExampleGenerator_SchemaRefs() {
 	//       },
 	//       "type": "object"
 	//     },
+	//     "embedded3": {},
 	//     "float64": {
 	//       "format": "double",
 	//       "type": "number"
