@@ -6,13 +6,12 @@ func Merge(schema Schema) *Schema {
 		return &schema
 	}
 
-	result := schema
-	result.AllOf = SchemaRefs{schema.AllOf[0]}
-	for _, schema := range schema.AllOf[1:] {
-		add(&result, schema.Value)
+	for _, allOfSchema := range schema.AllOf {
+		add(&schema, allOfSchema.Value)
 	}
 
-	return &result
+	schema.AllOf = nil
+	return &schema
 }
 
 func isListOfObjects(schema *Schema) bool {
@@ -34,12 +33,14 @@ func add(result, schema *Schema) {
 		return
 	}
 
-	resultProperties := result.AllOf[0].Value.Properties
 	for name, schema := range schema.Properties {
-		resultProperties[name] = schema
+		if result.Properties == nil {
+			result.Properties = Schemas{}
+		}
+		result.Properties[name] = schema
 	}
 
-	result.AllOf[0].Value.Required = addRequired(result.AllOf[0].Value.Required, schema)
+	result.Required = addRequired(result.Required, schema)
 }
 
 // addRequired combines required fields from schema into 'required'

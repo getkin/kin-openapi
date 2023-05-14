@@ -13,7 +13,7 @@ func TestMerge_EmptySchema(t *testing.T) {
 	require.Equal(t, &schema, merged)
 }
 
-func TestMerge_NotAllOf(t *testing.T) {
+func TestMerge_NoAllOf(t *testing.T) {
 	schema := Schema{
 		Title: "test",
 	}
@@ -35,7 +35,7 @@ func TestMerge_OneObjectNoProps(t *testing.T) {
 	}
 
 	merged := Merge(schema)
-	require.Equal(t, &schema, merged)
+	require.Len(t, merged.Properties, 0)
 }
 
 func TestMerge_OneObjectOneProp(t *testing.T) {
@@ -59,7 +59,8 @@ func TestMerge_OneObjectOneProp(t *testing.T) {
 	}
 
 	merged := Merge(schema)
-	require.Equal(t, &schema, merged)
+	require.Len(t, merged.Properties, 1)
+	require.Equal(t, object["description"], merged.Properties["description"])
 }
 
 func TestMerge_TwoObjects(t *testing.T) {
@@ -96,10 +97,10 @@ func TestMerge_TwoObjects(t *testing.T) {
 	}
 
 	merged := Merge(schema)
-	require.Len(t, merged.AllOf, 1)
-	require.Len(t, merged.AllOf[0].Value.Properties, 2)
-	require.Equal(t, obj1["description"], merged.AllOf[0].Value.Properties["description"])
-	require.Equal(t, obj2["name"], merged.AllOf[0].Value.Properties["name"])
+	require.Len(t, merged.AllOf, 0)
+	require.Len(t, merged.Properties, 2)
+	require.Equal(t, obj1["description"], merged.Properties["description"])
+	require.Equal(t, obj2["name"], merged.Properties["name"])
 }
 
 func TestMerge_OverlappingProps(t *testing.T) {
@@ -136,9 +137,9 @@ func TestMerge_OverlappingProps(t *testing.T) {
 	}
 
 	merged := Merge(schema)
-	require.Len(t, merged.AllOf, 1)
-	require.Len(t, merged.AllOf[0].Value.Properties, 1)
-	require.Equal(t, obj1["description"], merged.AllOf[0].Value.Properties["description"])
+	require.Len(t, merged.AllOf, 0)
+	require.Len(t, merged.Properties, 1)
+	require.Equal(t, obj2["description"], merged.Properties["description"])
 }
 
 func TestMerge_Required(t *testing.T) {
@@ -162,15 +163,15 @@ func TestMerge_Required(t *testing.T) {
 			require.NoError(t, err, "validating spec")
 
 			merged := Merge(*doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
-			require.Len(t, merged.AllOf, 1)
+			require.Len(t, merged.AllOf, 0)
 
-			props := merged.AllOf[0].Value.Properties
+			props := merged.Properties
 			require.Len(t, props, 3)
 			require.Contains(t, props, "id")
 			require.Contains(t, props, "createdAt")
 			require.Contains(t, props, "otherId")
 
-			required := merged.AllOf[0].Value.Required
+			required := merged.Required
 			require.Len(t, required, 2)
 			require.Contains(t, required, "id")
 			require.Contains(t, required, "otherId")
