@@ -34,7 +34,30 @@ func add(result, schema *Schema) {
 		return
 	}
 
+	resultProperties := result.AllOf[0].Value.Properties
 	for name, schema := range schema.Properties {
-		result.AllOf[0].Value.Properties[name] = schema
+		resultProperties[name] = schema
 	}
+
+	result.AllOf[0].Value.Required = addRequired(result.AllOf[0].Value.Required, schema)
+}
+
+// addRequired combines required fields from schema into 'required'
+func addRequired(required []string, schema *Schema) []string {
+	requiredSet := make(map[string]struct{})
+	for _, name := range schema.Required {
+		requiredSet[name] = struct{}{}
+	}
+	for _, name := range required {
+		requiredSet[name] = struct{}{}
+	}
+
+	requiredList := make([]string, len(requiredSet))
+	i := 0
+	for name := range requiredSet {
+		requiredList[i] = name
+		i++
+	}
+
+	return requiredList
 }

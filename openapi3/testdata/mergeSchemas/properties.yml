@@ -1,0 +1,43 @@
+openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+
+paths:
+  /products:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+
+components:
+
+  schemas:
+
+    ProductDto:
+      type: object
+      allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          createdAt:
+            type: string
+            format: datetime
+        required:
+        - id
+      - type: object
+        properties:
+          otherId:
+            type: string
+            format: uuid
+          createdAt:
+            type: string
+            format: datetime
+        required:
+        - otherId
