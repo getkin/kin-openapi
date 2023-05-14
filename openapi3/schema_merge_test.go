@@ -8,16 +8,16 @@ import (
 
 func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
-	flat := Merge(schema)
-	require.Equal(t, &schema, flat)
+	merged := Merge(schema)
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_NotAllOf(t *testing.T) {
 	schema := Schema{
 		Title: "test",
 	}
-	flat := Merge(schema)
-	require.Equal(t, &schema, flat)
+	merged := Merge(schema)
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_OneObjectNoProps(t *testing.T) {
@@ -33,8 +33,8 @@ func TestMerge_OneObjectNoProps(t *testing.T) {
 		},
 	}
 
-	flat := Merge(schema)
-	require.Equal(t, &schema, flat)
+	merged := Merge(schema)
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_OneObjectOneProp(t *testing.T) {
@@ -57,8 +57,8 @@ func TestMerge_OneObjectOneProp(t *testing.T) {
 		},
 	}
 
-	flat := Merge(schema)
-	require.Equal(t, &schema, flat)
+	merged := Merge(schema)
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_TwoObjects(t *testing.T) {
@@ -94,10 +94,10 @@ func TestMerge_TwoObjects(t *testing.T) {
 		},
 	}
 
-	flat := Merge(schema)
-	require.Len(t, flat.AllOf[0].Value.Properties, 2)
-	require.Equal(t, obj1["description"], flat.AllOf[0].Value.Properties["description"])
-	require.Equal(t, obj2["name"], flat.AllOf[0].Value.Properties["name"])
+	merged := Merge(schema)
+	require.Len(t, merged.AllOf[0].Value.Properties, 2)
+	require.Equal(t, obj1["description"], merged.AllOf[0].Value.Properties["description"])
+	require.Equal(t, obj2["name"], merged.AllOf[0].Value.Properties["name"])
 }
 
 func TestMerge_OverlappingProps(t *testing.T) {
@@ -133,7 +133,7 @@ func TestMerge_OverlappingProps(t *testing.T) {
 		},
 	}
 
-	flat := Merge(schema)
-	require.Len(t, flat.AllOf[0].Value.Properties, 1)
-	require.Equal(t, obj1["description"], flat.AllOf[0].Value.Properties["description"])
+	merged := Merge(schema)
+	require.Len(t, merged.AllOf[0].Value.Properties, 1)
+	require.Equal(t, obj1["description"], merged.AllOf[0].Value.Properties["description"])
 }
