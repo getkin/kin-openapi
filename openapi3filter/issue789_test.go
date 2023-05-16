@@ -13,7 +13,6 @@ import (
 )
 
 func TestIssue789(t *testing.T) {
-
 	anyOfArraySpec := `
 openapi: 3.0.0
 info:
@@ -42,8 +41,7 @@ paths:
 
 	oneOfArraySpec := strings.ReplaceAll(anyOfArraySpec, "anyOf", "oneOf")
 
-	allOfArraySpec := strings.ReplaceAll(strings.ReplaceAll(anyOfArraySpec, "anyOf", "allOf"),
-		"type: boolean", "type: number")
+	allOfArraySpec := strings.ReplaceAll(anyOfArraySpec, "anyOf", "allOf")
 
 	tests := []struct {
 		name   string
