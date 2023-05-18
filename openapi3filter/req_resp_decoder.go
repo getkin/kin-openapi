@@ -301,10 +301,8 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 				isMatched++
 			}
 		}
-		if isMatched == 1 {
+		if isMatched >= 1 {
 			return value, found, nil
-		} else if isMatched > 1 {
-			return nil, found, fmt.Errorf("decoding oneOf failed: %d schemas matched", isMatched)
 		}
 		if required {
 			return nil, found, fmt.Errorf("decoding oneOf failed: %q is required", param)

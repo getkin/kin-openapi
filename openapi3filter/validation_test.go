@@ -270,13 +270,6 @@ func TestFilter(t *testing.T) {
 
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=567",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &RequestError{}, err)
-
-	req = ExampleRequest{
-		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=2017-12-31T11:59:59",
 	}
 	err = expect(req, resp)
