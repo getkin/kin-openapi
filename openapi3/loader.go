@@ -615,6 +615,9 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	for _, contentType := range value.Content {
+		if contentType == nil {
+			continue
+		}
 		examples := make([]string, 0, len(contentType.Examples))
 		for name := range contentType.Examples {
 			examples = append(examples, name)
