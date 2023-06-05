@@ -6,12 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: update file name, test yml and test name to iclude issue number
-func TestIssue(t *testing.T) {
+func TestIssue796(t *testing.T) {
 	// Need to set CircularReferenceCounter to > 10
 	CircularReferenceCounter = 20
 	loader := NewLoader()
-	doc, err := loader.LoadFromFile("testdata/issue.yml")
+	doc, err := loader.LoadFromFile("testdata/issue796.yml")
 	require.NoError(t, err)
 
 	err = doc.Validate(loader.Context)
