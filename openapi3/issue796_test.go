@@ -7,8 +7,11 @@ import (
 )
 
 func TestIssue796(t *testing.T) {
+	var old int
 	// Need to set CircularReferenceCounter to > 10
-	CircularReferenceCounter = 20
+	old, CircularReferenceCounter = CircularReferenceCounter, 20
+	defer func() { CircularReferenceCounter = old }()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromFile("testdata/issue796.yml")
 	require.NoError(t, err)
