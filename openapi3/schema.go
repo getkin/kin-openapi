@@ -847,60 +847,70 @@ func (schema *Schema) IsEmpty() bool {
 // Validate returns an error if Schema does not comply with the OpenAPI spec.
 func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	return schema.validate(ctx, []*Schema{})
+	_, err := schema.validate(ctx, []*Schema{})
+	return err
 }
 
-func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
+// returns the updated stack and an error if Schema does not comply with the OpenAPI spec.
+func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema, error) {
 	validationOpts := getValidationOptions(ctx)
 
 	for _, existing := range stack {
 		if existing == schema {
-			return nil
+			return stack, nil
 		}
 	}
 	stack = append(stack, schema)
 
 	if schema.ReadOnly && schema.WriteOnly {
-		return errors.New("a property MUST NOT be marked as both readOnly and writeOnly being true")
+		return stack, errors.New("a property MUST NOT be marked as both readOnly and writeOnly being true")
 	}
 
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
-			return foundUnresolvedRef(item.Ref)
+			return stack, foundUnresolvedRef(item.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
 	for _, item := range schema.AnyOf {
 		v := item.Value
 		if v == nil {
-			return foundUnresolvedRef(item.Ref)
+			return stack, foundUnresolvedRef(item.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
-			return foundUnresolvedRef(item.Ref)
+			return stack, foundUnresolvedRef(item.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return foundUnresolvedRef(ref.Ref)
+			return stack, foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
@@ -914,7 +924,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
 			case "float", "double":
 			default:
 				if validationOpts.schemaFormatValidationEnabled {
-					return unsupportedFormat(format)
+					return stack, unsupportedFormat(format)
 				}
 			}
 		}
@@ -924,7 +934,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
 			case "int32", "int64":
 			default:
 				if validationOpts.schemaFormatValidationEnabled {
-					return unsupportedFormat(format)
+					return stack, unsupportedFormat(format)
 				}
 			}
 		}
@@ -946,31 +956,33 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
 			default:
 				// Try to check for custom defined formats
 				if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-					return unsupportedFormat(format)
+					return stack, unsupportedFormat(format)
 				}
 			}
 		}
 		if schema.Pattern != "" && !validationOpts.schemaPatternValidationDisabled {
 			if err := schema.compilePattern(); err != nil {
-				return err
+				return stack, err
 			}
 		}
 	case TypeArray:
 		if schema.Items == nil {
-			return errors.New("when schema type is 'array', schema 'items' must be non-null")
+			return stack, errors.New("when schema type is 'array', schema 'items' must be non-null")
 		}
 	case TypeObject:
 	default:
-		return fmt.Errorf("unsupported 'type' value %q", schemaType)
+		return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
 	}
 
 	if ref := schema.Items; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return foundUnresolvedRef(ref.Ref)
+			return stack, foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
@@ -983,45 +995,49 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) error {
 		ref := schema.Properties[name]
 		v := ref.Value
 		if v == nil {
-			return foundUnresolvedRef(ref.Ref)
+			return stack, foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
 	if schema.AdditionalProperties.Has != nil && schema.AdditionalProperties.Schema != nil {
-		return errors.New("additionalProperties are set to both boolean and schema")
+		return stack, errors.New("additionalProperties are set to both boolean and schema")
 	}
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return foundUnresolvedRef(ref.Ref)
+			return stack, foundUnresolvedRef(ref.Ref)
 		}
-		if err := v.validate(ctx, stack); err != nil {
-			return err
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
 		}
 	}
 
 	if v := schema.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
-			return fmt.Errorf("invalid external docs: %w", err)
+			return stack, fmt.Errorf("invalid external docs: %w", err)
 		}
 	}
 
 	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
 		if err := schema.VisitJSON(v); err != nil {
-			return fmt.Errorf("invalid default: %w", err)
+			return stack, fmt.Errorf("invalid default: %w", err)
 		}
 	}
 
 	if x := schema.Example; x != nil && !validationOpts.examplesValidationDisabled {
 		if err := validateExampleValue(ctx, x, schema); err != nil {
-			return fmt.Errorf("invalid example: %w", err)
+			return stack, fmt.Errorf("invalid example: %w", err)
 		}
 	}
 
-	return validateExtensions(ctx, schema.Extensions)
+	return stack, validateExtensions(ctx, schema.Extensions)
 }
 
 func (schema *Schema) IsMatching(value interface{}) bool {
