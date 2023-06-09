@@ -1,3 +1,5 @@
+// +build race
+
 package openapi3_test
 
 import (
@@ -107,6 +109,7 @@ func execute(t *testing.T, noReqs int, srv *httptest.Server, r *http.Request) {
 		go func() {
 			<-starter
 			resp, err := srv.Client().Do(r)
+			require.NoError(t, err)
 			body, err := io.ReadAll(resp.Body)
 			require.EqualValues(t, "Response", string(body))
 			require.NoError(t, err)
