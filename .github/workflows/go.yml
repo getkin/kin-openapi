@@ -82,6 +82,9 @@ jobs:
     - run: go test -v -run TestIssue741 -race ./...
       env:
         CGO_ENABLED: '1'
+    - run: go test -v -run TestVisitJSONForDataRace -race ./...
+      env:
+        CGO_ENABLED: '1'
     - run: git --no-pager diff --exit-code
 
     - if: runner.os == 'Linux'
