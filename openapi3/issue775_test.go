@@ -3,18 +3,18 @@ package openapi3_test
 import (
 	"context"
 	"fmt"
-	"github.com/getkin/kin-openapi/routers"
-	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"io"
 	"net/http"
 	"net/http/httptest"
-
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/stretchr/testify/require"
+	"github.com/getkin/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 var specYAML = []byte(`
