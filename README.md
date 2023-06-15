@@ -159,13 +159,13 @@ func main() {
 }
 
 func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded interface{}, err error) {
-	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
+	// Decode body to a primitive, []interface{}, or map[string]interface{}.
 }
 ```
 
 ## Custom function to check uniqueness of array items
 
-By defaut, the library check unique items by below predefined function
+By default, the library check unique items by below predefined function
 
 ```go
 func isSliceOfUniqueItems(xs []interface{}) bool {

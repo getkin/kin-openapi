@@ -2109,8 +2109,8 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 	s := len(xs)
 	m := make(map[string]struct{}, s)
 	for _, x := range xs {
-		// The input slice is coverted from a JSON string, there shall
-		// have no error when covert it back.
+		// The input slice is converted from a JSON string, there shall
+		// have no error when convert it back.
 		key, _ := json.Marshal(&x)
 		m[string(key)] = struct{}{}
 	}

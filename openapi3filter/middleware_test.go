@@ -371,7 +371,7 @@ func TestValidator(t *testing.T) {
 			router, err := gorillamux.NewRouter(doc)
 			require.NoError(t, err, "failed to create router")
 
-			// Now wrap the test handler with the validator middlware
+			// Now wrap the test handler with the validator middleware
 			v := openapi3filter.NewValidator(router, append(test.options, openapi3filter.Strict(test.strict))...)
 			h = v.Middleware(&test.handler)
 

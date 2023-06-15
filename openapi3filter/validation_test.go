@@ -616,7 +616,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 
 		for securityRequirement, validated := range *schemesValidated {
 			if !validated {
-				t.Fatalf("The security requirement %v was exepected to be validated but wasn't",
+				t.Fatalf("The security requirement %v was unexpected to be validated but wasn't",
 					securityRequirement)
 			}
 		}

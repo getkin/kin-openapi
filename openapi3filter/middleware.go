@@ -57,7 +57,7 @@ func (e ErrCode) responseText() string {
 	}
 }
 
-// NewValidator returns a new response validation middlware, using the given
+// NewValidator returns a new response validation middleware, using the given
 // routes from an OpenAPI 3 specification.
 func NewValidator(router routers.Router, options ...ValidatorOption) *Validator {
 	v := &Validator{

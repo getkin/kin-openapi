@@ -94,7 +94,7 @@ components:
 		}
 	}
 
-	{ // Add a single "discription" item as part data
+	{ // Add a single "description" item as part data
 		h := make(textproto.MIMEHeader)
 		h.Set("Content-Disposition", `form-data; name="description"`)
 		fw, err := writer.CreatePart(h)
