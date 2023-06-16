@@ -18,7 +18,7 @@ var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (p ParametersMap) JSONLookup(token string) (interface{}, error) {
 	ref, ok := p[token]
-	if ref == nil || ok == false {
+	if ref == nil || !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 

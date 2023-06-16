@@ -14,7 +14,7 @@ type Links map[string]*LinkRef
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (links Links) JSONLookup(token string) (interface{}, error) {
 	ref, ok := links[token]
-	if ok == false {
+	if !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 
