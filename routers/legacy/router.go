@@ -157,10 +157,7 @@ func (router *Router) FindRoute(req *http.Request) (*routers.Route, map[string]s
 	}
 	paramKeys := node.VariableNames
 	for i, value := range paramValues {
-		key := paramKeys[i]
-		if strings.HasSuffix(key, "*") {
-			key = key[:len(key)-1]
-		}
+		key := strings.TrimSuffix(paramKeys[i], "*")
 		pathParams[key] = value
 	}
 	return route, pathParams, nil

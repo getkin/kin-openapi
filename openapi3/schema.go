@@ -84,7 +84,7 @@ var _ jsonpointer.JSONPointable = (*Schemas)(nil)
 // JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (s Schemas) JSONLookup(token string) (interface{}, error) {
 	ref, ok := s[token]
-	if ref == nil || ok == false {
+	if ref == nil || !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 
@@ -1405,7 +1405,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				Value:                 value,
 				Schema:                schema,
 				SchemaField:           "type",
-				Reason:                fmt.Sprintf("value must be an integer"),
+				Reason:                "value must be an integer",
 				customizeMessageError: settings.customizeMessageError,
 			}
 			if !settings.multiError {
