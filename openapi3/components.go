@@ -230,7 +230,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 const identifierPattern = `^[a-zA-Z0-9._-]+$`
 
 // IdentifierRegExp verifies whether Component object key matches 'identifierPattern' pattern, according to OapiAPI v3.x.0.
-// Hovever, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in orde not to fail
+// However, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in order not to fail
 // converted v2-v3 validation
 var IdentifierRegExp = regexp.MustCompile(identifierPattern)
 

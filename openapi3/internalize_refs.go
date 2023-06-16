@@ -376,7 +376,7 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 // refNameResolver takes in references to returns a name to store the reference under locally.
 // It MUST return a unique name for each reference type.
 // A default implementation is provided that will suffice for most use cases. See the function
-// documention for more details.
+// documentation for more details.
 //
 // Example:
 //
