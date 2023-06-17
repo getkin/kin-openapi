@@ -29,6 +29,6 @@ func TestIssue615(t *testing.T) {
 	doc, err := loader.LoadFromFile("testdata/recursiveRef/issue615.yml")
 	require.NoError(t, err)
 
-	doc.Validate(loader.Context)
+	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 }

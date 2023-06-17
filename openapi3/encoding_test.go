@@ -19,7 +19,7 @@ func TestEncodingJSON(t *testing.T) {
 	docA := &Encoding{}
 	err = json.Unmarshal(encodingJSON, &docA)
 	require.NoError(t, err)
-	require.NotEmpty(t, data)
+	require.NotEmpty(t, docA)
 
 	t.Log("Validate *openapi3.Encoding")
 	err = docA.Validate(context.Background())
