@@ -213,7 +213,7 @@ components:
 		},
 	})
 
-	require.Contains(t, err.Error(), `Error at "/first/second/third"`)
+	require.ErrorContains(t, err, `Error at "/first/second/third"`)
 
 	var sErr *SchemaError
 

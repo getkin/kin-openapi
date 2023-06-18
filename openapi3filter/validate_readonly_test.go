@@ -204,7 +204,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 
 				if tc.requestErrContains != "" {
 					require.Error(t, err)
-					require.Contains(t, err.Error(), tc.requestErrContains)
+					require.ErrorContains(t, err, tc.requestErrContains)
 				} else {
 					require.NoError(t, err)
 				}
@@ -220,7 +220,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 
 				if tc.responseErrContains != "" {
 					require.Error(t, err)
-					require.Contains(t, err.Error(), tc.responseErrContains)
+					require.ErrorContains(t, err, tc.responseErrContains)
 				} else {
 					require.NoError(t, err)
 				}

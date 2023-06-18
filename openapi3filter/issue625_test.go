@@ -115,7 +115,7 @@ paths:
 			if testcase.errStr == "" {
 				require.NoError(t, err)
 			} else {
-				require.Contains(t, err.Error(), testcase.errStr)
+				require.ErrorContains(t, err, testcase.errStr)
 			}
 		},
 		)

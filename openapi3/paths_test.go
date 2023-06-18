@@ -90,7 +90,7 @@ paths:
 				require.NoError(t, err)
 				return
 			}
-			require.Equal(t, tt.wantErr, err.Error())
+			require.EqualError(t, err, tt.wantErr)
 		})
 	}
 }
