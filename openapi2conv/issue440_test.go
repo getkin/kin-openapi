@@ -45,5 +45,5 @@ func TestIssue440(t *testing.T) {
 	doc2.BasePath = ""
 	doc3, err = ToV3(&doc2)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), `invalid host`)
+	require.ErrorContains(t, err, `invalid host`)
 }

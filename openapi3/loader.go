@@ -959,10 +959,10 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 
 func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	if pathItem == nil {
-		return errors.New("invalid path item: value MUST be an object")
+		err = errors.New("invalid path item: value MUST be an object")
+		return
 	}
-	ref := pathItem.Ref
-	if ref != "" {
+	if ref := pathItem.Ref; ref != "" {
 		if pathItem.Summary != "" ||
 			pathItem.Description != "" ||
 			pathItem.Connect != nil ||
@@ -976,18 +976,18 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			pathItem.Trace != nil ||
 			len(pathItem.Servers) != 0 ||
 			len(pathItem.Parameters) != 0 {
-			return nil
+			return
 		}
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
-				return err
+				return
 			}
 			*pathItem = p
 		} else {
 			var resolved PathItem
 			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
-				return err
+				return
 			}
 			*pathItem = resolved
 		}

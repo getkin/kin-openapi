@@ -103,11 +103,25 @@ paths:
 }
 
 func ExampleLoader() {
-	const source = `{"info":{"description":"An API"}}`
-	doc, err := NewLoader().LoadFromData([]byte(source))
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+  description: An API
+`[1:])
+
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	if err != nil {
 		panic(err)
 	}
+
+	if err := doc.Validate(loader.Context); err != nil {
+		panic(err)
+	}
+
 	fmt.Print(doc.Info.Description)
 	// Output: An API
 }

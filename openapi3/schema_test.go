@@ -1277,8 +1277,12 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 }
 
 func TestIssue283(t *testing.T) {
-	const api = `
+	spec := []byte(`
 openapi: "3.0.1"
+paths: {}
+info:
+  version: 1.1.1
+  title: title
 components:
   schemas:
     Test:
@@ -1289,18 +1293,23 @@ components:
           not:
             type: boolean
       type: object
-`
+`[1:])
+
 	data := map[string]interface{}{
 		"name":      "kin-openapi",
 		"ownerName": true,
 	}
-	s, err := NewLoader().LoadFromData([]byte(api))
+
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	require.NotNil(t, s)
-	err = s.Components.Schemas["Test"].Value.VisitJSON(data)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Test"].Value.VisitJSON(data)
 	require.NotNil(t, err)
 	require.NotEqual(t, errSchema, err)
-	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
+	require.ErrorContains(t, err, `Error at "/ownerName": Doesn't match schema "not"`)
 }
 
 func TestValidationFailsOnInvalidPattern(t *testing.T) {

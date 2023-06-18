@@ -350,7 +350,7 @@ components:
 
 					if tc.errContains != "" && !testOption.disableExamplesValidation {
 						require.Error(t, err)
-						require.Contains(t, err.Error(), tc.errContains)
+						require.ErrorContains(t, err, tc.errContains)
 					} else {
 						require.NoError(t, err)
 					}
@@ -516,7 +516,7 @@ components:
 
 					if tc.errContains != "" {
 						require.Error(t, err)
-						require.Contains(t, err.Error(), tc.errContains)
+						require.ErrorContains(t, err, tc.errContains)
 					} else {
 						require.NoError(t, err)
 					}

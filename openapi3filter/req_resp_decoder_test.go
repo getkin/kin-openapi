@@ -1044,16 +1044,16 @@ func TestDecodeParameter(t *testing.T) {
 						Title:   "MyAPI",
 						Version: "0.1",
 					}
-					spec := &openapi3.T{OpenAPI: "3.0.0", Info: info}
+					doc := &openapi3.T{OpenAPI: "3.0.0", Info: info, Paths: openapi3.Paths{}}
 					op := &openapi3.Operation{
 						OperationID: "test",
 						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
 						Responses:   openapi3.NewResponses(),
 					}
-					spec.AddOperation(path, http.MethodGet, op)
-					err = spec.Validate(context.Background())
+					doc.AddOperation(path, http.MethodGet, op)
+					err = doc.Validate(context.Background())
 					require.NoError(t, err)
-					router, err := legacyrouter.NewRouter(spec)
+					router, err := legacyrouter.NewRouter(doc)
 					require.NoError(t, err)
 
 					route, pathParams, err := router.FindRoute(req)
