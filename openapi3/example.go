@@ -13,7 +13,7 @@ type Examples map[string]*ExampleRef
 
 var _ jsonpointer.JSONPointable = (*Examples)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (e Examples) JSONLookup(token string) (interface{}, error) {
 	ref, ok := e[token]
 	if ref == nil || !ok {

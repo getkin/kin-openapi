@@ -12,7 +12,7 @@ type Callbacks map[string]*CallbackRef
 
 var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 	ref, ok := c[token]
 	if ref == nil || !ok {

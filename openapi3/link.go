@@ -11,7 +11,7 @@ import (
 
 type Links map[string]*LinkRef
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (links Links) JSONLookup(token string) (interface{}, error) {
 	ref, ok := links[token]
 	if !ok {
