@@ -111,7 +111,7 @@ func (x *${type}Ref) Validate(ctx context.Context, opts ...ValidationOption) err
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *${type}Ref) JSONLookup(token string) (interface{}, error) {
 	if token == "\$ref" {
 		return x.Ref, nil

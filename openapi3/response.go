@@ -53,7 +53,7 @@ func (responses Responses) Validate(ctx context.Context, opts ...ValidationOptio
 	return nil
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (responses Responses) JSONLookup(token string) (interface{}, error) {
 	ref, ok := responses[token]
 	if !ok {

@@ -15,7 +15,7 @@ type ParametersMap map[string]*ParameterRef
 
 var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (p ParametersMap) JSONLookup(token string) (interface{}, error) {
 	ref, ok := p[token]
 	if ref == nil || !ok {
@@ -33,7 +33,7 @@ type Parameters []*ParameterRef
 
 var _ jsonpointer.JSONPointable = (*Parameters)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (p Parameters) JSONLookup(token string) (interface{}, error) {
 	index, err := strconv.Atoi(token)
 	if err != nil {
@@ -244,7 +244,7 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (parameter Parameter) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":

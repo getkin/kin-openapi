@@ -145,7 +145,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 	return validateExtensions(ctx, mediaType.Extensions)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":
