@@ -7,7 +7,8 @@ import (
 )
 
 func TestIssue492(t *testing.T) {
-	spec := []byte(`components:
+	spec := []byte(`
+components:
   schemas:
     Server:
       properties:
@@ -20,20 +21,28 @@ func TestIssue492(t *testing.T) {
       type: string
       format: date-time
 openapi: "3.0.1"
-`)
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+`[1:])
 
-	s, err := NewLoader().LoadFromData(spec)
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
 	// verify that the expected format works
-	err = s.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06.789Z",
 	})
 	require.NoError(t, err)
 
 	// verify that the issue is fixed
-	err = s.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06:789Z",
 	})

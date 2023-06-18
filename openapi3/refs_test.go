@@ -108,7 +108,8 @@ components:
           type: string
 `[1:])
 
-	doc, err := NewLoader().LoadFromData(spec)
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.EqualError(t, err, `invalid response: value MUST be an object`)
 	require.Nil(t, doc)
 }

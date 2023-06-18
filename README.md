@@ -64,7 +64,8 @@ go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--example
 ## Loading OpenAPI document
 Use `openapi3.Loader`, which resolves all references:
 ```go
-doc, err := openapi3.NewLoader().LoadFromFile("swagger.json")
+loader := openapi3.NewLoader()
+doc, err := loader.LoadFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
