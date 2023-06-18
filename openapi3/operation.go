@@ -162,9 +162,7 @@ func (operation Operation) JSONLookup(token string) (interface{}, error) {
 }
 
 func (operation *Operation) AddParameter(p *Parameter) {
-	operation.Parameters = append(operation.Parameters, &ParameterRef{
-		Value: p,
-	})
+	operation.Parameters = append(operation.Parameters, &ParameterRef{Value: p})
 }
 
 func (operation *Operation) AddResponse(status int, response *Response) {

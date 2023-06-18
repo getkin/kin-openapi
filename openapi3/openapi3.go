@@ -97,7 +97,6 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	}
 
 	var wrap func(error) error
-	// NOTE: only mention info/components/paths/... key in this func's errors.
 
 	wrap = func(e error) error { return fmt.Errorf("invalid components: %w", e) }
 	if v := doc.Components; v != nil {
