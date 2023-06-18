@@ -91,9 +91,9 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
 	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 
 	require.Nil(t, doc)
-	require.EqualError(t, err, fmt.Sprintf("error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL))
+	require.EqualError(t, err, fmt.Sprintf(`error loading "%s/components.openapi.json": request returned status code 400`, ts.URL))
 
 	doc, err = loader.LoadFromData(spec)
 	require.Nil(t, doc)
-	require.EqualError(t, err, fmt.Sprintf("error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL))
+	require.EqualError(t, err, fmt.Sprintf(`error loading "%s/components.openapi.json": request returned status code 400`, ts.URL))
 }

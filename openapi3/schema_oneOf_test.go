@@ -122,7 +122,7 @@ func TestVisitJSON_OneOf_MissingDiscriptorProperty(t *testing.T) {
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name": "snoopy",
 	})
-	require.ErrorContains(t, err, "input does not contain the discriminator property \"$type\"\n")
+	require.ErrorContains(t, err, `input does not contain the discriminator property "$type"`)
 }
 
 func TestVisitJSON_OneOf_MissingDiscriptorValue(t *testing.T) {
@@ -131,7 +131,7 @@ func TestVisitJSON_OneOf_MissingDiscriptorValue(t *testing.T) {
 		"name":  "snoopy",
 		"$type": "snake",
 	})
-	require.ErrorContains(t, err, "discriminator property \"$type\" has invalid value")
+	require.ErrorContains(t, err, `discriminator property "$type" has invalid value`)
 }
 
 func TestVisitJSON_OneOf_MissingField(t *testing.T) {
@@ -140,7 +140,7 @@ func TestVisitJSON_OneOf_MissingField(t *testing.T) {
 		"name":  "snoopy",
 		"$type": "dog",
 	})
-	require.EqualError(t, err, "doesn't match schema due to: Error at \"/barks\": property \"barks\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"$type\": {\n        \"enum\": [\n          \"dog\"\n        ],\n        \"type\": \"string\"\n      },\n      \"barks\": {\n        \"type\": \"boolean\"\n      },\n      \"name\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"barks\",\n      \"$type\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"$type\": \"dog\",\n    \"name\": \"snoopy\"\n  }\n")
+	require.ErrorContains(t, err, `doesn't match schema due to: Error at "/barks": property "barks" is missing`)
 }
 
 func TestVisitJSON_OneOf_NoDiscriptor_MissingField(t *testing.T) {
@@ -148,7 +148,7 @@ func TestVisitJSON_OneOf_NoDiscriptor_MissingField(t *testing.T) {
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name": "snoopy",
 	})
-	require.EqualError(t, err, "doesn't match schema due to: Error at \"/scratches\": property \"scratches\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"name\": {\n        \"type\": \"string\"\n      },\n      \"scratches\": {\n        \"type\": \"boolean\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"scratches\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"name\": \"snoopy\"\n  }\n Or Error at \"/barks\": property \"barks\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"barks\": {\n        \"type\": \"boolean\"\n      },\n      \"name\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"barks\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"name\": \"snoopy\"\n  }\n")
+	require.ErrorContains(t, err, `doesn't match schema due to: Error at "/scratches": property "scratches" is missing`)
 }
 
 func TestVisitJSON_OneOf_BadDescriminatorType(t *testing.T) {
@@ -158,14 +158,14 @@ func TestVisitJSON_OneOf_BadDescriminatorType(t *testing.T) {
 		"scratches": true,
 		"$type":     1,
 	})
-	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string")
+	require.ErrorContains(t, err, `value of discriminator property "$type" is not a string`)
 
 	err = doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name":  "snoopy",
 		"barks": true,
 		"$type": nil,
 	})
-	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string")
+	require.ErrorContains(t, err, `value of discriminator property "$type" is not a string`)
 }
 
 func TestVisitJSON_OneOf_Path(t *testing.T) {

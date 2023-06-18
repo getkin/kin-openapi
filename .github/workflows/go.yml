@@ -124,6 +124,11 @@ jobs:
         ! git grep -InE 'NewLoader[(][)][.]Load'
 
     - if: runner.os == 'Linux'
+      name: Use raw quotes https://go.dev/ref/spec#String_literals
+      run: |
+        ! git grep -InE 'require[.].+\\"'
+
+    - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
         [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
