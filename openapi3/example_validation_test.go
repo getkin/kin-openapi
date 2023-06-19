@@ -221,8 +221,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					spec := bytes.Buffer{}
-					spec.WriteString(`
+					spec := bytes.NewBufferString(`
 openapi: 3.0.3
 info:
   title: An API
@@ -436,8 +435,7 @@ func TestExampleObjectValidation(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					spec := bytes.Buffer{}
-					spec.WriteString(`
+					spec := bytes.NewBufferString(`
 openapi: 3.0.3
 info:
   title: An API
