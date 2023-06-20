@@ -23,9 +23,8 @@ import (
 
 func TestDecodeParameter(t *testing.T) {
 	var (
-		boolPtr   = func(b bool) *bool { return &b }
-		explode   = boolPtr(true)
-		noExplode = boolPtr(false)
+		explode   = openapi3.BoolPtr(true)
+		noExplode = openapi3.BoolPtr(false)
 		arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
 			return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "array", Items: items}}
 		}
@@ -1079,8 +1078,6 @@ func TestDecodeParameter(t *testing.T) {
 }
 
 func TestDecodeBody(t *testing.T) {
-	boolPtr := func(b bool) *bool { return &b }
-
 	urlencodedForm := make(url.Values)
 	urlencodedForm.Set("a", "a1")
 	urlencodedForm.Set("b", "10")
@@ -1198,7 +1195,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: openapi3.BoolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
@@ -1211,7 +1208,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationPipeDelimited, Explode: openapi3.BoolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
