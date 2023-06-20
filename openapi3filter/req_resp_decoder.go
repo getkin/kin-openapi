@@ -812,7 +812,7 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 	pairs := strings.Split(src, propDelim)
 
 	// When propDelim and valueDelim is equal the source string follow the next rule:
-	// every even item of pairs is a properies's name, and the subsequent odd item is a property's value.
+	// every even item of pairs is a properties's name, and the subsequent odd item is a property's value.
 	if propDelim == valueDelim {
 		// Taking into account the rule above, a valid source string must be splitted by propDelim
 		// to an array with an even number of items.

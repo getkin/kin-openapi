@@ -80,7 +80,7 @@ paths:
 			req:  `/items?test=true,3`,
 		},
 		{
-			name:   "faled oneof object array",
+			name:   "failed oneof object array",
 			spec:   oneOfArraySpec,
 			req:    `/items?test="val1","val2"`,
 			errStr: `parameter "test" in query has an error: item 0: decoding oneOf failed: 0 schemas matched`,

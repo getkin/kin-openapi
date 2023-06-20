@@ -491,7 +491,7 @@ var schemaExamples = []schemaExample{
 				map[string]interface{}{
 					"key1": 1,
 					"key2": 1,
-					// Additioanl properties will make object different
+					// Additional properties will make object different
 					// By default additionalProperties is true
 				},
 				map[string]interface{}{
