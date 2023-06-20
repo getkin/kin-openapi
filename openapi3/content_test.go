@@ -102,12 +102,8 @@ func TestContent_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Using require.True here because require.Same is not yet released.
-			// We're comparing pointer values and the require.Equal will
-			// dereference and compare the pointed to values rather than check
-			// if the memory addresses are the same. Once require.Same is released
-			// this test should convert to using that.
-			require.True(t, tt.want == tt.content.Get(tt.mime))
+			got := tt.content.Get(tt.mime)
+			require.Same(t, tt.want, got)
 		})
 	}
 }
