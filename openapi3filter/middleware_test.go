@@ -454,7 +454,7 @@ paths:
 		result := map[string]interface{}{"result": x * x}
 		if x == 42 {
 			// An easter egg. Unfortunately, the spec does not allow additional properties...
-			result["comment"] = "the answer to the ulitimate question of life, the universe, and everything"
+			result["comment"] = "the answer to the ultimate question of life, the universe, and everything"
 		}
 		if err = json.NewEncoder(w).Encode(&result); err != nil {
 			panic(err)

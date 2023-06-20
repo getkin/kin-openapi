@@ -314,7 +314,7 @@ func TestLoadWithRecursiveReferenceInLocalReferenceInParentSubdir(t *testing.T) 
 	require.Equal(t, "object", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
-func TestLoadWithRecursiveReferenceInRefrerenceInLocalReference(t *testing.T) {
+func TestLoadWithRecursiveReferenceInReferenceInLocalReference(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/refInLocalRef/openapi.json")
