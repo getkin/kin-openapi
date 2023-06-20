@@ -182,7 +182,7 @@ func unmarshal(data []byte, v interface{}) error {
 	return nil
 }
 
-// ResolveRefsIn expands references if for instance spec was just unmarshalled
+// ResolveRefsIn expands references if for instance spec was just unmarshaled
 func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	if loader.Context == nil {
 		loader.Context = context.Background()
