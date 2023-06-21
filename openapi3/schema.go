@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
@@ -47,6 +48,8 @@ var (
 	ErrSchemaInputNaN = errors.New("floating point NaN is not allowed")
 	// ErrSchemaInputInf may be returned when validating a number
 	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
+
+	compiledPatterns sync.Map
 )
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
@@ -154,10 +157,9 @@ type Schema struct {
 	MultipleOf *float64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
 
 	// String
-	MinLength       uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MaxLength       *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	Pattern         string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	compiledPattern *regexp.Regexp
+	MinLength uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	MaxLength *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	Pattern   string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 
 	// Array
 	MinItems uint64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
@@ -712,7 +714,6 @@ func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema {
 
 func (schema *Schema) WithPattern(pattern string) *Schema {
 	schema.Pattern = pattern
-	schema.compiledPattern = nil
 	return schema
 }
 
@@ -960,8 +961,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				}
 			}
 		}
-		if schema.Pattern != "" && !validationOpts.schemaPatternValidationDisabled {
-			if err := schema.compilePattern(); err != nil {
+		if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" {
+			if _, err := schema.compilePattern(); err != nil {
 				return stack, err
 			}
 		}
@@ -1612,27 +1613,31 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	}
 
 	// "pattern"
-	if schema.Pattern != "" && schema.compiledPattern == nil && !settings.patternValidationDisabled {
-		var err error
-		if err = schema.compilePattern(); err != nil {
+	if !settings.patternValidationDisabled && schema.Pattern != "" {
+		cpiface, _ := compiledPatterns.Load(schema.Pattern)
+		cp, _ := cpiface.(*regexp.Regexp)
+		if cp == nil {
+			var err error
+			if cp, err = schema.compilePattern(); err != nil {
+				if !settings.multiError {
+					return err
+				}
+				me = append(me, err)
+			}
+		}
+		if !cp.MatchString(value) {
+			err := &SchemaError{
+				Value:                 value,
+				Schema:                schema,
+				SchemaField:           "pattern",
+				Reason:                fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern),
+				customizeMessageError: settings.customizeMessageError,
+			}
 			if !settings.multiError {
 				return err
 			}
 			me = append(me, err)
 		}
-	}
-	if cp := schema.compiledPattern; cp != nil && !cp.MatchString(value) {
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "pattern",
-			Reason:                fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern),
-			customizeMessageError: settings.customizeMessageError,
-		}
-		if !settings.multiError {
-			return err
-		}
-		me = append(me, err)
 	}
 
 	// "format"
@@ -1985,16 +1990,20 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, value int
 	}
 }
 
-func (schema *Schema) compilePattern() (err error) {
-	if schema.compiledPattern, err = regexp.Compile(schema.Pattern); err != nil {
-		return &SchemaError{
+// NOTE: racey WRT [writes to schema.Pattern] vs [reads schema.Pattern then writes to compiledPatterns]
+func (schema *Schema) compilePattern() (cp *regexp.Regexp, err error) {
+	pattern := schema.Pattern
+	if cp, err = regexp.Compile(pattern); err != nil {
+		err = &SchemaError{
 			Schema:      schema,
 			SchemaField: "pattern",
 			Origin:      err,
-			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", schema.Pattern, err),
+			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
 		}
+		return
 	}
-	return nil
+	var _ bool = compiledPatterns.CompareAndSwap(pattern, nil, cp)
+	return
 }
 
 // SchemaError is an error that occurs during schema validation.

@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.16', '1.x']
+        go: ['1.x']
         os:
         - ubuntu-latest
         - windows-latest
@@ -76,10 +76,13 @@ jobs:
         GOARCH: '386'
     - run: go test -count=10 ./...
     - run: go test -count=2 -covermode=atomic ./...
-    - run: go test -v -run TestRaceyPatternSchema -race ./...
+    - run: go test -v -count=10 -run TestRaceyPatternSchemaValidateHindersIt -race ./...
       env:
         CGO_ENABLED: '1'
-    - run: go test -v -run TestIssue741 -race ./...
+    - run: go test -v -count=10 -run TestRaceyPatternSchemaForIssue775 -race ./...
+      env:
+        CGO_ENABLED: '1'
+    - run: go test -v -count=10 -run TestIssue741 -race ./...
       env:
         CGO_ENABLED: '1'
     - run: git --no-pager diff --exit-code
@@ -99,7 +102,7 @@ jobs:
       run: |
         ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
 
-    - if: runner.os == 'Linux' && matrix.go != '1.16'
+    - if: runner.os == 'Linux'
       name: nilness
       run: go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...
 
