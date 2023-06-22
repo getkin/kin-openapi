@@ -52,26 +52,6 @@ var (
 	compiledPatterns sync.Map
 )
 
-// Float64Ptr is a helper for defining OpenAPI schemas.
-func Float64Ptr(value float64) *float64 {
-	return &value
-}
-
-// BoolPtr is a helper for defining OpenAPI schemas.
-func BoolPtr(value bool) *bool {
-	return &value
-}
-
-// Int64Ptr is a helper for defining OpenAPI schemas.
-func Int64Ptr(value int64) *int64 {
-	return &value
-}
-
-// Uint64Ptr is a helper for defining OpenAPI schemas.
-func Uint64Ptr(value uint64) *uint64 {
-	return &value
-}
-
 // NewSchemaRef simply builds a SchemaRef
 func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 	return &SchemaRef{
