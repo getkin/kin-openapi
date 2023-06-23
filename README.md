@@ -58,7 +58,7 @@ Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling l
 # Some recipes
 ## Validating an OpenAPI document
 ```shell
-go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
+go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
 ```
 
 ## Loading OpenAPI document
