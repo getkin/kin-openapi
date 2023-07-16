@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -128,6 +130,15 @@ func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 		return f(loader, location)
 	}
 	return DefaultReadFromURI(loader, location)
+}
+
+// LoadFromStdin loads a spec from stdin
+func (loader *Loader) LoadFromStdin() (*T, error) {
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return nil, fmt.Errorf("read from stdin: %w", err)
+	}
+	return loader.LoadFromData(data)
 }
 
 // LoadFromData loads a spec from a byte array
