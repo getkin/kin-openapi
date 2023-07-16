@@ -63,7 +63,12 @@ func main() {
 		loader := openapi3.NewLoader()
 		loader.IsExternalRefsAllowed = *ext
 
-		doc, err := loader.LoadFromFile(filename)
+		var doc *openapi3.T
+		if filename == "-" {
+			doc, err = loader.LoadFromStdin()
+		} else {
+			doc, err = loader.LoadFromFile(filename)
+		}
 		if err != nil {
 			log.Fatalln("Loading error:", err)
 		}
