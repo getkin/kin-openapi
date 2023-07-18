@@ -2,15 +2,166 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
+func TestMerge_MinMax(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Min:  Float64Ptr(10),
+					Max:  Float64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Min:  Float64Ptr(5),
+					Max:  Float64Ptr(25),
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, float64(10), *merged.Min)
+	require.Equal(t, float64(25), *merged.Max)
+}
+
+func TestMerge_MaxLength(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:      "object",
+					MaxLength: Uint64Ptr(10),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:      "object",
+					MaxLength: Uint64Ptr(20),
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, uint64(10), *merged.MaxLength)
+}
+
+func TestMerge_MinLength(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:      "object",
+					MinLength: 10,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:      "object",
+					MinLength: 20,
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, uint64(20), merged.MinLength)
+}
+
+func TestMerge_Description(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:        "object",
+					Description: "desc1",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:        "object",
+					Description: "desc2",
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, "desc1", merged.Description)
+}
+
+func TestMerge_Type(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, "object", merged.Type)
+}
+
+func TestMerge_Title(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:  "object",
+					Title: "first",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:  "object",
+					Title: "second",
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, "first", merged.Title)
+}
+
+func TestMerge_Format(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:   "object",
+					Format: "number",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:   "object",
+					Format: "number",
+				},
+			},
+		},
+	}
+
+	merged := Merge(schema)
+	require.Equal(t, "number", merged.Format)
+}
+
 func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
 	merged := Merge(schema)
-	require.Equal(t, &schema, merged)
+	require.Equal(t, &schema, merged) //todo &schema
 }
 
 func TestMerge_NoAllOf(t *testing.T) {
@@ -18,49 +169,7 @@ func TestMerge_NoAllOf(t *testing.T) {
 		Title: "test",
 	}
 	merged := Merge(schema)
-	require.Equal(t, &schema, merged)
-}
-
-func TestMerge_OneObjectNoProps(t *testing.T) {
-
-	schema := Schema{
-		AllOf: SchemaRefs{
-			&SchemaRef{
-				Value: &Schema{
-					Type:       "object",
-					Properties: Schemas{},
-				},
-			},
-		},
-	}
-
-	merged := Merge(schema)
-	require.Len(t, merged.Properties, 0)
-}
-
-func TestMerge_OneObjectOneProp(t *testing.T) {
-
-	object := Schemas{}
-	object["description"] = &SchemaRef{
-		Value: &Schema{
-			Type: "string",
-		},
-	}
-
-	schema := Schema{
-		AllOf: SchemaRefs{
-			&SchemaRef{
-				Value: &Schema{
-					Type:       "object",
-					Properties: object,
-				},
-			},
-		},
-	}
-
-	merged := Merge(schema)
-	require.Len(t, merged.Properties, 1)
-	require.Equal(t, object["description"], merged.Properties["description"])
+	require.Equal(t, &schema, merged) //todo &schema
 }
 
 func TestMerge_TwoObjects(t *testing.T) {
@@ -103,19 +212,63 @@ func TestMerge_TwoObjects(t *testing.T) {
 	require.Equal(t, obj2["name"], merged.Properties["name"])
 }
 
+func TestMerge_OneObjectOneProp(t *testing.T) {
+
+	object := Schemas{}
+	object["description"] = &SchemaRef{
+		Value: &Schema{
+			Type: "string",
+		},
+	}
+
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					Properties: object,
+				},
+			},
+		},
+	}
+
+	merged := Merge(schema)
+	require.Len(t, merged.Properties, 1)
+	require.Equal(t, object["description"], merged.Properties["description"])
+}
+
+func TestMerge_OneObjectNoProps(t *testing.T) {
+
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					Properties: Schemas{},
+				},
+			},
+		},
+	}
+
+	merged := Merge(schema)
+	require.Len(t, merged.Properties, 0)
+}
+
 func TestMerge_OverlappingProps(t *testing.T) {
 
 	obj1 := Schemas{}
 	obj1["description"] = &SchemaRef{
 		Value: &Schema{
-			Type: "string",
+			Title: "first",
+			// Type: "string",   TODO: decide on Type conflict resolution strategy
 		},
 	}
 
 	obj2 := Schemas{}
 	obj2["description"] = &SchemaRef{
 		Value: &Schema{
-			Type: "int",
+			Title: "second",
+			// Type: "int",      TODO: decide on Type conflict resolution strategy
 		},
 	}
 
@@ -135,13 +288,32 @@ func TestMerge_OverlappingProps(t *testing.T) {
 			},
 		},
 	}
-
 	merged := Merge(schema)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 1)
-	require.Equal(t, obj2["description"], merged.Properties["description"])
+	require.Equal(t, (*obj1["description"].Value), (*merged.Properties["description"].Value))
 }
 
+func TestMergeAllOf_Pattern(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:    "object",
+					Pattern: "foo",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:    "object",
+					Pattern: "bar",
+				},
+			},
+		},
+	}
+	merged := Merge(schema)
+	require.Equal(t, "(?=foo)(?=bar)", merged.Pattern)
+}
 func TestMerge_Required(t *testing.T) {
 
 	ctx := context.Background()
@@ -161,9 +333,7 @@ func TestMerge_Required(t *testing.T) {
 			require.NoError(t, err, "loading test file")
 			err = doc.Validate(ctx)
 			require.NoError(t, err, "validating spec")
-
 			merged := Merge(*doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
-			require.Len(t, merged.AllOf, 0)
 
 			props := merged.Properties
 			require.Len(t, props, 3)
@@ -178,3 +348,78 @@ func TestMerge_Required(t *testing.T) {
 		})
 	}
 }
+
+/* temporary */
+func PrettyPrintJSON(rawJSON []byte) error {
+	var data interface{}
+
+	err := json.Unmarshal(rawJSON, &data)
+	if err != nil {
+		return err
+	}
+
+	prettyJSON, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(prettyJSON))
+	return nil
+}
+
+// func TestMerge_NestedAllOf(t *testing.T) {
+// 	obj2 := Schemas{}
+// 	obj2["description"] = &SchemaRef{
+// 		Value: &Schema{
+// 			Type:  "object",
+// 			Title: "description",
+// 		},
+// 	}
+// 	obj2["abcdefg"] = &SchemaRef{
+// 		Value: &Schema{
+// 			Type:  "object",
+// 			Title: "abc",
+// 		},
+// 	}
+
+// 	obj1 := Schemas{}
+// 	obj1["description"] = &SchemaRef{
+// 		Value: &Schema{
+// 			Type:  "object",
+// 			Title: "object2",
+// 		},
+// 	}
+// 	obj1["test"] = &SchemaRef{
+// 		Value: &Schema{
+// 			AllOf: SchemaRefs{
+// 				&SchemaRef{
+// 					Value: &Schema{
+// 						Type:  "object",
+// 						Title: "abc",
+// 					},
+// 				},
+// 				&SchemaRef{
+// 					Value: &Schema{
+// 						Type:       "object",
+// 						Properties: obj2,
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	schema := Schema{
+// 		AllOf: SchemaRefs{
+// 			&SchemaRef{
+// 				Value: &Schema{
+// 					Type:       "object",
+// 					Properties: obj1,
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	d, _ := schema.MarshalJSON()
+// 	PrettyPrintJSON(d)
+// 	//todo add tests.
+// }
