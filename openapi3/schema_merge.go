@@ -66,7 +66,7 @@ func mergeFields(schemas []Schema) *Schema {
 
 	formats := getStringValues(schemas, "format")
 	if len(formats) > 0 {
-		res, err := formatResolver(formats)
+		res, err := resolveFormat(formats)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -75,7 +75,7 @@ func mergeFields(schemas []Schema) *Schema {
 
 	types := getStringValues(schemas, "type")
 	if len(types) > 0 {
-		res, err := typeResolver(types)
+		res, err := resolveType(types)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -160,10 +160,6 @@ func resolvePattern(values []string) string {
 	return pattern.String()
 }
 
-/*
-temporary resolution policy:
-conflict is resolves only if all formats have the same value.
-*/
 func resolveMinLength(values []uint64) uint64 {
 	return findMaxValue(values)
 }
@@ -224,18 +220,14 @@ func resolveDescriptions(values []string) string {
 	return values[0]
 }
 
-func typeResolver(values []string) (string, error) {
+func resolveType(values []string) (string, error) {
 	if allStringsEqual(values) {
 		return values[0], nil
 	}
-	return values[0], errors.New("aaacould not resovle Format conflict - all Type values must be identical")
+	return values[0], errors.New("could not resovle Type conflict - all Type values must be identical")
 }
 
-/*
-temporary resolution policy:
-conflict is resolved only if all formats have the same value.
-*/
-func formatResolver(values []string) (string, error) {
+func resolveFormat(values []string) (string, error) {
 	if allStringsEqual(values) {
 		return values[0], nil
 	}
