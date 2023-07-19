@@ -121,6 +121,15 @@ func mergeFields(schemas []Schema) *Schema {
 	if len(properties) > 0 {
 		result.Properties = resolveProperties(properties)
 	}
+
+	enum := getEnum(schemas, "enum")
+	if len(enum) > 0 {
+		res, err := resolveEnum(enum)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		result.Enum = res
+	}
 	return result
 }
 
@@ -150,6 +159,24 @@ func resolveProperties(schemas []Schemas) Schemas {
 		result[name] = &ref
 	}
 	return result
+}
+
+func getEnum(schemas []Schema, field string) []interface{} {
+	enums := make([]interface{}, 0)
+	for _, schema := range schemas {
+		if schema.Enum != nil {
+			enums = append(enums, schema.Enum...)
+		}
+	}
+	return enums
+}
+
+func resolveEnum(values []interface{}) ([]interface{}, error) {
+	if areAllUnique(values) {
+		return values, nil
+	} else {
+		return nil, errors.New("could not resovle Enum conflict - all Enum values must be unique")
+	}
 }
 
 func resolvePattern(values []string) string {
@@ -317,6 +344,17 @@ func allStringsEqual(values []string) bool {
 		if first != value {
 			return false
 		}
+	}
+	return true
+}
+
+func areAllUnique(values []interface{}) bool {
+	occurrenceMap := make(map[interface{}]bool)
+	for _, item := range values {
+		if occurrenceMap[item] {
+			return false
+		}
+		occurrenceMap[item] = true
 	}
 	return true
 }

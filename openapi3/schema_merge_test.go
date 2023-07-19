@@ -9,6 +9,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMerge_Enum(t *testing.T) {
+	obj1Enum := make([]interface{}, 3)
+	obj1Enum[0] = "1"
+	obj1Enum[1] = nil
+	obj1Enum[2] = 1
+
+	obj2Enum := make([]interface{}, 1)
+	obj2Enum[0] = struct{}{}
+
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Enum: obj1Enum,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Enum: obj2Enum,
+				},
+			},
+		},
+	}
+	concatenated := append(obj1Enum, obj2Enum...)
+	merged := Merge(schema)
+	require.Equal(t, concatenated, merged.Enum)
+}
+
 func TestMerge_MinMax(t *testing.T) {
 	schema := Schema{
 		AllOf: SchemaRefs{
