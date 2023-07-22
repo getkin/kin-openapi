@@ -31,7 +31,7 @@ func TestMerge_MultipleOf(t *testing.T) {
 	}
 
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, float64(10), *merged.MultipleOf)
 
 	schema = Schema{
@@ -52,7 +52,7 @@ func TestMerge_MultipleOf(t *testing.T) {
 	}
 
 	merged, err = Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, float64(77), *merged.MultipleOf)
 }
 
@@ -83,7 +83,7 @@ func TestMerge_Enum(t *testing.T) {
 	}
 	concatenated := append(obj1Enum, obj2Enum...)
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, concatenated, merged.Enum)
 }
 
@@ -107,7 +107,7 @@ func TestMerge_MinMax(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, float64(10), *merged.Min)
 	require.Equal(t, float64(25), *merged.Max)
 }
@@ -130,7 +130,7 @@ func TestMerge_MaxLength(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, uint64(10), *merged.MaxLength)
 }
 
@@ -152,7 +152,7 @@ func TestMerge_MinLength(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, uint64(20), merged.MinLength)
 }
 
@@ -174,7 +174,7 @@ func TestMerge_Description(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, "desc1", merged.Description)
 }
 
@@ -194,7 +194,7 @@ func TestMerge_Type(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, "object", merged.Type)
 }
 
@@ -216,7 +216,7 @@ func TestMerge_Title(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, "first", merged.Title)
 }
 
@@ -226,27 +226,27 @@ func TestMerge_Format(t *testing.T) {
 			&SchemaRef{
 				Value: &Schema{
 					Type:   "object",
-					Format: "number",
+					Format: "date",
 				},
 			},
 			&SchemaRef{
 				Value: &Schema{
 					Type:   "object",
-					Format: "number",
+					Format: "date",
 				},
 			},
 		},
 	}
 
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
-	require.Equal(t, "number", merged.Format)
+	require.NoError(t, err)
+	require.Equal(t, "date", merged.Format)
 }
 
 func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, &schema, merged) //todo &schema
 }
 
@@ -255,7 +255,7 @@ func TestMerge_NoAllOf(t *testing.T) {
 		Title: "test",
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, &schema, merged) //todo &schema
 }
 
@@ -293,7 +293,7 @@ func TestMerge_TwoObjects(t *testing.T) {
 	}
 
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 2)
 	require.Equal(t, obj1["description"], merged.Properties["description"])
@@ -321,7 +321,7 @@ func TestMerge_OneObjectOneProp(t *testing.T) {
 	}
 
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Len(t, merged.Properties, 1)
 	require.Equal(t, object["description"], merged.Properties["description"])
 }
@@ -340,7 +340,7 @@ func TestMerge_OneObjectNoProps(t *testing.T) {
 	}
 
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Len(t, merged.Properties, 0)
 }
 
@@ -379,7 +379,7 @@ func TestMerge_OverlappingProps(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 1)
 	require.Equal(t, (*obj1["description"].Value), (*merged.Properties["description"].Value))
@@ -403,7 +403,7 @@ func TestMergeAllOf_Pattern(t *testing.T) {
 		},
 	}
 	merged, err := Merge(schema)
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 	require.Equal(t, "(?=foo)(?=bar)", merged.Pattern)
 }
 func TestMerge_Required(t *testing.T) {
@@ -426,7 +426,7 @@ func TestMerge_Required(t *testing.T) {
 			err = doc.Validate(ctx)
 			require.NoError(t, err, "validating spec")
 			merged, err := Merge(*doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
-			require.Equal(t, nil, err)
+			require.NoError(t, err)
 
 			props := merged.Properties
 			require.Len(t, props, 3)
