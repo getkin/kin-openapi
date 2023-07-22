@@ -84,7 +84,34 @@ func TestMerge_Enum(t *testing.T) {
 	concatenated := append(obj1Enum, obj2Enum...)
 	merged, err := Merge(schema)
 	require.NoError(t, err)
-	require.Equal(t, concatenated, merged.Enum)
+	require.ElementsMatch(t, concatenated, merged.Enum)
+
+	obj1Enum = make([]interface{}, 2)
+	obj1Enum[0] = "1"
+	obj1Enum[1] = nil
+	obj2Enum = make([]interface{}, 1)
+	obj2Enum[0] = "1"
+
+	schema = Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Enum: obj1Enum,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Enum: obj2Enum,
+				},
+			},
+		},
+	}
+	enums := []interface{}{"1", nil}
+	merged, err = Merge(schema)
+	require.NoError(t, err)
+	require.ElementsMatch(t, enums, merged.Enum)
 }
 
 func TestMerge_MinMax(t *testing.T) {

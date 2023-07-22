@@ -153,11 +153,7 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 
 	enum := getEnum(schemas, "enum")
 	if len(enum) > 0 {
-		res, err := resolveEnum(enum)
-		if err != nil {
-			return result, err
-		}
-		result.Enum = res
+		result.Enum = resolveEnum(enum)
 	}
 
 	multipleOf := getFloat64Values(schemas, "multipleOf")
@@ -253,12 +249,8 @@ func getEnum(schemas []Schema, field string) []interface{} {
 	return enums
 }
 
-func resolveEnum(values []interface{}) ([]interface{}, error) {
-	if areAllUnique(values) {
-		return values, nil
-	} else {
-		return nil, errors.New("could not resovle Enum conflict - all Enum values must be unique")
-	}
+func resolveEnum(values []interface{}) []interface{} {
+	return removeDuplicates(values)
 }
 
 func resolvePattern(values []string) string {
@@ -430,15 +422,16 @@ func allStringsEqual(values []string) bool {
 	return true
 }
 
-func areAllUnique(values []interface{}) bool {
-	occurrenceMap := make(map[interface{}]bool)
-	for _, item := range values {
-		if occurrenceMap[item] {
-			return false
+func removeDuplicates(values []interface{}) []interface{} {
+	uniqueMap := make(map[interface{}]struct{})
+	uniqueValues := make([]interface{}, 0)
+	for _, value := range values {
+		if _, found := uniqueMap[value]; !found {
+			uniqueMap[value] = struct{}{}
+			uniqueValues = append(uniqueValues, value)
 		}
-		occurrenceMap[item] = true
 	}
-	return true
+	return uniqueValues
 }
 
 /* temporary */
