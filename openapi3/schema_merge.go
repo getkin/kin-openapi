@@ -9,12 +9,16 @@ import (
 )
 
 // Merge replaces objects under AllOf with a flattened equivalent
-func Merge(schema Schema) *Schema {
+func Merge(schema Schema) (*Schema, error) {
 	if !isListOfObjects(&schema) {
-		return &schema
+		return &schema, nil
 	}
+
 	if schema.AllOf != nil {
-		mergedAllOf := mergeAllOf(schema.AllOf)
+		mergedAllOf, err := mergeAllOf(schema.AllOf)
+		if err != nil {
+			return &Schema{}, err
+		}
 		schema = copy(mergedAllOf, schema) // temporary.
 	}
 	schema.AllOf = nil
@@ -22,32 +26,49 @@ func Merge(schema Schema) *Schema {
 	//todo: merge result of mergedAllOf with all other fields of base Schema.
 	//todo: implement merge functions for OneOf, AnyOf, Items
 	if schema.Properties != nil {
-		schema.Properties = mergeProperties(schema.Properties)
+		properties, err := mergeProperties(schema.Properties)
+		if err != nil {
+			return &Schema{}, err
+		}
+		schema.Properties = properties
+
 	}
-	return &schema
+
+	return &schema, nil
 }
 
-func mergeAllOf(allOf SchemaRefs) Schema {
+func mergeAllOf(allOf SchemaRefs) (Schema, error) {
 
 	schemas := make([]Schema, 0) // naming
 	for _, schema := range allOf {
-		schemas = append(schemas, *Merge(*schema.Value))
+		merged, err := Merge(*schema.Value)
+		if err != nil {
+			return Schema{}, err
+		}
+		schemas = append(schemas, *merged)
 	}
 
-	schema := mergeFields(schemas)
-	return *schema
+	schema, err := mergeFields(schemas)
+	if err != nil {
+		return *schema, err
+	}
+	return *schema, nil
 }
 
-func mergeProperties(schemas Schemas) Schemas {
+func mergeProperties(schemas Schemas) (Schemas, error) {
 	res := make(Schemas)
 	for name, schemaRef := range schemas {
-		schemaRef.Value = Merge(*schemaRef.Value)
+		merged, err := Merge(*schemaRef.Value)
+		if err != nil {
+			return res, err
+		}
+		schemaRef.Value = merged
 		res[name] = schemaRef
 	}
-	return res
+	return res, nil
 }
 
-func mergeFields(schemas []Schema) *Schema {
+func mergeFields(schemas []Schema) (*Schema, error) {
 	result := NewSchema()
 	titles := getStringValues(schemas, "title")
 	if len(titles) > 0 {
@@ -68,7 +89,7 @@ func mergeFields(schemas []Schema) *Schema {
 	if len(formats) > 0 {
 		res, err := resolveFormat(formats)
 		if err != nil {
-			log.Fatal(err.Error())
+			return result, err
 		}
 		result.Format = res
 	}
@@ -77,7 +98,7 @@ func mergeFields(schemas []Schema) *Schema {
 	if len(types) > 0 {
 		res, err := resolveType(types)
 		if err != nil {
-			log.Fatal(err.Error())
+			return result, err
 		}
 		result.Type = res
 	}
@@ -119,14 +140,18 @@ func mergeFields(schemas []Schema) *Schema {
 
 	properties := getProperties(schemas)
 	if len(properties) > 0 {
-		result.Properties = resolveProperties(properties)
+		res, err := resolveProperties(properties)
+		if err != nil {
+			return result, err
+		}
+		result.Properties = res
 	}
 
 	enum := getEnum(schemas, "enum")
 	if len(enum) > 0 {
 		res, err := resolveEnum(enum)
 		if err != nil {
-			log.Fatal(err.Error())
+			return result, err
 		}
 		result.Enum = res
 	}
@@ -136,7 +161,7 @@ func mergeFields(schemas []Schema) *Schema {
 		result.MultipleOf = Float64Ptr(resolveMultipleOf(multipleOf))
 	}
 
-	return result
+	return result, nil
 }
 
 /* MultipleOf */
@@ -193,7 +218,7 @@ func getProperties(schemas []Schema) []Schemas {
 	return sr
 }
 
-func resolveProperties(schemas []Schemas) Schemas {
+func resolveProperties(schemas []Schemas) (Schemas, error) {
 	allRefs := map[string][]Schema{} //naming
 	for _, schema := range schemas { //naming
 		for name, schemaRef := range schema {
@@ -202,12 +227,16 @@ func resolveProperties(schemas []Schemas) Schemas {
 	}
 	result := make(Schemas)
 	for name, schemas := range allRefs {
+		merged, err := mergeFields(schemas)
+		if err != nil {
+			return Schemas{}, err
+		}
 		ref := SchemaRef{
-			Value: mergeFields(schemas),
+			Value: merged,
 		}
 		result[name] = &ref
 	}
-	return result
+	return result, nil
 }
 
 func getEnum(schemas []Schema, field string) []interface{} {
