@@ -130,7 +130,56 @@ func mergeFields(schemas []Schema) *Schema {
 		}
 		result.Enum = res
 	}
+
+	multipleOf := getFloat64Values(schemas, "multipleOf")
+	if len(multipleOf) > 0 {
+		result.MultipleOf = Float64Ptr(resolveMultipleOf(multipleOf))
+	}
+
 	return result
+}
+
+/* MultipleOf */
+func gcd(a, b uint64) uint64 {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+func lcm(a, b uint64) uint64 {
+	return a * b / gcd(a, b)
+}
+
+func containsNonInteger(arr []float64) bool {
+	for _, num := range arr {
+		if num != math.Trunc(num) {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveMultipleOf(values []float64) float64 {
+	factor := 1.0
+	for containsNonInteger(values) {
+		factor *= 10.0
+		for i := range values {
+			values[i] *= factor
+		}
+	}
+
+	uintValues := make([]uint64, len(values))
+	for i, val := range values {
+		uintValues[i] = uint64(val)
+	}
+
+	lcmValue := uintValues[0]
+	for _, v := range uintValues {
+		lcmValue = lcm(lcmValue, v)
+	}
+
+	return float64(lcmValue) / factor
 }
 
 /* Properties */

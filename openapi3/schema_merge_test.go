@@ -9,6 +9,51 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMerge_MultipleOf(t *testing.T) {
+
+	//todo - more tests
+
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					MultipleOf: Float64Ptr(10.0),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					MultipleOf: Float64Ptr(2.0),
+				},
+			},
+		},
+	}
+
+	merged := Merge(schema)
+	require.Equal(t, float64(10), *merged.MultipleOf)
+
+	schema = Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					MultipleOf: Float64Ptr(11.0),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					MultipleOf: Float64Ptr(0.7),
+				},
+			},
+		},
+	}
+
+	merged = Merge(schema)
+	require.Equal(t, float64(77), *merged.MultipleOf)
+}
+
 func TestMerge_Enum(t *testing.T) {
 	obj1Enum := make([]interface{}, 3)
 	obj1Enum[0] = "1"
