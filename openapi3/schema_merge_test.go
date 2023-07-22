@@ -243,6 +243,27 @@ func TestMerge_Format(t *testing.T) {
 	require.Equal(t, "date", merged.Format)
 }
 
+func TestMerge_Format_Failure(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:   "object",
+					Format: "date",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:   "object",
+					Format: "byte",
+				},
+			},
+		},
+	}
+	_, err := Merge(schema)
+	require.EqualError(t, err, FormatErrorMessage)
+}
+
 func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
 	merged, err := Merge(schema)

@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+const (
+	FormatErrorMessage = "Unable to resolve Format conflict: all Format values must be identical."
+)
+
 // Merge replaces objects under AllOf with a flattened equivalent
 func Merge(schema Schema) (*Schema, error) {
 	if !isListOfObjects(&schema) {
@@ -336,7 +340,7 @@ func resolveFormat(values []string) (string, error) {
 	if allStringsEqual(values) {
 		return values[0], nil
 	}
-	return values[0], errors.New("could not resovle Format conflict - all Format values must be identical")
+	return values[0], errors.New(FormatErrorMessage)
 }
 
 func titleResolver(values []string) string {
