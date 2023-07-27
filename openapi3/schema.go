@@ -1149,6 +1149,10 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				if v == f {
 					return
 				}
+			case int64:
+				if v == float64(c) {
+					return
+				}
 			default:
 				if reflect.DeepEqual(v, value) {
 					return
