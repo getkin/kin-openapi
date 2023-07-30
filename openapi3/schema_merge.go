@@ -117,13 +117,13 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 		result.MaxLength = Uint64Ptr(resolveMaxLength(maxLength))
 	}
 
-	minimum, isExcludedMin := resolveMinimum(schemas)
+	minimum, isExcludedMin := resolveMinimumRange(schemas)
 	if minimum != nil {
 		result.Min = minimum
 		result.ExclusiveMin = isExcludedMin
 	}
 
-	maximum, isExcludedMax := resolveMaximum(schemas)
+	maximum, isExcludedMax := resolveMaximumRange(schemas)
 	if maximum != nil {
 		result.Max = maximum
 		result.ExclusiveMax = isExcludedMax
@@ -299,7 +299,7 @@ func findMinValue(values []uint64) uint64 {
 	return min
 }
 
-func resolveMaximum(schemas []Schema) (*float64, bool) {
+func resolveMaximumRange(schemas []Schema) (*float64, bool) {
 	min := math.Inf(1)
 	isExcluded := false
 	var value *float64
@@ -315,7 +315,7 @@ func resolveMaximum(schemas []Schema) (*float64, bool) {
 	return value, isExcluded
 }
 
-func resolveMinimum(schemas []Schema) (*float64, bool) {
+func resolveMinimumRange(schemas []Schema) (*float64, bool) {
 	max := math.Inf(-1)
 	isExcluded := false
 	var value *float64
