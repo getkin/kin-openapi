@@ -117,14 +117,16 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 		result.MaxLength = Uint64Ptr(resolveMaxLength(maxLength))
 	}
 
-	minimum := getFloat64Values(schemas, "min")
-	if len(minimum) > 0 {
-		result.Min = Float64Ptr(resolveMinimum(minimum))
+	minimum, isExcludedMin := resolveMinimum(schemas)
+	if minimum != nil {
+		result.Min = minimum
+		result.ExclusiveMin = isExcludedMin
 	}
 
-	maximum := getFloat64Values(schemas, "max")
-	if len(maximum) > 0 {
-		result.Max = Float64Ptr(resolveMaximum(maximum))
+	maximum, isExcludedMax := resolveMaximum(schemas)
+	if maximum != nil {
+		result.Max = maximum
+		result.ExclusiveMax = isExcludedMax
 	}
 
 	minItems := getUint64Values(schemas, "minItems")
@@ -297,24 +299,36 @@ func findMinValue(values []uint64) uint64 {
 	return min
 }
 
-func resolveMaximum(values []float64) float64 {
+func resolveMaximum(schemas []Schema) (*float64, bool) {
 	min := math.Inf(1)
-	for _, value := range values {
-		if value < min {
-			min = value
+	isExcluded := false
+	var value *float64
+	for _, s := range schemas {
+		if s.Max != nil {
+			if *s.Max < min {
+				min = *s.Max
+				value = s.Max
+				isExcluded = s.ExclusiveMax
+			}
 		}
 	}
-	return min
+	return value, isExcluded
 }
 
-func resolveMinimum(values []float64) float64 {
+func resolveMinimum(schemas []Schema) (*float64, bool) {
 	max := math.Inf(-1)
-	for _, value := range values {
-		if value > max {
-			max = value
+	isExcluded := false
+	var value *float64
+	for _, s := range schemas {
+		if s.Min != nil {
+			if *s.Min > max {
+				max = *s.Min
+				value = s.Min
+				isExcluded = s.ExclusiveMin
+			}
 		}
 	}
-	return max
+	return value, isExcluded
 }
 
 func resolveDescriptions(values []string) string {
@@ -355,6 +369,20 @@ func isListOfObjects(schema *Schema) bool {
 	}
 
 	return true
+}
+
+func getBoolValues(schemas []Schema, field string) []bool {
+	values := []bool{}
+	for _, schema := range schemas {
+		value, err := schema.JSONLookup(field)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		if v, ok := value.(bool); ok {
+			values = append(values, v)
+		}
+	}
+	return values
 }
 
 func getStringValues(schemas []Schema, field string) []string {
