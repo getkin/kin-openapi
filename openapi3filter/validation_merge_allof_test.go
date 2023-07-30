@@ -358,6 +358,7 @@ func validateConsistency(t *testing.T, spec string, tests []Test) {
 		if test.wantErr {
 			require.Error(t, nonMerged[i])
 			require.Error(t, merged[i])
+			require.Equal(t, nonMerged[i].Error(), merged[i].Error())
 		} else {
 			require.NoError(t, nonMerged[i])
 			require.NoError(t, merged[i])
