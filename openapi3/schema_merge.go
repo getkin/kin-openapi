@@ -81,7 +81,7 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 
 	required := getStringValues(schemas, "required")
 	if len(required) > 0 {
-		result.Required = requiredResolver(required)
+		result.Required = resolveRequired(required)
 	}
 
 	description := getStringValues(schemas, "description")
@@ -353,8 +353,16 @@ func titleResolver(values []string) string {
 	return values[0]
 }
 
-func requiredResolver(values []string) []string {
-	return values
+func resolveRequired(values []string) []string {
+	uniqueMap := make(map[string]bool)
+	var uniqueValues []string
+	for _, str := range values {
+		if _, found := uniqueMap[str]; !found {
+			uniqueMap[str] = true
+			uniqueValues = append(uniqueValues, str)
+		}
+	}
+	return uniqueValues
 }
 
 func isListOfObjects(schema *Schema) bool {
@@ -369,20 +377,6 @@ func isListOfObjects(schema *Schema) bool {
 	}
 
 	return true
-}
-
-func getBoolValues(schemas []Schema, field string) []bool {
-	values := []bool{}
-	for _, schema := range schemas {
-		value, err := schema.JSONLookup(field)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		if v, ok := value.(bool); ok {
-			values = append(values, v)
-		}
-	}
-	return values
 }
 
 func getStringValues(schemas []Schema, field string) []string {
