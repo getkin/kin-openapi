@@ -252,7 +252,7 @@ func getEnum(schemas []Schema, field string) []interface{} {
 }
 
 func resolveEnum(values []interface{}) []interface{} {
-	return removeDuplicates(values)
+	return uniqueValues(values)
 }
 
 func resolvePattern(values []string) string {
@@ -450,7 +450,7 @@ func allStringsEqual(values []string) bool {
 	return true
 }
 
-func removeDuplicates(values []interface{}) []interface{} {
+func uniqueValues(values []interface{}) []interface{} {
 	uniqueMap := make(map[interface{}]struct{})
 	uniqueValues := make([]interface{}, 0)
 	for _, value := range values {
