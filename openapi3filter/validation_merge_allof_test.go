@@ -247,18 +247,7 @@ paths:
 		},
 	}
 
-	nonMerged := runTests(t, spec, tests, false)
-	merged := runTests(t, spec, tests, true)
-
-	for i, test := range tests {
-		if test.wantErr {
-			require.Error(t, nonMerged[i])
-			require.Error(t, merged[i])
-		} else {
-			require.NoError(t, nonMerged[i])
-			require.NoError(t, merged[i])
-		}
-	}
+	validateConsistency(t, spec, tests)
 }
 
 func TestMergeRange(t *testing.T) {
