@@ -211,6 +211,18 @@ func init() {
 	// defined as date-time in https://www.rfc-editor.org/rfc/rfc3339#section-5.6
 	DefineStringFormat("date-time", `^[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])T(23:59:60|(([01][0-9]|2[0-3])(:[0-5][0-9]){2}))(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
 
+	// defined as uuid in https://www.rfc-editor.org/rfc/rfc4122
+	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122, FromOpenAPIMinorVersion(1))
+
+	// defined as ipv4 in
+	DefineStringFormatCallback("ipv4", validateIPv4, FromOpenAPIMinorVersion(1))
+
+	// defined as ipv6 in https://www.rfc-editor.org/rfc/rfc4122
+	DefineStringFormatCallback("ipv6", validateIPv6, FromOpenAPIMinorVersion(1))
+
+	// hostname as defined in https://www.rfc-editor.org/rfc/rfc1123#section-2.1
+	DefineStringFormat(`hostname`, `^[a-zA-Z0-9][a-zA-Z0-9-.]+[a-zA-Z0-9]$`, FromOpenAPIMinorVersion(1))
+
 	defaultSchemaStringFormats = SaveStringFormats(SchemaStringFormats)
 }
 
