@@ -205,11 +205,11 @@ func init() {
 	// The pattern supports base64 and b./ase64url. Padding ('=') is supported.
 	DefineStringFormat("byte", `(^$|^[a-zA-Z0-9+/\-_]*=*$)`)
 
-	// date
-	DefineStringFormat("date", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`)
+	// defined as full-date in https://www.rfc-editor.org/rfc/rfc3339#section-5.6
+	DefineStringFormat("date", `^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|30|31)$`)
 
-	// date-time
-	DefineStringFormat("date-time", `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
+	// defined as date-time in https://www.rfc-editor.org/rfc/rfc3339#section-5.6
+	DefineStringFormat("date-time", `^[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])T(23:59:60|(([01][0-9]|2[0-3])(:[0-5][0-9]){2}))(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`)
 
 	defaultSchemaStringFormats = SaveStringFormats(SchemaStringFormats)
 }
