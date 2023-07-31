@@ -20,6 +20,8 @@ type schemaValidationSettings struct {
 	defaultsSet         func()
 
 	customizeMessageError func(err *SchemaError) string
+
+	openapiMinorVersion uint64 // defaults to 0 (3.0.z)
 }
 
 // FailFast returns schema validation errors quicker.
@@ -76,4 +78,9 @@ func newSchemaValidationSettings(opts ...SchemaValidationOption) *schemaValidati
 		opt(settings)
 	}
 	return settings
+}
+
+// SetOpenAPIMinorVersion setting allows to define minor OpenAPI version schema must comply with
+func SetOpenAPIMinorVersion(minorVersion uint64) SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.openapiMinorVersion = minorVersion }
 }

@@ -20,6 +20,8 @@ func TestIssue735(t *testing.T) {
 	DefineStringFormat("email", FormatOfStringForEmail)
 	DefineIPv4Format()
 	DefineIPv6Format()
+	// restore modified string formats used during this tests
+	defer RestoreDefaultStringFormats()
 
 	testCases := []testCase{
 		{

@@ -73,6 +73,9 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if options.ExcludeWriteOnlyValidations {
 		opts = append(opts, openapi3.DisableWriteOnlyValidation())
 	}
+	if route != nil {
+		opts = append(opts, openapi3.SetOpenAPIMinorVersion(route.Spec.OpenAPI.Minor()))
+	}
 
 	headers := make([]string, 0, len(response.Headers))
 	for k := range response.Headers {
@@ -148,7 +151,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	}
 
 	// Validate data with the schema.
-	if err := contentType.Schema.Value.VisitJSON(value, append(opts, openapi3.VisitAsResponse())...); err != nil {
+	if err := contentType.Schema.Value.VisitJSON(value, append(opts, openapi3.VisitAsResponse(), openapi3.SetOpenAPIMinorVersion(route.Spec.OpenAPI.Minor()))...); err != nil {
 		schemaId := getSchemaIdentifier(contentType.Schema)
 		schemaId = prependSpaceIfNeeded(schemaId)
 		return &ResponseError{

@@ -579,6 +579,13 @@ func NewStringSchema() *Schema {
 	}
 }
 
+func NewDateSchema() *Schema {
+	return &Schema{
+		Type:   TypeString,
+		Format: "date",
+	}
+}
+
 func NewDateTimeSchema() *Schema {
 	return &Schema{
 		Type:   TypeString,
@@ -586,10 +593,31 @@ func NewDateTimeSchema() *Schema {
 	}
 }
 
+func NewHostnameSchema() *Schema {
+	return &Schema{
+		Type:   TypeString,
+		Format: "hostname",
+	}
+}
+
 func NewUUIDSchema() *Schema {
 	return &Schema{
 		Type:   TypeString,
 		Format: "uuid",
+	}
+}
+
+func NewIPv4Schema() *Schema {
+	return &Schema{
+		Type:   TypeString,
+		Format: "ipv4",
+	}
+}
+
+func NewIPv6Schema() *Schema {
+	return &Schema{
+		Type:   TypeString,
+		Format: "ipv6",
 	}
 }
 
@@ -1628,7 +1656,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	var formatStrErr string
 	var formatErr error
 	if format := schema.Format; format != "" {
-		if f, ok := SchemaStringFormats[format]; ok {
+		if f := getSchemaStringFormats(format, settings.openapiMinorVersion); f != nil {
 			switch {
 			case f.regexp != nil && f.callback == nil:
 				if cp := f.regexp; !cp.MatchString(value) {

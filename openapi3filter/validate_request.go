@@ -181,6 +181,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
+	if input.Route != nil {
+		opts = append(opts, openapi3.SetOpenAPIMinorVersion(input.Route.Spec.OpenAPI.Minor()))
+	}
 	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
@@ -284,6 +287,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	if options.ExcludeReadOnlyValidations {
 		opts = append(opts, openapi3.DisableReadOnlyValidation())
+	}
+	if input.Route != nil {
+		opts = append(opts, openapi3.SetOpenAPIMinorVersion(input.Route.Spec.OpenAPI.Minor()))
 	}
 
 	// Validate JSON with the schema

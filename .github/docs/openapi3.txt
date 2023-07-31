@@ -100,8 +100,12 @@ type Schema struct{ ... }
     func NewArraySchema() *Schema
     func NewBoolSchema() *Schema
     func NewBytesSchema() *Schema
+    func NewDateSchema() *Schema
     func NewDateTimeSchema() *Schema
     func NewFloat64Schema() *Schema
+    func NewHostnameSchema() *Schema
+    func NewIPv4Schema() *Schema
+    func NewIPv6Schema() *Schema
     func NewInt32Schema() *Schema
     func NewInt64Schema() *Schema
     func NewIntegerSchema() *Schema
@@ -125,6 +129,7 @@ type SchemaValidationOption func(*schemaValidationSettings)
     func EnableFormatValidation() SchemaValidationOption
     func FailFast() SchemaValidationOption
     func MultiErrors() SchemaValidationOption
+    func SetOpenAPIMinorVersion(minorVersion uint64) SchemaValidationOption
     func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption
     func VisitAsRequest() SchemaValidationOption
     func VisitAsResponse() SchemaValidationOption
