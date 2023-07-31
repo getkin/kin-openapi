@@ -9,17 +9,20 @@ var CircularReferenceError = "kin-openapi bug found: circular schema reference n
 var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
 var ErrURINotSupported = errors.New("unsupported URI")
 var IdentifierRegExp = regexp.MustCompile(identifierPattern)
-var SchemaStringFormats = make(map[string]Format, 4)
+var SchemaStringFormats = make(map[string]*Format, 4)
 func BoolPtr(value bool) *bool
 func DefaultRefNameResolver(ref string) string
 func DefineIPv4Format()
 func DefineIPv6Format()
-func DefineStringFormat(name string, pattern string)
-func DefineStringFormatCallback(name string, callback FormatCallback)
+func DefineStringFormat(name string, pattern string, options ...SchemaFormatOption)
+func DefineStringFormatCallback(name string, callback FormatCallback, options ...SchemaFormatOption)
 func Float64Ptr(value float64) *float64
 func Int64Ptr(value int64) *int64
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
 func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
+func RestoreDefaultStringFormats()
+func RestoreStringFormats(formatToRestore map[string]*Format)
+func SaveStringFormats(map[string]*Format) map[string]*Format
 func Uint64Ptr(value uint64) *uint64
 func ValidateIdentifier(value string) error
 func WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context
@@ -108,6 +111,9 @@ type Schema struct{ ... }
     func NewStringSchema() *Schema
     func NewUUIDSchema() *Schema
 type SchemaError struct{ ... }
+type SchemaFormatOption func(options *SchemaFormatOptions)
+    func FromOpenAPIMinorVersion(fromMinorVersion uint64) SchemaFormatOption
+type SchemaFormatOptions struct{ ... }
 type SchemaRef struct{ ... }
     func NewSchemaRef(ref string, value *Schema) *SchemaRef
 type SchemaRefs []*SchemaRef
