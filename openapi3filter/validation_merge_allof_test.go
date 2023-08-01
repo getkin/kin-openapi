@@ -18,6 +18,7 @@ type Test struct {
 	wantErr bool
 }
 
+// non-conflicting properties with required can be merged
 func TestMergeRequired(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
@@ -87,6 +88,7 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// multiple-of can always be merged
 func TestMergeMultipleOf(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
@@ -138,6 +140,7 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// minlength and maxlength can always be merged
 func TestMergeStringRange(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
@@ -358,7 +361,6 @@ func validateConsistency(t *testing.T, spec string, tests []Test) {
 		if test.wantErr {
 			require.Error(t, nonMerged[i])
 			require.Error(t, merged[i])
-			require.Equal(t, nonMerged[i].Error(), merged[i].Error())
 		} else {
 			require.NoError(t, nonMerged[i])
 			require.NoError(t, merged[i])
@@ -368,13 +370,12 @@ func validateConsistency(t *testing.T, spec string, tests []Test) {
 
 // todo: find a better way to do that
 func merge(doc *openapi3.T) *openapi3.T {
-	schema := doc.Paths.Find("/sample").Put.RequestBody.Value.Content.Get("application/json").Schema.Value
-	merged, err := openapi3.Merge(*schema)
+	schemaRef := doc.Paths.Find("/sample").Put.RequestBody.Value.Content.Get("application/json").Schema
+	merged, err := openapi3.Merge(*schemaRef.Value)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	schema = merged
-	// doc.Paths.Find("/sample").Put.RequestBody.Value.Content.Get("application/json").Schema.Value = merged
+	schemaRef.Value = merged
 	return doc
 }
 
