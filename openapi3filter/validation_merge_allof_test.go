@@ -116,13 +116,10 @@ paths:
 }
 
 func TestMergeUniqueItems(t *testing.T) {
-
-	t.Skip()
-
 	const spec = `
 openapi: 3.0.0
 info:
-  title: Validate multiple of
+  title: Validate merge of unique items
   version: '0.1'
 paths:
   /sample:
@@ -162,19 +159,7 @@ paths:
 			true,
 		},
 	}
-	nonMerged := runTests(t, spec, tests, false)
-	merged := runTests(t, spec, tests, true)
-
-	for i, test := range tests {
-		if test.wantErr {
-			require.Error(t, nonMerged[i])
-			require.Error(t, merged[i])
-		} else {
-			require.NoError(t, nonMerged[i])
-			require.NoError(t, merged[i])
-		}
-	}
-	//validateConsistency(t, spec, tests)
+	validateConsistency(t, spec, tests)
 }
 
 // non-conflicting properties with required can be merged

@@ -176,10 +176,10 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 		result.Items = &ref
 	}
 
-	// uniqueItems := getBoolValues(schemas, "uniqueItems")
-	// if len(uniqueItems) > 0 {
-	// 	result.UniqueItems = resolveUniqueItems(uniqueItems)
-	// }
+	uniqueItems := getBoolValues(schemas, "uniqueItems")
+	if len(uniqueItems) > 0 {
+		result.UniqueItems = resolveUniqueItems(uniqueItems)
+	}
 
 	return result, nil
 }
