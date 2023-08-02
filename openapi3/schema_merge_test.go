@@ -9,6 +9,102 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+/* Item merge fails due to conflicting item types. */
+func TestMerge_Items_Failure(t *testing.T) {
+	obj1 := Schemas{}
+	obj1["test"] = &SchemaRef{
+		Value: &Schema{
+			Type: "array",
+			Items: &SchemaRef{
+				Value: &Schema{
+					Type: "integer",
+				},
+			},
+		},
+	}
+
+	obj2 := Schemas{}
+	obj2["test"] = &SchemaRef{
+		Value: &Schema{
+			Type: "array",
+			Items: &SchemaRef{
+				Value: &Schema{
+					Type: "string",
+				},
+			},
+		},
+	}
+
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					Properties: obj1,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					Properties: obj2,
+				},
+			},
+		},
+	}
+	_, err := Merge(schema)
+	require.EqualError(t, err, TypeErrorMessage)
+}
+
+/* items are merged successfully when there are no conflicts */
+func TestMerge_Items(t *testing.T) {
+	obj1 := Schemas{}
+	obj1["test"] = &SchemaRef{
+		Value: &Schema{
+			Type: "array",
+			Items: &SchemaRef{
+				Value: &Schema{
+					Type: "integer",
+				},
+			},
+		},
+	}
+
+	obj2 := Schemas{}
+	obj2["test"] = &SchemaRef{
+		Value: &Schema{
+			Type: "array",
+			Items: &SchemaRef{
+				Value: &Schema{
+					Type: "integer",
+				},
+			},
+		},
+	}
+
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					Properties: obj1,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:       "object",
+					Properties: obj2,
+				},
+			},
+		},
+	}
+
+	merged, err := Merge(schema)
+	require.NoError(t, err)
+	require.Nil(t, merged.AllOf)
+	require.Equal(t, "array", merged.Properties["test"].Value.Type)
+	require.Equal(t, "integer", merged.Properties["test"].Value.Items.Value.Type)
+}
+
 func TestMerge_MultipleOf(t *testing.T) {
 
 	//todo - more tests

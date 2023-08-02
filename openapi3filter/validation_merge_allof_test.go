@@ -18,6 +18,165 @@ type Test struct {
 	wantErr bool
 }
 
+func TestMergeItems(t *testing.T) {
+	//todo: cleanup
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Validate items of type integer
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: integer
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: integer
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"test": [1, 2, 3]}`),
+			false,
+		},
+		{
+			[]byte(`{"test": ["abc"]}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+
+	const spec2 = `
+openapi: 3.0.0
+info:
+  title: Validate items of objects 
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests = []Test{
+		{
+			[]byte(`{"test": [{"id": 1, "name": "abc"}]}`),
+			false,
+		},
+		{
+			[]byte(`{"test": [{"id": "1"}]}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec2, tests)
+}
+
+func TestMergeUniqueItems(t *testing.T) {
+
+	t.Skip()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Validate multiple of
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: integer
+                      uniqueItems: true
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: integer
+                      uniqueItems: false
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests := []Test{
+		{
+			[]byte(`{"test": [1, 2, 3]}`),
+			false,
+		},
+		{
+			[]byte(`{"test": [1, 1]}`),
+			true,
+		},
+	}
+	nonMerged := runTests(t, spec, tests, false)
+	merged := runTests(t, spec, tests, true)
+
+	for i, test := range tests {
+		if test.wantErr {
+			require.Error(t, nonMerged[i])
+			require.Error(t, merged[i])
+		} else {
+			require.NoError(t, nonMerged[i])
+			require.NoError(t, merged[i])
+		}
+	}
+	//validateConsistency(t, spec, tests)
+}
+
 // non-conflicting properties with required can be merged
 func TestMergeRequired(t *testing.T) {
 	const spec = `

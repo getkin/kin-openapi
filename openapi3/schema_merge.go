@@ -10,6 +10,7 @@ import (
 
 const (
 	FormatErrorMessage = "Unable to resolve Format conflict: all Format values must be identical."
+	TypeErrorMessage   = "Unable to resolve Format conflict: all Type values must be identical."
 )
 
 // Merge replaces objects under AllOf with a flattened equivalent
@@ -163,7 +164,52 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 		result.MultipleOf = Float64Ptr(resolveMultipleOf(multipleOf))
 	}
 
+	items := getItems(schemas)
+	if len(items) > 0 {
+		res, err := resolveItems(items)
+		if err != nil {
+			return result, err
+		}
+		ref := SchemaRef{
+			Value: res,
+		}
+		result.Items = &ref
+	}
+
+	// uniqueItems := getBoolValues(schemas, "uniqueItems")
+	// if len(uniqueItems) > 0 {
+	// 	result.UniqueItems = resolveUniqueItems(uniqueItems)
+	// }
+
 	return result, nil
+}
+
+/* Items */
+func resolveItems(items []Schema) (*Schema, error) {
+	s, err := mergeFields(items)
+	if err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+func getItems(schemas []Schema) []Schema {
+	items := []Schema{}
+	for _, s := range schemas {
+		if s.Items != nil {
+			items = append(items, *(s.Items.Value))
+		}
+	}
+	return items
+}
+
+func resolveUniqueItems(values []bool) bool {
+	for _, v := range values {
+		if v == true {
+			return true
+		}
+	}
+	return false
 }
 
 /* MultipleOf */
@@ -339,7 +385,7 @@ func resolveType(values []string) (string, error) {
 	if allStringsEqual(values) {
 		return values[0], nil
 	}
-	return values[0], errors.New("could not resovle Type conflict - all Type values must be identical")
+	return values[0], errors.New(TypeErrorMessage)
 }
 
 func resolveFormat(values []string) (string, error) {
@@ -429,6 +475,20 @@ func getFloat64Values(schemas []Schema, field string) []float64 {
 			if v != nil {
 				values = append(values, *v)
 			}
+		}
+	}
+	return values
+}
+
+func getBoolValues(schemas []Schema, field string) []bool {
+	values := []bool{}
+	for _, schema := range schemas {
+		value, err := schema.JSONLookup(field)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		if v, ok := value.(bool); ok {
+			values = append(values, v)
 		}
 	}
 	return values
