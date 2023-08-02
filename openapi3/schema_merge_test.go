@@ -9,7 +9,52 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/* Item merge fails due to conflicting item types. */
+// conflicting uniqueItems values are merged successfully
+func TestMerge_UniqueItems(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:        "object",
+					UniqueItems: true,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:        "object",
+					UniqueItems: false,
+				},
+			},
+		},
+	}
+
+	merged, err := Merge(schema)
+	require.NoError(t, err)
+	require.Equal(t, true, merged.UniqueItems)
+
+	schema = Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:        "object",
+					UniqueItems: false,
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:        "object",
+					UniqueItems: false,
+				},
+			},
+		},
+	}
+
+	merged, err = Merge(schema)
+	require.NoError(t, err)
+	require.Equal(t, false, merged.UniqueItems)
+}
+
+// Item merge fails due to conflicting item types.
 func TestMerge_Items_Failure(t *testing.T) {
 	obj1 := Schemas{}
 	obj1["test"] = &SchemaRef{
@@ -55,7 +100,7 @@ func TestMerge_Items_Failure(t *testing.T) {
 	require.EqualError(t, err, TypeErrorMessage)
 }
 
-/* items are merged successfully when there are no conflicts */
+// items are merged successfully when there are no conflicts
 func TestMerge_Items(t *testing.T) {
 	obj1 := Schemas{}
 	obj1["test"] = &SchemaRef{
