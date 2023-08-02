@@ -18,6 +18,68 @@ type Test struct {
 	wantErr bool
 }
 
+// non-conflicting Items range can be merged
+func TestMergeItemsRange(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Validate items range is restrictive
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: integer
+                      minItems: 1
+                      maxItems: 3
+                - type: object
+                  properties:
+                    test:
+                      type: array
+                      items:
+                        type: integer
+                      minItems: 2
+                      maxItems: 4
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"test": [1, 2]}`),
+			false,
+		},
+		{
+			[]byte(`{"test": [1, 2, 3]}`),
+			false,
+		},
+		{
+			[]byte(`{"test": [1, 2, 3, 4]}`),
+			true,
+		},
+		{
+			[]byte(`{"test": [1]}`),
+			true,
+		},
+		{
+			[]byte(`{"test": []}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
 func TestMergeItems(t *testing.T) {
 	//todo: cleanup
 
