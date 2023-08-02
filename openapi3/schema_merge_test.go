@@ -255,7 +255,32 @@ func TestMerge_Enum(t *testing.T) {
 	require.ElementsMatch(t, enums, merged.Enum)
 }
 
-func TestMerge_MinMax(t *testing.T) {
+func TestMerge_RangeItems(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:     "object",
+					MinItems: 10,
+					MaxItems: Uint64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:     "object",
+					MinItems: 5,
+					MaxItems: Uint64Ptr(25),
+				},
+			},
+		},
+	}
+	merged, err := Merge(schema)
+	require.NoError(t, err)
+	require.Equal(t, uint64(10), merged.MinItems)
+	require.Equal(t, uint64(25), *merged.MaxItems)
+}
+
+func TestMerge_Range(t *testing.T) {
 	schema := Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
