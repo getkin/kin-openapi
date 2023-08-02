@@ -255,6 +255,32 @@ func TestMerge_Enum(t *testing.T) {
 	require.ElementsMatch(t, enums, merged.Enum)
 }
 
+// Properties range is the most restrictive
+func TestMerge_RangeProperties(t *testing.T) {
+	schema := Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:     "object",
+					MinProps: 10,
+					MaxProps: Uint64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:     "object",
+					MinProps: 5,
+					MaxProps: Uint64Ptr(25),
+				},
+			},
+		},
+	}
+	merged, err := Merge(schema)
+	require.NoError(t, err)
+	require.Equal(t, uint64(10), merged.MinProps)
+	require.Equal(t, uint64(25), *merged.MaxProps)
+}
+
 // Items range is the most restrictive
 func TestMerge_RangeItems(t *testing.T) {
 	schema := Schema{

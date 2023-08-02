@@ -181,7 +181,25 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 		result.UniqueItems = resolveUniqueItems(uniqueItems)
 	}
 
+	minProp := getUint64Values(schemas, "minProps")
+	if len(minProp) > 0 {
+		result.MinProps = resolveMinProps(minProp)
+	}
+
+	maxProp := getUint64Values(schemas, "maxProps")
+	if len(maxProp) > 0 {
+		result.MaxProps = Uint64Ptr(resolveMaxProps(maxProp))
+	}
+
 	return result, nil
+}
+
+func resolveMinProps(values []uint64) uint64 {
+	return findMaxValue(values)
+}
+
+func resolveMaxProps(values []uint64) uint64 {
+	return findMinValue(values)
 }
 
 /* Items */
