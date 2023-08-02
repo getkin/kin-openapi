@@ -255,6 +255,7 @@ func TestMerge_Enum(t *testing.T) {
 	require.ElementsMatch(t, enums, merged.Enum)
 }
 
+// Items range is the most restrictive
 func TestMerge_RangeItems(t *testing.T) {
 	schema := Schema{
 		AllOf: SchemaRefs{
