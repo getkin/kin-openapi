@@ -115,6 +115,7 @@ paths:
 	validateConsistency(t, spec2, tests)
 }
 
+// conflicting uniqueItems can be merged
 func TestMergeUniqueItems(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
