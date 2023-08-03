@@ -305,18 +305,18 @@ func resolveProperties(schemas []Schemas) (Schemas, error) {
 	return result, nil
 }
 
-func getEnum(schemas []Schema, field string) []interface{} {
-	enums := make([]interface{}, 0)
+func getEnum(schemas []Schema, field string) [][]interface{} {
+	enums := make([][]interface{}, 0)
 	for _, schema := range schemas {
 		if schema.Enum != nil {
-			enums = append(enums, schema.Enum...)
+			enums = append(enums, schema.Enum)
 		}
 	}
 	return enums
 }
 
-func resolveEnum(values []interface{}) []interface{} {
-	return uniqueValues(values)
+func resolveEnum(values [][]interface{}) []interface{} {
+	return findIntersectionOfArrays(values)
 }
 
 func resolvePattern(values []string) string {
@@ -532,6 +532,39 @@ func uniqueValues(values []interface{}) []interface{} {
 		}
 	}
 	return uniqueValues
+}
+
+func getIntersection(arr1, arr2 []interface{}) []interface{} {
+	intersectionMap := make(map[interface{}]bool)
+	result := []interface{}{}
+
+	// Mark elements in the first array
+	for _, val := range arr1 {
+		intersectionMap[val] = true
+	}
+
+	// Check if elements in the second array exist in the intersection map
+	for _, val := range arr2 {
+		if intersectionMap[val] {
+			result = append(result, val)
+		}
+	}
+
+	return result
+}
+
+func findIntersectionOfArrays(arrays [][]interface{}) []interface{} {
+	if len(arrays) == 0 {
+		return nil
+	}
+
+	intersection := arrays[0]
+
+	for i := 1; i < len(arrays); i++ {
+		intersection = getIntersection(intersection, arrays[i])
+	}
+
+	return intersection
 }
 
 /* temporary */

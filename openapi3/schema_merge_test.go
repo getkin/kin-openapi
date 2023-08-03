@@ -204,7 +204,7 @@ func TestMerge_Enum(t *testing.T) {
 	obj1Enum[2] = 1
 
 	obj2Enum := make([]interface{}, 1)
-	obj2Enum[0] = struct{}{}
+	obj2Enum[0] = "1"
 
 	schema := Schema{
 		AllOf: SchemaRefs{
@@ -222,16 +222,18 @@ func TestMerge_Enum(t *testing.T) {
 			},
 		},
 	}
-	concatenated := append(obj1Enum, obj2Enum...)
+	// concatenated := append(obj1Enum, obj2Enum...)
+	arr := make([]interface{}, 1)
+	arr[0] = "1"
 	merged, err := Merge(schema)
 	require.NoError(t, err)
-	require.ElementsMatch(t, concatenated, merged.Enum)
+	require.ElementsMatch(t, arr, merged.Enum)
 
 	obj1Enum = make([]interface{}, 2)
-	obj1Enum[0] = "1"
+	obj1Enum[0] = 1
 	obj1Enum[1] = nil
 	obj2Enum = make([]interface{}, 1)
-	obj2Enum[0] = "1"
+	obj2Enum[0] = 2
 
 	schema = Schema{
 		AllOf: SchemaRefs{
@@ -249,10 +251,9 @@ func TestMerge_Enum(t *testing.T) {
 			},
 		},
 	}
-	enums := []interface{}{"1", nil}
 	merged, err = Merge(schema)
 	require.NoError(t, err)
-	require.ElementsMatch(t, enums, merged.Enum)
+	require.Empty(t, merged.Enum)
 }
 
 // Properties range is the most restrictive

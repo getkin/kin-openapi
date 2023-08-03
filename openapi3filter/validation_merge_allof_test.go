@@ -566,6 +566,7 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// enum is merged as the intersection of all values
 func TestMergeIntegerEnum(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
@@ -584,11 +585,11 @@ paths:
                 - type: object
                   properties:
                     test1:
-                      enum: ["1", "2"]
+                      enum: ["1", "2", "3"]
                 - type: object
                   properties:
-                    test2:
-                      enum: ["3"]
+                    test1:
+                      enum: ["1", "2", "4"]
       responses:
         '200':
           description: Ok
@@ -596,7 +597,7 @@ paths:
 
 	tests := []Test{
 		{
-			[]byte(`{"test2": "3"}`),
+			[]byte(`{"test1": "2"}`),
 			false,
 		},
 		{
@@ -605,6 +606,14 @@ paths:
 		},
 		{
 			[]byte(`{"test1": "4"}`),
+			true,
+		},
+		{
+			[]byte(`{"test1": "3"}`),
+			true,
+		},
+		{
+			[]byte(`{"test1": ""}`),
 			true,
 		},
 	}
