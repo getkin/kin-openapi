@@ -145,13 +145,16 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 		result.Pattern = resolvePattern(patterns)
 	}
 
+	// temporary
 	properties := getProperties(schemas)
 	if len(properties) > 0 {
-		res, err := resolveProperties(properties)
+		res, additionalProperties, err := resolveProperties(schemas)
 		if err != nil {
 			return result, err
+		} else {
+			result.Properties = res
+			result.AdditionalProperties = *additionalProperties
 		}
-		result.Properties = res
 	}
 
 	enum := getEnum(schemas, "enum")
@@ -284,9 +287,10 @@ func getProperties(schemas []Schema) []Schemas {
 	return sr
 }
 
-func resolveProperties(schemas []Schemas) (Schemas, error) {
-	allRefs := map[string][]Schema{} //naming
-	for _, schema := range schemas { //naming
+func resolveProperties(schemas []Schema) (Schemas, *AdditionalProperties, error) {
+	propRefs := getProperties(schemas)
+	allRefs := map[string][]Schema{}  //naming
+	for _, schema := range propRefs { //naming
 		for name, schemaRef := range schema {
 			allRefs[name] = append(allRefs[name], *schemaRef.Value)
 		}
@@ -295,14 +299,48 @@ func resolveProperties(schemas []Schemas) (Schemas, error) {
 	for name, schemas := range allRefs {
 		merged, err := mergeFields(schemas)
 		if err != nil {
-			return Schemas{}, err
+			return Schemas{}, nil, err
 		}
 		ref := SchemaRef{
 			Value: merged,
 		}
 		result[name] = &ref
 	}
-	return result, nil
+
+	result, additionalProperties := mergeAdditionalProps(schemas, result)
+	return result, &additionalProperties, nil
+}
+
+func mergeAdditionalProps(schemas []Schema, propsMap Schemas) (Schemas, AdditionalProperties) {
+	additionalProperties := &AdditionalProperties{
+		Has:    nil,
+		Schema: nil,
+	}
+	for _, s := range schemas {
+		if s.AdditionalProperties.Has == nil {
+			continue
+		}
+		if !*s.AdditionalProperties.Has {
+			for prop := range propsMap {
+				found := false
+				for key := range s.Properties {
+					if prop == key {
+						found = true
+					}
+				}
+				if !found {
+					delete(propsMap, prop)
+				}
+			}
+			f := false
+			additionalProperties.Has = &f
+			return propsMap, *additionalProperties
+		} else {
+			t := true
+			additionalProperties.Has = &t
+		}
+	}
+	return propsMap, *additionalProperties
 }
 
 func getEnum(schemas []Schema, field string) [][]interface{} {
