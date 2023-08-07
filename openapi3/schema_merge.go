@@ -44,6 +44,7 @@ func collect(schemas []Schema) SchemaCollection {
 		collection.Title = append(collection.Title, s.Title)
 		collection.Type = append(collection.Type, s.Type)
 		collection.Format = append(collection.Format, s.Format)
+		collection.Description = append(collection.Description, s.Description)
 		collection.Enum = append(collection.Enum, s.Enum)
 		collection.UniqueItems = append(collection.UniqueItems, s.UniqueItems)
 		collection.ExclusiveMin = append(collection.ExclusiveMin, s.ExclusiveMin)
@@ -98,41 +99,76 @@ func Merge(schema Schema) (*Schema, error) {
 func mergeFields2(schemas []Schema) (*Schema, error) {
 	result := NewSchema()
 	collection := collect(schemas)
-
 	result.Title = collection.Title[0]
 	result.Description = collection.Description[0]
-
-	res, err := resolveFormat(collection.Format)
+	format, err := resolveFormat2(collection.Format)
 	if err != nil {
 		return result, err
 	}
-	result.Format = res
-
-	if len(types) > 0 {
-		res, err := resolveType(collection.Type)
-		if err != nil {
-			return result, err
-		}
-		result.Type = res
+	result.Format = format
+	stype, err := resolveType2(collection.Type)
+	if err != nil {
+		return result, err
 	}
-
-	// required := getStringValues(schemas, "required")
-	if len(collection.Required) > 0 {
-		result.Required = resolveRequired(collection.Required)
+	result.Type = stype
+	result = resolveNumberRange(result, &collection)
+	result.MinLength = findMaxValue(collection.MinLength)
+	result.MaxLength = findMinValue2(collection.MaxLength)
+	result.MinItems = findMaxValue(collection.MinItems)
+	result.MaxItems = findMinValue2(collection.MaxItems)
+	result.MinProps = findMaxValue(collection.MinProps)
+	result.MaxProps = findMinValue2(collection.MaxProps)
+	result.Pattern = resolvePattern(collection.Pattern)
+	result.Enum = resolveEnum(collection.Enum) //todo: handle nil enums? (empty arrays)
+	result = resolveMultipleOf2(result, &collection)
+	result.Required = resolveRequired2(collection.Required)
+	result, err = resolveItems2(result, &collection)
+	if err != nil {
+		return result, err
 	}
-
+	result.UniqueItems = resolveUniqueItems(collection.UniqueItems)
+	result, err = resolveProperties2(result, &collection)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
-func flattenArray(arrays [][]string) []string {
-	var result []string
+func resolveNumberRange(schema *Schema, collection *SchemaCollection) *Schema {
 
-	for _, subArray := range arrays {
-		for _, item := range subArray {
-			result = append(result, item)
+	//resolve minimum
+	max := math.Inf(-1)
+	isExcluded := false
+	var value *float64
+	for i, s := range collection.Min {
+		if s != nil {
+			if *s > max {
+				max = *s
+				value = s
+				isExcluded = collection.ExclusiveMin[i]
+			}
 		}
 	}
 
-	return result
+	schema.Min = value
+	schema.ExclusiveMin = isExcluded
+	//resolve maximum
+	min := math.Inf(1)
+	isExcluded = false
+	// var value *float64
+	for i, s := range collection.Max {
+		if s != nil {
+			if *s < min {
+				min = *s
+				value = s
+				isExcluded = collection.ExclusiveMax[i]
+			}
+		}
+	}
+
+	schema.Max = value
+	schema.ExclusiveMax = isExcluded
+	return schema
 }
 
 func mergeAllOf(allOf SchemaRefs) (Schema, error) {
@@ -146,7 +182,7 @@ func mergeAllOf(allOf SchemaRefs) (Schema, error) {
 		schemas = append(schemas, *merged)
 	}
 
-	schema, err := mergeFields(schemas)
+	schema, err := mergeFields2(schemas)
 	if err != nil {
 		return *schema, err
 	}
@@ -172,7 +208,7 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 
 	formats := getStringValues(schemas, "format")
 	if len(formats) > 0 {
-		res, err := resolveFormat(formats)
+		res, err := resolveFormat2(formats)
 		if err != nil {
 			return result, err
 		}
@@ -181,7 +217,7 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 
 	types := getStringValues(schemas, "type")
 	if len(types) > 0 {
-		res, err := resolveType(types)
+		res, err := resolveType2(types)
 		if err != nil {
 			return result, err
 		}
@@ -298,9 +334,32 @@ func resolveMaxProps(values []uint64) uint64 {
 	return findMinValue(values)
 }
 
+func resolveItems2(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	items := []Schema{}
+	for _, s := range collection.Items {
+		if s != nil {
+			items = append(items, *(s.Value))
+		}
+	}
+	if len(items) == 0 {
+		schema.Items = nil
+		return schema, nil
+	}
+
+	res, err := resolveItems(items)
+	if err != nil {
+		return schema, err
+	}
+	ref := SchemaRef{
+		Value: res,
+	}
+	schema.Items = &ref
+	return schema, nil
+}
+
 /* Items */
 func resolveItems(items []Schema) (*Schema, error) {
-	s, err := mergeFields(items)
+	s, err := mergeFields2(items)
 	if err != nil {
 		return s, err
 	}
@@ -319,7 +378,7 @@ func getItems(schemas []Schema) []Schema {
 
 func resolveUniqueItems(values []bool) bool {
 	for _, v := range values {
-		if v == true {
+		if v {
 			return true
 		}
 	}
@@ -345,6 +404,22 @@ func containsNonInteger(arr []float64) bool {
 		}
 	}
 	return false
+}
+
+func resolveMultipleOf2(schema *Schema, collection *SchemaCollection) *Schema {
+	values := []float64{}
+	for _, v := range collection.MultipleOf {
+		if v == nil {
+			continue
+		}
+		values = append(values, *v)
+	}
+	if len(values) == 0 {
+		schema.MultipleOf = nil
+		return schema
+	}
+	schema.MultipleOf = Float64Ptr(resolveMultipleOf(values))
+	return schema
 }
 
 func resolveMultipleOf(values []float64) float64 {
@@ -380,6 +455,41 @@ func getProperties(schemas []Schema) []Schemas {
 	return sr
 }
 
+func getProperties2(collection *SchemaCollection) []Schemas {
+	sr := []Schemas{}
+	for _, prop := range collection.Properties {
+		sr = append(sr, prop)
+	}
+	return sr
+}
+
+func resolveProperties2(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	propRefs := getProperties2(collection)
+	allRefs := map[string][]Schema{}  //naming
+	for _, schema := range propRefs { //naming
+		for name, schemaRef := range schema {
+			allRefs[name] = append(allRefs[name], *schemaRef.Value)
+		}
+	}
+	result := make(Schemas)
+	for name, schemas := range allRefs {
+		merged, err := mergeFields2(schemas)
+		if err != nil {
+			schema.Properties = nil
+			return schema, err
+		}
+		ref := SchemaRef{
+			Value: merged,
+		}
+		result[name] = &ref
+	}
+	if len(result) == 0 {
+		result = nil
+	}
+	schema.Properties = result
+	return schema, nil
+}
+
 func resolveProperties(schemas []Schema) (Schemas, *AdditionalProperties, error) {
 	propRefs := getProperties(schemas)
 	allRefs := map[string][]Schema{}  //naming
@@ -390,7 +500,7 @@ func resolveProperties(schemas []Schema) (Schemas, *AdditionalProperties, error)
 	}
 	result := make(Schemas)
 	for name, schemas := range allRefs {
-		merged, err := mergeFields(schemas)
+		merged, err := mergeFields2(schemas)
 		if err != nil {
 			return Schemas{}, nil, err
 		}
@@ -453,7 +563,9 @@ func resolveEnum(values [][]interface{}) []interface{} {
 func resolvePattern(values []string) string {
 	var pattern strings.Builder
 	for _, p := range values {
-		pattern.WriteString(fmt.Sprintf("(?=%s)", p))
+		if len(p) > 0 {
+			pattern.WriteString(fmt.Sprintf("(?=%s)", p))
+		}
 	}
 	return pattern.String()
 }
@@ -482,6 +594,25 @@ func findMaxValue(values []uint64) uint64 {
 		}
 	}
 	return max
+}
+
+func findMinValue2(values []*uint64) *uint64 {
+	dvalues := []uint64{}
+	for _, v := range values {
+		if v != nil {
+			dvalues = append(dvalues, *v)
+		}
+	}
+	if len(dvalues) == 0 {
+		return nil
+	}
+	min := uint64(math.MaxUint64)
+	for _, num := range dvalues {
+		if num < min {
+			min = num
+		}
+	}
+	return Uint64Ptr(min)
 }
 
 func findMinValue(values []uint64) uint64 {
@@ -526,43 +657,68 @@ func resolveMinimumRange(schemas []Schema) (*float64, bool) {
 	return value, isExcluded
 }
 
-func resolveType(values []string) (string, error) {
+func resolveType2(values []string) (string, error) {
+	values = filterEmptyStrings(values)
+	if len(values) == 0 {
+		return "", nil
+	}
 	if allStringsEqual(values) {
 		return values[0], nil
 	}
 	return values[0], errors.New(TypeErrorMessage)
 }
 
-func resolveFormat(values []string) (string, error) {
+func resolveFormat2(values []string) (string, error) {
+	values = filterEmptyStrings(values)
+	if len(values) == 0 {
+		return "", nil
+	}
 	if allStringsEqual(values) {
 		return values[0], nil
 	}
 	return values[0], errors.New(FormatErrorMessage)
 }
 
-func titleResolver(values []string) string {
-	return values[0]
-}
+// func resolveType(values []string) (string, error) {
+// 	if allStringsEqual(values) {
+// 		return values[0], nil
+// 	}
+// 	return values[0], errors.New(TypeErrorMessage)
+// }
 
-func resolveRequired(values [][]string) []string {
+// func resolveFormat(values []string) (string, error) {
+// 	values = filterEmptyStrings(values)
+// 	if len(values) > 0 && allStringsEqual(values) {
+// 		return values[0], nil
+// 	}
+// 	return values[0], errors.New(FormatErrorMessage)
+// }
 
+// func allStringsEqual2(values []string) (string, error) {
+// 	values = filterEmptyStrings(values)
+// 	if len(values) == 0 {
+// 		return "", nil
+// 	}
+// 	if allStringsEqual(values) {
+// 		return values[0], nil
+// 	}
+// 	return values[0], errors.New(FormatErrorMessage)
+// }
+
+func filterEmptyStrings(input []string) []string {
 	var result []string
 
-	for _, subArray := range values {
-		for _, item := range subArray {
-			result = append(result, item)
+	for _, s := range input {
+		if s != "" {
+			result = append(result, s)
 		}
 	}
 
-	uniqueMap := make(map[string]bool)
-	var uniqueValues []string
-	for _, str := range result {
-		if _, found := uniqueMap[str]; !found {
-			uniqueMap[str] = true
-			uniqueValues = append(uniqueValues, str)
-		}
-	}
-	return uniqueValues
+	return result
+}
+
+func titleResolver(values []string) string {
+	return values[0]
 }
 
 func isListOfObjects(schema *Schema) bool {
@@ -699,7 +855,9 @@ func findIntersectionOfArrays(arrays [][]interface{}) []interface{} {
 	for i := 1; i < len(arrays); i++ {
 		intersection = getIntersection(intersection, arrays[i])
 	}
-
+	if len(intersection) == 0 {
+		return nil
+	}
 	return intersection
 }
 
@@ -744,4 +902,37 @@ func copy(source Schema, destination Schema) Schema {
 	destination.AdditionalProperties = source.AdditionalProperties
 	destination.Discriminator = source.Discriminator
 	return destination
+}
+
+func resolveDescriptions(values []string) string {
+	return values[0]
+}
+
+func flattenArray(arrays [][]string) []string {
+	var result []string
+
+	for i := 0; i < len(arrays); i++ {
+		for j := 0; j < len(arrays[i]); j++ {
+			result = append(result, arrays[i][j])
+		}
+	}
+
+	return result
+}
+
+func resolveRequired2(values [][]string) []string {
+	f := flattenArray(values)
+	return resolveRequired(f)
+}
+
+func resolveRequired(values []string) []string {
+	uniqueMap := make(map[string]bool)
+	var uniqueValues []string
+	for _, str := range values {
+		if _, found := uniqueMap[str]; !found {
+			uniqueMap[str] = true
+			uniqueValues = append(uniqueValues, str)
+		}
+	}
+	return uniqueValues
 }
