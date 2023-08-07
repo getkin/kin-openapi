@@ -13,6 +13,59 @@ const (
 	TypeErrorMessage   = "Unable to resolve Format conflict: all Type values must be identical."
 )
 
+type SchemaCollection struct {
+	Title                []string
+	Type                 []string
+	Format               []string
+	Description          []string
+	Enum                 [][]interface{}
+	UniqueItems          []bool
+	ExclusiveMin         []bool
+	ExclusiveMax         []bool
+	Min                  []*float64
+	Max                  []*float64
+	MultipleOf           []*float64
+	MinLength            []uint64
+	MaxLength            []*uint64
+	Pattern              []string
+	MinItems             []uint64
+	MaxItems             []*uint64
+	Items                []*SchemaRef
+	Required             [][]string
+	Properties           []Schemas
+	MinProps             []uint64
+	MaxProps             []*uint64
+	AdditionalProperties []AdditionalProperties
+}
+
+func collect(schemas []Schema) SchemaCollection {
+	collection := SchemaCollection{}
+	for _, s := range schemas {
+		collection.Title = append(collection.Title, s.Title)
+		collection.Type = append(collection.Type, s.Type)
+		collection.Format = append(collection.Format, s.Format)
+		collection.Enum = append(collection.Enum, s.Enum)
+		collection.UniqueItems = append(collection.UniqueItems, s.UniqueItems)
+		collection.ExclusiveMin = append(collection.ExclusiveMin, s.ExclusiveMin)
+		collection.ExclusiveMax = append(collection.ExclusiveMax, s.ExclusiveMax)
+		collection.Min = append(collection.Min, s.Min)
+		collection.Max = append(collection.Max, s.Max)
+		collection.MultipleOf = append(collection.MultipleOf, s.MultipleOf)
+		collection.MinLength = append(collection.MinLength, s.MinLength)
+		collection.MaxLength = append(collection.MaxLength, s.MaxLength)
+		collection.Pattern = append(collection.Pattern, s.Pattern)
+		collection.MinItems = append(collection.MinItems, s.MinItems)
+		collection.MaxItems = append(collection.MaxItems, s.MaxItems)
+		collection.Items = append(collection.Items, s.Items)
+		collection.Required = append(collection.Required, s.Required)
+		collection.Properties = append(collection.Properties, s.Properties)
+		collection.MinProps = append(collection.MinProps, s.MinProps)
+		collection.MaxProps = append(collection.MaxProps, s.MaxProps)
+		collection.AdditionalProperties = append(collection.AdditionalProperties, s.AdditionalProperties)
+	}
+	return collection
+}
+
 // Merge replaces objects under AllOf with a flattened equivalent
 func Merge(schema Schema) (*Schema, error) {
 	if !isListOfObjects(&schema) {
@@ -42,6 +95,46 @@ func Merge(schema Schema) (*Schema, error) {
 	return &schema, nil
 }
 
+func mergeFields2(schemas []Schema) (*Schema, error) {
+	result := NewSchema()
+	collection := collect(schemas)
+
+	result.Title = collection.Title[0]
+	result.Description = collection.Description[0]
+
+	res, err := resolveFormat(collection.Format)
+	if err != nil {
+		return result, err
+	}
+	result.Format = res
+
+	if len(types) > 0 {
+		res, err := resolveType(collection.Type)
+		if err != nil {
+			return result, err
+		}
+		result.Type = res
+	}
+
+	// required := getStringValues(schemas, "required")
+	if len(collection.Required) > 0 {
+		result.Required = resolveRequired(collection.Required)
+	}
+
+}
+
+func flattenArray(arrays [][]string) []string {
+	var result []string
+
+	for _, subArray := range arrays {
+		for _, item := range subArray {
+			result = append(result, item)
+		}
+	}
+
+	return result
+}
+
 func mergeAllOf(allOf SchemaRefs) (Schema, error) {
 
 	schemas := make([]Schema, 0) // naming
@@ -58,19 +151,6 @@ func mergeAllOf(allOf SchemaRefs) (Schema, error) {
 		return *schema, err
 	}
 	return *schema, nil
-}
-
-func mergeProperties(schemas Schemas) (Schemas, error) {
-	res := make(Schemas)
-	for name, schemaRef := range schemas {
-		merged, err := Merge(*schemaRef.Value)
-		if err != nil {
-			return res, err
-		}
-		schemaRef.Value = merged
-		res[name] = schemaRef
-	}
-	return res, nil
 }
 
 func mergeFields(schemas []Schema) (*Schema, error) {
@@ -195,6 +275,19 @@ func mergeFields(schemas []Schema) (*Schema, error) {
 	}
 
 	return result, nil
+}
+
+func mergeProperties(schemas Schemas) (Schemas, error) {
+	res := make(Schemas)
+	for name, schemaRef := range schemas {
+		merged, err := Merge(*schemaRef.Value)
+		if err != nil {
+			return res, err
+		}
+		schemaRef.Value = merged
+		res[name] = schemaRef
+	}
+	return res, nil
 }
 
 func resolveMinProps(values []uint64) uint64 {
@@ -433,10 +526,6 @@ func resolveMinimumRange(schemas []Schema) (*float64, bool) {
 	return value, isExcluded
 }
 
-func resolveDescriptions(values []string) string {
-	return values[0]
-}
-
 func resolveType(values []string) (string, error) {
 	if allStringsEqual(values) {
 		return values[0], nil
@@ -455,10 +544,19 @@ func titleResolver(values []string) string {
 	return values[0]
 }
 
-func resolveRequired(values []string) []string {
+func resolveRequired(values [][]string) []string {
+
+	var result []string
+
+	for _, subArray := range values {
+		for _, item := range subArray {
+			result = append(result, item)
+		}
+	}
+
 	uniqueMap := make(map[string]bool)
 	var uniqueValues []string
-	for _, str := range values {
+	for _, str := range result {
 		if _, found := uniqueMap[str]; !found {
 			uniqueMap[str] = true
 			uniqueValues = append(uniqueValues, str)
