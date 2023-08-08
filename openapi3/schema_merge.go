@@ -302,17 +302,6 @@ func resolveMultipleOf(values []float64) float64 {
 	return float64(lcmValue) / factor
 }
 
-/* Properties */
-func getProperties(schemas []Schema) []Schemas {
-	sr := []Schemas{}
-	for _, s := range schemas {
-		if s.Properties != nil {
-			sr = append(sr, s.Properties)
-		}
-	}
-	return sr
-}
-
 func getProperties2(collection *SchemaCollection) []Schemas {
 	sr := []Schemas{}
 	for _, prop := range collection.Properties {
