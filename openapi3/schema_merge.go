@@ -275,6 +275,7 @@ func resolveMultipleOf2(schema *Schema, collection *SchemaCollection) *Schema {
 		schema.MultipleOf = nil
 		return schema
 	}
+
 	schema.MultipleOf = Float64Ptr(resolveMultipleOf(values))
 	return schema
 }
@@ -345,16 +346,6 @@ func resolveProperties2(schema *Schema, collection *SchemaCollection) (*Schema, 
 	}
 	schema.Properties = result
 	return schema, nil
-}
-
-func getEnum(schemas []Schema, field string) [][]interface{} {
-	enums := make([][]interface{}, 0)
-	for _, schema := range schemas {
-		if schema.Enum != nil {
-			enums = append(enums, schema.Enum)
-		}
-	}
-	return enums
 }
 
 func resolveEnum(values [][]interface{}) []interface{} {
@@ -546,10 +537,6 @@ func copy(source Schema, destination Schema) Schema {
 	destination.AdditionalProperties = source.AdditionalProperties
 	destination.Discriminator = source.Discriminator
 	return destination
-}
-
-func resolveDescriptions(values []string) string {
-	return values[0]
 }
 
 func flattenArray(arrays [][]string) []string {
