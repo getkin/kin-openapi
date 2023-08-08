@@ -2,7 +2,7 @@ package openapi3_test
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestIssue241(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/issue241.yml")
+	data, err := os.ReadFile("testdata/issue241.yml")
 	require.NoError(t, err)
 
 	loader := openapi3.NewLoader()

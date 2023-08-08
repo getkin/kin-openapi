@@ -3,7 +3,7 @@ package openapi2_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"reflect"
 
 	"github.com/invopop/yaml"
@@ -12,7 +12,7 @@ import (
 )
 
 func Example() {
-	input, err := ioutil.ReadFile("testdata/swagger.json")
+	input, err := os.ReadFile("testdata/swagger.json")
 	if err != nil {
 		panic(err)
 	}
