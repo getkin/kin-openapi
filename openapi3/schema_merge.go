@@ -3,7 +3,6 @@ package openapi3
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"strings"
 )
@@ -94,6 +93,19 @@ func Merge(schema Schema) (*Schema, error) {
 	}
 
 	return &schema, nil
+}
+
+func mergeProperties(schemas Schemas) (Schemas, error) {
+	res := make(Schemas)
+	for name, schemaRef := range schemas {
+		merged, err := Merge(*schemaRef.Value)
+		if err != nil {
+			return res, err
+		}
+		schemaRef.Value = merged
+		res[name] = schemaRef
+	}
+	return res, nil
 }
 
 func mergeFields2(schemas []Schema) (*Schema, error) {
@@ -189,151 +201,6 @@ func mergeAllOf(allOf SchemaRefs) (Schema, error) {
 	return *schema, nil
 }
 
-func mergeFields(schemas []Schema) (*Schema, error) {
-	result := NewSchema()
-	titles := getStringValues(schemas, "title")
-	if len(titles) > 0 {
-		result.Title = titleResolver(titles)
-	}
-
-	required := getStringValues(schemas, "required")
-	if len(required) > 0 {
-		result.Required = resolveRequired(required)
-	}
-
-	description := getStringValues(schemas, "description")
-	if len(description) > 0 {
-		result.Description = resolveDescriptions(description)
-	}
-
-	formats := getStringValues(schemas, "format")
-	if len(formats) > 0 {
-		res, err := resolveFormat2(formats)
-		if err != nil {
-			return result, err
-		}
-		result.Format = res
-	}
-
-	types := getStringValues(schemas, "type")
-	if len(types) > 0 {
-		res, err := resolveType2(types)
-		if err != nil {
-			return result, err
-		}
-		result.Type = res
-	}
-
-	minLength := getUint64Values(schemas, "minLength")
-	if len(minLength) > 0 {
-		result.MinLength = resolveMinLength(minLength)
-	}
-
-	maxLength := getUint64Values(schemas, "maxLength")
-	if len(maxLength) > 0 {
-		result.MaxLength = Uint64Ptr(resolveMaxLength(maxLength))
-	}
-
-	minimum, isExcludedMin := resolveMinimumRange(schemas)
-	if minimum != nil {
-		result.Min = minimum
-		result.ExclusiveMin = isExcludedMin
-	}
-
-	maximum, isExcludedMax := resolveMaximumRange(schemas)
-	if maximum != nil {
-		result.Max = maximum
-		result.ExclusiveMax = isExcludedMax
-	}
-
-	minItems := getUint64Values(schemas, "minItems")
-	if len(minItems) > 0 {
-		result.MinItems = resolveMinItems(minItems)
-	}
-
-	maxItems := getUint64Values(schemas, "maxItems")
-	if len(maxItems) > 0 {
-		result.MaxItems = Uint64Ptr(resolveMaxItems(maxItems))
-	}
-
-	patterns := getStringValues(schemas, "pattern")
-	if len(patterns) > 0 {
-		result.Pattern = resolvePattern(patterns)
-	}
-
-	// temporary
-	properties := getProperties(schemas)
-	if len(properties) > 0 {
-		res, additionalProperties, err := resolveProperties(schemas)
-		if err != nil {
-			return result, err
-		} else {
-			result.Properties = res
-			result.AdditionalProperties = *additionalProperties
-		}
-	}
-
-	enum := getEnum(schemas, "enum")
-	if len(enum) > 0 {
-		result.Enum = resolveEnum(enum)
-	}
-
-	multipleOf := getFloat64Values(schemas, "multipleOf")
-	if len(multipleOf) > 0 {
-		result.MultipleOf = Float64Ptr(resolveMultipleOf(multipleOf))
-	}
-
-	items := getItems(schemas)
-	if len(items) > 0 {
-		res, err := resolveItems(items)
-		if err != nil {
-			return result, err
-		}
-		ref := SchemaRef{
-			Value: res,
-		}
-		result.Items = &ref
-	}
-
-	uniqueItems := getBoolValues(schemas, "uniqueItems")
-	if len(uniqueItems) > 0 {
-		result.UniqueItems = resolveUniqueItems(uniqueItems)
-	}
-
-	minProp := getUint64Values(schemas, "minProps")
-	if len(minProp) > 0 {
-		result.MinProps = resolveMinProps(minProp)
-	}
-
-	maxProp := getUint64Values(schemas, "maxProps")
-	if len(maxProp) > 0 {
-		result.MaxProps = Uint64Ptr(resolveMaxProps(maxProp))
-	}
-
-	return result, nil
-}
-
-func mergeProperties(schemas Schemas) (Schemas, error) {
-	res := make(Schemas)
-	for name, schemaRef := range schemas {
-		merged, err := Merge(*schemaRef.Value)
-		if err != nil {
-			return res, err
-		}
-		schemaRef.Value = merged
-		res[name] = schemaRef
-	}
-	return res, nil
-}
-
-func resolveMinProps(values []uint64) uint64 {
-	return findMaxValue(values)
-}
-
-func resolveMaxProps(values []uint64) uint64 {
-	return findMinValue(values)
-}
-
 func resolveItems2(schema *Schema, collection *SchemaCollection) (*Schema, error) {
 	items := []Schema{}
 	for _, s := range collection.Items {
@@ -364,16 +231,6 @@ func resolveItems(items []Schema) (*Schema, error) {
 		return s, err
 	}
 	return s, nil
-}
-
-func getItems(schemas []Schema) []Schema {
-	items := []Schema{}
-	for _, s := range schemas {
-		if s.Items != nil {
-			items = append(items, *(s.Items.Value))
-		}
-	}
-	return items
 }
 
 func resolveUniqueItems(values []bool) bool {
@@ -490,62 +347,6 @@ func resolveProperties2(schema *Schema, collection *SchemaCollection) (*Schema, 
 	return schema, nil
 }
 
-func resolveProperties(schemas []Schema) (Schemas, *AdditionalProperties, error) {
-	propRefs := getProperties(schemas)
-	allRefs := map[string][]Schema{}  //naming
-	for _, schema := range propRefs { //naming
-		for name, schemaRef := range schema {
-			allRefs[name] = append(allRefs[name], *schemaRef.Value)
-		}
-	}
-	result := make(Schemas)
-	for name, schemas := range allRefs {
-		merged, err := mergeFields2(schemas)
-		if err != nil {
-			return Schemas{}, nil, err
-		}
-		ref := SchemaRef{
-			Value: merged,
-		}
-		result[name] = &ref
-	}
-
-	result, additionalProperties := mergeAdditionalProps(schemas, result)
-	return result, &additionalProperties, nil
-}
-
-func mergeAdditionalProps(schemas []Schema, propsMap Schemas) (Schemas, AdditionalProperties) {
-	additionalProperties := &AdditionalProperties{
-		Has:    nil,
-		Schema: nil,
-	}
-	for _, s := range schemas {
-		if s.AdditionalProperties.Has == nil {
-			continue
-		}
-		if !*s.AdditionalProperties.Has {
-			for prop := range propsMap {
-				found := false
-				for key := range s.Properties {
-					if prop == key {
-						found = true
-					}
-				}
-				if !found {
-					delete(propsMap, prop)
-				}
-			}
-			f := false
-			additionalProperties.Has = &f
-			return propsMap, *additionalProperties
-		} else {
-			t := true
-			additionalProperties.Has = &t
-		}
-	}
-	return propsMap, *additionalProperties
-}
-
 func getEnum(schemas []Schema, field string) [][]interface{} {
 	enums := make([][]interface{}, 0)
 	for _, schema := range schemas {
@@ -568,22 +369,6 @@ func resolvePattern(values []string) string {
 		}
 	}
 	return pattern.String()
-}
-
-func resolveMinLength(values []uint64) uint64 {
-	return findMaxValue(values)
-}
-
-func resolveMaxLength(values []uint64) uint64 {
-	return findMinValue(values)
-}
-
-func resolveMinItems(values []uint64) uint64 {
-	return findMaxValue(values)
-}
-
-func resolveMaxItems(values []uint64) uint64 {
-	return findMinValue(values)
 }
 
 func findMaxValue(values []uint64) uint64 {
@@ -615,48 +400,6 @@ func findMinValue2(values []*uint64) *uint64 {
 	return Uint64Ptr(min)
 }
 
-func findMinValue(values []uint64) uint64 {
-	min := uint64(math.MaxUint64)
-	for _, num := range values {
-		if num < min {
-			min = num
-		}
-	}
-	return min
-}
-
-func resolveMaximumRange(schemas []Schema) (*float64, bool) {
-	min := math.Inf(1)
-	isExcluded := false
-	var value *float64
-	for _, s := range schemas {
-		if s.Max != nil {
-			if *s.Max < min {
-				min = *s.Max
-				value = s.Max
-				isExcluded = s.ExclusiveMax
-			}
-		}
-	}
-	return value, isExcluded
-}
-
-func resolveMinimumRange(schemas []Schema) (*float64, bool) {
-	max := math.Inf(-1)
-	isExcluded := false
-	var value *float64
-	for _, s := range schemas {
-		if s.Min != nil {
-			if *s.Min > max {
-				max = *s.Min
-				value = s.Min
-				isExcluded = s.ExclusiveMin
-			}
-		}
-	}
-	return value, isExcluded
-}
-
 func resolveType2(values []string) (string, error) {
 	values = filterEmptyStrings(values)
 	if len(values) == 0 {
@@ -679,32 +422,6 @@ func resolveFormat2(values []string) (string, error) {
 	return values[0], errors.New(FormatErrorMessage)
 }
 
-// func resolveType(values []string) (string, error) {
-// 	if allStringsEqual(values) {
-// 		return values[0], nil
-// 	}
-// 	return values[0], errors.New(TypeErrorMessage)
-// }
-
-// func resolveFormat(values []string) (string, error) {
-// 	values = filterEmptyStrings(values)
-// 	if len(values) > 0 && allStringsEqual(values) {
-// 		return values[0], nil
-// 	}
-// 	return values[0], errors.New(FormatErrorMessage)
-// }
-
-// func allStringsEqual2(values []string) (string, error) {
-// 	values = filterEmptyStrings(values)
-// 	if len(values) == 0 {
-// 		return "", nil
-// 	}
-// 	if allStringsEqual(values) {
-// 		return values[0], nil
-// 	}
-// 	return values[0], errors.New(FormatErrorMessage)
-// }
-
 func filterEmptyStrings(input []string) []string {
 	var result []string
 
@@ -715,10 +432,6 @@ func filterEmptyStrings(input []string) []string {
 	}
 
 	return result
-}
-
-func titleResolver(values []string) string {
-	return values[0]
 }
 
 func isListOfObjects(schema *Schema) bool {
@@ -733,75 +446,6 @@ func isListOfObjects(schema *Schema) bool {
 	}
 
 	return true
-}
-
-func getStringValues(schemas []Schema, field string) []string {
-	values := []string{}
-	for _, schema := range schemas {
-		value, err := schema.JSONLookup(field)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		switch v := value.(type) {
-		case string:
-			if len(v) > 0 {
-				values = append(values, v)
-			}
-		case []string:
-			values = append(values, v...)
-		}
-	}
-	return values
-}
-
-func getUint64Values(schemas []Schema, field string) []uint64 {
-	values := []uint64{}
-	for _, schema := range schemas {
-		value, err := schema.JSONLookup(field)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		if v, ok := value.(*uint64); ok {
-			if v != nil {
-				values = append(values, *v)
-			}
-		}
-		if v, ok := value.(uint64); ok {
-			values = append(values, v)
-		}
-	}
-	return values
-}
-
-func getFloat64Values(schemas []Schema, field string) []float64 {
-	values := []float64{}
-	for _, schema := range schemas {
-		value, err := schema.JSONLookup(field)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		if v, ok := value.(*float64); ok {
-			if v != nil {
-				values = append(values, *v)
-			}
-		}
-	}
-	return values
-}
-
-func getBoolValues(schemas []Schema, field string) []bool {
-	values := []bool{}
-	for _, schema := range schemas {
-		value, err := schema.JSONLookup(field)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		if v, ok := value.(bool); ok {
-			values = append(values, v)
-		}
-	}
-	return values
 }
 
 func allStringsEqual(values []string) bool {
