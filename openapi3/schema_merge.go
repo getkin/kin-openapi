@@ -38,9 +38,9 @@ type SchemaCollection struct {
 }
 
 // Merge replaces objects under AllOf with a flattened equivalent
-func Merge(schema Schema) (*Schema, error) {
-	if !isListOfObjects(&schema) {
-		return &schema, nil
+func Merge(schema *Schema) (*Schema, error) {
+	if !isListOfObjects(schema) {
+		return schema, nil
 	}
 
 	if schema.AllOf != nil {
@@ -63,13 +63,13 @@ func Merge(schema Schema) (*Schema, error) {
 
 	}
 
-	return &schema, nil
+	return schema, nil
 }
 
 func mergeProperties(schemas Schemas) (Schemas, error) {
 	res := make(Schemas)
 	for name, schemaRef := range schemas {
-		merged, err := Merge(*schemaRef.Value)
+		merged, err := Merge(schemaRef.Value)
 		if err != nil {
 			return res, err
 		}
@@ -79,7 +79,7 @@ func mergeProperties(schemas Schemas) (Schemas, error) {
 	return res, nil
 }
 
-func mergeFields(schemas []Schema) (*Schema, error) {
+func mergeFields(schemas []*Schema) (*Schema, error) {
 	result := NewSchema()
 	collection := collect(schemas)
 	result.Title = collection.Title[0]
@@ -154,29 +154,29 @@ func resolveNumberRange(schema *Schema, collection *SchemaCollection) *Schema {
 	return schema
 }
 
-func mergeAllOf(allOf SchemaRefs) (Schema, error) {
+func mergeAllOf(allOf SchemaRefs) (*Schema, error) {
 
-	schemas := make([]Schema, 0) // naming
+	schemas := []*Schema{}
 	for _, schema := range allOf {
-		merged, err := Merge(*schema.Value)
+		merged, err := Merge(schema.Value)
 		if err != nil {
-			return Schema{}, err
+			return &Schema{}, err
 		}
-		schemas = append(schemas, *merged)
+		schemas = append(schemas, merged)
 	}
 
 	schema, err := mergeFields(schemas)
 	if err != nil {
-		return *schema, err
+		return schema, err
 	}
-	return *schema, nil
+	return schema, nil
 }
 
 func resolveItems(schema *Schema, collection *SchemaCollection) (*Schema, error) {
-	items := []Schema{}
+	items := []*Schema{}
 	for _, s := range collection.Items {
 		if s != nil {
-			items = append(items, *(s.Value))
+			items = append(items, s.Value)
 		}
 	}
 	if len(items) == 0 {
@@ -259,10 +259,10 @@ func resolveMultipleOf(schema *Schema, collection *SchemaCollection) *Schema {
 
 func resolveProperties(schema *Schema, collection *SchemaCollection) (*Schema, error) {
 	propRefs := append([]Schemas{}, collection.Properties...)
-	allRefs := map[string][]Schema{}  //naming
+	allRefs := map[string][]*Schema{} //naming
 	for _, schema := range propRefs { //naming
 		for name, schemaRef := range schema {
-			allRefs[name] = append(allRefs[name], *schemaRef.Value)
+			allRefs[name] = append(allRefs[name], schemaRef.Value)
 		}
 	}
 	result := make(Schemas)
@@ -493,7 +493,7 @@ func resolveRequired2(values [][]string) []string {
 }
 
 /* temporary */
-func copy(source Schema, destination Schema) Schema {
+func copy(source *Schema, destination *Schema) *Schema {
 	destination.Extensions = source.Extensions
 	destination.OneOf = source.OneOf
 	destination.AnyOf = source.AnyOf
@@ -535,7 +535,7 @@ func copy(source Schema, destination Schema) Schema {
 	return destination
 }
 
-func collect(schemas []Schema) SchemaCollection {
+func collect(schemas []*Schema) SchemaCollection {
 	collection := SchemaCollection{}
 	for _, s := range schemas {
 		collection.Title = append(collection.Title, s.Title)

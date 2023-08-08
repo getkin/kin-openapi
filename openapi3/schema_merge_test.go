@@ -28,7 +28,7 @@ func TestMerge_UniqueItems(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, true, merged.UniqueItems)
 
@@ -49,7 +49,7 @@ func TestMerge_UniqueItems(t *testing.T) {
 		},
 	}
 
-	merged, err = Merge(schema)
+	merged, err = Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, false, merged.UniqueItems)
 }
@@ -96,7 +96,7 @@ func TestMerge_Items_Failure(t *testing.T) {
 			},
 		},
 	}
-	_, err := Merge(schema)
+	_, err := Merge(&schema)
 	require.EqualError(t, err, TypeErrorMessage)
 }
 
@@ -143,7 +143,7 @@ func TestMerge_Items(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Nil(t, merged.AllOf)
 	require.Equal(t, "array", merged.Properties["test"].Value.Type)
@@ -171,7 +171,7 @@ func TestMerge_MultipleOf(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, float64(10), *merged.MultipleOf)
 
@@ -192,7 +192,7 @@ func TestMerge_MultipleOf(t *testing.T) {
 		},
 	}
 
-	merged, err = Merge(schema)
+	merged, err = Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, float64(77), *merged.MultipleOf)
 }
@@ -225,7 +225,7 @@ func TestMerge_Enum(t *testing.T) {
 	// concatenated := append(obj1Enum, obj2Enum...)
 	arr := make([]interface{}, 1)
 	arr[0] = "1"
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.ElementsMatch(t, arr, merged.Enum)
 
@@ -251,7 +251,7 @@ func TestMerge_Enum(t *testing.T) {
 			},
 		},
 	}
-	merged, err = Merge(schema)
+	merged, err = Merge(&schema)
 	require.NoError(t, err)
 	require.Empty(t, merged.Enum)
 }
@@ -276,7 +276,7 @@ func TestMerge_RangeProperties(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, uint64(10), merged.MinProps)
 	require.Equal(t, uint64(25), *merged.MaxProps)
@@ -302,7 +302,7 @@ func TestMerge_RangeItems(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, uint64(10), merged.MinItems)
 	require.Equal(t, uint64(25), *merged.MaxItems)
@@ -327,7 +327,7 @@ func TestMerge_Range(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, float64(10), *merged.Min)
 	require.Equal(t, float64(25), *merged.Max)
@@ -350,7 +350,7 @@ func TestMerge_MaxLength(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, uint64(10), *merged.MaxLength)
 }
@@ -372,7 +372,7 @@ func TestMerge_MinLength(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, uint64(20), merged.MinLength)
 }
@@ -394,7 +394,7 @@ func TestMerge_Description(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, "desc1", merged.Description)
 }
@@ -414,7 +414,7 @@ func TestMerge_Type(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, "object", merged.Type)
 }
@@ -436,7 +436,7 @@ func TestMerge_Title(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, "first", merged.Title)
 }
@@ -459,7 +459,7 @@ func TestMerge_Format(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, "date", merged.Format)
 }
@@ -481,13 +481,13 @@ func TestMerge_Format_Failure(t *testing.T) {
 			},
 		},
 	}
-	_, err := Merge(schema)
+	_, err := Merge(&schema)
 	require.EqualError(t, err, FormatErrorMessage)
 }
 
 func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, &schema, merged) //todo &schema
 }
@@ -496,7 +496,7 @@ func TestMerge_NoAllOf(t *testing.T) {
 	schema := Schema{
 		Title: "test",
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, &schema, merged) //todo &schema
 }
@@ -534,7 +534,7 @@ func TestMerge_TwoObjects(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 2)
@@ -562,7 +562,7 @@ func TestMerge_OneObjectOneProp(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Len(t, merged.Properties, 1)
 	require.Equal(t, object["description"].Value.Type, merged.Properties["description"].Value.Type)
@@ -581,7 +581,7 @@ func TestMerge_OneObjectNoProps(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Len(t, merged.Properties, 0)
 }
@@ -620,7 +620,7 @@ func TestMerge_OverlappingProps(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 1)
@@ -644,7 +644,7 @@ func TestMergeAllOf_Pattern(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(schema)
+	merged, err := Merge(&schema)
 	require.NoError(t, err)
 	require.Equal(t, "(?=foo)(?=bar)", merged.Pattern)
 }
@@ -667,7 +667,7 @@ func TestMerge_Required(t *testing.T) {
 			require.NoError(t, err, "loading test file")
 			err = doc.Validate(ctx)
 			require.NoError(t, err, "validating spec")
-			merged, err := Merge(*doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
+			merged, err := Merge(doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
 			require.NoError(t, err)
 
 			props := merged.Properties
