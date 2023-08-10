@@ -14,6 +14,7 @@ const (
 
 type SchemaCollection struct {
 	OneOf                []SchemaRefs
+	AnyOf                []SchemaRefs
 	Title                []string
 	Type                 []string
 	Format               []string
@@ -120,6 +121,12 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	if err != nil {
 		return result, err
 	}
+
+	result, err = resolveAnyOf(result, &collection)
+	if err != nil {
+		return result, err
+	}
+
 	return result, nil
 }
 
@@ -544,6 +551,7 @@ func copy(source *Schema, destination *Schema) *Schema {
 func collect(schemas []*Schema) SchemaCollection {
 	collection := SchemaCollection{}
 	for _, s := range schemas {
+		collection.AnyOf = append(collection.AnyOf, s.AnyOf)
 		collection.OneOf = append(collection.OneOf, s.OneOf)
 		collection.Title = append(collection.Title, s.Title)
 		collection.Type = append(collection.Type, s.Type)
@@ -600,6 +608,8 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 		}
 		schema, err := mergeFields(schemas)
 		merged = append(merged, schema)
+
+		//todo: if error is nil, do not add merge, and continue to iterate.
 		if err != nil {
 			return merged, err
 		}
@@ -607,21 +617,43 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 	return merged, nil
 }
 
-func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
-	combinations := getCombinations(collection.OneOf)
-	mergedCombinations, err := mergeCombinations(combinations)
+func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	combinations := getCombinations(collection.AnyOf)
+	if len(combinations) == 0 {
+		return schema, nil
+	}
+	refs, err := resolveGroups(combinations)
 	if err != nil {
 		return schema, err
+	}
+	schema.AnyOf = refs
+	return schema, nil
+}
+
+func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	combinations := getCombinations(collection.OneOf)
+	if len(combinations) == 0 {
+		return schema, nil
+	}
+	refs, err := resolveGroups(combinations)
+	if err != nil {
+		return schema, err
+	}
+	schema.OneOf = refs
+	return schema, nil
+}
+
+func resolveGroups(combinations []SchemaRefs) (SchemaRefs, error) {
+	mergedCombinations, err := mergeCombinations(combinations)
+	if err != nil {
+		return nil, err
 	}
 
 	var refs SchemaRefs
 	for _, merged := range mergedCombinations {
-
 		refs = append(refs, &SchemaRef{
 			Value: merged,
 		})
 	}
-
-	schema.OneOf = refs
-	return schema, nil
+	return refs, nil
 }

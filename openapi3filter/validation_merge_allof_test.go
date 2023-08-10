@@ -713,6 +713,68 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+func TestMerge_AnyOf(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Example integer enum
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - anyOf:
+                    - type: object
+                      properties:
+                        test1:
+                          type: string
+                        test2:
+                          type: boolean
+                    - type: object
+                      properties:
+                        test1:
+                          type: number
+                - anyOf:
+                    - type: object
+                      properties:
+                        test2:
+                          type: boolean
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests := []Test{
+		{
+			[]byte(`{"test1": 1}`),
+			false,
+		},
+		{
+			[]byte(`{"test2": 1}`),
+			true,
+		},
+		{
+			[]byte(`{"test2": true, "test1": 111}`),
+			false,
+		},
+		{
+			[]byte(`{"test2": 1}`),
+			true,
+		},
+		{
+			[]byte(`{"test3": 1}`),
+			false,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
 func TestMerge_OneOf(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
