@@ -2,6 +2,7 @@ package openapi3filter
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -712,6 +713,47 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+func TestMerge_OneOf(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: OneOf
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - oneOf:
+                  - type: object
+                    properties:
+                      test1:
+                        type: string
+                      test2:
+                        type: boolean
+                - oneOf:
+                  - type: object
+                    properties:
+                      test1:
+                        type: string
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"test1": "string"}`),
+			false,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
 func validateConsistency(t *testing.T, spec string, tests []Test) {
 	nonMerged := runTests(t, spec, tests, false)
 	merged := runTests(t, spec, tests, true)
@@ -727,7 +769,6 @@ func validateConsistency(t *testing.T, spec string, tests []Test) {
 	}
 }
 
-// todo: find a better way to do that
 func merge(doc *openapi3.T) *openapi3.T {
 	schemaRef := doc.Paths.Find("/sample").Put.RequestBody.Value.Content.Get("application/json").Schema
 	merged, err := openapi3.Merge(schemaRef.Value)
@@ -744,6 +785,12 @@ func runTests(t *testing.T, spec string, tests []Test, shouldMerge bool) []error
 
 	if shouldMerge {
 		doc = merge(doc)
+		// j, err := doc.MarshalJSON()
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// PrettyPrintJSON(j)
+		// log.Fatal("bye")
 	}
 
 	require.NoError(t, err)
@@ -771,4 +818,21 @@ func runTests(t *testing.T, spec string, tests []Test, shouldMerge bool) []error
 
 	}
 	return result
+}
+
+func PrettyPrintJSON(rawJSON []byte) error {
+	var data interface{}
+
+	err := json.Unmarshal(rawJSON, &data)
+	if err != nil {
+		return err
+	}
+
+	prettyJSON, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(prettyJSON))
+	return nil
 }

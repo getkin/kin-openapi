@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	FormatErrorMessage = "Unable to resolve Format conflict: all Format values must be identical."
-	TypeErrorMessage   = "Unable to resolve Format conflict: all Type values must be identical."
+	FormatErrorMessage = "unable to resolve Format conflict: all Format values must be identical"
+	TypeErrorMessage   = "unable to resolve Type conflict: all Type values must be identical"
 )
 
 type SchemaCollection struct {
+	OneOf                []SchemaRefs
 	Title                []string
 	Type                 []string
 	Format               []string
@@ -104,13 +105,18 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	result.Pattern = resolvePattern(collection.Pattern)
 	result.Enum = resolveEnum(collection.Enum) //todo: handle nil enums? (empty arrays)
 	result = resolveMultipleOf(result, &collection)
-	result.Required = resolveRequired2(collection.Required)
+	result.Required = resolveRequired(collection.Required)
 	result, err = resolveItems(result, &collection)
 	if err != nil {
 		return result, err
 	}
 	result.UniqueItems = resolveUniqueItems(collection.UniqueItems)
 	result, err = resolveProperties(result, &collection)
+	if err != nil {
+		return result, err
+	}
+
+	result, err = resolveOneOf(result, &collection)
 	if err != nil {
 		return result, err
 	}
@@ -401,11 +407,11 @@ func isListOfObjects(schema *Schema) bool {
 		return false
 	}
 
-	for _, subSchema := range schema.AllOf {
-		if subSchema.Value.Type != "object" {
-			return false
-		}
-	}
+	// for _, subSchema := range schema.AllOf {
+	// 	if subSchema.Value.Type != "object" {
+	// 		return false
+	// 	}
+	// }
 
 	return true
 }
@@ -479,7 +485,7 @@ func flattenArray(arrays [][]string) []string {
 	return result
 }
 
-func resolveRequired2(values [][]string) []string {
+func resolveRequired(values [][]string) []string {
 	flatValues := flattenArray(values)
 	uniqueMap := make(map[string]bool)
 	var uniqueValues []string
@@ -538,6 +544,7 @@ func copy(source *Schema, destination *Schema) *Schema {
 func collect(schemas []*Schema) SchemaCollection {
 	collection := SchemaCollection{}
 	for _, s := range schemas {
+		collection.OneOf = append(collection.OneOf, s.OneOf)
 		collection.Title = append(collection.Title, s.Title)
 		collection.Type = append(collection.Type, s.Type)
 		collection.Format = append(collection.Format, s.Format)
@@ -562,4 +569,59 @@ func collect(schemas []*Schema) SchemaCollection {
 		collection.AdditionalProperties = append(collection.AdditionalProperties, s.AdditionalProperties)
 	}
 	return collection
+}
+
+// getCombinations calculates the cartesian product of groups of SchemaRefs.
+func getCombinations(groups []SchemaRefs) []SchemaRefs {
+	if len(groups) == 0 {
+		return []SchemaRefs{}
+	}
+	result := []SchemaRefs{{}}
+	for _, group := range groups {
+		var newResult []SchemaRefs
+		for _, resultItem := range result {
+			for _, ref := range group {
+				combination := append(SchemaRefs{}, resultItem...)
+				combination = append(combination, ref)
+				newResult = append(newResult, combination)
+			}
+		}
+		result = newResult
+	}
+	return result
+}
+
+func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
+	merged := []*Schema{}
+	for _, combination := range combinations {
+		schemas := []*Schema{}
+		for _, ref := range combination {
+			schemas = append(schemas, ref.Value)
+		}
+		schema, err := mergeFields(schemas)
+		merged = append(merged, schema)
+		if err != nil {
+			return merged, err
+		}
+	}
+	return merged, nil
+}
+
+func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	combinations := getCombinations(collection.OneOf)
+	mergedCombinations, err := mergeCombinations(combinations)
+	if err != nil {
+		return schema, err
+	}
+
+	var refs SchemaRefs
+	for _, merged := range mergedCombinations {
+
+		refs = append(refs, &SchemaRef{
+			Value: merged,
+		})
+	}
+
+	schema.OneOf = refs
+	return schema, nil
 }
