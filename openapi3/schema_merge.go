@@ -13,6 +13,7 @@ const (
 )
 
 type SchemaCollection struct {
+	Not                  []*SchemaRef
 	OneOf                []SchemaRefs
 	AnyOf                []SchemaRefs
 	Title                []string
@@ -127,6 +128,7 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 		return result, err
 	}
 
+	result = resolveNot(result, &collection)
 	return result, nil
 }
 
@@ -551,6 +553,7 @@ func copy(source *Schema, destination *Schema) *Schema {
 func collect(schemas []*Schema) SchemaCollection {
 	collection := SchemaCollection{}
 	for _, s := range schemas {
+		collection.Not = append(collection.Not, s.Not)
 		collection.AnyOf = append(collection.AnyOf, s.AnyOf)
 		collection.OneOf = append(collection.OneOf, s.OneOf)
 		collection.Title = append(collection.Title, s.Title)
@@ -615,6 +618,24 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 		}
 	}
 	return merged, nil
+}
+
+func resolveNot(schema *Schema, collection *SchemaCollection) *Schema {
+	refs := []*SchemaRef{}
+	for _, v := range collection.Not {
+		if v != nil {
+			refs = append(refs, v)
+		}
+	}
+	if len(refs) == 0 {
+		return schema
+	}
+	schema.Not = &SchemaRef{
+		Value: &Schema{
+			AnyOf: collection.Not,
+		},
+	}
+	return schema
 }
 
 func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {

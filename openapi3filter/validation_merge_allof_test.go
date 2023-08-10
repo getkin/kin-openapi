@@ -775,11 +775,12 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// Testing OneOf Merging Inside AllOf
 func TestMerge_OneOf(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
 info:
-  title: OneOf
+  title: Testing OneOf Merging Inside AllOf
   version: '0.1'
 paths:
   /sample:
@@ -810,6 +811,63 @@ paths:
 		{
 			[]byte(`{"test1": "string"}`),
 			false,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
+// testing Multiple `not` inside `allOf`
+func TestMerge_Not(t *testing.T) {
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Multiple 'not' inside 'allOf' Example
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                  - not:
+                      type: object
+                      properties:
+                        test1:
+                          type: string
+                        test2:
+                          type: object
+                  - not:
+                      type: object
+                      properties:
+                        test1:
+                          type: number
+                        test2:
+                          type: boolean
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"test1": true}`),
+			false,
+		},
+		{
+			[]byte(`{"test2": "string"}`),
+			false,
+		},
+		{
+			[]byte(`{"test1": "string"}`),
+			true,
+		},
+		{
+			[]byte(`{"test2": true}`),
+			true,
 		},
 	}
 
