@@ -19,6 +19,62 @@ type Test struct {
 	wantErr bool
 }
 
+// validate that merge is successful when additionalProperties is a Schema
+func TestMerge_AdditionalProperties_Schema(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Validate range
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    age:
+                      type: integer
+                    name:
+                      type: string
+                  additionalProperties:
+                    type: integer
+                - type: object
+                  properties:
+                    height:
+                      type: integer
+                  additionalProperties:
+                    maximum: 100
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests := []Test{
+		{
+			[]byte(`{"age": 1}`),
+			false,
+		},
+		{
+			[]byte(`{"height": 1000}`),
+			false,
+		},
+		{
+			[]byte(`{"additionalProp": 1}`),
+			false,
+		},
+		{
+			[]byte(`{"additionalProp": 101}`),
+			true,
+		},
+	}
+	validateConsistency(t, spec, tests)
+}
+
 // validate only intersecting properties if one of the additionalProperties is false
 func TestMerge_AdditionalProperties_False(t *testing.T) {
 	const spec = `
@@ -68,41 +124,52 @@ paths:
 	validateConsistency(t, spec, tests)
 
 	spec2 := `
-openapi: 3.0.0
-info:
-  title: Example integer enum
-  version: '0.1'
-paths:
-  /sample:
-    put:
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              allOf:
-                - type: object
-                  properties:
-                    test1:
-                      enum: ["1", "5", "3"]
-                  additionalProperties: true
-                - type: object
-                  properties:
-                    test1:
-                      enum: ["1", "8", "7"]
-                  additionalProperties: false
-      responses:
-        '200':
-          description: Ok
-`
+   openapi: 3.0.0
+   info:
+     title: Example integer enum
+     version: '0.1'
+   paths:
+     /sample:
+       put:
+         requestBody:
+           required: true
+           content:
+             application/json:
+               schema:
+                 allOf:
+                   - type: object
+                     properties:
+                       test:
+                         enum: ["1", "5", "3"]
+                       prop1:
+                         type: string
+                     additionalProperties: true
+                   - type: object
+                     properties:
+                       test1:
+                         enum: ["1", "8", "7"]
+                     additionalProperties: false
+                   - type: object
+                     properties:
+                       test1:
+                         enum: ["3", "8", "5"]
+                     additionalProperties: false					 
+         responses:
+           '200':
+             description: Ok
+   `
 
 	tests = []Test{
 		{
-			[]byte(`{"test1": "1"}`),
+			[]byte(`{"test1": "8"}`),
 			false,
 		},
 		{
-			[]byte(`{"test2": "8"}`),
+			[]byte(`{"test1": "1"}`),
+			true,
+		},
+		{
+			[]byte(`{"prop1": "string"}`),
 			true,
 		},
 	}

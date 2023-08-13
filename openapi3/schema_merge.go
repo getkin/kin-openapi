@@ -129,6 +129,10 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	}
 
 	result = resolveNot(result, &collection)
+	result, err = resolveAdditionalProperties(result, &collection)
+	if err != nil {
+		return result, err
+	}
 	return result, nil
 }
 
@@ -272,14 +276,41 @@ func resolveMultipleOf(schema *Schema, collection *SchemaCollection) *Schema {
 	return schema
 }
 
-func resolveProperties(schema *Schema, collection *SchemaCollection) (*Schema, error) {
-	propRefs := append([]Schemas{}, collection.Properties...)
-	allRefs := map[string][]*Schema{} //naming
-	for _, schema := range propRefs { //naming
-		for name, schemaRef := range schema {
-			allRefs[name] = append(allRefs[name], schemaRef.Value)
+func getPropFieldsToMerge(collection *SchemaCollection) []string {
+	properties := [][]string{}
+	for i, schema := range collection.Properties {
+		additionalProps := collection.AdditionalProperties[i].Has
+		if additionalProps != nil && !*additionalProps {
+			keys := []string{}
+			for key := range schema {
+				keys = append(keys, key)
+			}
+			properties = append(properties, keys)
 		}
 	}
+	if len(properties) > 0 {
+		return findIntersection(properties...)
+	}
+	keys := []string{}
+	for _, schema := range collection.Properties {
+		for key := range schema {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
+
+func resolveProperties(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	keys := getPropFieldsToMerge(collection)
+	allRefs := map[string][]*Schema{}              //naming
+	for _, schema := range collection.Properties { //naming
+		for name, schemaRef := range schema {
+			if containsString(keys, name) {
+				allRefs[name] = append(allRefs[name], schemaRef.Value)
+			}
+		}
+	}
+
 	result := make(Schemas)
 	for name, schemas := range allRefs {
 		merged, err := mergeFields(schemas)
@@ -296,42 +327,41 @@ func resolveProperties(schema *Schema, collection *SchemaCollection) (*Schema, e
 		result = nil
 	}
 
-	result, additionalProperties := mergeAdditionalProps(collection, result)
-	schema.AdditionalProperties = additionalProperties
 	schema.Properties = result
 	return schema, nil
 }
 
-func mergeAdditionalProps(collection *SchemaCollection, propsMap Schemas) (Schemas, AdditionalProperties) {
+func resolveAdditionalProperties(schema *Schema, collection *SchemaCollection) (*Schema, error) {
 	additionalProperties := &AdditionalProperties{
 		Has:    nil,
 		Schema: nil,
 	}
-	for i, additionalProps := range collection.AdditionalProperties {
-		if additionalProps.Has == nil {
-			continue
+
+	additionalSchemas := []*Schema{}
+	for _, ap := range collection.AdditionalProperties {
+		if ap.Has != nil && !*ap.Has {
+			hasValue := false
+			additionalProperties.Has = &hasValue
+			schema.AdditionalProperties = *additionalProperties
+			return schema, nil
 		}
-		if !*additionalProps.Has {
-			for prop := range propsMap {
-				found := false
-				for key := range collection.Properties[i] {
-					if prop == key {
-						found = true
-					}
-				}
-				if !found {
-					delete(propsMap, prop)
-				}
-			}
-			f := false
-			additionalProperties.Has = &f
-			return propsMap, *additionalProperties
-		} else {
-			t := true
-			additionalProperties.Has = &t
+		if ap.Schema != nil && ap.Schema.Value != nil {
+			additionalSchemas = append(additionalSchemas, ap.Schema.Value)
 		}
 	}
-	return propsMap, *additionalProperties
+
+	if len(additionalSchemas) > 0 {
+		result, err := mergeFields(additionalSchemas)
+		if err != nil {
+			return schema, err
+		}
+		additionalProperties.Schema = &SchemaRef{
+			Value: result,
+		}
+	}
+
+	schema.AdditionalProperties = *additionalProperties
+	return schema, nil
 }
 
 func resolveEnum(values [][]interface{}) []interface{} {
@@ -397,6 +427,15 @@ func resolveFormat(values []string) (string, error) {
 		return values[0], nil
 	}
 	return values[0], errors.New(FormatErrorMessage)
+}
+
+func containsString(list []string, search string) bool {
+	for _, item := range list {
+		if item == search {
+			return true
+		}
+	}
+	return false
 }
 
 func filterEmptyStrings(input []string) []string {
@@ -677,4 +716,34 @@ func resolveGroups(combinations []SchemaRefs) (SchemaRefs, error) {
 		})
 	}
 	return refs, nil
+}
+
+func findIntersection(arrays ...[]string) []string {
+	if len(arrays) == 0 {
+		return nil
+	}
+
+	// Create a map to store the elements of the first array
+	elementsMap := make(map[string]bool)
+	for _, element := range arrays[0] {
+		elementsMap[element] = true
+	}
+
+	// Iterate through the remaining arrays and update the map
+	for _, arr := range arrays[1:] {
+		tempMap := make(map[string]bool)
+		for _, element := range arr {
+			if elementsMap[element] {
+				tempMap[element] = true
+			}
+		}
+		elementsMap = tempMap
+	}
+
+	intersection := []string{}
+	for element := range elementsMap {
+		intersection = append(intersection, element)
+	}
+
+	return intersection
 }
