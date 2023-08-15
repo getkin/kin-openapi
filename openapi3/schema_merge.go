@@ -61,15 +61,66 @@ func Merge(schema *Schema) (*Schema, error) {
 		return schema, nil
 	}
 
-	//todo: merge result of mergedAllOf with all other fields of base Schema.
-	//todo: implement merge functions for OneOf, AnyOf, Items
+	// handle cases where AllOf is nil, but other fields might include AllOf.
+	schema, err := handleNestedAllOfCases(schema)
+	if err != nil {
+		return &Schema{}, err
+	}
+
+	return schema, nil
+}
+
+func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
 	if schema.Properties != nil {
 		properties, err := mergeProperties(schema.Properties)
 		if err != nil {
 			return &Schema{}, err
 		}
 		schema.Properties = properties
+	}
 
+	if schema.AnyOf != nil {
+		var mergedAnyOf SchemaRefs
+		for _, schemaRef := range schema.AnyOf {
+			if schemaRef == nil {
+				continue
+			}
+			result, err := Merge(schemaRef.Value)
+			if err != nil {
+				return &Schema{}, err
+			}
+			mergedAnyOf = append(mergedAnyOf, &SchemaRef{
+				Value: result,
+			})
+		}
+		schema.AnyOf = mergedAnyOf
+	}
+
+	if schema.OneOf != nil {
+		var mergedOneOf SchemaRefs
+		for _, schemaRef := range schema.OneOf {
+			if schemaRef == nil {
+				continue
+			}
+			result, err := Merge(schemaRef.Value)
+			if err != nil {
+				return &Schema{}, err
+			}
+			mergedOneOf = append(mergedOneOf, &SchemaRef{
+				Value: result,
+			})
+		}
+		schema.AnyOf = mergedOneOf
+	}
+
+	if schema.Not != nil {
+		result, err := Merge(schema.Not.Value)
+		if err != nil {
+			return &Schema{}, err
+		}
+		schema.Not = &SchemaRef{
+			Value: result,
+		}
 	}
 
 	return schema, nil
