@@ -3,7 +3,9 @@ package openapi3
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
+	"regexp"
 	"strings"
 )
 
@@ -51,9 +53,13 @@ func Merge(schema *Schema) (*Schema, error) {
 		if err != nil {
 			return &Schema{}, err
 		}
-		schema = copy(mergedAllOf, schema) // temporary.
+		schema.AllOf = nil
+		schema, err = mergeFields([]*Schema{schema, mergedAllOf})
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		return schema, nil
 	}
-	schema.AllOf = nil
 
 	//todo: merge result of mergedAllOf with all other fields of base Schema.
 	//todo: implement merge functions for OneOf, AnyOf, Items
@@ -105,7 +111,7 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	result.MinProps = findMaxValue(collection.MinProps)
 	result.MaxProps = findMinValue(collection.MaxProps)
 	result.Pattern = resolvePattern(collection.Pattern)
-	result.Enum = resolveEnum(collection.Enum) //todo: handle nil enums? (empty arrays)
+	result.Enum = resolveEnum(collection.Enum)
 	result = resolveMultipleOf(result, &collection)
 	result.Required = resolveRequired(collection.Required)
 	result, err = resolveItems(result, &collection)
@@ -365,17 +371,32 @@ func resolveAdditionalProperties(schema *Schema, collection *SchemaCollection) (
 }
 
 func resolveEnum(values [][]interface{}) []interface{} {
-	return findIntersectionOfArrays(values)
+	var nonEmptyEnum [][]interface{}
+	for _, enum := range values {
+		if len(enum) > 0 {
+			nonEmptyEnum = append(nonEmptyEnum, enum)
+		}
+	}
+	return findIntersectionOfArrays(nonEmptyEnum)
 }
 
 func resolvePattern(values []string) string {
 	var pattern strings.Builder
 	for _, p := range values {
 		if len(p) > 0 {
-			pattern.WriteString(fmt.Sprintf("(?=%s)", p))
+			if !isPatternResolved(p) {
+				pattern.WriteString(fmt.Sprintf("(?=%s)", p))
+			} else {
+				pattern.WriteString(p)
+			}
 		}
 	}
 	return pattern.String()
+}
+
+func isPatternResolved(pattern string) bool {
+	match, _ := regexp.MatchString(`^\(\?=.+\)$`, pattern)
+	return match
 }
 
 func findMaxValue(values []uint64) uint64 {
@@ -474,18 +495,6 @@ func allStringsEqual(values []string) bool {
 	return true
 }
 
-func uniqueValues(values []interface{}) []interface{} {
-	uniqueMap := make(map[interface{}]struct{})
-	uniqueValues := make([]interface{}, 0)
-	for _, value := range values {
-		if _, found := uniqueMap[value]; !found {
-			uniqueMap[value] = struct{}{}
-			uniqueValues = append(uniqueValues, value)
-		}
-	}
-	return uniqueValues
-}
-
 func getIntersection(arr1, arr2 []interface{}) []interface{} {
 	intersectionMap := make(map[interface{}]bool)
 	result := []interface{}{}
@@ -544,49 +553,6 @@ func resolveRequired(values [][]string) []string {
 		}
 	}
 	return uniqueValues
-}
-
-/* temporary */
-func copy(source *Schema, destination *Schema) *Schema {
-	destination.Extensions = source.Extensions
-	destination.OneOf = source.OneOf
-	destination.AnyOf = source.AnyOf
-	destination.AllOf = source.AllOf
-	destination.Not = source.Not
-	destination.Type = source.Type
-	destination.Title = source.Title
-	destination.Format = source.Format
-	destination.Description = source.Description
-	destination.Enum = source.Enum
-	destination.Default = source.Default
-	destination.Example = source.Example
-	destination.ExternalDocs = source.ExternalDocs
-	destination.UniqueItems = source.UniqueItems
-	destination.ExclusiveMin = source.ExclusiveMin
-	destination.ExclusiveMax = source.ExclusiveMax
-	destination.Nullable = source.Nullable
-	destination.ReadOnly = source.ReadOnly
-	destination.WriteOnly = source.WriteOnly
-	destination.AllowEmptyValue = source.AllowEmptyValue
-	destination.Deprecated = source.Deprecated
-	destination.XML = source.XML
-	destination.Min = source.Min
-	destination.Max = source.Max
-	destination.MultipleOf = source.MultipleOf
-	destination.MinLength = source.MinLength
-	destination.MaxLength = source.MaxLength
-	destination.Pattern = source.Pattern
-	destination.compiledPattern = source.compiledPattern
-	destination.MinItems = source.MinItems
-	destination.MaxItems = source.MaxItems
-	destination.Items = source.Items
-	destination.Required = source.Required
-	destination.Properties = source.Properties
-	destination.MinProps = source.MinProps
-	destination.MaxProps = source.MaxProps
-	destination.AdditionalProperties = source.AdditionalProperties
-	destination.Discriminator = source.Discriminator
-	return destination
 }
 
 func collect(schemas []*Schema) SchemaCollection {
@@ -660,28 +626,52 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 }
 
 func resolveNot(schema *Schema, collection *SchemaCollection) *Schema {
-	refs := []*SchemaRef{}
-	for _, v := range collection.Not {
-		if v != nil {
-			refs = append(refs, v)
-		}
-	}
+	refs := filterNilSchemaRef(collection.Not)
 	if len(refs) == 0 {
 		return schema
 	}
 	schema.Not = &SchemaRef{
 		Value: &Schema{
-			AnyOf: collection.Not,
+			AnyOf: refs,
 		},
 	}
 	return schema
 }
 
+func filterNilSchemaRef(refs []*SchemaRef) []*SchemaRef {
+	result := []*SchemaRef{}
+	for _, v := range refs {
+		if v != nil {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func filterEmptySchemaRefs(groups []SchemaRefs) []SchemaRefs {
+	result := []SchemaRefs{}
+	for _, group := range groups {
+		if len(group) > 0 {
+			result = append(result, group)
+		}
+	}
+	return result
+}
+
 func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
-	combinations := getCombinations(collection.AnyOf)
-	if len(combinations) == 0 {
+	groups := filterEmptySchemaRefs(collection.AnyOf)
+	if len(groups) == 0 {
 		return schema, nil
 	}
+	if len(groups) == 1 {
+		// todo: this is a temporary fix
+		schema.AnyOf = groups[0]
+		return schema, nil
+	}
+	combinations := getCombinations(groups)
+	// if len(combinations) == 0 {
+	// return schema, nil
+	// }
 	refs, err := resolveGroups(combinations)
 	if err != nil {
 		return schema, err
@@ -691,6 +681,15 @@ func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error)
 }
 
 func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	groups := filterEmptySchemaRefs(collection.OneOf)
+	if len(groups) == 0 {
+		return schema, nil
+	}
+	if len(groups) == 1 {
+		// todo: this is a temporary fix
+		schema.OneOf = groups[0]
+		return schema, nil
+	}
 	combinations := getCombinations(collection.OneOf)
 	if len(combinations) == 0 {
 		return schema, nil

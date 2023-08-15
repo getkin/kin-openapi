@@ -2,7 +2,6 @@ package openapi3filter
 
 import (
 	"bytes"
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -17,6 +16,49 @@ import (
 type Test struct {
 	data    []byte
 	wantErr bool
+}
+
+// validate that allof fields are merged with base schema fields
+func TestMerge_BaseSchema(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: base schema merge test
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: integer
+                maximum: 10
+              allOf:
+                - type: object
+                  additionalProperties:
+                    type: integer
+                    maximum: 5
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests := []Test{
+		{
+			[]byte(`{"age": 1}`),
+			false,
+		},
+		{
+			[]byte(`{"height": 1000}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
 }
 
 // validate that merge is successful when additionalProperties is a Schema
@@ -972,12 +1014,6 @@ func runTests(t *testing.T, spec string, tests []Test, shouldMerge bool) []error
 
 	if shouldMerge {
 		doc = merge(doc)
-		// j, err := doc.MarshalJSON()
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// PrettyPrintJSON(j)
-		// log.Fatal("bye")
 	}
 
 	require.NoError(t, err)
@@ -1005,21 +1041,4 @@ func runTests(t *testing.T, spec string, tests []Test, shouldMerge bool) []error
 
 	}
 	return result
-}
-
-func PrettyPrintJSON(rawJSON []byte) error {
-	var data interface{}
-
-	err := json.Unmarshal(rawJSON, &data)
-	if err != nil {
-		return err
-	}
-
-	prettyJSON, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	log.Println(string(prettyJSON))
-	return nil
 }

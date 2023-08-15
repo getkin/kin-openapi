@@ -2,8 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"encoding/json"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -222,7 +220,7 @@ func TestMerge_Enum(t *testing.T) {
 			},
 		},
 	}
-	// concatenated := append(obj1Enum, obj2Enum...)
+
 	arr := make([]interface{}, 1)
 	arr[0] = "1"
 	merged, err := Merge(&schema)
@@ -379,6 +377,7 @@ func TestMerge_MinLength(t *testing.T) {
 
 func TestMerge_Description(t *testing.T) {
 	schema := Schema{
+		Description: "desc0",
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -396,7 +395,7 @@ func TestMerge_Description(t *testing.T) {
 	}
 	merged, err := Merge(&schema)
 	require.NoError(t, err)
-	require.Equal(t, "desc1", merged.Description)
+	require.Equal(t, "desc0", merged.Description)
 }
 
 func TestMerge_Type(t *testing.T) {
@@ -421,6 +420,7 @@ func TestMerge_Type(t *testing.T) {
 
 func TestMerge_Title(t *testing.T) {
 	schema := Schema{
+		Title: "base schema",
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -438,7 +438,7 @@ func TestMerge_Title(t *testing.T) {
 	}
 	merged, err := Merge(&schema)
 	require.NoError(t, err)
-	require.Equal(t, "first", merged.Title)
+	require.Equal(t, "base schema", merged.Title)
 }
 
 func TestMerge_Format(t *testing.T) {
@@ -682,24 +682,6 @@ func TestMerge_Required(t *testing.T) {
 			require.Contains(t, required, "otherId")
 		})
 	}
-}
-
-/* temporary */
-func PrettyPrintJSON(rawJSON []byte) error {
-	var data interface{}
-
-	err := json.Unmarshal(rawJSON, &data)
-	if err != nil {
-		return err
-	}
-
-	prettyJSON, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	log.Println(string(prettyJSON))
-	return nil
 }
 
 // func TestMerge_NestedAllOf(t *testing.T) {
