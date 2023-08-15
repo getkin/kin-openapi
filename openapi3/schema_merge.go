@@ -663,15 +663,10 @@ func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error)
 	if len(groups) == 0 {
 		return schema, nil
 	}
-	if len(groups) == 1 {
-		// todo: this is a temporary fix
-		schema.AnyOf = groups[0]
+	combinations := getCombinations(groups)
+	if len(combinations) == 0 {
 		return schema, nil
 	}
-	combinations := getCombinations(groups)
-	// if len(combinations) == 0 {
-	// return schema, nil
-	// }
 	refs, err := resolveGroups(combinations)
 	if err != nil {
 		return schema, err
@@ -683,11 +678,6 @@ func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error)
 func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
 	groups := filterEmptySchemaRefs(collection.OneOf)
 	if len(groups) == 0 {
-		return schema, nil
-	}
-	if len(groups) == 1 {
-		// todo: this is a temporary fix
-		schema.OneOf = groups[0]
 		return schema, nil
 	}
 	combinations := getCombinations(collection.OneOf)
