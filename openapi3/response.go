@@ -27,8 +27,21 @@ func (responses Responses) Default() *ResponseRef {
 	return responses["default"]
 }
 
+// Get returns a ResponseRef for the given status
+// If an exact match isn't initially found a patterned field is checked using
+// the first digit to determine the range (eg: 201 to 2XX)
 func (responses Responses) Get(status int) *ResponseRef {
-	return responses[strconv.FormatInt(int64(status), 10)]
+	st := strconv.FormatInt(int64(status), 10)
+	rref, ok := responses[strconv.FormatInt(int64(status), 10)]
+	if ok {
+		return rref
+	}
+	st = string(st[0]) + "XX"
+	rref, ok = responses[st]
+	if !ok {
+		return nil
+	}
+	return rref
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
