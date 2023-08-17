@@ -32,13 +32,12 @@ func (responses Responses) Default() *ResponseRef {
 // the first digit to determine the range (eg: 201 to 2XX)
 func (responses Responses) Get(status int) *ResponseRef {
 	st := strconv.FormatInt(int64(status), 10)
-	rref, ok := responses[strconv.FormatInt(int64(status), 10)]
+	rref, ok := responses[st]
 	if ok {
 		return rref
 	}
 	st = string(st[0]) + "XX"
-	rref, ok = responses[st]
-	if !ok {
+	if rref, ok = responses[st]; !ok {
 		return nil
 	}
 	return rref
