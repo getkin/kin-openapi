@@ -4,7 +4,7 @@
 //   - "/"
 //   - "/abc""
 //   - "/abc/{variable}" (matches until next '/' or end-of-string)
-//   - "/abc/{variable*}" (matches everything, including "/abc" if "/abc" has noot)
+//   - "/abc/{variable*}" (matches everything, including "/abc" if "/abc" has root)
 //   - "/abc/{ variable | prefix_(.*}_suffix }" (matches regular expressions)
 package pathpattern
 

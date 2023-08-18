@@ -23,9 +23,8 @@ import (
 
 func TestDecodeParameter(t *testing.T) {
 	var (
-		boolPtr   = func(b bool) *bool { return &b }
-		explode   = boolPtr(true)
-		noExplode = boolPtr(false)
+		explode   = openapi3.BoolPtr(true)
+		noExplode = openapi3.BoolPtr(false)
 		arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
 			return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "array", Items: items}}
 		}
@@ -1044,16 +1043,16 @@ func TestDecodeParameter(t *testing.T) {
 						Title:   "MyAPI",
 						Version: "0.1",
 					}
-					spec := &openapi3.T{OpenAPI: "3.0.0", Info: info}
+					doc := &openapi3.T{OpenAPI: "3.0.0", Info: info, Paths: openapi3.Paths{}}
 					op := &openapi3.Operation{
 						OperationID: "test",
 						Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
 						Responses:   openapi3.NewResponses(),
 					}
-					spec.AddOperation(path, http.MethodGet, op)
-					err = spec.Validate(context.Background())
+					doc.AddOperation(path, http.MethodGet, op)
+					err = doc.Validate(context.Background())
 					require.NoError(t, err)
-					router, err := legacyrouter.NewRouter(spec)
+					router, err := legacyrouter.NewRouter(doc)
 					require.NoError(t, err)
 
 					route, pathParams, err := router.FindRoute(req)
@@ -1079,8 +1078,6 @@ func TestDecodeParameter(t *testing.T) {
 }
 
 func TestDecodeBody(t *testing.T) {
-	boolPtr := func(b bool) *bool { return &b }
-
 	urlencodedForm := make(url.Values)
 	urlencodedForm.Set("a", "a1")
 	urlencodedForm.Set("b", "10")
@@ -1198,7 +1195,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: openapi3.BoolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},
@@ -1211,7 +1208,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationPipeDelimited, Explode: boolPtr(false)},
+				"c": {Style: openapi3.SerializationPipeDelimited, Explode: openapi3.BoolPtr(false)},
 			},
 			want: map[string]interface{}{"a": "a1", "b": int64(10), "c": []interface{}{"c1", "c2"}},
 		},

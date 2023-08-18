@@ -37,7 +37,7 @@ func TestIssue639(t *testing.T) {
               type: object
         responses:
           '200':
-           description: Successful respons
+           description: Successful response
 `[1:]
 
 	doc, err := loader.LoadFromData([]byte(spec))

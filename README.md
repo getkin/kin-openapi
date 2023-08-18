@@ -17,7 +17,7 @@ The project has received pull requests [from many people](https://github.com/get
 Be sure to [give back to this project](https://github.com/sponsors/fenollp) like our sponsors:
 
 <p align="center">
-	<a href="//www.speakeasyapi.dev"><img src=".github/sponsors/speakeasy.png" alt="Speakeasy" height="100px"/></a>
+	<a href="https://speakeasyapi.dev/?utm_source=kinopenapi+repo&utm_medium=github+sponsorship"><img src=".github/sponsors/speakeasy-github-sponsor-dark.svg" alt="Speakeasy" height="100px"/></a>
 </p>
 
 Here's some projects that depend on _kin-openapi_:
@@ -30,6 +30,7 @@ Here's some projects that depend on _kin-openapi_:
   * [github.com/hashicorp/nomad-openapi](https://github.com/hashicorp/nomad-openapi) - "Nomad is an easy-to-use, flexible, and performant workload orchestrator that can deploy a mix of microservice, batch, containerized, and non-containerized applications. Nomad is easy to operate and scale and has native Consul and Vault integrations."
   * [gitlab.com/jamietanna/httptest-openapi](https://gitlab.com/jamietanna/httptest-openapi) ([*blog post*](https://www.jvt.me/posts/2022/05/22/go-openapi-contract-test/)) - "Go OpenAPI Contract Verification for use with `net/http`"
   * [github.com/SIMITGROUP/openapigenerator](https://github.com/SIMITGROUP/openapigenerator) - "Openapi v3 microservices generator"
+  * [https://github.com/projectsveltos/addon-controller](https://github.com/projectsveltos/addon-controller) - "Kubernetes add-on controller designed to manage tens of clusters."
   * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
 ## Alternatives
@@ -57,13 +58,14 @@ Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling l
 # Some recipes
 ## Validating an OpenAPI document
 ```shell
-go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
+go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
 ```
 
 ## Loading OpenAPI document
 Use `openapi3.Loader`, which resolves all references:
 ```go
-doc, err := openapi3.NewLoader().LoadFromFile("swagger.json")
+loader := openapi3.NewLoader()
+doc, err := loader.LoadFromFile("swagger.json")
 ```
 
 ## Getting OpenAPI operation that matches request
@@ -159,13 +161,13 @@ func main() {
 }
 
 func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded interface{}, err error) {
-	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
+	// Decode body to a primitive, []interface{}, or map[string]interface{}.
 }
 ```
 
 ## Custom function to check uniqueness of array items
 
-By defaut, the library check unique items by below predefined function
+By default, the library check unique items by below predefined function
 
 ```go
 func isSliceOfUniqueItems(xs []interface{}) bool {

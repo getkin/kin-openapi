@@ -221,8 +221,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					spec := bytes.Buffer{}
-					spec.WriteString(`
+					spec := bytes.NewBufferString(`
 openapi: 3.0.3
 info:
   title: An API
@@ -350,7 +349,7 @@ components:
 
 					if tc.errContains != "" && !testOption.disableExamplesValidation {
 						require.Error(t, err)
-						require.Contains(t, err.Error(), tc.errContains)
+						require.ErrorContains(t, err, tc.errContains)
 					} else {
 						require.NoError(t, err)
 					}
@@ -436,8 +435,7 @@ func TestExampleObjectValidation(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					spec := bytes.Buffer{}
-					spec.WriteString(`
+					spec := bytes.NewBufferString(`
 openapi: 3.0.3
 info:
   title: An API
@@ -516,7 +514,7 @@ components:
 
 					if tc.errContains != "" {
 						require.Error(t, err)
-						require.Contains(t, err.Error(), tc.errContains)
+						require.ErrorContains(t, err, tc.errContains)
 					} else {
 						require.NoError(t, err)
 					}

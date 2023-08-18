@@ -9,7 +9,7 @@ import (
 )
 
 func TestIssue222(t *testing.T) {
-	spec := `
+	spec := []byte(`
 openapi: 3.0.0
 info:
   version: 1.0.0
@@ -106,14 +106,17 @@ components:
           format: int32
         message:
           type: string
-`
+`[1:])
 
-	_, err := NewLoader().LoadFromData([]byte(spec))
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.EqualError(t, err, `invalid response: value MUST be an object`)
+	require.Nil(t, doc)
 }
 
 func TestIssue247(t *testing.T) {
-	spec := `openapi: 3.0.2
+	spec := []byte(`
+openapi: 3.0.2
 info:
   title: Swagger Petstore - OpenAPI 3.0
   license:
@@ -212,64 +215,106 @@ components:
         - type: string
         - type: integer
           format: int32
-  `
-	root, err := NewLoader().LoadFromData([]byte(spec))
+`[1:])
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	var ptr jsonpointer.Pointer
+	var v interface{}
+	var kind reflect.Kind
 
-	ptr, err := jsonpointer.New("/paths/~1pet/put/responses/200/content")
+	ptr, err = jsonpointer.New("/paths")
 	require.NoError(t, err)
-	v, kind, err := ptr.Get(root)
+	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
-	require.Equal(t, reflect.TypeOf(Content{}).Kind(), kind)
+	require.IsType(t, Paths{}, v)
+	require.Equal(t, reflect.TypeOf(Paths{}).Kind(), kind)
+
+	ptr, err = jsonpointer.New("/paths/~1pet")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(doc)
+	require.NoError(t, err)
+	require.IsType(t, &PathItem{}, v)
+	require.Equal(t, reflect.TypeOf(&PathItem{}).Kind(), kind)
+
+	ptr, err = jsonpointer.New("/paths/~1pet/put")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(doc)
+	require.NoError(t, err)
+	require.IsType(t, &Operation{}, v)
+	require.Equal(t, reflect.TypeOf(&Operation{}).Kind(), kind)
+
+	ptr, err = jsonpointer.New("/paths/~1pet/put/responses")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(doc)
+	require.NoError(t, err)
+	require.IsType(t, Responses{}, v)
+	require.Equal(t, reflect.TypeOf(Responses{}).Kind(), kind)
+
+	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(doc)
+	require.NoError(t, err)
+	require.IsType(t, &Response{}, v)
+	require.Equal(t, reflect.TypeOf(&Response{}).Kind(), kind)
+
+	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200/content")
+	require.NoError(t, err)
+	v, kind, err = ptr.Get(doc)
+	require.NoError(t, err)
 	require.IsType(t, Content{}, v)
+	require.Equal(t, reflect.TypeOf(Content{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200/content/application~1json/schema")
 	require.NoError(t, err)
-	v, kind, err = ptr.Get(root)
+	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
-	require.Equal(t, reflect.Ptr, kind)
 	require.IsType(t, &Ref{}, v)
+	require.Equal(t, reflect.Ptr, kind)
 	require.Equal(t, "#/components/schemas/Pet", v.(*Ref).Ref)
 
 	ptr, err = jsonpointer.New("/components/schemas/Pets/items")
 	require.NoError(t, err)
-	v, kind, err = ptr.Get(root)
+	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
-	require.Equal(t, reflect.Ptr, kind)
 	require.IsType(t, &Ref{}, v)
+	require.Equal(t, reflect.Ptr, kind)
 	require.Equal(t, "#/components/schemas/Pet", v.(*Ref).Ref)
 
 	ptr, err = jsonpointer.New("/components/schemas/Error/properties/code")
 	require.NoError(t, err)
-	v, kind, err = ptr.Get(root)
+	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
-	require.Equal(t, reflect.Ptr, kind)
 	require.IsType(t, &Schema{}, v)
+	require.Equal(t, reflect.Ptr, kind)
 	require.Equal(t, "integer", v.(*Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/0")
 	require.NoError(t, err)
-	v, kind, err = ptr.Get(root)
+	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
-	require.Equal(t, reflect.Ptr, kind)
 	require.IsType(t, &Schema{}, v)
+	require.Equal(t, reflect.Ptr, kind)
 	require.Equal(t, "string", v.(*Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/1")
 	require.NoError(t, err)
-	v, kind, err = ptr.Get(root)
+	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
-	require.Equal(t, reflect.Ptr, kind)
 	require.IsType(t, &Schema{}, v)
+	require.Equal(t, reflect.Ptr, kind)
 	require.Equal(t, "integer", v.(*Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/5")
 	require.NoError(t, err)
-	_, _, err = ptr.Get(root)
+	_, _, err = ptr.Get(doc)
 	require.Error(t, err)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/-1")
 	require.NoError(t, err)
-	_, _, err = ptr.Get(root)
+	_, _, err = ptr.Get(doc)
 	require.Error(t, err)
 }

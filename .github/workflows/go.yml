@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.16', '1.x']
+        go: ['1.x']
         os:
         - ubuntu-latest
         - windows-latest
@@ -76,10 +76,13 @@ jobs:
         GOARCH: '386'
     - run: go test -count=10 ./...
     - run: go test -count=2 -covermode=atomic ./...
-    - run: go test -v -run TestRaceyPatternSchema -race ./...
+    - run: go test -v -count=10 -run TestRaceyPatternSchemaValidateHindersIt -race ./...
       env:
         CGO_ENABLED: '1'
-    - run: go test -v -run TestIssue741 -race ./...
+    - run: go test -v -count=10 -run TestRaceyPatternSchemaForIssue775 -race ./...
+      env:
+        CGO_ENABLED: '1'
+    - run: go test -v -count=10 -run TestIssue741 -race ./...
       env:
         CGO_ENABLED: '1'
     - run: git --no-pager diff --exit-code
@@ -99,7 +102,7 @@ jobs:
       run: |
         ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
 
-    - if: runner.os == 'Linux' && matrix.go != '1.16'
+    - if: runner.os == 'Linux'
       name: nilness
       run: go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...
 
@@ -119,6 +122,21 @@ jobs:
         ! git grep -InE 'func.+[*].+[)].MarshalJSON[(][)]'
 
     - if: runner.os == 'Linux'
+      name: Use `loader := NewLoader(); loader.Load ...`
+      run: |
+        ! git grep -InE 'NewLoader[(][)][.]Load'
+
+    - if: runner.os == 'Linux'
+      name: Use raw quotes https://go.dev/ref/spec#String_literals
+      run: |
+        ! git grep -InE 'require[.].+\\"'
+
+    - if: runner.os == 'Linux'
+      name: Use require.ErrorContains(..)
+      run: |
+        ! git grep -InE 'require[.].+err.Error'
+
+    - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
         [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
@@ -126,7 +144,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Missing validation of unknown fields in extensions
       run: |
-        [[ $(git grep -InF 'return validateExtensions' -- openapi3 | wc -l) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]
+        [[ $(git grep -InE 'return .*validateExtensions' -- openapi3 | wc -l) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]
 
     - if: runner.os == 'Linux'
       name: Style around Extensions embedding

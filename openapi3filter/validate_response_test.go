@@ -182,7 +182,7 @@ func Test_validateResponseHeader(t *testing.T) {
 			if tt.wantErr {
 				require.NotEmpty(t, tt.wantErrMsg, "wanted error message is not populated")
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.wantErrMsg)
+				require.ErrorContains(t, err, tt.wantErrMsg)
 			} else {
 				require.NoError(t, err)
 			}

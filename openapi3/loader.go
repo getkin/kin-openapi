@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -130,6 +132,15 @@ func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 	return DefaultReadFromURI(loader, location)
 }
 
+// LoadFromStdin loads a spec from stdin
+func (loader *Loader) LoadFromStdin() (*T, error) {
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return nil, fmt.Errorf("read from stdin: %w", err)
+	}
+	return loader.LoadFromData(data)
+}
+
 // LoadFromData loads a spec from a byte array
 func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
@@ -182,7 +193,7 @@ func unmarshal(data []byte, v interface{}) error {
 	return nil
 }
 
-// ResolveRefsIn expands references if for instance spec was just unmarshalled
+// ResolveRefsIn expands references if for instance spec was just unmarshaled
 func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	if loader.Context == nil {
 		loader.Context = context.Background()
@@ -615,6 +626,9 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	for _, contentType := range value.Content {
+		if contentType == nil {
+			continue
+		}
 		examples := make([]string, 0, len(contentType.Examples))
 		for name := range contentType.Examples {
 			examples = append(examples, name)
@@ -956,10 +970,10 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 
 func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	if pathItem == nil {
-		return errors.New("invalid path item: value MUST be an object")
+		err = errors.New("invalid path item: value MUST be an object")
+		return
 	}
-	ref := pathItem.Ref
-	if ref != "" {
+	if ref := pathItem.Ref; ref != "" {
 		if pathItem.Summary != "" ||
 			pathItem.Description != "" ||
 			pathItem.Connect != nil ||
@@ -973,18 +987,18 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			pathItem.Trace != nil ||
 			len(pathItem.Servers) != 0 ||
 			len(pathItem.Parameters) != 0 {
-			return nil
+			return
 		}
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
-				return err
+				return
 			}
 			*pathItem = p
 		} else {
 			var resolved PathItem
 			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
-				return err
+				return
 			}
 			*pathItem = resolved
 		}

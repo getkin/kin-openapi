@@ -3,11 +3,19 @@ package openapi3
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var oneofSpec = []byte(`components:
+func oneofSpec(t *testing.T) *T {
+	t.Helper()
+
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+components:
   schemas:
     Cat:
       type: object
@@ -49,9 +57,28 @@ var oneofSpec = []byte(`components:
         mapping:
           cat: "#/components/schemas/Cat"
           dog: "#/components/schemas/Dog"
-`)
+`[1:])
 
-var oneofNoDiscriminatorSpec = []byte(`components:
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	return doc
+}
+
+func oneofNoDiscriminatorSpec(t *testing.T) *T {
+	t.Helper()
+
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+components:
   schemas:
     Cat:
       type: object
@@ -78,69 +105,76 @@ var oneofNoDiscriminatorSpec = []byte(`components:
       oneOf:
         - $ref: "#/components/schemas/Cat"
         - $ref: "#/components/schemas/Dog"
-`)
+`[1:])
 
-func TestVisitJSON_OneOf_MissingDiscriptorProperty(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
-		"name": "snoopy",
-	})
-	require.ErrorContains(t, err, "input does not contain the discriminator property \"$type\"\n")
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	return doc
 }
 
-func TestVisitJSON_OneOf_MissingDiscriptorValue(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
-	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+func TestVisitJSON_OneOf_MissingDescriptorProperty(t *testing.T) {
+	doc := oneofSpec(t)
+	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+		"name": "snoopy",
+	})
+	require.ErrorContains(t, err, `input does not contain the discriminator property "$type"`)
+}
+
+func TestVisitJSON_OneOf_MissingDescriptorValue(t *testing.T) {
+	doc := oneofSpec(t)
+	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name":  "snoopy",
 		"$type": "snake",
 	})
-	require.ErrorContains(t, err, "discriminator property \"$type\" has invalid value")
+	require.ErrorContains(t, err, `discriminator property "$type" has invalid value`)
 }
 
 func TestVisitJSON_OneOf_MissingField(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
-	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+	doc := oneofSpec(t)
+	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name":  "snoopy",
 		"$type": "dog",
 	})
-	require.EqualError(t, err, "doesn't match schema due to: Error at \"/barks\": property \"barks\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"$type\": {\n        \"enum\": [\n          \"dog\"\n        ],\n        \"type\": \"string\"\n      },\n      \"barks\": {\n        \"type\": \"boolean\"\n      },\n      \"name\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"barks\",\n      \"$type\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"$type\": \"dog\",\n    \"name\": \"snoopy\"\n  }\n")
+	require.ErrorContains(t, err, `doesn't match schema due to: Error at "/barks": property "barks" is missing`)
 }
 
-func TestVisitJSON_OneOf_NoDiscriptor_MissingField(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofNoDiscriminatorSpec)
-	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
+	doc := oneofNoDiscriminatorSpec(t)
+	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name": "snoopy",
 	})
-	require.EqualError(t, err, "doesn't match schema due to: Error at \"/scratches\": property \"scratches\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"name\": {\n        \"type\": \"string\"\n      },\n      \"scratches\": {\n        \"type\": \"boolean\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"scratches\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"name\": \"snoopy\"\n  }\n Or Error at \"/barks\": property \"barks\" is missing\nSchema:\n  {\n    \"properties\": {\n      \"barks\": {\n        \"type\": \"boolean\"\n      },\n      \"name\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"name\",\n      \"barks\"\n    ],\n    \"type\": \"object\"\n  }\n\nValue:\n  {\n    \"name\": \"snoopy\"\n  }\n")
+	require.ErrorContains(t, err, `doesn't match schema due to: Error at "/scratches": property "scratches" is missing`)
 }
 
-func TestVisitJSON_OneOf_BadDescriminatorType(t *testing.T) {
-	s, err := NewLoader().LoadFromData(oneofSpec)
-	require.NoError(t, err)
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+func TestVisitJSON_OneOf_BadDiscriminatorType(t *testing.T) {
+	doc := oneofSpec(t)
+	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name":      "snoopy",
 		"scratches": true,
 		"$type":     1,
 	})
-	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string")
+	require.ErrorContains(t, err, `value of discriminator property "$type" is not a string`)
 
-	err = s.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]interface{}{
 		"name":  "snoopy",
 		"barks": true,
 		"$type": nil,
 	})
-	require.ErrorContains(t, err, "value of discriminator property \"$type\" is not a string")
+	require.ErrorContains(t, err, `value of discriminator property "$type" is not a string`)
 }
 
 func TestVisitJSON_OneOf_Path(t *testing.T) {
-	t.Parallel()
-
-	loader := NewLoader()
-	spc := `
+	spec := []byte(`
+openapi: 3.0.0
+paths: {}
+info:
+  version: 1.1.1
+  title: title
 components:
   schemas:
     Something:
@@ -162,9 +196,13 @@ components:
                      type: string
                      minLength: 10
                      maxLength: 10
-`[1:]
+`[1:])
 
-	doc, err := loader.LoadFromData([]byte(spc))
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
 	err = doc.Components.Schemas["Something"].Value.VisitJSON(map[string]interface{}{
@@ -175,10 +213,10 @@ components:
 		},
 	})
 
-	assert.Contains(t, err.Error(), `Error at "/first/second/third"`)
+	require.ErrorContains(t, err, `Error at "/first/second/third"`)
 
 	var sErr *SchemaError
 
-	assert.ErrorAs(t, err, &sErr)
-	assert.Equal(t, []string{"first", "second", "third"}, sErr.JSONPointer())
+	require.ErrorAs(t, err, &sErr)
+	require.Equal(t, []string{"first", "second", "third"}, sErr.JSONPointer())
 }

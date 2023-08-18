@@ -139,8 +139,8 @@ var refTestDataEntries = []refTestDataEntry{
 		},
 	},
 	{
-		name:            "PathOperationReqestBodyContentSchemaRef",
-		contentTemplate: externalPathOperationReqestBodyContentSchemaRefTemplate,
+		name:            "PathOperationRequestBodyContentSchemaRef",
+		contentTemplate: externalPathOperationRequestBodyContentSchemaRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value)
 			require.Equal(t, "string", doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
@@ -567,7 +567,7 @@ const externalPathOperationRequestBodyExampleRefTemplate = `
     }
 }`
 
-const externalPathOperationReqestBodyContentSchemaRefTemplate = `
+const externalPathOperationRequestBodyContentSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {

@@ -32,6 +32,6 @@ components:
 	doc, err := sl.LoadFromData(spec)
 	require.NoError(t, err)
 
-	doc.Validate(sl.Context)
+	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 }
