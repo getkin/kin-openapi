@@ -35,4 +35,5 @@ paths:
 
 	require.NotNil(t, doc.Paths["/v1/operation"].Get.Responses.Get(201))
 	require.Nil(t, doc.Paths["/v1/operation"].Get.Responses.Get(404))
+	require.Nil(t, doc.Paths["/v1/operation"].Get.Responses.Get(999))
 }

@@ -30,17 +30,27 @@ func (responses Responses) Default() *ResponseRef {
 // Get returns a ResponseRef for the given status
 // If an exact match isn't initially found a patterned field is checked using
 // the first digit to determine the range (eg: 201 to 2XX)
+// See https://spec.openapis.org/oas/v3.0.3#patterned-fields-0
 func (responses Responses) Get(status int) *ResponseRef {
 	st := strconv.FormatInt(int64(status), 10)
-	rref, ok := responses[st]
-	if ok {
+	if rref, ok := responses[st]; ok {
 		return rref
 	}
 	st = string(st[0]) + "XX"
-	if rref, ok = responses[st]; !ok {
+	switch st {
+	case "1XX":
+		return responses["1XX"]
+	case "2XX":
+		return responses["2XX"]
+	case "3XX":
+		return responses["3XX"]
+	case "4XX":
+		return responses["4XX"]
+	case "5XX":
+		return responses["5XX"]
+	default:
 		return nil
 	}
-	return rref
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
