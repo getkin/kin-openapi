@@ -9,7 +9,7 @@ import (
 
 // conflicting uniqueItems values are merged successfully
 func TestMerge_UniqueItemsTrue(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -31,7 +31,7 @@ func TestMerge_UniqueItemsTrue(t *testing.T) {
 
 // non-conflicting uniqueItems values are merged successfully
 func TestMerge_UniqueItemsFalse(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -53,7 +53,7 @@ func TestMerge_UniqueItemsFalse(t *testing.T) {
 
 // Item merge fails due to conflicting item types.
 func TestMerge_Items_Failure(t *testing.T) {
-	_, err := Merge(&Schema{
+	_, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -96,7 +96,7 @@ func TestMerge_Items_Failure(t *testing.T) {
 
 // items are merged successfully when there are no conflicts
 func TestMerge_Items(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -143,7 +143,7 @@ func TestMerge_Items(t *testing.T) {
 func TestMerge_MultipleOfContained(t *testing.T) {
 
 	//todo - more tests
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -164,7 +164,7 @@ func TestMerge_MultipleOfContained(t *testing.T) {
 }
 
 func TestMerge_MultipleOfNotContained(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -185,7 +185,7 @@ func TestMerge_MultipleOfNotContained(t *testing.T) {
 }
 
 func TestMerge_EnumContained(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -206,7 +206,7 @@ func TestMerge_EnumContained(t *testing.T) {
 }
 
 func TestMerge_EnumNoIntersection(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -228,7 +228,7 @@ func TestMerge_EnumNoIntersection(t *testing.T) {
 
 // Properties range is the most restrictive
 func TestMerge_RangeProperties(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -254,7 +254,7 @@ func TestMerge_RangeProperties(t *testing.T) {
 // Items range is the most restrictive
 func TestMerge_RangeItems(t *testing.T) {
 
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -278,7 +278,7 @@ func TestMerge_RangeItems(t *testing.T) {
 }
 
 func TestMerge_Range(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -302,7 +302,7 @@ func TestMerge_Range(t *testing.T) {
 }
 
 func TestMerge_MaxLength(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -323,7 +323,7 @@ func TestMerge_MaxLength(t *testing.T) {
 }
 
 func TestMerge_MinLength(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -344,7 +344,7 @@ func TestMerge_MinLength(t *testing.T) {
 }
 
 func TestMerge_Description(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		Description: "desc0",
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -366,7 +366,7 @@ func TestMerge_Description(t *testing.T) {
 }
 
 func TestMerge_Type(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -385,7 +385,7 @@ func TestMerge_Type(t *testing.T) {
 }
 
 func TestMerge_Title(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		Title: "base schema",
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -407,7 +407,7 @@ func TestMerge_Title(t *testing.T) {
 }
 
 func TestMerge_Format(t *testing.T) {
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -428,7 +428,7 @@ func TestMerge_Format(t *testing.T) {
 }
 
 func TestMerge_Format_Failure(t *testing.T) {
-	_, err := Merge(&Schema{
+	_, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -449,7 +449,7 @@ func TestMerge_Format_Failure(t *testing.T) {
 
 func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
-	merged, err := Merge(&schema)
+	merged, err := Merge(schema)
 	require.NoError(t, err)
 	require.Equal(t, &schema, merged) //todo &schema
 }
@@ -458,7 +458,7 @@ func TestMerge_NoAllOf(t *testing.T) {
 	schema := Schema{
 		Title: "test",
 	}
-	merged, err := Merge(&schema)
+	merged, err := Merge(schema)
 	require.NoError(t, err)
 	require.Equal(t, &schema, merged) //todo &schema
 }
@@ -498,7 +498,7 @@ func TestMerge_TwoObjects(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(&schema)
+	merged, err := Merge(schema)
 	require.NoError(t, err)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 2)
@@ -527,7 +527,7 @@ func TestMerge_OneObjectOneProp(t *testing.T) {
 		},
 	}
 
-	merged, err := Merge(&schema)
+	merged, err := Merge(schema)
 	require.NoError(t, err)
 	require.Len(t, merged.Properties, 1)
 	require.Equal(t, object["description"].Value.Type, merged.Properties["description"].Value.Type)
@@ -535,7 +535,7 @@ func TestMerge_OneObjectOneProp(t *testing.T) {
 
 func TestMerge_OneObjectNoProps(t *testing.T) {
 
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -585,7 +585,7 @@ func TestMerge_OverlappingProps(t *testing.T) {
 			},
 		},
 	}
-	merged, err := Merge(&schema)
+	merged, err := Merge(schema)
 	require.NoError(t, err)
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 1)
@@ -594,7 +594,7 @@ func TestMerge_OverlappingProps(t *testing.T) {
 
 func TestMergeAllOf_Pattern(t *testing.T) {
 
-	merged, err := Merge(&Schema{
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -632,7 +632,7 @@ func TestMerge_Required(t *testing.T) {
 			require.NoError(t, err, "loading test file")
 			err = doc.Validate(ctx)
 			require.NoError(t, err, "validating spec")
-			merged, err := Merge(doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
+			merged, err := Merge(*doc.Paths["/products"].Get.Responses["200"].Value.Content["application/json"].Schema.Value)
 			require.NoError(t, err)
 
 			props := merged.Properties

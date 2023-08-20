@@ -43,9 +43,9 @@ type SchemaCollection struct {
 }
 
 // Merge replaces objects under AllOf with a flattened equivalent
-func Merge(schema *Schema) (*Schema, error) {
-	if !isListOfObjects(schema) {
-		return schema, nil
+func Merge(schema Schema) (*Schema, error) {
+	if !isListOfObjects(&schema) {
+		return &schema, nil
 	}
 
 	if schema.AllOf != nil {
@@ -54,20 +54,20 @@ func Merge(schema *Schema) (*Schema, error) {
 			return &Schema{}, err
 		}
 		schema.AllOf = nil
-		schema, err = mergeFields([]*Schema{schema, mergedAllOf})
+		result, err := mergeFields([]*Schema{&schema, mergedAllOf})
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		return schema, nil
+		return result, nil
 	}
 
 	// handle cases where AllOf is nil, but other fields might include AllOf.
-	schema, err := handleNestedAllOfCases(schema)
+	result, err := handleNestedAllOfCases(&schema)
 	if err != nil {
 		return &Schema{}, err
 	}
 
-	return schema, nil
+	return result, nil
 }
 
 func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
@@ -85,7 +85,7 @@ func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
 			if schemaRef == nil {
 				continue
 			}
-			result, err := Merge(schemaRef.Value)
+			result, err := Merge(*schemaRef.Value)
 			if err != nil {
 				return &Schema{}, err
 			}
@@ -102,7 +102,7 @@ func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
 			if schemaRef == nil {
 				continue
 			}
-			result, err := Merge(schemaRef.Value)
+			result, err := Merge(*schemaRef.Value)
 			if err != nil {
 				return &Schema{}, err
 			}
@@ -114,7 +114,7 @@ func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
 	}
 
 	if schema.Not != nil {
-		result, err := Merge(schema.Not.Value)
+		result, err := Merge(*schema.Not.Value)
 		if err != nil {
 			return &Schema{}, err
 		}
@@ -129,7 +129,7 @@ func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
 func mergeProperties(schemas Schemas) (Schemas, error) {
 	res := make(Schemas)
 	for name, schemaRef := range schemas {
-		merged, err := Merge(schemaRef.Value)
+		merged, err := Merge(*schemaRef.Value)
 		if err != nil {
 			return res, err
 		}
@@ -234,7 +234,7 @@ func mergeAllOf(allOf SchemaRefs) (*Schema, error) {
 
 	schemas := []*Schema{}
 	for _, schema := range allOf {
-		merged, err := Merge(schema.Value)
+		merged, err := Merge(*schema.Value)
 		if err != nil {
 			return &Schema{}, err
 		}
