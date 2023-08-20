@@ -1,6 +1,7 @@
 const ParameterInPath = "path" ...
 const TypeArray = "array" ...
 const FormatOfStringForUUIDOfRFC4122 = `^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$` ...
+const FormatErrorMessage = "unable to resolve Format conflict: all Format values must be identical" ...
 const SerializationSimple = "simple" ...
 var SchemaErrorDetailsDisabled = false ...
 var CircularReferenceCounter = 3
@@ -91,6 +92,7 @@ type ResponseRef struct{ ... }
 type Responses map[string]*ResponseRef
     func NewResponses() Responses
 type Schema struct{ ... }
+    func Merge(schema *Schema) (*Schema, error)
     func NewAllOfSchema(schemas ...*Schema) *Schema
     func NewAnyOfSchema(schemas ...*Schema) *Schema
     func NewArraySchema() *Schema
@@ -106,6 +108,7 @@ type Schema struct{ ... }
     func NewSchema() *Schema
     func NewStringSchema() *Schema
     func NewUUIDSchema() *Schema
+type SchemaCollection struct{ ... }
 type SchemaError struct{ ... }
 type SchemaRef struct{ ... }
     func NewSchemaRef(ref string, value *Schema) *SchemaRef
