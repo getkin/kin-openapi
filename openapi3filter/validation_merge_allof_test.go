@@ -194,7 +194,7 @@ paths:
                      properties:
                        test1:
                          enum: ["3", "8", "5"]
-                     additionalProperties: false					 
+                     additionalProperties: false
          responses:
            '200':
              description: Ok
@@ -381,7 +381,7 @@ paths:
 	const spec2 = `
 openapi: 3.0.0
 info:
-  title: Validate items of objects 
+  title: Validate items of objects
   version: '0.1'
 paths:
   /sample:
