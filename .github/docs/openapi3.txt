@@ -92,7 +92,7 @@ type ResponseRef struct{ ... }
 type Responses map[string]*ResponseRef
     func NewResponses() Responses
 type Schema struct{ ... }
-    func Merge(schema *Schema) (*Schema, error)
+    func Merge(schema Schema) (*Schema, error)
     func NewAllOfSchema(schemas ...*Schema) *Schema
     func NewAnyOfSchema(schemas ...*Schema) *Schema
     func NewArraySchema() *Schema
