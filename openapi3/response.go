@@ -27,8 +27,30 @@ func (responses Responses) Default() *ResponseRef {
 	return responses["default"]
 }
 
+// Get returns a ResponseRef for the given status
+// If an exact match isn't initially found a patterned field is checked using
+// the first digit to determine the range (eg: 201 to 2XX)
+// See https://spec.openapis.org/oas/v3.0.3#patterned-fields-0
 func (responses Responses) Get(status int) *ResponseRef {
-	return responses[strconv.FormatInt(int64(status), 10)]
+	st := strconv.FormatInt(int64(status), 10)
+	if rref, ok := responses[st]; ok {
+		return rref
+	}
+	st = string(st[0]) + "XX"
+	switch st {
+	case "1XX":
+		return responses["1XX"]
+	case "2XX":
+		return responses["2XX"]
+	case "3XX":
+		return responses["3XX"]
+	case "4XX":
+		return responses["4XX"]
+	case "5XX":
+		return responses["5XX"]
+	default:
+		return nil
+	}
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
@@ -53,10 +75,10 @@ func (responses Responses) Validate(ctx context.Context, opts ...ValidationOptio
 	return nil
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (responses Responses) JSONLookup(token string) (interface{}, error) {
 	ref, ok := responses[token]
-	if ok == false {
+	if !ok {
 		return nil, fmt.Errorf("invalid token reference: %q", token)
 	}
 

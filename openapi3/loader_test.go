@@ -103,11 +103,25 @@ paths:
 }
 
 func ExampleLoader() {
-	const source = `{"info":{"description":"An API"}}`
-	doc, err := NewLoader().LoadFromData([]byte(source))
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+  description: An API
+`[1:])
+
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	if err != nil {
 		panic(err)
 	}
+
+	if err := doc.Validate(loader.Context); err != nil {
+		panic(err)
+	}
+
 	fmt.Print(doc.Info.Description)
 	// Output: An API
 }
@@ -300,7 +314,7 @@ func TestLoadWithRecursiveReferenceInLocalReferenceInParentSubdir(t *testing.T) 
 	require.Equal(t, "object", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
-func TestLoadWithRecursiveReferenceInRefrerenceInLocalReference(t *testing.T) {
+func TestLoadWithRecursiveReferenceInReferenceInLocalReference(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/refInLocalRef/openapi.json")

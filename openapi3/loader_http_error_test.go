@@ -44,14 +44,11 @@ func TestLoadReferenceFromRemoteURLFailsWithHttpError(t *testing.T) {
 
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	_, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
+	require.EqualError(t, err, fmt.Sprintf(`error resolving reference "%s/components.openapi.json#/components/headers/CustomTestHeader": error loading "%s/components.openapi.json": request returned status code 400`, ts.URL, ts.URL))
 
-	require.Nil(t, doc)
-	require.EqualError(t, err, fmt.Sprintf("error resolving reference \"%s/components.openapi.json#/components/headers/CustomTestHeader\": error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL, ts.URL))
-
-	doc, err = loader.LoadFromData(spec)
-	require.Nil(t, doc)
-	require.EqualError(t, err, fmt.Sprintf("error resolving reference \"%s/components.openapi.json#/components/headers/CustomTestHeader\": error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL, ts.URL))
+	_, err = loader.LoadFromData(spec)
+	require.EqualError(t, err, fmt.Sprintf(`error resolving reference "%s/components.openapi.json#/components/headers/CustomTestHeader": error loading "%s/components.openapi.json": request returned status code 400`, ts.URL, ts.URL))
 }
 
 func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
@@ -91,9 +88,9 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
 	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 
 	require.Nil(t, doc)
-	require.EqualError(t, err, fmt.Sprintf("error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL))
+	require.EqualError(t, err, fmt.Sprintf(`error loading "%s/components.openapi.json": request returned status code 400`, ts.URL))
 
 	doc, err = loader.LoadFromData(spec)
 	require.Nil(t, doc)
-	require.EqualError(t, err, fmt.Sprintf("error loading \"%s/components.openapi.json\": request returned status code 400", ts.URL))
+	require.EqualError(t, err, fmt.Sprintf(`error loading "%s/components.openapi.json": request returned status code 400`, ts.URL))
 }

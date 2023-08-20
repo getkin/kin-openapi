@@ -77,7 +77,7 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *CallbackRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -153,7 +153,7 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *ExampleRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -229,7 +229,7 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *HeaderRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -305,7 +305,7 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error 
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *LinkRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -381,7 +381,7 @@ func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) e
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *ParameterRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -457,7 +457,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -533,7 +533,7 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *ResponseRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -609,7 +609,7 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *SchemaRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
@@ -685,7 +685,7 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 	return foundUnresolvedRef(x.Ref)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil

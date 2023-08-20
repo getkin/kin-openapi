@@ -7,7 +7,8 @@ import (
 )
 
 func TestIssue289(t *testing.T) {
-	spec := []byte(`components:
+	spec := []byte(`
+components:
   schemas:
     Server:
       properties:
@@ -27,11 +28,20 @@ func TestIssue289(t *testing.T) {
       pattern: "^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$"
       type: string
 openapi: "3.0.1"
-`)
+info:
+  version: 1.0.0
+  title: title
+paths: {}
+`[1:])
 
-	s, err := NewLoader().LoadFromData(spec)
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = s.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
 		"name":    "kin-openapi",
 		"address": "127.0.0.1",
 	})

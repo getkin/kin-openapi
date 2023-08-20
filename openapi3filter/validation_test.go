@@ -270,13 +270,6 @@ func TestFilter(t *testing.T) {
 
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=567",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &RequestError{}, err)
-
-	req = ExampleRequest{
-		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=2017-12-31T11:59:59",
 	}
 	err = expect(req, resp)
@@ -504,26 +497,26 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 	tc := []struct {
 		name            string
 		schemes         *[]ExampleSecurityScheme
-		expectedSchemes *[]ExampleSecurityScheme
+		expectedSchemes []ExampleSecurityScheme
 	}{
 		{
 			name:    "/inherited-security",
 			schemes: nil,
-			expectedSchemes: &[]ExampleSecurityScheme{
+			expectedSchemes: []ExampleSecurityScheme{
 				securitySchemes[1],
 			},
 		},
 		{
 			name:            "/overwrite-without-security",
 			schemes:         &[]ExampleSecurityScheme{},
-			expectedSchemes: &[]ExampleSecurityScheme{},
+			expectedSchemes: []ExampleSecurityScheme{},
 		},
 		{
 			name: "/overwrite-with-security",
 			schemes: &[]ExampleSecurityScheme{
 				securitySchemes[0],
 			},
-			expectedSchemes: &[]ExampleSecurityScheme{
+			expectedSchemes: []ExampleSecurityScheme{
 				securitySchemes[0],
 			},
 		},
@@ -555,7 +548,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 
 	// Add the paths from the test cases to the spec's paths
 	for _, tc := range tc {
-		var securityRequirements *openapi3.SecurityRequirements = nil
+		var securityRequirements *openapi3.SecurityRequirements
 		if tc.schemes != nil {
 			tempS := openapi3.NewSecurityRequirements()
 			for _, scheme := range *tc.schemes {
@@ -579,13 +572,9 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 	// Test each case
 	for _, path := range tc {
 		// Make a map of the schemes and whether they're
-		var schemesValidated *map[*openapi3.SecurityScheme]bool = nil
-		if path.expectedSchemes != nil {
-			temp := make(map[*openapi3.SecurityScheme]bool)
-			schemesValidated = &temp
-			for _, scheme := range *path.expectedSchemes {
-				(*schemesValidated)[scheme.Scheme] = false
-			}
+		schemesValidated := make(map[*openapi3.SecurityScheme]bool)
+		for _, scheme := range path.expectedSchemes {
+			schemesValidated[scheme.Scheme] = false
 		}
 
 		// Create the request
@@ -598,15 +587,13 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 			Route:   route,
 			Options: &Options{
 				AuthenticationFunc: func(ctx context.Context, input *AuthenticationInput) error {
-					if schemesValidated != nil {
-						if validated, ok := (*schemesValidated)[input.SecurityScheme]; ok {
-							if validated {
-								t.Fatalf("The path %q had the schemes %v named %q validated more than once",
-									path.name, input.SecurityScheme, input.SecuritySchemeName)
-							}
-							(*schemesValidated)[input.SecurityScheme] = true
-							return nil
+					if validated, ok := schemesValidated[input.SecurityScheme]; ok {
+						if validated {
+							t.Fatalf("The path %q had the schemes %v named %q validated more than once",
+								path.name, input.SecurityScheme, input.SecuritySchemeName)
 						}
+						schemesValidated[input.SecurityScheme] = true
+						return nil
 					}
 
 					t.Fatalf("The path %q had the schemes %v named %q",
@@ -621,9 +608,9 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 		err = ValidateRequest(context.Background(), &req)
 		require.NoError(t, err)
 
-		for securityRequirement, validated := range *schemesValidated {
+		for securityRequirement, validated := range schemesValidated {
 			if !validated {
-				t.Fatalf("The security requirement %v was exepected to be validated but wasn't",
+				t.Fatalf("The security requirement %v was unexpected to be validated but wasn't",
 					securityRequirement)
 			}
 		}

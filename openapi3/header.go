@@ -12,7 +12,7 @@ type Headers map[string]*HeaderRef
 
 var _ jsonpointer.JSONPointable = (*Headers)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (h Headers) JSONLookup(token string) (interface{}, error) {
 	ref, ok := h[token]
 	if ref == nil || !ok {
@@ -33,7 +33,7 @@ type Header struct {
 
 var _ jsonpointer.JSONPointable = (*Header)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (header Header) JSONLookup(token string) (interface{}, error) {
 	return header.Parameter.JSONLookup(token)
 }

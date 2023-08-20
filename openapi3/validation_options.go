@@ -92,7 +92,7 @@ func DisableExamplesValidation() ValidationOption {
 	}
 }
 
-// WithValidationOptions allows adding validation options to a context object that can be used when validationg any OpenAPI type.
+// WithValidationOptions allows adding validation options to a context object that can be used when validating any OpenAPI type.
 func WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context {
 	if len(opts) == 0 {
 		return ctx

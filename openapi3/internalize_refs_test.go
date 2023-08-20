@@ -42,9 +42,9 @@ func TestInternalizeRefs(t *testing.T) {
 			require.NoError(t, err, "validating internalized spec")
 
 			actual, err := doc.MarshalJSON()
-			require.NoError(t, err, "marshalling internalized spec")
+			require.NoError(t, err, "marshaling internalized spec")
 
-			// run a static check over the file, making sure each occurence of a
+			// run a static check over the file, making sure each occurrence of a
 			// reference is followed by a #
 			numRefs := len(regexpRef.FindAll(actual, -1))
 			numInternalRefs := len(regexpRefInternal.FindAll(actual, -1))

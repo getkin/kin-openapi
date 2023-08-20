@@ -12,38 +12,36 @@ import (
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
-func TestIssue625(t *testing.T) {
-
+func TestIssue789(t *testing.T) {
 	anyOfArraySpec := `
 openapi: 3.0.0
 info:
   version: 1.0.0
   title: Sample API
 paths:
- /items:
-  get:
-    description: Returns a list of stuff
-    parameters:
-    - description: test object
-      explode: false
-      in: query
-      name: test
-      required: false
-      schema:
-        type: array
-        items:
-         anyOf:
-          - type: integer
-          - type: boolean
-    responses:
-      '200':
-        description: Successful response
+  /items:
+    get:
+      description: Returns a list of stuff
+      parameters:
+      - description: test object
+        explode: false
+        in: query
+        name: test
+        required: true
+        schema:
+          type: string
+          anyOf:
+            - pattern: '\babc\b'
+            - pattern: '\bfoo\b'
+            - pattern: '\bbar\b'
+      responses:
+        '200':
+          description: Successful response
 `[1:]
 
 	oneOfArraySpec := strings.ReplaceAll(anyOfArraySpec, "anyOf", "oneOf")
 
-	allOfArraySpec := strings.ReplaceAll(strings.ReplaceAll(anyOfArraySpec, "anyOf", "allOf"),
-		"type: boolean", "type: number")
+	allOfArraySpec := strings.ReplaceAll(anyOfArraySpec, "anyOf", "allOf")
 
 	tests := []struct {
 		name   string
@@ -52,38 +50,43 @@ paths:
 		errStr string
 	}{
 		{
-			name: "success anyof object array",
+			name: "success anyof string pattern match",
 			spec: anyOfArraySpec,
-			req:  "/items?test=3,7",
+			req:  "/items?test=abc",
 		},
 		{
-			name:   "failed anyof object array",
+			name:   "failed anyof string pattern match",
 			spec:   anyOfArraySpec,
-			req:    "/items?test=s1,s2",
-			errStr: `parameter "test" in query has an error: path 0: value s1: an invalid boolean: invalid syntax`,
+			req:    "/items?test=def",
+			errStr: `parameter "test" in query has an error: doesn't match any schema from "anyOf"`,
 		},
-
 		{
 			name: "success allof object array",
 			spec: allOfArraySpec,
-			req:  `/items?test=1,3`,
+			req:  `/items?test=abc foo bar`,
 		},
 		{
 			name:   "failed allof object array",
 			spec:   allOfArraySpec,
-			req:    `/items?test=1.2,3.1`,
-			errStr: `parameter "test" in query has an error: path 0: value 1.2: an invalid integer: invalid syntax`,
+			req:    `/items?test=foo`,
+			errStr: `parameter "test" in query has an error: string doesn't match the regular expression`,
 		},
 		{
-			name: "success oneof object array",
+			name: "success oneof string pattern match",
 			spec: oneOfArraySpec,
-			req:  `/items?test=true,3`,
+			req:  `/items?test=foo`,
 		},
 		{
-			name:   "failed oneof object array",
+			name:   "failed oneof string pattern match",
 			spec:   oneOfArraySpec,
-			req:    `/items?test="val1","val2"`,
-			errStr: `parameter "test" in query has an error: item 0: decoding oneOf failed: 0 schemas matched`,
+			req:    `/items?test=def`,
+			errStr: `parameter "test" in query has an error: doesn't match schema due to: string doesn't match the regular expression`,
+		},
+		{
+			name:   "failed oneof string pattern match",
+			spec:   oneOfArraySpec,
+			req:    `/items?test=foo bar`,
+			errStr: `parameter "test" in query has an error: input matches more than one oneOf schemas`,
 		},
 	}
 

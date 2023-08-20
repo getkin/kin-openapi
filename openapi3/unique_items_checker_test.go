@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,5 +32,5 @@ func TestRegisterArrayUniqueItemsChecker(t *testing.T) {
 
 	err = schema.VisitJSON(val)
 	require.Error(t, err)
-	require.True(t, strings.HasPrefix(err.Error(), "duplicate items found"))
+	require.ErrorContains(t, err, "duplicate items found")
 }
