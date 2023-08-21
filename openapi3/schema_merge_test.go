@@ -7,6 +7,122 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// merge multiple Not inside AllOf
+func TestMerge_Not(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Not: &SchemaRef{
+						Value: &Schema{
+							Type: "string",
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Not: &SchemaRef{
+						Value: &Schema{
+							Type: "integer",
+						},
+					},
+				},
+			},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, "string", merged.Not.Value.AnyOf[0].Value.Type)
+	require.Equal(t, "integer", merged.Not.Value.AnyOf[1].Value.Type)
+}
+
+// merge multiple OneOf inside AllOf
+func TestMerge_OneOf(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					OneOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"string"},
+							},
+						},
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					OneOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"string", "boolean"}, merged.OneOf[0].Value.Required)
+}
+
+// merge multiple AnyOf inside AllOf
+func TestMerge_AnyOf(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					AnyOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"string"},
+							},
+						},
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					AnyOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"string", "boolean"}, merged.AnyOf[0].Value.Required)
+}
+
 // conflicting uniqueItems values are merged successfully
 func TestMerge_UniqueItemsTrue(t *testing.T) {
 	merged, err := Merge(Schema{
@@ -648,60 +764,3 @@ func TestMerge_Required(t *testing.T) {
 		})
 	}
 }
-
-// func TestMerge_NestedAllOf(t *testing.T) {
-// 	obj2 := Schemas{}
-// 	obj2["description"] = &SchemaRef{
-// 		Value: &Schema{
-// 			Type:  "object",
-// 			Title: "description",
-// 		},
-// 	}
-// 	obj2["abcdefg"] = &SchemaRef{
-// 		Value: &Schema{
-// 			Type:  "object",
-// 			Title: "abc",
-// 		},
-// 	}
-
-// 	obj1 := Schemas{}
-// 	obj1["description"] = &SchemaRef{
-// 		Value: &Schema{
-// 			Type:  "object",
-// 			Title: "object2",
-// 		},
-// 	}
-// 	obj1["test"] = &SchemaRef{
-// 		Value: &Schema{
-// 			AllOf: SchemaRefs{
-// 				&SchemaRef{
-// 					Value: &Schema{
-// 						Type:  "object",
-// 						Title: "abc",
-// 					},
-// 				},
-// 				&SchemaRef{
-// 					Value: &Schema{
-// 						Type:       "object",
-// 						Properties: obj2,
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	schema := Schema{
-// 		AllOf: SchemaRefs{
-// 			&SchemaRef{
-// 				Value: &Schema{
-// 					Type:       "object",
-// 					Properties: obj1,
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	d, _ := schema.MarshalJSON()
-// 	PrettyPrintJSON(d)
-// 	//todo add tests.
-// }
