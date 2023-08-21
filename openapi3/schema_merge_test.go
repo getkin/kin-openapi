@@ -417,8 +417,9 @@ func TestMerge_EnumContained(t *testing.T) {
 	require.ElementsMatch(t, []interface{}{"1"}, merged.Enum)
 }
 
+// enum merge fails if the intersection of enum values is empty.
 func TestMerge_EnumNoIntersection(t *testing.T) {
-	merged, err := Merge(Schema{
+	_, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -434,8 +435,7 @@ func TestMerge_EnumNoIntersection(t *testing.T) {
 			},
 		},
 	})
-	require.NoError(t, err)
-	require.Empty(t, merged.Enum)
+	require.Error(t, err)
 }
 
 // Properties range is the most restrictive

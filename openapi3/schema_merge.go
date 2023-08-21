@@ -163,7 +163,11 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	result.MinProps = findMaxValue(collection.MinProps)
 	result.MaxProps = findMinValue(collection.MaxProps)
 	result.Pattern = resolvePattern(collection.Pattern)
-	result.Enum = resolveEnum(collection.Enum)
+	enums, err := resolveEnum(collection.Enum)
+	if err != nil {
+		return result, err
+	}
+	result.Enum = enums
 	result = resolveMultipleOf(result, &collection)
 	result.Required = resolveRequired(collection.Required)
 	result, err = resolveItems(result, &collection)
@@ -422,14 +426,22 @@ func resolveAdditionalProperties(schema *Schema, collection *SchemaCollection) (
 	return schema, nil
 }
 
-func resolveEnum(values [][]interface{}) []interface{} {
+func resolveEnum(values [][]interface{}) ([]interface{}, error) {
 	var nonEmptyEnum [][]interface{}
 	for _, enum := range values {
 		if len(enum) > 0 {
 			nonEmptyEnum = append(nonEmptyEnum, enum)
 		}
 	}
-	return findIntersectionOfArrays(nonEmptyEnum)
+	var intersection []interface{}
+	if len(nonEmptyEnum) == 0 {
+		return intersection, nil
+	}
+	intersection = findIntersectionOfArrays(nonEmptyEnum)
+	if len(intersection) == 0 {
+		return intersection, errors.New("unable to resolve Enum conflict: intersection of values must be non-empty")
+	}
+	return intersection, nil
 }
 
 func resolvePattern(values []string) string {
