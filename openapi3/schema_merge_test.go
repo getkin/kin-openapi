@@ -7,6 +7,102 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// if ExclusiveMax is true on the minimum Max value, then ExclusiveMax is true in the merged schema.
+func TestMerge_ExclusiveMaxIsTrue(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMax: true,
+					Max:          Float64Ptr(1),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: false,
+					Max:          Float64Ptr(2),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, true, merged.ExclusiveMax)
+}
+
+// if ExclusiveMax is false on the minimum Max value, then ExclusiveMax is false in the merged schema.
+func TestMerge_ExclusiveMaxIsFalse(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMax: false,
+					Max:          Float64Ptr(1),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: true,
+					Max:          Float64Ptr(2),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, false, merged.ExclusiveMax)
+}
+
+// if ExclusiveMin is false on the highest Min value, then ExclusiveMin is false in the merged schema.
+func TestMerge_ExclusiveMinIsFalse(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: false,
+					Min:          Float64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: true,
+					Min:          Float64Ptr(5),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, false, merged.ExclusiveMin)
+}
+
+// if ExclusiveMin is true on the highest Min value, then ExclusiveMin is true in the merged schema.
+func TestMerge_ExclusiveMinIsTrue(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: true,
+					Min:          Float64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: false,
+					Min:          Float64Ptr(5),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, true, merged.ExclusiveMin)
+}
+
 // merge multiple Not inside AllOf
 func TestMerge_Not(t *testing.T) {
 	merged, err := Merge(Schema{
@@ -481,7 +577,8 @@ func TestMerge_Description(t *testing.T) {
 	require.Equal(t, "desc0", merged.Description)
 }
 
-func TestMerge_Type(t *testing.T) {
+// non-conflicting types are merged successfully
+func TestMerge_NonConflictingType(t *testing.T) {
 	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -498,6 +595,39 @@ func TestMerge_Type(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, "object", merged.Type)
+}
+
+// schema cannot be merged if types are conflicting
+func TestMerge_FailsOnConflictingTypes(t *testing.T) {
+	_, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "object",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.Error(t, err)
 }
 
 func TestMerge_Title(t *testing.T) {
