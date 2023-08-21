@@ -375,7 +375,7 @@ func TestMerge_MultipleOfContained(t *testing.T) {
 	require.Equal(t, float64(10), *merged.MultipleOf)
 }
 
-func TestMerge_MultipleOfNotContained(t *testing.T) {
+func TestMerge_MultipleOfDecimal(t *testing.T) {
 	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
