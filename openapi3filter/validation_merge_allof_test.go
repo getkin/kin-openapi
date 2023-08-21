@@ -982,6 +982,7 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// testing Nested AllOf Inside OneOf
 func TestMerge_NestedAllOfInsideOneOf(t *testing.T) {
 
 	const spec = `
@@ -1041,6 +1042,7 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// testing Nested AllOf Inside AnyOf
 func TestMerge_NestedAllOfInsideAnyOf(t *testing.T) {
 
 	const spec = `
