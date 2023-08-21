@@ -987,7 +987,7 @@ func TestMerge_NestedAllOfInsideOneOf(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
 info:
-  title: Multiple 'not' inside 'allOf' Example
+  title: Nested AllOf Inside OneOf
   version: '0.1'
 paths:
   /sample:
@@ -998,6 +998,10 @@ paths:
           application/json:
             schema:
               allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: integer
                 - type: object
                   oneOf:
                     - type: object
@@ -1017,10 +1021,6 @@ paths:
 `
 	tests := []Test{
 		{
-			[]byte(`{"test1": true}`),
-			true,
-		},
-		{
 			[]byte(`{"id": 1, "name": "name"}`),
 			false,
 		},
@@ -1029,17 +1029,73 @@ paths:
 			false,
 		},
 		{
+			[]byte(`{"test1": true}`),
+			true,
+		},
+		{
 			[]byte(`{"id": 1, "name": "name, "nickname": "nickname"}`),
 			true,
 		},
-		// {
-		// 	[]byte(`{"test1": "string"}`),
-		// 	true,
-		// },
-		// {
-		// 	[]byte(`{"test2": true}`),
-		// 	true,
-		// },
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
+func TestMerge_NestedAllOfInsideAnyOf(t *testing.T) {
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Nested AllOf Inside AnyOf
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: integer
+                - type: object
+                  anyOf:
+                    - type: object
+                      allOf:
+                        - type: object
+                          required:
+                            - nickname
+                        - type: object
+                          properties:
+                            name:
+                              type: string
+                    - type: object
+                      required:
+                        - id
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"id": 1, "name": "name"}`),
+			false,
+		},
+		{
+			[]byte(`{"nickname": "nickname"}`),
+			false,
+		},
+		{
+			[]byte(`{"test1": true}`),
+			true,
+		},
+		{
+			[]byte(`{}`),
+			true,
+		},
 	}
 
 	validateConsistency(t, spec, tests)
