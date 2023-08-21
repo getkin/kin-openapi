@@ -681,6 +681,10 @@ func resolveNot(schema *Schema, collection *SchemaCollection) *Schema {
 	if len(refs) == 0 {
 		return schema
 	}
+	if len(refs) == 1 {
+		schema.Not = refs[0]
+		return schema
+	}
 	schema.Not = &SchemaRef{
 		Value: &Schema{
 			AnyOf: refs,
@@ -714,6 +718,10 @@ func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error)
 	if len(groups) == 0 {
 		return schema, nil
 	}
+	if len(groups) == 1 {
+		schema.AnyOf = groups[0]
+		return schema, nil
+	}
 	combinations := getCombinations(groups)
 	if len(combinations) == 0 {
 		return schema, nil
@@ -729,6 +737,10 @@ func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error)
 func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
 	groups := filterEmptySchemaRefs(collection.OneOf)
 	if len(groups) == 0 {
+		return schema, nil
+	}
+	if len(groups) == 1 {
+		schema.OneOf = groups[0]
 		return schema, nil
 	}
 	combinations := getCombinations(collection.OneOf)
@@ -748,7 +760,6 @@ func resolveGroups(combinations []SchemaRefs) (SchemaRefs, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var refs SchemaRefs
 	for _, merged := range mergedCombinations {
 		refs = append(refs, &SchemaRef{
