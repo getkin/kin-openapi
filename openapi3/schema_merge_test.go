@@ -801,7 +801,6 @@ func TestMerge_OverlappingProps(t *testing.T) {
 		"description": &SchemaRef{
 			Value: &Schema{
 				Title: "first",
-				// Type: "string",   TODO: decide on Type conflict resolution strategy
 			},
 		},
 	}
@@ -810,7 +809,6 @@ func TestMerge_OverlappingProps(t *testing.T) {
 		"description": &SchemaRef{
 			Value: &Schema{
 				Title: "second",
-				// Type: "int",      TODO: decide on Type conflict resolution strategy
 			},
 		},
 	}
@@ -836,6 +834,145 @@ func TestMerge_OverlappingProps(t *testing.T) {
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 1)
 	require.Equal(t, (*obj1["description"].Value), (*merged.Properties["description"].Value))
+}
+
+// if additionalProperties is false, then the merged additionalProperties is the intersection of relevant properties.
+func TestMerge_AdditionalProperties_False(t *testing.T) {
+	apFalse := false
+	apTrue := true
+
+	var firstPropEnum []interface{}
+	var secondPropEnum []interface{}
+	var thirdPropEnum []interface{}
+
+	firstPropEnum = append(firstPropEnum, "1", "5", "3")
+	secondPropEnum = append(secondPropEnum, "1", "8", "7")
+	thirdPropEnum = append(thirdPropEnum, "3", "8", "5")
+
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Enum: firstPropEnum,
+							},
+						},
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: secondPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apFalse,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: thirdPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apFalse,
+					},
+				},
+			},
+		}})
+	require.NoError(t, err)
+	require.Equal(t, "8", merged.Properties["prop2"].Value.Enum[0])
+}
+
+// if additionalProperties is true, then the merged additionalProperties is the intersection of all properties.
+func TestMerge_AdditionalProperties_True(t *testing.T) {
+	apTrue := true
+
+	var firstPropEnum []interface{}
+	var secondPropEnum []interface{}
+	var thirdPropEnum []interface{}
+
+	firstPropEnum = append(firstPropEnum, "1", "5", "3")
+	secondPropEnum = append(secondPropEnum, "1", "8", "7")
+	thirdPropEnum = append(thirdPropEnum, "3", "8", "5")
+
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Enum: firstPropEnum,
+							},
+						},
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: secondPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: thirdPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+		}})
+	require.NoError(t, err)
+	require.Equal(t, "string", merged.Properties["name"].Value.Type)
 }
 
 func TestMergeAllOf_Pattern(t *testing.T) {
