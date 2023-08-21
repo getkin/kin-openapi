@@ -982,6 +982,69 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+func TestMerge_NestedAllOfInsideOneOf(t *testing.T) {
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Multiple 'not' inside 'allOf' Example
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  oneOf:
+                    - type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    - type: object
+                      allOf:
+                        - type: object
+                          required:
+                            - nickname
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"test1": true}`),
+			true,
+		},
+		{
+			[]byte(`{"id": 1, "name": "name"}`),
+			false,
+		},
+		{
+			[]byte(`{"id": 1, "nickname": "nickname"}`),
+			false,
+		},
+		{
+			[]byte(`{"id": 1, "name": "name, "nickname": "nickname"}`),
+			true,
+		},
+		// {
+		// 	[]byte(`{"test1": "string"}`),
+		// 	true,
+		// },
+		// {
+		// 	[]byte(`{"test2": true}`),
+		// 	true,
+		// },
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
 func validateConsistency(t *testing.T, spec string, tests []Test) {
 	nonMerged := runTests(t, spec, tests, false)
 	merged := runTests(t, spec, tests, true)
