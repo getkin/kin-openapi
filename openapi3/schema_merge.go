@@ -679,12 +679,13 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 			schemas = append(schemas, ref.Value)
 		}
 		schema, err := mergeFields(schemas)
-		merged = append(merged, schema)
-
-		//todo: if error is nil, do not add merge, and continue to iterate.
 		if err != nil {
-			return merged, err
+			continue
 		}
+		merged = append(merged, schema)
+	}
+	if len(merged) == 0 {
+		return merged, errors.New("unable to resolve combined schema")
 	}
 	return merged, nil
 }
