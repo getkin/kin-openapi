@@ -19,8 +19,8 @@ Be sure to [give back to this project](https://github.com/sponsors/fenollp) like
 <p align="center">
 	<a href="https://speakeasyapi.dev/?utm_source=kinopenapi+repo&utm_medium=github+sponsorship">
 		<picture>
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-github-sponsor-light.svg">
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-github-sponsor-dark.svg">
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-github-sponsor-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-github-sponsor-dark.svg">
 		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-github-sponsor-dark.svg" height="100px">
 		</picture>
 	</a>
