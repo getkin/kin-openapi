@@ -111,7 +111,7 @@ func handleNestedAllOfCases(schema *Schema) (*Schema, error) {
 				Value: result,
 			})
 		}
-		schema.AnyOf = mergedOneOf
+		schema.OneOf = mergedOneOf
 	}
 
 	if schema.Not != nil {

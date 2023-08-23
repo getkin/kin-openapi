@@ -21,7 +21,7 @@ func TestMerge_ExclusiveMaxIsTrue(t *testing.T) {
 			&SchemaRef{
 				Value: &Schema{
 					Type:         "object",
-					ExclusiveMin: false,
+					ExclusiveMax: false,
 					Max:          Float64Ptr(2),
 				},
 			},
@@ -45,7 +45,7 @@ func TestMerge_ExclusiveMaxIsFalse(t *testing.T) {
 			&SchemaRef{
 				Value: &Schema{
 					Type:         "object",
-					ExclusiveMin: true,
+					ExclusiveMax: true,
 					Max:          Float64Ptr(2),
 				},
 			},
