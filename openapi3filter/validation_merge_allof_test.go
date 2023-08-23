@@ -982,6 +982,127 @@ paths:
 	validateConsistency(t, spec, tests)
 }
 
+// testing Nested AllOf Inside OneOf
+func TestMerge_NestedAllOfInsideOneOf(t *testing.T) {
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Nested AllOf Inside OneOf
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: integer
+                - type: object
+                  oneOf:
+                    - type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    - type: object
+                      allOf:
+                        - type: object
+                          required:
+                            - nickname
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"id": 1, "name": "name"}`),
+			false,
+		},
+		{
+			[]byte(`{"id": 1, "nickname": "nickname"}`),
+			false,
+		},
+		{
+			[]byte(`{"test1": true}`),
+			true,
+		},
+		{
+			[]byte(`{"id": 1, "name": "name, "nickname": "nickname"}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
+// testing Nested AllOf Inside AnyOf
+func TestMerge_NestedAllOfInsideAnyOf(t *testing.T) {
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: Nested AllOf Inside AnyOf
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: integer
+                - type: object
+                  anyOf:
+                    - type: object
+                      allOf:
+                        - type: object
+                          required:
+                            - nickname
+                        - type: object
+                          properties:
+                            name:
+                              type: string
+                    - type: object
+                      required:
+                        - id
+      responses:
+        '200':
+          description: Ok
+`
+	tests := []Test{
+		{
+			[]byte(`{"id": 1, "name": "name"}`),
+			false,
+		},
+		{
+			[]byte(`{"nickname": "nickname"}`),
+			false,
+		},
+		{
+			[]byte(`{"test1": true}`),
+			true,
+		},
+		{
+			[]byte(`{}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+}
+
 func validateConsistency(t *testing.T, spec string, tests []Test) {
 	nonMerged := runTests(t, spec, tests, false)
 	merged := runTests(t, spec, tests, true)

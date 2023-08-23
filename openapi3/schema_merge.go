@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -162,7 +163,11 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	result.MinProps = findMaxValue(collection.MinProps)
 	result.MaxProps = findMinValue(collection.MaxProps)
 	result.Pattern = resolvePattern(collection.Pattern)
-	result.Enum = resolveEnum(collection.Enum)
+	enums, err := resolveEnum(collection.Enum)
+	if err != nil {
+		return result, err
+	}
+	result.Enum = enums
 	result = resolveMultipleOf(result, &collection)
 	result.Required = resolveRequired(collection.Required)
 	result, err = resolveItems(result, &collection)
@@ -421,14 +426,22 @@ func resolveAdditionalProperties(schema *Schema, collection *SchemaCollection) (
 	return schema, nil
 }
 
-func resolveEnum(values [][]interface{}) []interface{} {
+func resolveEnum(values [][]interface{}) ([]interface{}, error) {
 	var nonEmptyEnum [][]interface{}
 	for _, enum := range values {
 		if len(enum) > 0 {
 			nonEmptyEnum = append(nonEmptyEnum, enum)
 		}
 	}
-	return findIntersectionOfArrays(nonEmptyEnum)
+	var intersection []interface{}
+	if len(nonEmptyEnum) == 0 {
+		return intersection, nil
+	}
+	intersection = findIntersectionOfArrays(nonEmptyEnum)
+	if len(intersection) == 0 {
+		return intersection, errors.New("unable to resolve Enum conflict: intersection of values must be non-empty")
+	}
+	return intersection, nil
 }
 
 func resolvePattern(values []string) string {
@@ -666,12 +679,13 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 			schemas = append(schemas, ref.Value)
 		}
 		schema, err := mergeFields(schemas)
-		merged = append(merged, schema)
-
-		//todo: if error is nil, do not add merge, and continue to iterate.
 		if err != nil {
-			return merged, err
+			continue
 		}
+		merged = append(merged, schema)
+	}
+	if len(merged) == 0 {
+		return merged, errors.New("unable to resolve combined schema")
 	}
 	return merged, nil
 }
@@ -679,6 +693,10 @@ func mergeCombinations(combinations []SchemaRefs) ([]*Schema, error) {
 func resolveNot(schema *Schema, collection *SchemaCollection) *Schema {
 	refs := filterNilSchemaRef(collection.Not)
 	if len(refs) == 0 {
+		return schema
+	}
+	if len(refs) == 1 {
+		schema.Not = refs[0]
 		return schema
 	}
 	schema.Not = &SchemaRef{
@@ -710,52 +728,59 @@ func filterEmptySchemaRefs(groups []SchemaRefs) []SchemaRefs {
 }
 
 func resolveAnyOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
-	groups := filterEmptySchemaRefs(collection.AnyOf)
-	if len(groups) == 0 {
-		return schema, nil
-	}
-	combinations := getCombinations(groups)
-	if len(combinations) == 0 {
-		return schema, nil
-	}
-	refs, err := resolveGroups(combinations)
-	if err != nil {
-		return schema, err
-	}
+	refs, err := resolveCombinations(collection.AnyOf)
 	schema.AnyOf = refs
-	return schema, nil
+	return schema, err
 }
 
 func resolveOneOf(schema *Schema, collection *SchemaCollection) (*Schema, error) {
-	groups := filterEmptySchemaRefs(collection.OneOf)
-	if len(groups) == 0 {
-		return schema, nil
-	}
-	combinations := getCombinations(collection.OneOf)
-	if len(combinations) == 0 {
-		return schema, nil
-	}
-	refs, err := resolveGroups(combinations)
-	if err != nil {
-		return schema, err
-	}
+	refs, err := resolveCombinations(collection.OneOf)
 	schema.OneOf = refs
-	return schema, nil
+	return schema, err
 }
 
-func resolveGroups(combinations []SchemaRefs) (SchemaRefs, error) {
+func mergeSchemaRefs(sr []SchemaRefs) ([]SchemaRefs, error) {
+	result := []SchemaRefs{}
+	for _, refs := range sr {
+		r := SchemaRefs{}
+		for _, ref := range refs {
+			merged, err := Merge(*ref.Value)
+			if err != nil {
+				return result, err
+			}
+			r = append(r, &SchemaRef{Value: merged})
+		}
+		result = append(result, r)
+	}
+	return result, nil
+}
+
+func resolveCombinations(collection []SchemaRefs) (SchemaRefs, error) {
+	groups := filterEmptySchemaRefs(collection)
+	if len(groups) == 0 {
+		return nil, nil
+	}
+	groups, err := mergeSchemaRefs(groups)
+	if err != nil {
+		return SchemaRefs{}, err
+	}
+	// there is only one schema, no need for calculating combinations.
+	if len(groups) == 1 {
+		return groups[0], nil
+	}
+
+	combinations := getCombinations(groups)
 	mergedCombinations, err := mergeCombinations(combinations)
 	if err != nil {
 		return nil, err
 	}
-
 	var refs SchemaRefs
 	for _, merged := range mergedCombinations {
 		refs = append(refs, &SchemaRef{
 			Value: merged,
 		})
 	}
-	return refs, nil
+	return refs, err
 }
 
 func findIntersection(arrays ...[]string) []string {
@@ -786,4 +811,25 @@ func findIntersection(arrays ...[]string) []string {
 	}
 
 	return intersection
+}
+
+// temporary
+func PrettyPrintJSON(s *Schema) error {
+	var data interface{}
+	rawJSON, jsonErr := s.MarshalJSON()
+	if jsonErr != nil {
+		return jsonErr
+	}
+	err := json.Unmarshal(rawJSON, &data)
+	if err != nil {
+		return err
+	}
+
+	prettyJSON, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(prettyJSON))
+	return nil
 }

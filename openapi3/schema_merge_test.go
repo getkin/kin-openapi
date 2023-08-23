@@ -7,6 +7,218 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// if ExclusiveMax is true on the minimum Max value, then ExclusiveMax is true in the merged schema.
+func TestMerge_ExclusiveMaxIsTrue(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMax: true,
+					Max:          Float64Ptr(1),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: false,
+					Max:          Float64Ptr(2),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, true, merged.ExclusiveMax)
+}
+
+// if ExclusiveMax is false on the minimum Max value, then ExclusiveMax is false in the merged schema.
+func TestMerge_ExclusiveMaxIsFalse(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMax: false,
+					Max:          Float64Ptr(1),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: true,
+					Max:          Float64Ptr(2),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, false, merged.ExclusiveMax)
+}
+
+// if ExclusiveMin is false on the highest Min value, then ExclusiveMin is false in the merged schema.
+func TestMerge_ExclusiveMinIsFalse(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: false,
+					Min:          Float64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: true,
+					Min:          Float64Ptr(5),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, false, merged.ExclusiveMin)
+}
+
+// if ExclusiveMin is true on the highest Min value, then ExclusiveMin is true in the merged schema.
+func TestMerge_ExclusiveMinIsTrue(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: true,
+					Min:          Float64Ptr(40),
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type:         "object",
+					ExclusiveMin: false,
+					Min:          Float64Ptr(5),
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, true, merged.ExclusiveMin)
+}
+
+// merge multiple Not inside AllOf
+func TestMerge_Not(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Not: &SchemaRef{
+						Value: &Schema{
+							Type: "string",
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Not: &SchemaRef{
+						Value: &Schema{
+							Type: "integer",
+						},
+					},
+				},
+			},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, "string", merged.Not.Value.AnyOf[0].Value.Type)
+	require.Equal(t, "integer", merged.Not.Value.AnyOf[1].Value.Type)
+}
+
+// merge multiple OneOf inside AllOf
+func TestMerge_OneOf(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					OneOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"string"},
+							},
+						},
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					OneOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"string", "boolean"}, merged.OneOf[0].Value.Required)
+}
+
+// merge multiple AnyOf inside AllOf
+func TestMerge_AnyOf(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					AnyOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"string"},
+							},
+						},
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					AnyOf: SchemaRefs{
+						&SchemaRef{
+							Value: &Schema{
+								Type:     "object",
+								Required: []string{"boolean"},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"string", "boolean"}, merged.AnyOf[0].Value.Required)
+}
+
 // conflicting uniqueItems values are merged successfully
 func TestMerge_UniqueItemsTrue(t *testing.T) {
 	merged, err := Merge(Schema{
@@ -163,7 +375,7 @@ func TestMerge_MultipleOfContained(t *testing.T) {
 	require.Equal(t, float64(10), *merged.MultipleOf)
 }
 
-func TestMerge_MultipleOfNotContained(t *testing.T) {
+func TestMerge_MultipleOfDecimal(t *testing.T) {
 	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -205,8 +417,9 @@ func TestMerge_EnumContained(t *testing.T) {
 	require.ElementsMatch(t, []interface{}{"1"}, merged.Enum)
 }
 
+// enum merge fails if the intersection of enum values is empty.
 func TestMerge_EnumNoIntersection(t *testing.T) {
-	merged, err := Merge(Schema{
+	_, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -222,8 +435,7 @@ func TestMerge_EnumNoIntersection(t *testing.T) {
 			},
 		},
 	})
-	require.NoError(t, err)
-	require.Empty(t, merged.Enum)
+	require.Error(t, err)
 }
 
 // Properties range is the most restrictive
@@ -365,7 +577,8 @@ func TestMerge_Description(t *testing.T) {
 	require.Equal(t, "desc0", merged.Description)
 }
 
-func TestMerge_Type(t *testing.T) {
+// non-conflicting types are merged successfully
+func TestMerge_NonConflictingType(t *testing.T) {
 	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -382,6 +595,39 @@ func TestMerge_Type(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, "object", merged.Type)
+}
+
+// schema cannot be merged if types are conflicting
+func TestMerge_FailsOnConflictingTypes(t *testing.T) {
+	_, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "object",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.Error(t, err)
 }
 
 func TestMerge_Title(t *testing.T) {
@@ -555,7 +801,6 @@ func TestMerge_OverlappingProps(t *testing.T) {
 		"description": &SchemaRef{
 			Value: &Schema{
 				Title: "first",
-				// Type: "string",   TODO: decide on Type conflict resolution strategy
 			},
 		},
 	}
@@ -564,7 +809,6 @@ func TestMerge_OverlappingProps(t *testing.T) {
 		"description": &SchemaRef{
 			Value: &Schema{
 				Title: "second",
-				// Type: "int",      TODO: decide on Type conflict resolution strategy
 			},
 		},
 	}
@@ -590,6 +834,145 @@ func TestMerge_OverlappingProps(t *testing.T) {
 	require.Len(t, merged.AllOf, 0)
 	require.Len(t, merged.Properties, 1)
 	require.Equal(t, (*obj1["description"].Value), (*merged.Properties["description"].Value))
+}
+
+// if additionalProperties is false, then the merged additionalProperties is the intersection of relevant properties.
+func TestMerge_AdditionalProperties_False(t *testing.T) {
+	apFalse := false
+	apTrue := true
+
+	var firstPropEnum []interface{}
+	var secondPropEnum []interface{}
+	var thirdPropEnum []interface{}
+
+	firstPropEnum = append(firstPropEnum, "1", "5", "3")
+	secondPropEnum = append(secondPropEnum, "1", "8", "7")
+	thirdPropEnum = append(thirdPropEnum, "3", "8", "5")
+
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Enum: firstPropEnum,
+							},
+						},
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: secondPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apFalse,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: thirdPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apFalse,
+					},
+				},
+			},
+		}})
+	require.NoError(t, err)
+	require.Equal(t, "8", merged.Properties["prop2"].Value.Enum[0])
+}
+
+// if additionalProperties is true, then the merged additionalProperties is the intersection of all properties.
+func TestMerge_AdditionalProperties_True(t *testing.T) {
+	apTrue := true
+
+	var firstPropEnum []interface{}
+	var secondPropEnum []interface{}
+	var thirdPropEnum []interface{}
+
+	firstPropEnum = append(firstPropEnum, "1", "5", "3")
+	secondPropEnum = append(secondPropEnum, "1", "8", "7")
+	thirdPropEnum = append(thirdPropEnum, "3", "8", "5")
+
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Enum: firstPropEnum,
+							},
+						},
+						"name": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: secondPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Type: "object",
+					Properties: Schemas{
+						"prop2": &SchemaRef{
+							Value: &Schema{
+								Enum: thirdPropEnum,
+							},
+						},
+					},
+					AdditionalProperties: AdditionalProperties{
+						Has: &apTrue,
+					},
+				},
+			},
+		}})
+	require.NoError(t, err)
+	require.Equal(t, "string", merged.Properties["name"].Value.Type)
 }
 
 func TestMergeAllOf_Pattern(t *testing.T) {
@@ -648,60 +1031,3 @@ func TestMerge_Required(t *testing.T) {
 		})
 	}
 }
-
-// func TestMerge_NestedAllOf(t *testing.T) {
-// 	obj2 := Schemas{}
-// 	obj2["description"] = &SchemaRef{
-// 		Value: &Schema{
-// 			Type:  "object",
-// 			Title: "description",
-// 		},
-// 	}
-// 	obj2["abcdefg"] = &SchemaRef{
-// 		Value: &Schema{
-// 			Type:  "object",
-// 			Title: "abc",
-// 		},
-// 	}
-
-// 	obj1 := Schemas{}
-// 	obj1["description"] = &SchemaRef{
-// 		Value: &Schema{
-// 			Type:  "object",
-// 			Title: "object2",
-// 		},
-// 	}
-// 	obj1["test"] = &SchemaRef{
-// 		Value: &Schema{
-// 			AllOf: SchemaRefs{
-// 				&SchemaRef{
-// 					Value: &Schema{
-// 						Type:  "object",
-// 						Title: "abc",
-// 					},
-// 				},
-// 				&SchemaRef{
-// 					Value: &Schema{
-// 						Type:       "object",
-// 						Properties: obj2,
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	schema := Schema{
-// 		AllOf: SchemaRefs{
-// 			&SchemaRef{
-// 				Value: &Schema{
-// 					Type:       "object",
-// 					Properties: obj1,
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	d, _ := schema.MarshalJSON()
-// 	PrettyPrintJSON(d)
-// 	//todo add tests.
-// }
