@@ -18,6 +18,7 @@ func DefineStringFormat(name string, pattern string)
 func DefineStringFormatCallback(name string, callback FormatCallback)
 func Float64Ptr(value float64) *float64
 func Int64Ptr(value int64) *int64
+func PrettyPrintJSON(s *Schema) error
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
 func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
 func Uint64Ptr(value uint64) *uint64
