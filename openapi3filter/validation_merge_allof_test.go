@@ -17,6 +17,93 @@ type Test struct {
 	wantErr bool
 }
 
+// Validation of conflicting numeric formats.
+func TestMerge_Format(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: base schema merge test
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int32
+                - type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int64
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests := []Test{
+		{
+			[]byte(`{"id": 2147483647}`),
+			false,
+		},
+		{
+			[]byte(`{"id": 2147483648}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec, tests)
+
+	const spec2 = `
+openapi: 3.0.0
+info:
+  title: base schema merge test
+  version: '0.1'
+paths:
+  /sample:
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int64
+                - type: object
+                  properties:
+                    id:
+                      type: number
+                      format: float
+      responses:
+        '200':
+          description: Ok
+`
+
+	tests = []Test{
+		{
+			[]byte(`{"id": 2147483648}`),
+			false,
+		},
+		{
+			[]byte(`{"id": 10.1}`),
+			true,
+		},
+	}
+
+	validateConsistency(t, spec2, tests)
+}
+
 // validate that allof fields are merged with base schema fields
 func TestMerge_BaseSchema(t *testing.T) {
 	const spec = `
