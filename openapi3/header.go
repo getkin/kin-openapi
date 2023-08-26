@@ -48,7 +48,7 @@ func (header *Header) UnmarshalJSON(data []byte) error {
 	return header.Parameter.UnmarshalJSON(data)
 }
 
-// MarshalJSON returns the JSON encoding of Header.
+// MarshalYAML returns the JSON encoding of Header.
 func (header Header) MarshalYAML() (interface{}, error) {
 	return header.Parameter, nil
 }
