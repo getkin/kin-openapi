@@ -938,7 +938,7 @@ func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
 	merged, err := Merge(schema)
 	require.NoError(t, err)
-	require.Equal(t, &schema, merged) //todo &schema
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_NoAllOf(t *testing.T) {
@@ -947,7 +947,7 @@ func TestMerge_NoAllOf(t *testing.T) {
 	}
 	merged, err := Merge(schema)
 	require.NoError(t, err)
-	require.Equal(t, &schema, merged) //todo &schema
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_TwoObjects(t *testing.T) {
