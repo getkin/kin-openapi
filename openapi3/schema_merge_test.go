@@ -786,7 +786,8 @@ func TestMerge_Title(t *testing.T) {
 	require.Equal(t, "base schema", merged.Title)
 }
 
-func TestMerge_NumericFormat(t *testing.T) {
+// merge conflicting integer formats
+func TestMerge_FormatInteger(t *testing.T) {
 	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -817,8 +818,11 @@ func TestMerge_NumericFormat(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, formatInt32, merged.Properties["prop1"].Value.Format)
+}
 
-	merged, err = Merge(Schema{
+// merge conflicting float formats
+func TestMerge_FormatFloat(t *testing.T) {
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -848,8 +852,11 @@ func TestMerge_NumericFormat(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, formatFloat, merged.Properties["prop1"].Value.Format)
+}
 
-	merged, err = Merge(Schema{
+// merge conflicting integer and float formats
+func TestMerge_NumericFormat(t *testing.T) {
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
