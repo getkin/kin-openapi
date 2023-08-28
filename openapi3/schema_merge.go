@@ -13,6 +13,11 @@ import (
 const (
 	FormatErrorMessage = "unable to resolve Format conflict: all Format values must be identical"
 	TypeErrorMessage   = "unable to resolve Type conflict: all Type values must be identical"
+
+	formatInt32  = "int32"
+	formatInt64  = "int64"
+	formatFloat  = "float"
+	formatDouble = "double"
 )
 
 type SchemaCollection struct {
@@ -145,16 +150,14 @@ func mergeFields(schemas []*Schema) (*Schema, error) {
 	collection := collect(schemas)
 	result.Title = collection.Title[0]
 	result.Description = collection.Description[0]
-	format, err := resolveFormat(collection.Format)
+	result, err := resolveFormat(result, &collection)
 	if err != nil {
 		return result, err
 	}
-	result.Format = format
-	stype, err := resolveType(collection.Type)
+	result, err = resolveType(result, &collection)
 	if err != nil {
 		return result, err
 	}
-	result.Type = stype
 	result = resolveNumberRange(result, &collection)
 	result.MinLength = findMaxValue(collection.MinLength)
 	result.MaxLength = findMinValue(collection.MaxLength)
@@ -492,26 +495,75 @@ func findMinValue(values []*uint64) *uint64 {
 	return Uint64Ptr(min)
 }
 
-func resolveType(values []string) (string, error) {
-	values = filterEmptyStrings(values)
-	if len(values) == 0 {
-		return "", nil
+func resolveType(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	types := filterEmptyStrings(collection.Type)
+	if len(types) == 0 {
+		schema.Type = ""
+		return schema, nil
 	}
-	if allStringsEqual(values) {
-		return values[0], nil
+	if areTypesNumeric(types) {
+		for _, t := range types {
+			if t == "integer" {
+				schema.Type = "integer"
+				return schema, nil
+			}
+		}
+		schema.Type = "number"
+		return schema, nil
 	}
-	return values[0], errors.New(TypeErrorMessage)
+	if allStringsEqual(types) {
+		schema.Type = types[0]
+		return schema, nil
+	}
+	return schema, errors.New(TypeErrorMessage)
 }
 
-func resolveFormat(values []string) (string, error) {
-	values = filterEmptyStrings(values)
-	if len(values) == 0 {
-		return "", nil
+func areTypesNumeric(types []string) bool {
+	for _, t := range types {
+		if t != "integer" && t != "number" {
+			return false
+		}
 	}
-	if allStringsEqual(values) {
-		return values[0], nil
+	return true
+}
+
+func resolveFormat(schema *Schema, collection *SchemaCollection) (*Schema, error) {
+	formats := filterEmptyStrings(collection.Format)
+	if len(formats) == 0 {
+		schema.Format = ""
+		return schema, nil
 	}
-	return values[0], errors.New(FormatErrorMessage)
+
+	if areFormatsNumeric(formats) {
+		orderMap := make(map[string]int)
+		orderMap[formatInt32] = 1
+		orderMap[formatInt64] = 2
+		orderMap[formatDouble] = 3
+		orderMap[formatFloat] = 4
+		result := formatFloat
+		for _, format := range formats {
+			if orderMap[format] < orderMap[result] {
+				result = format
+			}
+		}
+		schema.Format = result
+		return schema, nil
+	}
+
+	if allStringsEqual(formats) {
+		schema.Format = formats[0]
+		return schema, nil
+	}
+	return schema, errors.New(FormatErrorMessage)
+}
+
+func areFormatsNumeric(values []string) bool {
+	for _, val := range values {
+		if val != formatInt32 && val != formatInt64 && val != formatFloat && val != formatDouble {
+			return false
+		}
+	}
+	return true
 }
 
 func containsString(list []string, search string) bool {

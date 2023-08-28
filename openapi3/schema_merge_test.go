@@ -7,6 +7,139 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// identical numeric types are merged successfully
+func TestMerge_TypeNumeric(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "number",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "number",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "number", merged.Properties["prop1"].Value.Type)
+
+	merged, err = Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "integer",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "integer",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "integer", merged.Properties["prop1"].Value.Type)
+}
+
+// Conflicting numeric types are merged successfully
+func TestMerge_TypeNumericConflictResolved(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "integer",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "number",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "integer", merged.Properties["prop1"].Value.Type)
+}
+
+// Conflicting types cannot be resolved
+func TestMerge_TypeFailure(t *testing.T) {
+	_, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "integer",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Type: "string",
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+
+	require.EqualError(t, err, TypeErrorMessage)
+}
+
 // if ExclusiveMax is true on the minimum Max value, then ExclusiveMax is true in the merged schema.
 func TestMerge_ExclusiveMaxIsTrue(t *testing.T) {
 	merged, err := Merge(Schema{
@@ -650,6 +783,113 @@ func TestMerge_Title(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, "base schema", merged.Title)
+}
+
+func TestMerge_NumericFormat(t *testing.T) {
+	merged, err := Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatInt32,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatInt64,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, formatInt32, merged.Properties["prop1"].Value.Format)
+
+	merged, err = Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatFloat,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatDouble,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, formatDouble, merged.Properties["prop1"].Value.Format)
+
+	merged, err = Merge(Schema{
+		AllOf: SchemaRefs{
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatFloat,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatDouble,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+			&SchemaRef{
+				Value: &Schema{
+					Properties: Schemas{
+						"prop1": &SchemaRef{
+							Value: &Schema{
+								Format: formatInt32,
+							},
+						},
+					},
+					Type: "object",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, formatInt32, merged.Properties["prop1"].Value.Format)
 }
 
 func TestMerge_Format(t *testing.T) {
