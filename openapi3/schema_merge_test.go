@@ -279,13 +279,13 @@ func TestMerge_OneOf(t *testing.T) {
 						&SchemaRef{
 							Value: &Schema{
 								Type:     "object",
-								Required: []string{"string"},
+								Required: []string{"prop1"},
 							},
 						},
 						&SchemaRef{
 							Value: &Schema{
 								Type:     "object",
-								Required: []string{"boolean"},
+								Required: []string{"prop2"},
 							},
 						},
 					},
@@ -298,7 +298,7 @@ func TestMerge_OneOf(t *testing.T) {
 						&SchemaRef{
 							Value: &Schema{
 								Type:     "object",
-								Required: []string{"boolean"},
+								Required: []string{"prop2"},
 							},
 						},
 					},
@@ -307,7 +307,8 @@ func TestMerge_OneOf(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, []string{"string", "boolean"}, merged.OneOf[0].Value.Required)
+	require.Equal(t, []string{"prop1", "prop2"}, merged.OneOf[0].Value.Required)
+	require.Equal(t, []string{"prop2"}, merged.OneOf[1].Value.Required)
 }
 
 // merge multiple AnyOf inside AllOf
