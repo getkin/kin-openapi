@@ -538,9 +538,9 @@ func resolveFormat(schema *Schema, collection *SchemaCollection) (*Schema, error
 		orderMap := make(map[string]int)
 		orderMap[formatInt32] = 1
 		orderMap[formatInt64] = 2
-		orderMap[formatDouble] = 3
-		orderMap[formatFloat] = 4
-		result := formatFloat
+		orderMap[formatFloat] = 3
+		orderMap[formatDouble] = 4
+		result := formatDouble
 		for _, format := range formats {
 			if orderMap[format] < orderMap[result] {
 				result = format

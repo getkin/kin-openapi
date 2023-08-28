@@ -847,7 +847,7 @@ func TestMerge_NumericFormat(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, formatDouble, merged.Properties["prop1"].Value.Format)
+	require.Equal(t, formatFloat, merged.Properties["prop1"].Value.Format)
 
 	merged, err = Merge(Schema{
 		AllOf: SchemaRefs{
