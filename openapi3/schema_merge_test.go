@@ -279,13 +279,13 @@ func TestMerge_OneOf(t *testing.T) {
 						&SchemaRef{
 							Value: &Schema{
 								Type:     "object",
-								Required: []string{"string"},
+								Required: []string{"prop1"},
 							},
 						},
 						&SchemaRef{
 							Value: &Schema{
 								Type:     "object",
-								Required: []string{"boolean"},
+								Required: []string{"prop2"},
 							},
 						},
 					},
@@ -298,7 +298,7 @@ func TestMerge_OneOf(t *testing.T) {
 						&SchemaRef{
 							Value: &Schema{
 								Type:     "object",
-								Required: []string{"boolean"},
+								Required: []string{"prop2"},
 							},
 						},
 					},
@@ -307,7 +307,8 @@ func TestMerge_OneOf(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, []string{"string", "boolean"}, merged.OneOf[0].Value.Required)
+	require.Equal(t, []string{"prop1", "prop2"}, merged.OneOf[0].Value.Required)
+	require.Equal(t, []string{"prop2"}, merged.OneOf[1].Value.Required)
 }
 
 // merge multiple AnyOf inside AllOf
@@ -785,7 +786,8 @@ func TestMerge_Title(t *testing.T) {
 	require.Equal(t, "base schema", merged.Title)
 }
 
-func TestMerge_NumericFormat(t *testing.T) {
+// merge conflicting integer formats
+func TestMerge_FormatInteger(t *testing.T) {
 	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
@@ -816,8 +818,11 @@ func TestMerge_NumericFormat(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, formatInt32, merged.Properties["prop1"].Value.Format)
+}
 
-	merged, err = Merge(Schema{
+// merge conflicting float formats
+func TestMerge_FormatFloat(t *testing.T) {
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -846,9 +851,12 @@ func TestMerge_NumericFormat(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Equal(t, formatDouble, merged.Properties["prop1"].Value.Format)
+	require.Equal(t, formatFloat, merged.Properties["prop1"].Value.Format)
+}
 
-	merged, err = Merge(Schema{
+// merge conflicting integer and float formats
+func TestMerge_NumericFormat(t *testing.T) {
+	merged, err := Merge(Schema{
 		AllOf: SchemaRefs{
 			&SchemaRef{
 				Value: &Schema{
@@ -937,7 +945,7 @@ func TestMerge_EmptySchema(t *testing.T) {
 	schema := Schema{}
 	merged, err := Merge(schema)
 	require.NoError(t, err)
-	require.Equal(t, &schema, merged) //todo &schema
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_NoAllOf(t *testing.T) {
@@ -946,7 +954,7 @@ func TestMerge_NoAllOf(t *testing.T) {
 	}
 	merged, err := Merge(schema)
 	require.NoError(t, err)
-	require.Equal(t, &schema, merged) //todo &schema
+	require.Equal(t, &schema, merged)
 }
 
 func TestMerge_TwoObjects(t *testing.T) {
