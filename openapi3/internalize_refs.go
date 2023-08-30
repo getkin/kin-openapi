@@ -338,32 +338,30 @@ func (doc *T) derefRequestBody(r RequestBody, refNameResolver RefNameResolver, p
 
 func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameResolver, parentIsExternal bool) {
 	for _, ops := range paths {
-		if isExternalRef(ops.Ref, parentIsExternal) {
-			parentIsExternal = true
-		}
+		pathIsExternal := isExternalRef(ops.Ref, parentIsExternal)
 		// inline full operations
 		ops.Ref = ""
 
 		for _, param := range ops.Parameters {
-			doc.addParameterToSpec(param, refNameResolver, parentIsExternal)
+			doc.addParameterToSpec(param, refNameResolver, pathIsExternal)
 		}
 
 		for _, op := range ops.Operations() {
-			isExternal := doc.addRequestBodyToSpec(op.RequestBody, refNameResolver, parentIsExternal)
+			isExternal := doc.addRequestBodyToSpec(op.RequestBody, refNameResolver, pathIsExternal)
 			if op.RequestBody != nil && op.RequestBody.Value != nil {
-				doc.derefRequestBody(*op.RequestBody.Value, refNameResolver, parentIsExternal || isExternal)
+				doc.derefRequestBody(*op.RequestBody.Value, refNameResolver, pathIsExternal || isExternal)
 			}
 			for _, cb := range op.Callbacks {
-				isExternal := doc.addCallbackToSpec(cb, refNameResolver, parentIsExternal)
+				isExternal := doc.addCallbackToSpec(cb, refNameResolver, pathIsExternal)
 				if cb.Value != nil {
-					doc.derefPaths(*cb.Value, refNameResolver, parentIsExternal || isExternal)
+					doc.derefPaths(*cb.Value, refNameResolver, pathIsExternal || isExternal)
 				}
 			}
-			doc.derefResponses(op.Responses, refNameResolver, parentIsExternal)
+			doc.derefResponses(op.Responses, refNameResolver, pathIsExternal)
 			for _, param := range op.Parameters {
-				isExternal := doc.addParameterToSpec(param, refNameResolver, parentIsExternal)
+				isExternal := doc.addParameterToSpec(param, refNameResolver, pathIsExternal)
 				if param.Value != nil {
-					doc.derefParameter(*param.Value, refNameResolver, parentIsExternal || isExternal)
+					doc.derefParameter(*param.Value, refNameResolver, pathIsExternal || isExternal)
 				}
 			}
 		}
