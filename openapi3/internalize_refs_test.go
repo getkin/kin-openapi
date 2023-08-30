@@ -22,6 +22,7 @@ func TestInternalizeRefs(t *testing.T) {
 		{"testdata/recursiveRef/openapi.yml"},
 		{"testdata/spec.yaml"},
 		{"testdata/callbacks.yml"},
+		{"testdata/issue831/testref.internalizepath.openapi.yml"},
 	}
 
 	for _, test := range tests {
