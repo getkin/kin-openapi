@@ -49,21 +49,21 @@ func TestRouter(t *testing.T) {
 			"/params/{x}/{y}/{z.*}": &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x")},
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("y")},
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("z")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x").WithSchema(openapi3.NewStringSchema())},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("y").WithSchema(openapi3.NewFloat64Schema())},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("z").WithSchema(openapi3.NewIntegerSchema())},
 				},
 			},
 			"/books/{bookid}": &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid").WithSchema(openapi3.NewStringSchema())},
 				},
 			},
 			"/books/{bookid2}.json": &openapi3.PathItem{
 				Post: booksPOST,
 				Parameters: openapi3.Parameters{
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid2")},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid2").WithSchema(openapi3.NewStringSchema())},
 				},
 			},
 			"/partial": &openapi3.PathItem{
