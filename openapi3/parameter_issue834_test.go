@@ -62,7 +62,7 @@ paths:
               type: string
           application/xml:
             schema:
-              type: string			  
+              type: string
     get:
       summary: List all pets
       operationId: listPets
@@ -95,7 +95,7 @@ paths:
     parameters:
       - in: query
         name: test
-        content: {}		  
+        content: {}
     get:
       summary: List all pets
       operationId: listPets
