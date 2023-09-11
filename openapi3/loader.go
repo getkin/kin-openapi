@@ -751,7 +751,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		} else {
 			if visitedLimit(visited, ref) {
 				visited = append(visited, ref)
-				return fmt.Errorf("%s - %s", CircularReferenceError, strings.Join(visited, " -> "))
+				return fmt.Errorf("%s with length %d - %s", CircularReferenceError, len(visited), strings.Join(visited, " -> "))
 			}
 			visited = append(visited, ref)
 
