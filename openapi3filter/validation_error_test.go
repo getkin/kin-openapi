@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -657,7 +656,7 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 		encoder := &ValidationErrorEncoder{Encoder: (ErrorEncoder)(DefaultErrorEncoder)}
 		resp := runTest_ServeHTTP(t, handler, encoder.Encode, r)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 		require.Equal(t, "[422][][] value must be an array [source pointer=/photoUrls]", string(body))
@@ -699,7 +698,7 @@ func TestValidationHandler_Middleware(t *testing.T) {
 		encoder := &ValidationErrorEncoder{Encoder: (ErrorEncoder)(DefaultErrorEncoder)}
 		resp := runTest_Middleware(t, handler, encoder.Encode, r)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 		require.Equal(t, "[422][][] value must be an array [source pointer=/photoUrls]", string(body))

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 
@@ -208,7 +207,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
 		var err error
-		if data, err = ioutil.ReadAll(req.Body); err != nil {
+		if data, err = io.ReadAll(req.Body); err != nil {
 			return &RequestError{
 				Input:       input,
 				RequestBody: requestBody,

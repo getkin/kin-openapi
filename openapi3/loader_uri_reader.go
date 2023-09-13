@@ -3,7 +3,7 @@ package openapi3
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -64,7 +64,7 @@ func ReadFromHTTP(cl *http.Client) ReadFromURIFunc {
 		if resp.StatusCode > 399 {
 			return nil, fmt.Errorf("error loading %q: request returned status code %d", location.String(), resp.StatusCode)
 		}
-		return ioutil.ReadAll(resp.Body)
+		return io.ReadAll(resp.Body)
 	}
 }
 

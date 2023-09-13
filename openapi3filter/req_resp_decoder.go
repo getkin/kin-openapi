@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -1019,7 +1018,7 @@ func init() {
 }
 
 func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
@@ -1064,7 +1063,7 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	}
 
 	// Parse form.
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1216,7 +1215,7 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 
 // FileBodyDecoder is a body decoder that decodes a file body to a string.
 func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,6 @@ package openapi3filter
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -149,7 +148,7 @@ func (v *Validator) Middleware(h http.Handler) http.Handler {
 			RequestValidationInput: requestValidationInput,
 			Status:                 wr.statusCode(),
 			Header:                 wr.Header(),
-			Body:                   ioutil.NopCloser(bytes.NewBuffer(wr.bodyContents())),
+			Body:                   io.NopCloser(bytes.NewBuffer(wr.bodyContents())),
 			Options:                &v.options,
 		}); err != nil {
 			v.logFunc("invalid response", err)

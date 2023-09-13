@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -391,7 +390,7 @@ func TestValidator(t *testing.T) {
 			require.Equalf(t, test.response.statusCode, resp.StatusCode,
 				"response code expect %d got %d", test.response.statusCode, resp.StatusCode)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err, "failed to read response body")
 			require.Equalf(t, test.response.body, string(body),
 				"response body expect %q got %q", test.response.body, string(body))
@@ -507,7 +506,7 @@ paths:
 			panic(err)
 		}
 		defer resp.Body.Close()
-		contents, err := ioutil.ReadAll(resp.Body)
+		contents, err := io.ReadAll(resp.Body)
 		if err != nil {
 			panic(err)
 		}

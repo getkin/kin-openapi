@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -365,7 +364,7 @@ func marshalReader(value interface{}) io.ReadCloser {
 	if err != nil {
 		panic(err)
 	}
-	return ioutil.NopCloser(bytes.NewReader(data))
+	return io.NopCloser(bytes.NewReader(data))
 }
 
 func TestValidateRequestBody(t *testing.T) {

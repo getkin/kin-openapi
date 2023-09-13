@@ -2,7 +2,7 @@ package openapi3filter
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -87,7 +87,7 @@ func TestIssue639(t *testing.T) {
 			}
 			err = ValidateRequest(ctx, requestValidationInput)
 			require.NoError(t, err)
-			bodyAfterValidation, err := ioutil.ReadAll(httpReq.Body)
+			bodyAfterValidation, err := io.ReadAll(httpReq.Body)
 			require.NoError(t, err)
 
 			raw := map[string]interface{}{}
