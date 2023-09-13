@@ -25,7 +25,7 @@ components:
 	}
 
 	opt := openapi3.SetSchemaErrorMessageCustomizer(func(err *openapi3.SchemaError) string {
-		return fmt.Sprintf(`field "%s" should be string`, err.Schema.Title)
+		return fmt.Sprintf(`field %q should be string`, err.Schema.Title)
 	})
 
 	err = doc.Components.Schemas["Something"].Value.Properties["field"].Value.VisitJSON(123, opt)

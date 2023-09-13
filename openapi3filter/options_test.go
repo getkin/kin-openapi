@@ -53,7 +53,7 @@ paths:
 	opts := &openapi3filter.Options{}
 
 	opts.WithCustomSchemaErrorFunc(func(err *openapi3.SchemaError) string {
-		return fmt.Sprintf(`field "%s" must be an integer`, err.Schema.Title)
+		return fmt.Sprintf(`field %q must be an integer`, err.Schema.Title)
 	})
 
 	req, err := http.NewRequest(http.MethodPost, "/some", strings.NewReader(`{"field":"not integer"}`))
