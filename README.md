@@ -78,7 +78,7 @@ doc, err := loader.LoadFromFile("swagger.json")
 ```go
 loader := openapi3.NewLoader()
 doc, _ := loader.LoadFromData([]byte(`...`))
-_ := doc.Validate(loader.Context)
+_ = doc.Validate(loader.Context)
 router, _ := gorillamux.NewRouter(doc)
 route, pathParams, _ := router.FindRoute(httpRequest)
 // Do something with route.Operation
@@ -103,7 +103,7 @@ func main() {
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 	doc, _ := loader.LoadFromFile(".../My-OpenAPIv3-API.yml")
 	// Validate document
-	_ := doc.Validate(ctx)
+	_ = doc.Validate(ctx)
 	router, _ := gorillamux.NewRouter(doc)
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
@@ -116,7 +116,7 @@ func main() {
 		PathParams: pathParams,
 		Route:      route,
 	}
-	_ := openapi3filter.ValidateRequest(ctx, requestValidationInput)
+	_ = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 
 	// Handle that request
 	// --> YOUR CODE GOES HERE <--
@@ -131,7 +131,7 @@ func main() {
 		Header:                 responseHeaders,
 	}
 	responseValidationInput.SetBodyBytes(responseBody)
-	_ := openapi3filter.ValidateResponse(ctx, responseValidationInput)
+	_ = openapi3filter.ValidateResponse(ctx, responseValidationInput)
 }
 ```
 
