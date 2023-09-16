@@ -3,7 +3,7 @@ package openapi3filter
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
@@ -795,7 +795,7 @@ func TestValidateRequestBodyAndSetDefault(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			validatedReqBody, err := ioutil.ReadAll(httpReq.Body)
+			validatedReqBody, err := io.ReadAll(httpReq.Body)
 			require.NoError(t, err)
 			tc.bodyAssertion(t, string(validatedReqBody))
 		})

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -1337,7 +1336,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	var decoder BodyDecoder
 	decoder = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (decoded interface{}, err error) {
 		var data []byte
-		if data, err = ioutil.ReadAll(body); err != nil {
+		if data, err = io.ReadAll(body); err != nil {
 			return
 		}
 		return strings.Split(string(data), ","), nil

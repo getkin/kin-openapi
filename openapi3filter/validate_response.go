@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -125,7 +125,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	defer body.Close()
 
 	// Read all
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,

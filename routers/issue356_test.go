@@ -2,7 +2,7 @@ package routers_test
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -129,7 +129,7 @@ paths:
 				rep, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
 				defer rep.Body.Close()
-				body, err := ioutil.ReadAll(rep.Body)
+				body, err := io.ReadAll(rep.Body)
 				require.NoError(t, err)
 
 				if expectError {
