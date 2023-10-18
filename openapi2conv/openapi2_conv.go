@@ -339,6 +339,12 @@ func formDataBody(bodies map[string]*openapi3.SchemaRef, reqs map[string]bool, c
 			requireds = append(requireds, propName)
 		}
 	}
+	for s, ref := range bodies {
+		if ref.Value != nil && len(ref.Value.Required) > 0 {
+			ref.Value.Required = nil
+			bodies[s] = ref
+		}
+	}
 	schema := &openapi3.Schema{
 		Type:       "object",
 		Properties: ToV3Schemas(bodies),
@@ -701,7 +707,7 @@ func fromV3RequestBodies(name string, requestBodyRef *openapi3.RequestBodyRef, c
 		return
 	}
 
-	//Only select one formData or request body for an individual requestBody as OpenAPI 2 does not support multiples
+	// Only select one formData or request body for an individual requestBody as OpenAPI 2 does not support multiples
 	if requestBodyRef.Value != nil {
 		for contentType, mediaType := range requestBodyRef.Value.Content {
 			if consumes == nil {
