@@ -1059,7 +1059,11 @@ func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOptio
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interface{}) (err error) {
 	switch value := value.(type) {
 	case nil:
-		return schema.visitJSONNull(settings)
+		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
+		// those could allow for a nullable value even though this one doesn't
+		if schema.Nullable {
+			return
+		}
 	case float64:
 		if math.IsNaN(value) {
 			return ErrSchemaInputNaN
@@ -1070,7 +1074,12 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 
 	if schema.IsEmpty() {
-		return
+		switch value.(type) {
+		case nil:
+			return schema.visitJSONNull(settings)
+		default:
+			return
+		}
 	}
 
 	if err = schema.visitNotOperation(settings, value); err != nil {
@@ -1085,6 +1094,8 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 
 	switch value := value.(type) {
+	case nil:
+		return schema.visitJSONNull(settings)
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
 	case json.Number:
