@@ -205,6 +205,32 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "NULLABLE ALLOF",
+		Schema: NewAllOfSchema(
+			NewBoolSchema().WithNullable(),
+			NewBoolSchema().WithNullable(),
+		),
+		Serialization: map[string]interface{}{
+			"allOf": []interface{}{
+				map[string]interface{}{"type": "boolean", "nullable": true},
+				map[string]interface{}{"type": "boolean", "nullable": true},
+			},
+		},
+		AllValid: []interface{}{
+			nil,
+			true,
+			false,
+		},
+		AllInvalid: []interface{}{
+			2,
+			4.2,
+			[]interface{}{42},
+			"bla",
+			map[string]interface{}{},
+		},
+	},
+
+	{
 		Title:  "BOOLEAN",
 		Schema: NewBoolSchema(),
 		Serialization: map[string]interface{}{
