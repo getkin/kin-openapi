@@ -1059,7 +1059,11 @@ func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOptio
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interface{}) (err error) {
 	switch value := value.(type) {
 	case nil:
-		return schema.visitJSONNull(settings)
+		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
+		// those could allow for a nullable value even though this one doesn't
+		if schema.Nullable {
+			return
+		}
 	case float64:
 		if math.IsNaN(value) {
 			return ErrSchemaInputNaN
@@ -1070,13 +1074,28 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 
 	if schema.IsEmpty() {
+		switch value.(type) {
+		case nil:
+			return schema.visitJSONNull(settings)
+		default:
+			return
+		}
+	}
+
+	if err = schema.visitNotOperation(settings, value); err != nil {
 		return
 	}
-	if err = schema.visitSetOperations(settings, value); err != nil {
+	var run bool
+	if err, run = schema.visitXOFOperations(settings, value); err != nil || !run {
+		return
+	}
+	if err = schema.visitEnumOperation(settings, value); err != nil {
 		return
 	}
 
 	switch value := value.(type) {
+	case nil:
+		return schema.visitJSONNull(settings)
 	case bool:
 		return schema.visitJSONBoolean(settings, value)
 	case json.Number:
@@ -1137,7 +1156,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 }
 
-func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
+func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, value interface{}) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
 			switch c := value.(type) {
@@ -1171,7 +1190,10 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
+	return
+}
 
+func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value interface{}) (err error) {
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -1189,7 +1211,13 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			}
 		}
 	}
+	return
+}
 
+// If the XOF operations pass successfully, abort further run of validation, as they will already be satisfied (unless the schema
+// itself is badly specified
+func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value interface{}) (err error, run bool) {
+	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
 		var discriminatorRef string
 		if schema.Discriminator != nil {
@@ -1201,7 +1229,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 						Schema:      schema,
 						SchemaField: "discriminator",
 						Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
-					}
+					}, false
 				}
 
 				discriminatorValString, okcheck := discriminatorVal.(string)
@@ -1211,7 +1239,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 						Schema:      schema,
 						SchemaField: "discriminator",
 						Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
-					}
+					}, false
 				}
 
 				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
@@ -1220,7 +1248,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 						Schema:      schema,
 						SchemaField: "discriminator",
 						Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
-					}
+					}, false
 				}
 			}
 		}
@@ -1234,7 +1262,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
-				return foundUnresolvedRef(item.Ref)
+				return foundUnresolvedRef(item.Ref), false
 			}
 
 			if discriminatorRef != "" && discriminatorRef != item.Ref {
@@ -1257,7 +1285,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 		if ok != 1 {
 			if settings.failfast {
-				return errSchema
+				return errSchema, false
 			}
 			e := &SchemaError{
 				Value:                 value,
@@ -1273,13 +1301,14 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				e.Reason = `value doesn't match any schema from "oneOf"`
 			}
 
-			return e
+			return e, false
 		}
 
 		// run again to inject default value that defined in matched oneOf schema
 		if settings.asreq || settings.asrep {
 			_ = v[matchedOneOfIndices[0]].Value.visitJSON(settings, value)
 		}
+		visitedOneOf = true
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
@@ -1291,7 +1320,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
-				return foundUnresolvedRef(item.Ref)
+				return foundUnresolvedRef(item.Ref), false
 			}
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
 			if settings.asreq || settings.asrep {
@@ -1305,7 +1334,7 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 		}
 		if !ok {
 			if settings.failfast {
-				return errSchema
+				return errSchema, false
 			}
 			return &SchemaError{
 				Value:                 value,
@@ -1313,20 +1342,21 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				SchemaField:           "anyOf",
 				Reason:                `doesn't match any schema from "anyOf"`,
 				customizeMessageError: settings.customizeMessageError,
-			}
+			}, false
 		}
 
 		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
+		visitedAnyOf = true
 	}
 
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
-			return foundUnresolvedRef(item.Ref)
+			return foundUnresolvedRef(item.Ref), false
 		}
 		if err := v.visitJSON(settings, value); err != nil {
 			if settings.failfast {
-				return errSchema
+				return errSchema, false
 			}
 			return &SchemaError{
 				Value:                 value,
@@ -1335,9 +1365,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				Reason:                `doesn't match all schemas from "allOf"`,
 				Origin:                err,
 				customizeMessageError: settings.customizeMessageError,
-			}
+			}, false
 		}
+		visitedAllOf = true
 	}
+
+	run = !(visitedOneOf || visitedAnyOf || visitedAllOf)
 	return
 }
 
