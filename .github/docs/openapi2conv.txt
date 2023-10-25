@@ -23,3 +23,4 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef
 func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.SchemaRef
 func ToV3SecurityRequirements(requirements openapi2.SecurityRequirements) openapi3.SecurityRequirements
 func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.SecuritySchemeRef, error)
+func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL) (*openapi3.T, error)
