@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/invopop/yaml"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -467,4 +468,45 @@ components:
 			}
 		})
 	}
+}
+
+func TestAddRemoveServer(t *testing.T) {
+	testServerLines := []*Server{{URL: "test0.com"}, {URL: "test1.com"}, {URL: "test3.com"}}
+
+	doc3 := &T{
+		OpenAPI:    "3.0.3",
+		Components: &Components{},
+	}
+
+	assert.Empty(t, doc3.Servers)
+
+	doc3.AddServer(&Server{URL: "testserver1.com"})
+
+	assert.NotEmpty(t, doc3.Servers)
+	assert.Len(t, doc3.Servers, 1)
+
+	doc3.RemoveAllServers()
+
+	assert.Empty(t, doc3.Servers)
+
+	doc3.AddServersSlice(testServerLines)
+
+	assert.NotEmpty(t, doc3.Servers)
+	assert.Len(t, doc3.Servers, 3)
+
+	doc3.RemoveAllServers()
+
+	doc3.AddServers(testServerLines[0], testServerLines[1], testServerLines[2])
+
+	assert.NotEmpty(t, doc3.Servers)
+	assert.Len(t, doc3.Servers, 3)
+
+	doc3.RemoveAllServers()
+
+	doc3.AddServers(testServerLines...)
+
+	assert.NotEmpty(t, doc3.Servers)
+	assert.Len(t, doc3.Servers, 3)
+
+	doc3.RemoveAllServers()
 }

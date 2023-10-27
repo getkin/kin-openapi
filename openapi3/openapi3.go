@@ -87,6 +87,18 @@ func (doc *T) AddServer(server *Server) {
 	doc.Servers = append(doc.Servers, server)
 }
 
+func (doc *T) AddServers(servers ...*Server) {
+	doc.Servers = append(doc.Servers, servers...)
+}
+
+func (doc *T) AddServersSlice(servers []*Server) {
+	doc.Servers = append(doc.Servers, servers...)
+}
+
+func (doc *T) RemoveAllServers() {
+	doc.Servers = Servers{}
+}
+
 // Validate returns an error if T does not comply with the OpenAPI spec.
 // Validations Options can be provided to modify the validation behavior.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
