@@ -110,11 +110,11 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 	}
 
 	doc3.Security = ToV3SecurityRequirements(doc2.Security)
-	{
-		if err := loader.ResolveRefsIn(doc3, location); err != nil {
-			return nil, err
-		}
+
+	if err := loader.ResolveRefsIn(doc3, location); err != nil {
+		return nil, err
 	}
+
 	return doc3, nil
 }
 
