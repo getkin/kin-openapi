@@ -13,6 +13,10 @@ import (
 
 // ToV3 converts an OpenAPIv2 spec to an OpenAPIv3 spec
 func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
+	return ToV3WithLoader(doc2, openapi3.NewLoader(), nil)
+}
+
+func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL) (*openapi3.T, error) {
 	doc3 := &openapi3.T{
 		OpenAPI:      "3.0.3",
 		Info:         &doc2.Info,
@@ -106,12 +110,11 @@ func ToV3(doc2 *openapi2.T) (*openapi3.T, error) {
 	}
 
 	doc3.Security = ToV3SecurityRequirements(doc2.Security)
-	{
-		sl := openapi3.NewLoader()
-		if err := sl.ResolveRefsIn(doc3, nil); err != nil {
-			return nil, err
-		}
+
+	if err := loader.ResolveRefsIn(doc3, location); err != nil {
+		return nil, err
 	}
+
 	return doc3, nil
 }
 
