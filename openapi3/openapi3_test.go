@@ -485,7 +485,7 @@ func TestAddRemoveServer(t *testing.T) {
 	assert.NotEmpty(t, doc3.Servers)
 	assert.Len(t, doc3.Servers, 1)
 
-	doc3.RemoveAllServers()
+	doc3.Servers = Servers{}
 
 	assert.Empty(t, doc3.Servers)
 
@@ -494,12 +494,12 @@ func TestAddRemoveServer(t *testing.T) {
 	assert.NotEmpty(t, doc3.Servers)
 	assert.Len(t, doc3.Servers, 3)
 
-	doc3.RemoveAllServers()
+	doc3.Servers = Servers{}
 
 	doc3.AddServers(testServerLines...)
 
 	assert.NotEmpty(t, doc3.Servers)
 	assert.Len(t, doc3.Servers, 3)
 
-	doc3.RemoveAllServers()
+	doc3.Servers = Servers{}
 }
