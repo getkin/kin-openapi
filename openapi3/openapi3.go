@@ -91,10 +91,6 @@ func (doc *T) AddServers(servers ...*Server) {
 	doc.Servers = append(doc.Servers, servers...)
 }
 
-func (doc *T) AddServersSlice(servers []*Server) {
-	doc.Servers = append(doc.Servers, servers...)
-}
-
 func (doc *T) RemoveAllServers() {
 	doc.Servers = Servers{}
 }

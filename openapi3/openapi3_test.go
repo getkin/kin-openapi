@@ -489,13 +489,6 @@ func TestAddRemoveServer(t *testing.T) {
 
 	assert.Empty(t, doc3.Servers)
 
-	doc3.AddServersSlice(testServerLines)
-
-	assert.NotEmpty(t, doc3.Servers)
-	assert.Len(t, doc3.Servers, 3)
-
-	doc3.RemoveAllServers()
-
 	doc3.AddServers(testServerLines[0], testServerLines[1], testServerLines[2])
 
 	assert.NotEmpty(t, doc3.Servers)
