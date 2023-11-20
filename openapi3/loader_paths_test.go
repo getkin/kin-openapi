@@ -9,7 +9,7 @@ import (
 
 func TestPathsMustStartWithSlash(t *testing.T) {
 	spec := `
-openapi: "3.0"
+openapi: "3.0.0"
 info:
   version: "1.0"
   title: sample

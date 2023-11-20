@@ -13,6 +13,7 @@ type ValidationOptions struct {
 	schemaFormatValidationEnabled                    bool
 	schemaPatternValidationDisabled                  bool
 	extraSiblingFieldsAllowed                        map[string]struct{}
+	versionValidationDisabled                        bool
 }
 
 type validationOptionsKey struct{}
@@ -89,6 +90,20 @@ func EnableExamplesValidation() ValidationOption {
 func DisableExamplesValidation() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.examplesValidationDisabled = true
+	}
+}
+
+// EnableVersionValidation enables openapi version validation.
+func EnableVersionValidation() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.versionValidationDisabled = false
+	}
+}
+
+// DisableVersionValidation disables openapi version validation.
+func DisableVersionValidation() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.versionValidationDisabled = true
 	}
 }
 

@@ -97,7 +97,7 @@ func eqYAML(t *testing.T, expected, actual []byte) {
 }
 
 var specYAML = []byte(`
-openapi: '3.0'
+openapi: '3.0.0'
 info:
   title: MyAPI
   version: '0.1'
@@ -154,7 +154,7 @@ components:
 
 var specJSON = []byte(`
 {
-  "openapi": "3.0",
+  "openapi": "3.0.0",
   "info": {
     "title": "MyAPI",
     "version": "0.1"
@@ -267,7 +267,7 @@ func spec() *T {
 	}
 	example := map[string]string{"name": "Some example"}
 	return &T{
-		OpenAPI: "3.0",
+		OpenAPI: "3.0.0",
 		Info: &Info{
 			Title:   "MyAPI",
 			Version: "0.1",
@@ -423,12 +423,12 @@ components:
 		{
 			name:        "version is missing",
 			spec:        strings.Replace(spec, version, "", 1),
-			expectedErr: "value of openapi must be a non-empty string",
+			expectedErr: "invalid openapi value: must be a non-empty string",
 		},
 		{
 			name:        "version is empty string",
 			spec:        strings.Replace(spec, version, "openapi: ''", 1),
-			expectedErr: "value of openapi must be a non-empty string",
+			expectedErr: "invalid openapi value: must be a non-empty string",
 		},
 		{
 			name:        "info section is missing",

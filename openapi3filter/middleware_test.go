@@ -58,6 +58,7 @@ paths:
           name: id
           schema:
             type: string
+            format: uuid
           required: true
         - in: query
           name: version
@@ -91,6 +92,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         contents:
           { $ref: '#/components/schemas/TestContents' }
       required: [id, contents]
@@ -113,31 +115,56 @@ components:
 `
 
 type validatorTestHandler struct {
+	urlRE             *regexp.Regexp
 	contentType       string
 	getBody, postBody string
 	errBody           string
 	errStatusCode     int
 }
 
-const validatorOkResponse = `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}}`
+const numValidatorOkResponse = `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}}`
+const uuidValidatorOkResponse = `{"id": "D1911DAD-DEBA-4C87-8071-A94BD99D27FC", "contents": {"name": "foo", "expected": 9, "actual": 10}}`
 
-func (h validatorTestHandler) withDefaults() validatorTestHandler {
+func (h validatorTestHandler) withNumDefaults() validatorTestHandler {
 	if h.contentType == "" {
 		h.contentType = "application/json"
 	}
 	if h.getBody == "" {
-		h.getBody = validatorOkResponse
+		h.getBody = numValidatorOkResponse
 	}
 	if h.postBody == "" {
-		h.postBody = validatorOkResponse
+		h.postBody = numValidatorOkResponse
 	}
 	if h.errBody == "" {
 		h.errBody = `{"code":"bad","message":"bad things"}`
 	}
+	if h.urlRE == nil {
+		h.urlRE = numUrlRE
+	}
 	return h
 }
 
-var testUrlRE = regexp.MustCompile(`^/test(/\d+)?$`)
+func (h validatorTestHandler) withUUIDDefaults() validatorTestHandler {
+	if h.contentType == "" {
+		h.contentType = "application/json"
+	}
+	if h.getBody == "" {
+		h.getBody = uuidValidatorOkResponse
+	}
+	if h.postBody == "" {
+		h.postBody = uuidValidatorOkResponse
+	}
+	if h.errBody == "" {
+		h.errBody = `{"code":"bad","message":"bad things"}`
+	}
+	if h.urlRE == nil {
+		h.urlRE = uuidUrlRE
+	}
+	return h
+}
+
+var numUrlRE = regexp.MustCompile(`^/test(/\d+)?$`)
+var uuidUrlRE = regexp.MustCompile(`^/test(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})?$`)
 
 func (h *validatorTestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", h.contentType)
@@ -146,7 +173,7 @@ func (h *validatorTestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		w.Write([]byte(h.errBody))
 		return
 	}
-	if !testUrlRE.MatchString(r.URL.Path) {
+	if h.urlRE != nil && !h.urlRE.MatchString(r.URL.Path) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(h.errBody))
 		return
@@ -179,26 +206,65 @@ func TestValidator(t *testing.T) {
 		body       string
 	}
 	tests := []struct {
-		name     string
-		handler  validatorTestHandler
-		options  []openapi3filter.ValidatorOption
-		request  testRequest
-		response testResponse
-		strict   bool
+		name           string
+		openapiVersion openapi3.Version
+		handler        validatorTestHandler
+		options        []openapi3filter.ValidatorOption
+		request        testRequest
+		response       testResponse
+		strict         bool
 	}{{
-		name:    "valid GET",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "valid num GET 3.0",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method: "GET",
 			path:   "/test/42?version=1",
 		},
 		response: testResponse{
-			200, validatorOkResponse,
+			200, numValidatorOkResponse,
 		},
 		strict: true,
 	}, {
-		name:    "valid POST",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "valid uuid GET 3.0",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withUUIDDefaults(),
+		request: testRequest{
+			method: "GET",
+			path:   "/test/FDB366E3-340F-4DE0-97BD-EF08FB3D4EF7?version=1",
+		},
+		response: testResponse{
+			200, uuidValidatorOkResponse,
+		},
+		strict: true,
+	}, {
+		name:           "valid uuid GET 3.1",
+		openapiVersion: "3.1.0",
+		handler:        validatorTestHandler{}.withUUIDDefaults(),
+		request: testRequest{
+			method: "GET",
+			path:   "/test/FDB366E3-340F-4DE0-97BD-EF08FB3D4EF7?version=1",
+		},
+		response: testResponse{
+			200, uuidValidatorOkResponse,
+		},
+		strict: true,
+	}, {
+		name:           "invalid num GET 3.1; uuid expected",
+		openapiVersion: "3.1.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
+		request: testRequest{
+			method: "GET",
+			path:   "/test/42?version=1",
+		},
+		response: testResponse{
+			400, "bad request\n",
+		},
+		strict: true,
+	}, {
+		name:           "valid num POST 3.0",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method:      "POST",
 			path:        "/test?version=1",
@@ -206,12 +272,58 @@ func TestValidator(t *testing.T) {
 			contentType: "application/json",
 		},
 		response: testResponse{
-			201, validatorOkResponse,
+			201, numValidatorOkResponse,
 		},
 		strict: true,
 	}, {
-		name:    "not found; no GET operation for /test",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "valid uuid POST 3.0",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withUUIDDefaults(),
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			201, uuidValidatorOkResponse,
+		},
+		strict: true,
+	}, {
+		name:           "valid uuid POST 3.1",
+		openapiVersion: "3.1.0",
+		handler:        validatorTestHandler{}.withUUIDDefaults(),
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			201, uuidValidatorOkResponse,
+		},
+		strict: true,
+	}, {
+		name:           "invalid response POST 3.1; uuid expected",
+		openapiVersion: "3.1.0",
+		handler: validatorTestHandler{
+			getBody:  numValidatorOkResponse,
+			postBody: numValidatorOkResponse,
+		}.withUUIDDefaults(),
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			500, "server error\n",
+		},
+		strict: true,
+	}, {
+		name:           "not found; no GET operation for /test",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method: "GET",
 			path:   "/test?version=1",
@@ -221,8 +333,9 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name:    "not found; no POST operation for /test/42",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "not found; no POST operation for /test/42",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method: "POST",
 			path:   "/test/42?version=1",
@@ -232,8 +345,9 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name:    "invalid request; missing version",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "invalid request; missing version",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method: "GET",
 			path:   "/test/42",
@@ -243,8 +357,9 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name:    "invalid POST request; wrong property type",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "invalid POST request; wrong property type",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method:      "POST",
 			path:        "/test?version=1",
@@ -256,8 +371,9 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name:    "invalid POST request; missing property",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "invalid POST request; missing property",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method:      "POST",
 			path:        "/test?version=1",
@@ -269,8 +385,9 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name:    "invalid POST request; extra property",
-		handler: validatorTestHandler{}.withDefaults(),
+		name:           "invalid POST request; extra property",
+		openapiVersion: "3.0.0",
+		handler:        validatorTestHandler{}.withNumDefaults(),
 		request: testRequest{
 			method:      "POST",
 			path:        "/test?version=1",
@@ -282,12 +399,13 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name: "valid response; 404 error",
+		name:           "valid response 3.0; 404 error",
+		openapiVersion: "3.0.0",
 		handler: validatorTestHandler{
 			contentType:   "application/json",
 			errBody:       `{"code": "404", "message": "not found"}`,
 			errStatusCode: 404,
-		}.withDefaults(),
+		}.withNumDefaults(),
 		request: testRequest{
 			method: "GET",
 			path:   "/test/42?version=1",
@@ -297,11 +415,62 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name: "invalid response; invalid error",
+		name:           "valid response 3.1; 404 error",
+		openapiVersion: "3.1.0",
+		handler: validatorTestHandler{
+			contentType:   "application/json",
+			errBody:       `{"code": "404", "message": "not found"}`,
+			errStatusCode: 404,
+		}.withNumDefaults(),
+		request: testRequest{
+			method: "GET",
+			path:   "/test/4506CEF4-FB58-41C7-A5D2-AC538C59F1BA?version=1",
+		},
+		response: testResponse{
+			404, `{"code": "404", "message": "not found"}`,
+		},
+		strict: true,
+	}, {
+		name:           "invalid response 3.1; uuid expected",
+		openapiVersion: "3.1.0",
+		handler: validatorTestHandler{
+			getBody:  numValidatorOkResponse,
+			postBody: numValidatorOkResponse,
+		}.withUUIDDefaults(),
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			500, "server error\n",
+		},
+		strict: true,
+	}, {
+		name:           "invalid response 3.1; not strict",
+		openapiVersion: "3.1.0",
+		handler: validatorTestHandler{
+			getBody:  numValidatorOkResponse,
+			postBody: numValidatorOkResponse,
+		}.withUUIDDefaults(),
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			201, numValidatorOkResponse,
+		},
+		strict: false,
+	}, {
+		name:           "invalid response; invalid error",
+		openapiVersion: "3.0.0",
 		handler: validatorTestHandler{
 			errBody:       `"not found"`,
 			errStatusCode: 404,
-		}.withDefaults(),
+		}.withNumDefaults(),
 		request: testRequest{
 			method: "GET",
 			path:   "/test/42?version=1",
@@ -311,10 +480,11 @@ func TestValidator(t *testing.T) {
 		},
 		strict: true,
 	}, {
-		name: "invalid POST response; not strict",
+		name:           "invalid POST response; not strict",
+		openapiVersion: "3.0.0",
 		handler: validatorTestHandler{
 			postBody: `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
-		}.withDefaults(),
+		}.withNumDefaults(),
 		request: testRequest{
 			method:      "POST",
 			path:        "/test?version=1",
@@ -327,12 +497,13 @@ func TestValidator(t *testing.T) {
 		},
 		strict: false,
 	}, {
-		name: "POST response status code not in spec (return 200, spec only has 201)",
+		name:           "POST response status code not in spec (return 200, spec only has 201)",
+		openapiVersion: "3.0.0",
 		handler: validatorTestHandler{
 			postBody:      `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
 			errStatusCode: 200,
 			errBody:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
-		}.withDefaults(),
+		}.withNumDefaults(),
 		options: []openapi3filter.ValidatorOption{openapi3filter.ValidationOptions(openapi3filter.Options{
 			IncludeResponseStatus: true,
 		})},
@@ -364,6 +535,9 @@ func TestValidator(t *testing.T) {
 			doc.Servers = []*openapi3.Server{{URL: s.URL}}
 			err = doc.Validate(loader.Context)
 			require.NoError(t, err, "failed to validate with test server")
+
+			// Define version
+			doc.OpenAPI = test.openapiVersion
 
 			// Create the router and validator
 			router, err := gorillamux.NewRouter(doc)

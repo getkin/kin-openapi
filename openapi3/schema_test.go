@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -17,12 +18,11 @@ type schemaExample struct {
 	Title         string
 	Schema        *Schema
 	Serialization interface{}
-	AllValid      []interface{}
-	AllInvalid    []interface{}
+	AllValid      [][]interface{} // indexed by minor OpenAPI version supported
+	AllInvalid    [][]interface{} // also indexed by minor OpenAPI version supported
 }
 
 func TestSchemas(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
 	for _, example := range schemaExamples {
 		t.Run(example.Title, testSchema(t, example))
 	}
@@ -46,19 +46,23 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 			require.Equal(t, dataUnserialized, dataSchema)
 		}
 		for validateFuncIndex, validateFunc := range validateSchemaFuncs {
-			for index, value := range example.AllValid {
-				err := validateFunc(t, schema, value)
-				require.NoErrorf(t, err, "ValidateFunc #%d, AllValid #%d: %#v", validateFuncIndex, index, value)
+			for minorVersion, examples := range example.AllValid {
+				for index, value := range examples {
+					err := validateFunc(t, schema, value, SetOpenAPIMinorVersion(uint64(minorVersion)))
+					assert.NoErrorf(t, err, "ValidateFunc #%d, AllValid #%d: %#v", validateFuncIndex, index, value)
+				}
 			}
-			for index, value := range example.AllInvalid {
-				err := validateFunc(t, schema, value)
-				require.Errorf(t, err, "ValidateFunc #%d, AllInvalid #%d: %#v", validateFuncIndex, index, value)
+			for minorVersion, examples := range example.AllInvalid {
+				for index, value := range examples {
+					err := validateFunc(t, schema, value, SetOpenAPIMinorVersion(uint64(minorVersion)))
+					assert.Errorf(t, err, "ValidateFunc #%d, AllInvalid #%d: %#v", validateFuncIndex, index, value)
+				}
 			}
 		}
 		// NaN and Inf aren't valid JSON but are handled
 		for index, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
 			err := schema.VisitJSON(value)
-			require.Errorf(t, err, "NaNAndInf #%d: %#v", index, value)
+			assert.Errorf(t, err, "NaNAndInf #%d: %#v", index, value)
 		}
 	}
 }
@@ -96,16 +100,20 @@ var schemaExamples = []schemaExample{
 			// This OA3 schema is exactly this draft-04 schema:
 			//   {"not": {"type": "null"}}
 		},
-		AllValid: []interface{}{
-			false,
-			true,
-			3.14,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllValid: [][]interface{}{
+			{ // OpenAPI 3.0
+				false,
+				true,
+				3.14,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
+		AllInvalid: [][]interface{}{
+			{ // OpenAPI 3.0
+				nil,
+			},
 		},
 	},
 
@@ -118,16 +126,18 @@ var schemaExamples = []schemaExample{
 			//         ,{type:array, items:{}}, type:object]}
 			"nullable": true,
 		},
-		AllValid: []interface{}{
-			nil,
-			false,
-			true,
-			0,
-			0.0,
-			3.14,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllValid: [][]interface{}{
+			{
+				nil,
+				false,
+				true,
+				0,
+				0.0,
+				3.14,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 
@@ -138,18 +148,22 @@ var schemaExamples = []schemaExample{
 			"nullable": true,
 			"type":     "boolean",
 		},
-		AllValid: []interface{}{
-			nil,
-			false,
-			true,
+		AllValid: [][]interface{}{
+			{
+				nil,
+				false,
+				true,
+			},
 		},
-		AllInvalid: []interface{}{
-			0,
-			0.0,
-			3.14,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				0,
+				0.0,
+				3.14,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 
@@ -166,16 +180,20 @@ var schemaExamples = []schemaExample{
 				map[string]interface{}{"type": "number"},
 			},
 		},
-		AllValid: []interface{}{
-			nil,
-			42,
-			4.2,
+		AllValid: [][]interface{}{
+			{
+				nil,
+				42,
+				4.2,
+			},
 		},
-		AllInvalid: []interface{}{
-			true,
-			[]interface{}{42},
-			"bla",
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				true,
+				[]interface{}{42},
+				"bla",
+				map[string]interface{}{},
+			},
 		},
 	},
 
@@ -236,16 +254,20 @@ var schemaExamples = []schemaExample{
 		Serialization: map[string]interface{}{
 			"type": "boolean",
 		},
-		AllValid: []interface{}{
-			false,
-			true,
+		AllValid: [][]interface{}{
+			{
+				false,
+				true,
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			3.14,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				3.14,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 
@@ -259,20 +281,24 @@ var schemaExamples = []schemaExample{
 			"minimum": 2.5,
 			"maximum": 3.5,
 		},
-		AllValid: []interface{}{
-			2.5,
-			3.14,
-			3.5,
+		AllValid: [][]interface{}{
+			{
+				2.5,
+				3.14,
+				3.5,
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			false,
-			true,
-			2.4,
-			3.6,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				false,
+				true,
+				2.4,
+				3.6,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 
@@ -287,20 +313,24 @@ var schemaExamples = []schemaExample{
 			"minimum": 2,
 			"maximum": 5,
 		},
-		AllValid: []interface{}{
-			2,
-			5,
+		AllValid: [][]interface{}{
+			{
+				2,
+				5,
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			false,
-			true,
-			1,
-			6,
-			3.5,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				false,
+				true,
+				1,
+				6,
+				3.5,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 	{
@@ -310,21 +340,25 @@ var schemaExamples = []schemaExample{
 			"type":   "integer",
 			"format": "int64",
 		},
-		AllValid: []interface{}{
-			1,
-			256,
-			65536,
-			int64(math.MaxInt32) + 10,
-			int64(math.MinInt32) - 10,
+		AllValid: [][]interface{}{
+			{
+				1,
+				256,
+				65536,
+				int64(math.MaxInt32) + 10,
+				int64(math.MinInt32) - 10,
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			false,
-			3.5,
-			true,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				false,
+				3.5,
+				true,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 	{
@@ -334,23 +368,27 @@ var schemaExamples = []schemaExample{
 			"type":   "integer",
 			"format": "int32",
 		},
-		AllValid: []interface{}{
-			1,
-			256,
-			65536,
-			int64(math.MaxInt32),
-			int64(math.MaxInt32),
+		AllValid: [][]interface{}{
+			{
+				1,
+				256,
+				65536,
+				int64(math.MaxInt32),
+				int64(math.MaxInt32),
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			false,
-			3.5,
-			int64(math.MaxInt32) + 10,
-			int64(math.MinInt32) - 10,
-			true,
-			"",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				false,
+				3.5,
+				int64(math.MaxInt32) + 10,
+				int64(math.MinInt32) - 10,
+				true,
+				"",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
 	{
@@ -365,23 +403,26 @@ var schemaExamples = []schemaExample{
 			"maxLength": 3,
 			"pattern":   "^[abc]+$",
 		},
-		AllValid: []interface{}{
-			"ab",
-			"abc",
+		AllValid: [][]interface{}{
+			{
+				"ab",
+				"abc",
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			false,
-			true,
-			3.14,
-			"a",
-			"xy",
-			"aaaa",
-			[]interface{}{},
-			map[string]interface{}{},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				false,
+				true,
+				3.14,
+				"a",
+				"xy",
+				"aaaa",
+				[]interface{}{},
+				map[string]interface{}{},
+			},
 		},
 	},
-
 	{
 		Title:  "STRING: optional format 'uuid'",
 		Schema: NewUUIDSchema(),
@@ -389,30 +430,67 @@ var schemaExamples = []schemaExample{
 			"type":   "string",
 			"format": "uuid",
 		},
-		AllValid: []interface{}{
-			"dd7d8481-81a3-407f-95f0-a2f1cb382a4b",
-			"dcba3901-2fba-48c1-9db2-00422055804e",
-			"ace8e3be-c254-4c10-8859-1401d9a9d52a",
-			"DD7D8481-81A3-407F-95F0-A2F1CB382A4B",
-			"DCBA3901-2FBA-48C1-9DB2-00422055804E",
-			"ACE8E3BE-C254-4C10-8859-1401D9A9D52A",
-			"dd7D8481-81A3-407f-95F0-A2F1CB382A4B",
-			"DCBA3901-2FBA-48C1-9db2-00422055804e",
-			"ACE8E3BE-c254-4C10-8859-1401D9A9D52A",
+		AllValid: [][]interface{}{
+			{
+				"anything-not-definedin3.0",
+			},
+			{
+				"dd7d8481-81a3-407f-95f0-a2f1cb382a4b",
+				"dcba3901-2fba-48c1-9db2-00422055804e",
+				"ace8e3be-c254-4c10-8859-1401d9a9d52a",
+				"DD7D8481-81A3-407F-95F0-A2F1CB382A4B",
+				"DCBA3901-2FBA-48C1-9DB2-00422055804E",
+				"ACE8E3BE-C254-4C10-8859-1401D9A9D52A",
+				"dd7D8481-81A3-407f-95F0-A2F1CB382A4B",
+				"DCBA3901-2FBA-48C1-9db2-00422055804e",
+				"ACE8E3BE-c254-4C10-8859-1401D9A9D52A",
+			},
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: [][]interface{}{
 			nil,
-			"g39840b1-d0ef-446d-e555-48fcca50a90a",
-			"4cf3i040-ea14-4daa-b0b5-ea9329473519",
-			"aaf85740-7e27-4b4f-b4554-a03a43b1f5e3",
-			"56f5bff4-z4b6-48e6-a10d-b6cf66a83b04",
-			"G39840B1-D0EF-446D-E555-48FCCA50A90A",
-			"4CF3I040-EA14-4DAA-B0B5-EA9329473519",
-			"AAF85740-7E27-4B4F-B4554-A03A43B1F5E3",
-			"56F5BFF4-Z4B6-48E6-A10D-B6CF66A83B04",
-			"4CF3I040-EA14-4Daa-B0B5-EA9329473519",
-			"AAf85740-7E27-4B4F-B4554-A03A43b1F5E3",
-			"56F5Bff4-Z4B6-48E6-a10D-B6CF66A83B04",
+			{
+				nil,
+				"g39840b1-d0ef-446d-e555-48fcca50a90a",
+				"4cf3i040-ea14-4daa-b0b5-ea9329473519",
+				"aaf85740-7e27-4b4f-b4554-a03a43b1f5e3",
+				"56f5bff4-z4b6-48e6-a10d-b6cf66a83b04",
+				"G39840B1-D0EF-446D-E555-48FCCA50A90A",
+				"4CF3I040-EA14-4DAA-B0B5-EA9329473519",
+				"AAF85740-7E27-4B4F-B4554-A03A43B1F5E3",
+				"56F5BFF4-Z4B6-48E6-A10D-B6CF66A83B04",
+				"4CF3I040-EA14-4Daa-B0B5-EA9329473519",
+				"AAf85740-7E27-4B4F-B4554-A03A43b1F5E3",
+				"56F5Bff4-Z4B6-48E6-a10D-B6CF66A83B04",
+			},
+		},
+	},
+
+	{
+		Title:  "STRING: format 'date'",
+		Schema: NewDateSchema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "date",
+		},
+		AllValid: [][]interface{}{
+			{
+				"2017-12-31",
+				"2017-01-01",
+			},
+		},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				3.14,
+				"2017-12-00",
+				"2017-12-32",
+				"2017-13-01",
+				"2017-00-31",
+				"99-09-09",
+				"2017-01-00",
+				"2017-01-32",
+				"2017-01-40",
+			},
 		},
 	},
 
@@ -423,53 +501,68 @@ var schemaExamples = []schemaExample{
 			"type":   "string",
 			"format": "date-time",
 		},
-		AllValid: []interface{}{
-			"2017-12-31T11:59:59",
-			"2017-12-31T11:59:59Z",
-			"2017-12-31T11:59:59-11:30",
-			"2017-12-31T11:59:59+11:30",
-			"2017-12-31T11:59:59.999+11:30",
-			"2017-12-31T11:59:59.999Z",
+		AllValid: [][]interface{}{
+			{
+				"2017-12-31T11:59:59",
+				"2017-12-31T11:59:59Z",
+				"2017-12-31T11:59:59-11:30",
+				"2017-12-31T11:59:59+11:30",
+				"2017-12-31T11:59:59.999+11:30",
+				"2017-12-31T11:59:59.999Z",
+				"2017-12-31T23:59:60", // leap second
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			3.14,
-			"2017-12-31",
-			"2017-12-31T11:59:59\n",
-			"2017-12-31T11:59:59.+11:30",
-			"2017-12-31T11:59:59.Z",
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				3.14,
+				"2017-12-31",
+				"2017-12-31T11:59:59\n",
+				"2017-12-31T11:59:59.+11:30",
+				"2017-12-31T11:59:59.Z",
+				"2017-12-00T11:59:59.Z",
+				"2017-12-32T11:59:59.Z",
+				"2017-12-40T11:59:59.Z",
+				"2017-12-00T11:59:59",
+				"2017-12-31T11:59:60",
+				"99-09-09T11:59:59",
+			},
 		},
 	},
 
 	{
-		Title:  "STRING: format 'date-time'",
+		Title:  "STRING: format 'byte'",
 		Schema: NewBytesSchema(),
 		Serialization: map[string]interface{}{
 			"type":   "string",
 			"format": "byte",
 		},
-		AllValid: []interface{}{
-			"",
-			base64.StdEncoding.EncodeToString(func() []byte {
-				data := make([]byte, 0, 1024)
-				for i := 0; i < cap(data); i++ {
-					data = append(data, byte(i))
-				}
-				return data
-			}()),
-			base64.URLEncoding.EncodeToString(func() []byte {
-				data := make([]byte, 0, 1024)
-				for i := 0; i < cap(data); i++ {
-					data = append(data, byte(i))
-				}
-				return data
-			}()),
+		AllValid: [][]interface{}{
+			{
+				"",
+				base64.StdEncoding.EncodeToString(func() []byte {
+					data := make([]byte, 0, 1024)
+					for i := 0; i < cap(data); i++ {
+						data = append(data, byte(i))
+					}
+					return data
+				}()),
+				base64.URLEncoding.EncodeToString(func() []byte {
+					data := make([]byte, 0, 1024)
+					for i := 0; i < cap(data); i++ {
+						data = append(data, byte(i))
+					}
+					return data
+				}()),
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			" ",
-			"\n\n", // a \n is ok for JSON but not for YAML decoder/encoder
-			"%",
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				" ",
+				"\n\n", // a \n is ok for JSON but not for YAML decoder/encoder
+				"%",
+			},
 		},
 	},
 
@@ -491,25 +584,29 @@ var schemaExamples = []schemaExample{
 				"type": "number",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				1, 2,
-			},
-			[]interface{}{
-				1, 2, 3,
+		AllValid: [][]interface{}{
+			{
+				[]interface{}{
+					1, 2,
+				},
+				[]interface{}{
+					1, 2, 3,
+				},
 			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			3.14,
-			[]interface{}{
-				1,
-			},
-			[]interface{}{
-				42, 42,
-			},
-			[]interface{}{
-				1, 2, 3, 4,
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				3.14,
+				[]interface{}{
+					1,
+				},
+				[]interface{}{
+					42, 42,
+				},
+				[]interface{}{
+					1, 2, 3, 4,
+				},
 			},
 		},
 	},
@@ -537,34 +634,38 @@ var schemaExamples = []schemaExample{
 				"type": "object",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
-					"key1": 1,
-					"key2": 1,
-					// Additional properties will make object different
-					// By default additionalProperties is true
+		AllValid: [][]interface{}{
+			{
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+						"key2": 1,
+						// Additioanl properties will make object different
+						// By default additionalProperties is true
+					},
+					map[string]interface{}{
+						"key1": 1,
+					},
 				},
-				map[string]interface{}{
-					"key1": 1,
-				},
-			},
-			[]interface{}{
-				map[string]interface{}{
-					"key1": 1,
-				},
-				map[string]interface{}{
-					"key1": 2,
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+					map[string]interface{}{
+						"key1": 2,
+					},
 				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
-					"key1": 1,
-				},
-				map[string]interface{}{
-					"key1": 1,
+		AllInvalid: [][]interface{}{
+			{
+				[]interface{}{
+					map[string]interface{}{
+						"key1": 1,
+					},
+					map[string]interface{}{
+						"key1": 1,
+					},
 				},
 			},
 		},
@@ -602,54 +703,58 @@ var schemaExamples = []schemaExample{
 				"type": "object",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
-					"key1": []interface{}{
-						1, 2,
+		AllValid: [][]interface{}{
+			{
+				[]interface{}{
+					map[string]interface{}{
+						"key1": []interface{}{
+							1, 2,
+						},
+					},
+					map[string]interface{}{
+						"key1": []interface{}{
+							3, 4,
+						},
 					},
 				},
-				map[string]interface{}{
-					"key1": []interface{}{
-						3, 4,
+				[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
+					map[string]interface{}{
+						"key1": []interface{}{
+							10, 9,
+						},
 					},
-				},
-			},
-			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
-				map[string]interface{}{
-					"key1": []interface{}{
-						10, 9,
-					},
-				},
-				map[string]interface{}{
-					"key1": []interface{}{
-						9, 10,
+					map[string]interface{}{
+						"key1": []interface{}{
+							9, 10,
+						},
 					},
 				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{ // Violate outer array uniqueItems: true
-				map[string]interface{}{
-					"key1": []interface{}{
-						9, 9,
+		AllInvalid: [][]interface{}{
+			{
+				[]interface{}{ // Violate outer array uniqueItems: true
+					map[string]interface{}{
+						"key1": []interface{}{
+							9, 9,
+						},
+					},
+					map[string]interface{}{
+						"key1": []interface{}{
+							9, 9,
+						},
 					},
 				},
-				map[string]interface{}{
-					"key1": []interface{}{
-						9, 9,
+				[]interface{}{ // Violate inner(array in object) array uniqueItems: true
+					map[string]interface{}{
+						"key1": []interface{}{
+							9, 9,
+						},
 					},
-				},
-			},
-			[]interface{}{ // Violate inner(array in object) array uniqueItems: true
-				map[string]interface{}{
-					"key1": []interface{}{
-						9, 9,
-					},
-				},
-				map[string]interface{}{
-					"key1": []interface{}{
-						8, 8,
+					map[string]interface{}{
+						"key1": []interface{}{
+							8, 8,
+						},
 					},
 				},
 			},
@@ -678,24 +783,28 @@ var schemaExamples = []schemaExample{
 				"type":        "array",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				[]interface{}{1, 2},
-				[]interface{}{3, 4},
-			},
-			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
-				[]interface{}{1, 2},
-				[]interface{}{2, 1},
+		AllValid: [][]interface{}{
+			{
+				[]interface{}{
+					[]interface{}{1, 2},
+					[]interface{}{3, 4},
+				},
+				[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
+					[]interface{}{1, 2},
+					[]interface{}{2, 1},
+				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{ // Violate outer array uniqueItems: true
-				[]interface{}{8, 9},
-				[]interface{}{8, 9},
-			},
-			[]interface{}{ // Violate inner array uniqueItems: true
-				[]interface{}{9, 9},
-				[]interface{}{8, 8},
+		AllInvalid: [][]interface{}{
+			{
+				[]interface{}{ // Violate outer array uniqueItems: true
+					[]interface{}{8, 9},
+					[]interface{}{8, 9},
+				},
+				[]interface{}{ // Violate inner array uniqueItems: true
+					[]interface{}{9, 9},
+					[]interface{}{8, 8},
+				},
 			},
 		},
 	},
@@ -732,72 +841,76 @@ var schemaExamples = []schemaExample{
 				"type":        "array",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
+		AllValid: [][]interface{}{
+			{
 				[]interface{}{
-					map[string]interface{}{
-						"key1": 1,
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 1,
+						},
+					},
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 2,
+						},
 					},
 				},
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 2,
+				[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 1,
+						},
+						map[string]interface{}{
+							"key1": 2,
+						},
 					},
-				},
-			},
-			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 1,
-					},
-					map[string]interface{}{
-						"key1": 2,
-					},
-				},
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 2,
-					},
-					map[string]interface{}{
-						"key1": 1,
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 2,
+						},
+						map[string]interface{}{
+							"key1": 1,
+						},
 					},
 				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{ // Violate outer array uniqueItems: true
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 1,
+		AllInvalid: [][]interface{}{
+			{
+				[]interface{}{ // Violate outer array uniqueItems: true
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 1,
+						},
+						map[string]interface{}{
+							"key1": 2,
+						},
 					},
-					map[string]interface{}{
-						"key1": 2,
-					},
-				},
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 1,
-					},
-					map[string]interface{}{
-						"key1": 2,
-					},
-				},
-			},
-			[]interface{}{ // Violate inner array uniqueItems: true
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 1,
-					},
-					map[string]interface{}{
-						"key1": 1,
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 1,
+						},
+						map[string]interface{}{
+							"key1": 2,
+						},
 					},
 				},
-				[]interface{}{
-					map[string]interface{}{
-						"key1": 2,
+				[]interface{}{ // Violate inner array uniqueItems: true
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 1,
+						},
+						map[string]interface{}{
+							"key1": 1,
+						},
 					},
-					map[string]interface{}{
-						"key1": 2,
+					[]interface{}{
+						map[string]interface{}{
+							"key1": 2,
+						},
+						map[string]interface{}{
+							"key1": 2,
+						},
 					},
 				},
 			},
@@ -822,30 +935,34 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{},
-			map[string]interface{}{
-				"numberProperty": 3.14,
-			},
-			map[string]interface{}{
-				"numberProperty": 3.14,
-				"some prop":      nil,
+		AllValid: [][]interface{}{
+			{
+				map[string]interface{}{},
+				map[string]interface{}{
+					"numberProperty": 3.14,
+				},
+				map[string]interface{}{
+					"numberProperty": 3.14,
+					"some prop":      nil,
+				},
 			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			false,
-			true,
-			3.14,
-			"",
-			[]interface{}{},
-			map[string]interface{}{
-				"numberProperty": "abc",
-			},
-			map[string]interface{}{
-				"numberProperty": 3.14,
-				"some prop":      42,
-				"third":          "prop",
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				false,
+				true,
+				3.14,
+				"",
+				[]interface{}{},
+				map[string]interface{}{
+					"numberProperty": "abc",
+				},
+				map[string]interface{}{
+					"numberProperty": 3.14,
+					"some prop":      42,
+					"third":          "prop",
+				},
 			},
 		},
 	},
@@ -864,16 +981,20 @@ var schemaExamples = []schemaExample{
 				"type": "number",
 			},
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{},
-			map[string]interface{}{
-				"x": 3.14,
-				"y": 3.14,
+		AllValid: [][]interface{}{
+			{
+				map[string]interface{}{},
+				map[string]interface{}{
+					"x": 3.14,
+					"y": 3.14,
+				},
 			},
 		},
-		AllInvalid: []interface{}{
-			map[string]interface{}{
-				"x": "abc",
+		AllInvalid: [][]interface{}{
+			{
+				map[string]interface{}{
+					"x": "abc",
+				},
 			},
 		},
 	},
@@ -886,11 +1007,13 @@ var schemaExamples = []schemaExample{
 			"type":                 "object",
 			"additionalProperties": true,
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{},
-			map[string]interface{}{
-				"x": false,
-				"y": 3.14,
+		AllValid: [][]interface{}{
+			{
+				map[string]interface{}{},
+				map[string]interface{}{
+					"x": false,
+					"y": 3.14,
+				},
 			},
 		},
 	},
@@ -919,16 +1042,20 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		AllValid: []interface{}{
-			false,
-			2,
-			"abc",
+		AllValid: [][]interface{}{
+			{
+				false,
+				2,
+				"abc",
+			},
 		},
-		AllInvalid: []interface{}{
-			nil,
-			true,
-			3.14,
-			"not this",
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				true,
+				3.14,
+				"not this",
+			},
 		},
 	},
 
@@ -962,14 +1089,18 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		AllValid: []interface{}{
-			1,
-			2,
-			3,
+		AllValid: [][]interface{}{
+			{
+				1,
+				2,
+				3,
+			},
 		},
-		AllInvalid: []interface{}{
-			0,
-			4,
+		AllInvalid: [][]interface{}{
+			{
+				0,
+				4,
+			},
 		},
 	},
 
@@ -1003,14 +1134,18 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		AllValid: []interface{}{
-			2,
+		AllValid: [][]interface{}{
+			{
+				2,
+			},
 		},
-		AllInvalid: []interface{}{
-			0,
-			1,
-			3,
-			4,
+		AllInvalid: [][]interface{}{
+			{
+				0,
+				1,
+				3,
+				4,
+			},
 		},
 	},
 
@@ -1044,14 +1179,168 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		AllValid: []interface{}{
-			1,
-			3,
+		AllValid: [][]interface{}{
+			{
+				1,
+				3,
+			},
 		},
-		AllInvalid: []interface{}{
-			0,
-			2,
-			4,
+		AllInvalid: [][]interface{}{
+			{
+				0,
+				2,
+				4,
+			},
+		},
+	},
+	{
+		Title:  "STRING: format 'hostname'",
+		Schema: NewHostnameSchema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "hostname",
+		},
+		AllValid: [][]interface{}{
+			{ // OpenAPI 3.0: hostname format not define so anything is fine
+				"a",
+				"ab",
+				"a_b",
+			},
+			{
+				"abc",
+				"a-b",
+				"a0b",
+				"ab9",
+				"0ab9",
+				"a-b.domain",
+				"a-b.sub-domain.domain",
+				"0.1",
+			},
+		},
+		AllInvalid: [][]interface{}{
+			nil,
+			{
+				nil,
+				3.14,
+				"a",
+				"ab",
+				"a_b",
+				"~test",
+			},
+		},
+	},
+
+	{
+		Title:  "STRING: format 'ipv4'",
+		Schema: NewIPv4Schema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "ipv4",
+		},
+		AllValid: [][]interface{}{
+			{ // OpenAPI 3.0: hostname format not define so anything is fine
+				"notchecked",
+				"pi",
+			},
+			{
+				"127.0.0.1",
+				"192.168.1.2",
+				"192.168.1.0",
+				"10.1.2.3",
+			},
+		},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				3.14,
+				false,
+				1,
+			},
+			{
+				nil,
+				3.14,
+				true,
+				2,
+				"a.b.c.d",
+				"192.168.1.y",
+				// "192.168.1.02",	// fixed in go 1.17
+				// "192.168.01.2",	// fixed in go 1.17
+				// "10.01.2.3",		// fixed in go 1.17
+				// "010.1.2.3",		// fixed in go 1.17
+				"256.168.1.2",
+				"192.256.1.2",
+				"192.168.256.2",
+				"192.168.1.256",
+				"255",
+				"1.2",
+				"1.1.1.1.",
+				"-1.2.3.4",
+				"1...4",
+				"1.2..4",
+				"1..3.4",
+				"1.2.3.4.5",
+				".2.3.4",
+			},
+		},
+	},
+
+	{
+		Title:  "STRING: format 'ipv6'",
+		Schema: NewIPv6Schema(),
+		Serialization: map[string]interface{}{
+			"type":   "string",
+			"format": "ipv6",
+		},
+		AllValid: [][]interface{}{
+			{ // OpenAPI 3.0: hostname format not define so anything is fine
+				"notchecked",
+			},
+			{
+				"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+				"2001:0db8:85a3:0:0:8a2e:0370:7334",
+				"2001:0db8:85a3::8a2e:0370:7334",
+				"2001:0db8:85a3::8a2e:370:7334",
+				"2001:db8::",
+				"::1234:5678",
+				"::",
+				"::1",
+				"::ffff:0.0.0.0",
+				"2001:db8:3333:4444:5555:6666:1.2.3.4",
+			},
+		},
+		AllInvalid: [][]interface{}{
+			{
+				nil,
+				3.14,
+				true,
+			},
+			{
+				nil,
+				3.14,
+				false,
+				"",
+				"56FE::2159:5BBC::6594", // double ::
+				"a.b.c.d",
+				"127.0.0.1",
+				"::192.168.1.y",
+				// "::192.168.1.02", 	// fixed in go 1.17
+				// ";;192.168.01.2", 	// fixed in go 1.17
+				// "::10.01.2.3", 		// fixed in go 1.17
+				// "::010.1.2.3",		// fixed in go 1.17
+				"::256.168.1.2",
+				"::192.256.1.2",
+				"::192.168.256.2",
+				"::192.168.1.256",
+				"::1.2",
+				"::1.1.1.1.",
+				"::-1.2.3.4",
+				"::1...4",
+				"::1.2..4",
+				"::1..3.4",
+				"::1.2.3.4.5",
+				"::.2.3.4",
+				"::1:2:3.5:4",
+			},
 		},
 	},
 }
