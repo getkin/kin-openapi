@@ -922,6 +922,14 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 	case "string":
 		return raw, nil
 	default:
+		if len(schema.Value.OneOf) > 0 {
+			for i := range schema.Value.OneOf {
+				res, err := parsePrimitive(raw, schema.Value.OneOf[i])
+				if err == nil {
+					return res, nil
+				}
+			}
+		}
 		panic(fmt.Sprintf("schema has non primitive type %q", schema.Value.Type))
 	}
 }
