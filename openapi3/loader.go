@@ -765,9 +765,9 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			component.Value = &schema
 		} else {
-			if visitedLimit(visited, ref) {
+			if visitedLimit(&visited, ref) {
 				visited = append(visited, ref)
-				return fmt.Errorf("%s with length %d - %s", CircularReferenceError, len(visited), strings.Join(visited, " -> "))
+				return fmt.Errorf("%s with length %d - %s", CircularReferenceError, len(visited)-2, strings.Join(visited, " -> "))
 			}
 			visited = append(visited, ref)
 
@@ -1048,15 +1048,34 @@ func unescapeRefString(ref string) string {
 	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
 
-func visitedLimit(visited []string, ref string) bool {
+func visitedLimit(visited *[]string, ref string) bool {
 	visitedCount := 0
-	for _, v := range visited {
+	for _, v := range *visited {
 		if v == ref {
 			visitedCount++
 			if visitedCount >= CircularReferenceCounter {
+				*visited = dedupe(*visited)
+				if visitedCount < CircularReferenceCounter {
+					break
+				}
 				return true
 			}
 		}
 	}
 	return false
+}
+
+func dedupe(xs []string) []string {
+	m := make(map[string]struct{}, len(xs))
+	for _, x := range xs {
+		m[x] = struct{}{}
+	}
+	ys := make([]string, 0, len(m))
+	for _, x := range xs {
+		if _, ok := m[x]; ok {
+			ys = append(ys, x)
+		}
+		delete(m, x)
+	}
+	return ys
 }
