@@ -801,10 +801,6 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			component.Value = resolved.Value
 		}
-		if loader.visitedSchema == nil {
-			loader.visitedSchema = make(map[*Schema]struct{})
-		}
-		loader.visitedSchema[component.Value] = struct{}{}
 	}
 	value := component.Value
 	if value == nil {
