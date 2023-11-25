@@ -68,12 +68,15 @@ func ReadFromHTTP(cl *http.Client) ReadFromURIFunc {
 	}
 }
 
+func is_file(location *url.URL) bool {
+	return location.Path != "" &&
+		location.Host == "" &&
+		(location.Scheme == "" || location.Scheme == "file")
+}
+
 // ReadFromFile is a ReadFromURIFunc which reads local file URIs.
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error) {
-	if location.Host != "" {
-		return nil, ErrURINotSupported
-	}
-	if location.Scheme != "" && location.Scheme != "file" {
+	if !is_file(location) {
 		return nil, ErrURINotSupported
 	}
 	return os.ReadFile(location.Path)

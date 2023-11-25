@@ -95,23 +95,17 @@ func (loader *Loader) allowsExternalRefs(ref string) (err error) {
 	return
 }
 
-// loadSingleElementFromURI reads the data from ref and unmarshals to the passed element.
 func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element interface{}) (*url.URL, error) {
 	if err := loader.allowsExternalRefs(ref); err != nil {
 		return nil, err
 	}
 
-	parsedURL, err := url.Parse(ref)
+	resolvedPath, err := resolvePathWithRef(ref, rootPath)
 	if err != nil {
 		return nil, err
 	}
-	if fragment := parsedURL.Fragment; fragment != "" {
-		return nil, fmt.Errorf("unexpected ref fragment %q", fragment)
-	}
-
-	resolvedPath, err := resolvePath(rootPath, parsedURL)
-	if err != nil {
-		return nil, fmt.Errorf("could not resolve path: %w", err)
+	if frag := resolvedPath.Fragment; frag != "" {
+		return nil, fmt.Errorf("unexpected ref fragment %q", frag)
 	}
 
 	data, err := loader.readURL(resolvedPath)
@@ -267,27 +261,35 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	return
 }
 
-func join(basePath *url.URL, relativePath *url.URL) (*url.URL, error) {
+func join(basePath *url.URL, relativePath *url.URL) *url.URL {
 	if basePath == nil {
-		return relativePath, nil
+		return relativePath
 	}
-	newPath, err := url.Parse(basePath.String())
-	if err != nil {
-		return nil, fmt.Errorf("cannot copy path: %q", basePath.String())
-	}
+	newPath := *basePath
 	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
-	return newPath, nil
+	return &newPath
 }
 
-func resolvePath(basePath *url.URL, componentPath *url.URL) (*url.URL, error) {
-	if componentPath.Scheme == "" && componentPath.Host == "" {
+func resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
+	if is_file(componentPath) {
 		// support absolute paths
 		if componentPath.Path[0] == '/' {
-			return componentPath, nil
+			return componentPath
 		}
 		return join(basePath, componentPath)
 	}
-	return componentPath, nil
+	return componentPath
+}
+
+func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
+	parsedURL, err := url.Parse(ref)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse reference: %q: %w", ref, err)
+	}
+
+	resolvedPath := resolvePath(rootPath, parsedURL)
+	resolvedPath.Fragment = parsedURL.Fragment
+	return resolvedPath, nil
 }
 
 func isSingleRefElement(ref string) bool {
@@ -476,23 +478,18 @@ func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string,
 		return nil, "", nil, err
 	}
 
-	parsedURL, err := url.Parse(ref)
+	resolvedPath, err := resolvePathWithRef(ref, path)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot parse reference: %q: %v", ref, parsedURL)
+		return nil, "", nil, err
 	}
-	fragment := parsedURL.Fragment
-	parsedURL.Fragment = ""
-
-	var resolvedPath *url.URL
-	if resolvedPath, err = resolvePath(path, parsedURL); err != nil {
-		return nil, "", nil, fmt.Errorf("error resolving path: %w", err)
-	}
+	fragment := "#" + resolvedPath.Fragment
+	resolvedPath.Fragment = ""
 
 	if doc, err = loader.loadFromURIInternal(resolvedPath); err != nil {
 		return nil, "", nil, fmt.Errorf("error resolving reference %q: %w", ref, err)
 	}
 
-	return doc, "#" + fragment, resolvedPath, nil
+	return doc, fragment, resolvedPath, nil
 }
 
 func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
