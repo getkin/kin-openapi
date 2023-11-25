@@ -315,11 +315,25 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	drill := func(cursor interface{}) (interface{}, error) {
 		for _, pathPart := range strings.Split(fragment[1:], "/") {
 			pathPart = unescapeRefString(pathPart)
+			attempted := false
 
-			if cursor, err = drillIntoField(cursor, pathPart); err != nil {
-				e := failedToResolveRefFragmentPart(ref, pathPart)
-				return nil, fmt.Errorf("%s: %w", e, err)
+			// Special case due to multijson
+			if s, ok := cursor.(*SchemaRef); ok && pathPart == "additionalProperties" {
+				if ap := s.Value.AdditionalProperties.Has; ap != nil {
+					cursor = *ap
+				} else {
+					cursor = s.Value.AdditionalProperties.Schema
+				}
+				attempted = true
 			}
+
+			if !attempted {
+				if cursor, err = drillIntoField(cursor, pathPart); err != nil {
+					e := failedToResolveRefFragmentPart(ref, pathPart)
+					return nil, fmt.Errorf("%s: %w", e, err)
+				}
+			}
+
 			if cursor == nil {
 				return nil, failedToResolveRefFragmentPart(ref, pathPart)
 			}
@@ -401,14 +415,6 @@ func readableType(x interface{}) string {
 }
 
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
-	// Special case due to multijson
-	if s, ok := cursor.(*SchemaRef); ok && fieldName == "additionalProperties" {
-		if ap := s.Value.AdditionalProperties.Has; ap != nil {
-			return *ap, nil
-		}
-		return s.Value.AdditionalProperties.Schema, nil
-	}
-
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 	case reflect.Map:
 		elementValue := val.MapIndex(reflect.ValueOf(fieldName))
