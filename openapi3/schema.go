@@ -790,35 +790,35 @@ func (schema *Schema) IsEmpty() bool {
 		schema.MinProps != 0 || schema.MaxProps != nil {
 		return false
 	}
-	if n := schema.Not; n != nil && !n.Value.IsEmpty() {
+	if n := schema.Not; n != nil && n.Value != nil && !n.Value.IsEmpty() {
 		return false
 	}
-	if ap := schema.AdditionalProperties.Schema; ap != nil && !ap.Value.IsEmpty() {
+	if ap := schema.AdditionalProperties.Schema; ap != nil && ap.Value != nil && !ap.Value.IsEmpty() {
 		return false
 	}
 	if apa := schema.AdditionalProperties.Has; apa != nil && !*apa {
 		return false
 	}
-	if items := schema.Items; items != nil && !items.Value.IsEmpty() {
+	if items := schema.Items; items != nil && items.Value != nil && !items.Value.IsEmpty() {
 		return false
 	}
 	for _, s := range schema.Properties {
-		if !s.Value.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
 			return false
 		}
 	}
 	for _, s := range schema.OneOf {
-		if !s.Value.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
 			return false
 		}
 	}
 	for _, s := range schema.AnyOf {
-		if !s.Value.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
 			return false
 		}
 	}
 	for _, s := range schema.AllOf {
-		if !s.Value.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
 			return false
 		}
 	}
