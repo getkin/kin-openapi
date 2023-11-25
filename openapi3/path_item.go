@@ -215,3 +215,20 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 
 	return validateExtensions(ctx, pathItem.Extensions)
 }
+
+// isEmpty's introduced in 546590b1
+func (pathItem *PathItem) isEmpty() bool {
+	return pathItem.Summary == "" &&
+		pathItem.Description == "" &&
+		pathItem.Connect == nil &&
+		pathItem.Delete == nil &&
+		pathItem.Get == nil &&
+		pathItem.Head == nil &&
+		pathItem.Options == nil &&
+		pathItem.Patch == nil &&
+		pathItem.Post == nil &&
+		pathItem.Put == nil &&
+		pathItem.Trace == nil &&
+		len(pathItem.Servers) == 0 &&
+		len(pathItem.Parameters) == 0
+}

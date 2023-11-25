@@ -974,19 +974,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		return
 	}
 	if ref := pathItem.Ref; ref != "" {
-		if pathItem.Summary != "" ||
-			pathItem.Description != "" ||
-			pathItem.Connect != nil ||
-			pathItem.Delete != nil ||
-			pathItem.Get != nil ||
-			pathItem.Head != nil ||
-			pathItem.Options != nil ||
-			pathItem.Patch != nil ||
-			pathItem.Post != nil ||
-			pathItem.Put != nil ||
-			pathItem.Trace != nil ||
-			len(pathItem.Servers) != 0 ||
-			len(pathItem.Parameters) != 0 {
+		if !pathItem.isEmpty() {
 			return
 		}
 		if isSingleRefElement(ref) {
