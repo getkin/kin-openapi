@@ -496,7 +496,11 @@ func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string,
 }
 
 func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid header: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedHeader == nil {
 			loader.visitedHeader = make(map[*Header]struct{})
 		}
@@ -506,9 +510,6 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		loader.visitedHeader[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid header: value MUST be an object")
-	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var header Header
@@ -542,7 +543,11 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 }
 
 func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid parameter: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedParameter == nil {
 			loader.visitedParameter = make(map[*Parameter]struct{})
 		}
@@ -552,11 +557,7 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		loader.visitedParameter[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid parameter: value MUST be an object")
-	}
-	ref := component.Ref
-	if ref != "" {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var param Parameter
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
@@ -599,7 +600,11 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 }
 
 func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid requestBody: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedRequestBody == nil {
 			loader.visitedRequestBody = make(map[*RequestBody]struct{})
 		}
@@ -609,9 +614,6 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		loader.visitedRequestBody[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid requestBody: value MUST be an object")
-	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
@@ -662,7 +664,11 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 }
 
 func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid response: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedResponse == nil {
 			loader.visitedResponse = make(map[*Response]struct{})
 		}
@@ -672,11 +678,7 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		loader.visitedResponse[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid response: value MUST be an object")
-	}
-	ref := component.Ref
-	if ref != "" {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var resp Response
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
@@ -751,8 +753,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		loader.visitedSchema[component.Value] = struct{}{}
 	}
 
-	ref := component.Ref
-	if ref != "" {
+	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var schema Schema
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
@@ -826,7 +827,11 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid securityScheme: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedSecurityScheme == nil {
 			loader.visitedSecurityScheme = make(map[*SecurityScheme]struct{})
 		}
@@ -836,9 +841,6 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		loader.visitedSecurityScheme[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid securityScheme: value MUST be an object")
-	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
@@ -862,7 +864,11 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 }
 
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid example: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedExample == nil {
 			loader.visitedExample = make(map[*Example]struct{})
 		}
@@ -872,9 +878,6 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 		loader.visitedExample[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid example: value MUST be an object")
-	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var example Example
@@ -898,7 +901,11 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 }
 
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid callback: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedCallback == nil {
 			loader.visitedCallback = make(map[*Callback]struct{})
 		}
@@ -908,9 +915,6 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		loader.visitedCallback[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid callback: value MUST be an object")
-	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var resolved Callback
@@ -944,7 +948,11 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 }
 
 func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
-	if component != nil && component.Value != nil {
+	if component == nil {
+		return errors.New("invalid link: value MUST be an object")
+	}
+
+	if component.Value != nil {
 		if loader.visitedLink == nil {
 			loader.visitedLink = make(map[*Link]struct{})
 		}
@@ -954,9 +962,6 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		loader.visitedLink[component.Value] = struct{}{}
 	}
 
-	if component == nil {
-		return errors.New("invalid link: value MUST be an object")
-	}
 	if ref := component.Ref; ref != "" {
 		if isSingleRefElement(ref) {
 			var link Link
@@ -984,6 +989,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		err = errors.New("invalid path item: value MUST be an object")
 		return
 	}
+
 	if ref := pathItem.Ref; ref != "" {
 		if !pathItem.isEmpty() {
 			return
