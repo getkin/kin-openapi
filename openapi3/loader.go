@@ -319,6 +319,13 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			pathPart = unescapeRefString(pathPart)
 			attempted := false
 
+			// Special case of T
+			// See issue856: a ref to doc => we assume that doc is a T => things live in T.Extensions
+			if t, ok := cursor.(*T); ok && pathPart == "" {
+				cursor = t.Extensions
+				attempted = true
+			}
+
 			// Special case due to multijson
 			if s, ok := cursor.(*SchemaRef); ok && pathPart == "additionalProperties" {
 				if ap := s.Value.AdditionalProperties.Has; ap != nil {
