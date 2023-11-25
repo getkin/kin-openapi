@@ -218,6 +218,8 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 
 // isEmpty's introduced in 546590b1
 func (pathItem *PathItem) isEmpty() bool {
+	// NOTE: ignores pathItem.Extensions
+	// NOTE: ignores pathItem.Ref
 	return pathItem.Summary == "" &&
 		pathItem.Description == "" &&
 		pathItem.Connect == nil &&
