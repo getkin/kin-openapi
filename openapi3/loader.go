@@ -432,10 +432,15 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 		hasFields := false
 		for i := 0; i < val.NumField(); i++ {
 			hasFields = true
-			if fieldName == strings.Split(val.Type().Field(i).Tag.Get("yaml"), ",")[0] {
-				return val.Field(i).Interface(), nil
+			if yamlTag := val.Type().Field(i).Tag.Get("yaml"); yamlTag != "-" {
+				if tagName := strings.Split(yamlTag, ",")[0]; tagName != "" {
+					if fieldName == tagName {
+						return val.Field(i).Interface(), nil
+					}
+				}
 			}
 		}
+
 		// if cursor is a "ref wrapper" struct (e.g. RequestBodyRef),
 		if _, ok := val.Type().FieldByName("Value"); ok {
 			// try digging into its Value field
