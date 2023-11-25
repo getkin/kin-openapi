@@ -286,6 +286,14 @@ func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
 	return resolvedPath, nil
 }
 
+func shouldAppendFragment(ref string, rootPath *url.URL) (bool, error) {
+	refDocPath, err := resolvePathWithRef(ref, rootPath)
+	if err != nil {
+		return false, err
+	}
+	return is_file(refDocPath) && refDocPath.Fragment == "", nil
+}
+
 func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
@@ -554,6 +562,12 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		return errMUSTHeader
 	}
 
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
+	}
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
@@ -604,6 +618,12 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
 	if component.isEmpty() {
 		return errMUSTParameter
+	}
+
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
 	}
 
 	if ref := component.Ref; ref != "" {
@@ -666,6 +686,12 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
 	if component.isEmpty() {
 		return errMUSTRequestBody
+	}
+
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
 	}
 
 	if ref := component.Ref; ref != "" {
@@ -735,6 +761,12 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
 	if component.isEmpty() {
 		return errMUSTResponse
+	}
+
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
 	}
 
 	if ref := component.Ref; ref != "" {
@@ -815,6 +847,12 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL, visited []string) (err error) {
 	if component.isEmpty() {
 		return errMUSTSchema
+	}
+
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
 	}
 
 	if ref := component.Ref; ref != "" {
@@ -900,6 +938,12 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		return errMUSTSecurityScheme
 	}
 
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
+	}
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
@@ -938,6 +982,12 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 }
 
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
+	}
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
@@ -978,6 +1028,12 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
 	if component.isEmpty() {
 		return errMUSTCallback
+	}
+
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
 	}
 
 	if ref := component.Ref; ref != "" {
@@ -1032,6 +1088,12 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		return errMUSTLink
 	}
 
+	if should, err := shouldAppendFragment(component.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		component.Ref += "#/"
+	}
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
@@ -1073,6 +1135,12 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 	if pathItem == nil {
 		err = errMUSTPathItem
 		return
+	}
+
+	if should, err := shouldAppendFragment(pathItem.Ref, documentPath); err != nil {
+		return err
+	} else if should {
+		pathItem.Ref += "#/"
 	}
 
 	if ref := pathItem.Ref; ref != "" {
