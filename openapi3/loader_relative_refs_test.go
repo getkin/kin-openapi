@@ -801,14 +801,14 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 
 func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 	for _, td := range relativeDocRefsTestDataEntries {
-		t.Logf("testcase %q", td.name)
-
-		spec := []byte(td.contentTemplate)
-		loader := NewLoader()
-		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/"})
-		require.NoError(t, err)
-		td.testFunc(t, doc)
+		t.Run(td.name, func(t *testing.T) {
+			spec := []byte(td.contentTemplate)
+			loader := NewLoader()
+			loader.IsExternalRefsAllowed = true
+			doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/"})
+			require.NoError(t, err)
+			td.testFunc(t, doc)
+		})
 	}
 }
 
@@ -909,7 +909,6 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
-
 	require.NoError(t, err)
 
 	// path in nested directory
