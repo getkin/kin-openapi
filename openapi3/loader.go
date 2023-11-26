@@ -491,9 +491,22 @@ func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string,
 	return doc, fragment, resolvedPath, nil
 }
 
+var (
+	errMUSTCallback       = errors.New("invalid callback: value MUST be an object")
+	errMUSTExample        = errors.New("invalid example: value MUST be an object")
+	errMUSTHeader         = errors.New("invalid header: value MUST be an object")
+	errMUSTLink           = errors.New("invalid link: value MUST be an object")
+	errMUSTParameter      = errors.New("invalid parameter: value MUST be an object")
+	errMUSTPathItem       = errors.New("invalid path item: value MUST be an object")
+	errMUSTRequestBody    = errors.New("invalid requestBody: value MUST be an object")
+	errMUSTResponse       = errors.New("invalid response: value MUST be an object")
+	errMUSTSchema         = errors.New("invalid schema: value MUST be an object")
+	errMUSTSecurityScheme = errors.New("invalid securityScheme: value MUST be an object")
+)
+
 func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid header: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTHeader
 	}
 
 	if component.Value != nil {
@@ -520,6 +533,9 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 				return err
 			}
 			if err := loader.resolveHeaderRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTHeader {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -539,8 +555,8 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 }
 
 func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid parameter: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTParameter
 	}
 
 	if component.Value != nil {
@@ -567,6 +583,9 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				return err
 			}
 			if err := loader.resolveParameterRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTParameter {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -596,8 +615,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 }
 
 func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid requestBody: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTRequestBody
 	}
 
 	if component.Value != nil {
@@ -624,6 +643,9 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 				return err
 			}
 			if err = loader.resolveRequestBodyRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTRequestBody {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -660,8 +682,8 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 }
 
 func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid response: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTResponse
 	}
 
 	if component.Value != nil {
@@ -688,6 +710,9 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 				return err
 			}
 			if err := loader.resolveResponseRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTResponse {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -735,8 +760,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 }
 
 func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL, visited []string) (err error) {
-	if component == nil {
-		return errors.New("invalid schema: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTSchema
 	}
 
 	if component.Value != nil {
@@ -769,6 +794,9 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			if err := loader.resolveSchemaRef(doc, &resolved, componentPath, visited); err != nil {
+				if err == errMUSTSchema {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -823,8 +851,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid securityScheme: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTSecurityScheme
 	}
 
 	if component.Value != nil {
@@ -851,6 +879,9 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 				return err
 			}
 			if err := loader.resolveSecuritySchemeRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTSecurityScheme {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -860,8 +891,8 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 }
 
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid example: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTExample
 	}
 
 	if component.Value != nil {
@@ -888,6 +919,9 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 				return err
 			}
 			if err := loader.resolveExampleRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTExample {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -897,8 +931,8 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 }
 
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid callback: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTCallback
 	}
 
 	if component.Value != nil {
@@ -925,6 +959,9 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 				return err
 			}
 			if err = loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTCallback {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -944,8 +981,8 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 }
 
 func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
-	if component == nil {
-		return errors.New("invalid link: value MUST be an object")
+	if component.isEmpty() {
+		return errMUSTLink
 	}
 
 	if component.Value != nil {
@@ -972,6 +1009,9 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 				return err
 			}
 			if err := loader.resolveLinkRef(doc, &resolved, componentPath); err != nil {
+				if err == errMUSTLink {
+					return nil
+				}
 				return err
 			}
 			component.Value = resolved.Value
@@ -982,7 +1022,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 
 func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	if pathItem == nil {
-		err = errors.New("invalid path item: value MUST be an object")
+		err = errMUSTPathItem
 		return
 	}
 
@@ -999,6 +1039,9 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		} else {
 			var resolved PathItem
 			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
+				if err == errMUSTPathItem {
+					return nil
+				}
 				return
 			}
 			*pathItem = resolved
