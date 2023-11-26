@@ -1050,6 +1050,7 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	if schema.Value.Type != "object" {
 		return nil, errors.New("unsupported schema of request body")
 	}
+	// TODO: sum all properties possible first
 	for propName, propSchema := range schema.Value.Properties {
 		switch propSchema.Value.Type {
 		case "object":
