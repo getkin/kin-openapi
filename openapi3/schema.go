@@ -2011,22 +2011,6 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, value int
 	}
 }
 
-// NOTE: racey WRT [writes to schema.Pattern] vs [reads schema.Pattern then writes to compiledPatterns]
-func (schema *Schema) compilePattern() (cp *regexp.Regexp, err error) {
-	pattern := schema.Pattern
-	if cp, err = regexp.Compile(pattern); err != nil {
-		err = &SchemaError{
-			Schema:      schema,
-			SchemaField: "pattern",
-			Origin:      err,
-			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
-		}
-		return
-	}
-	var _ bool = compiledPatterns.CompareAndSwap(pattern, nil, cp)
-	return
-}
-
 // SchemaError is an error that occurs during schema validation.
 type SchemaError struct {
 	// Value is the value that failed validation.
