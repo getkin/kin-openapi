@@ -142,7 +142,7 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	type ParameterBis Parameter
 	var x ParameterBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "$ref")

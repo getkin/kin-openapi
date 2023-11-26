@@ -67,7 +67,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	type ExampleBis Example
 	var x ExampleBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "summary")

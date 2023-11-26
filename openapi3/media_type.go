@@ -89,7 +89,7 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	type MediaTypeBis MediaType
 	var x MediaTypeBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "schema")

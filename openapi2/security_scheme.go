@@ -69,7 +69,7 @@ func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	type SecuritySchemeBis SecurityScheme
 	var x SecuritySchemeBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "$ref")

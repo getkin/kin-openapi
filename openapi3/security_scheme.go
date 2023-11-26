@@ -107,7 +107,7 @@ func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
 	type SecuritySchemeBis SecurityScheme
 	var x SecuritySchemeBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "type")
@@ -268,7 +268,7 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	type OAuthFlowsBis OAuthFlows
 	var x OAuthFlowsBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "implicit")
@@ -348,7 +348,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	type OAuthFlowBis OAuthFlow
 	var x OAuthFlowBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "authorizationUrl")

@@ -14,8 +14,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/invopop/yaml"
 )
 
 var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
@@ -176,15 +174,6 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	}
 
 	return doc, nil
-}
-
-func unmarshal(data []byte, v interface{}) error {
-	// See https://github.com/getkin/kin-openapi/issues/680
-	if err := json.Unmarshal(data, v); err != nil {
-		// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
-		return yaml.Unmarshal(data, v)
-	}
-	return nil
 }
 
 // ResolveRefsIn expands references if for instance spec was just unmarshaled

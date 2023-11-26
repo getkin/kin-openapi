@@ -116,7 +116,7 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	type RequestBodyBis RequestBody
 	var x RequestBodyBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "description")

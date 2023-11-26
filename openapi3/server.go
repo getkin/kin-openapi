@@ -103,7 +103,7 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 	type ServerBis Server
 	var x ServerBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "url")
@@ -255,7 +255,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	type ServerVariableBis ServerVariable
 	var x ServerVariableBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "enum")

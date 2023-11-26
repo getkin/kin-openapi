@@ -73,7 +73,7 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 	type LinkBis Link
 	var x LinkBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "operationRef")
