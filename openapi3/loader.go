@@ -310,7 +310,10 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		return nil, nil, fmt.Errorf("cannot parse reference: %q: %v", ref, parsedURL)
 	}
 	fragment := parsedURL.Fragment
-	if !strings.HasPrefix(fragment, "/") {
+	if fragment == "" {
+		fragment = "/"
+	}
+	if fragment[0] != '/' {
 		return nil, nil, fmt.Errorf("expected fragment prefix '#/' in URI %q", ref)
 	}
 
