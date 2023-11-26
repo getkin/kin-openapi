@@ -88,7 +88,8 @@ func main() {
 			log.Fatalln("Validation error:", err)
 		}
 
-	case vd.Swagger == "2" || strings.HasPrefix(vd.Swagger, "2."):
+	case vd.OpenAPI == "2" || strings.HasPrefix(vd.OpenAPI, "2."),
+		vd.Swagger == "2" || strings.HasPrefix(vd.Swagger, "2."):
 		if *circular != defaultCircular {
 			log.Fatal("Flag --circular is only for OpenAPIv3")
 		}
