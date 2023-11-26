@@ -32,7 +32,7 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 	type DiscriminatorBis Discriminator
 	var x DiscriminatorBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "propertyName")

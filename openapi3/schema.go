@@ -178,7 +178,7 @@ func (addProps AdditionalProperties) MarshalJSON() ([]byte, error) {
 func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
 	var x interface{}
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	switch y := x.(type) {
 	case nil:
@@ -342,7 +342,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	type SchemaBis Schema
 	var x SchemaBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 

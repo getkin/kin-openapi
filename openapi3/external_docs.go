@@ -37,7 +37,7 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	type ExternalDocsBis ExternalDocs
 	var x ExternalDocsBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "description")
