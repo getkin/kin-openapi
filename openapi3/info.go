@@ -56,6 +56,9 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "contact")
 	delete(x.Extensions, "license")
 	delete(x.Extensions, "version")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*info = Info(x)
 	return nil
 }

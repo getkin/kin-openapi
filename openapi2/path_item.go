@@ -77,6 +77,9 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "post")
 	delete(x.Extensions, "put")
 	delete(x.Extensions, "parameters")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*pathItem = PathItem(x)
 	return nil
 }

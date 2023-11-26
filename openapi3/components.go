@@ -80,6 +80,9 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "examples")
 	delete(x.Extensions, "links")
 	delete(x.Extensions, "callbacks")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*components = Components(x)
 	return nil
 }

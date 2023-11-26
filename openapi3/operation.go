@@ -119,6 +119,9 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "security")
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "externalDocs")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*operation = Operation(x)
 	return nil
 }

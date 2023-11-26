@@ -827,6 +827,9 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	}
 	if schema.Value.Nullable {
 		schema.Value.Nullable = false
+		if schema.Value.Extensions == nil {
+			schema.Value.Extensions = make(map[string]interface{})
+		}
 		schema.Value.Extensions["x-nullable"] = true
 	}
 

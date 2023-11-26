@@ -82,6 +82,9 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "server")
 	delete(x.Extensions, "requestBody")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*link = Link(x)
 	return nil
 }

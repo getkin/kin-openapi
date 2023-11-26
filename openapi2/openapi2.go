@@ -100,6 +100,9 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "securityDefinitions")
 	delete(x.Extensions, "security")
 	delete(x.Extensions, "tags")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*doc = T(x)
 	return nil
 }

@@ -44,6 +44,9 @@ func (contact *Contact) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "email")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*contact = Contact(x)
 	return nil
 }

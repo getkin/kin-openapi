@@ -118,6 +118,9 @@ func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "bearerFormat")
 	delete(x.Extensions, "flows")
 	delete(x.Extensions, "openIdConnectUrl")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*ss = SecurityScheme(x)
 	return nil
 }
@@ -272,6 +275,9 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "password")
 	delete(x.Extensions, "clientCredentials")
 	delete(x.Extensions, "authorizationCode")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*flows = OAuthFlows(x)
 	return nil
 }
@@ -349,6 +355,9 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "tokenUrl")
 	delete(x.Extensions, "refreshUrl")
 	delete(x.Extensions, "scopes")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*flow = OAuthFlow(x)
 	return nil
 }

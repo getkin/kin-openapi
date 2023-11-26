@@ -54,6 +54,9 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "prefix")
 	delete(x.Extensions, "attribute")
 	delete(x.Extensions, "wrapped")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*xml = XML(x)
 	return nil
 }

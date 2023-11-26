@@ -395,6 +395,10 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "additionalProperties")
 	delete(x.Extensions, "discriminator")
 
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
+
 	*schema = Schema(x)
 
 	if schema.Format == "date" {

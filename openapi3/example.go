@@ -74,6 +74,9 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "value")
 	delete(x.Extensions, "externalValue")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*example = Example(x)
 	return nil
 }

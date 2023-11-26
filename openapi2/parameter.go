@@ -171,6 +171,10 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "minItems")
 	delete(x.Extensions, "default")
 
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
+
 	*parameter = Parameter(x)
 	return nil
 }

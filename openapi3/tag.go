@@ -69,6 +69,9 @@ func (t *Tag) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "externalDocs")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*t = Tag(x)
 	return nil
 }

@@ -55,6 +55,9 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "schema")
 	delete(x.Extensions, "headers")
 	delete(x.Extensions, "examples")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*response = Response(x)
 	return nil
 }

@@ -38,6 +38,9 @@ func (license *License) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*license = License(x)
 	return nil
 }
