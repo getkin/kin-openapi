@@ -42,6 +42,9 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "url")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*e = ExternalDocs(x)
 	return nil
 }

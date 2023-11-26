@@ -82,6 +82,9 @@ func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "tokenUrl")
 	delete(x.Extensions, "scopes")
 	delete(x.Extensions, "tags")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*securityScheme = SecurityScheme(x)
 	return nil
 }

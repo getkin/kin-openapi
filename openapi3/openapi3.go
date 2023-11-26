@@ -67,6 +67,9 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "tags")
 	delete(x.Extensions, "externalDocs")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*doc = T(x)
 	return nil
 }

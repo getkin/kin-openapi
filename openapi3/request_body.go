@@ -122,6 +122,9 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "required")
 	delete(x.Extensions, "content")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*requestBody = RequestBody(x)
 	return nil
 }

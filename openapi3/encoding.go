@@ -76,6 +76,9 @@ func (encoding *Encoding) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "style")
 	delete(x.Extensions, "explode")
 	delete(x.Extensions, "allowReserved")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*encoding = Encoding(x)
 	return nil
 }

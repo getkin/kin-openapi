@@ -239,6 +239,9 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "examples")
 	delete(x.Extensions, "content")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 
 	*parameter = Parameter(x)
 	return nil
