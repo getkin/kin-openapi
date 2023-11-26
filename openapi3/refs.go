@@ -20,6 +20,8 @@ type CallbackRef struct {
 
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
+func (x *CallbackRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
@@ -95,6 +97,8 @@ type ExampleRef struct {
 }
 
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
+
+func (x *ExampleRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (interface{}, error) {
@@ -172,6 +176,8 @@ type HeaderRef struct {
 
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
+func (x *HeaderRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
@@ -247,6 +253,8 @@ type LinkRef struct {
 }
 
 var _ jsonpointer.JSONPointable = (*LinkRef)(nil)
+
+func (x *LinkRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (interface{}, error) {
@@ -324,6 +332,8 @@ type ParameterRef struct {
 
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
 
+func (x *ParameterRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
@@ -399,6 +409,8 @@ type RequestBodyRef struct {
 }
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
+
+func (x *RequestBodyRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (interface{}, error) {
@@ -476,6 +488,8 @@ type ResponseRef struct {
 
 var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
 
+func (x *ResponseRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
@@ -552,6 +566,8 @@ type SchemaRef struct {
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
+func (x *SchemaRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
@@ -627,6 +643,8 @@ type SecuritySchemeRef struct {
 }
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
+
+func (x *SecuritySchemeRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (interface{}, error) {

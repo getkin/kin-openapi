@@ -39,6 +39,8 @@ type ${type}Ref struct {
 
 var _ jsonpointer.JSONPointable = (*${type}Ref)(nil)
 
+func (x *${type}Ref) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
 // MarshalYAML returns the YAML encoding of ${type}Ref.
 func (x ${type}Ref) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
