@@ -8,11 +8,19 @@ import (
 )
 
 func validateExtensions(ctx context.Context, extensions map[string]interface{}) error { // FIXME: newtype + Validate(...)
+	allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+
 	var unknowns []string
 	for k := range extensions {
-		if !strings.HasPrefix(k, "x-") {
-			unknowns = append(unknowns, k)
+		if strings.HasPrefix(k, "x-") {
+			continue
 		}
+		if allowed != nil {
+			if _, ok := allowed[k]; ok {
+				continue
+			}
+		}
+		unknowns = append(unknowns, k)
 	}
 
 	if len(unknowns) != 0 {
