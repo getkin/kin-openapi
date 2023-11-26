@@ -98,7 +98,7 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 		return nil, err
 	}
 
-	resolvedPath, err := resolvePathWithRef(ref, rootPath)
+	resolvedPath, err := resolvePathWithRef(ref, rootPath) //move up
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +268,10 @@ func resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
 		return join(basePath, componentPath)
 	}
 	return componentPath
+	// if is_file(componentPath) && componentPath.Path[0] == '/' {
+	// 	return componentPath
+	// }
+	// return join(basePath, componentPath)
 }
 
 func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
@@ -298,6 +302,13 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	componentPath *url.URL,
 	err error,
 ) {
+	// if ref != "" && ref[0] == '#' {
+	// 	// return doc, path, nil
+	// 	componentDoc = doc
+	// 	componentPath = path
+	// 	err = nil
+	// 	return
+	// }
 	if componentDoc, ref, componentPath, err = loader.resolveRef(doc, ref, path); err != nil {
 		return nil, nil, err
 	}
@@ -485,7 +496,7 @@ func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string,
 		return nil, "", nil, err
 	}
 
-	resolvedPath, err := resolvePathWithRef(ref, path)
+	resolvedPath, err := resolvePathWithRef(ref, path) //move up
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -796,6 +807,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		return errMUSTSchema
 	}
 
+	// fmt.Printf("\n>>> resolveSchemaRef's component = %#v\n", component)
+	// fmt.Printf(">>> resolveSchemaRef's visited = %+v\n", visited)
 	if component.Value != nil {
 		if loader.visitedSchema == nil {
 			loader.visitedSchema = make(map[*Schema]struct{})
@@ -811,17 +824,54 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	} else if should {
 		component.Ref += "#/"
 	}
+	// fmt.Printf(">>> resolveSchemaRef's component.Ref = %q\n", component.Ref)
+
+	const oh = true
 
 	if ref := component.Ref; ref != "" {
+
+		if oh {
+			if component.Value != nil && !component.Value.IsEmpty() {
+				return nil
+			}
+
+			// component = &openapi3.SchemaRef{Ref:"", Value:(*openapi3.Schema)(0xc00022c600), extra:[]string(nil)}
+			// visited = [./components/Bar.yml#/]
+			// component.Ref = ""
+			// component.Value = &openapi3.Schema{Extensions:map[string]interface {}{}, OneOf:openapi3.SchemaRefs(nil), AnyOf:openapi3.SchemaRefs(nil), AllOf:openapi3.SchemaRefs(nil), Not:(*openapi3.SchemaRef)(nil), Type:"string", Title:"", Format:"", Description:"", Enum:[]interface {}(nil), Default:interface {}(nil), Example:"bar", ExternalDocs:(*openapi3.ExternalDocs)(nil), UniqueItems:false, ExclusiveMin:false, ExclusiveMax:false, Nullable:false, ReadOnly:false, WriteOnly:false, AllowEmptyValue:false, Deprecated:false, XML:(*openapi3.XML)(nil), Min:(*float64)(nil), Max:(*float64)(nil), MultipleOf:(*float64)(nil), MinLength:0x0, MaxLength:(*uint64)(nil), Pattern:"", MinItems:0x0, MaxItems:(*uint64)(nil), Items:(*openapi3.SchemaRef)(nil), Required:[]string(nil), Properties:openapi3.Schemas(nil), MinProps:0x0, MaxProps:(*uint64)(nil), AdditionalProperties:openapi3.AdditionalProperties{Has:(*bool)(nil), Schema:(*openapi3.SchemaRef)(nil)}, Discriminator:(*openapi3.Discriminator)(nil)}
+
+			// component = &openapi3.SchemaRef{Ref:"./components/Cat.yml", Value:(*openapi3.Schema)(nil), extra:[]string(nil)}
+			// visited = []
+			// component.Ref = "./components/Cat.yml#/"
+			// !single
+
+			// component = &openapi3.SchemaRef{Ref:"", Value:(*openapi3.Schema)(0xc00022ca80), extra:[]string(nil)}
+			// visited = [./components/Cat.yml#/]
+			// component.Ref = ""
+			// component.Value = &openapi3.Schema{Extensions:map[string]interface {}{}, OneOf:openapi3.SchemaRefs(nil), AnyOf:openapi3.SchemaRefs(nil), AllOf:openapi3.SchemaRefs(nil), Not:(*openapi3.SchemaRef)(nil), Type:"object", Title:"", Format:"", Description:"", Enum:[]interface {}(nil), Default:interface {}(nil), Example:interface {}(nil), ExternalDocs:(*openapi3.ExternalDocs)(nil), UniqueItems:false, ExclusiveMin:false, ExclusiveMax:false, Nullable:false, ReadOnly:false, WriteOnly:false, AllowEmptyValue:false, Deprecated:false, XML:(*openapi3.XML)(nil), Min:(*float64)(nil), Max:(*float64)(nil), MultipleOf:(*float64)(nil), MinLength:0x0, MaxLength:(*uint64)(nil), Pattern:"", MinItems:0x0, MaxItems:(*uint64)(nil), Items:(*openapi3.SchemaRef)(nil), Required:[]string(nil), Properties:openapi3.Schemas{"cat":(*openapi3.SchemaRef)(0xc000223440)}, MinProps:0x0, MaxProps:(*uint64)(nil), AdditionalProperties:openapi3.AdditionalProperties{Has:(*bool)(nil), Schema:(*openapi3.SchemaRef)(nil)}, Discriminator:(*openapi3.Discriminator)(nil)}
+
+			// component = &openapi3.SchemaRef{Ref:"../openapi.yml#/components/schemas/Cat", Value:(*openapi3.Schema)(nil), extra:[]string(nil)}
+			// visited = [./components/Cat.yml#/]
+			// component.Ref = "../openapi.yml#/components/schemas/Cat"
+			// !single
+			//     issue615_test.go:20:
+			//         	Error Trace:	/home/pete/wefwefwef/kin-openapi.git/openapi3/issue615_test.go:20
+			//         	Error:      	Error "error resolving reference \"../openapi.yml#/components/responses/400\": error resolving reference \"../openapi.yml#/components/schemas/Cat\": open testdata/openapi.yml: no such file or directory" does not contain "kin-openapi bug found: circular schema reference not handled"
+
+		}
+
 		if isSingleRefElement(ref) {
+			// fmt.Printf(">>> resolveSchemaRef's single\n")
 			var schema Schema
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
 				return err
 			}
 			component.Value = &schema
 		} else {
+			// fmt.Printf(">>> resolveSchemaRef's !single\n")
 			if visitedLimit(visited, ref) {
 				visited = append(visited, ref)
+				// return nil
 				return fmt.Errorf("%s with length %d - %s", CircularReferenceError, len(visited), strings.Join(visited, " -> "))
 			}
 			visited = append(visited, ref)
@@ -847,6 +897,42 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	value := component.Value
 	if value == nil {
 		return nil
+	}
+	// fmt.Printf(">>> resolveSchemaRef's component.Value = %#v\n", component.Value)
+	if !oh {
+		if component.Ref == "" && len(visited) > 0 && visited[0] == "./components/Cat.yml#/" {
+			// fmt.Printf(">>> resolveSchemaRef's lets see\n")
+			component.Ref = visited[0]
+			return nil
+		}
+
+		// component = &openapi3.SchemaRef{Ref:"", Value:(*openapi3.Schema)(0xc0001b5380), extra:[]string(nil)}
+		// visited = [./components/Bar.yml#/]
+		// component.Ref = ""
+		// component.Value = &openapi3.Schema{Extensions:map[string]interface {}{}, OneOf:openapi3.SchemaRefs(nil), AnyOf:openapi3.SchemaRefs(nil), AllOf:openapi3.SchemaRefs(nil), Not:(*openapi3.SchemaRef)(nil), Type:"string", Title:"", Format:"", Description:"", Enum:[]interface {}(nil), Default:interface {}(nil), Example:"bar", ExternalDocs:(*openapi3.ExternalDocs)(nil), UniqueItems:false, ExclusiveMin:false, ExclusiveMax:false, Nullable:false, ReadOnly:false, WriteOnly:false, AllowEmptyValue:false, Deprecated:false, XML:(*openapi3.XML)(nil), Min:(*float64)(nil), Max:(*float64)(nil), MultipleOf:(*float64)(nil), MinLength:0x0, MaxLength:(*uint64)(nil), Pattern:"", MinItems:0x0, MaxItems:(*uint64)(nil), Items:(*openapi3.SchemaRef)(nil), Required:[]string(nil), Properties:openapi3.Schemas(nil), MinProps:0x0, MaxProps:(*uint64)(nil), AdditionalProperties:openapi3.AdditionalProperties{Has:(*bool)(nil), Schema:(*openapi3.SchemaRef)(nil)}, Discriminator:(*openapi3.Discriminator)(nil)}
+		// component.Value = &openapi3.Schema{Extensions:map[string]interface {}{}, OneOf:openapi3.SchemaRefs(nil), AnyOf:openapi3.SchemaRefs(nil), AllOf:openapi3.SchemaRefs(nil), Not:(*openapi3.SchemaRef)(nil), Type:"string", Title:"", Format:"", Description:"", Enum:[]interface {}(nil), Default:interface {}(nil), Example:"bar", ExternalDocs:(*openapi3.ExternalDocs)(nil), UniqueItems:false, ExclusiveMin:false, ExclusiveMax:false, Nullable:false, ReadOnly:false, WriteOnly:false, AllowEmptyValue:false, Deprecated:false, XML:(*openapi3.XML)(nil), Min:(*float64)(nil), Max:(*float64)(nil), MultipleOf:(*float64)(nil), MinLength:0x0, MaxLength:(*uint64)(nil), Pattern:"", MinItems:0x0, MaxItems:(*uint64)(nil), Items:(*openapi3.SchemaRef)(nil), Required:[]string(nil), Properties:openapi3.Schemas(nil), MinProps:0x0, MaxProps:(*uint64)(nil), AdditionalProperties:openapi3.AdditionalProperties{Has:(*bool)(nil), Schema:(*openapi3.SchemaRef)(nil)}, Discriminator:(*openapi3.Discriminator)(nil)}
+
+		// component = &openapi3.SchemaRef{Ref:"./components/Cat.yml", Value:(*openapi3.Schema)(nil), extra:[]string(nil)}
+		// visited = []
+		// component.Ref = "./components/Cat.yml#/"
+		// !single
+
+		// component = &openapi3.SchemaRef{Ref:"", Value:(*openapi3.Schema)(0xc0001b5980), extra:[]string(nil)}
+		// visited = [./components/Cat.yml#/]
+		// component.Ref = ""
+		// component.Value = &openapi3.Schema{Extensions:map[string]interface {}{}, OneOf:openapi3.SchemaRefs(nil), AnyOf:openapi3.SchemaRefs(nil), AllOf:openapi3.SchemaRefs(nil), Not:(*openapi3.SchemaRef)(nil), Type:"object", Title:"", Format:"", Description:"", Enum:[]interface {}(nil), Default:interface {}(nil), Example:interface {}(nil), ExternalDocs:(*openapi3.ExternalDocs)(nil), UniqueItems:false, ExclusiveMin:false, ExclusiveMax:false, Nullable:false, ReadOnly:false, WriteOnly:false, AllowEmptyValue:false, Deprecated:false, XML:(*openapi3.XML)(nil), Min:(*float64)(nil), Max:(*float64)(nil), MultipleOf:(*float64)(nil), MinLength:0x0, MaxLength:(*uint64)(nil), Pattern:"", MinItems:0x0, MaxItems:(*uint64)(nil), Items:(*openapi3.SchemaRef)(nil), Required:[]string(nil), Properties:openapi3.Schemas{"cat":(*openapi3.SchemaRef)(0xc0001ee960)}, MinProps:0x0, MaxProps:(*uint64)(nil), AdditionalProperties:openapi3.AdditionalProperties{Has:(*bool)(nil), Schema:(*openapi3.SchemaRef)(nil)}, Discriminator:(*openapi3.Discriminator)(nil)}
+		// lets see
+		// component.Value = &openapi3.Schema{Extensions:map[string]interface {}{}, OneOf:openapi3.SchemaRefs(nil), AnyOf:openapi3.SchemaRefs(nil), AllOf:openapi3.SchemaRefs(nil), Not:(*openapi3.SchemaRef)(nil), Type:"object", Title:"", Format:"", Description:"", Enum:[]interface {}(nil), Default:interface {}(nil), Example:interface {}(nil), ExternalDocs:(*openapi3.ExternalDocs)(nil), UniqueItems:false, ExclusiveMin:false, ExclusiveMax:false, Nullable:false, ReadOnly:false, WriteOnly:false, AllowEmptyValue:false, Deprecated:false, XML:(*openapi3.XML)(nil), Min:(*float64)(nil), Max:(*float64)(nil), MultipleOf:(*float64)(nil), MinLength:0x0, MaxLength:(*uint64)(nil), Pattern:"", MinItems:0x0, MaxItems:(*uint64)(nil), Items:(*openapi3.SchemaRef)(nil), Required:[]string(nil), Properties:openapi3.Schemas{"cat":(*openapi3.SchemaRef)(0xc0001ee960)}, MinProps:0x0, MaxProps:(*uint64)(nil), AdditionalProperties:openapi3.AdditionalProperties{Has:(*bool)(nil), Schema:(*openapi3.SchemaRef)(nil)}, Discriminator:(*openapi3.Discriminator)(nil)}
+
+		// component = &openapi3.SchemaRef{Ref:"../openapi.yml#/components/schemas/Cat", Value:(*openapi3.Schema)(nil), extra:[]string(nil)}
+		// visited = [./components/Cat.yml#/]
+		// component.Ref = "../openapi.yml#/components/schemas/Cat"
+		// !single
+		//     issue615_test.go:30:
+		//         	Error Trace:	/home/pete/wefwefwef/kin-openapi.git/openapi3/issue615_test.go:30
+		//         	Error:      	Received unexpected error:
+		//         	            	error resolving reference "../openapi.yml#/components/responses/400": error resolving reference "../openapi.yml#/components/schemas/Cat": open testdata/openapi.yml: no such file or directory
+
 	}
 
 	// ResolveRefs referred schemas
@@ -1087,6 +1173,10 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		err = errMUSTPathItem
 		return
 	}
+
+	// if loader.visitedPathItemRefs
+
+	//cache pathItem visits
 
 	if should, err := shouldAppendFragment(pathItem.Ref, documentPath); err != nil {
 		return err
