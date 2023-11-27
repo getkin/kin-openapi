@@ -302,45 +302,27 @@ func spec() *T {
 		},
 		Components: &Components{
 			Parameters: ParametersMap{
-				"someParameter": {
-					Value: parameter,
-				},
+				"someParameter": {Value: parameter},
 			},
 			RequestBodies: RequestBodies{
-				"someRequestBody": {
-					Value: requestBody,
-				},
+				"someRequestBody": {Value: requestBody},
 			},
-			Responses: Responses{
-				"someResponse": {
-					Value: response,
-				},
+			Responses: ResponseBodies{
+				"someResponse": {Value: response},
 			},
 			Schemas: Schemas{
-				"someSchema": {
-					Value: schema,
-				},
+				"someSchema": {Value: schema},
 			},
 			Headers: Headers{
-				"someHeader": {
-					Ref: "#/components/headers/otherHeader",
-				},
-				"otherHeader": {
-					Value: &Header{Parameter{Schema: &SchemaRef{Value: NewStringSchema()}}},
-				},
+				"someHeader":  {Ref: "#/components/headers/otherHeader"},
+				"otherHeader": {Value: &Header{Parameter{Schema: &SchemaRef{Value: NewStringSchema()}}}},
 			},
 			Examples: Examples{
-				"someExample": {
-					Ref: "#/components/examples/otherExample",
-				},
-				"otherExample": {
-					Value: NewExample(example),
-				},
+				"someExample":  {Ref: "#/components/examples/otherExample"},
+				"otherExample": {Value: NewExample(example)},
 			},
 			SecuritySchemes: SecuritySchemes{
-				"someSecurityScheme": {
-					Ref: "#/components/securitySchemes/otherSecurityScheme",
-				},
+				"someSecurityScheme": {Ref: "#/components/securitySchemes/otherSecurityScheme"},
 				"otherSecurityScheme": {
 					Value: &SecurityScheme{
 						Description: "Some security scheme",

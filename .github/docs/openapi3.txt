@@ -87,6 +87,7 @@ type RequestBody struct{ ... }
 type RequestBodyRef struct{ ... }
 type Response struct{ ... }
     func NewResponse() *Response
+type ResponseBodies map[string]*ResponseRef
 type ResponseRef struct{ ... }
 type Responses map[string]*ResponseRef
     func NewResponses() Responses

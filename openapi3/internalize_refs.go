@@ -158,7 +158,7 @@ func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver,
 		doc.Components = &Components{}
 	}
 	if doc.Components.Responses == nil {
-		doc.Components.Responses = make(Responses)
+		doc.Components.Responses = make(ResponseBodies)
 	}
 	doc.Components.Responses[name] = &ResponseRef{Value: r.Value}
 	r.Ref = "#/components/responses/" + name
@@ -313,7 +313,7 @@ func (doc *T) derefLinks(ls Links, refNameResolver RefNameResolver, parentIsExte
 	}
 }
 
-func (doc *T) derefResponses(es Responses, refNameResolver RefNameResolver, parentIsExternal bool) {
+func (doc *T) derefResponses(es map[string]*ResponseRef, refNameResolver RefNameResolver, parentIsExternal bool) {
 	for _, e := range es {
 		isExternal := doc.addResponseToSpec(e, refNameResolver, parentIsExternal)
 		if e.Value != nil {
