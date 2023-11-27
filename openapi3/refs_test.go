@@ -216,12 +216,15 @@ components:
         - type: integer
           format: int32
 `[1:])
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	require.NotNil(t, doc)
+
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+
 	var ptr jsonpointer.Pointer
 	var v interface{}
 	var kind reflect.Kind

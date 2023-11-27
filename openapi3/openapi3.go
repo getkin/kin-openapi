@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/go-openapi/jsonpointer"
 )
 
 // T is the root of an OpenAPI v3 document
@@ -22,6 +24,33 @@ type T struct {
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	visited visitedComponent
+}
+
+var _ jsonpointer.JSONPointable = (*T)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (doc *T) JSONLookup(token string) (interface{}, error) {
+	switch token {
+	case "openapi":
+		return doc.OpenAPI, nil
+	case "components":
+		return doc.Components, nil
+	case "info":
+		return doc.Info, nil
+	case "paths":
+		return doc.Paths, nil
+	case "security":
+		return doc.Security, nil
+	case "servers":
+		return doc.Servers, nil
+	case "tags":
+		return doc.Tags, nil
+	case "externalDocs":
+		return doc.ExternalDocs, nil
+	}
+
+	v, _, err := jsonpointer.GetForToken(doc.Extensions, token)
+	return v, err
 }
 
 // MarshalJSON returns the JSON encoding of T.

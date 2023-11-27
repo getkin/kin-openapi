@@ -11,21 +11,6 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
-type ResponseBodies map[string]*ResponseRef
-
-var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
-
-// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (m ResponseBodies) JSONLookup(token string) (interface{}, error) {
-	if v, ok := m[token]; !ok || v == nil {
-		return nil, fmt.Errorf("no response body %q", token)
-	} else if ref := v.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
-	} else {
-		return v.Value, nil
-	}
-}
-
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
 type Responses map[string]*ResponseRef

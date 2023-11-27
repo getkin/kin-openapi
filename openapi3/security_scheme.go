@@ -6,26 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-
-	"github.com/go-openapi/jsonpointer"
 )
-
-type SecuritySchemes map[string]*SecuritySchemeRef
-
-// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (s SecuritySchemes) JSONLookup(token string) (interface{}, error) {
-	ref, ok := s[token]
-	if ref == nil || !ok {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
-
-var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
 
 // SecurityScheme is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-scheme-object
