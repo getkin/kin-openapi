@@ -16,7 +16,7 @@ type Components struct {
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`
 	RequestBodies   RequestBodies   `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
-	Responses       Responses       `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Responses       ResponseBodies  `json:"responses,omitempty" yaml:"responses,omitempty"`
 	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
 	Examples        Examples        `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Links           Links           `json:"links,omitempty" yaml:"links,omitempty"`
@@ -142,10 +142,10 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 	}
 	sort.Strings(responses)
 	for _, k := range responses {
-		v := components.Responses[k]
 		if err = ValidateIdentifier(k); err != nil {
 			return fmt.Errorf("response %q: %w", k, err)
 		}
+		v := components.Responses[k]
 		if err = v.Validate(ctx); err != nil {
 			return fmt.Errorf("response %q: %w", k, err)
 		}
