@@ -8,23 +8,6 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
-type Headers map[string]*HeaderRef
-
-var _ jsonpointer.JSONPointable = (*Headers)(nil)
-
-// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (h Headers) JSONLookup(token string) (interface{}, error) {
-	ref, ok := h[token]
-	if ref == nil || !ok {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
-
 // Header is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#header-object
 type Header struct {

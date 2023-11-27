@@ -5,6 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/go-openapi/jsonpointer"
+)
+
+type (
+	Callbacks       map[string]*CallbackRef
+	Examples        map[string]*ExampleRef
+	Headers         map[string]*HeaderRef
+	Links           map[string]*LinkRef
+	ParametersMap   map[string]*ParameterRef
+	RequestBodies   map[string]*RequestBodyRef
+	ResponseBodies  map[string]*ResponseRef
+	Schemas         map[string]*SchemaRef
+	SecuritySchemes map[string]*SecuritySchemeRef
 )
 
 // Components is specified by OpenAPI/Swagger standard version 3.
@@ -227,4 +241,121 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 	}
 
 	return validateExtensions(ctx, components.Extensions)
+}
+
+var _ jsonpointer.JSONPointable = (*Schemas)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Schemas) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no schema %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m ParametersMap) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no parameter %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Headers)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Headers) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no header %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m RequestBodies) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no request body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m ResponseBodies) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no response body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m SecuritySchemes) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no security scheme body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Examples)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Examples) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no example body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Links)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Links) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no link body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Callbacks) JSONLookup(token string) (interface{}, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no callback body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
 }

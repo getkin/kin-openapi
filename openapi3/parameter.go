@@ -11,23 +11,6 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
-type ParametersMap map[string]*ParameterRef
-
-var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
-
-// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (p ParametersMap) JSONLookup(token string) (interface{}, error) {
-	ref, ok := p[token]
-	if ref == nil || !ok {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
-
 // Parameters is specified by OpenAPI/Swagger 3.0 standard.
 type Parameters []*ParameterRef
 
@@ -39,13 +22,11 @@ func (p Parameters) JSONLookup(token string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	if index < 0 || index >= len(p) {
 		return nil, fmt.Errorf("index %d out of bounds of array of length %d", index, len(p))
 	}
 
 	ref := p[index]
-
 	if ref != nil && ref.Ref != "" {
 		return &Ref{Ref: ref.Ref}, nil
 	}

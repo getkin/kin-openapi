@@ -60,23 +60,6 @@ func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 	}
 }
 
-type Schemas map[string]*SchemaRef
-
-var _ jsonpointer.JSONPointable = (*Schemas)(nil)
-
-// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (s Schemas) JSONLookup(token string) (interface{}, error) {
-	ref, ok := s[token]
-	if ref == nil || !ok {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
-
 type SchemaRefs []*SchemaRef
 
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
