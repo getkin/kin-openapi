@@ -1,9 +1,93 @@
-const SuffixKindConstant = SuffixKind(iota) ...
-var DefaultOptions = &Options{ ... }
+package pathpattern // import "github.com/getkin/kin-openapi/routers/legacy/pathpattern"
+
+Package pathpattern implements path matching.
+
+Examples of supported patterns:
+  - "/"
+  - "/abc""
+  - "/abc/{variable}" (matches until next '/' or end-of-string)
+  - "/abc/{variable*}" (matches everything, including "/abc" if "/abc" has root)
+  - "/abc/{ variable | prefix_(.*}_suffix }" (matches regular expressions)
+
+CONSTANTS
+
+const (
+	// SuffixKindConstant matches a constant string
+	SuffixKindConstant = SuffixKind(iota)
+
+	// SuffixKindRegExp matches a regular expression
+	SuffixKindRegExp
+
+	// SuffixKindVariable matches everything until '/'
+	SuffixKindVariable
+
+	// SuffixKindEverything matches everything (until end-of-string)
+	SuffixKindEverything
+)
+    Note that order is important!
+
+
+VARIABLES
+
+var DefaultOptions = &Options{
+	SupportWildcard: true,
+}
+
+FUNCTIONS
+
 func EqualSuffix(a, b Suffix) bool
 func PathFromHost(host string, specialDashes bool) string
-type Node struct{ ... }
-type Options struct{ ... }
-type Suffix struct{ ... }
+    PathFromHost converts a host pattern to a path pattern.
+
+    Examples:
+      - PathFromHost("some-subdomain.domain.com", false) ->
+        "com/./domain/./some-subdomain"
+      - PathFromHost("some-subdomain.domain.com", true) ->
+        "com/./domain/./subdomain/-/some"
+
+
+TYPES
+
+type Node struct {
+	VariableNames []string
+	Value         interface{}
+	Suffixes      SuffixList
+}
+
+func (currentNode *Node) Add(path string, value interface{}, options *Options) error
+
+func (currentNode *Node) CreateNode(path string, options *Options) (*Node, error)
+
+func (currentNode *Node) Match(path string) (*Node, []string)
+
+func (currentNode *Node) MustAdd(path string, value interface{}, options *Options)
+
+func (currentNode *Node) String() string
+
+type Options struct {
+	SupportWildcard bool
+	SupportRegExp   bool
+}
+
+type Suffix struct {
+	Kind    SuffixKind
+	Pattern string
+
+	// Next node
+	Node *Node
+	// Has unexported fields.
+}
+    Suffix describes condition that
+
+func (suffix Suffix) String() string
+
 type SuffixKind int
+
 type SuffixList []Suffix
+
+func (list SuffixList) Len() int
+
+func (list SuffixList) Less(i, j int) bool
+
+func (list SuffixList) Swap(i, j int)
+
