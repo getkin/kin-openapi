@@ -1,11 +1,72 @@
-var RefSchemaRef = openapi3.NewSchemaRef("Ref", ...)
+package openapi3gen // import "github.com/getkin/kin-openapi/openapi3gen"
+
+Package openapi3gen generates OpenAPIv3 JSON schemas from Go types.
+
+VARIABLES
+
+var RefSchemaRef = openapi3.NewSchemaRef("Ref",
+	openapi3.NewObjectSchema().WithProperty("$ref", openapi3.NewStringSchema().WithMinLength(1)))
+
+FUNCTIONS
+
 func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error)
+    NewSchemaRefForValue is a shortcut for
+    NewGenerator(...).NewSchemaRefForValue(...)
+
+
+TYPES
+
 type CycleError struct{}
+    CycleError indicates that a type graph has one or more possible cycles.
+
+func (err *CycleError) Error() string
+
 type ExcludeSchemaSentinel struct{}
-type Generator struct{ ... }
-    func NewGenerator(opts ...Option) *Generator
+    ExcludeSchemaSentinel indicates that the schema for a specific field should
+    not be included in the final output.
+
+func (err *ExcludeSchemaSentinel) Error() string
+
+type Generator struct {
+	Types map[reflect.Type]*openapi3.SchemaRef
+
+	// SchemaRefs contains all references and their counts.
+	// If count is 1, it's not ne
+	// An OpenAPI identifier has been assigned to each.
+	SchemaRefs map[*openapi3.SchemaRef]int
+
+	// Has unexported fields.
+}
+
+func NewGenerator(opts ...Option) *Generator
+
+func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, error)
+
+func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error)
+    NewSchemaRefForValue uses reflection on the given value to produce a
+    SchemaRef, and updates a supplied map with any dependent component schemas
+    if they lead to cycles
+
 type Option func(*generatorOpt)
-    func SchemaCustomizer(sc SchemaCustomizerFn) Option
-    func ThrowErrorOnCycle() Option
-    func UseAllExportedFields() Option
+    Option allows tweaking SchemaRef generation
+
+func SchemaCustomizer(sc SchemaCustomizerFn) Option
+    SchemaCustomizer allows customization of the schema that is generated for a
+    field, for example to support an additional tagging scheme
+
+func ThrowErrorOnCycle() Option
+    ThrowErrorOnCycle changes the default behavior of creating cycle refs to
+    instead error if a cycle is detected.
+
+func UseAllExportedFields() Option
+    UseAllExportedFields changes the default behavior of only generating schemas
+    for struct fields with a JSON tag.
+
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
+    SchemaCustomizerFn is a callback function, allowing the OpenAPI schema
+    definition to be updated with additional properties during the generation
+    process, based on the name of the field, the Go type, and the struct tags.
+    name will be "_root" for the top level object, and tag will be "".
+    A SchemaCustomizerFn can return an ExcludeSchemaSentinel error to indicate
+    that the schema for this field should not be included in the final output
+

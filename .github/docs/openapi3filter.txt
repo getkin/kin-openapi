@@ -1,54 +1,424 @@
-const ErrCodeOK = 0 ...
+package openapi3filter // import "github.com/getkin/kin-openapi/openapi3filter"
+
+Package openapi3filter validates that requests and inputs request an OpenAPI 3
+specification file.
+
+CONSTANTS
+
+const (
+	// ErrCodeOK indicates no error. It is also the default value.
+	ErrCodeOK = 0
+	// ErrCodeCannotFindRoute happens when the validator fails to resolve the
+	// request to a defined OpenAPI route.
+	ErrCodeCannotFindRoute = iota
+	// ErrCodeRequestInvalid happens when the inbound request does not conform
+	// to the OpenAPI 3 specification.
+	ErrCodeRequestInvalid = iota
+	// ErrCodeResponseInvalid happens when the wrapped handler response does
+	// not conform to the OpenAPI 3 specification.
+	ErrCodeResponseInvalid = iota
+)
+
+VARIABLES
+
 var ErrAuthenticationServiceMissing = errors.New("missing AuthenticationFunc")
+    ErrAuthenticationServiceMissing is returned when no authentication service
+    is defined for the request validator
+
 var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
+    ErrInvalidEmptyValue is returned when a value of a parameter or request body
+    is empty while it's not allowed.
+
 var ErrInvalidRequired = errors.New("value is required but missing")
-var JSONPrefixes = []string{ ... }
+    ErrInvalidRequired is returned when a required value of a parameter or
+    request body is not defined.
+
+var JSONPrefixes = []string{
+	")]}',\n",
+}
+
+FUNCTIONS
+
 func ConvertErrors(err error) error
+    ConvertErrors converts all errors to the appropriate error format.
+
 func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter)
-func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, ...) (interface{}, error)
+    DefaultErrorEncoder writes the error to the ResponseWriter, by default a
+    content type of text/plain, a body of the plain text of the error, and a
+    status code of 500. If the error implements Headerer, the provided headers
+    will be applied to the response. If the error implements json.Marshaler,
+    and the marshaling succeeds, a content type of application/json and the JSON
+    encoded form of the error will be used. If the error implements StatusCoder,
+    the provided StatusCode will be used instead of 500.
+
+func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error)
+    FileBodyDecoder is a body decoder that decodes a file body to a string.
+
 func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error
+    NoopAuthenticationFunc is an AuthenticationFunc
+
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
+    RegisterBodyDecoder registers a request body's decoder for a content type.
+
+    If a decoder for the specified content type already exists, the function
+    replaces it with the specified decoder. This call is not thread-safe:
+    body decoders should not be created/destroyed by multiple goroutines.
+
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
 func TrimJSONPrefix(data []byte) []byte
+    TrimJSONPrefix trims one of the possible prefixes
+
 func UnregisterBodyDecoder(contentType string)
+    UnregisterBodyDecoder dissociates a body decoder from a content type.
+
+    Decoding this content type will result in an error. This call is not
+    thread-safe: body decoders should not be created/destroyed by multiple
+    goroutines.
+
 func UnregisterBodyEncoder(contentType string)
-func ValidateParameter(ctx context.Context, input *RequestValidationInput, ...) error
+    This call is not thread-safe: body encoders should not be created/destroyed
+    by multiple goroutines.
+
+func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error
+    ValidateParameter validates a parameter's value by JSON schema. The function
+    returns RequestError with a ParseError cause when unable to parse a value.
+    The function returns RequestError with ErrInvalidRequired cause when a value
+    of a required parameter is not defined. The function returns RequestError
+    with ErrInvalidEmptyValue cause when a value of a required parameter is not
+    defined. The function returns RequestError with a openapi3.SchemaError cause
+    when a value is invalid by JSON schema.
+
 func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error)
-func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, ...) error
+    ValidateRequest is used to validate the given input according to previous
+    loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec,
+    a non-nil error will be returned.
+
+    Note: One can tune the behavior of uniqueItems: true verification by
+    registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
+
+func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error
+    ValidateRequestBody validates data of a request's body.
+
+    The function returns RequestError with ErrInvalidRequired cause when a
+    value is required but not defined. The function returns RequestError with a
+    openapi3.SchemaError cause when a value is invalid by JSON schema.
+
 func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
-func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationInput, ...) error
+    ValidateResponse is used to validate the given input according to previous
+    loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec,
+    a non-nil error will be returned.
+
+    Note: One can tune the behavior of uniqueItems: true verification by
+    registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
+
+func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationInput, srs openapi3.SecurityRequirements) error
+    ValidateSecurityRequirements goes through multiple OpenAPI 3 security
+    requirements in order and returns nil on the first valid requirement.
+    If no requirement is met, errors are returned in order.
+
+
+TYPES
+
 type AuthenticationFunc func(context.Context, *AuthenticationInput) error
-type AuthenticationInput struct{ ... }
+    AuthenticationFunc allows for custom security requirement
+    validation. A non-nil error fails authentication according to
+    https://spec.openapis.org/oas/v3.1.0#security-requirement-object See
+    ValidateSecurityRequirements
+
+type AuthenticationInput struct {
+	RequestValidationInput *RequestValidationInput
+	SecuritySchemeName     string
+	SecurityScheme         *openapi3.SecurityScheme
+	Scopes                 []string
+}
+
+func (input *AuthenticationInput) NewError(err error) error
+
 type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (interface{}, error)
-    func RegisteredBodyDecoder(contentType string) BodyDecoder
+    BodyDecoder is an interface to decode a body of a request or response.
+    An implementation must return a value that is a primitive, []interface{},
+    or map[string]interface{}.
+
+func RegisteredBodyDecoder(contentType string) BodyDecoder
+    RegisteredBodyDecoder returns the registered body decoder for the given
+    content type.
+
+    If no decoder was registered for the given content type, nil is returned.
+    This call is not thread-safe: body decoders should not be created/destroyed
+    by multiple goroutines.
+
 type BodyEncoder func(body interface{}) ([]byte, error)
-    func RegisteredBodyEncoder(contentType string) BodyEncoder
+
+func RegisteredBodyEncoder(contentType string) BodyEncoder
+    RegisteredBodyEncoder returns the registered body encoder for the given
+    content type.
+
+    If no encoder was registered for the given content type, nil is returned.
+    This call is not thread-safe: body encoders should not be created/destroyed
+    by multiple goroutines.
+
 type ContentParameterDecoder func(param *openapi3.Parameter, values []string) (interface{}, *openapi3.Schema, error)
+    A ContentParameterDecoder takes a parameter definition from the OpenAPI
+    spec, and the value which we received for it. It is expected to return the
+    value unmarshaled into an interface which can be traversed for validation,
+    it should also return the schema to be used for validating the object,
+    since there can be more than one in the content spec.
+
+    If a query parameter appears multiple times, values[] will have more than
+    one value, but for all other parameter types it should have just one.
+
 type CustomSchemaErrorFunc func(err *openapi3.SchemaError) string
+    CustomSchemaErrorFunc allows for custom the schema error message.
+
 type EncodingFn func(partName string) *openapi3.Encoding
+    EncodingFn is a function that returns an encoding of a request body's part.
+
 type ErrCode int
+    ErrCode is used for classification of different types of errors that may
+    occur during validation. These may be used to write an appropriate response
+    in ErrFunc.
+
 type ErrFunc func(w http.ResponseWriter, status int, code ErrCode, err error)
+    ErrFunc handles errors that may occur during validation.
+
 type ErrorEncoder func(ctx context.Context, err error, w http.ResponseWriter)
-type Headerer interface{ ... }
+    ErrorEncoder is responsible for encoding an error to the ResponseWriter.
+    Users are encouraged to use custom ErrorEncoders to encode HTTP errors to
+    their clients, and will likely want to pass and check for their own error
+    types. See the example shipping/handling service.
+
+type Headerer interface {
+	Headers() http.Header
+}
+    Headerer is checked by DefaultErrorEncoder. If an error value implements
+    Headerer, the provided headers will be applied to the response writer,
+    after the Content-Type is set.
+
 type LogFunc func(message string, err error)
-type Options struct{ ... }
-type ParseError struct{ ... }
+    LogFunc handles log messages that may occur during validation.
+
+type Options struct {
+	// Set ExcludeRequestBody so ValidateRequest skips request body validation
+	ExcludeRequestBody bool
+
+	// Set ExcludeResponseBody so ValidateResponse skips response body validation
+	ExcludeResponseBody bool
+
+	// Set ExcludeReadOnlyValidations so ValidateRequest skips read-only validations
+	ExcludeReadOnlyValidations bool
+
+	// Set ExcludeWriteOnlyValidations so ValidateResponse skips write-only validations
+	ExcludeWriteOnlyValidations bool
+
+	// Set IncludeResponseStatus so ValidateResponse fails on response
+	// status not defined in OpenAPI spec
+	IncludeResponseStatus bool
+
+	MultiError bool
+
+	// A document with security schemes defined will not pass validation
+	// unless an AuthenticationFunc is defined.
+	// See NoopAuthenticationFunc
+	AuthenticationFunc AuthenticationFunc
+
+	// Indicates whether default values are set in the
+	// request. If true, then they are not set
+	SkipSettingDefaults bool
+
+	// Has unexported fields.
+}
+    Options used by ValidateRequest and ValidateResponse
+
+func (o *Options) WithCustomSchemaErrorFunc(f CustomSchemaErrorFunc)
+    WithCustomSchemaErrorFunc sets a function to override the schema error
+    message. If the passed function returns an empty string, it returns to the
+    previous Error() implementation.
+
+type ParseError struct {
+	Kind   ParseErrorKind
+	Value  interface{}
+	Reason string
+	Cause  error
+
+	// Has unexported fields.
+}
+    ParseError describes errors which happens while parse operation's
+    parameters, requestBody, or response.
+
+func (e *ParseError) Error() string
+
+func (e *ParseError) Path() []interface{}
+    Path returns a path to the root cause.
+
+func (e *ParseError) RootCause() error
+    RootCause returns a root cause of ParseError.
+
+func (e ParseError) Unwrap() error
+
 type ParseErrorKind int
-    const KindOther ParseErrorKind = iota ...
-type RequestError struct{ ... }
-type RequestValidationInput struct{ ... }
-type ResponseError struct{ ... }
-type ResponseValidationInput struct{ ... }
-type SecurityRequirementsError struct{ ... }
-type StatusCoder interface{ ... }
-type ValidationError struct{ ... }
-type ValidationErrorEncoder struct{ ... }
-type ValidationErrorSource struct{ ... }
-type ValidationHandler struct{ ... }
-type Validator struct{ ... }
-    func NewValidator(router routers.Router, options ...ValidatorOption) *Validator
+    ParseErrorKind describes a kind of ParseError. The type simplifies
+    comparison of errors.
+
+const (
+	// KindOther describes an untyped parsing error.
+	KindOther ParseErrorKind = iota
+	// KindUnsupportedFormat describes an error that happens when a value has an unsupported format.
+	KindUnsupportedFormat
+	// KindInvalidFormat describes an error that happens when a value does not conform a format
+	// that is required by a serialization method.
+	KindInvalidFormat
+)
+type RequestError struct {
+	Input       *RequestValidationInput
+	Parameter   *openapi3.Parameter
+	RequestBody *openapi3.RequestBody
+	Reason      string
+	Err         error
+}
+    RequestError is returned by ValidateRequest when request does not match
+    OpenAPI spec
+
+func (err *RequestError) Error() string
+
+func (err RequestError) Unwrap() error
+
+type RequestValidationInput struct {
+	Request      *http.Request
+	PathParams   map[string]string
+	QueryParams  url.Values
+	Route        *routers.Route
+	Options      *Options
+	ParamDecoder ContentParameterDecoder
+}
+
+func (input *RequestValidationInput) GetQueryParams() url.Values
+
+type ResponseError struct {
+	Input  *ResponseValidationInput
+	Reason string
+	Err    error
+}
+    ResponseError is returned by ValidateResponse when response does not match
+    OpenAPI spec
+
+func (err *ResponseError) Error() string
+
+func (err ResponseError) Unwrap() error
+
+type ResponseValidationInput struct {
+	RequestValidationInput *RequestValidationInput
+	Status                 int
+	Header                 http.Header
+	Body                   io.ReadCloser
+	Options                *Options
+}
+
+func (input *ResponseValidationInput) SetBodyBytes(value []byte) *ResponseValidationInput
+
+type SecurityRequirementsError struct {
+	SecurityRequirements openapi3.SecurityRequirements
+	Errors               []error
+}
+    SecurityRequirementsError is returned by ValidateSecurityRequirements when
+    no requirement is met.
+
+func (err *SecurityRequirementsError) Error() string
+
+type StatusCoder interface {
+	StatusCode() int
+}
+    StatusCoder is checked by DefaultErrorEncoder. If an error value implements
+    StatusCoder, the StatusCode will be used when encoding the error.
+    By default, StatusInternalServerError (500) is used.
+
+type ValidationError struct {
+	// A unique identifier for this particular occurrence of the problem.
+	Id string `json:"id,omitempty" yaml:"id,omitempty"`
+	// The HTTP status code applicable to this problem.
+	Status int `json:"status,omitempty" yaml:"status,omitempty"`
+	// An application-specific error code, expressed as a string value.
+	Code string `json:"code,omitempty" yaml:"code,omitempty"`
+	// A short, human-readable summary of the problem. It **SHOULD NOT** change from occurrence to occurrence of the problem, except for purposes of localization.
+	Title string `json:"title,omitempty" yaml:"title,omitempty"`
+	// A human-readable explanation specific to this occurrence of the problem.
+	Detail string `json:"detail,omitempty" yaml:"detail,omitempty"`
+	// An object containing references to the source of the error
+	Source *ValidationErrorSource `json:"source,omitempty" yaml:"source,omitempty"`
+}
+    ValidationError struct provides granular error information useful
+    for communicating issues back to end user and developer. Based on
+    https://jsonapi.org/format/#error-objects
+
+func (e *ValidationError) Error() string
+    Error implements the error interface.
+
+func (e *ValidationError) StatusCode() int
+    StatusCode implements the StatusCoder interface for DefaultErrorEncoder
+
+type ValidationErrorEncoder struct {
+	Encoder ErrorEncoder
+}
+    ValidationErrorEncoder wraps a base ErrorEncoder to handle ValidationErrors
+
+func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http.ResponseWriter)
+    Encode implements the ErrorEncoder interface for encoding ValidationErrors
+
+type ValidationErrorSource struct {
+	// A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].
+	Pointer string `json:"pointer,omitempty" yaml:"pointer,omitempty"`
+	// A string indicating which query parameter caused the error.
+	Parameter string `json:"parameter,omitempty" yaml:"parameter,omitempty"`
+}
+    ValidationErrorSource struct
+
+type ValidationHandler struct {
+	Handler            http.Handler
+	AuthenticationFunc AuthenticationFunc
+	File               string
+	ErrorEncoder       ErrorEncoder
+	// Has unexported fields.
+}
+
+func (h *ValidationHandler) Load() error
+
+func (h *ValidationHandler) Middleware(next http.Handler) http.Handler
+    Middleware implements gorilla/mux MiddlewareFunc
+
+func (h *ValidationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
+
+type Validator struct {
+	// Has unexported fields.
+}
+    Validator provides HTTP request and response validation middleware.
+
+func NewValidator(router routers.Router, options ...ValidatorOption) *Validator
+    NewValidator returns a new response validation middleware, using the given
+    routes from an OpenAPI 3 specification.
+
+func (v *Validator) Middleware(h http.Handler) http.Handler
+    Middleware returns an http.Handler which wraps the given handler with
+    request and response validation.
+
 type ValidatorOption func(*Validator)
-    func OnErr(f ErrFunc) ValidatorOption
-    func OnLog(f LogFunc) ValidatorOption
-    func Strict(strict bool) ValidatorOption
-    func ValidationOptions(options Options) ValidatorOption
+    ValidatorOption defines an option that may be specified when creating a
+    Validator.
+
+func OnErr(f ErrFunc) ValidatorOption
+    OnErr provides a callback that handles writing an HTTP response on a
+    validation error. This allows customization of error responses without
+    prescribing a particular form. This callback is only called on response
+    validator errors in Strict mode.
+
+func OnLog(f LogFunc) ValidatorOption
+    OnLog provides a callback that handles logging in the Validator. This allows
+    the validator to integrate with a services' existing logging system without
+    prescribing a particular one.
+
+func Strict(strict bool) ValidatorOption
+    Strict, if set, causes an internal server error to be sent if the wrapped
+    handler response fails response validation. If not set, the response is sent
+    and the error is only logged.
+
+func ValidationOptions(options Options) ValidatorOption
+    ValidationOptions sets request/response validation options on the validator.
+

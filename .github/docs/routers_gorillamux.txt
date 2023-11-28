@@ -1,2 +1,27 @@
+package gorillamux // import "github.com/getkin/kin-openapi/routers/gorillamux"
+
+Package gorillamux implements a router.
+
+It differs from the legacy router: * it provides somewhat granular errors: "path
+not found", "method not allowed". * it handles matching routes with extensions
+(e.g. /books/{id}.json) * it handles path patterns with a different syntax (e.g.
+/params/{x}/{y}/{z:.*})
+
+FUNCTIONS
+
 func NewRouter(doc *openapi3.T) (routers.Router, error)
-type Router struct{ ... }
+    NewRouter creates a gorilla/mux router. Assumes spec is .Validate()d Note
+    that a variable for the port number MUST have a default value and only this
+    value will match as the port (see issue #367).
+
+
+TYPES
+
+type Router struct {
+	// Has unexported fields.
+}
+    Router helps link http.Request.s and an OpenAPIv3 spec
+
+func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string, error)
+    FindRoute extracts the route and parameters of an http.Request
+

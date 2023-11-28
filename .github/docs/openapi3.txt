@@ -1,156 +1,1662 @@
-const ParameterInPath = "path" ...
-const TypeArray = "array" ...
-const FormatOfStringForUUIDOfRFC4122 = `^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$` ...
-const SerializationSimple = "simple" ...
-var SchemaErrorDetailsDisabled = false ...
+package openapi3 // import "github.com/getkin/kin-openapi/openapi3"
+
+Package openapi3 parses and writes OpenAPI 3 specification documents.
+
+See https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md
+
+CONSTANTS
+
+const (
+	ParameterInPath   = "path"
+	ParameterInQuery  = "query"
+	ParameterInHeader = "header"
+	ParameterInCookie = "cookie"
+)
+const (
+	TypeArray   = "array"
+	TypeBoolean = "boolean"
+	TypeInteger = "integer"
+	TypeNumber  = "number"
+	TypeObject  = "object"
+	TypeString  = "string"
+)
+const (
+	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
+	FormatOfStringForUUIDOfRFC4122 = `^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$`
+
+	// FormatOfStringForEmail pattern catches only some suspiciously wrong-looking email addresses.
+	// Use DefineStringFormat(...) if you need something stricter.
+	FormatOfStringForEmail = `^[^@]+@[^@<>",\s]+$`
+)
+const (
+	SerializationSimple         = "simple"
+	SerializationLabel          = "label"
+	SerializationMatrix         = "matrix"
+	SerializationForm           = "form"
+	SerializationSpaceDelimited = "spaceDelimited"
+	SerializationPipeDelimited  = "pipeDelimited"
+	SerializationDeepObject     = "deepObject"
+)
+
+VARIABLES
+
+var (
+	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
+	SchemaErrorDetailsDisabled = false
+
+	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
+	ErrOneOfConflict = errors.New("input matches more than one oneOf schemas")
+
+	// ErrSchemaInputNaN may be returned when validating a number
+	ErrSchemaInputNaN = errors.New("floating point NaN is not allowed")
+	// ErrSchemaInputInf may be returned when validating a number
+	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
+)
 var CircularReferenceCounter = 3
 var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
 var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
+    DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
+    HTTP URIs and local file URIs.
+
 var ErrURINotSupported = errors.New("unsupported URI")
+    ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle
+    a given URI.
+
 var IdentifierRegExp = regexp.MustCompile(identifierPattern)
+    IdentifierRegExp verifies whether Component object key matches
+    'identifierPattern' pattern, according to OpenAPI v3.x. However, to be able
+    supporting legacy OpenAPI v2.x, there is a need to customize above pattern
+    in order not to fail converted v2-v3 validation
+
 var SchemaStringFormats = make(map[string]Format, 4)
+    SchemaStringFormats allows for validating string formats
+
+
+FUNCTIONS
+
 func BoolPtr(value bool) *bool
+    BoolPtr is a helper for defining OpenAPI schemas.
+
 func DefaultRefNameResolver(ref string) string
+    DefaultRefResolver is a default implementation of refNameResolver for the
+    InternalizeRefs function.
+
+    If a reference points to an element inside a document, it returns the last
+    element in the reference using filepath.Base. Otherwise if the reference
+    points to a file, it returns the file name trimmed of all extensions.
+
 func DefineIPv4Format()
+    DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
+
 func DefineIPv6Format()
+    DefineIPv6Format opts in ipv6 format validation on top of OAS 3 spec
+
 func DefineStringFormat(name string, pattern string)
+    DefineStringFormat defines a new regexp pattern for a given format
+
 func DefineStringFormatCallback(name string, callback FormatCallback)
+    DefineStringFormatCallback adds a validation function for a specific schema
+    format entry
+
 func Float64Ptr(value float64) *float64
+    Float64Ptr is a helper for defining OpenAPI schemas.
+
 func Int64Ptr(value int64) *int64
+    Int64Ptr is a helper for defining OpenAPI schemas.
+
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
+    ReadFromFile is a ReadFromURIFunc which reads local file URIs.
+
 func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
+    RegisterArrayUniqueItemsChecker is used to register a customized function
+    used to check if JSON array have unique items.
+
 func Uint64Ptr(value uint64) *uint64
+    Uint64Ptr is a helper for defining OpenAPI schemas.
+
 func ValidateIdentifier(value string) error
+    ValidateIdentifier returns an error if the given component name does not
+    match IdentifierRegExp.
+
 func WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context
-type AdditionalProperties struct{ ... }
+    WithValidationOptions allows adding validation options to a context object
+    that can be used when validating any OpenAPI type.
+
+
+TYPES
+
+type AdditionalProperties struct {
+	Has    *bool
+	Schema *SchemaRef
+}
+
+func (addProps AdditionalProperties) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of AdditionalProperties.
+
+func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets AdditionalProperties to a copy of data.
+
 type Callback map[string]*PathItem
-type CallbackRef struct{ ... }
+    Callback is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#callback-object
+
+func (callback Callback) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Callback does not comply with the OpenAPI spec.
+
+type CallbackRef struct {
+	Ref   string
+	Value *Callback
+	// Has unexported fields.
+}
+    CallbackRef represents either a Callback or a $ref to a Callback. When
+    serializing and both fields are set, Ref is preferred over Value.
+
+func (x *CallbackRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x CallbackRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of CallbackRef.
+
+func (x CallbackRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of CallbackRef.
+
+func (x *CallbackRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets CallbackRef to a copy of data.
+
+func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if CallbackRef does not comply with the OpenAPI
+    spec.
+
 type Callbacks map[string]*CallbackRef
-type Components struct{ ... }
-    func NewComponents() Components
-type Contact struct{ ... }
+
+func (m Callbacks) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type Components struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
+	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`
+	RequestBodies   RequestBodies   `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
+	Responses       ResponseBodies  `json:"responses,omitempty" yaml:"responses,omitempty"`
+	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
+	Examples        Examples        `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Links           Links           `json:"links,omitempty" yaml:"links,omitempty"`
+	Callbacks       Callbacks       `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+}
+    Components is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#components-object
+
+func NewComponents() Components
+
+func (components Components) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Components.
+
+func (components *Components) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Components to a copy of data.
+
+func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) (err error)
+    Validate returns an error if Components does not comply with the OpenAPI
+    spec.
+
+type Contact struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
+	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
+	Email string `json:"email,omitempty" yaml:"email,omitempty"`
+}
+    Contact is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contact-object
+
+func (contact Contact) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Contact.
+
+func (contact *Contact) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Contact to a copy of data.
+
+func (contact *Contact) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Contact does not comply with the OpenAPI spec.
+
 type Content map[string]*MediaType
-    func NewContent() Content
-    func NewContentWithFormDataSchema(schema *Schema) Content
-    func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content
-    func NewContentWithJSONSchema(schema *Schema) Content
-    func NewContentWithJSONSchemaRef(schema *SchemaRef) Content
-    func NewContentWithSchema(schema *Schema, consumes []string) Content
-    func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
-type Discriminator struct{ ... }
-type Encoding struct{ ... }
-    func NewEncoding() *Encoding
-type Example struct{ ... }
-    func NewExample(value interface{}) *Example
-type ExampleRef struct{ ... }
+    Content is specified by OpenAPI/Swagger 3.0 standard.
+
+func NewContent() Content
+
+func NewContentWithFormDataSchema(schema *Schema) Content
+
+func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content
+
+func NewContentWithJSONSchema(schema *Schema) Content
+
+func NewContentWithJSONSchemaRef(schema *SchemaRef) Content
+
+func NewContentWithSchema(schema *Schema, consumes []string) Content
+
+func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
+
+func (content Content) Get(mime string) *MediaType
+
+func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Content does not comply with the OpenAPI spec.
+
+type Discriminator struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	PropertyName string            `json:"propertyName" yaml:"propertyName"` // required
+	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+}
+    Discriminator is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
+
+func (discriminator Discriminator) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Discriminator.
+
+func (discriminator *Discriminator) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Discriminator to a copy of data.
+
+func (discriminator *Discriminator) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Discriminator does not comply with the OpenAPI
+    spec.
+
+type Encoding struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
+	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+}
+    Encoding is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encoding-object
+
+func NewEncoding() *Encoding
+
+func (encoding Encoding) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Encoding.
+
+func (encoding *Encoding) SerializationMethod() *SerializationMethod
+    SerializationMethod returns a serialization method of request body.
+    When serialization method is not defined the method returns the default
+    serialization method.
+
+func (encoding *Encoding) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Encoding to a copy of data.
+
+func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Encoding does not comply with the OpenAPI spec.
+
+func (encoding *Encoding) WithHeader(name string, header *Header) *Encoding
+
+func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
+
+type Example struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Summary       string      `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description   string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Value         interface{} `json:"value,omitempty" yaml:"value,omitempty"`
+	ExternalValue string      `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
+}
+    Example is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#example-object
+
+func NewExample(value interface{}) *Example
+
+func (example Example) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Example.
+
+func (example *Example) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Example to a copy of data.
+
+func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Example does not comply with the OpenAPI spec.
+
+type ExampleRef struct {
+	Ref   string
+	Value *Example
+	// Has unexported fields.
+}
+    ExampleRef represents either a Example or a $ref to a Example. When
+    serializing and both fields are set, Ref is preferred over Value.
+
+func (x *ExampleRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x ExampleRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of ExampleRef.
+
+func (x ExampleRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of ExampleRef.
+
+func (x *ExampleRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets ExampleRef to a copy of data.
+
+func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if ExampleRef does not comply with the OpenAPI
+    spec.
+
 type Examples map[string]*ExampleRef
-type ExternalDocs struct{ ... }
-type Format struct{ ... }
+
+func (m Examples) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type ExternalDocs struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+}
+    ExternalDocs is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#external-documentation-object
+
+func (e ExternalDocs) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of ExternalDocs.
+
+func (e *ExternalDocs) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets ExternalDocs to a copy of data.
+
+func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if ExternalDocs does not comply with the OpenAPI
+    spec.
+
+type Format struct {
+	// Has unexported fields.
+}
+    Format represents a format validator registered by either DefineStringFormat
+    or DefineStringFormatCallback
+
 type FormatCallback func(value string) error
-type Header struct{ ... }
-type HeaderRef struct{ ... }
+    FormatCallback performs custom checks on exotic formats
+
+type Header struct {
+	Parameter
+}
+    Header is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#header-object
+
+func (header Header) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (header Header) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Header.
+
+func (header Header) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the JSON encoding of Header.
+
+func (header *Header) SerializationMethod() (*SerializationMethod, error)
+    SerializationMethod returns a header's serialization method.
+
+func (header *Header) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Header to a copy of data.
+
+func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Header does not comply with the OpenAPI spec.
+
+type HeaderRef struct {
+	Ref   string
+	Value *Header
+	// Has unexported fields.
+}
+    HeaderRef represents either a Header or a $ref to a Header. When serializing
+    and both fields are set, Ref is preferred over Value.
+
+func (x *HeaderRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x HeaderRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of HeaderRef.
+
+func (x HeaderRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of HeaderRef.
+
+func (x *HeaderRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets HeaderRef to a copy of data.
+
+func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if HeaderRef does not comply with the OpenAPI
+    spec.
+
 type Headers map[string]*HeaderRef
-type Info struct{ ... }
-type License struct{ ... }
-type Link struct{ ... }
-type LinkRef struct{ ... }
+
+func (m Headers) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type Info struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Title          string   `json:"title" yaml:"title"` // Required
+	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
+	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
+	Contact        *Contact `json:"contact,omitempty" yaml:"contact,omitempty"`
+	License        *License `json:"license,omitempty" yaml:"license,omitempty"`
+	Version        string   `json:"version" yaml:"version"` // Required
+}
+    Info is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#info-object
+
+func (info Info) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Info.
+
+func (info *Info) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Info to a copy of data.
+
+func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Info does not comply with the OpenAPI spec.
+
+type License struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Name string `json:"name" yaml:"name"` // Required
+	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
+}
+    License is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#license-object
+
+func (license License) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of License.
+
+func (license *License) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets License to a copy of data.
+
+func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if License does not comply with the OpenAPI spec.
+
+type Link struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
+	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Parameters   map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Server       *Server                `json:"server,omitempty" yaml:"server,omitempty"`
+	RequestBody  interface{}            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+}
+    Link is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#link-object
+
+func (link Link) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Link.
+
+func (link *Link) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Link to a copy of data.
+
+func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Link does not comply with the OpenAPI spec.
+
+type LinkRef struct {
+	Ref   string
+	Value *Link
+	// Has unexported fields.
+}
+    LinkRef represents either a Link or a $ref to a Link. When serializing and
+    both fields are set, Ref is preferred over Value.
+
+func (x *LinkRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x LinkRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of LinkRef.
+
+func (x LinkRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of LinkRef.
+
+func (x *LinkRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets LinkRef to a copy of data.
+
+func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if LinkRef does not comply with the OpenAPI spec.
+
 type Links map[string]*LinkRef
-type Loader struct{ ... }
-    func NewLoader() *Loader
-type MediaType struct{ ... }
-    func NewMediaType() *MediaType
+
+func (m Links) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type Loader struct {
+	// IsExternalRefsAllowed enables visiting other files
+	IsExternalRefsAllowed bool
+
+	// ReadFromURIFunc allows overriding the any file/URL reading func
+	ReadFromURIFunc ReadFromURIFunc
+
+	Context context.Context
+
+	// Has unexported fields.
+}
+    Loader helps deserialize an OpenAPIv3 document
+
+func NewLoader() *Loader
+    NewLoader returns an empty Loader
+
+func (loader *Loader) LoadFromData(data []byte) (*T, error)
+    LoadFromData loads a spec from a byte array
+
+func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, error)
+    LoadFromDataWithPath takes the OpenAPI document data in bytes and a path
+    where the resolver can find referred elements and returns a *T with all
+    resolved data or an error if unable to load data or resolve refs.
+
+func (loader *Loader) LoadFromFile(location string) (*T, error)
+    LoadFromFile loads a spec from a local file path
+
+func (loader *Loader) LoadFromStdin() (*T, error)
+    LoadFromStdin loads a spec from stdin
+
+func (loader *Loader) LoadFromURI(location *url.URL) (*T, error)
+    LoadFromURI loads a spec from a remote URL
+
+func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error)
+    ResolveRefsIn expands references if for instance spec was just unmarshaled
+
+type MediaType struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example  interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+}
+    MediaType is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
+
+func NewMediaType() *MediaType
+
+func (mediaType MediaType) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (mediaType MediaType) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of MediaType.
+
+func (mediaType *MediaType) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets MediaType to a copy of data.
+
+func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if MediaType does not comply with the OpenAPI
+    spec.
+
+func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType
+
+func (mediaType *MediaType) WithExample(name string, value interface{}) *MediaType
+
+func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType
+
+func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType
+
 type MultiError []error
-type OAuthFlow struct{ ... }
-type OAuthFlows struct{ ... }
-type Operation struct{ ... }
-    func NewOperation() *Operation
-type Parameter struct{ ... }
-    func NewCookieParameter(name string) *Parameter
-    func NewHeaderParameter(name string) *Parameter
-    func NewPathParameter(name string) *Parameter
-    func NewQueryParameter(name string) *Parameter
-type ParameterRef struct{ ... }
+    MultiError is a collection of errors, intended for when multiple issues need
+    to be reported upstream
+
+func (me MultiError) As(target interface{}) bool
+    As allows you to use `errors.As()` to set target to the first error within
+    the multi error that matches the target type
+
+func (me MultiError) Error() string
+
+func (me MultiError) Is(target error) bool
+    Is allows you to determine if a generic error is in fact a MultiError using
+    `errors.Is()` It will also return true if any of the contained errors match
+    target
+
+type OAuthFlow struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
+}
+    OAuthFlow is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
+
+func (flow OAuthFlow) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of OAuthFlow.
+
+func (flow *OAuthFlow) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets OAuthFlow to a copy of data.
+
+func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if OAuthFlows does not comply with the OpenAPI
+    spec.
+
+type OAuthFlows struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
+	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
+	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
+	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty" yaml:"authorizationCode,omitempty"`
+}
+    OAuthFlows is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
+
+func (flows OAuthFlows) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of OAuthFlows.
+
+func (flows *OAuthFlows) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets OAuthFlows to a copy of data.
+
+func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if OAuthFlows does not comply with the OpenAPI
+    spec.
+
+type Operation struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	// Optional tags for documentation.
+	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+
+	// Optional short summary.
+	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
+
+	// Optional description. Should use CommonMark syntax.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+
+	// Optional operation ID.
+	OperationID string `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+
+	// Optional parameters.
+	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+
+	// Optional body parameter.
+	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+
+	// Responses.
+	Responses Responses `json:"responses" yaml:"responses"` // Required
+
+	// Optional callbacks
+	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+
+	Deprecated bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+
+	// Optional security requirements that overrides top-level security.
+	Security *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+
+	// Optional servers that overrides top-level servers.
+	Servers *Servers `json:"servers,omitempty" yaml:"servers,omitempty"`
+
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+}
+    Operation represents "operation" specified
+    by" OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
+
+func NewOperation() *Operation
+
+func (operation *Operation) AddParameter(p *Parameter)
+
+func (operation *Operation) AddResponse(status int, response *Response)
+
+func (operation Operation) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (operation Operation) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Operation.
+
+func (operation *Operation) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Operation to a copy of data.
+
+func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Operation does not comply with the OpenAPI
+    spec.
+
+type Parameter struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Style           string      `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode         *bool       `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool        `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Required        bool        `json:"required,omitempty" yaml:"required,omitempty"`
+	Schema          *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example         interface{} `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples        Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Content         Content     `json:"content,omitempty" yaml:"content,omitempty"`
+}
+    Parameter is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameter-object
+
+func NewCookieParameter(name string) *Parameter
+
+func NewHeaderParameter(name string) *Parameter
+
+func NewPathParameter(name string) *Parameter
+
+func NewQueryParameter(name string) *Parameter
+
+func (parameter Parameter) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (parameter Parameter) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Parameter.
+
+func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error)
+    SerializationMethod returns a parameter's serialization method. When a
+    parameter's serialization method is not defined the method returns the
+    default serialization method corresponding to a parameter's location.
+
+func (parameter *Parameter) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Parameter to a copy of data.
+
+func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Parameter does not comply with the OpenAPI
+    spec.
+
+func (parameter *Parameter) WithDescription(value string) *Parameter
+
+func (parameter *Parameter) WithRequired(value bool) *Parameter
+
+func (parameter *Parameter) WithSchema(value *Schema) *Parameter
+
+type ParameterRef struct {
+	Ref   string
+	Value *Parameter
+	// Has unexported fields.
+}
+    ParameterRef represents either a Parameter or a $ref to a Parameter.
+    When serializing and both fields are set, Ref is preferred over Value.
+
+func (x *ParameterRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x ParameterRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of ParameterRef.
+
+func (x ParameterRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of ParameterRef.
+
+func (x *ParameterRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets ParameterRef to a copy of data.
+
+func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if ParameterRef does not comply with the OpenAPI
+    spec.
+
 type Parameters []*ParameterRef
-    func NewParameters() Parameters
+    Parameters is specified by OpenAPI/Swagger 3.0 standard.
+
+func NewParameters() Parameters
+
+func (parameters Parameters) GetByInAndName(in string, name string) *Parameter
+
+func (p Parameters) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Parameters does not comply with the OpenAPI
+    spec.
+
 type ParametersMap map[string]*ParameterRef
-type PathItem struct{ ... }
+
+func (m ParametersMap) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type PathItem struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
+	Connect     *Operation `json:"connect,omitempty" yaml:"connect,omitempty"`
+	Delete      *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
+	Get         *Operation `json:"get,omitempty" yaml:"get,omitempty"`
+	Head        *Operation `json:"head,omitempty" yaml:"head,omitempty"`
+	Options     *Operation `json:"options,omitempty" yaml:"options,omitempty"`
+	Patch       *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
+	Post        *Operation `json:"post,omitempty" yaml:"post,omitempty"`
+	Put         *Operation `json:"put,omitempty" yaml:"put,omitempty"`
+	Trace       *Operation `json:"trace,omitempty" yaml:"trace,omitempty"`
+	Servers     Servers    `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+    PathItem is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
+
+func (pathItem *PathItem) GetOperation(method string) *Operation
+
+func (pathItem PathItem) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of PathItem.
+
+func (pathItem *PathItem) Operations() map[string]*Operation
+
+func (pathItem *PathItem) SetOperation(method string, operation *Operation)
+
+func (pathItem *PathItem) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets PathItem to a copy of data.
+
+func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if PathItem does not comply with the OpenAPI spec.
+
 type Paths map[string]*PathItem
+    Paths is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
+
+func (paths Paths) Find(key string) *PathItem
+    Find returns a path that matches the key.
+
+    The method ignores differences in template variable names (except possible
+    "*" suffix).
+
+    For example:
+
+        paths := openapi3.Paths {
+          "/person/{personName}": &openapi3.PathItem{},
+        }
+        pathItem := path.Find("/person/{name}")
+
+    would return the correct path item.
+
+func (paths Paths) InMatchingOrder() []string
+    InMatchingOrder returns paths in the
+    order they are matched against URLs. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
+    When matching URLs, concrete (non-templated) paths would be matched before
+    their templated counterparts.
+
+func (paths Paths) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Paths does not comply with the OpenAPI spec.
+
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
-    func ReadFromHTTP(cl *http.Client) ReadFromURIFunc
-    func ReadFromURIs(readers ...ReadFromURIFunc) ReadFromURIFunc
-    func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
-type Ref struct{ ... }
+    ReadFromURIFunc defines a function which reads the contents of a resource
+    located at a URI.
+
+func ReadFromHTTP(cl *http.Client) ReadFromURIFunc
+    ReadFromHTTP returns a ReadFromURIFunc which uses the given http.Client to
+    read the contents from a remote HTTP URI. This client may be customized to
+    implement timeouts, RFC 7234 caching, etc.
+
+func ReadFromURIs(readers ...ReadFromURIFunc) ReadFromURIFunc
+    ReadFromURIs returns a ReadFromURIFunc which tries to read a URI using the
+    given reader functions, in the same order. If a reader function does not
+    support the URI and returns ErrURINotSupported, the next function is checked
+    until a match is found, or the URI is not supported by any.
+
+func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
+    URIMapCache returns a ReadFromURIFunc that caches the contents read from
+    URI locations in a simple map. This cache implementation is suitable for
+    short-lived processes such as command-line tools which process OpenAPI
+    documents.
+
+type Ref struct {
+	Ref string `json:"$ref" yaml:"$ref"`
+}
+    Ref is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
+
 type RefNameResolver func(string) string
+
 type RequestBodies map[string]*RequestBodyRef
-type RequestBody struct{ ... }
-    func NewRequestBody() *RequestBody
-type RequestBodyRef struct{ ... }
-type Response struct{ ... }
-    func NewResponse() *Response
+
+func (m RequestBodies) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type RequestBody struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
+	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
+	Content     Content `json:"content" yaml:"content"`
+}
+    RequestBody is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#request-body-object
+
+func NewRequestBody() *RequestBody
+
+func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType
+
+func (requestBody RequestBody) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of RequestBody.
+
+func (requestBody *RequestBody) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets RequestBody to a copy of data.
+
+func (requestBody *RequestBody) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if RequestBody does not comply with the OpenAPI
+    spec.
+
+func (requestBody *RequestBody) WithContent(content Content) *RequestBody
+
+func (requestBody *RequestBody) WithDescription(value string) *RequestBody
+
+func (requestBody *RequestBody) WithFormDataSchema(value *Schema) *RequestBody
+
+func (requestBody *RequestBody) WithFormDataSchemaRef(value *SchemaRef) *RequestBody
+
+func (requestBody *RequestBody) WithJSONSchema(value *Schema) *RequestBody
+
+func (requestBody *RequestBody) WithJSONSchemaRef(value *SchemaRef) *RequestBody
+
+func (requestBody *RequestBody) WithRequired(value bool) *RequestBody
+
+func (requestBody *RequestBody) WithSchema(value *Schema, consumes []string) *RequestBody
+
+func (requestBody *RequestBody) WithSchemaRef(value *SchemaRef, consumes []string) *RequestBody
+
+type RequestBodyRef struct {
+	Ref   string
+	Value *RequestBody
+	// Has unexported fields.
+}
+    RequestBodyRef represents either a RequestBody or a $ref to a RequestBody.
+    When serializing and both fields are set, Ref is preferred over Value.
+
+func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x RequestBodyRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of RequestBodyRef.
+
+func (x RequestBodyRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of RequestBodyRef.
+
+func (x *RequestBodyRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets RequestBodyRef to a copy of data.
+
+func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if RequestBodyRef does not comply with the OpenAPI
+    spec.
+
+type Response struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
+	Links       Links   `json:"links,omitempty" yaml:"links,omitempty"`
+}
+    Response is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
+
+func NewResponse() *Response
+
+func (response Response) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Response.
+
+func (response *Response) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Response to a copy of data.
+
+func (response *Response) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Response does not comply with the OpenAPI spec.
+
+func (response *Response) WithContent(content Content) *Response
+
+func (response *Response) WithDescription(value string) *Response
+
+func (response *Response) WithJSONSchema(schema *Schema) *Response
+
+func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response
+
 type ResponseBodies map[string]*ResponseRef
-type ResponseRef struct{ ... }
+
+func (m ResponseBodies) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type ResponseRef struct {
+	Ref   string
+	Value *Response
+	// Has unexported fields.
+}
+    ResponseRef represents either a Response or a $ref to a Response. When
+    serializing and both fields are set, Ref is preferred over Value.
+
+func (x *ResponseRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x ResponseRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of ResponseRef.
+
+func (x ResponseRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of ResponseRef.
+
+func (x *ResponseRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets ResponseRef to a copy of data.
+
+func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if ResponseRef does not comply with the OpenAPI
+    spec.
+
 type Responses map[string]*ResponseRef
-    func NewResponses() Responses
-type Schema struct{ ... }
-    func NewAllOfSchema(schemas ...*Schema) *Schema
-    func NewAnyOfSchema(schemas ...*Schema) *Schema
-    func NewArraySchema() *Schema
-    func NewBoolSchema() *Schema
-    func NewBytesSchema() *Schema
-    func NewDateTimeSchema() *Schema
-    func NewFloat64Schema() *Schema
-    func NewInt32Schema() *Schema
-    func NewInt64Schema() *Schema
-    func NewIntegerSchema() *Schema
-    func NewObjectSchema() *Schema
-    func NewOneOfSchema(schemas ...*Schema) *Schema
-    func NewSchema() *Schema
-    func NewStringSchema() *Schema
-    func NewUUIDSchema() *Schema
-type SchemaError struct{ ... }
-type SchemaRef struct{ ... }
-    func NewSchemaRef(ref string, value *Schema) *SchemaRef
+    Responses is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
+
+func NewResponses() Responses
+
+func (responses Responses) Default() *ResponseRef
+
+func (responses Responses) Get(status int) *ResponseRef
+    Get returns a ResponseRef for the given status If an exact
+    match isn't initially found a patterned field is checked using
+    the first digit to determine the range (eg: 201 to 2XX) See
+    https://spec.openapis.org/oas/v3.0.3#patterned-fields-0
+
+func (responses Responses) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (responses Responses) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Responses does not comply with the OpenAPI
+    spec.
+
+type Schema struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
+	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
+	AllOf        SchemaRefs    `json:"allOf,omitempty" yaml:"allOf,omitempty"`
+	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
+	Type         string        `json:"type,omitempty" yaml:"type,omitempty"`
+	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
+	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
+	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default      interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
+	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	// Array-related, here for struct compactness
+	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	// Number-related, here for struct compactness
+	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	// Properties
+	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
+	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
+	WriteOnly       bool `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
+
+	// Number
+	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	Max        *float64 `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	MultipleOf *float64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+
+	// String
+	MinLength uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	MaxLength *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	Pattern   string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+
+	// Array
+	MinItems uint64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MaxItems *uint64    `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
+
+	// Object
+	Required             []string             `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties           Schemas              `json:"properties,omitempty" yaml:"properties,omitempty"`
+	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
+	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+}
+    Schema is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
+
+func NewAllOfSchema(schemas ...*Schema) *Schema
+
+func NewAnyOfSchema(schemas ...*Schema) *Schema
+
+func NewArraySchema() *Schema
+
+func NewBoolSchema() *Schema
+
+func NewBytesSchema() *Schema
+
+func NewDateTimeSchema() *Schema
+
+func NewFloat64Schema() *Schema
+
+func NewInt32Schema() *Schema
+
+func NewInt64Schema() *Schema
+
+func NewIntegerSchema() *Schema
+
+func NewObjectSchema() *Schema
+
+func NewOneOfSchema(schemas ...*Schema) *Schema
+
+func NewSchema() *Schema
+
+func NewStringSchema() *Schema
+
+func NewUUIDSchema() *Schema
+
+func (schema *Schema) IsEmpty() bool
+    IsEmpty tells whether schema is equivalent to the empty schema `{}`.
+
+func (schema *Schema) IsMatching(value interface{}) bool
+
+func (schema *Schema) IsMatchingJSONArray(value []interface{}) bool
+
+func (schema *Schema) IsMatchingJSONBoolean(value bool) bool
+
+func (schema *Schema) IsMatchingJSONNumber(value float64) bool
+
+func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool
+
+func (schema *Schema) IsMatchingJSONString(value string) bool
+
+func (schema Schema) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (schema Schema) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Schema.
+
+func (schema *Schema) NewRef() *SchemaRef
+
+func (schema *Schema) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Schema to a copy of data.
+
+func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Schema does not comply with the OpenAPI spec.
+
+func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOption) error
+
+func (schema *Schema) VisitJSONArray(value []interface{}) error
+
+func (schema *Schema) VisitJSONBoolean(value bool) error
+
+func (schema *Schema) VisitJSONNumber(value float64) error
+
+func (schema *Schema) VisitJSONObject(value map[string]interface{}) error
+
+func (schema *Schema) VisitJSONString(value string) error
+
+func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema
+
+func (schema *Schema) WithAnyAdditionalProperties() *Schema
+
+func (schema *Schema) WithDefault(defaultValue interface{}) *Schema
+
+func (schema *Schema) WithEnum(values ...interface{}) *Schema
+
+func (schema *Schema) WithExclusiveMax(value bool) *Schema
+
+func (schema *Schema) WithExclusiveMin(value bool) *Schema
+
+func (schema *Schema) WithFormat(value string) *Schema
+
+func (schema *Schema) WithItems(value *Schema) *Schema
+
+func (schema *Schema) WithLength(i int64) *Schema
+
+func (schema *Schema) WithLengthDecodedBase64(i int64) *Schema
+
+func (schema *Schema) WithMax(value float64) *Schema
+
+func (schema *Schema) WithMaxItems(i int64) *Schema
+
+func (schema *Schema) WithMaxLength(i int64) *Schema
+
+func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema
+
+func (schema *Schema) WithMaxProperties(i int64) *Schema
+
+func (schema *Schema) WithMin(value float64) *Schema
+
+func (schema *Schema) WithMinItems(i int64) *Schema
+
+func (schema *Schema) WithMinLength(i int64) *Schema
+
+func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema
+
+func (schema *Schema) WithMinProperties(i int64) *Schema
+
+func (schema *Schema) WithNullable() *Schema
+
+func (schema *Schema) WithPattern(pattern string) *Schema
+
+func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema
+
+func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema
+
+func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema
+
+func (schema *Schema) WithUniqueItems(unique bool) *Schema
+
+func (schema *Schema) WithoutAdditionalProperties() *Schema
+
+type SchemaError struct {
+	// Value is the value that failed validation.
+	Value interface{}
+
+	// Schema is the schema that failed validation.
+	Schema *Schema
+	// SchemaField is the field of the schema that failed validation.
+	SchemaField string
+	// Reason is a human-readable message describing the error.
+	// The message should never include the original value to prevent leakage of potentially sensitive inputs in error messages.
+	Reason string
+	// Origin is the original error that caused this error.
+	Origin error
+
+	// Has unexported fields.
+}
+    SchemaError is an error that occurs during schema validation.
+
+func (err *SchemaError) Error() string
+
+func (err *SchemaError) JSONPointer() []string
+
+func (err SchemaError) Unwrap() error
+
+type SchemaRef struct {
+	Ref   string
+	Value *Schema
+	// Has unexported fields.
+}
+    SchemaRef represents either a Schema or a $ref to a Schema. When serializing
+    and both fields are set, Ref is preferred over Value.
+
+func NewSchemaRef(ref string, value *Schema) *SchemaRef
+    NewSchemaRef simply builds a SchemaRef
+
+func (x *SchemaRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x SchemaRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of SchemaRef.
+
+func (x SchemaRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of SchemaRef.
+
+func (x *SchemaRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets SchemaRef to a copy of data.
+
+func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if SchemaRef does not comply with the OpenAPI
+    spec.
+
 type SchemaRefs []*SchemaRef
+
+func (s SchemaRefs) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
 type SchemaValidationOption func(*schemaValidationSettings)
-    func DefaultsSet(f func()) SchemaValidationOption
-    func DisablePatternValidation() SchemaValidationOption
-    func DisableReadOnlyValidation() SchemaValidationOption
-    func DisableWriteOnlyValidation() SchemaValidationOption
-    func EnableFormatValidation() SchemaValidationOption
-    func FailFast() SchemaValidationOption
-    func MultiErrors() SchemaValidationOption
-    func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption
-    func VisitAsRequest() SchemaValidationOption
-    func VisitAsResponse() SchemaValidationOption
+    SchemaValidationOption describes options a user has when validating request
+    / response bodies.
+
+func DefaultsSet(f func()) SchemaValidationOption
+    DefaultsSet executes the given callback (once) IFF schema validation set
+    default values.
+
+func DisablePatternValidation() SchemaValidationOption
+    DisablePatternValidation setting makes Validate not return an error when
+    validating patterns that are not supported by the Go regexp engine.
+
+func DisableReadOnlyValidation() SchemaValidationOption
+    DisableReadOnlyValidation setting makes Validate not return an error when
+    validating properties marked as read-only
+
+func DisableWriteOnlyValidation() SchemaValidationOption
+    DisableWriteOnlyValidation setting makes Validate not return an error when
+    validating properties marked as write-only
+
+func EnableFormatValidation() SchemaValidationOption
+    EnableFormatValidation setting makes Validate not return an error when
+    validating documents that mention schema formats that are not defined by the
+    OpenAPIv3 specification.
+
+func FailFast() SchemaValidationOption
+    FailFast returns schema validation errors quicker.
+
+func MultiErrors() SchemaValidationOption
+
+func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption
+    SetSchemaErrorMessageCustomizer allows to override the schema error message.
+    If the passed function returns an empty string, it returns to the previous
+    Error() implementation.
+
+func VisitAsRequest() SchemaValidationOption
+
+func VisitAsResponse() SchemaValidationOption
+
 type Schemas map[string]*SchemaRef
+
+func (m Schemas) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
 type SecurityRequirement map[string][]string
-    func NewSecurityRequirement() SecurityRequirement
+    SecurityRequirement is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-requirement-object
+
+func NewSecurityRequirement() SecurityRequirement
+
+func (security SecurityRequirement) Authenticate(provider string, scopes ...string) SecurityRequirement
+
+func (security *SecurityRequirement) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if SecurityRequirement does not comply with the
+    OpenAPI spec.
+
 type SecurityRequirements []SecurityRequirement
-    func NewSecurityRequirements() *SecurityRequirements
-type SecurityScheme struct{ ... }
-    func NewCSRFSecurityScheme() *SecurityScheme
-    func NewJWTSecurityScheme() *SecurityScheme
-    func NewOIDCSecurityScheme(oidcUrl string) *SecurityScheme
-    func NewSecurityScheme() *SecurityScheme
-type SecuritySchemeRef struct{ ... }
+
+func NewSecurityRequirements() *SecurityRequirements
+
+func (srs SecurityRequirements) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if SecurityRequirements does not comply with the
+    OpenAPI spec.
+
+func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *SecurityRequirements
+
+type SecurityScheme struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
+	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Name             string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In               string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Scheme           string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
+	BearerFormat     string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
+	Flows            *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
+	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty" yaml:"openIdConnectUrl,omitempty"`
+}
+    SecurityScheme is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-scheme-object
+
+func NewCSRFSecurityScheme() *SecurityScheme
+
+func NewJWTSecurityScheme() *SecurityScheme
+
+func NewOIDCSecurityScheme(oidcUrl string) *SecurityScheme
+
+func NewSecurityScheme() *SecurityScheme
+
+func (ss SecurityScheme) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of SecurityScheme.
+
+func (ss *SecurityScheme) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets SecurityScheme to a copy of data.
+
+func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if SecurityScheme does not comply with the OpenAPI
+    spec.
+
+func (ss *SecurityScheme) WithBearerFormat(value string) *SecurityScheme
+
+func (ss *SecurityScheme) WithDescription(value string) *SecurityScheme
+
+func (ss *SecurityScheme) WithIn(value string) *SecurityScheme
+
+func (ss *SecurityScheme) WithName(value string) *SecurityScheme
+
+func (ss *SecurityScheme) WithScheme(value string) *SecurityScheme
+
+func (ss *SecurityScheme) WithType(value string) *SecurityScheme
+
+type SecuritySchemeRef struct {
+	Ref   string
+	Value *SecurityScheme
+	// Has unexported fields.
+}
+    SecuritySchemeRef represents either a SecurityScheme or a $ref to a
+    SecurityScheme. When serializing and both fields are set, Ref is preferred
+    over Value.
+
+func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (x SecuritySchemeRef) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of SecuritySchemeRef.
+
+func (x SecuritySchemeRef) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of SecuritySchemeRef.
+
+func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets SecuritySchemeRef to a copy of data.
+
+func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if SecuritySchemeRef does not comply with the
+    OpenAPI spec.
+
 type SecuritySchemes map[string]*SecuritySchemeRef
-type SerializationMethod struct{ ... }
-type Server struct{ ... }
-type ServerVariable struct{ ... }
+
+func (m SecuritySchemes) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type SerializationMethod struct {
+	Style   string
+	Explode bool
+}
+    SerializationMethod describes a serialization method of HTTP request's
+    parameters and body.
+
+type Server struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	URL         string                     `json:"url" yaml:"url"` // Required
+	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+}
+    Server is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
+
+func (server *Server) BasePath() (string, error)
+    BasePath returns the base path extracted from the default values of
+    variables, if any. Assumes a valid struct (per Validate()).
+
+func (server Server) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Server.
+
+func (server Server) MatchRawURL(input string) ([]string, string, bool)
+
+func (server Server) ParameterNames() ([]string, error)
+
+func (server *Server) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Server to a copy of data.
+
+func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (err error)
+    Validate returns an error if Server does not comply with the OpenAPI spec.
+
+type ServerVariable struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+}
+    ServerVariable is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
+
+func (serverVariable ServerVariable) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of ServerVariable.
+
+func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets ServerVariable to a copy of data.
+
+func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if ServerVariable does not comply with the OpenAPI
+    spec.
+
 type Servers []*Server
+    Servers is specified by OpenAPI/Swagger standard version 3.
+
+func (servers Servers) BasePath() (string, error)
+    BasePath returns the base path of the first server in the list, or /.
+
+func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string)
+
+func (servers Servers) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Servers does not comply with the OpenAPI spec.
+
 type SliceUniqueItemsChecker func(items []interface{}) bool
-type T struct{ ... }
-type Tag struct{ ... }
+    SliceUniqueItemsChecker is an function used to check if an given slice have
+    unique items.
+
+type T struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
+	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
+	Info         *Info                `json:"info" yaml:"info"`   // Required
+	Paths        Paths                `json:"paths" yaml:"paths"` // Required
+	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
+	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+
+	// Has unexported fields.
+}
+    T is the root of an OpenAPI v3 document See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#openapi-object
+
+func (doc *T) AddOperation(path string, method string, operation *Operation)
+
+func (doc *T) AddServer(server *Server)
+
+func (doc *T) AddServers(servers ...*Server)
+
+func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string)
+    InternalizeRefs removes all references to external files from the spec and
+    moves them to the components section.
+
+    refNameResolver takes in references to returns a name to store the reference
+    under locally. It MUST return a unique name for each reference type.
+    A default implementation is provided that will suffice for most use cases.
+    See the function documentation for more details.
+
+    Example:
+
+        doc.InternalizeRefs(context.Background(), nil)
+
+func (doc *T) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+func (doc T) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of T.
+
+func (doc *T) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets T to a copy of data.
+
+func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if T does not comply with the OpenAPI spec.
+    Validations Options can be provided to modify the validation behavior.
+
+type Tag struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
+	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+}
+    Tag is specified by OpenAPI/Swagger 3.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#tag-object
+
+func (t Tag) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Tag.
+
+func (t *Tag) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Tag to a copy of data.
+
+func (t *Tag) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Tag does not comply with the OpenAPI spec.
+
 type Tags []*Tag
+    Tags is specified by OpenAPI/Swagger 3.0 standard.
+
+func (tags Tags) Get(name string) *Tag
+
+func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Tags does not comply with the OpenAPI spec.
+
 type ValidationOption func(options *ValidationOptions)
-    func AllowExtraSiblingFields(fields ...string) ValidationOption
-    func DisableExamplesValidation() ValidationOption
-    func DisableSchemaDefaultsValidation() ValidationOption
-    func DisableSchemaFormatValidation() ValidationOption
-    func DisableSchemaPatternValidation() ValidationOption
-    func EnableExamplesValidation() ValidationOption
-    func EnableSchemaDefaultsValidation() ValidationOption
-    func EnableSchemaFormatValidation() ValidationOption
-    func EnableSchemaPatternValidation() ValidationOption
-type ValidationOptions struct{ ... }
-type XML struct{ ... }
+    ValidationOption allows the modification of how the OpenAPI document is
+    validated.
+
+func AllowExtraSiblingFields(fields ...string) ValidationOption
+    AllowExtraSiblingFields called as AllowExtraSiblingFields("description")
+    makes Validate not return an error when said field appears next to a $ref.
+
+func DisableExamplesValidation() ValidationOption
+    DisableExamplesValidation disables all example schema validation.
+    By default, all schema examples are validated.
+
+func DisableSchemaDefaultsValidation() ValidationOption
+    DisableSchemaDefaultsValidation disables schemas' default field validation.
+    By default, schema default values are validated against their schema.
+
+func DisableSchemaFormatValidation() ValidationOption
+    DisableSchemaFormatValidation does the opposite of
+    EnableSchemaFormatValidation. By default, schema format validation is
+    disabled.
+
+func DisableSchemaPatternValidation() ValidationOption
+    DisableSchemaPatternValidation makes Validate not return an error when
+    validating patterns that are not supported by the Go regexp engine.
+
+func EnableExamplesValidation() ValidationOption
+    EnableExamplesValidation does the opposite of DisableExamplesValidation.
+    By default, all schema examples are validated.
+
+func EnableSchemaDefaultsValidation() ValidationOption
+    EnableSchemaDefaultsValidation does the opposite of
+    DisableSchemaDefaultsValidation. By default, schema default values are
+    validated against their schema.
+
+func EnableSchemaFormatValidation() ValidationOption
+    EnableSchemaFormatValidation makes Validate not return an error when
+    validating documents that mention schema formats that are not defined by the
+    OpenAPIv3 specification. By default, schema format validation is disabled.
+
+func EnableSchemaPatternValidation() ValidationOption
+    EnableSchemaPatternValidation does the opposite of
+    DisableSchemaPatternValidation. By default, schema pattern validation is
+    enabled.
+
+type ValidationOptions struct {
+	// Has unexported fields.
+}
+    ValidationOptions provides configuration for validating OpenAPI documents.
+
+type XML struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Prefix    string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
+	Attribute bool   `json:"attribute,omitempty" yaml:"attribute,omitempty"`
+	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
+}
+    XML is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object
+
+func (xml XML) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of XML.
+
+func (xml *XML) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets XML to a copy of data.
+
+func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if XML does not comply with the OpenAPI spec.
+
