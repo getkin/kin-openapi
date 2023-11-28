@@ -276,6 +276,9 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
 
 ## CHANGELOG: Sub-v0 breaking API changes
+### next
+* `(openapi3.Responses).Get(int)` renamed to `(*openapi3.Responses).Status(int)`
+
 
 ### v0.121.0
 * Introduce `openapi3.RequestBodies` (an alias on `map[string]*openapi3.ResponseRef`) and use it in place of `openapi3.Responses` for field `openapi3.Components.Responses`.
