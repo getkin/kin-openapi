@@ -23,7 +23,7 @@ func TestIssue594(t *testing.T) {
 	require.NoError(t, err)
 
 	doc.Info.Version = "1.2.3"
-	doc.Paths["/marketing/contacts/search/emails"].Post = nil
+	doc.Paths.Value("/marketing/contacts/search/emails").Post = nil
 	doc.Components.Schemas["full-segment"].Value.Example = nil
 
 	err = doc.Validate(sl.Context)

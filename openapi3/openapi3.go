@@ -17,7 +17,7 @@ type T struct {
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
 	Info         *Info                `json:"info" yaml:"info"`   // Required
-	Paths        Paths                `json:"paths" yaml:"paths"` // Required
+	Paths        *Paths               `json:"paths" yaml:"paths"` // Required
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -104,13 +104,13 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {
-	if doc.Paths == nil {
-		doc.Paths = make(Paths)
-	}
-	pathItem := doc.Paths[path]
+	pathItem := doc.Paths.Value(path)
 	if pathItem == nil {
 		pathItem = &PathItem{}
-		doc.Paths[path] = pathItem
+		if doc.Paths == nil {
+			doc.Paths = NewPaths()
+		}
+		doc.Paths.Set(path, pathItem)
 	}
 	pathItem.SetOperation(method, operation)
 }

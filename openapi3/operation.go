@@ -34,7 +34,7 @@ type Operation struct {
 	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 
 	// Responses.
-	Responses Responses `json:"responses" yaml:"responses"` // Required
+	Responses *Responses `json:"responses" yaml:"responses"` // Required
 
 	// Optional callbacks
 	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
@@ -169,18 +169,14 @@ func (operation *Operation) AddParameter(p *Parameter) {
 }
 
 func (operation *Operation) AddResponse(status int, response *Response) {
-	responses := operation.Responses
-	if responses == nil {
-		responses = NewResponses()
-		operation.Responses = responses
-	}
 	code := "default"
-	if status != 0 {
+	if 0 < status && status < 1000 {
 		code = strconv.FormatInt(int64(status), 10)
 	}
-	responses[code] = &ResponseRef{
-		Value: response,
+	if operation.Responses == nil {
+		operation.Responses = NewResponses()
 	}
+	operation.Responses.Set(code, &ResponseRef{Value: response})
 }
 
 // Validate returns an error if Operation does not comply with the OpenAPI spec.

@@ -56,8 +56,8 @@ func TestFilter(t *testing.T) {
 				URL: "http://example.com/api/",
 			},
 		},
-		Paths: openapi3.Paths{
-			"/prefix/{pathArg}/suffix": &openapi3.PathItem{
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/prefix/{pathArg}/suffix", &openapi3.PathItem{
 				Post: &openapi3.Operation{
 					Parameters: openapi3.Parameters{
 						{
@@ -136,9 +136,9 @@ func TestFilter(t *testing.T) {
 					},
 					Responses: openapi3.NewResponses(),
 				},
-			},
+			}),
 
-			"/issue151": &openapi3.PathItem{
+			openapi3.WithPath("/issue151", &openapi3.PathItem{
 				Get: &openapi3.Operation{
 					Responses: openapi3.NewResponses(),
 				},
@@ -152,8 +152,8 @@ func TestFilter(t *testing.T) {
 						},
 					},
 				},
-			},
-		},
+			}),
+		),
 	}
 
 	err := doc.Validate(context.Background())
@@ -527,7 +527,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-		Paths: map[string]*openapi3.PathItem{},
+		Paths: openapi3.NewPaths(),
 		Security: openapi3.SecurityRequirements{
 			{
 				securitySchemes[1].Name: {},
@@ -555,12 +555,12 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 			}
 			securityRequirements = tempS
 		}
-		doc.Paths[tc.name] = &openapi3.PathItem{
+		doc.Paths.Set(tc.name, &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
 				Responses: openapi3.NewResponses(),
 			},
-		}
+		})
 	}
 
 	err := doc.Validate(context.Background())
@@ -655,7 +655,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-		Paths: map[string]*openapi3.PathItem{},
+		Paths: openapi3.NewPaths(),
 		Components: &openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
@@ -680,12 +680,12 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 
 		// Create the path with the security requirements
-		doc.Paths[tc.name] = &openapi3.PathItem{
+		doc.Paths.Set(tc.name, &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
 				Responses: openapi3.NewResponses(),
 			},
-		}
+		})
 	}
 
 	err := doc.Validate(context.Background())
@@ -752,7 +752,7 @@ func TestAllSchemesMet(t *testing.T) {
 			Title:   "MyAPI",
 			Version: "0.1",
 		},
-		Paths: map[string]*openapi3.PathItem{},
+		Paths: openapi3.NewPaths(),
 		Components: &openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
 		},
@@ -780,14 +780,14 @@ func TestAllSchemesMet(t *testing.T) {
 			}
 		}
 
-		doc.Paths[tc.name] = &openapi3.PathItem{
+		doc.Paths.Set(tc.name, &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security: &openapi3.SecurityRequirements{
 					securityRequirement,
 				},
 				Responses: openapi3.NewResponses(),
 			},
-		}
+		})
 	}
 
 	err := doc.Validate(context.Background())

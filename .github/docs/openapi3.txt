@@ -136,12 +136,45 @@ func (addProps AdditionalProperties) MarshalJSON() ([]byte, error)
 func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets AdditionalProperties to a copy of data.
 
-type Callback map[string]*PathItem
+type Callback struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	// Has unexported fields.
+}
     Callback is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#callback-object
 
-func (callback Callback) Validate(ctx context.Context, opts ...ValidationOption) error
+func NewCallback(opts ...NewCallbackOption) *Callback
+    NewCallback builds a Callback object with path items in insertion order.
+
+func NewCallbackWithCapacity(cap int) *Callback
+    NewCallbackWithCapacity builds a Callback object of the given capacity.
+
+func (callback Callback) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://github.com/go-openapi/jsonpointer#JSONPointable
+
+func (callback *Callback) Len() int
+    Len returns the amount of keys in callback excluding callback.Extensions.
+
+func (callback *Callback) Map() map[string]*PathItem
+    Map returns callback as a 'map'. Note: iteration on Go maps is not ordered.
+
+func (callback Callback) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Callback.
+
+func (callback *Callback) Set(key string, value *PathItem)
+    Set adds or replaces key 'key' of 'callback' with 'value'. Note: 'callback'
+    MUST be non-nil
+
+func (callback *Callback) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Callback to a copy of data.
+
+func (callback *Callback) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Callback does not comply with the OpenAPI spec.
+
+func (callback *Callback) Value(key string) *PathItem
+    Value returns the callback for key or nil
 
 type CallbackRef struct {
 	Ref   string
@@ -609,6 +642,27 @@ func (me MultiError) Is(target error) bool
     `errors.Is()` It will also return true if any of the contained errors match
     target
 
+type NewCallbackOption func(*Callback)
+    NewCallbackOption describes options to NewCallback func
+
+func WithCallback(cb string, pathItem *PathItem) NewCallbackOption
+    WithCallback adds Callback as an option to NewCallback
+
+type NewPathsOption func(*Paths)
+    NewPathsOption describes options to NewPaths func
+
+func WithPath(path string, pathItem *PathItem) NewPathsOption
+    WithPath adds a named path item
+
+type NewResponsesOption func(*Responses)
+    NewResponsesOption describes options to NewResponses func
+
+func WithName(name string, response *Response) NewResponsesOption
+    WithName adds a name-keyed Response
+
+func WithStatus(status int, responseRef *ResponseRef) NewResponsesOption
+    WithStatus adds a status code keyed ResponseRef
+
 type OAuthFlow struct {
 	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
@@ -673,7 +727,7 @@ type Operation struct {
 	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 
 	// Responses.
-	Responses Responses `json:"responses" yaml:"responses"` // Required
+	Responses *Responses `json:"responses" yaml:"responses"` // Required
 
 	// Optional callbacks
 	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
@@ -847,11 +901,21 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error
 func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
 
-type Paths map[string]*PathItem
+type Paths struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	// Has unexported fields.
+}
     Paths is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
 
-func (paths Paths) Find(key string) *PathItem
+func NewPaths(opts ...NewPathsOption) *Paths
+    NewPaths builds a paths object with path items in insertion order.
+
+func NewPathsWithCapacity(cap int) *Paths
+    NewPathsWithCapacity builds a paths object of the given capacity.
+
+func (paths *Paths) Find(key string) *PathItem
     Find returns a path that matches the key.
 
     The method ignores differences in template variable names (except possible
@@ -866,15 +930,38 @@ func (paths Paths) Find(key string) *PathItem
 
     would return the correct path item.
 
-func (paths Paths) InMatchingOrder() []string
+func (paths *Paths) InMatchingOrder() []string
     InMatchingOrder returns paths in the
     order they are matched against URLs. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
     When matching URLs, concrete (non-templated) paths would be matched before
     their templated counterparts.
 
-func (paths Paths) Validate(ctx context.Context, opts ...ValidationOption) error
+func (paths Paths) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://github.com/go-openapi/jsonpointer#JSONPointable
+
+func (paths *Paths) Len() int
+    Len returns the amount of keys in paths excluding paths.Extensions.
+
+func (paths *Paths) Map() map[string]*PathItem
+    Map returns paths as a 'map'. Note: iteration on Go maps is not ordered.
+
+func (paths Paths) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Paths.
+
+func (paths *Paths) Set(key string, value *PathItem)
+    Set adds or replaces key 'key' of 'paths' with 'value'. Note: 'paths' MUST
+    be non-nil
+
+func (paths *Paths) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Paths to a copy of data.
+
+func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Paths does not comply with the OpenAPI spec.
+
+func (paths *Paths) Value(key string) *PathItem
+    Value returns the paths for key or nil
 
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
     ReadFromURIFunc defines a function which reads the contents of a resource
@@ -1039,27 +1126,57 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
     Validate returns an error if ResponseRef does not comply with the OpenAPI
     spec.
 
-type Responses map[string]*ResponseRef
+type Responses struct {
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
+	// Has unexported fields.
+}
     Responses is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
 
-func NewResponses() Responses
+func NewResponses(opts ...NewResponsesOption) *Responses
+    NewResponses builds a responses object with response objects in insertion
+    order. Given no arguments, NewResponses returns a valid responses object
+    containing a default match-all reponse.
 
-func (responses Responses) Default() *ResponseRef
+func NewResponsesWithCapacity(cap int) *Responses
+    NewResponsesWithCapacity builds a responses object of the given capacity.
 
-func (responses Responses) Get(status int) *ResponseRef
-    Get returns a ResponseRef for the given status If an exact
+func (responses *Responses) Default() *ResponseRef
+    Default returns the default response
+
+func (responses Responses) JSONLookup(token string) (interface{}, error)
+    JSONLookup implements
+    https://github.com/go-openapi/jsonpointer#JSONPointable
+
+func (responses *Responses) Len() int
+    Len returns the amount of keys in responses excluding responses.Extensions.
+
+func (responses *Responses) Map() map[string]*ResponseRef
+    Map returns responses as a 'map'. Note: iteration on Go maps is not ordered.
+
+func (responses Responses) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Responses.
+
+func (responses *Responses) Set(key string, value *ResponseRef)
+    Set adds or replaces key 'key' of 'responses' with 'value'. Note:
+    'responses' MUST be non-nil
+
+func (responses *Responses) Status(status int) *ResponseRef
+    Status returns a ResponseRef for the given status If an exact
     match isn't initially found a patterned field is checked using
     the first digit to determine the range (eg: 201 to 2XX) See
     https://spec.openapis.org/oas/v3.0.3#patterned-fields-0
 
-func (responses Responses) JSONLookup(token string) (interface{}, error)
-    JSONLookup implements
-    https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (responses *Responses) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Responses to a copy of data.
 
-func (responses Responses) Validate(ctx context.Context, opts ...ValidationOption) error
+func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Responses does not comply with the OpenAPI
     spec.
+
+func (responses *Responses) Value(key string) *ResponseRef
+    Value returns the responses for key or nil
 
 type Schema struct {
 	Extensions map[string]interface{} `json:"-" yaml:"-"`
@@ -1519,7 +1636,7 @@ type T struct {
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
 	Info         *Info                `json:"info" yaml:"info"`   // Required
-	Paths        Paths                `json:"paths" yaml:"paths"` // Required
+	Paths        *Paths               `json:"paths" yaml:"paths"` // Required
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`

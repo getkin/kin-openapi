@@ -44,10 +44,10 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 
 	// Find input for the current status
 	responses := route.Operation.Responses
-	if len(responses) == 0 {
+	if responses.Len() == 0 {
 		return nil
 	}
-	responseRef := responses.Get(status) // Response
+	responseRef := responses.Status(status) // Response
 	if responseRef == nil {
 		responseRef = responses.Default() // Default input
 	}
@@ -104,7 +104,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if contentType == nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: fmt.Sprintf("response header Content-Type has unexpected value: %q", inputMIME),
+			Reason: fmt.Sprintf("response %s: %q", prefixInvalidCT, inputMIME),
 		}
 	}
 

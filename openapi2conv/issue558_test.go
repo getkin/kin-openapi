@@ -27,7 +27,7 @@ paths:
 `
 	doc3, err := v2v3YAML([]byte(spec))
 	require.NoError(t, err)
-	require.NotEmpty(t, doc3.Paths["/test"].Get.Deprecated)
+	require.NotEmpty(t, doc3.Paths.Value("/test").Get.Deprecated)
 	_, err = yaml.Marshal(doc3)
 	require.NoError(t, err)
 

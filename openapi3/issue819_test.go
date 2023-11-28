@@ -33,7 +33,7 @@ paths:
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
-	require.NotNil(t, doc.Paths["/v1/operation"].Get.Responses.Get(201))
-	require.Nil(t, doc.Paths["/v1/operation"].Get.Responses.Get(404))
-	require.Nil(t, doc.Paths["/v1/operation"].Get.Responses.Get(999))
+	require.NotNil(t, doc.Paths.Value("/v1/operation").Get.Responses.Status(201))
+	require.Nil(t, doc.Paths.Value("/v1/operation").Get.Responses.Status(404))
+	require.Nil(t, doc.Paths.Value("/v1/operation").Get.Responses.Status(999))
 }

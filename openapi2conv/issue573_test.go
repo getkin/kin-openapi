@@ -36,13 +36,13 @@ func TestIssue573(t *testing.T) {
 
 	// Make sure the response content appears for each mime-type originally
 	// appeared in "produces".
-	pingGetContent := v3.Paths["/ping"].Get.Responses["200"].Value.Content
+	pingGetContent := v3.Paths.Value("/ping").Get.Responses.Value("200").Value.Content
 	require.Len(t, pingGetContent, 2)
 	require.Contains(t, pingGetContent, "application/toml")
 	require.Contains(t, pingGetContent, "application/xml")
 
 	// Is "produces" is not explicitly specified, default to "application/json".
-	pingPostContent := v3.Paths["/ping"].Post.Responses["200"].Value.Content
+	pingPostContent := v3.Paths.Value("/ping").Post.Responses.Value("200").Value.Content
 	require.Len(t, pingPostContent, 1)
 	require.Contains(t, pingPostContent, "application/json")
 }

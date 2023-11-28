@@ -13,9 +13,24 @@ func TestLoaderSupportsRecursiveReference(t *testing.T) {
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
-	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Example)
-	require.Equal(t, "ErrorDetails", doc.Paths["/foo"].Get.Responses.Get(400).Value.Content.Get("application/json").Schema.Value.Title)
-	require.Equal(t, "ErrorDetails", doc.Paths["/double-ref-foo"].Get.Responses.Get(400).Value.Content.Get("application/json").Schema.Value.Title)
+
+	require.Equal(t, "bar", doc.
+		Paths.Value("/foo").
+		Get.Responses.Status(200).Value.
+		Content.Get("application/json").
+		Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Example)
+
+	require.Equal(t, "ErrorDetails", doc.
+		Paths.Value("/foo").
+		Get.Responses.Status(400).Value.
+		Content.Get("application/json").
+		Schema.Value.Title)
+
+	require.Equal(t, "ErrorDetails", doc.
+		Paths.Value("/double-ref-foo").
+		Get.Responses.Status(400).Value.
+		Content.Get("application/json").
+		Schema.Value.Title)
 }
 
 func TestIssue447(t *testing.T) {
@@ -38,14 +53,9 @@ components:
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 	require.Equal(t, "object", doc.Components.
-		// Complex
 		Schemas["Complex"].
-		// parent
 		Value.Properties["parent"].
-		// parent
 		Value.Properties["parent"].
-		// parent
 		Value.Properties["parent"].
-		// type
 		Value.Type)
 }
