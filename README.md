@@ -137,8 +137,8 @@ func main() {
 
 ## Custom content type for body of HTTP request/response
 
-By default, the library parses a body of HTTP request and response
-if it has one of the next content types: `"text/plain"` or `"application/json"`.
+By default, the library parses a body of the HTTP request and response
+if it has one of the following content types: `"text/plain"` or `"application/json"`.
 To support other content types you must register decoders for them:
 
 ```go
@@ -173,7 +173,7 @@ func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, e
 
 ## Custom function to check uniqueness of array items
 
-By default, the library check unique items by below predefined function
+By default, the library checks unique items using the following predefined function:
 
 ```go
 func isSliceOfUniqueItems(xs []interface{}) bool {
@@ -187,8 +187,8 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 }
 ```
 
-In the predefined function using `json.Marshal` to generate a string can
-be used as a map key which is to support check the uniqueness of an array
+In the predefined function `json.Marshal` is used to generate a string that can
+be used as a map key which is to check the uniqueness of an array
 when the array items are objects or arrays. You can register
 you own function according to your input data to get better performance:
 
