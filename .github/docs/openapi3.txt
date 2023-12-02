@@ -148,7 +148,7 @@ func NewCallback(opts ...NewCallbackOption) *Callback
     NewCallback builds a Callback object with path items in insertion order.
 
 func NewCallbackWithCapacity(cap int) *Callback
-    NewCallbackWithCapacity builds a Callback object of the given capacity.
+    NewCallbackWithCapacity builds a callback object of the given capacity.
 
 func (callback Callback) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -157,10 +157,10 @@ func (callback Callback) JSONLookup(token string) (interface{}, error)
 func (callback *Callback) Len() int
     Len returns the amount of keys in callback excluding callback.Extensions.
 
-func (callback *Callback) Map() map[string]*PathItem
+func (callback *Callback) Map() (m map[string]*PathItem)
     Map returns callback as a 'map'. Note: iteration on Go maps is not ordered.
 
-func (callback Callback) MarshalJSON() ([]byte, error)
+func (callback *Callback) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Callback.
 
 func (callback *Callback) Set(key string, value *PathItem)
@@ -944,10 +944,10 @@ func (paths Paths) JSONLookup(token string) (interface{}, error)
 func (paths *Paths) Len() int
     Len returns the amount of keys in paths excluding paths.Extensions.
 
-func (paths *Paths) Map() map[string]*PathItem
+func (paths *Paths) Map() (m map[string]*PathItem)
     Map returns paths as a 'map'. Note: iteration on Go maps is not ordered.
 
-func (paths Paths) MarshalJSON() ([]byte, error)
+func (paths *Paths) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Paths.
 
 func (paths *Paths) Set(key string, value *PathItem)
@@ -1152,10 +1152,10 @@ func (responses Responses) JSONLookup(token string) (interface{}, error)
 func (responses *Responses) Len() int
     Len returns the amount of keys in responses excluding responses.Extensions.
 
-func (responses *Responses) Map() map[string]*ResponseRef
+func (responses *Responses) Map() (m map[string]*ResponseRef)
     Map returns responses as a 'map'. Note: iteration on Go maps is not ordered.
 
-func (responses Responses) MarshalJSON() ([]byte, error)
+func (responses *Responses) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Responses.
 
 func (responses *Responses) Set(key string, value *ResponseRef)

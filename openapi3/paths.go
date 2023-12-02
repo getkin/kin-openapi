@@ -15,11 +15,6 @@ type Paths struct {
 	m map[string]*PathItem
 }
 
-// NewPathsWithCapacity builds a paths object of the given capacity.
-func NewPathsWithCapacity(cap int) *Paths {
-	return &Paths{m: make(map[string]*PathItem, cap)}
-}
-
 // NewPaths builds a paths object with path items in insertion order.
 func NewPaths(opts ...NewPathsOption) *Paths {
 	paths := NewPathsWithCapacity(len(opts))
