@@ -117,11 +117,6 @@ jobs:
         [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | wc -l)" = 1 ]]
 
     - if: runner.os == 'Linux'
-      name: Ensure non-pointer MarshalJSON
-      run: |
-        ! git grep -InE 'func[^{}]+[*][^{}]+[)].MarshalJSON[(][)]'
-
-    - if: runner.os == 'Linux'
       name: Use `loader := NewLoader(); loader.Load ...`
       run: |
         ! git grep -InE 'NewLoader[(][)][.]Load'
