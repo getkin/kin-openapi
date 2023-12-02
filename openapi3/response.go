@@ -16,22 +16,13 @@ type Responses struct {
 	m map[string]*ResponseRef
 }
 
-// NewResponsesWithCapacity builds a responses object of the given capacity.
-func NewResponsesWithCapacity(cap int) *Responses {
-	return &Responses{m: make(map[string]*ResponseRef, cap)}
-}
-
 // NewResponses builds a responses object with response objects in insertion order.
 // Given no arguments, NewResponses returns a valid responses object containing a default match-all reponse.
 func NewResponses(opts ...NewResponsesOption) *Responses {
-	var responses *Responses
-	if n := len(opts); n != 0 {
-		responses = NewResponsesWithCapacity(n)
-	} else {
-		responses = &Responses{m: map[string]*ResponseRef{
-			"default": {Value: NewResponse().WithDescription("")},
-		}}
+	if len(opts) == 0 {
+		return NewResponses(WithName("default", NewResponse().WithDescription("")))
 	}
+	responses := NewResponsesWithCapacity(len(opts))
 	for _, opt := range opts {
 		opt(responses)
 	}

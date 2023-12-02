@@ -8,6 +8,14 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
+// NewResponsesWithCapacity builds a responses object of the given capacity.
+func NewResponsesWithCapacity(cap int) *Responses {
+	if cap == 0 {
+		return &Responses{m: make(map[string]*ResponseRef)}
+	}
+	return &Responses{m: make(map[string]*ResponseRef, cap)}
+}
+
 // Value returns the responses for key or nil
 func (responses *Responses) Value(key string) *ResponseRef {
 	if responses.Len() == 0 {
@@ -27,7 +35,7 @@ func (responses *Responses) Set(key string, value *ResponseRef) {
 
 // Len returns the amount of keys in responses excluding responses.Extensions.
 func (responses *Responses) Len() int {
-	if responses == nil {
+	if responses == nil || responses.m == nil {
 		return 0
 	}
 	return len(responses.m)
@@ -35,11 +43,15 @@ func (responses *Responses) Len() int {
 
 // Map returns responses as a 'map'.
 // Note: iteration on Go maps is not ordered.
-func (responses *Responses) Map() map[string]*ResponseRef {
-	if responses.Len() == 0 {
-		return nil
+func (responses *Responses) Map() (m map[string]*ResponseRef) {
+	if responses == nil || len(responses.m) == 0 {
+		return make(map[string]*ResponseRef)
 	}
-	return responses.m
+	m = make(map[string]*ResponseRef, len(responses.m))
+	for k, v := range responses.m {
+		m[k] = v
+	}
+	return
 }
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -58,7 +70,7 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of Responses.
-func (responses Responses) MarshalJSON() ([]byte, error) {
+func (responses *Responses) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, responses.Len()+len(responses.Extensions))
 	for k, v := range responses.Extensions {
 		m[k] = v
@@ -108,6 +120,14 @@ func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
+// NewCallbackWithCapacity builds a callback object of the given capacity.
+func NewCallbackWithCapacity(cap int) *Callback {
+	if cap == 0 {
+		return &Callback{m: make(map[string]*PathItem)}
+	}
+	return &Callback{m: make(map[string]*PathItem, cap)}
+}
+
 // Value returns the callback for key or nil
 func (callback *Callback) Value(key string) *PathItem {
 	if callback.Len() == 0 {
@@ -127,7 +147,7 @@ func (callback *Callback) Set(key string, value *PathItem) {
 
 // Len returns the amount of keys in callback excluding callback.Extensions.
 func (callback *Callback) Len() int {
-	if callback == nil {
+	if callback == nil || callback.m == nil {
 		return 0
 	}
 	return len(callback.m)
@@ -135,11 +155,15 @@ func (callback *Callback) Len() int {
 
 // Map returns callback as a 'map'.
 // Note: iteration on Go maps is not ordered.
-func (callback *Callback) Map() map[string]*PathItem {
-	if callback.Len() == 0 {
-		return nil
+func (callback *Callback) Map() (m map[string]*PathItem) {
+	if callback == nil || len(callback.m) == 0 {
+		return make(map[string]*PathItem)
 	}
-	return callback.m
+	m = make(map[string]*PathItem, len(callback.m))
+	for k, v := range callback.m {
+		m[k] = v
+	}
+	return
 }
 
 var _ jsonpointer.JSONPointable = (*Callback)(nil)
@@ -158,7 +182,7 @@ func (callback Callback) JSONLookup(token string) (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of Callback.
-func (callback Callback) MarshalJSON() ([]byte, error) {
+func (callback *Callback) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, callback.Len()+len(callback.Extensions))
 	for k, v := range callback.Extensions {
 		m[k] = v
@@ -208,6 +232,14 @@ func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
+// NewPathsWithCapacity builds a paths object of the given capacity.
+func NewPathsWithCapacity(cap int) *Paths {
+	if cap == 0 {
+		return &Paths{m: make(map[string]*PathItem)}
+	}
+	return &Paths{m: make(map[string]*PathItem, cap)}
+}
+
 // Value returns the paths for key or nil
 func (paths *Paths) Value(key string) *PathItem {
 	if paths.Len() == 0 {
@@ -227,7 +259,7 @@ func (paths *Paths) Set(key string, value *PathItem) {
 
 // Len returns the amount of keys in paths excluding paths.Extensions.
 func (paths *Paths) Len() int {
-	if paths == nil {
+	if paths == nil || paths.m == nil {
 		return 0
 	}
 	return len(paths.m)
@@ -235,11 +267,15 @@ func (paths *Paths) Len() int {
 
 // Map returns paths as a 'map'.
 // Note: iteration on Go maps is not ordered.
-func (paths *Paths) Map() map[string]*PathItem {
-	if paths.Len() == 0 {
-		return nil
+func (paths *Paths) Map() (m map[string]*PathItem) {
+	if paths == nil || len(paths.m) == 0 {
+		return make(map[string]*PathItem)
 	}
-	return paths.m
+	m = make(map[string]*PathItem, len(paths.m))
+	for k, v := range paths.m {
+		m[k] = v
+	}
+	return
 }
 
 var _ jsonpointer.JSONPointable = (*Paths)(nil)
@@ -258,7 +294,7 @@ func (paths Paths) JSONLookup(token string) (interface{}, error) {
 }
 
 // MarshalJSON returns the JSON encoding of Paths.
-func (paths Paths) MarshalJSON() ([]byte, error) {
+func (paths *Paths) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, paths.Len()+len(paths.Extensions))
 	for k, v := range paths.Extensions {
 		m[k] = v

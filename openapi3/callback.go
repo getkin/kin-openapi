@@ -13,11 +13,6 @@ type Callback struct {
 	m map[string]*PathItem
 }
 
-// NewCallbackWithCapacity builds a Callback object of the given capacity.
-func NewCallbackWithCapacity(cap int) *Callback {
-	return &Callback{m: make(map[string]*PathItem, cap)}
-}
-
 // NewCallback builds a Callback object with path items in insertion order.
 func NewCallback(opts ...NewCallbackOption) *Callback {
 	Callback := NewCallbackWithCapacity(len(opts))

@@ -29,7 +29,9 @@ names+=('paths')
 [[ "${#types[@]}" = "${#names[@]}" ]]
 [[ "${#types[@]}" = "$(git grep -InF ' m map[string]*' -- openapi3/loader.go | wc -l)" ]]
 
-cat <<EOF >"$maplike"
+
+maplike_header() {
+	cat <<EOF >"$maplike"
 package openapi3
 
 import (
@@ -39,10 +41,13 @@ import (
 
 	"github.com/go-openapi/jsonpointer"
 )
+
 EOF
+}
 
 
-cat <<EOF >"$maplike_test"
+test_header() {
+	cat <<EOF >"$maplike_test"
 package openapi3
 
 import (
@@ -53,16 +58,32 @@ import (
 
 func TestMaplikeMethods(t *testing.T) {
 	t.Parallel()
+
 EOF
+}
 
-for i in "${!types[@]}"; do
-	type=${types[$i]}
-	value_type=${value_types[$i]}
-	deref_v=${deref_vs[$i]}
-	name=${names[$i]}
 
+test_footer() {
+	echo "}" >>"$maplike_test"
+}
+
+
+maplike_NewWithCapa() {
 	cat <<EOF >>"$maplike"
+// New${type#'*'}WithCapacity builds a ${name} object of the given capacity.
+func New${type#'*'}WithCapacity(cap int) ${type} {
+	if cap == 0 {
+		return &${type#'*'}{m: make(map[string]${value_type})}
+	}
+	return &${type#'*'}{m: make(map[string]${value_type}, cap)}
+}
 
+EOF
+}
+
+
+maplike_ValueSetLen() {
+	cat <<EOF >>"$maplike"
 // Value returns the ${name} for key or nil
 func (${name} ${type}) Value(key string) ${value_type} {
 	if ${name}.Len() == 0 {
@@ -82,7 +103,7 @@ func (${name} ${type}) Set(key string, value ${value_type}) {
 
 // Len returns the amount of keys in ${name} excluding ${name}.Extensions.
 func (${name} ${type}) Len() int {
-	if ${name} == nil {
+	if ${name} == nil || ${name}.m == nil {
 		return 0
 	}
 	return len(${name}.m)
@@ -90,13 +111,23 @@ func (${name} ${type}) Len() int {
 
 // Map returns ${name} as a 'map'.
 // Note: iteration on Go maps is not ordered.
-func (${name} ${type}) Map() map[string]${value_type} {
-	if ${name}.Len() == 0 {
-		return nil
+func (${name} ${type}) Map() (m map[string]${value_type}) {
+	if ${name} == nil || len(${name}.m) == 0 {
+		return make(map[string]${value_type})
 	}
-	return ${name}.m
+	m = make(map[string]${value_type}, len(${name}.m))
+	for k, v := range ${name}.m {
+		m[k] = v
+	}
+	return
 }
 
+EOF
+}
+
+
+maplike_Pointable() {
+	cat <<EOF >>"$maplike"
 var _ jsonpointer.JSONPointable = (${type})(nil)
 
 // JSONLookup implements https://github.com/go-openapi/jsonpointer#JSONPointable
@@ -112,8 +143,14 @@ func (${name} ${type#'*'}) JSONLookup(token string) (interface{}, error) {
 	}
 }
 
+EOF
+}
+
+
+maplike_UnMarsh() {
+	cat <<EOF >>"$maplike"
 // MarshalJSON returns the JSON encoding of ${type#'*'}.
-func (${name} ${type#'*'}) MarshalJSON() ([]byte, error) {
+func (${name} ${type}) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{}, ${name}.Len()+len(${name}.Extensions))
 	for k, v := range ${name}.Extensions {
 		m[k] = v
@@ -163,22 +200,24 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 EOF
+}
 
+
+test_body() {
 	cat <<EOF >>"$maplike_test"
-
 	t.Run("${type}", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
 			x := (${type})(nil)
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, (map[string]${value_type})(nil), x.Map())
+			require.Equal(t, map[string]${value_type}{}, x.Map())
 			require.Equal(t, (${value_type})(nil), x.Value("key"))
 			require.Panics(t, func() { x.Set("key", &${value_type#'*'}{}) })
 		})
 		t.Run("nonnil", func(t *testing.T) {
 			x := &${type#'*'}{}
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, (map[string]${value_type})(nil), x.Map())
+			require.Equal(t, map[string]${value_type}{}, x.Map())
 			require.Equal(t, (${value_type})(nil), x.Value("key"))
 			x.Set("key", &${value_type#'*'}{})
 			require.Equal(t, 1, x.Len())
@@ -186,10 +225,30 @@ EOF
 			require.Equal(t, &${value_type#'*'}{}, x.Value("key"))
 		})
 	})
+
 EOF
+}
+
+
+
+maplike_header
+test_header
+
+for i in "${!types[@]}"; do
+	type=${types[$i]}
+	value_type=${value_types[$i]}
+	deref_v=${deref_vs[$i]}
+	name=${names[$i]}
+
+	type="$type" name="$name" value_type="$value_type" maplike_NewWithCapa
+	type="$type" name="$name" value_type="$value_type" maplike_ValueSetLen
+	type="$type" name="$name"    deref_v="$deref_v"    maplike_Pointable
+	type="$type" name="$name" value_type="$value_type" maplike_UnMarsh
+	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike"
+
+	type="$type" value_type="$value_type" test_body
+
 
 done
 
-	cat <<EOF >>"$maplike_test"
-}
-EOF
+test_footer
