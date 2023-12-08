@@ -221,3 +221,49 @@ components:
 		})
 	}
 }
+
+func TestValidateRequestExcludeQueryParams(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    post:
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Ok
+`
+	req, err := http.NewRequest(http.MethodPost, "/category?category=foo", nil)
+	require.NoError(t, err)
+	router := setupTestRouter(t, spec)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	err = ValidateRequest(context.Background(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: true,
+		},
+	})
+	require.NoError(t, err)
+
+	err = ValidateRequest(context.Background(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: false,
+		},
+	})
+	require.Error(t, err)
+}
