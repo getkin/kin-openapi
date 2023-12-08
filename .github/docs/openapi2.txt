@@ -1,4 +1,4 @@
-package openapi2 // import "github.com/getkin/kin-openapi/openapi2"
+package openapi2 // import "."
 
 Package openapi2 parses and writes OpenAPIv2 specification documents.
 

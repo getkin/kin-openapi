@@ -1,4 +1,4 @@
-package gorillamux // import "github.com/getkin/kin-openapi/routers/gorillamux"
+package gorillamux // import "."
 
 Package gorillamux implements a router.
 

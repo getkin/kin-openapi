@@ -1,4 +1,4 @@
-package routers // import "github.com/getkin/kin-openapi/routers"
+package routers // import "."
 
 
 VARIABLES
