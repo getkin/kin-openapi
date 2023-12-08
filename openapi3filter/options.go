@@ -7,6 +7,9 @@ type Options struct {
 	// Set ExcludeRequestBody so ValidateRequest skips request body validation
 	ExcludeRequestBody bool
 
+	// Set ExcludeRequestQueryParams so ValidateRequest skips request query params validation
+	ExcludeRequestQueryParams bool
+
 	// Set ExcludeResponseBody so ValidateResponse skips response body validation
 	ExcludeResponseBody bool
 
