@@ -2,12 +2,6 @@ module github.com/getkin/kin-openapi
 
 go 1.20
 
-exclude (
-	// these versions contain a nil pointer CVE
-	gopkg.in/yaml.v3 v3.0.0
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
-)
-
 require (
 	github.com/go-openapi/jsonpointer v0.19.6
 	github.com/gorilla/mux v1.8.0
