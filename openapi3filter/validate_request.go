@@ -141,7 +141,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		for _, subSchema := range schema.AllOf {
 			if subSchema.Value.Default != nil {
 				value = subSchema.Value.Default
-				break
+				break // This is not a validation of the schema itself, so use the first default value.
 			}
 		}
 
