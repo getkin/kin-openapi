@@ -5,10 +5,11 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func TestIssue884(t *testing.T) {
