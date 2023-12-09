@@ -138,12 +138,10 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	// Set default value if needed
 	if !options.SkipSettingDefaults && value == nil && schema != nil {
 		value = schema.Default
-		if schema.AllOf != nil {
-			for _, subSchema := range schema.AllOf {
-				if subSchema.Value.Default != nil {
-					value = subSchema.Value.Default
-					break
-				}
+		for _, subSchema := range schema.AllOf {
+			if subSchema.Value.Default != nil {
+				value = subSchema.Value.Default
+				break
 			}
 		}
 
