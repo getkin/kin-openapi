@@ -735,6 +735,11 @@ func (schema *Schema) WithProperties(properties map[string]*Schema) *Schema {
 	return schema
 }
 
+func (schema *Schema) WithRequired(required []string) *Schema {
+	schema.Required = required
+	return schema
+}
+
 func (schema *Schema) WithMinProperties(i int64) *Schema {
 	n := uint64(i)
 	schema.MinProps = n
