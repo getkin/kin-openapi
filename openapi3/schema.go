@@ -1362,7 +1362,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		visitedAllOf = true
 	}
 
-	run = !(visitedOneOf || visitedAnyOf || visitedAllOf)
+	run = !((visitedOneOf || visitedAnyOf || visitedAllOf) && value == nil)
 	return
 }
 
