@@ -132,6 +132,10 @@ jobs:
         ! git grep -InE 'require[.].+err.Error'
 
     - if: runner.os == 'Linux'
+      name: Ensure go-run'ing binaries works
+      run: go run -a github.com/getkin/kin-openapi/cmd/validate@latest -- openapi3/testdata/test.openapi.yml
+
+    - if: runner.os == 'Linux'
       name: Missing specification object link to definition
       run: |
         [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
