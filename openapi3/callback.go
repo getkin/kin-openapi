@@ -3,6 +3,8 @@ package openapi3
 import (
 	"context"
 	"sort"
+
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 // Callback is specified by OpenAPI/Swagger standard version 3.
@@ -10,7 +12,7 @@ import (
 type Callback struct {
 	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
-	m map[string]*PathItem
+	om *orderedmap.OrderedMap[string, *PathItem]
 }
 
 // NewCallback builds a Callback object with path items in insertion order.

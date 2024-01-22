@@ -25,8 +25,10 @@ func TestMaplikeMethods(t *testing.T) {
 			require.Equal(t, (*ResponseRef)(nil), x.Value("key"))
 			x.Set("key", &ResponseRef{})
 			require.Equal(t, 1, x.Len())
-			require.Equal(t, map[string]*ResponseRef{"key": {}}, x.Map())
-			require.Equal(t, &ResponseRef{}, x.Value("key"))
+			m := x.Map()
+			require.Equal(t, map[string]*ResponseRef{"key": {}}, m)
+			m["key"].Ref = "bla"
+			require.Equal(t, &ResponseRef{Ref: "bla"}, x.Value("key"))
 		})
 	})
 
@@ -46,8 +48,10 @@ func TestMaplikeMethods(t *testing.T) {
 			require.Equal(t, (*PathItem)(nil), x.Value("key"))
 			x.Set("key", &PathItem{})
 			require.Equal(t, 1, x.Len())
-			require.Equal(t, map[string]*PathItem{"key": {}}, x.Map())
-			require.Equal(t, &PathItem{}, x.Value("key"))
+			m := x.Map()
+			require.Equal(t, map[string]*PathItem{"key": {}}, m)
+			m["key"].Ref = "bla"
+			require.Equal(t, &PathItem{Ref: "bla"}, x.Value("key"))
 		})
 	})
 
@@ -67,8 +71,10 @@ func TestMaplikeMethods(t *testing.T) {
 			require.Equal(t, (*PathItem)(nil), x.Value("key"))
 			x.Set("key", &PathItem{})
 			require.Equal(t, 1, x.Len())
-			require.Equal(t, map[string]*PathItem{"key": {}}, x.Map())
-			require.Equal(t, &PathItem{}, x.Value("key"))
+			m := x.Map()
+			require.Equal(t, map[string]*PathItem{"key": {}}, m)
+			m["key"].Ref = "bla"
+			require.Equal(t, &PathItem{Ref: "bla"}, x.Value("key"))
 		})
 	})
 

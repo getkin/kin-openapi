@@ -150,6 +150,9 @@ func NewCallback(opts ...NewCallbackOption) *Callback
 func NewCallbackWithCapacity(cap int) *Callback
     NewCallbackWithCapacity builds a callback object of the given capacity.
 
+func (callback *Callback) Iter() *callbackKV
+    Iter returns a pointer to the first pair, in insertion order.
+
 func (callback Callback) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
@@ -937,6 +940,9 @@ func (paths *Paths) InMatchingOrder() []string
     When matching URLs, concrete (non-templated) paths would be matched before
     their templated counterparts.
 
+func (paths *Paths) Iter() *pathsKV
+    Iter returns a pointer to the first pair, in insertion order.
+
 func (paths Paths) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
@@ -1144,6 +1150,9 @@ func NewResponsesWithCapacity(cap int) *Responses
 
 func (responses *Responses) Default() *ResponseRef
     Default returns the default response
+
+func (responses *Responses) Iter() *responsesKV
+    Iter returns a pointer to the first pair, in insertion order.
 
 func (responses Responses) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
