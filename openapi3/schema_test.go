@@ -231,6 +231,39 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "ANYOF WITH PARENT CONSTRAINTS",
+		Schema: NewAnyOfSchema(
+			NewObjectSchema().WithRequired([]string{"stringProp"}),
+			NewObjectSchema().WithRequired([]string{"boolProp"}),
+		).WithProperties(map[string]*Schema{
+			"stringProp": NewStringSchema().WithMaxLength(18),
+			"boolProp":   NewBoolSchema(),
+		}),
+		Serialization: map[string]interface{}{
+			"properties": map[string]interface{}{
+				"stringProp": map[string]interface{}{"type": "string", "maxLength": 18},
+				"boolProp":   map[string]interface{}{"type": "boolean"},
+			},
+			"anyOf": []interface{}{
+				map[string]interface{}{"type": "object", "required": []string{"stringProp"}},
+				map[string]interface{}{"type": "object", "required": []string{"boolProp"}},
+			},
+		},
+		AllValid: []interface{}{
+			map[string]interface{}{"stringProp": "valid string value"},
+			map[string]interface{}{"boolProp": true},
+			map[string]interface{}{"stringProp": "valid string value", "boolProp": true},
+		},
+		AllInvalid: []interface{}{
+			1,
+			map[string]interface{}{},
+			map[string]interface{}{"invalidProp": false},
+			map[string]interface{}{"stringProp": "invalid string value"},
+			map[string]interface{}{"stringProp": "invalid string value", "boolProp": true},
+		},
+	},
+
+	{
 		Title:  "BOOLEAN",
 		Schema: NewBoolSchema(),
 		Serialization: map[string]interface{}{

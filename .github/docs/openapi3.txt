@@ -1355,6 +1355,8 @@ func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema
 
 func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema
 
+func (schema *Schema) WithRequired(required []string) *Schema
+
 func (schema *Schema) WithUniqueItems(unique bool) *Schema
 
 func (schema *Schema) WithoutAdditionalProperties() *Schema
