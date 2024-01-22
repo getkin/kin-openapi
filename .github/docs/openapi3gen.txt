@@ -1,4 +1,4 @@
-package openapi3gen // import "."
+package openapi3gen // import "github.com/getkin/kin-openapi/openapi3gen"
 
 Package openapi3gen generates OpenAPIv3 JSON schemas from Go types.
 

@@ -1,4 +1,4 @@
-package legacy // import "."
+package legacy // import "github.com/getkin/kin-openapi/routers/legacy"
 
 Package legacy implements a router.
 

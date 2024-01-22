@@ -1,4 +1,4 @@
-package openapi2conv // import "."
+package openapi2conv // import "github.com/getkin/kin-openapi/openapi2conv"
 
 Package openapi2conv converts an OpenAPI v2 specification document to v3.
 

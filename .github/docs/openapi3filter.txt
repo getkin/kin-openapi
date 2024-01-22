@@ -1,4 +1,4 @@
-package openapi3filter // import "."
+package openapi3filter // import "github.com/getkin/kin-openapi/openapi3filter"
 
 Package openapi3filter validates that requests and inputs request an OpenAPI 3
 specification file.
