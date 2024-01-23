@@ -1,0 +1,50 @@
+0 0s kin-openapi.git issue645-bis-bis λ ge '^\s+[A-Z]\w+ +map' openapi3/ |\grep -vF 'Extensions map['
+openapi3/components.go:13:	Callbacks       map[string]*CallbackRef
+openapi3/components.go:14:	Examples        map[string]*ExampleRef
+openapi3/components.go:15:	Headers         map[string]*HeaderRef
+openapi3/components.go:16:	Links           map[string]*LinkRef
+openapi3/components.go:17:	ParametersMap   map[string]*ParameterRef
+openapi3/components.go:18:	RequestBodies   map[string]*RequestBodyRef
+openapi3/components.go:19:	ResponseBodies  map[string]*ResponseRef
+openapi3/components.go:20:	Schemas         map[string]*SchemaRef
+openapi3/components.go:21:	SecuritySchemes map[string]*SecuritySchemeRef
+openapi3/discriminator.go:14:	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+openapi3/link.go:18:	Parameters   map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+openapi3/loader_read_from_uri_func_test.go:36:	Sources map[string][]byte
+openapi3/media_type.go:21:	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+openapi3/security_scheme.go:305:	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
+openapi3/server.go:58:	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+
+
+0 3s kin-openapi.git issue645 λ ge -F '.Map()'
+maps.sh:226:                    require.Equal(t, map[string]${value_type}{}, x.Map())
+maps.sh:233:                    require.Equal(t, map[string]${value_type}{}, x.Map())
+maps.sh:237:                    m := x.Map()
+openapi2conv/openapi2_conv.go:623:      for path, pathItem := range doc3.Paths.Map() {
+openapi2conv/openapi2_conv.go:986:              resultResponses, err := FromV3Responses(responses.Map(), doc3.Components)
+openapi3/callback.go:44:        for key := range callback.Map() {
+openapi3/internalize_refs.go:326:       doc.derefResponseBodies(rs.Map(), refNameResolver, parentIsExternal)
+openapi3/internalize_refs.go:365:                                       cbValue := (*cb.Value).Map()
+openapi3/internalize_refs.go:436:                               cbValue := (*cb.Value).Map()
+openapi3/internalize_refs.go:442:       doc.derefPaths(doc.Paths.Map(), refNameResolver, false)
+openapi3/loader.go:241: for _, pathItem := range doc.Paths.Map() {
+openapi3/loader.go:335:                         cursor = c.Map() // om map[string]*ResponseRef
+openapi3/loader.go:337:                         cursor = c.Map() // om map[string]*PathItem
+openapi3/loader.go:339:                         cursor = c.Map() // om map[string]*PathItem
+openapi3/loader.go:1018:        for _, pathItem := range value.Map() {
+openapi3/loader.go:1111:                for _, response := range operation.Responses.Map() {
+openapi3/maplike_test.go:17:                    require.Equal(t, map[string]*ResponseRef{}, x.Map())
+openapi3/maplike_test.go:24:                    require.Equal(t, map[string]*ResponseRef{}, x.Map())
+openapi3/maplike_test.go:28:                    m := x.Map()
+openapi3/maplike_test.go:40:                    require.Equal(t, map[string]*PathItem{}, x.Map())
+openapi3/maplike_test.go:47:                    require.Equal(t, map[string]*PathItem{}, x.Map())
+openapi3/maplike_test.go:51:                    m := x.Map()
+openapi3/maplike_test.go:63:                    require.Equal(t, map[string]*PathItem{}, x.Map())
+openapi3/maplike_test.go:70:                    require.Equal(t, map[string]*PathItem{}, x.Map())
+openapi3/maplike_test.go:74:                    m := x.Map()
+openapi3/paths.go:48:   for key := range paths.Map() {
+openapi3/paths.go:152:  for path := range paths.Map() {
+openapi3/paths.go:190:  for path, pathItem := range paths.Map() {
+openapi3/paths.go:201:  for urlPath, pathItem := range paths.Map() {
+openapi3/response.go:89:        for key := range responses.Map() {
+routers/legacy/router.go:67:    for path, pathItem := range doc.Paths.Map() {

@@ -308,7 +308,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 
 	drill := func(cursor interface{}) (interface{}, error) {
 		for _, pathPart := range strings.Split(fragment[1:], "/") {
-			pathPart = unescapeRefString(pathPart)
+			pathPart = strings.Replace(strings.Replace(pathPart, "~1", "/", -1), "~0", "~", -1)
 			attempted := false
 
 			switch c := cursor.(type) {
@@ -332,11 +332,11 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 				}
 
 			case *Responses:
-				cursor = c.m // m map[string]*ResponseRef
+				cursor = c.Map() // om map[string]*ResponseRef
 			case *Callback:
-				cursor = c.m // m map[string]*PathItem
+				cursor = c.Map() // om map[string]*PathItem
 			case *Paths:
-				cursor = c.m // m map[string]*PathItem
+				cursor = c.Map() // om map[string]*PathItem
 			}
 
 			if !attempted {
@@ -472,12 +472,43 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 					return enc, nil
 				}
 			}
+
+			if v := omdriller(val, fieldName); v != nil {
+				return v, nil
+			}
 		}
 		return nil, fmt.Errorf("struct field %q not found", fieldName)
 
 	default:
 		return nil, errors.New("not a map, slice nor struct")
 	}
+}
+
+func omdriller(val reflect.Value, fieldName string) interface{} {
+	// TODO: ge -B1 '^\s+om [*]orderedmap' -- openapi3/
+	switch tyname := val.Type().Name(); tyname {
+	case "Paths":
+		if om := val.Interface().(Paths).om; om != nil {
+			if v, ok := (*om).Get(fieldName); ok {
+				return v
+			}
+		}
+
+	case "Responses":
+		if om := val.Interface().(Responses).om; om != nil {
+			if v, ok := (*om).Get(fieldName); ok {
+				return v
+			}
+		}
+
+	case "Callback":
+		if om := val.Interface().(Callback).om; om != nil {
+			if v, ok := (*om).Get(fieldName); ok {
+				return v
+			}
+		}
+	}
+	return nil
 }
 
 func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
@@ -1089,10 +1120,6 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		}
 	}
 	return
-}
-
-func unescapeRefString(ref string) string {
-	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
 
 func visitedLimit(visited []string, ref string) bool {

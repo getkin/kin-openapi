@@ -200,7 +200,7 @@ func TestRouter(t *testing.T) {
 	}
 	content := openapi3.NewContentWithJSONSchema(schema)
 	responses := openapi3.NewResponses()
-	responses.Value("default").Value.Content = content
+	responses.Default().Value.Content = content
 	doc.Paths.Set("/withExamples", &openapi3.PathItem{
 		Get: &openapi3.Operation{Responses: responses},
 	})

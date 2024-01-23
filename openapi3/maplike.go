@@ -2,18 +2,18 @@ package openapi3
 
 import (
 	"encoding/json"
-	"sort"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 // NewResponsesWithCapacity builds a responses object of the given capacity.
 func NewResponsesWithCapacity(cap int) *Responses {
 	if cap == 0 {
-		return &Responses{m: make(map[string]*ResponseRef)}
+		return &Responses{om: orderedmap.New[string, *ResponseRef]()}
 	}
-	return &Responses{m: make(map[string]*ResponseRef, cap)}
+	return &Responses{om: orderedmap.New[string, *ResponseRef](cap)}
 }
 
 // Value returns the responses for key or nil
@@ -21,37 +21,52 @@ func (responses *Responses) Value(key string) *ResponseRef {
 	if responses.Len() == 0 {
 		return nil
 	}
-	return responses.m[key]
+	return responses.om.Value(key)
 }
 
 // Set adds or replaces key 'key' of 'responses' with 'value'.
 // Note: 'responses' MUST be non-nil
 func (responses *Responses) Set(key string, value *ResponseRef) {
-	if responses.m == nil {
-		responses.m = make(map[string]*ResponseRef)
+	if responses.om == nil {
+		responses.om = NewResponsesWithCapacity(0).om
 	}
-	responses.m[key] = value
+	_, _ = responses.om.Set(key, value)
 }
 
 // Len returns the amount of keys in responses excluding responses.Extensions.
 func (responses *Responses) Len() int {
-	if responses == nil || responses.m == nil {
+	if responses == nil || responses.om == nil {
 		return 0
 	}
-	return len(responses.m)
+	return responses.om.Len()
 }
 
 // Map returns responses as a 'map'.
 // Note: iteration on Go maps is not ordered.
 func (responses *Responses) Map() (m map[string]*ResponseRef) {
-	if responses == nil || len(responses.m) == 0 {
+	if responses == nil || responses.om == nil {
 		return make(map[string]*ResponseRef)
 	}
-	m = make(map[string]*ResponseRef, len(responses.m))
-	for k, v := range responses.m {
-		m[k] = v
+	m = make(map[string]*ResponseRef, responses.Len())
+	for pair := responses.Iter(); pair != nil; pair = pair.Next() {
+		m[pair.Key] = pair.Value
 	}
 	return
+}
+
+type responsesKV orderedmap.Pair[string, *ResponseRef] //FIXME: pub?
+// Iter returns a pointer to the first pair, in insertion order.
+func (responses *Responses) Iter() *responsesKV {
+	if responses.Len() == 0 {
+		return nil
+	}
+	return (*responsesKV)(responses.om.Oldest())
+}
+
+// Next returns a pointer to the next pair, in insertion order.
+func (pair *responsesKV) Next() *responsesKV {
+	ompair := (*orderedmap.Pair[string, *ResponseRef])(pair)
+	return (*responsesKV)(ompair.Next())
 }
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -71,36 +86,28 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 
 // MarshalJSON returns the JSON encoding of Responses.
 func (responses *Responses) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, responses.Len()+len(responses.Extensions))
+	om := orderedmap.New[string, interface{}](responses.Len() + len(responses.Extensions))
+	for pair := responses.Iter(); pair != nil; pair = pair.Next() {
+		om.Set(pair.Key, pair.Value)
+	}
 	for k, v := range responses.Extensions {
-		m[k] = v
+		om.Set(k, v)
 	}
-	for k, v := range responses.Map() {
-		m[k] = v
-	}
-	return json.Marshal(m)
+	return om.MarshalJSON()
 }
 
 // UnmarshalJSON sets Responses to a copy of data.
 func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
-	var m map[string]interface{}
-	if err = json.Unmarshal(data, &m); err != nil {
+	om := orderedmap.New[string, interface{}]()
+	if err = json.Unmarshal(data, &om); err != nil {
 		return
 	}
 
-	ks := make([]string, 0, len(m))
-	for k := range m {
-		ks = append(ks, k)
-	}
-	sort.Strings(ks)
+	x := NewResponsesWithCapacity(om.Len())
+	x.Extensions = make(map[string]interface{})
 
-	x := Responses{
-		Extensions: make(map[string]interface{}),
-		m:          make(map[string]*ResponseRef, len(m)),
-	}
-
-	for _, k := range ks {
-		v := m[k]
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		k, v := pair.Key, pair.Value
 		if strings.HasPrefix(k, "x-") {
 			x.Extensions[k] = v
 			continue
@@ -114,18 +121,18 @@ func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
 		if err = vv.UnmarshalJSON(data); err != nil {
 			return
 		}
-		x.m[k] = &vv
+		x.Set(k, &vv)
 	}
-	*responses = x
+	*responses = *x
 	return
 }
 
 // NewCallbackWithCapacity builds a callback object of the given capacity.
 func NewCallbackWithCapacity(cap int) *Callback {
 	if cap == 0 {
-		return &Callback{m: make(map[string]*PathItem)}
+		return &Callback{om: orderedmap.New[string, *PathItem]()}
 	}
-	return &Callback{m: make(map[string]*PathItem, cap)}
+	return &Callback{om: orderedmap.New[string, *PathItem](cap)}
 }
 
 // Value returns the callback for key or nil
@@ -133,37 +140,52 @@ func (callback *Callback) Value(key string) *PathItem {
 	if callback.Len() == 0 {
 		return nil
 	}
-	return callback.m[key]
+	return callback.om.Value(key)
 }
 
 // Set adds or replaces key 'key' of 'callback' with 'value'.
 // Note: 'callback' MUST be non-nil
 func (callback *Callback) Set(key string, value *PathItem) {
-	if callback.m == nil {
-		callback.m = make(map[string]*PathItem)
+	if callback.om == nil {
+		callback.om = NewCallbackWithCapacity(0).om
 	}
-	callback.m[key] = value
+	_, _ = callback.om.Set(key, value)
 }
 
 // Len returns the amount of keys in callback excluding callback.Extensions.
 func (callback *Callback) Len() int {
-	if callback == nil || callback.m == nil {
+	if callback == nil || callback.om == nil {
 		return 0
 	}
-	return len(callback.m)
+	return callback.om.Len()
 }
 
 // Map returns callback as a 'map'.
 // Note: iteration on Go maps is not ordered.
 func (callback *Callback) Map() (m map[string]*PathItem) {
-	if callback == nil || len(callback.m) == 0 {
+	if callback == nil || callback.om == nil {
 		return make(map[string]*PathItem)
 	}
-	m = make(map[string]*PathItem, len(callback.m))
-	for k, v := range callback.m {
-		m[k] = v
+	m = make(map[string]*PathItem, callback.Len())
+	for pair := callback.Iter(); pair != nil; pair = pair.Next() {
+		m[pair.Key] = pair.Value
 	}
 	return
+}
+
+type callbackKV orderedmap.Pair[string, *PathItem] //FIXME: pub?
+// Iter returns a pointer to the first pair, in insertion order.
+func (callback *Callback) Iter() *callbackKV {
+	if callback.Len() == 0 {
+		return nil
+	}
+	return (*callbackKV)(callback.om.Oldest())
+}
+
+// Next returns a pointer to the next pair, in insertion order.
+func (pair *callbackKV) Next() *callbackKV {
+	ompair := (*orderedmap.Pair[string, *PathItem])(pair)
+	return (*callbackKV)(ompair.Next())
 }
 
 var _ jsonpointer.JSONPointable = (*Callback)(nil)
@@ -183,36 +205,28 @@ func (callback Callback) JSONLookup(token string) (interface{}, error) {
 
 // MarshalJSON returns the JSON encoding of Callback.
 func (callback *Callback) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, callback.Len()+len(callback.Extensions))
+	om := orderedmap.New[string, interface{}](callback.Len() + len(callback.Extensions))
+	for pair := callback.Iter(); pair != nil; pair = pair.Next() {
+		om.Set(pair.Key, pair.Value)
+	}
 	for k, v := range callback.Extensions {
-		m[k] = v
+		om.Set(k, v)
 	}
-	for k, v := range callback.Map() {
-		m[k] = v
-	}
-	return json.Marshal(m)
+	return om.MarshalJSON()
 }
 
 // UnmarshalJSON sets Callback to a copy of data.
 func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
-	var m map[string]interface{}
-	if err = json.Unmarshal(data, &m); err != nil {
+	om := orderedmap.New[string, interface{}]()
+	if err = json.Unmarshal(data, &om); err != nil {
 		return
 	}
 
-	ks := make([]string, 0, len(m))
-	for k := range m {
-		ks = append(ks, k)
-	}
-	sort.Strings(ks)
+	x := NewCallbackWithCapacity(om.Len())
+	x.Extensions = make(map[string]interface{})
 
-	x := Callback{
-		Extensions: make(map[string]interface{}),
-		m:          make(map[string]*PathItem, len(m)),
-	}
-
-	for _, k := range ks {
-		v := m[k]
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		k, v := pair.Key, pair.Value
 		if strings.HasPrefix(k, "x-") {
 			x.Extensions[k] = v
 			continue
@@ -226,18 +240,18 @@ func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
 		if err = vv.UnmarshalJSON(data); err != nil {
 			return
 		}
-		x.m[k] = &vv
+		x.Set(k, &vv)
 	}
-	*callback = x
+	*callback = *x
 	return
 }
 
 // NewPathsWithCapacity builds a paths object of the given capacity.
 func NewPathsWithCapacity(cap int) *Paths {
 	if cap == 0 {
-		return &Paths{m: make(map[string]*PathItem)}
+		return &Paths{om: orderedmap.New[string, *PathItem]()}
 	}
-	return &Paths{m: make(map[string]*PathItem, cap)}
+	return &Paths{om: orderedmap.New[string, *PathItem](cap)}
 }
 
 // Value returns the paths for key or nil
@@ -245,37 +259,52 @@ func (paths *Paths) Value(key string) *PathItem {
 	if paths.Len() == 0 {
 		return nil
 	}
-	return paths.m[key]
+	return paths.om.Value(key)
 }
 
 // Set adds or replaces key 'key' of 'paths' with 'value'.
 // Note: 'paths' MUST be non-nil
 func (paths *Paths) Set(key string, value *PathItem) {
-	if paths.m == nil {
-		paths.m = make(map[string]*PathItem)
+	if paths.om == nil {
+		paths.om = NewPathsWithCapacity(0).om
 	}
-	paths.m[key] = value
+	_, _ = paths.om.Set(key, value)
 }
 
 // Len returns the amount of keys in paths excluding paths.Extensions.
 func (paths *Paths) Len() int {
-	if paths == nil || paths.m == nil {
+	if paths == nil || paths.om == nil {
 		return 0
 	}
-	return len(paths.m)
+	return paths.om.Len()
 }
 
 // Map returns paths as a 'map'.
 // Note: iteration on Go maps is not ordered.
 func (paths *Paths) Map() (m map[string]*PathItem) {
-	if paths == nil || len(paths.m) == 0 {
+	if paths == nil || paths.om == nil {
 		return make(map[string]*PathItem)
 	}
-	m = make(map[string]*PathItem, len(paths.m))
-	for k, v := range paths.m {
-		m[k] = v
+	m = make(map[string]*PathItem, paths.Len())
+	for pair := paths.Iter(); pair != nil; pair = pair.Next() {
+		m[pair.Key] = pair.Value
 	}
 	return
+}
+
+type pathsKV orderedmap.Pair[string, *PathItem] //FIXME: pub?
+// Iter returns a pointer to the first pair, in insertion order.
+func (paths *Paths) Iter() *pathsKV {
+	if paths.Len() == 0 {
+		return nil
+	}
+	return (*pathsKV)(paths.om.Oldest())
+}
+
+// Next returns a pointer to the next pair, in insertion order.
+func (pair *pathsKV) Next() *pathsKV {
+	ompair := (*orderedmap.Pair[string, *PathItem])(pair)
+	return (*pathsKV)(ompair.Next())
 }
 
 var _ jsonpointer.JSONPointable = (*Paths)(nil)
@@ -295,36 +324,28 @@ func (paths Paths) JSONLookup(token string) (interface{}, error) {
 
 // MarshalJSON returns the JSON encoding of Paths.
 func (paths *Paths) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, paths.Len()+len(paths.Extensions))
+	om := orderedmap.New[string, interface{}](paths.Len() + len(paths.Extensions))
+	for pair := paths.Iter(); pair != nil; pair = pair.Next() {
+		om.Set(pair.Key, pair.Value)
+	}
 	for k, v := range paths.Extensions {
-		m[k] = v
+		om.Set(k, v)
 	}
-	for k, v := range paths.Map() {
-		m[k] = v
-	}
-	return json.Marshal(m)
+	return om.MarshalJSON()
 }
 
 // UnmarshalJSON sets Paths to a copy of data.
 func (paths *Paths) UnmarshalJSON(data []byte) (err error) {
-	var m map[string]interface{}
-	if err = json.Unmarshal(data, &m); err != nil {
+	om := orderedmap.New[string, interface{}]()
+	if err = json.Unmarshal(data, &om); err != nil {
 		return
 	}
 
-	ks := make([]string, 0, len(m))
-	for k := range m {
-		ks = append(ks, k)
-	}
-	sort.Strings(ks)
+	x := NewPathsWithCapacity(om.Len())
+	x.Extensions = make(map[string]interface{})
 
-	x := Paths{
-		Extensions: make(map[string]interface{}),
-		m:          make(map[string]*PathItem, len(m)),
-	}
-
-	for _, k := range ks {
-		v := m[k]
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		k, v := pair.Key, pair.Value
 		if strings.HasPrefix(k, "x-") {
 			x.Extensions[k] = v
 			continue
@@ -338,8 +359,8 @@ func (paths *Paths) UnmarshalJSON(data []byte) (err error) {
 		if err = vv.UnmarshalJSON(data); err != nil {
 			return
 		}
-		x.m[k] = &vv
+		x.Set(k, &vv)
 	}
-	*paths = x
+	*paths = *x
 	return
 }

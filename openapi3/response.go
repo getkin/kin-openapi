@@ -6,6 +6,8 @@ import (
 	"errors"
 	"sort"
 	"strconv"
+
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
@@ -13,7 +15,7 @@ import (
 type Responses struct {
 	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
-	m map[string]*ResponseRef
+	om *orderedmap.OrderedMap[string, *ResponseRef]
 }
 
 // NewResponses builds a responses object with response objects in insertion order.

@@ -141,6 +141,11 @@ jobs:
         [[ 31 -eq $(git grep -InE '^// See https:.+OpenAPI-Specification.+3[.]0[.]3[.]md#.+bject$' openapi3/*.go | grep -v _test.go | grep -v doc.go | wc -l) ]]
 
     - if: runner.os == 'Linux'
+      name: Ensure opaque usage of orderedmap package
+      run: |
+        ! git grep -InE orderedmap -- .github/docs/
+
+    - if: runner.os == 'Linux'
       name: Missing validation of unknown fields in extensions
       run: |
         [[ $(git grep -InE 'return .*validateExtensions' -- openapi3 | wc -l) -eq $(git grep -InE '^\s+Extensions.+`' -- openapi3 | wc -l) ]]

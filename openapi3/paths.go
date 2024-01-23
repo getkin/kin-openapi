@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 // Paths is specified by OpenAPI/Swagger standard version 3.
@@ -12,7 +14,7 @@ import (
 type Paths struct {
 	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
-	m map[string]*PathItem
+	om *orderedmap.OrderedMap[string, *PathItem]
 }
 
 // NewPaths builds a paths object with path items in insertion order.
