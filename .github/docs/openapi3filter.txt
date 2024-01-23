@@ -54,6 +54,10 @@ func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter)
 func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error)
     FileBodyDecoder is a body decoder that decodes a file body to a string.
 
+func JSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error)
+    JSONBodyDecoder decodes a JSON formatted body. It is public so that is easy
+    to register additional JSON based formats.
+
 func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error
     NoopAuthenticationFunc is an AuthenticationFunc
 
