@@ -1004,10 +1004,10 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 }
 
 func init() {
-	RegisterBodyDecoder("application/json", jsonBodyDecoder)
-	RegisterBodyDecoder("application/json-patch+json", jsonBodyDecoder)
+	RegisterBodyDecoder("application/json", JSONBodyDecoder)
+	RegisterBodyDecoder("application/json-patch+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
-	RegisterBodyDecoder("application/problem+json", jsonBodyDecoder)
+	RegisterBodyDecoder("application/problem+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
@@ -1025,7 +1025,9 @@ func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schem
 	return string(data), nil
 }
 
-func jsonBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+// JSONBodyDecoder decodes a JSON formatted body. It is public so that is easy
+// to register additional JSON based formats.
+func JSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	var value interface{}
 	dec := json.NewDecoder(body)
 	dec.UseNumber()
