@@ -150,6 +150,9 @@ func NewCallback(opts ...NewCallbackOption) *Callback
 func NewCallbackWithCapacity(cap int) *Callback
     NewCallbackWithCapacity builds a callback object of the given capacity.
 
+func (callback *Callback) Delete(key string)
+    Delete removes the entry associated with key 'key' from 'callback'.
+
 func (callback Callback) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
@@ -915,6 +918,9 @@ func NewPaths(opts ...NewPathsOption) *Paths
 func NewPathsWithCapacity(cap int) *Paths
     NewPathsWithCapacity builds a paths object of the given capacity.
 
+func (paths *Paths) Delete(key string)
+    Delete removes the entry associated with key 'key' from 'paths'.
+
 func (paths *Paths) Find(key string) *PathItem
     Find returns a path that matches the key.
 
@@ -1144,6 +1150,9 @@ func NewResponsesWithCapacity(cap int) *Responses
 
 func (responses *Responses) Default() *ResponseRef
     Default returns the default response
+
+func (responses *Responses) Delete(key string)
+    Delete removes the entry associated with key 'key' from 'responses'.
 
 func (responses Responses) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
