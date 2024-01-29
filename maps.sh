@@ -82,7 +82,7 @@ EOF
 }
 
 
-maplike_ValueSetLen() {
+maplike_ValueSetLenDelete() {
 	cat <<EOF >>"$maplike"
 // Value returns the ${name} for key or nil
 func (${name} ${type}) Value(key string) ${value_type} {
@@ -107,6 +107,13 @@ func (${name} ${type}) Len() int {
 		return 0
 	}
 	return len(${name}.m)
+}
+
+// Delete removes the entry associated with key 'key' from '${name}'.
+func (${name} ${type}) Delete(key string) {
+	if ${name} != nil && ${name}.m != nil {
+		delete(${name}.m, key)
+	}
 }
 
 // Map returns ${name} as a 'map'.
@@ -213,6 +220,7 @@ test_body() {
 			require.Equal(t, map[string]${value_type}{}, x.Map())
 			require.Equal(t, (${value_type})(nil), x.Value("key"))
 			require.Panics(t, func() { x.Set("key", &${value_type#'*'}{}) })
+			require.NotPanics(t, func() { x.Delete("key") })
 		})
 		t.Run("nonnil", func(t *testing.T) {
 			x := &${type#'*'}{}
@@ -223,6 +231,11 @@ test_body() {
 			require.Equal(t, 1, x.Len())
 			require.Equal(t, map[string]${value_type}{"key": {}}, x.Map())
 			require.Equal(t, &${value_type#'*'}{}, x.Value("key"))
+			x.Delete("key")
+			require.Equal(t, 0, x.Len())
+			require.Equal(t, map[string]${value_type}{}, x.Map())
+			require.Equal(t, (${value_type})(nil), x.Value("key"))
+			require.NotPanics(t, func() { x.Delete("key") })
 		})
 	})
 
@@ -241,7 +254,7 @@ for i in "${!types[@]}"; do
 	name=${names[$i]}
 
 	type="$type" name="$name" value_type="$value_type" maplike_NewWithCapa
-	type="$type" name="$name" value_type="$value_type" maplike_ValueSetLen
+	type="$type" name="$name" value_type="$value_type" maplike_ValueSetLenDelete
 	type="$type" name="$name"    deref_v="$deref_v"    maplike_Pointable
 	type="$type" name="$name" value_type="$value_type" maplike_UnMarsh
 	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike"
