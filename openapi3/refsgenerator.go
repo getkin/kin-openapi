@@ -13,8 +13,16 @@ import (
 //go:embed refs.tmpl
 var tmplData string
 
+//go:embed refs_test.tmpl
+var tmplTestData string
+
 func main() {
-	file, err := os.Create("refs.go")
+	generateTemplate("refs", tmplData)
+	generateTemplate("refs_test", tmplTestData)
+}
+
+func generateTemplate(filename string, tmpl string) {
+	file, err := os.Create(filename + ".go")
 	if err != nil {
 		panic(err)
 	}
@@ -25,7 +33,7 @@ func main() {
 		}
 	}()
 
-	packageTemplate := template.Must(template.New("openapi3-refs").Parse(tmplData))
+	packageTemplate := template.Must(template.New("openapi3-" + filename).Parse(tmpl))
 
 	type componentType struct {
 		Name           string
