@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1077,23 +1078,56 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	// Make an object value from form values.
 	obj := make(map[string]interface{})
 	dec := &urlValuesDecoder{values: values}
-	for name, prop := range schema.Value.Properties {
-		var (
-			value interface{}
-			enc   *openapi3.Encoding
-		)
-		if encFn != nil {
-			enc = encFn(name)
-		}
-		sm := enc.SerializationMethod()
 
-		if value, _, err = decodeValue(dec, name, sm, prop, false); err != nil {
-			return nil, err
-		}
-		obj[name] = value
+	// Decode schema constructs (allOf, anyOf, oneOf)
+	if err := decodeSchemaConstructs(dec, schema.Value.AllOf, obj, encFn); err != nil {
+		return nil, err
+	}
+	if err := decodeSchemaConstructs(dec, schema.Value.AnyOf, obj, encFn); err != nil {
+		return nil, err
+	}
+	if err := decodeSchemaConstructs(dec, schema.Value.OneOf, obj, encFn); err != nil {
+		return nil, err
+	}
+
+	// Decode properties from the main schema
+	if err := decodeSchemaConstructs(dec, []*openapi3.SchemaRef{schema}, obj, encFn); err != nil {
+		return nil, err
 	}
 
 	return obj, nil
+}
+
+// decodeSchemaConstructs tries to decode properties based on provided schemas.
+// This function is for decoding purposes only and not for validation.
+func decodeSchemaConstructs(dec *urlValuesDecoder, schemas []*openapi3.SchemaRef, obj map[string]interface{}, encFn EncodingFn) error {
+	for _, schemaRef := range schemas {
+		for name, prop := range schemaRef.Value.Properties {
+			value, _, err := decodeProperty(dec, name, prop, encFn)
+			if err != nil {
+				continue
+			}
+			if existingValue, exists := obj[name]; exists && !isEqual(existingValue, value) {
+				return fmt.Errorf("conflicting values for property %q", name)
+			}
+			obj[name] = value
+		}
+	}
+
+	return nil
+}
+
+func isEqual(value1, value2 interface{}) bool {
+	return reflect.DeepEqual(value1, value2)
+}
+
+func decodeProperty(dec valueDecoder, name string, prop *openapi3.SchemaRef, encFn EncodingFn) (interface{}, bool, error) {
+	var enc *openapi3.Encoding
+	if encFn != nil {
+		enc = encFn(name)
+	}
+	sm := enc.SerializationMethod()
+	return decodeValue(dec, name, sm, prop, false)
 }
 
 func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
