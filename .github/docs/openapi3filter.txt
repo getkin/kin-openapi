@@ -331,6 +331,8 @@ type SecurityRequirementsError struct {
 
 func (err *SecurityRequirementsError) Error() string
 
+func (err SecurityRequirementsError) Unwrap() []error
+
 type StatusCoder interface {
 	StatusCode() int
 }
