@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"net/http"
@@ -620,4 +621,53 @@ servers:
 			}
 		})
 	}
+}
+
+func TestReadFromIoReader(t *testing.T) {
+	buffer := bytes.NewReader([]byte(`openapi: 3.0.0 
+info: 
+  title: An API
+  version: v1
+components:
+  schemas:
+    NewItem:
+      required: [name]
+      properties:
+        name: {type: string}
+        tag: {type: string}
+    ErrorModel:
+      type: object
+      required: [code, message]
+      properties:
+        code: {type: integer}
+        message: {type: string}
+paths:
+  /items:
+    put:
+      description: ''
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewItem'
+      responses:
+        default: &defaultResponse # a YAML ref
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'`))
+
+	loader := NewLoader()
+	doc, err := loader.LoadFromIoReader(buffer)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+}
+
+func TestReadFromIoReader_Nil(t *testing.T) {
+	_, err := NewLoader().LoadFromIoReader(nil)
+	require.EqualError(t, err, "invalid reader: <nil>")
 }
