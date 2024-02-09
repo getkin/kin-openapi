@@ -668,6 +668,7 @@ paths:
 }
 
 func TestReadFromIoReader_Nil(t *testing.T) {
-	_, err := NewLoader().LoadFromIoReader(nil)
+	loader := NewLoader()
+	_, err := loader.LoadFromIoReader(nil)
 	require.EqualError(t, err, "invalid reader: <nil>")
 }
