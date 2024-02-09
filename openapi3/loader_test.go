@@ -624,8 +624,8 @@ servers:
 }
 
 func TestReadFromIoReader(t *testing.T) {
-	buffer := bytes.NewReader([]byte(`openapi: 3.0.0 
-info: 
+	buffer := bytes.NewReader([]byte(`openapi: 3.0.0
+info:
   title: An API
   version: v1
 components:
