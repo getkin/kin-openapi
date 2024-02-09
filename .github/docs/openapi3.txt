@@ -586,6 +586,9 @@ func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, 
 func (loader *Loader) LoadFromFile(location string) (*T, error)
     LoadFromFile loads a spec from a local file path
 
+func (loader *Loader) LoadFromIoReader(reader io.Reader) (*T, error)
+    LoadFromStdin loads a spec from io.Reader
+
 func (loader *Loader) LoadFromStdin() (*T, error)
     LoadFromStdin loads a spec from stdin
 
