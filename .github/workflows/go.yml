@@ -55,6 +55,9 @@ jobs:
     - run: ./refs.sh | tee openapi3/refs.go
     - run: git --no-pager diff --exit-code
 
+    - run: ./refs_test.sh | tee openapi3/refs_test.go
+    - run: git --no-pager diff --exit-code
+
     - run: ./maps.sh
     - run: git --no-pager diff --exit-code
 
