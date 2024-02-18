@@ -49,19 +49,25 @@ func TestDecodeParameter(t *testing.T) {
 				AllOf: []*openapi3.SchemaRef{
 					integerSchema,
 					numberSchema,
-				}}}
+				},
+			},
+		}
 		anyofSchema = &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
 				AnyOf: []*openapi3.SchemaRef{
 					integerSchema,
 					stringSchema,
-				}}}
+				},
+			},
+		}
 		oneofSchema = &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
 				OneOf: []*openapi3.SchemaRef{
 					booleanSchema,
 					integerSchema,
-				}}}
+				},
+			},
+		}
 		arraySchema  = arrayOf(stringSchema)
 		objectSchema = objectOf("id", stringSchema, "name", stringSchema)
 	)
@@ -657,6 +663,21 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
 					found: true,
 				},
+				{
+					name:  "deepObject explode array",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", arraySchema)},
+					query: "param[items]=f%26oo&param[items]=bar",
+					want:  map[string]interface{}{"items": []string{"f%26oo", "bar"}},
+					found: true,
+				},
+				// TODO:
+				// {
+				// 	name:  "deepObject explode nested object",
+				// 	param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("obj", objectOf("nestedObj", stringSchema))},
+				// 	query: "param[obj][nestedObj]=bar",
+				// 	want:  map[string]interface{}{"obj": map[string]string{"nestedObj": "bar"}},
+				// 	found: true,
+				// },
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},

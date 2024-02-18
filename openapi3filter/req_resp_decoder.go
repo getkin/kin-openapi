@@ -616,8 +616,9 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (int
 	}
 
 	return parsePrimitive(v, schema)
-
 }
+
+const urlArrayDelimiter = "\x1F"
 
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, bool, error) {
 	var propsFn func(url.Values) (map[string]string, error)
@@ -651,7 +652,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 					// A query parameter's name does not match the required format, so skip it.
 					continue
 				}
-				props[groups[0][1]] = values[0]
+				props[groups[0][1]] = strings.Join(values, urlArrayDelimiter)
 			}
 			if len(props) == 0 {
 				// HTTP request does not contain query parameters encoded by rules of style "deepObject".
@@ -851,14 +852,18 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
-		value, err := parsePrimitive(props[propName], propSchema)
-		if err != nil {
-			if v, ok := err.(*ParseError); ok {
-				return nil, &ParseError{path: []interface{}{propName}, Cause: v}
+		if propSchema.Value.Type == "array" {
+			obj[propName] = strings.Split(props[propName], urlArrayDelimiter)
+		} else {
+			value, err := parsePrimitive(props[propName], propSchema)
+			if err != nil {
+				if v, ok := err.(*ParseError); ok {
+					return nil, &ParseError{path: []interface{}{propName}, Cause: v}
+				}
+				return nil, fmt.Errorf("property %q: %w", propName, err)
 			}
-			return nil, fmt.Errorf("property %q: %w", propName, err)
+			obj[propName] = value
 		}
-		obj[propName] = value
 	}
 	return obj, nil
 }
@@ -1180,10 +1185,10 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 				if anyProperties := schema.Value.AdditionalProperties.Has; anyProperties != nil {
 					switch *anyProperties {
 					case true:
-						//additionalProperties: true
+						// additionalProperties: true
 						continue
 					default:
-						//additionalProperties: false
+						// additionalProperties: false
 						return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 					}
 				}
@@ -1300,7 +1305,6 @@ func zipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 
 			return nil
 		}()
-
 		if err != nil {
 			return nil, err
 		}
