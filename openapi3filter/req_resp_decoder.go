@@ -618,7 +618,11 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (int
 	return parsePrimitive(v, schema)
 }
 
-const urlArrayDelimiter = "\x1F"
+const (
+	// TODO: doc
+	UrlArrayDelimiter     = "\x1F"
+	UrlObjectKeyDelimiter = "."
+)
 
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, bool, error) {
 	var propsFn func(url.Values) (map[string]string, error)
@@ -647,12 +651,20 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 		propsFn = func(params url.Values) (map[string]string, error) {
 			props := make(map[string]string)
 			for key, values := range params {
-				groups := regexp.MustCompile(fmt.Sprintf("%s\\[(.+?)\\]", param)).FindAllStringSubmatch(key, -1)
-				if len(groups) == 0 {
+				matches := regexp.MustCompile(`\[(.*?)\]`).FindAllStringSubmatch(key, -1)
+				switch l := len(matches); {
+				case l == 0:
 					// A query parameter's name does not match the required format, so skip it.
 					continue
+				case l == 1:
+					props[matches[0][1]] = strings.Join(values, UrlArrayDelimiter)
+				case l > 1:
+					kk := []string{}
+					for _, m := range matches {
+						kk = append(kk, m[1])
+					}
+					props[strings.Join(kk, UrlObjectKeyDelimiter)] = strings.Join(values, UrlArrayDelimiter)
 				}
-				props[groups[0][1]] = strings.Join(values, urlArrayDelimiter)
 			}
 			if len(props) == 0 {
 				// HTTP request does not contain query parameters encoded by rules of style "deepObject".
@@ -663,7 +675,6 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	default:
 		return nil, false, invalidSerializationMethodErr(sm)
 	}
-
 	props, err := propsFn(d.values)
 	if err != nil {
 		return nil, false, err
@@ -846,6 +857,17 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 	return props, nil
 }
 
+func deepSet(m map[string]interface{}, keys []string, value interface{}) {
+	for i := 0; i < len(keys)-1; i++ {
+		key := keys[i]
+		if _, ok := m[key]; !ok {
+			m[key] = make(map[string]interface{})
+		}
+		m = m[key].(map[string]interface{})
+	}
+	m[keys[len(keys)-1]] = value
+}
+
 // makeObject returns an object that contains properties from props.
 // A value of every property is parsed as a primitive value.
 // The function returns an error when an error happened while parse object's properties.
@@ -853,7 +875,16 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
 		if propSchema.Value.Type == "array" {
-			obj[propName] = strings.Split(props[propName], urlArrayDelimiter)
+			obj[propName] = strings.Split(props[propName], UrlArrayDelimiter)
+		} else if propSchema.Value.Type == "object" {
+			for prop := range props {
+				if !strings.HasPrefix(prop, propName+UrlObjectKeyDelimiter) {
+					continue
+				}
+				mapKeys := strings.Split(prop, UrlObjectKeyDelimiter)
+				value := props[prop] // FIXME: should parse primitive as below, but based on schema of nested element, not parent object.
+				deepSet(obj, mapKeys, value)
+			}
 		} else {
 			value, err := parsePrimitive(props[propName], propSchema)
 			if err != nil {
