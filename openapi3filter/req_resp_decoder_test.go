@@ -1144,7 +1144,7 @@ func TestDecodeParameter(t *testing.T) {
 						if errors.As(err, &pErr) {
 							require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
 						} else {
-							require.ErrorContains(t, err, tc.err.Error())
+							require.EqualError(t, err, tc.err.Error())
 						}
 						return
 					}
