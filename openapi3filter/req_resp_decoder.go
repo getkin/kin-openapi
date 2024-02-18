@@ -900,18 +900,10 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				mapKeys := strings.Split(prop, urlObjectKeyDelimiter)
 				nestedSchema, err := findNestedSchema(schema, mapKeys)
 				if err != nil {
-					path := make([]interface{}, len(mapKeys))
-					for i, v := range mapKeys {
-						path[i] = v
-					}
-					return nil, &ParseError{path: path, Reason: err.Error()}
+					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
 				}
 				if nestedSchema.Value.Type == "array" {
-					path := make([]interface{}, len(mapKeys))
-					for i, v := range mapKeys {
-						path[i] = v
-					}
-					return nil, &ParseError{path: path, Reason: "nested objects with array fields not implemented"}
+					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: "nested objects with array fields not implemented"}
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {
@@ -934,6 +926,14 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 		}
 	}
 	return obj, nil
+}
+
+func pathFromKeys(kk []string) []interface{} {
+	path := make([]interface{}, len(kk))
+	for i, v := range kk {
+		path[i] = v
+	}
+	return path
 }
 
 // parseArray returns an array that contains items from a raw array.
