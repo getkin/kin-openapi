@@ -619,9 +619,9 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (int
 }
 
 const (
-	// TODO: doc
-	UrlArrayDelimiter     = "\x1F"
-	UrlObjectKeyDelimiter = "."
+	// these should not conflict with anything
+	urlArrayDelimiter     = "\x1F"
+	urlObjectKeyDelimiter = "\x1F"
 )
 
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, bool, error) {
@@ -657,13 +657,13 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 					// A query parameter's name does not match the required format, so skip it.
 					continue
 				case l == 1:
-					props[matches[0][1]] = strings.Join(values, UrlArrayDelimiter)
+					props[matches[0][1]] = strings.Join(values, urlArrayDelimiter)
 				case l > 1:
 					kk := []string{}
 					for _, m := range matches {
 						kk = append(kk, m[1])
 					}
-					props[strings.Join(kk, UrlObjectKeyDelimiter)] = strings.Join(values, UrlArrayDelimiter)
+					props[strings.Join(kk, urlObjectKeyDelimiter)] = strings.Join(values, urlArrayDelimiter)
 				}
 			}
 			if len(props) == 0 {
@@ -887,19 +887,19 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
 		if propSchema.Value.Type == "array" {
-			obj[propName] = strings.Split(props[propName], UrlArrayDelimiter)
+			obj[propName] = strings.Split(props[propName], urlArrayDelimiter)
 		} else if propSchema.Value.Type == "object" {
 			for prop := range props {
-				if !strings.HasPrefix(prop, propName+UrlObjectKeyDelimiter) {
+				if !strings.HasPrefix(prop, propName+urlObjectKeyDelimiter) {
 					continue
 				}
-				mapKeys := strings.Split(prop, UrlObjectKeyDelimiter)
+				mapKeys := strings.Split(prop, urlObjectKeyDelimiter)
 				nestedSchema, err := findNestedSchema(schema, mapKeys)
 				if err != nil {
 					return nil, err
 				}
 				if nestedSchema.Value.Type == "array" {
-					return nil, fmt.Errorf("nested objects with array fields not implemented (%q)", prop)
+					return nil, fmt.Errorf("nested objects with array fields not implemented (%q)", strings.Join(mapKeys, "."))
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {

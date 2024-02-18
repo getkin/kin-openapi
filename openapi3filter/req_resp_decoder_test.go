@@ -671,6 +671,8 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}{"items": []string{"f%26oo", "bar"}},
 					found: true,
 				},
+				// TODO test additionalProperties works: https://github.com/getkin/kin-openapi/issues/294
+				// maybe test anyof, oneof...
 				{
 					name: "deepObject explode nested object",
 					param: &openapi3.Parameter{
