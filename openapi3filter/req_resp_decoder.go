@@ -882,7 +882,9 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					continue
 				}
 				mapKeys := strings.Split(prop, UrlObjectKeyDelimiter)
-				value := props[prop] // FIXME: should parse primitive as below, but based on schema of nested element, not parent object.
+				// FIXME: should parse primitive as below, but based on schema of nested element, not parent object.
+				// loop propSchema.Value.Properties indexing by mapKeys until found
+				value := props[prop]
 				deepSet(obj, mapKeys, value)
 			}
 		} else {

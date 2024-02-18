@@ -680,9 +680,45 @@ func TestDecodeParameter(t *testing.T) {
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=string",
-					want:  map[string]interface{}{"obj": map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"}, "objTwo": "string"},
+					want: map[string]interface{}{
+						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
+						"objTwo": "string",
+					},
 					found: true,
 				},
+				{
+					name: "deepObject explode nested object with array",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+							"objTwo", arraySchema,
+						),
+					},
+					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=f%26oo&param[objTwo]=bar",
+					want: map[string]interface{}{
+						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
+						"objTwo": []string{"f%26oo", "bar"},
+					},
+					found: true,
+				},
+				// FIXME:
+				// {
+				// 	name: "deepObject explode nested object with nested array",
+				// 	param: &openapi3.Parameter{
+				// 		Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				// 		Schema: objectOf(
+				// 			"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+				// 			"objTwo", objectOf("items", arraySchema),
+				// 		),
+				// 	},
+				// 	query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items]=f%26oo&param[objTwo][items]=bar",
+				// 	want: map[string]interface{}{
+				// 		"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
+				// 		"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
+				// 	},
+				// 	found: true,
+				// },
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},
