@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -714,23 +715,24 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo]=f%26oo&param[objTwo]=bar",
 					err:   &ParseError{path: []interface{}{"obj"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bad"}},
 				},
-				// FIXME:
-				// {
-				// 	name: "deepObject explode nested object with nested array",
-				// 	param: &openapi3.Parameter{
-				// 		Name: "param", In: "query", Style: "deepObject", Explode: explode,
-				// 		Schema: objectOf(
-				// 			"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
-				// 			"objTwo", objectOf("items", arraySchema),
-				// 		),
-				// 	},
-				// 	query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items]=f%26oo&param[objTwo][items]=bar",
-				// 	want: map[string]interface{}{
-				// 		"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
-				// 		"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
-				// 	},
-				// 	found: true,
-				// },
+				{
+					name: "deepObject explode nested object with nested array",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+							"objTwo", objectOf("items", arraySchema),
+						),
+					},
+					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items]=f%26oo&param[objTwo][items]=bar",
+					want: map[string]interface{}{
+						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
+						"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
+					},
+					// TODO: implement
+					err:   errors.New(`nested objects with array fields not implemented ("objTwo.items")`),
+					found: true,
+				},
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},
@@ -1136,7 +1138,12 @@ func TestDecodeParameter(t *testing.T) {
 
 					if tc.err != nil {
 						require.Error(t, err)
-						require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
+						var pErr *ParseError
+						if errors.As(err, &pErr) {
+							require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
+						} else {
+							require.ErrorContains(t, err, tc.err.Error())
+						}
 						return
 					}
 

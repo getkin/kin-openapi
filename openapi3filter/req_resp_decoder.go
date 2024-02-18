@@ -898,6 +898,9 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				if err != nil {
 					return nil, err
 				}
+				if nestedSchema.Value.Type == "array" {
+					return nil, fmt.Errorf("nested objects with array fields not implemented (%q)", prop)
+				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {
 					if v, ok := err.(*ParseError); ok {
