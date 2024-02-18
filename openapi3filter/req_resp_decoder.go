@@ -868,6 +868,18 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}) {
 	m[keys[len(keys)-1]] = value
 }
 
+func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
+	currentSchema := parentSchema
+	for _, key := range keys {
+		propertySchema, ok := currentSchema.Value.Properties[key]
+		if !ok {
+			return nil, fmt.Errorf("nested schema for key %q not found", key)
+		}
+		currentSchema = propertySchema
+	}
+	return currentSchema, nil
+}
+
 // makeObject returns an object that contains properties from props.
 // A value of every property is parsed as a primitive value.
 // The function returns an error when an error happened while parse object's properties.
@@ -882,9 +894,17 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					continue
 				}
 				mapKeys := strings.Split(prop, UrlObjectKeyDelimiter)
-				// FIXME: should parse primitive as below, but based on schema of nested element, not parent object.
-				// loop propSchema.Value.Properties indexing by mapKeys until found
-				value := props[prop]
+				nestedSchema, err := findNestedSchema(schema, mapKeys)
+				if err != nil {
+					return nil, err
+				}
+				value, err := parsePrimitive(props[prop], nestedSchema)
+				if err != nil {
+					if v, ok := err.(*ParseError); ok {
+						return nil, &ParseError{path: []interface{}{propName}, Cause: v}
+					}
+					return nil, fmt.Errorf("property %q: %w", prop, err)
+				}
 				deepSet(obj, mapKeys, value)
 			}
 		} else {

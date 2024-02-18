@@ -702,6 +702,18 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
+				{
+					name: "deepObject explode nested object with array - bad value",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", booleanSchema),
+							"objTwo", arraySchema,
+						),
+					},
+					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo]=f%26oo&param[objTwo]=bar",
+					err:   &ParseError{path: []interface{}{"obj"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bad"}},
+				},
 				// FIXME:
 				// {
 				// 	name: "deepObject explode nested object with nested array",
@@ -1122,8 +1134,6 @@ func TestDecodeParameter(t *testing.T) {
 					input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
 					got, found, err := decodeStyledParameter(tc.param, input)
 
-					require.Truef(t, found == tc.found, "got found: %t, want found: %t", found, tc.found)
-
 					if tc.err != nil {
 						require.Error(t, err)
 						require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
@@ -1132,6 +1142,8 @@ func TestDecodeParameter(t *testing.T) {
 
 					require.NoError(t, err)
 					require.EqualValues(t, tc.want, got)
+
+					require.Truef(t, found == tc.found, "got found: %t, want found: %t", found, tc.found)
 				})
 			}
 		})
