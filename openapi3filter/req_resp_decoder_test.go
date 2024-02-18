@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -732,7 +731,7 @@ func TestDecodeParameter(t *testing.T) {
 						"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
 					},
 					// TODO: implement
-					err:   errors.New(`nested objects with array fields not implemented ("objTwo.items")`),
+					err:   &ParseError{path: []interface{}{"objTwo", "items"}, Reason: "nested objects with array fields not implemented"},
 					found: true,
 				},
 				{
@@ -1140,12 +1139,8 @@ func TestDecodeParameter(t *testing.T) {
 
 					if tc.err != nil {
 						require.Error(t, err)
-						var pErr *ParseError
-						if errors.As(err, &pErr) {
-							require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
-						} else {
-							require.EqualError(t, err, tc.err.Error())
-						}
+						require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
+
 						return
 					}
 
