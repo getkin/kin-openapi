@@ -40,11 +40,13 @@ func TestDecodeParameter(t *testing.T) {
 			return s
 		}
 
-		integerSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "integer"}}
-		numberSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "number"}}
-		booleanSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "boolean"}}
-		stringSchema  = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "string"}}
-		allofSchema   = &openapi3.SchemaRef{
+		integerSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "integer"}}
+		numberSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "number"}}
+		booleanSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "boolean"}}
+		stringSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "string"}}
+		additionalPropertiesObjectStringSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", AdditionalProperties: openapi3.AdditionalProperties{Schema: stringSchema}}}
+		additionalPropertiesObjectBoolSchema   = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", AdditionalProperties: openapi3.AdditionalProperties{Schema: booleanSchema}}}
+		allofSchema                            = &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
 				AllOf: []*openapi3.SchemaRef{
 					integerSchema,
@@ -670,8 +672,47 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}{"items": []string{"f%26oo", "bar"}},
 					found: true,
 				},
-				// TODO test additionalProperties works: https://github.com/getkin/kin-openapi/issues/294
 				// maybe test anyof, oneof...
+				{
+					name: "deepObject explode nested object additionalProperties",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectStringSchema,
+							"objTwo", stringSchema,
+						),
+					},
+					query: "param[obj][prop1]=bar&param[obj][prop2]=foo&param[objTwo]=string",
+					want: map[string]interface{}{
+						"obj":    map[string]interface{}{"prop1": "bar", "prop2": "foo"},
+						"objTwo": "string",
+					},
+					found: true,
+				},
+				{
+					name: "deepObject explode nested object additionalProperties - bad value",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectBoolSchema,
+							"objTwo", stringSchema,
+						),
+					},
+					query: "param[obj][prop1]=notbool&param[objTwo]=string",
+					err:   &ParseError{path: []interface{}{"obj"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "notbool"}},
+				},
+				{
+					name: "deepObject explode nested object additionalProperties - bad index",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectStringSchema,
+							"objTwo", stringSchema,
+						),
+					},
+					query: "param[obj][prop1]=bar&param[obj][prop2][badindex]=bad&param[objTwo]=string",
+					err:   &ParseError{path: []interface{}{"obj", "prop2", "badindex"}, Reason: `nested schema for key "badindex" not found`},
+				},
 				{
 					name: "deepObject explode nested object",
 					param: &openapi3.Parameter{

@@ -873,7 +873,11 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 	for _, key := range keys {
 		propertySchema, ok := currentSchema.Value.Properties[key]
 		if !ok {
-			return nil, fmt.Errorf("nested schema for key %q not found", key)
+			if currentSchema.Value.AdditionalProperties.Schema == nil {
+				return nil, fmt.Errorf("nested schema for key %q not found", key)
+			}
+			currentSchema = currentSchema.Value.AdditionalProperties.Schema
+			continue
 		}
 		currentSchema = propertySchema
 	}
@@ -896,7 +900,11 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				mapKeys := strings.Split(prop, urlObjectKeyDelimiter)
 				nestedSchema, err := findNestedSchema(schema, mapKeys)
 				if err != nil {
-					return nil, err
+					path := make([]interface{}, len(mapKeys))
+					for i, v := range mapKeys {
+						path[i] = v
+					}
+					return nil, &ParseError{path: path, Reason: err.Error()}
 				}
 				if nestedSchema.Value.Type == "array" {
 					path := make([]interface{}, len(mapKeys))
