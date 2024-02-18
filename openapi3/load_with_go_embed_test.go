@@ -40,5 +40,5 @@ func Example() {
 		Properties["bar"].Value.
 		Type,
 	)
-	// Output: string
+	// Output: &[string]
 }

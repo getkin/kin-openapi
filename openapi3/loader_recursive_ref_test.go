@@ -52,7 +52,7 @@ components:
 	require.NoError(t, err)
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
-	require.Equal(t, "object", doc.Components.
+	require.Equal(t, &Types{"object"}, doc.Components.
 		Schemas["Complex"].
 		Value.Properties["parent"].
 		Value.Properties["parent"].

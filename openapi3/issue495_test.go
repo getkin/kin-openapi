@@ -81,7 +81,7 @@ paths:
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
-	require.Equal(t, &Schema{Type: "object"}, doc.Components.Schemas["schemaArray"].Value.Items.Value)
+	require.Equal(t, &Schema{Type: &Types{"object"}}, doc.Components.Schemas["schemaArray"].Value.Items.Value)
 }
 
 func TestIssue495WithDraft04(t *testing.T) {

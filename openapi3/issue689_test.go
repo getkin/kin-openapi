@@ -22,7 +22,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "read-only property succeeds when read-only validation is disabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", ReadOnly: true}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: true}}),
 			value: map[string]interface{}{"foo": true},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
@@ -32,7 +32,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "non read-only property succeeds when read-only validation is disabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", ReadOnly: false}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest()},
 			value:    map[string]interface{}{"foo": true},
@@ -41,7 +41,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "read-only property fails when read-only validation is enabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", ReadOnly: true}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: true}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest()},
 			value:    map[string]interface{}{"foo": true},
@@ -50,7 +50,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "non read-only property succeeds when read-only validation is enabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", ReadOnly: false}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest()},
 			value:    map[string]interface{}{"foo": true},
@@ -60,7 +60,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "write-only property succeeds when write-only validation is disabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", WriteOnly: true}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: true}}),
 			value: map[string]interface{}{"foo": true},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse(),
@@ -70,7 +70,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "non write-only property succeeds when write-only validation is disabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", WriteOnly: false}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse()},
 			value:    map[string]interface{}{"foo": true},
@@ -79,7 +79,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "write-only property fails when write-only validation is enabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", WriteOnly: true}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: true}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse()},
 			value:    map[string]interface{}{"foo": true},
@@ -88,7 +88,7 @@ func TestIssue689(t *testing.T) {
 		{
 			name: "non write-only property succeeds when write-only validation is enabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
-				"foo": {Type: "boolean", WriteOnly: false}}),
+				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse()},
 			value:    map[string]interface{}{"foo": true},

@@ -194,7 +194,7 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 
 	unmarshal := func(encoded string, paramSchema *openapi3.SchemaRef) (decoded interface{}, err error) {
 		if err = json.Unmarshal([]byte(encoded), &decoded); err != nil {
-			if paramSchema != nil && paramSchema.Value.Type != "object" {
+			if paramSchema != nil && !paramSchema.Value.Type.Is("object") {
 				decoded, err = encoded, nil
 			}
 		}
@@ -315,14 +315,14 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		return nil, found, errors.New("not implemented: decoding 'not'")
 	}
 
-	if schema.Value.Type != "" {
+	if schema.Value.Type != nil {
 		var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, bool, error)
-		switch schema.Value.Type {
-		case "array":
+		switch {
+		case schema.Value.Type.Is("array"):
 			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, bool, error) {
 				return dec.DecodeArray(param, sm, schema)
 			}
-		case "object":
+		case schema.Value.Type.Is("object"):
 			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (interface{}, bool, error) {
 				return dec.DecodeObject(param, sm, schema)
 			}
@@ -505,7 +505,7 @@ func (d *urlValuesDecoder) DecodePrimitive(param string, sm *openapi3.Serializat
 		return nil, ok, nil
 	}
 
-	if schema.Value.Type == "" && schema.Value.Pattern != "" {
+	if schema.Value.Type == nil && schema.Value.Pattern != "" {
 		return values[0], ok, nil
 	}
 	val, err := parsePrimitive(values[0], schema)
@@ -693,7 +693,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 			break
 		}
 
-		if schema.Value.Type == "array" || schema.Value.Type == "object" {
+		if schema.Value.Type.Permits("array") || schema.Value.Type.Permits("object") {
 			for k := range props {
 				path := strings.Split(k, urlDecoderDelimiter)
 				if _, ok := deepGet(val, path...); ok {
@@ -915,8 +915,8 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
-		switch propSchema.Value.Type {
-		case "array":
+		switch {
+		case propSchema.Value.Type.Is("array"):
 			vals := strings.Split(props[propName], urlDecoderDelimiter)
 			for _, v := range vals {
 				_, err := parsePrimitive(v, propSchema.Value.Items)
@@ -925,7 +925,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				}
 			}
 			obj[propName] = vals
-		case "object":
+		case propSchema.Value.Type.Is("object"):
 			for prop := range props {
 				if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
 					continue
@@ -935,7 +935,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				if err != nil {
 					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
 				}
-				if nestedSchema.Value.Type == "array" {
+				if nestedSchema.Value.Type.Permits("array") {
 					vals := strings.Split(props[prop], urlDecoderDelimiter)
 					for _, v := range vals {
 						_, err := parsePrimitive(v, nestedSchema.Value.Items)
@@ -1005,40 +1005,50 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]interface{}, err
 // parsePrimitive returns a value that is created by parsing a source string to a primitive type
 // that is specified by a schema. The function returns nil when the source string is empty.
 // The function panics when a schema has a non-primitive type.
-func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error) {
+func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v interface{}, err error) {
 	if raw == "" {
 		return nil, nil
 	}
-	switch schema.Value.Type {
+	for _, typ := range schema.Value.Type.Slice() {
+		v, err = parsePrimitiveCase(raw, schema, typ)
+		if err == nil {
+			return
+		}
+	}
+	return
+}
+
+func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (interface{}, error) {
+	switch typ {
 	case "integer":
 		if schema.Value.Format == "int32" {
 			v, err := strconv.ParseInt(raw, 0, 32)
 			if err != nil {
-				return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
+				return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + typ, Cause: err.(*strconv.NumError).Err}
 			}
 			return int32(v), nil
 		}
 		v, err := strconv.ParseInt(raw, 0, 64)
 		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
+			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + typ, Cause: err.(*strconv.NumError).Err}
 		}
 		return v, nil
 	case "number":
 		v, err := strconv.ParseFloat(raw, 64)
 		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
+			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + typ, Cause: err.(*strconv.NumError).Err}
 		}
 		return v, nil
 	case "boolean":
 		v, err := strconv.ParseBool(raw)
 		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + schema.Value.Type, Cause: err.(*strconv.NumError).Err}
+			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + typ, Cause: err.(*strconv.NumError).Err}
 		}
 		return v, nil
 	case "string":
 		return raw, nil
 	default:
-		return nil, &ParseError{Kind: KindOther, Value: raw, Reason: "schema has non primitive type " + schema.Value.Type}
+		return nil, &ParseError{Kind: KindOther, Value: raw, Reason: "schema has non primitive type " + typ}
 	}
 }
 
@@ -1165,16 +1175,17 @@ func urlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	// Validate schema of request body.
 	// By the OpenAPI 3 specification request body's schema must have type "object".
 	// Properties of the schema describes individual parts of request body.
-	if schema.Value.Type != "object" {
+	if !schema.Value.Type.Is("object") {
 		return nil, errors.New("unsupported schema of request body")
 	}
 	for propName, propSchema := range schema.Value.Properties {
-		switch propSchema.Value.Type {
-		case "object":
+		propType := propSchema.Value.Type
+		switch {
+		case propType.Is("object"):
 			return nil, fmt.Errorf("unsupported schema of request body's property %q", propName)
-		case "array":
+		case propType.Is("array"):
 			items := propSchema.Value.Items.Value
-			if items.Type != "string" && items.Type != "integer" && items.Type != "number" && items.Type != "boolean" {
+			if !(items.Type.Is("string") || items.Type.Is("integer") || items.Type.Is("number") || items.Type.Is("boolean")) {
 				return nil, fmt.Errorf("unsupported schema of request body's property %q", propName)
 			}
 		}
@@ -1246,7 +1257,7 @@ func decodeProperty(dec valueDecoder, name string, prop *openapi3.SchemaRef, enc
 }
 
 func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
-	if schema.Value.Type != "object" {
+	if !schema.Value.Type.Is("object") {
 		return nil, errors.New("unsupported schema of request body")
 	}
 
@@ -1309,7 +1320,7 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 				}
 			}
-			if valueSchema.Value.Type == "array" {
+			if valueSchema.Value.Type.Is("array") {
 				valueSchema = valueSchema.Value.Items
 			}
 		}
@@ -1354,7 +1365,7 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		if len(vv) == 0 {
 			continue
 		}
-		if prop.Value.Type == "array" {
+		if prop.Value.Type.Is("array") {
 			obj[name] = vv
 		} else {
 			obj[name] = vv[0]
