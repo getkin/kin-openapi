@@ -702,7 +702,7 @@ func TestDecodeParameter(t *testing.T) {
 						),
 					},
 					query: "param[obj][prop1]=notbool&param[objTwo]=string",
-					err:   &ParseError{path: []interface{}{"obj"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "notbool"}},
+					err:   &ParseError{path: []interface{}{"obj", "prop1"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "notbool"}},
 				},
 				{
 					name: "deepObject explode nested object additionalProperties - bad index inside additionalProperties",
@@ -796,7 +796,7 @@ func TestDecodeParameter(t *testing.T) {
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo]=f%26oo&param[objTwo]=bar",
-					err:   &ParseError{path: []interface{}{"obj"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bad"}},
+					err:   &ParseError{path: []interface{}{"obj", "nestedObjTwo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bad"}},
 				},
 				{
 					name: "deepObject explode nested object with nested array",
@@ -832,17 +832,18 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-				// {
-				// 	name: "deepObject explode nested object array bad index panics",
-				// 	param: &openapi3.Parameter{
-				// 		Name: "param", In: "query", Style: "deepObject", Explode: explode,
-				// 		Schema: objectOf(
-				// 			"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
-				// 		),
-				// 	},
-				// 	query: "param[obj][nestedObjOne]=baz",
-				// 	found: true,
-				// },
+				{
+					name: "deepObject explode nested object array bad index",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
+						),
+					},
+					query: "param[obj][nestedObjOne]=baz",
+					found: true,
+					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindOther, Value: "baz", Reason: "schema has non primitive type object"}},
+				},
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},

@@ -918,7 +918,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 			for _, v := range vals {
 				_, err := parsePrimitive(v, propSchema.Value.Items)
 				if err != nil {
-					return nil, handlePropParseError(propName, err)
+					return nil, handlePropParseError([]string{propName}, err)
 				}
 			}
 			obj[propName] = vals
@@ -937,7 +937,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					for _, v := range vals {
 						_, err := parsePrimitive(v, nestedSchema.Value.Items)
 						if err != nil {
-							return nil, handlePropParseError(propName, err)
+							return nil, handlePropParseError(mapKeys, err)
 						}
 					}
 					deepSet(obj, mapKeys, vals)
@@ -945,14 +945,14 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {
-					return nil, handlePropParseError(propName, err)
+					return nil, handlePropParseError(mapKeys, err)
 				}
 				deepSet(obj, mapKeys, value)
 			}
 		default:
 			value, err := parsePrimitive(props[propName], propSchema)
 			if err != nil {
-				return nil, handlePropParseError(propName, err)
+				return nil, handlePropParseError([]string{propName}, err)
 			}
 			obj[propName] = value
 		}
@@ -960,11 +960,11 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	return obj, nil
 }
 
-func handlePropParseError(propName string, err error) error {
+func handlePropParseError(path []string, err error) error {
 	if v, ok := err.(*ParseError); ok {
-		return &ParseError{path: []interface{}{propName}, Cause: v}
+		return &ParseError{path: pathFromKeys(path), Cause: v}
 	}
-	return fmt.Errorf("property %q: %w", propName, err)
+	return fmt.Errorf("property %q: %w", strings.Join(path, "."), err)
 }
 
 func pathFromKeys(kk []string) []interface{} {
@@ -1035,7 +1035,7 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (interface{}, error)
 	case "string":
 		return raw, nil
 	default:
-		panic(fmt.Sprintf("schema has non primitive type %q", schema.Value.Type))
+		return nil, &ParseError{Kind: KindOther, Value: raw, Reason: "schema has non primitive type " + schema.Value.Type}
 	}
 }
 
