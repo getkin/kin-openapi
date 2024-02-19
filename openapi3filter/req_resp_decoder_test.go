@@ -815,6 +815,34 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
+
+				{
+					name: "deepObject explode nested object with nested array on different levels",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
+							"objTwo", objectOf("items", stringArraySchema),
+						),
+					},
+					query: "param[obj][nestedObjOne][items]=baz&param[objTwo][items]=foo&param[objTwo][items]=bar",
+					want: map[string]interface{}{
+						"obj":    map[string]interface{}{"nestedObjOne": map[string]interface{}{"items": []string{"baz"}}},
+						"objTwo": map[string]interface{}{"items": []string{"foo", "bar"}},
+					},
+					found: true,
+				},
+				// {
+				// 	name: "deepObject explode nested object array bad index panics",
+				// 	param: &openapi3.Parameter{
+				// 		Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				// 		Schema: objectOf(
+				// 			"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
+				// 		),
+				// 	},
+				// 	query: "param[obj][nestedObjOne]=baz",
+				// 	found: true,
+				// },
 				{
 					name:  "default",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: objectSchema},
