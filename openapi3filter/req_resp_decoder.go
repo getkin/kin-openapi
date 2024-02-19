@@ -912,20 +912,17 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
-		if propSchema.Value.Type == "array" {
-			fmt.Printf("props[propName]: %v\n", props[propName])
+		switch propSchema.Value.Type {
+		case "array":
 			vals := strings.Split(props[propName], urlDecoderDelimiter)
 			for _, v := range vals {
 				_, err := parsePrimitive(v, propSchema.Value.Items)
 				if err != nil {
-					if v, ok := err.(*ParseError); ok {
-						return nil, &ParseError{path: []interface{}{propName}, Cause: v}
-					}
-					return nil, fmt.Errorf("property %q: %w", propName, err)
+					return nil, handlePropParseError(propName, err)
 				}
 			}
 			obj[propName] = vals
-		} else if propSchema.Value.Type == "object" {
+		case "object":
 			for prop := range props {
 				if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
 					continue
@@ -940,10 +937,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					for _, v := range vals {
 						_, err := parsePrimitive(v, nestedSchema.Value.Items)
 						if err != nil {
-							if v, ok := err.(*ParseError); ok {
-								return nil, &ParseError{path: []interface{}{propName}, Cause: v}
-							}
-							return nil, fmt.Errorf("property %q: %w", propName, err)
+							return nil, handlePropParseError(propName, err)
 						}
 					}
 					deepSet(obj, mapKeys, vals)
@@ -951,25 +945,26 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {
-					if v, ok := err.(*ParseError); ok {
-						return nil, &ParseError{path: []interface{}{propName}, Cause: v}
-					}
-					return nil, fmt.Errorf("property %q: %w", prop, err)
+					return nil, handlePropParseError(propName, err)
 				}
 				deepSet(obj, mapKeys, value)
 			}
-		} else {
+		default:
 			value, err := parsePrimitive(props[propName], propSchema)
 			if err != nil {
-				if v, ok := err.(*ParseError); ok {
-					return nil, &ParseError{path: []interface{}{propName}, Cause: v}
-				}
-				return nil, fmt.Errorf("property %q: %w", propName, err)
+				return nil, handlePropParseError(propName, err)
 			}
 			obj[propName] = value
 		}
 	}
 	return obj, nil
+}
+
+func handlePropParseError(propName string, err error) error {
+	if v, ok := err.(*ParseError); ok {
+		return &ParseError{path: []interface{}{propName}, Cause: v}
+	}
+	return fmt.Errorf("property %q: %w", propName, err)
 }
 
 func pathFromKeys(kk []string) []interface{} {
