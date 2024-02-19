@@ -913,7 +913,18 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
 		if propSchema.Value.Type == "array" {
-			obj[propName] = strings.Split(props[propName], urlDecoderDelimiter)
+			fmt.Printf("props[propName]: %v\n", props[propName])
+			vals := strings.Split(props[propName], urlDecoderDelimiter)
+			for _, v := range vals {
+				_, err := parsePrimitive(v, propSchema.Value.Items)
+				if err != nil {
+					if v, ok := err.(*ParseError); ok {
+						return nil, &ParseError{path: []interface{}{propName}, Cause: v}
+					}
+					return nil, fmt.Errorf("property %q: %w", propName, err)
+				}
+			}
+			obj[propName] = vals
 		} else if propSchema.Value.Type == "object" {
 			for prop := range props {
 				if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
@@ -925,7 +936,17 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
 				}
 				if nestedSchema.Value.Type == "array" {
-					deepSet(obj, mapKeys, strings.Split(props[prop], urlDecoderDelimiter))
+					vals := strings.Split(props[prop], urlDecoderDelimiter)
+					for _, v := range vals {
+						_, err := parsePrimitive(v, nestedSchema.Value.Items)
+						if err != nil {
+							if v, ok := err.(*ParseError); ok {
+								return nil, &ParseError{path: []interface{}{propName}, Cause: v}
+							}
+							return nil, fmt.Errorf("property %q: %w", propName, err)
+						}
+					}
+					deepSet(obj, mapKeys, vals)
 					continue
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
