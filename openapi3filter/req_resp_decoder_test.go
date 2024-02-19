@@ -70,8 +70,9 @@ func TestDecodeParameter(t *testing.T) {
 				},
 			},
 		}
-		arraySchema  = arrayOf(stringSchema)
-		objectSchema = objectOf("id", stringSchema, "name", stringSchema)
+		stringArraySchema  = arrayOf(stringSchema)
+		integerArraySchema = arrayOf(integerSchema)
+		objectSchema       = objectOf("id", stringSchema, "name", stringSchema)
 	)
 
 	type testCase struct {
@@ -226,77 +227,77 @@ func TestDecodeParameter(t *testing.T) {
 			testCases: []testCase{
 				{
 					name:  "simple",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: noExplode, Schema: stringArraySchema},
 					path:  "/foo,bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "simple explode",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "simple", Explode: explode, Schema: stringArraySchema},
 					path:  "/foo,bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "label",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringArraySchema},
 					path:  "/.foo,bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "label invalid",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: noExplode, Schema: stringArraySchema},
 					path:  "/foo,bar",
 					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo,bar"},
 				},
 				{
 					name:  "label explode",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringArraySchema},
 					path:  "/.foo.bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "label explode invalid",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "label", Explode: explode, Schema: stringArraySchema},
 					path:  "/foo.bar",
 					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo.bar"},
 				},
 				{
 					name:  "matrix",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringArraySchema},
 					path:  "/;param=foo,bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "matrix invalid",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: noExplode, Schema: stringArraySchema},
 					path:  "/foo,bar",
 					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo,bar"},
 				},
 				{
 					name:  "matrix explode",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringArraySchema},
 					path:  "/;param=foo;param=bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "matrix explode invalid",
-					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Style: "matrix", Explode: explode, Schema: stringArraySchema},
 					path:  "/foo,bar",
 					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo,bar"},
 				},
 				{
 					name:  "default",
-					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: stringArraySchema},
 					path:  "/foo,bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
@@ -571,49 +572,49 @@ func TestDecodeParameter(t *testing.T) {
 			testCases: []testCase{
 				{
 					name:  "form",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: noExplode, Schema: stringArraySchema},
 					query: "param=foo,bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "form explode",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "form", Explode: explode, Schema: stringArraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "spaceDelimited",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: stringArraySchema},
 					query: "param=foo bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "spaceDelimited explode",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: explode, Schema: stringArraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "pipeDelimited",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: stringArraySchema},
 					query: "param=foo|bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "pipeDelimited explode",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: explode, Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: explode, Schema: stringArraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
 				},
 				{
 					name:  "default",
-					param: &openapi3.Parameter{Name: "param", In: "query", Schema: arraySchema},
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringArraySchema},
 					query: "param=foo&param=bar",
 					want:  []interface{}{"foo", "bar"},
 					found: true,
@@ -667,7 +668,7 @@ func TestDecodeParameter(t *testing.T) {
 				},
 				{
 					name:  "deepObject explode array",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", arraySchema)},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", stringArraySchema)},
 					query: "param[items]=f%26oo&param[items]=bar",
 					want:  map[string]interface{}{"items": []string{"f%26oo", "bar"}},
 					found: true,
@@ -680,7 +681,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", additionalPropertiesObjectStringSchema,
 							"objTwo", stringSchema,
-							"objIgnored", objectOf("items", arraySchema),
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][prop1]=bar&param[obj][prop2]=foo&param[objTwo]=string",
@@ -697,7 +698,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", additionalPropertiesObjectBoolSchema,
 							"objTwo", stringSchema,
-							"objIgnored", objectOf("items", arraySchema),
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][prop1]=notbool&param[objTwo]=string",
@@ -710,7 +711,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", additionalPropertiesObjectStringSchema,
 							"objTwo", stringSchema,
-							"objIgnored", objectOf("items", arraySchema),
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][prop1]=bar&param[obj][prop2][badindex]=bad&param[objTwo]=string",
@@ -723,7 +724,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
 							"objTwo", stringSchema,
-							"objIgnored", objectOf("items", arraySchema),
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=string",
@@ -745,13 +746,24 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}{},
 				},
 				{
+					name: "deepObject explode nested object - bad array item type",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"objTwo", integerArraySchema,
+						),
+					},
+					query: "param[objTwo]=badint",
+					err:   &ParseError{path: []interface{}{"objTwo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
+				},
+				{
 					name: "deepObject explode nested object with array",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
-							"objTwo", arraySchema,
-							"objIgnored", objectOf("items", arraySchema),
+							"objTwo", stringArraySchema,
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=f%26oo&param[objTwo]=bar",
@@ -767,8 +779,8 @@ func TestDecodeParameter(t *testing.T) {
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", booleanSchema),
-							"objTwo", arraySchema,
-							"objIgnored", objectOf("items", arraySchema),
+							"objTwo", stringArraySchema,
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo]=f%26oo&param[objTwo]=bar",
@@ -780,8 +792,8 @@ func TestDecodeParameter(t *testing.T) {
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
-							"objTwo", objectOf("items", arraySchema),
-							"objIgnored", objectOf("items", arraySchema),
+							"objTwo", objectOf("items", stringArraySchema),
+							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items]=f%26oo&param[objTwo][items]=bar",
@@ -901,21 +913,21 @@ func TestDecodeParameter(t *testing.T) {
 			testCases: []testCase{
 				{
 					name:   "simple",
-					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: arraySchema},
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: noExplode, Schema: stringArraySchema},
 					header: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
 					found:  true,
 				},
 				{
 					name:   "simple explode",
-					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: arraySchema},
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Style: "simple", Explode: explode, Schema: stringArraySchema},
 					header: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
 					found:  true,
 				},
 				{
 					name:   "default",
-					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arraySchema},
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: stringArraySchema},
 					header: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
 					found:  true,
@@ -1077,7 +1089,7 @@ func TestDecodeParameter(t *testing.T) {
 			testCases: []testCase{
 				{
 					name:   "form",
-					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arraySchema},
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: stringArraySchema},
 					cookie: "X-Param:foo,bar",
 					want:   []interface{}{"foo", "bar"},
 					found:  true,
