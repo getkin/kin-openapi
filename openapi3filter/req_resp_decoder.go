@@ -681,15 +681,26 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 		return nil, false, nil
 	}
 
-	// check the props
+	val, err := makeObject(props, schema)
+
 	found := false
 	for propName := range schema.Value.Properties {
 		if _, ok := props[propName]; ok {
 			found = true
 			break
 		}
+
+		if schema.Value.Type == "array" || schema.Value.Type == "object" {
+			for k := range props {
+				path := strings.Split(k, urlDecoderDelimiter)
+				if _, ok := deepGet(val, path...); ok {
+					found = true
+					break
+				}
+			}
+		}
 	}
-	val, err := makeObject(props, schema)
+
 	return val, found, err
 }
 
@@ -855,6 +866,19 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 	return props, nil
 }
 
+func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
+	for _, key := range keys {
+		val, ok := m[key]
+		if !ok {
+			return nil, false
+		}
+		if m, ok = val.(map[string]interface{}); !ok {
+			return val, true
+		}
+	}
+	return m, true
+}
+
 func deepSet(m map[string]interface{}, keys []string, value interface{}) {
 	for i := 0; i < len(keys)-1; i++ {
 		key := keys[i]
@@ -901,7 +925,8 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
 				}
 				if nestedSchema.Value.Type == "array" {
-					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: "nested objects with array fields not implemented"}
+					deepSet(obj, mapKeys, strings.Split(props[prop], urlDecoderDelimiter))
+					continue
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {

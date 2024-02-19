@@ -680,6 +680,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", additionalPropertiesObjectStringSchema,
 							"objTwo", stringSchema,
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][prop1]=bar&param[obj][prop2]=foo&param[objTwo]=string",
@@ -696,6 +697,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", additionalPropertiesObjectBoolSchema,
 							"objTwo", stringSchema,
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][prop1]=notbool&param[objTwo]=string",
@@ -708,6 +710,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", additionalPropertiesObjectStringSchema,
 							"objTwo", stringSchema,
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][prop1]=bar&param[obj][prop2][badindex]=bad&param[objTwo]=string",
@@ -720,6 +723,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
 							"objTwo", stringSchema,
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=string",
@@ -736,6 +740,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
 							"objTwo", arraySchema,
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=f%26oo&param[objTwo]=bar",
@@ -752,6 +757,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", booleanSchema),
 							"objTwo", arraySchema,
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo]=f%26oo&param[objTwo]=bar",
@@ -764,6 +770,7 @@ func TestDecodeParameter(t *testing.T) {
 						Schema: objectOf(
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
 							"objTwo", objectOf("items", arraySchema),
+							"objIgnored", objectOf("items", arraySchema),
 						),
 					},
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items]=f%26oo&param[objTwo][items]=bar",
@@ -771,8 +778,6 @@ func TestDecodeParameter(t *testing.T) {
 						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
 						"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
 					},
-					// TODO: implement
-					err:   &ParseError{path: []interface{}{"objTwo", "items"}, Reason: "nested objects with array fields not implemented"},
 					found: true,
 				},
 				{
