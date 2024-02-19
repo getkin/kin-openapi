@@ -768,6 +768,17 @@ func TestDecodeParameter(t *testing.T) {
 					err:   &ParseError{path: []interface{}{"objTwo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
 				},
 				{
+					name: "deepObject explode deeply nested object - bad array item type",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", integerArraySchema),
+						),
+					},
+					query: "param[obj][nestedObjOne]=badint",
+					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
+				},
+				{
 					name: "deepObject explode nested object with array",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
