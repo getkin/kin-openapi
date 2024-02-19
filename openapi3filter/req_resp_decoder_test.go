@@ -673,7 +673,6 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}{"items": []string{"f%26oo", "bar"}},
 					found: true,
 				},
-				// maybe test anyof, oneof...
 				{
 					name: "deepObject explode nested object additionalProperties",
 					param: &openapi3.Parameter{
