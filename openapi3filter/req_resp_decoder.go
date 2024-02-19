@@ -682,6 +682,9 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	}
 
 	val, err := makeObject(props, schema)
+	if err != nil {
+		return nil, false, err
+	}
 
 	found := false
 	for propName := range schema.Value.Properties {
@@ -701,7 +704,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 		}
 	}
 
-	return val, found, err
+	return val, found, nil
 }
 
 // headerParamDecoder decodes values of header parameters.
