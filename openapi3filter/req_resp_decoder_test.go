@@ -705,7 +705,7 @@ func TestDecodeParameter(t *testing.T) {
 					err:   &ParseError{path: []interface{}{"obj"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "notbool"}},
 				},
 				{
-					name: "deepObject explode nested object additionalProperties - bad index",
+					name: "deepObject explode nested object additionalProperties - bad index inside additionalProperties",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(
@@ -733,6 +733,18 @@ func TestDecodeParameter(t *testing.T) {
 						"objTwo": "string",
 					},
 					found: true,
+				},
+				{
+					name: "deepObject explode nested object - bad index",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", stringSchema),
+						),
+					},
+					query: "param[obj][badindex]=bar",
+					found: true,
+					err:   &ParseError{path: []interface{}{"obj", "badindex"}, Reason: `nested schema for key "badindex" not found`},
 				},
 				{
 					name: "deepObject explode nested object - extraneous param ignored",
