@@ -734,6 +734,17 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name: "deepObject explode nested object - extraneous param ignored",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+						),
+					},
+					query: "param[unknown]=bar",
+					want:  map[string]interface{}{},
+				},
+				{
 					name: "deepObject explode nested object with array",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
