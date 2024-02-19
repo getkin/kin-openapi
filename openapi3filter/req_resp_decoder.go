@@ -619,9 +619,7 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (int
 }
 
 const (
-	// these should not conflict with anything
-	urlArrayDelimiter     = "\x1F"
-	urlObjectKeyDelimiter = "\x1F"
+	urlDecoderDelimiter = "\x1F" // should not conflict with URL characters
 )
 
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]interface{}, bool, error) {
@@ -657,13 +655,13 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 					// A query parameter's name does not match the required format, so skip it.
 					continue
 				case l == 1:
-					props[matches[0][1]] = strings.Join(values, urlArrayDelimiter)
+					props[matches[0][1]] = strings.Join(values, urlDecoderDelimiter)
 				case l > 1:
 					kk := []string{}
 					for _, m := range matches {
 						kk = append(kk, m[1])
 					}
-					props[strings.Join(kk, urlObjectKeyDelimiter)] = strings.Join(values, urlArrayDelimiter)
+					props[strings.Join(kk, urlDecoderDelimiter)] = strings.Join(values, urlDecoderDelimiter)
 				}
 			}
 			if len(props) == 0 {
@@ -891,13 +889,13 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	obj := make(map[string]interface{})
 	for propName, propSchema := range schema.Value.Properties {
 		if propSchema.Value.Type == "array" {
-			obj[propName] = strings.Split(props[propName], urlArrayDelimiter)
+			obj[propName] = strings.Split(props[propName], urlDecoderDelimiter)
 		} else if propSchema.Value.Type == "object" {
 			for prop := range props {
-				if !strings.HasPrefix(prop, propName+urlObjectKeyDelimiter) {
+				if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
 					continue
 				}
-				mapKeys := strings.Split(prop, urlObjectKeyDelimiter)
+				mapKeys := strings.Split(prop, urlDecoderDelimiter)
 				nestedSchema, err := findNestedSchema(schema, mapKeys)
 				if err != nil {
 					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
