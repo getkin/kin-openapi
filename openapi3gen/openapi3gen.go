@@ -36,9 +36,10 @@ type Option func(*generatorOpt)
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
 type generatorOpt struct {
-	useAllExportedFields bool
-	throwErrorOnCycle    bool
-	schemaCustomizer     SchemaCustomizerFn
+	useAllExportedFields   bool
+	throwErrorOnCycle      bool
+	schemaCustomizer       SchemaCustomizerFn
+	createComponentSchemas bool
 }
 
 // UseAllExportedFields changes the default behavior of only
@@ -59,6 +60,13 @@ func SchemaCustomizer(sc SchemaCustomizerFn) Option {
 	return func(x *generatorOpt) { x.schemaCustomizer = sc }
 }
 
+// CreateComponents changes the default behavior
+// to add all schemas as components
+// Reduces duplicate schemas in routes
+func CreateComponentSchemas() Option {
+	return func(x *generatorOpt) { x.createComponentSchemas = true }
+}
+
 // NewSchemaRefForValue is a shortcut for NewGenerator(...).NewSchemaRefForValue(...)
 func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
 	g := NewGenerator(opts...)
@@ -76,6 +84,7 @@ type Generator struct {
 	SchemaRefs map[*openapi3.SchemaRef]int
 
 	// componentSchemaRefs is a set of schemas that must be defined in the components to avoid cycles
+	// or if we have specified create components schemas
 	componentSchemaRefs map[string]struct{}
 }
 
@@ -97,6 +106,8 @@ func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, erro
 	return g.generateSchemaRefFor(nil, t, "_root", "")
 }
 
+// TODO I want to be able to track in component/schemas always
+
 // NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef, and updates a supplied map with any dependent component schemas if they lead to cycles
 func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
@@ -104,8 +115,13 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 		return nil, err
 	}
 	for ref := range g.SchemaRefs {
-		if _, ok := g.componentSchemaRefs[ref.Ref]; ok && schemas != nil {
-			schemas[ref.Ref] = &openapi3.SchemaRef{
+		refName := ref.Ref
+		if g.opts.createComponentSchemas && strings.HasPrefix(ref.Ref, "#/components/schemas/") {
+			refName = strings.TrimPrefix(ref.Ref, "#/components/schemas/")
+		}
+
+		if _, ok := g.componentSchemaRefs[refName]; ok && schemas != nil {
+			schemas[refName] = &openapi3.SchemaRef{
 				Value: ref.Value,
 			}
 		}
@@ -291,6 +307,12 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			schema.Type = "string"
 			schema.Format = "date-time"
 		} else {
+			if g.opts.createComponentSchemas && g.componentSchemaRefs[t.Name()] != struct{}{} {
+				// Check if we have already parsed this component schema ref based on the name of the struct
+				// and use that if so
+				return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
+			}
+
 			for _, fieldInfo := range typeInfo.Fields {
 				// Only fields with JSON tag are considered (by default)
 				if !fieldInfo.HasJSONTag && !g.opts.useAllExportedFields {
@@ -340,12 +362,14 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 					g.SchemaRefs[ref]++
 					schema.WithPropertyRef(fieldName, ref)
 				}
+
 			}
 
 			// Object only if it has properties
 			if schema.Properties != nil {
 				schema.Type = "object"
 			}
+
 		}
 	}
 
@@ -353,6 +377,12 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		if err := g.opts.schemaCustomizer(name, t, tag, schema); err != nil {
 			return nil, err
 		}
+	}
+
+	if g.opts.createComponentSchemas && schema.Type == "object" {
+		// For structs we add the schemas to the component schemas
+		g.componentSchemaRefs[t.Name()] = struct{}{}
+		return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
 	}
 
 	return openapi3.NewSchemaRef(t.Name(), schema), nil

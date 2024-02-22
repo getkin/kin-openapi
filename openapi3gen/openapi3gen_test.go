@@ -590,3 +590,70 @@ func ExampleNewSchemaRefForValue_recursive() {
 	//   "type": "object"
 	// }
 }
+
+func ExampleNewSchemaRefWithExportingSchemas() {
+	type AnotherStruct struct {
+		Field1 string `json:"field1"`
+		Field2 string `json:"field2"`
+		Field3 string `json:"field3"`
+	}
+	type RecursiveType struct {
+		Field1        string        `json:"field1"`
+		Field2        string        `json:"field2"`
+		Field3        string        `json:"field3"`
+		AnotherStruct AnotherStruct `json:"children,omitempty"`
+	}
+
+	schemas := make(openapi3.Schemas)
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(&RecursiveType{}, schemas, openapi3gen.CreateComponentSchemas())
+	if err != nil {
+		panic(err)
+	}
+
+	var data []byte
+	if data, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemas: %s\n", data)
+	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemas: {
+	//   "AnotherStruct": {
+	//     "properties": {
+	//       "field1": {
+	//         "type": "string"
+	//       },
+	//       "field2": {
+	//         "type": "string"
+	//       },
+	//       "field3": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   },
+	//   "RecursiveType": {
+	//     "properties": {
+	//       "children": {
+	//         "$ref": "#/components/schemas/AnotherStruct"
+	//       },
+	//       "field1": {
+	//         "type": "string"
+	//       },
+	//       "field2": {
+	//         "type": "string"
+	//       },
+	//       "field3": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   }
+	// }
+	// schemaRef: {
+	//   "$ref": "#/components/schemas/RecursiveType"
+	// }
+}
