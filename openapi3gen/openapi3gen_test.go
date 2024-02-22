@@ -14,6 +14,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/getkin/kin-openapi/openapi3gen/pack"
 )
 
 func ExampleGenerator_SchemaRefs() {
@@ -591,6 +592,10 @@ func ExampleNewSchemaRefForValue_recursive() {
 	// }
 }
 
+type Child struct {
+	Age string `json:"age"`
+}
+
 func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
@@ -602,12 +607,25 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 		Field2        string        `json:"field2"`
 		Field3        string        `json:"field3"`
 		AnotherStruct AnotherStruct `json:"children,omitempty"`
+		Child         pack.Child    `json:"child"`
+		Child2        Child         `json:"child2"`
+	}
+
+	// sample of a type name generator
+	typeNameGenerator := func(t reflect.Type) string {
+		packages := strings.Split(t.PkgPath(), "/")
+		return packages[len(packages)-1] + "_" + t.Name()
 	}
 
 	schemas := make(openapi3.Schemas)
-	schemaRef, err := openapi3gen.NewSchemaRefForValue(&RecursiveType{}, schemas, openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-		ExportComponentSchemas: true, IgnoreTopLevelSchema: false,
-	}))
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(
+		&RecursiveType{},
+		schemas,
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true, IgnoreTopLevelSchema: false,
+		}),
+		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
+	)
 	if err != nil {
 		panic(err)
 	}
