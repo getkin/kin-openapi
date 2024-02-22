@@ -35,11 +35,16 @@ type Option func(*generatorOpt)
 // the final output
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
+type ExportComponentSchemasOptions struct {
+	ExportComponentSchemas bool
+	IgnoreTopLevelSchema   bool
+}
+
 type generatorOpt struct {
 	useAllExportedFields   bool
 	throwErrorOnCycle      bool
 	schemaCustomizer       SchemaCustomizerFn
-	createComponentSchemas bool
+	exportComponentSchemas ExportComponentSchemasOptions
 }
 
 // UseAllExportedFields changes the default behavior of only
@@ -63,8 +68,8 @@ func SchemaCustomizer(sc SchemaCustomizerFn) Option {
 // CreateComponents changes the default behavior
 // to add all schemas as components
 // Reduces duplicate schemas in routes
-func CreateComponentSchemas() Option {
-	return func(x *generatorOpt) { x.createComponentSchemas = true }
+func CreateComponentSchemas(exso ExportComponentSchemasOptions) Option {
+	return func(x *generatorOpt) { x.exportComponentSchemas = exso }
 }
 
 // NewSchemaRefForValue is a shortcut for NewGenerator(...).NewSchemaRefForValue(...)
@@ -116,7 +121,7 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 	}
 	for ref := range g.SchemaRefs {
 		refName := ref.Ref
-		if g.opts.createComponentSchemas && strings.HasPrefix(ref.Ref, "#/components/schemas/") {
+		if g.opts.exportComponentSchemas.ExportComponentSchemas && strings.HasPrefix(ref.Ref, "#/components/schemas/") {
 			refName = strings.TrimPrefix(ref.Ref, "#/components/schemas/")
 		}
 
@@ -307,7 +312,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			schema.Type = "string"
 			schema.Format = "date-time"
 		} else {
-			if g.opts.createComponentSchemas && g.componentSchemaRefs[t.Name()] != struct{}{} {
+			if g.opts.exportComponentSchemas.ExportComponentSchemas && g.componentSchemaRefs[t.Name()] != struct{}{} {
 				// Check if we have already parsed this component schema ref based on the name of the struct
 				// and use that if so
 				return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
@@ -379,10 +384,12 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		}
 	}
 
-	if g.opts.createComponentSchemas && schema.Type == "object" {
+	if g.opts.exportComponentSchemas.ExportComponentSchemas && schema.Type == "object" {
 		// For structs we add the schemas to the component schemas
-		g.componentSchemaRefs[t.Name()] = struct{}{}
-		return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
+		if len(parents) > 1 || !g.opts.exportComponentSchemas.IgnoreTopLevelSchema {
+			g.componentSchemaRefs[t.Name()] = struct{}{}
+			return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
+		}
 	}
 
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
