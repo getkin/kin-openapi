@@ -591,7 +591,7 @@ func ExampleNewSchemaRefForValue_recursive() {
 	// }
 }
 
-func ExampleNewSchemaRefWithExportingSchemas() {
+func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
 		Field2 string `json:"field2"`
@@ -660,7 +660,7 @@ func ExampleNewSchemaRefWithExportingSchemas() {
 	// }
 }
 
-func ExampleNewSchemaRefWithExportingSchemasIgnoreTopLevelParent() {
+func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
 		Field2 string `json:"field2"`
