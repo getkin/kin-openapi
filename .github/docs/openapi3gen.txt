@@ -30,6 +30,7 @@ func (err *ExcludeSchemaSentinel) Error() string
 type ExportComponentSchemasOptions struct {
 	ExportComponentSchemas bool
 	IgnoreTopLevelSchema   bool
+	IgnoreGenerics         bool
 }
 
 type Generator struct {
