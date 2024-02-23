@@ -744,3 +744,98 @@ func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
 	//   "type": "object"
 	// }
 }
+
+func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
+	type GenericStruct[T any] struct {
+		GenericField T `json:"genericField"`
+	}
+	type AnotherStruct struct {
+		Field1 string `json:"field1"`
+		Field2 string `json:"field2"`
+		Field3 string `json:"field3"`
+	}
+	type RecursiveType struct {
+		Field1        string                `json:"field1"`
+		Field2        string                `json:"field2"`
+		Field3        string                `json:"field3"`
+		AnotherStruct AnotherStruct         `json:"children,omitempty"`
+		Child         pack.Child            `json:"child"`
+		Child2        Child                 `json:"child2"`
+		GenericStruct GenericStruct[string] `json:"genericChild"`
+	}
+
+	// sample of a type name generator
+	typeNameGenerator := func(t reflect.Type) string {
+		packages := strings.Split(t.PkgPath(), "/")
+		return packages[len(packages)-1] + "_" + t.Name()
+	}
+
+	schemas := make(openapi3.Schemas)
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(
+		&RecursiveType{},
+		schemas,
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true, IgnoreTopLevelSchema: false, IgnoreGenerics: true,
+		}),
+		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
+		openapi3gen.UseAllExportedFields(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	var data []byte
+	if data, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemas: %s\n", data)
+	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemas: {
+	//   "AnotherStruct": {
+	//     "properties": {
+	//       "field1": {
+	//         "type": "string"
+	//       },
+	//       "field2": {
+	//         "type": "string"
+	//       },
+	//       "field3": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   },
+	//   "RecursiveType": {
+	//     "properties": {
+	//       "children": {
+	//         "$ref": "#/components/schemas/AnotherStruct"
+	//       },
+	//       "field1": {
+	//         "type": "string"
+	//       },
+	//       "field2": {
+	//         "type": "string"
+	//       },
+	//       "field3": {
+	//         "type": "string"
+	//       },
+	//       "genericChild": {
+	//         "properties": {
+	//           "genericField": {
+	//             "type": "string"
+	//           }
+	//         },
+	//         "type": "object"
+	//       }
+	//     },
+	//     "type": "object"
+	//   }
+	// }
+	// schemaRef: {
+	//   "$ref": "#/components/schemas/RecursiveType"
+	// }
+}

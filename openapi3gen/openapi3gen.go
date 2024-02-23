@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,6 +39,7 @@ type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag,
 type ExportComponentSchemasOptions struct {
 	ExportComponentSchemas bool
 	IgnoreTopLevelSchema   bool
+	IgnoreGenerics         bool
 }
 
 type TypeNameGenerator func(t reflect.Type) string
@@ -396,14 +398,27 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		}
 	}
 
-	if g.opts.exportComponentSchemas.ExportComponentSchemas && schema.Type == "object" {
-		// For structs we add the schemas to the component schemas
-		if len(parents) > 1 || !g.opts.exportComponentSchemas.IgnoreTopLevelSchema {
-			typeName := g.generateTypeName(t)
+	if !g.opts.exportComponentSchemas.ExportComponentSchemas || schema.Type != "object" {
+		return openapi3.NewSchemaRef(t.Name(), schema), nil
+	}
 
-			g.componentSchemaRefs[typeName] = struct{}{}
-			return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
-		}
+	// Best way I could find to check that
+	// this current type is a generic
+	isGeneric, err := regexp.Match(`^.*\[.*\]$`, []byte(t.Name()))
+	if err != nil {
+		return nil, err
+	}
+
+	if isGeneric && g.opts.exportComponentSchemas.IgnoreGenerics {
+		return openapi3.NewSchemaRef(t.Name(), schema), nil
+	}
+
+	// For structs we add the schemas to the component schemas
+	if len(parents) > 1 || !g.opts.exportComponentSchemas.IgnoreTopLevelSchema {
+		typeName := g.generateTypeName(t)
+
+		g.componentSchemaRefs[typeName] = struct{}{}
+		return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
 	}
 
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
