@@ -1,5 +1,5 @@
 package pack
 
 type Child struct {
-	Name string `json:"name"`
+	Name string `yaml:"name"`
 }

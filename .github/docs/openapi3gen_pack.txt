@@ -4,6 +4,6 @@ package pack // import "github.com/getkin/kin-openapi/openapi3gen/pack"
 TYPES
 
 type Child struct {
-	Name string `json:"name"`
+	Name string `yaml:"name"`
 }
 

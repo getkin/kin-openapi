@@ -625,6 +625,7 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 			ExportComponentSchemas: true, IgnoreTopLevelSchema: false,
 		}),
 		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
+		openapi3gen.UseAllExportedFields(),
 	)
 	if err != nil {
 		panic(err)
