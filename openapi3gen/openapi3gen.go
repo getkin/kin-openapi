@@ -40,17 +40,27 @@ type ExportComponentSchemasOptions struct {
 	IgnoreTopLevelSchema   bool
 }
 
+type TypeNameGenerator func(t reflect.Type) string
+
 type generatorOpt struct {
 	useAllExportedFields   bool
 	throwErrorOnCycle      bool
 	schemaCustomizer       SchemaCustomizerFn
 	exportComponentSchemas ExportComponentSchemasOptions
+
+	typeNameGenerator TypeNameGenerator
 }
 
 // UseAllExportedFields changes the default behavior of only
 // generating schemas for struct fields with a JSON tag.
 func UseAllExportedFields() Option {
 	return func(x *generatorOpt) { x.useAllExportedFields = true }
+}
+
+func CreateTypeNameGenerator(tngnrt TypeNameGenerator) Option {
+	return func(x *generatorOpt) {
+		x.typeNameGenerator = tngnrt
+	}
 }
 
 // ThrowErrorOnCycle changes the default behavior of creating cycle
@@ -312,10 +322,12 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			schema.Type = "string"
 			schema.Format = "date-time"
 		} else {
-			if g.opts.exportComponentSchemas.ExportComponentSchemas && g.componentSchemaRefs[t.Name()] != struct{}{} {
+			typeName := g.generateTypeName(t)
+
+			if g.opts.exportComponentSchemas.ExportComponentSchemas && g.componentSchemaRefs[typeName] != struct{}{} {
 				// Check if we have already parsed this component schema ref based on the name of the struct
 				// and use that if so
-				return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
+				return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
 			}
 
 			for _, fieldInfo := range typeInfo.Fields {
@@ -387,12 +399,22 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 	if g.opts.exportComponentSchemas.ExportComponentSchemas && schema.Type == "object" {
 		// For structs we add the schemas to the component schemas
 		if len(parents) > 1 || !g.opts.exportComponentSchemas.IgnoreTopLevelSchema {
-			g.componentSchemaRefs[t.Name()] = struct{}{}
-			return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", t.Name()), schema), nil
+			typeName := g.generateTypeName(t)
+
+			g.componentSchemaRefs[typeName] = struct{}{}
+			return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
 		}
 	}
 
 	return openapi3.NewSchemaRef(t.Name(), schema), nil
+}
+
+func (g *Generator) generateTypeName(t reflect.Type) string {
+	if g.opts.typeNameGenerator != nil {
+		return g.opts.typeNameGenerator(t)
+	}
+
+	return t.Name()
 }
 
 func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
@@ -413,7 +435,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 		mapSchema.AdditionalProperties = openapi3.AdditionalProperties{Schema: ref}
 		return openapi3.NewSchemaRef("", mapSchema)
 	default:
-		typeName = t.Name()
+		typeName = g.generateTypeName(t)
 	}
 
 	g.componentSchemaRefs[typeName] = struct{}{}
