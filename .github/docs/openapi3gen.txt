@@ -59,6 +59,8 @@ func CreateComponentSchemas(exso ExportComponentSchemasOptions) Option
     CreateComponents changes the default behavior to add all schemas as
     components Reduces duplicate schemas in routes
 
+func CreateTypeNameGenerator(tngnrt TypeNameGenerator) Option
+
 func SchemaCustomizer(sc SchemaCustomizerFn) Option
     SchemaCustomizer allows customization of the schema that is generated for a
     field, for example to support an additional tagging scheme
@@ -78,4 +80,6 @@ type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag,
     name will be "_root" for the top level object, and tag will be "".
     A SchemaCustomizerFn can return an ExcludeSchemaSentinel error to indicate
     that the schema for this field should not be included in the final output
+
+type TypeNameGenerator func(t reflect.Type) string
 
