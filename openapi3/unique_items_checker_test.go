@@ -11,7 +11,7 @@ import (
 func TestRegisterArrayUniqueItemsChecker(t *testing.T) {
 	var (
 		schema = openapi3.Schema{
-			Type:        "array",
+			Type:        &openapi3.Types{"array"},
 			UniqueItems: true,
 			Items:       openapi3.NewStringSchema().NewRef(),
 		}

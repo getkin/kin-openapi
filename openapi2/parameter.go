@@ -32,7 +32,7 @@ type Parameter struct {
 	Name             string              `json:"name,omitempty" yaml:"name,omitempty"`
 	Description      string              `json:"description,omitempty" yaml:"description,omitempty"`
 	CollectionFormat string              `json:"collectionFormat,omitempty" yaml:"collectionFormat,omitempty"`
-	Type             string              `json:"type,omitempty" yaml:"type,omitempty"`
+	Type             *openapi3.Types     `json:"type,omitempty" yaml:"type,omitempty"`
 	Format           string              `json:"format,omitempty" yaml:"format,omitempty"`
 	Pattern          string              `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	AllowEmptyValue  bool                `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
@@ -76,7 +76,7 @@ func (parameter Parameter) MarshalJSON() ([]byte, error) {
 	if x := parameter.CollectionFormat; x != "" {
 		m["collectionFormat"] = x
 	}
-	if x := parameter.Type; x != "" {
+	if x := parameter.Type; x != nil {
 		m["type"] = x
 	}
 	if x := parameter.Format; x != "" {

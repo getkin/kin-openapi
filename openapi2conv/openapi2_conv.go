@@ -248,8 +248,8 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 
 	case "formData":
 		format, typ := parameter.Format, parameter.Type
-		if typ == "file" {
-			format, typ = "binary", "string"
+		if typ.Is("file") {
+			format, typ = "binary", &openapi3.Types{"string"}
 		}
 		if parameter.Extensions == nil {
 			parameter.Extensions = make(map[string]interface{}, 1)
@@ -347,7 +347,7 @@ func formDataBody(bodies map[string]*openapi3.SchemaRef, reqs map[string]bool, c
 		}
 	}
 	schema := &openapi3.Schema{
-		Type:       "object",
+		Type:       &openapi3.Types{"object"},
 		Properties: ToV3Schemas(bodies),
 		Required:   requireds,
 	}
@@ -772,8 +772,8 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	}
 
 	if schema.Value != nil {
-		if schema.Value.Type == "string" && schema.Value.Format == "binary" {
-			paramType := "file"
+		if schema.Value.Type.Is("string") && schema.Value.Format == "binary" {
+			paramType := &openapi3.Types{"file"}
 			required := false
 
 			value, _ := schema.Value.Extensions["x-formData-name"]
@@ -825,7 +825,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	for i, v := range schema.Value.AllOf {
 		schema.Value.AllOf[i], _ = FromV3SchemaRef(v, components)
 	}
-	if schema.Value.Nullable {
+	if schema.Value.PermitsNull() {
 		schema.Value.Nullable = false
 		if schema.Value.Extensions == nil {
 			schema.Value.Extensions = make(map[string]interface{})
@@ -893,7 +893,7 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 		val := schemaRef.Value
 		typ := val.Type
 		if val.Format == "binary" {
-			typ = "file"
+			typ = &openapi3.Types{"file"}
 		}
 		required := false
 		for _, name := range val.Required {

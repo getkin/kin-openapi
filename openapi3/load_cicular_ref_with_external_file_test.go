@@ -35,7 +35,7 @@ func TestLoadCircularRefFromFile(t *testing.T) {
 					Value: &openapi3.Schema{
 						Properties: map[string]*openapi3.SchemaRef{
 							"id": {
-								Value: &openapi3.Schema{Type: "string"}},
+								Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
 						},
 					},
 				},

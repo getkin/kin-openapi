@@ -24,6 +24,6 @@ func TestIssue652(t *testing.T) {
 
 		schema := spec.Components.Schemas[schemaName]
 		assert.Equal(t, schema.Ref, "../definitions.yml#/components/schemas/TestSchema")
-		assert.Equal(t, schema.Value.Type, "string")
+		assert.Equal(t, schema.Value.Type, &openapi3.Types{"string"})
 	})
 }

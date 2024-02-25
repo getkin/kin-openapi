@@ -195,7 +195,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	schema := &openapi3.Schema{
-		Type:    "string",
+		Type:    &openapi3.Types{"string"},
 		Example: 3,
 	}
 	content := openapi3.NewContentWithJSONSchema(schema)

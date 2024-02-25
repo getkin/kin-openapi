@@ -34,7 +34,7 @@ func TestIssue341(t *testing.T) {
 	}
 }`, string(bs))
 
-	require.Equal(t, "string", doc.
+	require.Equal(t, &Types{"string"}, doc.
 		Paths.Value("/testpath").
 		Get.
 		Responses.Value("200").Value.

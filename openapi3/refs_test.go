@@ -302,7 +302,7 @@ components:
 	require.NotNil(t, v)
 	require.IsType(t, &Schema{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, "integer", v.(*Schema).Type)
+	require.Equal(t, &Types{"integer"}, v.(*Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/0")
 	require.NoError(t, err)
@@ -311,7 +311,7 @@ components:
 	require.NotNil(t, v)
 	require.IsType(t, &Schema{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, "string", v.(*Schema).Type)
+	require.Equal(t, &Types{"string"}, v.(*Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/1")
 	require.NoError(t, err)
@@ -320,7 +320,7 @@ components:
 	require.NotNil(t, v)
 	require.IsType(t, &Schema{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, "integer", v.(*Schema).Type)
+	require.Equal(t, &Types{"integer"}, v.(*Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/5")
 	require.NoError(t, err)
