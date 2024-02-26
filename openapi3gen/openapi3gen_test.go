@@ -837,7 +837,8 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		Age string `json:"age"`
 	}
 	type GenericStruct[T any] struct {
-		GenericField T `json:"genericField"`
+		GenericField T     `json:"genericField"`
+		Child        Child `json:"child"`
 	}
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
@@ -854,12 +855,6 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		GenericStruct GenericStruct[string] `json:"genericChild"`
 	}
 
-	// sample of a type name generator
-	typeNameGenerator := func(t reflect.Type) string {
-		packages := strings.Split(t.PkgPath(), "/")
-		return packages[len(packages)-1] + "_" + t.Name()
-	}
-
 	schemas := make(openapi3.Schemas)
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(
 		&RecursiveType{},
@@ -867,7 +862,6 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
 			ExportComponentSchemas: true, IgnoreTopLevelSchema: false, IgnoreGenerics: true,
 		}),
-		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
 		openapi3gen.UseAllExportedFields(),
 	)
 	if err != nil {
@@ -899,6 +893,14 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 	//     },
 	//     "type": "object"
 	//   },
+	//   "Child": {
+	//     "properties": {
+	//       "age": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   },
 	//   "RecursiveType": {
 	//     "properties": {
 	//       "children": {
@@ -915,6 +917,9 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 	//       },
 	//       "genericChild": {
 	//         "properties": {
+	//           "child": {
+	//             "$ref": "#/components/schemas/Child"
+	//           },
 	//           "genericField": {
 	//             "type": "string"
 	//           }
