@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/getkin/kin-openapi/openapi3gen/subpkg"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/getkin/kin-openapi/openapi3gen/subpkg"
 )
 
 func ExampleGenerator_SchemaRefs() {
