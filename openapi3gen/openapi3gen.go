@@ -49,8 +49,7 @@ type generatorOpt struct {
 	throwErrorOnCycle      bool
 	schemaCustomizer       SchemaCustomizerFn
 	exportComponentSchemas ExportComponentSchemasOptions
-
-	typeNameGenerator TypeNameGenerator
+	typeNameGenerator      TypeNameGenerator
 }
 
 // UseAllExportedFields changes the default behavior of only

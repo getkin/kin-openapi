@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3gen/subpkg"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
-	"github.com/getkin/kin-openapi/openapi3gen/pack"
 )
 
 func ExampleGenerator_SchemaRefs() {
@@ -592,11 +592,98 @@ func ExampleNewSchemaRefForValue_recursive() {
 	// }
 }
 
-type Child struct {
-	Age string `json:"age"`
+// Make sure that custom schema name generator is employed and results produced with it are properly used
+func TestNewSchemaRefWithSubPackages(t *testing.T) {
+	type Parent struct {
+		Field1 string       `json:"field1"`
+		Child  subpkg.Child `json:"child"`
+	}
+
+	// these schema names should be returned by name generator
+	parentSchemaName := "PARENT_TYPE"
+	childSchemaName := "CHILD_TYPE"
+
+	// sample of a type name generator
+	typeNameGenerator := func(t reflect.Type) string {
+		switch t {
+		case reflect.TypeOf(Parent{}):
+			return parentSchemaName
+		case reflect.TypeOf(subpkg.Child{}):
+			return childSchemaName
+		}
+		panic("Unknown type")
+	}
+
+	schemas := make(openapi3.Schemas)
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(
+		&Parent{},
+		schemas,
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true, IgnoreTopLevelSchema: false,
+		}),
+		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
+		openapi3gen.UseAllExportedFields(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	var data []byte
+	if data, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemas: %s\n", data)
+	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output
+	// schemas: {
+	// 	"CHILD_TYPE": {
+	// 	  "properties": {
+	// 		"name": {
+	// 		  "type": "string"
+	// 		}
+	// 	  },
+	// 	  "type": "object"
+	// 	},
+	// 	"PARENT_TYPE": {
+	// 	  "properties": {
+	// 		"child": {
+	// 		  "$ref": "#/components/schemas/CHILD_TYPE"
+	// 		},
+	// 		"field1": {
+	// 		  "type": "string"
+	// 		}
+	// 	  },
+	// 	  "type": "object"
+	// 	}
+	//   }
+	//   schemaRef: {
+	// 	"$ref": "#/components/schemas/PARENT_TYPE"
+	//   }
+
+	numberOfDetectedSchemas := 0
+	for schemaName, _ := range schemas {
+		switch schemaName {
+		case parentSchemaName,
+			childSchemaName:
+			numberOfDetectedSchemas++
+		default:
+			// unknown schema
+			t.Errorf("Unknown schema: %s", schemaName)
+		}
+	}
+
+	if numberOfDetectedSchemas != 2 {
+		t.Errorf("Required number of expected schema names was not produced. Want 2, have %d", numberOfDetectedSchemas)
+	}
 }
 
 func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
+	type Child struct {
+		Age string `json:"age"`
+	}
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
 		Field2 string `json:"field2"`
@@ -607,7 +694,7 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 		Field2        string        `json:"field2"`
 		Field3        string        `json:"field3"`
 		AnotherStruct AnotherStruct `json:"children,omitempty"`
-		Child         pack.Child    `json:"child"`
+		Child         subpkg.Child  `json:"child"`
 		Child2        Child         `json:"child2"`
 	}
 
@@ -746,6 +833,9 @@ func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
 }
 
 func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
+	type Child struct {
+		Age string `json:"age"`
+	}
 	type GenericStruct[T any] struct {
 		GenericField T `json:"genericField"`
 	}
@@ -759,7 +849,7 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		Field2        string                `json:"field2"`
 		Field3        string                `json:"field3"`
 		AnotherStruct AnotherStruct         `json:"children,omitempty"`
-		Child         pack.Child            `json:"child"`
+		Child         subpkg.Child          `json:"child"`
 		Child2        Child                 `json:"child2"`
 		GenericStruct GenericStruct[string] `json:"genericChild"`
 	}
