@@ -130,8 +130,8 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 	}
 	for ref := range g.SchemaRefs {
 		refName := ref.Ref
-		if g.opts.exportComponentSchemas.ExportComponentSchemas && strings.HasPrefix(ref.Ref, "#/components/schemas/") {
-			refName = strings.TrimPrefix(ref.Ref, "#/components/schemas/")
+		if g.opts.exportComponentSchemas.ExportComponentSchemas && strings.HasPrefix(refName, "#/components/schemas/") {
+			refName = strings.TrimPrefix(refName, "#/components/schemas/")
 		}
 
 		if _, ok := g.componentSchemaRefs[refName]; ok && schemas != nil {
