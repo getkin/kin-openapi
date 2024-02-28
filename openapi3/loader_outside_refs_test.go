@@ -16,7 +16,7 @@ func TestLoadOutsideRefs(t *testing.T) {
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
-	require.Equal(t, "string", doc.
+	require.Equal(t, &Types{"string"}, doc.
 		Paths.Value("/service").
 		Get.
 		Responses.Value("200").Value.

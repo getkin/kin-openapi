@@ -154,6 +154,40 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "PRIMITIVES WITHOUT NULL",
+		Schema: &Schema{
+			Type: &Types{TypeString, TypeBoolean},
+		},
+		AllValid: []interface{}{
+			"",
+			"xyz",
+			true,
+			false,
+		},
+		AllInvalid: []interface{}{
+			1,
+			nil,
+		},
+	},
+
+	{
+		Title: "PRIMITIVES WITH NULL",
+		Schema: &Schema{
+			Type: &Types{TypeNumber, TypeNull},
+		},
+		AllValid: []interface{}{
+			0,
+			1,
+			2.3,
+			nil,
+		},
+		AllInvalid: []interface{}{
+			"x",
+			[]interface{}{},
+		},
+	},
+
+	{
 		Title: "NULLABLE ANYOF",
 		Schema: NewAnyOfSchema(
 			NewIntegerSchema(),
@@ -509,7 +543,7 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "ARRAY",
 		Schema: &Schema{
-			Type:        "array",
+			Type:        &Types{"array"},
 			MinItems:    2,
 			MaxItems:    Uint64Ptr(3),
 			UniqueItems: true,
@@ -549,10 +583,10 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "ARRAY : items format 'object'",
 		Schema: &Schema{
-			Type:        "array",
+			Type:        &Types{"array"},
 			UniqueItems: true,
 			Items: (&Schema{
-				Type: "object",
+				Type: &Types{"object"},
 				Properties: Schemas{
 					"key1": NewFloat64Schema().NewRef(),
 				},
@@ -606,13 +640,13 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "ARRAY : items format 'object' and object with a property of array type ",
 		Schema: &Schema{
-			Type:        "array",
+			Type:        &Types{"array"},
 			UniqueItems: true,
 			Items: (&Schema{
-				Type: "object",
+				Type: &Types{"object"},
 				Properties: Schemas{
 					"key1": (&Schema{
-						Type:        "array",
+						Type:        &Types{"array"},
 						UniqueItems: true,
 						Items:       NewFloat64Schema().NewRef(),
 					}).NewRef(),
@@ -692,10 +726,10 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "ARRAY : items format 'array'",
 		Schema: &Schema{
-			Type:        "array",
+			Type:        &Types{"array"},
 			UniqueItems: true,
 			Items: (&Schema{
-				Type:        "array",
+				Type:        &Types{"array"},
 				UniqueItems: true,
 				Items:       NewFloat64Schema().NewRef(),
 			}).NewRef(),
@@ -736,13 +770,13 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "ARRAY : items format 'array' and array with object type items",
 		Schema: &Schema{
-			Type:        "array",
+			Type:        &Types{"array"},
 			UniqueItems: true,
 			Items: (&Schema{
-				Type:        "array",
+				Type:        &Types{"array"},
 				UniqueItems: true,
 				Items: (&Schema{
-					Type: "object",
+					Type: &Types{"object"},
 					Properties: Schemas{
 						"key1": NewFloat64Schema().NewRef(),
 					},
@@ -840,7 +874,7 @@ var schemaExamples = []schemaExample{
 	{
 		Title: "OBJECT",
 		Schema: &Schema{
-			Type:     "object",
+			Type:     &Types{"object"},
 			MaxProps: Uint64Ptr(2),
 			Properties: Schemas{
 				"numberProperty": NewFloat64Schema().NewRef(),
@@ -884,10 +918,10 @@ var schemaExamples = []schemaExample{
 	},
 	{
 		Schema: &Schema{
-			Type: "object",
+			Type: &Types{"object"},
 			AdditionalProperties: AdditionalProperties{Schema: &SchemaRef{
 				Value: &Schema{
-					Type: "number",
+					Type: &Types{"number"},
 				},
 			}},
 		},
@@ -912,7 +946,7 @@ var schemaExamples = []schemaExample{
 	},
 	{
 		Schema: &Schema{
-			Type:                 "object",
+			Type:                 &Types{"object"},
 			AdditionalProperties: AdditionalProperties{Has: BoolPtr(true)},
 		},
 		Serialization: map[string]interface{}{
@@ -1399,7 +1433,7 @@ components:
 func TestValidationFailsOnInvalidPattern(t *testing.T) {
 	schema := Schema{
 		Pattern: "[",
-		Type:    "string",
+		Type:    &Types{"string"},
 	}
 
 	err := schema.Validate(context.Background())
@@ -1450,7 +1484,7 @@ enum:
 
 func TestIssue751(t *testing.T) {
 	schema := &Schema{
-		Type:        "array",
+		Type:        &Types{"array"},
 		UniqueItems: true,
 		Items:       NewStringSchema().NewRef(),
 	}

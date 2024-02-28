@@ -40,7 +40,7 @@ info:
 	require.Equal(t, 2, len(doc.Components.Schemas))
 	require.Equal(t, 0, doc.Paths.Len())
 
-	require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
+	require.Equal(t, &Types{"string"}, doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }
 
 func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {

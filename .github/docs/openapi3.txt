@@ -19,6 +19,7 @@ const (
 	TypeNumber  = "number"
 	TypeObject  = "object"
 	TypeString  = "string"
+	TypeNull    = "null"
 )
 const (
 	// FormatOfStringForUUIDOfRFC4122 is an optional predefined format for UUID v1-v5 as specified by RFC4122
@@ -1197,7 +1198,7 @@ type Schema struct {
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
 	AllOf        SchemaRefs    `json:"allOf,omitempty" yaml:"allOf,omitempty"`
 	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
-	Type         string        `json:"type,omitempty" yaml:"type,omitempty"`
+	Type         *Types        `json:"type,omitempty" yaml:"type,omitempty"`
 	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
 	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1298,6 +1299,8 @@ func (schema Schema) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Schema.
 
 func (schema *Schema) NewRef() *SchemaRef
+
+func (schema *Schema) PermitsNull() bool
 
 func (schema *Schema) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Schema to a copy of data.
@@ -1720,6 +1723,22 @@ func (tags Tags) Get(name string) *Tag
 
 func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Tags does not comply with the OpenAPI spec.
+
+type Types []string
+
+func (pTypes *Types) Includes(typ string) bool
+
+func (types *Types) Is(typ string) bool
+
+func (pTypes *Types) MarshalJSON() ([]byte, error)
+
+func (pTypes *Types) MarshalYAML() (interface{}, error)
+
+func (types *Types) Permits(typ string) bool
+
+func (types *Types) Slice() []string
+
+func (types *Types) UnmarshalJSON(data []byte) error
 
 type ValidationOption func(options *ValidationOptions)
     ValidationOption allows the modification of how the OpenAPI document is

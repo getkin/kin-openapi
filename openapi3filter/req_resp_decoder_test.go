@@ -25,10 +25,10 @@ func TestDecodeParameter(t *testing.T) {
 		explode   = openapi3.BoolPtr(true)
 		noExplode = openapi3.BoolPtr(false)
 		arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
-			return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "array", Items: items}}
+			return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"array"}, Items: items}}
 		}
 		objectOf = func(args ...interface{}) *openapi3.SchemaRef {
-			s := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", Properties: make(map[string]*openapi3.SchemaRef)}}
+			s := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, Properties: make(map[string]*openapi3.SchemaRef)}}
 			if len(args)%2 != 0 {
 				panic("invalid arguments. must be an even number of arguments")
 			}
@@ -40,12 +40,12 @@ func TestDecodeParameter(t *testing.T) {
 			return s
 		}
 
-		integerSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "integer"}}
-		numberSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "number"}}
-		booleanSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "boolean"}}
-		stringSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "string"}}
-		additionalPropertiesObjectStringSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", AdditionalProperties: openapi3.AdditionalProperties{Schema: stringSchema}}}
-		additionalPropertiesObjectBoolSchema   = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: "object", AdditionalProperties: openapi3.AdditionalProperties{Schema: booleanSchema}}}
+		integerSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}}}
+		numberSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}}}
+		booleanSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"boolean"}}}
+		stringSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}}
+		additionalPropertiesObjectStringSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, AdditionalProperties: openapi3.AdditionalProperties{Schema: stringSchema}}}
+		additionalPropertiesObjectBoolSchema   = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, AdditionalProperties: openapi3.AdditionalProperties{Schema: booleanSchema}}}
 		allofSchema                            = &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
 				AllOf: []*openapi3.SchemaRef{

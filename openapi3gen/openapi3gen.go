@@ -230,63 +230,63 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		return nil, nil // ignore
 
 	case reflect.Bool:
-		schema.Type = "boolean"
+		schema.Type = &openapi3.Types{"boolean"}
 
 	case reflect.Int:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 	case reflect.Int8:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &minInt8
 		schema.Max = &maxInt8
 	case reflect.Int16:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &minInt16
 		schema.Max = &maxInt16
 	case reflect.Int32:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Format = "int32"
 	case reflect.Int64:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Format = "int64"
 	case reflect.Uint:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &zeroInt
 	case reflect.Uint8:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint8
 	case reflect.Uint16:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint16
 	case reflect.Uint32:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint32
 	case reflect.Uint64:
-		schema.Type = "integer"
+		schema.Type = &openapi3.Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint64
 
 	case reflect.Float32:
-		schema.Type = "number"
+		schema.Type = &openapi3.Types{"number"}
 		schema.Format = "float"
 	case reflect.Float64:
-		schema.Type = "number"
+		schema.Type = &openapi3.Types{"number"}
 		schema.Format = "double"
 
 	case reflect.String:
-		schema.Type = "string"
+		schema.Type = &openapi3.Types{"string"}
 
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
 			if t == rawMessageType {
 				return &openapi3.SchemaRef{Value: schema}, nil
 			}
-			schema.Type = "string"
+			schema.Type = &openapi3.Types{"string"}
 			schema.Format = "byte"
 		} else {
-			schema.Type = "array"
+			schema.Type = &openapi3.Types{"array"}
 			items, err := g.generateSchemaRefFor(parents, t.Elem(), name, tag)
 			if err != nil {
 				if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
@@ -302,7 +302,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		}
 
 	case reflect.Map:
-		schema.Type = "object"
+		schema.Type = &openapi3.Types{"object"}
 		additionalProperties, err := g.generateSchemaRefFor(parents, t.Elem(), name, tag)
 		if err != nil {
 			if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
@@ -318,7 +318,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 
 	case reflect.Struct:
 		if t == timeType {
-			schema.Type = "string"
+			schema.Type = &openapi3.Types{"string"}
 			schema.Format = "date-time"
 		} else {
 			typeName := g.generateTypeName(t)
@@ -383,7 +383,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 
 			// Object only if it has properties
 			if schema.Properties != nil {
-				schema.Type = "object"
+				schema.Type = &openapi3.Types{"object"}
 			}
 
 		}
@@ -437,13 +437,13 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 	case reflect.Slice:
 		ref := g.generateCycleSchemaRef(t.Elem(), schema)
 		sliceSchema := openapi3.NewSchema()
-		sliceSchema.Type = "array"
+		sliceSchema.Type = &openapi3.Types{"array"}
 		sliceSchema.Items = ref
 		return openapi3.NewSchemaRef("", sliceSchema)
 	case reflect.Map:
 		ref := g.generateCycleSchemaRef(t.Elem(), schema)
 		mapSchema := openapi3.NewSchema()
-		mapSchema.Type = "object"
+		mapSchema.Type = &openapi3.Types{"object"}
 		mapSchema.AdditionalProperties = openapi3.AdditionalProperties{Schema: ref}
 		return openapi3.NewSchemaRef("", mapSchema)
 	default:

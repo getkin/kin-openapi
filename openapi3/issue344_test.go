@@ -16,5 +16,5 @@ func TestIssue344(t *testing.T) {
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
-	require.Equal(t, "string", doc.Components.Schemas["Test"].Value.Properties["test"].Value.Properties["name"].Value.Type)
+	require.Equal(t, &Types{"string"}, doc.Components.Schemas["Test"].Value.Properties["test"].Value.Properties["name"].Value.Type)
 }
