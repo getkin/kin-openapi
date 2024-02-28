@@ -611,7 +611,7 @@ func TestNewSchemaRefWithSubPackages(t *testing.T) {
 		case reflect.TypeOf(subpkg.Child{}):
 			return childSchemaName
 		}
-		panic("Unknown type")
+		return t.Name()
 	}
 
 	schemas := make(openapi3.Schemas)
