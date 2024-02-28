@@ -19,6 +19,15 @@ type XML struct {
 
 // MarshalJSON returns the JSON encoding of XML.
 func (xml XML) MarshalJSON() ([]byte, error) {
+	x, err := xml.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of XML.
+func (xml XML) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 5+len(xml.Extensions))
 	for k, v := range xml.Extensions {
 		m[k] = v
@@ -38,7 +47,7 @@ func (xml XML) MarshalJSON() ([]byte, error) {
 	if x := xml.Wrapped; x {
 		m["wrapped"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets XML to a copy of data.

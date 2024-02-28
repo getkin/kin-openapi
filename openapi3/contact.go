@@ -17,6 +17,15 @@ type Contact struct {
 
 // MarshalJSON returns the JSON encoding of Contact.
 func (contact Contact) MarshalJSON() ([]byte, error) {
+	x, err := contact.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Contact.
+func (contact Contact) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 3+len(contact.Extensions))
 	for k, v := range contact.Extensions {
 		m[k] = v
@@ -30,7 +39,7 @@ func (contact Contact) MarshalJSON() ([]byte, error) {
 	if x := contact.Email; x != "" {
 		m["email"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Contact to a copy of data.

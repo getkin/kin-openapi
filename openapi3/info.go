@@ -21,6 +21,15 @@ type Info struct {
 
 // MarshalJSON returns the JSON encoding of Info.
 func (info Info) MarshalJSON() ([]byte, error) {
+	x, err := info.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Info.
+func (info Info) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 6+len(info.Extensions))
 	for k, v := range info.Extensions {
 		m[k] = v
@@ -39,7 +48,7 @@ func (info Info) MarshalJSON() ([]byte, error) {
 		m["license"] = x
 	}
 	m["version"] = info.Version
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Info to a copy of data.

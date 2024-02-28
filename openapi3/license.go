@@ -17,6 +17,15 @@ type License struct {
 
 // MarshalJSON returns the JSON encoding of License.
 func (license License) MarshalJSON() ([]byte, error) {
+	x, err := license.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of License.
+func (license License) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 2+len(license.Extensions))
 	for k, v := range license.Extensions {
 		m[k] = v
@@ -25,7 +34,7 @@ func (license License) MarshalJSON() ([]byte, error) {
 	if x := license.URL; x != "" {
 		m["url"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets License to a copy of data.

@@ -222,23 +222,18 @@ func (addProps AdditionalProperties) MarshalYAML() (interface{}, error) {
 		return false, nil
 	}
 	if x := addProps.Schema; x != nil {
-		return x.Value, nil
+		return x.MarshalYAML()
 	}
 	return nil, nil
 }
 
 // MarshalJSON returns the JSON encoding of AdditionalProperties.
 func (addProps AdditionalProperties) MarshalJSON() ([]byte, error) {
-	if x := addProps.Has; x != nil {
-		if *x {
-			return []byte("true"), nil
-		}
-		return []byte("false"), nil
+	x, err := addProps.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	if x := addProps.Schema; x != nil {
-		return json.Marshal(x)
-	}
-	return nil, nil
+	return json.Marshal(x)
 }
 
 // UnmarshalJSON sets AdditionalProperties to a copy of data.
@@ -275,6 +270,16 @@ func NewSchema() *Schema {
 
 // MarshalJSON returns the JSON encoding of Schema.
 func (schema Schema) MarshalJSON() ([]byte, error) {
+	m, err := schema.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(m)
+}
+
+// MarshalYAML returns the YAML encoding of Schema.
+func (schema Schema) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 36+len(schema.Extensions))
 	for k, v := range schema.Extensions {
 		m[k] = v
@@ -401,7 +406,7 @@ func (schema Schema) MarshalJSON() ([]byte, error) {
 		m["discriminator"] = x
 	}
 
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Schema to a copy of data.

@@ -98,21 +98,6 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 	return validateExtensions(ctx, responses.Extensions)
 }
 
-// Support YAML Marshaler interface for gopkg.in/yaml
-func (responses *Responses) MarshalYAML() (any, error) {
-	res := make(map[string]any, len(responses.Extensions)+len(responses.m))
-
-	for k, v := range responses.Extensions {
-		res[k] = v
-	}
-
-	for k, v := range responses.m {
-		res[k] = v
-	}
-
-	return res, nil
-}
-
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
@@ -150,6 +135,15 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 
 // MarshalJSON returns the JSON encoding of Response.
 func (response Response) MarshalJSON() ([]byte, error) {
+	x, err := response.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Response.
+func (response Response) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 4+len(response.Extensions))
 	for k, v := range response.Extensions {
 		m[k] = v
@@ -166,7 +160,7 @@ func (response Response) MarshalJSON() ([]byte, error) {
 	if x := response.Links; len(x) != 0 {
 		m["links"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Response to a copy of data.

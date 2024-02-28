@@ -27,15 +27,16 @@ func (x CallbackRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of CallbackRef.
 func (x CallbackRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return json.Marshal(x.Value)
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets CallbackRef to a copy of data.
@@ -105,15 +106,16 @@ func (x ExampleRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of ExampleRef.
 func (x ExampleRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets ExampleRef to a copy of data.
@@ -183,15 +185,16 @@ func (x HeaderRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of HeaderRef.
 func (x HeaderRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets HeaderRef to a copy of data.
@@ -261,15 +264,16 @@ func (x LinkRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of LinkRef.
 func (x LinkRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets LinkRef to a copy of data.
@@ -339,15 +343,16 @@ func (x ParameterRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of ParameterRef.
 func (x ParameterRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets ParameterRef to a copy of data.
@@ -417,15 +422,16 @@ func (x RequestBodyRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets RequestBodyRef to a copy of data.
@@ -495,15 +501,16 @@ func (x ResponseRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of ResponseRef.
 func (x ResponseRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets ResponseRef to a copy of data.
@@ -573,15 +580,16 @@ func (x SchemaRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of SchemaRef.
 func (x SchemaRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets SchemaRef to a copy of data.
@@ -651,15 +659,16 @@ func (x SecuritySchemeRef) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
-	return x.Value.MarshalJSON()
+	return json.Marshal(y)
 }
 
 // UnmarshalJSON sets SecuritySchemeRef to a copy of data.

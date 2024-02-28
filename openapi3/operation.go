@@ -58,6 +58,15 @@ func NewOperation() *Operation {
 
 // MarshalJSON returns the JSON encoding of Operation.
 func (operation Operation) MarshalJSON() ([]byte, error) {
+	x, err := operation.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Operation.
+func (operation Operation) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 12+len(operation.Extensions))
 	for k, v := range operation.Extensions {
 		m[k] = v
@@ -96,7 +105,7 @@ func (operation Operation) MarshalJSON() ([]byte, error) {
 	if x := operation.ExternalDocs; x != nil {
 		m["externalDocs"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Operation to a copy of data.
