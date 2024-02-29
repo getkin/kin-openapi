@@ -619,7 +619,7 @@ func TestNewSchemaRefWithSubPackages(t *testing.T) {
 		&Parent{},
 		schemas,
 		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-			ExportComponentSchemas: true, IgnoreTopLevelSchema: false,
+			ExportComponentSchemas: true, ExportTopLevelSchema: true,
 		}),
 		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
 		openapi3gen.UseAllExportedFields(),
@@ -660,7 +660,7 @@ func TestNewSchemaRefWithSubPackages(t *testing.T) {
 	// 	}
 	//   }
 	//   schemaRef: {
-	// 	"$ref": "#/components/schemas/PARENT_TYPE"
+	// 		"$ref": "#/components/schemas/PARENT_TYPE"
 	//   }
 
 	numberOfDetectedSchemas := 0
@@ -709,7 +709,7 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 		&RecursiveType{},
 		schemas,
 		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-			ExportComponentSchemas: true, IgnoreTopLevelSchema: false,
+			ExportComponentSchemas: true, ExportTopLevelSchema: false,
 		}),
 		openapi3gen.CreateTypeNameGenerator(typeNameGenerator),
 		openapi3gen.UseAllExportedFields(),
@@ -781,7 +781,7 @@ func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
 
 	schemas := make(openapi3.Schemas)
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&RecursiveType{}, schemas, openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-		ExportComponentSchemas: true, IgnoreTopLevelSchema: true,
+		ExportComponentSchemas: true, ExportTopLevelSchema: true,
 	}))
 	if err != nil {
 		panic(err)
@@ -860,7 +860,7 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		&RecursiveType{},
 		schemas,
 		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-			ExportComponentSchemas: true, IgnoreTopLevelSchema: false, IgnoreGenerics: true,
+			ExportComponentSchemas: true, ExportTopLevelSchema: false, ExportGenerics: true,
 		}),
 		openapi3gen.UseAllExportedFields(),
 	)

@@ -38,8 +38,8 @@ type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag,
 
 type ExportComponentSchemasOptions struct {
 	ExportComponentSchemas bool
-	IgnoreTopLevelSchema   bool
-	IgnoreGenerics         bool
+	ExportTopLevelSchema   bool
+	ExportGenerics         bool
 }
 
 type TypeNameGenerator func(t reflect.Type) string
@@ -406,12 +406,12 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		return nil, err
 	}
 
-	if isGeneric && g.opts.exportComponentSchemas.IgnoreGenerics {
+	if isGeneric && !g.opts.exportComponentSchemas.ExportGenerics {
 		return openapi3.NewSchemaRef(t.Name(), schema), nil
 	}
 
 	// For structs we add the schemas to the component schemas
-	if len(parents) > 1 || !g.opts.exportComponentSchemas.IgnoreTopLevelSchema {
+	if len(parents) > 1 || g.opts.exportComponentSchemas.ExportTopLevelSchema {
 		typeName := g.generateTypeName(t)
 
 		g.componentSchemaRefs[typeName] = struct{}{}
