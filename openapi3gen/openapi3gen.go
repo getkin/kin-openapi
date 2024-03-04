@@ -386,7 +386,9 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 				schema.Type = &openapi3.Types{"object"}
 			}
 
+			// TODO move the export here!
 		}
+
 	}
 
 	if g.opts.schemaCustomizer != nil {
@@ -395,7 +397,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		}
 	}
 
-	if !g.opts.exportComponentSchemas.ExportComponentSchemas || !schema.Type.Is("object") {
+	if !g.opts.exportComponentSchemas.ExportComponentSchemas || t.Kind() != reflect.Struct {
 		return openapi3.NewSchemaRef(t.Name(), schema), nil
 	}
 

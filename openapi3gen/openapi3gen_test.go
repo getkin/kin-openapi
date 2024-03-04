@@ -934,3 +934,70 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 	//   "$ref": "#/components/schemas/RecursiveType"
 	// }
 }
+
+func TestNewSchemaRefWithExportingSchemasWithMap(t *testing.T) {
+	type Child struct {
+		Age string `json:"age"`
+	}
+	type MyType struct {
+		Field1 string                 `json:"field1"`
+		Field2 string                 `json:"field2"`
+		Map1   map[string]interface{} `json:"anymap"`
+		Map2   map[string]Child       `json:"anymapChild"`
+	}
+
+	schemas := make(openapi3.Schemas)
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(
+		&MyType{},
+		schemas,
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true, ExportTopLevelSchema: false, ExportGenerics: true,
+		}),
+		openapi3gen.UseAllExportedFields(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	var data []byte
+	if data, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemas: %s\n", data)
+	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemas: {
+	//   "Child": {
+	//     "properties": {
+	//       "age": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   },
+	// schemaRef: {
+	//   "properties": {
+	//   	"anymap": {
+	//   	  "additionalProperties": {},
+	//   	  "type": "object"
+	//   	},
+	//   	"anymapChild": {
+	//   	  "additionalProperties": {
+	//   		"$ref": "#/components/schemas/Child"
+	//   	  },
+	//   	  "type": "object"
+	//   	},
+	//   	"field1": {
+	//   	  "type": "string"
+	//   	},
+	//   	"field2": {
+	//   	  "type": "string"
+	//   	}
+	//     },
+	//     "type": "object"
+	//   }
+	// }
+}
