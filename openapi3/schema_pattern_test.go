@@ -15,4 +15,5 @@ func TestPattern(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, `^[a-zA-Z\x{0080}-\x{024F}]+$`, intoGoRegexp(`^[a-zA-Z\u0080-\u024F]+$`))
+	require.Equal(t, `^[6789a-zA-Z\x{0080}-\x{024F}]+$`, intoGoRegexp(`^[6789a-zA-Z\u0080-\u024F]+$`))
 }
