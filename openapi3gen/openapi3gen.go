@@ -35,6 +35,13 @@ type Option func(*generatorOpt)
 // the final output
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
+// SetSchemar allows client to set their own schema definition according to
+// their specification. Useful when some custom datatype is needed and/or some custom logic
+// is needed on how the schema values would be generated
+type SetSchemar interface {
+	SetSchema(*openapi3.Schema)
+}
+
 type generatorOpt struct {
 	useAllExportedFields bool
 	throwErrorOnCycle    bool
@@ -345,6 +352,14 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			// Object only if it has properties
 			if schema.Properties != nil {
 				schema.Type = &openapi3.Types{"object"}
+			}
+		}
+
+	default:
+		// Object has their own schema's implementation, so we'll use those
+		if v := reflect.New(t); v.CanInterface() {
+			if v, ok := v.Interface().(SetSchemar); ok {
+				v.SetSchema(schema)
 			}
 		}
 	}
