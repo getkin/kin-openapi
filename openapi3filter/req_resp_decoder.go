@@ -654,9 +654,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 				case l == 0:
 					// A query parameter's name does not match the required format, so skip it.
 					continue
-				case l == 1:
-					props[matches[0][1]] = strings.Join(values, urlDecoderDelimiter)
-				case l > 1:
+				case l >= 1:
 					kk := []string{}
 					for _, m := range matches {
 						kk = append(kk, m[1])
@@ -680,7 +678,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	if props == nil {
 		return nil, false, nil
 	}
-
+	fmt.Printf("props: %v\n", props)
 	val, err := makeObject(props, schema)
 	if err != nil {
 		return nil, false, err
@@ -869,6 +867,8 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 	return props, nil
 }
 
+// TODO: handle arrays.
+// deepget can rely on just checking []interface{} or map[string]interface{}
 func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
 	for _, key := range keys {
 		val, ok := m[key]
@@ -882,6 +882,8 @@ func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
 	return m, true
 }
 
+// TODO: handle arrays.
+// requires passing schema for straightforward set
 func deepSet(m map[string]interface{}, keys []string, value interface{}) {
 	for i := 0; i < len(keys)-1; i++ {
 		key := keys[i]
@@ -896,15 +898,19 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}) {
 func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
 	currentSchema := parentSchema
 	for _, key := range keys {
-		propertySchema, ok := currentSchema.Value.Properties[key]
-		if !ok {
-			if currentSchema.Value.AdditionalProperties.Schema == nil {
-				return nil, fmt.Errorf("nested schema for key %q not found", key)
+		if currentSchema.Value.Type.Includes(openapi3.TypeArray) {
+			currentSchema = currentSchema.Value.Items
+		} else {
+			propertySchema, ok := currentSchema.Value.Properties[key]
+			if !ok {
+				if currentSchema.Value.AdditionalProperties.Schema == nil {
+					return nil, fmt.Errorf("nested schema for key %q not found", key)
+				}
+				currentSchema = currentSchema.Value.AdditionalProperties.Schema
+				continue
 			}
-			currentSchema = currentSchema.Value.AdditionalProperties.Schema
-			continue
+			currentSchema = propertySchema
 		}
-		currentSchema = propertySchema
 	}
 	return currentSchema, nil
 }
@@ -918,6 +924,26 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	for propName, propSchema := range schema.Value.Properties {
 		switch {
 		case propSchema.Value.Type.Is("array"):
+			if propSchema.Value.Items.Value.Type.Is(openapi3.TypeObject) {
+				// indexes are required for array of objects
+				// get all keys that start with path +
+				for prop := range props {
+					if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
+						continue
+					}
+					fmt.Printf("prop: %v\n", prop)
+					re := fmt.Sprintf(`.*%[1]s(.*?)%[1]s(.*)(%[1]s)?`, urlDecoderDelimiter)
+					matches := regexp.MustCompile(re).FindAllStringSubmatch(prop, -1)
+					fmt.Printf("matches[0]: %v\n", matches[0])
+					idx, err := strconv.Atoi(matches[0][1])
+					if err != nil {
+						return nil, err
+					}
+					fmt.Printf("idx: %v\n", idx)
+					// instantiate obj
+					// deepSet(obj, mapKeys, ivals)
+				}
+			}
 			vals := strings.Split(props[propName], urlDecoderDelimiter)
 			for _, v := range vals {
 				_, err := parsePrimitive(v, propSchema.Value.Items)
