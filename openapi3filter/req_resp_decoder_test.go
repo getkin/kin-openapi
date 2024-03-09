@@ -20,9 +20,61 @@ import (
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
-func TestDeepGet(t *testing.T) {
-	t.Parallel()
+var (
+	explode   = openapi3.BoolPtr(true)
+	noExplode = openapi3.BoolPtr(false)
+	arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"array"}, Items: items}}
+	}
+	objectOf = func(args ...interface{}) *openapi3.SchemaRef {
+		s := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, Properties: make(map[string]*openapi3.SchemaRef)}}
+		if len(args)%2 != 0 {
+			panic("invalid arguments. must be an even number of arguments")
+		}
+		for i := 0; i < len(args)/2; i++ {
+			propName := args[i*2].(string)
+			propSchema := args[i*2+1].(*openapi3.SchemaRef)
+			s.Value.Properties[propName] = propSchema
+		}
+		return s
+	}
 
+	integerSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}}}
+	numberSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}}}
+	booleanSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"boolean"}}}
+	stringSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}}
+	additionalPropertiesObjectStringSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, AdditionalProperties: openapi3.AdditionalProperties{Schema: stringSchema}}}
+	additionalPropertiesObjectBoolSchema   = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, AdditionalProperties: openapi3.AdditionalProperties{Schema: booleanSchema}}}
+	allofSchema                            = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			AllOf: []*openapi3.SchemaRef{
+				integerSchema,
+				numberSchema,
+			},
+		},
+	}
+	anyofSchema = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			AnyOf: []*openapi3.SchemaRef{
+				integerSchema,
+				stringSchema,
+			},
+		},
+	}
+	oneofSchema = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			OneOf: []*openapi3.SchemaRef{
+				booleanSchema,
+				integerSchema,
+			},
+		},
+	}
+	stringArraySchema  = arrayOf(stringSchema)
+	integerArraySchema = arrayOf(integerSchema)
+	objectSchema       = objectOf("id", stringSchema, "name", stringSchema)
+)
+
+func TestDeepGet(t *testing.T) {
 	iarray := []interface{}{
 		map[string]interface{}{
 			"foo": 1,
@@ -131,7 +183,6 @@ func TestDeepGet(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc := tc
-			t.Parallel()
 
 			result, found := deepGet(tc.m, tc.keys...)
 			require.Equal(t, tc.shouldFind, found, "shouldFind mismatch")
@@ -140,114 +191,63 @@ func TestDeepGet(t *testing.T) {
 	}
 }
 
-// func TestDeepSet(t *testing.T) {
-// 	tests := []struct {
-// 		name     string
-// 		inputMap map[string]interface{}
-// 		keys     []string
-// 		value    interface{}
-// 		expected map[string]interface{}
-// 	}{
-// 		{
-// 			name:     "Simple Set",
-// 			inputMap: map[string]interface{}{},
-// 			keys:     []string{"key"},
-// 			value:    "value",
-// 			expected: map[string]interface{}{"key": "value"},
-// 		},
-// 		{
-// 			name: "Deep Set",
-// 			inputMap: map[string]interface{}{
-// 				"nested": map[string]interface{}{},
-// 			},
-// 			keys:  []string{"nested", "key"},
-// 			value: "value",
-// 			expected: map[string]interface{}{
-// 				"nested": map[string]interface{}{
-// 					"key": "value",
-// 				},
-// 			},
-// 		},
-// 		{
-// 			name: "Intermediate Array",
-// 			inputMap: map[string]interface{}{
-// 				"nested": []interface{}{},
-// 			},
-// 			keys:  []string{"nested", "0", "key"},
-// 			value: "value",
-// 			expected: map[string]interface{}{
-// 				"nested": []interface{}{
-// 					map[string]interface{}{
-// 						"key": "value",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestDeepSet(t *testing.T) {
+	tests := []struct {
+		name      string
+		inputMap  map[string]interface{}
+		schemaRef *openapi3.SchemaRef
+		keys      []string
+		value     interface{}
+		expected  map[string]interface{}
+	}{
+		{
+			name:      "Simple Set",
+			inputMap:  map[string]interface{}{},
+			keys:      []string{"key"},
+			value:     "value",
+			schemaRef: objectOf("key", stringSchema),
+			expected:  map[string]interface{}{"key": "value"},
+		},
+		{
+			name:      "Deep Set",
+			inputMap:  map[string]interface{}{},
+			keys:      []string{"nested", "key"},
+			value:     true,
+			schemaRef: objectOf("nested", objectOf("key", booleanSchema)),
+			expected: map[string]interface{}{
+				"nested": map[string]interface{}{
+					"key": true,
+				},
+			},
+		},
+		// {
+		// 	name: "Intermediate Array",
+		// 	inputMap: map[string]interface{}{
+		// 	},
+		// 	keys:  []string{"nested", "0", "key"},
+		// 	value: "value",
+		// 	expected: map[string]interface{}{
+		// 		"nested": []interface{}{
+		// 			map[string]interface{}{
+		// 				"key": "value",
+		// 			},
+		// 		},
+		// 	},
+		// },
+	}
 
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
-// 			deepSet(test.inputMap, test.keys, test.value)
-// 			require.EqualValues(t, test.expected, test.inputMap)
-// 		})
-// 	}
-// }
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.schemaRef == nil {
+				t.Fatalf("missing schema")
+			}
+			deepSet(tc.inputMap, tc.keys, tc.value, tc.schemaRef)
+			require.EqualValues(t, tc.expected, tc.inputMap)
+		})
+	}
+}
 
 func TestDecodeParameter(t *testing.T) {
-	var (
-		explode   = openapi3.BoolPtr(true)
-		noExplode = openapi3.BoolPtr(false)
-		arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
-			return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"array"}, Items: items}}
-		}
-		objectOf = func(args ...interface{}) *openapi3.SchemaRef {
-			s := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, Properties: make(map[string]*openapi3.SchemaRef)}}
-			if len(args)%2 != 0 {
-				panic("invalid arguments. must be an even number of arguments")
-			}
-			for i := 0; i < len(args)/2; i++ {
-				propName := args[i*2].(string)
-				propSchema := args[i*2+1].(*openapi3.SchemaRef)
-				s.Value.Properties[propName] = propSchema
-			}
-			return s
-		}
-
-		integerSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}}}
-		numberSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}}}
-		booleanSchema                          = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"boolean"}}}
-		stringSchema                           = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}}
-		additionalPropertiesObjectStringSchema = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, AdditionalProperties: openapi3.AdditionalProperties{Schema: stringSchema}}}
-		additionalPropertiesObjectBoolSchema   = &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}, AdditionalProperties: openapi3.AdditionalProperties{Schema: booleanSchema}}}
-		allofSchema                            = &openapi3.SchemaRef{
-			Value: &openapi3.Schema{
-				AllOf: []*openapi3.SchemaRef{
-					integerSchema,
-					numberSchema,
-				},
-			},
-		}
-		anyofSchema = &openapi3.SchemaRef{
-			Value: &openapi3.Schema{
-				AnyOf: []*openapi3.SchemaRef{
-					integerSchema,
-					stringSchema,
-				},
-			},
-		}
-		oneofSchema = &openapi3.SchemaRef{
-			Value: &openapi3.Schema{
-				OneOf: []*openapi3.SchemaRef{
-					booleanSchema,
-					integerSchema,
-				},
-			},
-		}
-		stringArraySchema  = arrayOf(stringSchema)
-		integerArraySchema = arrayOf(integerSchema)
-		objectSchema       = objectOf("id", stringSchema, "name", stringSchema)
-	)
-
 	type testCase struct {
 		name   string
 		param  *openapi3.Parameter

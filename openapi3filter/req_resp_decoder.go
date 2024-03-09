@@ -903,17 +903,29 @@ func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
 	return m, true
 }
 
-// TODO: handle arrays.
-// requires passing schema for straightforward set
-func deepSet(m map[string]interface{}, keys []string, value interface{}) {
-	for i := 0; i < len(keys)-1; i++ {
+func deepSet(m map[string]interface{}, keys []string, value interface{}, schema *openapi3.SchemaRef) {
+	setLen := len(keys) - 1
+	for i := 0; i < setLen; i++ {
 		key := keys[i]
-		if _, ok := m[key]; !ok {
-			m[key] = make(map[string]interface{})
+		nestedSchema, err := findNestedSchema(schema, keys[:i])
+		if err != nil {
+			panic(err)
 		}
-		m = m[key].(map[string]interface{})
+		fmt.Printf("nestedSchema: %v\n", nestedSchema)
+		switch x := nestedSchema.Value; {
+		case x.Type.Permits(openapi3.TypeArray):
+			fmt.Printf("keys[:i] array: %v\n", keys[:i])
+		case x.Type.Permits(openapi3.TypeObject):
+			if _, ok := m[key]; !ok {
+				m[key] = make(map[string]interface{})
+			}
+			m = m[key].(map[string]interface{})
+			fmt.Printf("keys[:i] object: %v\n", keys[:i])
+		default:
+			fmt.Printf("keys[:i] default: %v\n", keys[:i])
+		}
 	}
-	m[keys[len(keys)-1]] = value
+	m[keys[setLen]] = value
 }
 
 func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
@@ -999,14 +1011,14 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					if err != nil {
 						return nil, handlePropParseError(mapKeys, err)
 					}
-					deepSet(obj, mapKeys, ivals)
+					deepSet(obj, mapKeys, ivals, propSchema)
 					continue
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {
 					return nil, handlePropParseError(mapKeys, err)
 				}
-				deepSet(obj, mapKeys, value)
+				deepSet(obj, mapKeys, value, propSchema)
 			}
 		default:
 			value, err := parsePrimitive(props[propName], propSchema)
