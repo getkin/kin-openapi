@@ -202,12 +202,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans]=notbool", nil),
 			},
-			wantErr:        true,
 			wantErrParam:   "deepFilter",
+			wantErrBody:    `parameter "deepFilter" in query has an error: path booleans: value notbool: an invalid boolean: invalid syntax`,
 			wantErrParamIn: "query",
 			wantErrResponse: &ValidationError{
 				Status: http.StatusBadRequest,
-				Title:  `parameter "deepFilter" in query is invalid: notbool is an invalid boolean`,
+				Title:  "parameter \"deepFilter\" in query is invalid: notbool is an invalid boolean",
 			},
 		},
 		{

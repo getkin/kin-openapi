@@ -979,6 +979,9 @@ func convertArrayParameterToType(strArray []string, typ *openapi3.Types) (interf
 	switch {
 	case typ.Permits(openapi3.TypeBoolean):
 		for _, str := range strArray {
+			if str == "" {
+				continue
+			}
 			parsedBool, err := strconv.ParseBool(str)
 			if err != nil {
 				return nil, err
@@ -987,6 +990,9 @@ func convertArrayParameterToType(strArray []string, typ *openapi3.Types) (interf
 		}
 	case typ.Permits(openapi3.TypeInteger):
 		for _, str := range strArray {
+			if str == "" {
+				continue
+			}
 			parsedInt, err := strconv.Atoi(str)
 			if err != nil {
 				return nil, err
@@ -995,6 +1001,9 @@ func convertArrayParameterToType(strArray []string, typ *openapi3.Types) (interf
 		}
 	case typ.Permits(openapi3.TypeNumber):
 		for _, str := range strArray {
+			if str == "" {
+				continue
+			}
 			parsedFloat, err := strconv.ParseFloat(str, 64)
 			if err != nil {
 				return nil, err
