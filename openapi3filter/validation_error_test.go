@@ -194,13 +194,13 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "deepobject query parameter type",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[bool]=true", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans]=true&deepFilter[integers]=1&deepFilter[strings]=foo%26o&deepFilter[numbers]=1", nil),
 			},
 		},
 		{
-			name: "error - incorrect deepobject query parameter type",
+			name: "error - incorrect deepobject query parameter type bool",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[bool]=notbool", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans]=notbool", nil),
 			},
 			wantErr:        true,
 			wantErrParam:   "deepFilter",

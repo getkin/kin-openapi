@@ -157,16 +157,28 @@
             "schema": {
               "type": "object",
               "properties": {
-                "post": {
+                "strings": {
                   "type": "array",
                   "items": {
                     "type": "string"
                   }
                 },
-                "bool": {
+                "booleans": {
                   "type": "array",
                   "items": {
                     "type": "boolean"
+                  }
+                },
+                "numbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "integers": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
                   }
                 }
               }
