@@ -867,18 +867,39 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 	return props, nil
 }
 
-// TODO: handle arrays.
-// deepget can rely on just checking []interface{} or map[string]interface{}
 func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
-	for _, key := range keys {
+	for i := 0; i < len(keys); i++ {
+		key := keys[i]
 		val, ok := m[key]
 		if !ok {
 			return nil, false
 		}
-		if m, ok = val.(map[string]interface{}); !ok {
+		switch v := val.(type) {
+		case map[string]interface{}:
+			m = v
+		case []interface{}:
+			if i == len(keys)-1 {
+				return v, true
+			}
+			index, err := strconv.Atoi(keys[i+1])
+			i++
+			if err != nil || index < 0 || index >= len(v) {
+				return nil, false
+			}
+			item := v[index]
+			if _, ok := item.([]interface{}); ok {
+				// array of arrays not supported
+				return nil, false
+			} else if it, ok := item.(map[string]interface{}); ok {
+				m = it
+			} else {
+				return item, true // primitive
+			}
+		default:
 			return val, true
 		}
 	}
+
 	return m, true
 }
 

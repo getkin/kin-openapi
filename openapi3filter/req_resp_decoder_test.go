@@ -20,6 +20,126 @@ import (
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
+func TestDeepGet(t *testing.T) {
+	t.Parallel()
+
+	iarray := []interface{}{
+		map[string]interface{}{
+			"foo": 1,
+		},
+		map[string]interface{}{
+			"bar": 2,
+		},
+	}
+
+	tests := []struct {
+		name       string
+		m          map[string]interface{}
+		keys       []string
+		expected   interface{}
+		shouldFind bool
+	}{
+		{
+			name: "Simple map - key exists",
+			m: map[string]interface{}{
+				"foo": "bar",
+			},
+			keys:       []string{"foo"},
+			expected:   "bar",
+			shouldFind: true,
+		},
+		{
+			name: "Nested map - key exists",
+			m: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": "baz",
+				},
+			},
+			keys:       []string{"foo", "bar"},
+			expected:   "baz",
+			shouldFind: true,
+		},
+		{
+			name: "Nested map - key does not exist",
+			m: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": "baz",
+				},
+			},
+			keys:       []string{"foo", "baz"},
+			expected:   nil,
+			shouldFind: false,
+		},
+		{
+			name: "Array - element exists",
+			m: map[string]interface{}{
+				"array": []interface{}{"a", "b", "c"},
+			},
+			keys:       []string{"array", "1"},
+			expected:   "b",
+			shouldFind: true,
+		},
+		{
+			name: "Array - element does not exist - invalid index",
+			m: map[string]interface{}{
+				"array": []interface{}{"a", "b", "c"},
+			},
+			keys:       []string{"array", "3"},
+			expected:   nil,
+			shouldFind: false,
+		},
+		{
+			name: "Array - element does not exist - invalid keys",
+			m: map[string]interface{}{
+				"array": []interface{}{"a", "b", "c"},
+			},
+			keys:       []string{"array", "a", "999"},
+			expected:   nil,
+			shouldFind: false,
+		},
+		{
+			name: "Array of objects - element exists 1",
+			m: map[string]interface{}{
+				"array": iarray,
+			},
+			keys:       []string{"array", "1", "bar"},
+			expected:   2,
+			shouldFind: true,
+		},
+		{
+			name: "Array of objects - element exists 2",
+			m: map[string]interface{}{
+				"array": iarray,
+			},
+			keys: []string{"array", "0"},
+			expected: map[string]interface{}{
+				"foo": 1,
+			},
+			shouldFind: true,
+		},
+		{
+			name: "Array of objects - element exists 3",
+			m: map[string]interface{}{
+				"array": iarray,
+			},
+			keys:       []string{"array"},
+			expected:   iarray,
+			shouldFind: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
+			t.Parallel()
+
+			result, found := deepGet(tc.m, tc.keys...)
+			require.Equal(t, tc.shouldFind, found, "shouldFind mismatch")
+			require.Equal(t, tc.expected, result, "result mismatch")
+		})
+	}
+}
+
 // func TestDeepSet(t *testing.T) {
 // 	tests := []struct {
 // 		name     string
