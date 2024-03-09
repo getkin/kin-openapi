@@ -140,6 +140,86 @@
         }
       }
     },
+    "/pet/filter": {
+      "get": {
+        "tags": [
+          "pet"
+        ],
+        "summary": "Finds Pets by status",
+        "operationId": "filterPets",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "deepFilter",
+            "style": "deepObject",
+            "explode": true,
+            "allowReserved": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "post": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "bool": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Pet"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PetRequiredProperties"
+                      }
+                    ]
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Pet"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PetRequiredProperties"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      }
+    },
     "/pet/findByStatus": {
       "get": {
         "tags": [
@@ -178,8 +258,12 @@
                   "type": "array",
                   "items": {
                     "allOf": [
-                      {"$ref": "#/components/schemas/Pet"},
-                      {"$ref": "#/components/schemas/PetRequiredProperties"}
+                      {
+                        "$ref": "#/components/schemas/Pet"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PetRequiredProperties"
+                      }
                     ]
                   }
                 }
@@ -189,8 +273,12 @@
                   "type": "array",
                   "items": {
                     "allOf": [
-                      {"$ref": "#/components/schemas/Pet"},
-                      {"$ref": "#/components/schemas/PetRequiredProperties"}
+                      {
+                        "$ref": "#/components/schemas/Pet"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PetRequiredProperties"
+                      }
                     ]
                   }
                 }
@@ -283,8 +371,12 @@
                   "type": "array",
                   "items": {
                     "allOf": [
-                      {"$ref": "#/components/schemas/Pet"},
-                      {"$ref": "#/components/schemas/PetRequiredProperties"}
+                      {
+                        "$ref": "#/components/schemas/Pet"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PetRequiredProperties"
+                      }
                     ]
                   }
                 }
@@ -294,8 +386,12 @@
                   "type": "array",
                   "items": {
                     "allOf": [
-                      {"$ref": "#/components/schemas/Pet"},
-                      {"$ref": "#/components/schemas/PetRequiredProperties"}
+                      {
+                        "$ref": "#/components/schemas/Pet"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PetRequiredProperties"
+                      }
                     ]
                   }
                 }
