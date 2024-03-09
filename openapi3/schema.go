@@ -1737,7 +1737,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 				}
 			case f.regexp == nil && f.callback != nil:
 				if err := f.callback(value); err != nil {
-					var schemaErr = &SchemaError{}
+					schemaErr := &SchemaError{}
 					if errors.As(err, &schemaErr) {
 						formatStrErr = fmt.Sprintf(`string doesn't match the format %q (%s)`, format, schemaErr.Reason)
 					} else {

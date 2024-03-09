@@ -914,6 +914,7 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 // The function returns an error when an error happened while parse object's properties.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	obj := make(map[string]interface{})
+
 	for propName, propSchema := range schema.Value.Properties {
 		switch {
 		case propSchema.Value.Type.Is("array"):
@@ -924,7 +925,12 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					return nil, handlePropParseError([]string{propName}, err)
 				}
 			}
-			obj[propName] = vals
+
+			ivals, err := convertArrayParameterToType(vals, propSchema.Value.Items.Value.Type)
+			if err != nil {
+				return nil, handlePropParseError([]string{propName}, err)
+			}
+			obj[propName] = ivals
 		case propSchema.Value.Type.Is("object"):
 			for prop := range props {
 				if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
@@ -943,7 +949,11 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 							return nil, handlePropParseError(mapKeys, err)
 						}
 					}
-					deepSet(obj, mapKeys, vals)
+					ivals, err := convertArrayParameterToType(vals, nestedSchema.Value.Items.Value.Type)
+					if err != nil {
+						return nil, handlePropParseError(mapKeys, err)
+					}
+					deepSet(obj, mapKeys, ivals)
 					continue
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
@@ -960,7 +970,53 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 			obj[propName] = value
 		}
 	}
+
 	return obj, nil
+}
+
+func convertArrayParameterToType(strArray []string, typ *openapi3.Types) (interface{}, error) {
+	var iarr []interface{}
+	switch {
+	case typ.Permits(openapi3.TypeBoolean):
+		for _, str := range strArray {
+			if str == "" {
+				continue
+			}
+			parsedBool, err := strconv.ParseBool(str)
+			if err != nil {
+				return nil, err
+			}
+			iarr = append(iarr, parsedBool)
+		}
+	case typ.Permits(openapi3.TypeInteger):
+		for _, str := range strArray {
+			if str == "" {
+				continue
+			}
+			parsedInt, err := strconv.Atoi(str)
+			if err != nil {
+				return nil, err
+			}
+			iarr = append(iarr, parsedInt)
+		}
+	case typ.Permits(openapi3.TypeNumber):
+		for _, str := range strArray {
+			if str == "" {
+				continue
+			}
+			parsedFloat, err := strconv.ParseFloat(str, 64)
+			if err != nil {
+				return nil, err
+			}
+			iarr = append(iarr, parsedFloat)
+		}
+	case typ.Permits(openapi3.TypeString):
+		return strArray, nil
+	default:
+		return nil, fmt.Errorf("unsupported parameter array type: %s", typ)
+	}
+
+	return iarr, nil
 }
 
 func handlePropParseError(path []string, err error) error {
