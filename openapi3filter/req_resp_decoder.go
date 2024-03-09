@@ -925,7 +925,6 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					return nil, handlePropParseError([]string{propName}, err)
 				}
 			}
-			fmt.Printf("vals: %v\n", vals)
 			ivals, err := convertArrayParameterToType(vals, propSchema.Value.Items.Value.Type)
 			if err != nil {
 				return nil, handlePropParseError([]string{propName}, err)
