@@ -843,7 +843,7 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name: "deepObject explode nested object array bad index",
+					name: "deepObject explode nested array of objects - misplaced parameter",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(
@@ -853,6 +853,24 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param[obj][nestedObjOne]=baz",
 					found: true,
 					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindOther, Value: "baz", Reason: "schema has non primitive type object"}},
+				},
+				// FIXME: SUPPORT NESTED ARRAY OF OBJECTS
+				{
+					name: "deepObject explode nested array of objects",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"nested", arrayOf(objectOf("obj", booleanSchema)),
+						),
+					},
+					query: "param[nested][0][obj]=true&param[nested][1][obj]=false",
+					found: true,
+					want: map[string]interface{}{
+						"nested": []interface{}{
+							map[string]interface{}{"obj": true},
+							map[string]interface{}{"obj": false},
+						},
+					},
 				},
 				{
 					name:  "default",

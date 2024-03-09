@@ -925,7 +925,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					return nil, handlePropParseError([]string{propName}, err)
 				}
 			}
-
+			fmt.Printf("vals: %v\n", vals)
 			ivals, err := convertArrayParameterToType(vals, propSchema.Value.Items.Value.Type)
 			if err != nil {
 				return nil, handlePropParseError([]string{propName}, err)
@@ -1012,6 +1012,8 @@ func convertArrayParameterToType(strArray []string, typ *openapi3.Types) (interf
 		}
 	case typ.Permits(openapi3.TypeString):
 		return strArray, nil
+	case typ.Permits(openapi3.TypeObject):
+	// TODO: handle array of objects. everything assumes array of primitives now
 	default:
 		return nil, fmt.Errorf("unsupported parameter array type: %s", typ)
 	}
