@@ -904,28 +904,66 @@ func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
 }
 
 func deepSet(m map[string]interface{}, keys []string, value interface{}, schema *openapi3.SchemaRef) {
+	var currentPathElement, previousPathElement interface{}
+	currentPathElement = m
 	setLen := len(keys) - 1
 	for i := 0; i < setLen; i++ {
+		previousPathElement = currentPathElement
 		key := keys[i]
 		nestedSchema, err := findNestedSchema(schema, keys[:i])
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("nestedSchema: %v\n", nestedSchema)
+		// fmt.Printf("key: %v (%s)\n", key, nestedSchema.Value.Type.Slice())
+		// fmt.Printf("currentPathElement(%[1]T): %[1]s\n", currentPathElement)
+		// fmt.Printf("m: %[1]s\n", m)
 		switch x := nestedSchema.Value; {
 		case x.Type.Permits(openapi3.TypeArray):
 			fmt.Printf("keys[:i] array: %v\n", keys[:i])
-		case x.Type.Permits(openapi3.TypeObject):
-			if _, ok := m[key]; !ok {
-				m[key] = make(map[string]interface{})
+			index, err := strconv.Atoi(keys[i])
+			if err != nil || index < 0 {
+				break
 			}
-			m = m[key].(map[string]interface{})
+			cpe, ok := currentPathElement.([]interface{})
+			if !ok {
+				cpe = []interface{}{map[string]interface{}{}}
+			} else if index >= len(cpe) {
+				// Extend the slice if needed
+				for j := len(cpe); j <= index; j++ {
+					cpe = append(cpe, make(map[string]interface{}))
+				}
+			}
+			previousPathElement.(map[string]interface{})[keys[i-1]] = cpe // assume obj
+			currentPathElement = cpe[index]
+			i++
+		case x.Type.Permits(openapi3.TypeObject):
 			fmt.Printf("keys[:i] object: %v\n", keys[:i])
+			cpe := currentPathElement.(map[string]interface{})
+			if _, ok := m[key]; !ok {
+				cpe[key] = make(map[string]interface{})
+			}
+			currentPathElement = cpe[key]
 		default:
 			fmt.Printf("keys[:i] default: %v\n", keys[:i])
 		}
+
 	}
-	m[keys[setLen]] = value
+
+	fmt.Printf("m final: %[1]s\n", m)
+	if cpe, ok := currentPathElement.(map[string]interface{}); ok {
+		cpe[keys[setLen]] = value
+	} else if cpe, ok := currentPathElement.([]interface{}); ok {
+		index, err := strconv.Atoi(keys[setLen])
+		if err != nil {
+			panic(err)
+		}
+		if index >= len(cpe) {
+			cpe = append(cpe, make(map[string]interface{}))
+		}
+		cpe[index] = value
+	} else {
+		panic(fmt.Sprintf("unexpected type %T", currentPathElement))
+	}
 }
 
 func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
