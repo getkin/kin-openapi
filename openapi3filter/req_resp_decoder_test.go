@@ -75,12 +75,12 @@ var (
 )
 
 func TestDeepGet(t *testing.T) {
-	iarray := []interface{}{
-		map[string]interface{}{
-			"foo": 1,
+	iarray := map[string]interface{}{
+		"0": map[string]interface{}{
+			"foo": 111,
 		},
-		map[string]interface{}{
-			"bar": 2,
+		"1": map[string]interface{}{
+			"bar": 222,
 		},
 	}
 
@@ -155,7 +155,7 @@ func TestDeepGet(t *testing.T) {
 				"array": iarray,
 			},
 			keys:       []string{"array", "1", "bar"},
-			expected:   2,
+			expected:   222,
 			shouldFind: true,
 		},
 		{
@@ -165,7 +165,7 @@ func TestDeepGet(t *testing.T) {
 			},
 			keys: []string{"array", "0"},
 			expected: map[string]interface{}{
-				"foo": 1,
+				"foo": 111,
 			},
 			shouldFind: true,
 		},
@@ -227,8 +227,8 @@ func TestDeepSet(t *testing.T) {
 			value:     true,
 			schemaRef: objectOf("nested", arrayOf(objectOf("key", booleanSchema))),
 			expected: map[string]interface{}{
-				"nested": []interface{}{
-					map[string]interface{}{
+				"nested": map[string]interface{}{
+					"0": map[string]interface{}{
 						"key": true,
 					},
 				},
@@ -244,12 +244,12 @@ func TestDeepSet(t *testing.T) {
 		},
 		{
 			name:      "existing array",
-			inputMap:  map[string]interface{}{"obj": []interface{}{"existingValue"}},
+			inputMap:  map[string]interface{}{"obj": map[string]interface{}{"0": "existingValue"}},
 			keys:      []string{"obj", "1"},
 			value:     "newValue",
 			schemaRef: objectOf("obj", arrayOf(stringSchema)),
 			expected: map[string]interface{}{
-				"obj": []interface{}{"existingValue", "newValue"},
+				"obj": map[string]interface{}{"0": "existingValue", "1": "newValue"},
 			},
 		},
 		{
@@ -267,33 +267,33 @@ func TestDeepSet(t *testing.T) {
 		},
 		{
 			name:      "existing nested array of objects",
-			inputMap:  map[string]interface{}{"nested": []interface{}{map[string]interface{}{"existingKey": "existingValue"}}},
+			inputMap:  map[string]interface{}{"nested": map[string]interface{}{"0": map[string]interface{}{"existingKey": "existingValue"}}},
 			keys:      []string{"nested", "0", "newKey"},
 			value:     "newValue",
 			schemaRef: objectOf("nested", arrayOf(objectOf("newKey", stringSchema))),
 			expected: map[string]interface{}{
-				"nested": []interface{}{
-					map[string]interface{}{
+				"nested": map[string]interface{}{
+					"0": map[string]interface{}{
 						"existingKey": "existingValue",
 						"newKey":      "newValue",
 					},
 				},
 			},
 		},
-
-		// FIXME:
-		// {
-		// 	name:      "array of arrays",
-		// 	inputMap:  map[string]interface{}{},
-		// 	keys:      []string{"nested", "0", "0"},
-		// 	value:     false,
-		// 	schemaRef: objectOf("nested", arrayOf(arrayOf(booleanSchema))),
-		// 	expected: map[string]interface{}{
-		// 		"nested": []interface{}{
-		// 			[]interface{}{false},
-		// 		},
-		// 	},
-		// },
+		{
+			name:      "array of arrays",
+			inputMap:  map[string]interface{}{},
+			keys:      []string{"nested", "0", "0"},
+			value:     false,
+			schemaRef: objectOf("nested", arrayOf(arrayOf(booleanSchema))),
+			expected: map[string]interface{}{
+				"nested": map[string]interface{}{
+					"0": map[string]interface{}{
+						"0": false,
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
