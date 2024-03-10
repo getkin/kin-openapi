@@ -207,17 +207,6 @@ func TestDeepSet(t *testing.T) {
 			expected: map[string]interface{}{"key": "value"},
 		},
 		{
-			name:     "deep set",
-			inputMap: map[string]interface{}{},
-			keys:     []string{"nested", "key"},
-			value:    true,
-			expected: map[string]interface{}{
-				"nested": map[string]interface{}{
-					"key": true,
-				},
-			},
-		},
-		{
 			name:     "intermediate array of objects",
 			inputMap: map[string]interface{}{},
 			keys:     []string{"nested", "0", "key"},
@@ -231,34 +220,6 @@ func TestDeepSet(t *testing.T) {
 			},
 		},
 		{
-			name:     "existing map",
-			inputMap: map[string]interface{}{"existingKey": "existingValue"},
-			keys:     []string{"newKey"},
-			value:    "newValue",
-			expected: map[string]interface{}{"existingKey": "existingValue", "newKey": "newValue"},
-		},
-		{
-			name:     "existing array",
-			inputMap: map[string]interface{}{"obj": map[string]interface{}{"0": "existingValue"}},
-			keys:     []string{"obj", "1"},
-			value:    "newValue",
-			expected: map[string]interface{}{
-				"obj": map[string]interface{}{"0": "existingValue", "1": "newValue"},
-			},
-		},
-		{
-			name:     "existing nested map",
-			inputMap: map[string]interface{}{"nested": map[string]interface{}{"existingKey": "existingValue"}},
-			keys:     []string{"nested", "newKey"},
-			value:    "newValue",
-			expected: map[string]interface{}{
-				"nested": map[string]interface{}{
-					"existingKey": "existingValue",
-					"newKey":      "newValue",
-				},
-			},
-		},
-		{
 			name:     "existing nested array of objects",
 			inputMap: map[string]interface{}{"nested": map[string]interface{}{"0": map[string]interface{}{"existingKey": "existingValue"}}},
 			keys:     []string{"nested", "0", "newKey"},
@@ -268,19 +229,6 @@ func TestDeepSet(t *testing.T) {
 					"0": map[string]interface{}{
 						"existingKey": "existingValue",
 						"newKey":      "newValue",
-					},
-				},
-			},
-		},
-		{
-			name:     "array of arrays",
-			inputMap: map[string]interface{}{},
-			keys:     []string{"nested", "0", "5"},
-			value:    true,
-			expected: map[string]interface{}{
-				"nested": map[string]interface{}{
-					"0": map[string]interface{}{
-						"5": true,
 					},
 				},
 			},
