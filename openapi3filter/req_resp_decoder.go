@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -920,66 +921,99 @@ func buildObj(obj map[string]interface{}, parentKeys []string, key string, props
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	fmt.Printf("props: %v\n", props)
 	// TODO: assign arrays with maps via deepget deepset, then convert to actual representation based on schema
-	obj := make(map[string]interface{})
-	resobj := make(map[string]interface{})
-	_ = resobj
+	mobj := make(map[string]interface{})
+	result := make(map[string]interface{})
+	_ = result
 
 	for keys, values := range props {
-		deepSet(obj, strings.Split(keys, urlDecoderDelimiter), strings.Split(values, urlDecoderDelimiter))
+		deepSet(mobj, strings.Split(keys, urlDecoderDelimiter), strings.Split(values, urlDecoderDelimiter))
 	}
 
-	fmt.Printf("obj: %v\n", obj)
+	fmt.Printf("mobj: %v\n", mobj)
+	for propName, propSchema := range schema.Value.Properties {
+		fmt.Printf("propName: %v\n", propName)
+		if err := buildResObj(result, mobj, nil, propName, propSchema); err != nil {
+			panic(err)
+		}
+	}
 
-	// for propName := range schema.Value.Properties {
-	// 	fmt.Printf("propName: %v\n", propName)
-	// 	// buildResObj(resobj, obj, nil, propName, propSchema, props)
-	// }
-
-	return obj, nil
+	return result, nil
 }
 
-func buildResObj(obj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef, props map[string]string) {
-	switch {
-	case schema.Value.Type.Is("array"):
-		fmt.Printf("array--key: %v\n", key)
-		for prop := range props {
-			if !strings.HasPrefix(prop, key+urlDecoderDelimiter) {
-				continue
-			}
-			fmt.Printf("prop: %v\n", prop)
-			re := fmt.Sprintf(`.*%[1]s(.*?)%[1]s(.*)(%[1]s)?`, urlDecoderDelimiter)
-			matches := regexp.MustCompile(re).FindAllStringSubmatch(prop, -1)
-			fmt.Printf("matches[0]: %v\n", matches[0])
-			idx, err := strconv.Atoi(matches[0][1])
-			if err != nil {
-				return
-			}
-			fmt.Printf("idx: %v\n", idx)
-			// buildObj(obj, append(parentKeys, key), propName, propSchema, props)
+func mapToArray(m map[string]interface{}) ([]interface{}, error) {
+	var result []interface{}
 
+	keys := make([]int, 0, len(m))
+	for k := range m {
+		key, err := strconv.Atoi(k)
+		if err != nil {
+			return nil, fmt.Errorf("map array keys must be integers: %w", err)
+		} else {
+			keys = append(keys, key)
 		}
-		itemsSchema := schema.Value.Items.Value
-		switch {
-		case itemsSchema.Type.Includes("object"): // array of objects
-			for propName, propSchema := range itemsSchema.Properties {
-				fmt.Printf("array--propName: %v\n", propName)
-				fmt.Printf("array--propSchema type: %+v\n", propSchema.Value.Type.Slice())
-			}
-		case itemsSchema.Type.Includes("array"): // array of arrays
-		default: // array of primitives
-
+	}
+	sort.Ints(keys)
+	for i := 0; i < len(keys); i++ {
+		key := keys[i]
+		if key != i {
+			return nil, fmt.Errorf("missing array value at index %v", i) // disallow missing array elements in params
 		}
-	case schema.Value.Type.Is("object"):
-		fmt.Printf("object--key: %v\n", key)
-		for propName, propSchema := range schema.Value.Properties {
-			fmt.Printf("array--propName: %v\n", propName)
-			fmt.Printf("array--propSchema type: %+v\n", propSchema.Value.Type.Slice())
+		val, ok := m[strconv.Itoa(key)]
+		if !ok {
+			return nil, fmt.Errorf("missing key: %d", key)
 		}
-	default:
-		fmt.Printf("default--key: %v\n", key)
+		result = append(result, val)
 	}
 
-	fmt.Printf("obj(path=%s): %v\n", strings.Join(append(parentKeys, key), "."), obj)
+	return result, nil
+}
+
+func buildResObj(dst interface{}, mobj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) error {
+	for key, val := range mobj { // first always map
+		mapKeys := append(parentKeys, key)
+		nestedSchema, err := findNestedSchema(schema, mapKeys)
+		if err != nil {
+			return &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
+		}
+
+		// check type and convert to []interface{} if required
+		fmt.Printf("val: %v\n", val)
+		fmt.Printf("(path=%s) schema: %v - nested schema: %v \n", strings.Join(mapKeys, "."), schema.Value.Type.Slice(), nestedSchema.Value.Type.Slice())
+		switch {
+		case schema.Value.Type.Is("array"):
+			fmt.Printf("array --: %v\n", val)
+			mobjArr, ok := deepGet(mobj, mapKeys...)
+			if !ok {
+				return &ParseError{path: pathFromKeys(mapKeys), Reason: "not found"}
+			}
+			fmt.Printf("mobjArray: %+v\n", mobjArr)
+			t := mobjArr.(map[string]interface{})
+			// intermediate arrays have to be instantiated
+			arr, err := mapToArray(t)
+			if err != nil {
+				return &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
+			}
+			fmt.Printf("arr: %+v\n", arr)
+			// for arri := range t {
+			// 	d := []interface{}{}
+			// 	if err := buildResObj(d, t, mapKeys, arri, nestedSchema.Value.Items); err != nil {
+			// 		panic(err)
+			// 	}
+			// 	fmt.Printf("d: %v\n", d)
+			// }
+		case schema.Value.Type.Is("object"):
+			fmt.Printf("object --: %v\n", val)
+			// recurse
+		default:
+			fmt.Printf("default --: %v\n", val)
+			// set val
+		}
+
+	}
+
+	fmt.Printf("dst: %+v \n", dst)
+
+	return nil
 }
 
 func oldmakeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {

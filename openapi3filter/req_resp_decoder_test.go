@@ -1022,6 +1022,17 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindOther, Value: "baz", Reason: "schema has non primitive type object"}},
 				},
+				{
+					name: "deepObject explode nested array of objects - missing array index",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"arr", arrayOf(objectOf("key", booleanSchema)),
+						),
+					},
+					query: "param[arr][4][key]=true&param[arr][0][key]=false",
+					err:   &ParseError{path: []interface{}{"arr"}, Cause: &ParseError{Kind: KindOther, Value: "", Reason: "missing array value at index 0"}},
+				},
 				// FIXME: SUPPORT NESTED ARRAY OF OBJECTS
 				{
 					name: "deepObject explode nested array of objects",
