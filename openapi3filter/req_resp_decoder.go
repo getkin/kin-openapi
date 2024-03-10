@@ -924,7 +924,11 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	_ = result
 
 	for keys, value := range props {
-		// there are no []interface{} as values anymore when using indexes so dont split on delimiter
+		if strings.Contains(value, urlDecoderDelimiter) {
+			// don't support implicit array indexes anymore
+			p := pathFromKeys(strings.Split(keys, urlDecoderDelimiter))
+			return nil, &ParseError{path: p, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}
+		}
 		deepSet(mobj, strings.Split(keys, urlDecoderDelimiter), value)
 	}
 
@@ -983,7 +987,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		// check type and convert to []interface{} if required
 		paramArr, ok := deepGet(params, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 		}
 		fmt.Printf("mobjArray: %+v\n", paramArr)
 		t, isMap := paramArr.(map[string]interface{})
@@ -1028,7 +1032,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 		}
 
 		ival, err := parsePrimitive(val.(string), schema)
