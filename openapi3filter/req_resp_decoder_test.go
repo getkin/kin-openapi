@@ -125,7 +125,7 @@ func TestDeepGet(t *testing.T) {
 		{
 			name: "Array - element exists",
 			m: map[string]interface{}{
-				"array": []interface{}{"a", "b", "c"},
+				"array": map[string]interface{}{"0": "a", "1": "b", "2": "c"},
 			},
 			keys:       []string{"array", "1"},
 			expected:   "b",
@@ -134,7 +134,7 @@ func TestDeepGet(t *testing.T) {
 		{
 			name: "Array - element does not exist - invalid index",
 			m: map[string]interface{}{
-				"array": []interface{}{"a", "b", "c"},
+				"array": map[string]interface{}{"0": "a", "1": "b", "2": "c"},
 			},
 			keys:       []string{"array", "3"},
 			expected:   nil,
@@ -143,7 +143,7 @@ func TestDeepGet(t *testing.T) {
 		{
 			name: "Array - element does not exist - invalid keys",
 			m: map[string]interface{}{
-				"array": []interface{}{"a", "b", "c"},
+				"array": map[string]interface{}{"0": "a", "1": "b", "2": "c"},
 			},
 			keys:       []string{"array", "a", "999"},
 			expected:   nil,
@@ -193,27 +193,24 @@ func TestDeepGet(t *testing.T) {
 
 func TestDeepSet(t *testing.T) {
 	tests := []struct {
-		name      string
-		inputMap  map[string]interface{}
-		schemaRef *openapi3.SchemaRef
-		keys      []string
-		value     interface{}
-		expected  map[string]interface{}
+		name     string
+		inputMap map[string]interface{}
+		keys     []string
+		value    interface{}
+		expected map[string]interface{}
 	}{
 		{
-			name:      "simple set",
-			inputMap:  map[string]interface{}{},
-			keys:      []string{"key"},
-			value:     "value",
-			schemaRef: objectOf("key", stringSchema),
-			expected:  map[string]interface{}{"key": "value"},
+			name:     "simple set",
+			inputMap: map[string]interface{}{},
+			keys:     []string{"key"},
+			value:    "value",
+			expected: map[string]interface{}{"key": "value"},
 		},
 		{
-			name:      "deep set",
-			inputMap:  map[string]interface{}{},
-			keys:      []string{"nested", "key"},
-			value:     true,
-			schemaRef: objectOf("nested", objectOf("key", booleanSchema)),
+			name:     "deep set",
+			inputMap: map[string]interface{}{},
+			keys:     []string{"nested", "key"},
+			value:    true,
 			expected: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"key": true,
@@ -221,11 +218,10 @@ func TestDeepSet(t *testing.T) {
 			},
 		},
 		{
-			name:      "intermediate array of objects",
-			inputMap:  map[string]interface{}{},
-			keys:      []string{"nested", "0", "key"},
-			value:     true,
-			schemaRef: objectOf("nested", arrayOf(objectOf("key", booleanSchema))),
+			name:     "intermediate array of objects",
+			inputMap: map[string]interface{}{},
+			keys:     []string{"nested", "0", "key"},
+			value:    true,
 			expected: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"0": map[string]interface{}{
@@ -235,29 +231,26 @@ func TestDeepSet(t *testing.T) {
 			},
 		},
 		{
-			name:      "existing map",
-			inputMap:  map[string]interface{}{"existingKey": "existingValue"},
-			keys:      []string{"newKey"},
-			value:     "newValue",
-			schemaRef: objectOf("newKey", stringSchema),
-			expected:  map[string]interface{}{"existingKey": "existingValue", "newKey": "newValue"},
+			name:     "existing map",
+			inputMap: map[string]interface{}{"existingKey": "existingValue"},
+			keys:     []string{"newKey"},
+			value:    "newValue",
+			expected: map[string]interface{}{"existingKey": "existingValue", "newKey": "newValue"},
 		},
 		{
-			name:      "existing array",
-			inputMap:  map[string]interface{}{"obj": map[string]interface{}{"0": "existingValue"}},
-			keys:      []string{"obj", "1"},
-			value:     "newValue",
-			schemaRef: objectOf("obj", arrayOf(stringSchema)),
+			name:     "existing array",
+			inputMap: map[string]interface{}{"obj": map[string]interface{}{"0": "existingValue"}},
+			keys:     []string{"obj", "1"},
+			value:    "newValue",
 			expected: map[string]interface{}{
 				"obj": map[string]interface{}{"0": "existingValue", "1": "newValue"},
 			},
 		},
 		{
-			name:      "existing nested map",
-			inputMap:  map[string]interface{}{"nested": map[string]interface{}{"existingKey": "existingValue"}},
-			keys:      []string{"nested", "newKey"},
-			value:     "newValue",
-			schemaRef: objectOf("nested", objectOf("newKey", stringSchema)),
+			name:     "existing nested map",
+			inputMap: map[string]interface{}{"nested": map[string]interface{}{"existingKey": "existingValue"}},
+			keys:     []string{"nested", "newKey"},
+			value:    "newValue",
 			expected: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"existingKey": "existingValue",
@@ -266,11 +259,10 @@ func TestDeepSet(t *testing.T) {
 			},
 		},
 		{
-			name:      "existing nested array of objects",
-			inputMap:  map[string]interface{}{"nested": map[string]interface{}{"0": map[string]interface{}{"existingKey": "existingValue"}}},
-			keys:      []string{"nested", "0", "newKey"},
-			value:     "newValue",
-			schemaRef: objectOf("nested", arrayOf(objectOf("newKey", stringSchema))),
+			name:     "existing nested array of objects",
+			inputMap: map[string]interface{}{"nested": map[string]interface{}{"0": map[string]interface{}{"existingKey": "existingValue"}}},
+			keys:     []string{"nested", "0", "newKey"},
+			value:    "newValue",
 			expected: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"0": map[string]interface{}{
@@ -281,15 +273,14 @@ func TestDeepSet(t *testing.T) {
 			},
 		},
 		{
-			name:      "array of arrays",
-			inputMap:  map[string]interface{}{},
-			keys:      []string{"nested", "0", "0"},
-			value:     false,
-			schemaRef: objectOf("nested", arrayOf(arrayOf(booleanSchema))),
+			name:     "array of arrays",
+			inputMap: map[string]interface{}{},
+			keys:     []string{"nested", "0", "5"},
+			value:    true,
 			expected: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"0": map[string]interface{}{
-						"0": false,
+						"5": true,
 					},
 				},
 			},
@@ -298,10 +289,7 @@ func TestDeepSet(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.schemaRef == nil {
-				t.Fatalf("missing schema")
-			}
-			deepSet(tc.inputMap, tc.keys, tc.value, tc.schemaRef)
+			deepSet(tc.inputMap, tc.keys, tc.value)
 			require.EqualValues(t, tc.expected, tc.inputMap)
 		})
 	}

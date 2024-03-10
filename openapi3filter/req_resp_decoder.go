@@ -868,114 +868,27 @@ func propsFromString(src, propDelim, valueDelim string) (map[string]string, erro
 }
 
 func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
-	for i := 0; i < len(keys); i++ {
-		key := keys[i]
+	for _, key := range keys {
 		val, ok := m[key]
 		if !ok {
 			return nil, false
 		}
-		switch v := val.(type) {
-		case map[string]interface{}:
-			m = v
-		case []interface{}:
-			if i == len(keys)-1 {
-				return v, true
-			}
-			index, err := strconv.Atoi(keys[i+1])
-			i++
-			if err != nil || index < 0 || index >= len(v) {
-				return nil, false
-			}
-			item := v[index]
-			if _, ok := item.([]interface{}); ok {
-				// array of arrays not supported
-				return nil, false
-			} else if it, ok := item.(map[string]interface{}); ok {
-				m = it
-			} else {
-				return item, true // primitive
-			}
-		default:
+		if m, ok = val.(map[string]interface{}); !ok {
 			return val, true
 		}
 	}
-
 	return m, true
 }
 
-// TODO: deepSet and deepGet should just use maps and index by array index,
-// then convert the nested maps in makeObject to []interface{} using prop schema.
-// will simplify everything dramatically.
-func deepSet(m map[string]interface{}, keys []string, value interface{}, schema *openapi3.SchemaRef) {
-	var currentPathElement, previousPathElement interface{}
-	_ = previousPathElement
-	currentPathElement = m
-	setLen := len(keys) - 1
-	for i := 0; i < setLen; i++ {
-		previousPathElement = currentPathElement
+func deepSet(m map[string]interface{}, keys []string, value interface{}) {
+	for i := 0; i < len(keys)-1; i++ {
 		key := keys[i]
-		nestedSchema, err := findNestedSchema(schema, keys[:i])
-		if err != nil {
-			panic(err)
+		if _, ok := m[key]; !ok {
+			m[key] = make(map[string]interface{})
 		}
-		switch x := nestedSchema.Value; {
-		case x.Type.Permits(openapi3.TypeArray):
-			index, err := strconv.Atoi(keys[i])
-			if err != nil || index < 0 {
-				break
-			}
-			cpe, ok := currentPathElement.([]interface{})
-			if !ok {
-				cpe = []interface{}{map[string]interface{}{}}
-			} else if index >= len(cpe) {
-				// extend if needed, but path keys should be already sorted
-				for j := len(cpe); j <= index; j++ {
-					cpe = append(cpe, make(map[string]interface{}))
-				}
-			}
-			currentPathElement = cpe[index]
-			// set back into the original map's parent - assumes map
-			parentKey := keys[i-1]
-			switch m[parentKey].(type) {
-			case map[string]interface{}:
-				m[parentKey] = cpe
-			case []interface{}:
-				pidx, err := strconv.Atoi(parentKey)
-				if err != nil || pidx < 0 {
-					break
-				}
-
-				m[parentKey].([]interface{})[pidx].([]interface{})[index] = cpe
-			default:
-			}
-			i++
-		case x.Type.Permits(openapi3.TypeObject):
-			cpe := currentPathElement.(map[string]interface{})
-			if _, ok := m[key]; !ok {
-				cpe[key] = make(map[string]interface{})
-			}
-			currentPathElement = cpe[key]
-		default:
-		}
-
+		m = m[key].(map[string]interface{})
 	}
-
-	if cpe, ok := currentPathElement.(map[string]interface{}); ok {
-		cpe[keys[setLen]] = value
-	} else if cpe, ok := currentPathElement.([]interface{}); ok {
-		index, err := strconv.Atoi(keys[setLen])
-		if err != nil {
-			panic(err)
-		}
-		if index >= len(cpe) {
-			cpe = append(cpe, nil)
-		}
-
-		cpe[index] = value
-		m[keys[setLen-1]] = cpe
-	} else {
-		panic(fmt.Sprintf("unexpected type %T", currentPathElement))
-	}
+	m[keys[len(keys)-1]] = value
 }
 
 func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
@@ -1063,14 +976,14 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 					if err != nil {
 						return nil, handlePropParseError(mapKeys, err)
 					}
-					deepSet(obj, mapKeys, ivals, propSchema)
+					deepSet(obj, mapKeys, ivals)
 					continue
 				}
 				value, err := parsePrimitive(props[prop], nestedSchema)
 				if err != nil {
 					return nil, handlePropParseError(mapKeys, err)
 				}
-				deepSet(obj, mapKeys, value, propSchema)
+				deepSet(obj, mapKeys, value)
 			}
 		default:
 			value, err := parsePrimitive(props[propName], propSchema)
