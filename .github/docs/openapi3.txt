@@ -134,6 +134,9 @@ type AdditionalProperties struct {
 func (addProps AdditionalProperties) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of AdditionalProperties.
 
+func (addProps AdditionalProperties) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of AdditionalProperties.
+
 func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets AdditionalProperties to a copy of data.
 
