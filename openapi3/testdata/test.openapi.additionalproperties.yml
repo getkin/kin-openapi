@@ -11,3 +11,7 @@ components:
         type: array
         items:
           type: string
+    TestSchema2:
+      type: object
+      additionalProperties:
+        type: string
