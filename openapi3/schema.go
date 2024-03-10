@@ -213,6 +213,20 @@ type AdditionalProperties struct {
 	Schema *SchemaRef
 }
 
+// MarshalYAML returns the YAML encoding of AdditionalProperties.
+func (addProps AdditionalProperties) MarshalYAML() (interface{}, error) {
+	if x := addProps.Has; x != nil {
+		if *x {
+			return true, nil
+		}
+		return false, nil
+	}
+	if x := addProps.Schema; x != nil {
+		return x.Value, nil
+	}
+	return nil, nil
+}
+
 // MarshalJSON returns the JSON encoding of AdditionalProperties.
 func (addProps AdditionalProperties) MarshalJSON() ([]byte, error) {
 	if x := addProps.Has; x != nil {
