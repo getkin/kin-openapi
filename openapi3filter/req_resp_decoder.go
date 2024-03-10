@@ -911,6 +911,9 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 	return currentSchema, nil
 }
 
+func buildObj(obj map[string]interface{}, parentKeys []string, key string, props map[string]string) {
+}
+
 // makeObject returns an object that contains properties from props.
 // A value of every property is parsed as a primitive value.
 // The function returns an error when an error happened while parse object's properties.
@@ -918,8 +921,76 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	fmt.Printf("props: %v\n", props)
 	// TODO: assign arrays with maps via deepget deepset, then convert to actual representation based on schema
 	obj := make(map[string]interface{})
+	resobj := make(map[string]interface{})
+	_ = resobj
+
+	for keys, values := range props {
+		deepSet(obj, strings.Split(keys, urlDecoderDelimiter), strings.Split(values, urlDecoderDelimiter))
+	}
+
+	fmt.Printf("obj: %v\n", obj)
+
+	// for propName := range schema.Value.Properties {
+	// 	fmt.Printf("propName: %v\n", propName)
+	// 	// buildResObj(resobj, obj, nil, propName, propSchema, props)
+	// }
+
+	return obj, nil
+}
+
+func buildResObj(obj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef, props map[string]string) {
+	switch {
+	case schema.Value.Type.Is("array"):
+		fmt.Printf("array--key: %v\n", key)
+		for prop := range props {
+			if !strings.HasPrefix(prop, key+urlDecoderDelimiter) {
+				continue
+			}
+			fmt.Printf("prop: %v\n", prop)
+			re := fmt.Sprintf(`.*%[1]s(.*?)%[1]s(.*)(%[1]s)?`, urlDecoderDelimiter)
+			matches := regexp.MustCompile(re).FindAllStringSubmatch(prop, -1)
+			fmt.Printf("matches[0]: %v\n", matches[0])
+			idx, err := strconv.Atoi(matches[0][1])
+			if err != nil {
+				return
+			}
+			fmt.Printf("idx: %v\n", idx)
+			// buildObj(obj, append(parentKeys, key), propName, propSchema, props)
+
+		}
+		itemsSchema := schema.Value.Items.Value
+		switch {
+		case itemsSchema.Type.Includes("object"): // array of objects
+			for propName, propSchema := range itemsSchema.Properties {
+				fmt.Printf("array--propName: %v\n", propName)
+				fmt.Printf("array--propSchema type: %+v\n", propSchema.Value.Type.Slice())
+			}
+		case itemsSchema.Type.Includes("array"): // array of arrays
+		default: // array of primitives
+
+		}
+	case schema.Value.Type.Is("object"):
+		fmt.Printf("object--key: %v\n", key)
+		for propName, propSchema := range schema.Value.Properties {
+			fmt.Printf("array--propName: %v\n", propName)
+			fmt.Printf("array--propSchema type: %+v\n", propSchema.Value.Type.Slice())
+		}
+	default:
+		fmt.Printf("default--key: %v\n", key)
+	}
+
+	fmt.Printf("obj(path=%s): %v\n", strings.Join(append(parentKeys, key), "."), obj)
+}
+
+func oldmakeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
+	fmt.Printf("props: %v\n", props)
+	// TODO: assign arrays with maps via deepget deepset, then convert to actual representation based on schema
+	obj := make(map[string]interface{})
+	resobj := make(map[string]interface{})
+	_ = resobj
 
 	for propName, propSchema := range schema.Value.Properties {
+		fmt.Printf("propName: %v\n", propName)
 		switch {
 		case propSchema.Value.Type.Is("array"):
 			if propSchema.Value.Items.Value.Type.Is(openapi3.TypeObject) {
@@ -953,6 +1024,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 			if err != nil {
 				return nil, handlePropParseError([]string{propName}, err)
 			}
+			fmt.Printf("vals: %v\n", vals)
 			obj[propName] = ivals
 		case propSchema.Value.Type.Is("object"):
 			for prop := range props {
