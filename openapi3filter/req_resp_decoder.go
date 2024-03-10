@@ -970,7 +970,7 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 
 // buildResObj constructs an object based on a given schema and param values
 // mobj: pure map of maps containing all param values indexed by either key or array indexes
-func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
+func buildResObj(params map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
 	var err error
 	mapKeys := parentKeys
 	if key != "" {
@@ -981,14 +981,23 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		fmt.Printf("arr key: %v \n", key)
 
 		// check type and convert to []interface{} if required
-		mobjArr, ok := deepGet(mobj, mapKeys...)
+		paramArr, ok := deepGet(params, mapKeys...)
 		if !ok {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
-		fmt.Printf("mobjArray: %+v\n", mobjArr)
-		t, ok := mobjArr.(map[string]interface{})
-		if !ok {
-			fmt.Printf("mobjArray !ok: %+v\n", mobjArr)
+		fmt.Printf("mobjArray: %+v\n", paramArr)
+		t, isMap := paramArr.(map[string]interface{})
+		_, isArrayOfArrays := paramArr.([]interface{})
+		if !isMap {
+			if !isArrayOfArrays {
+				res, err := buildResObj(params, mapKeys, "", schema.Value.Items)
+				if err != nil {
+					return nil, err
+				}
+				return res, nil
+			} else {
+				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "array of arrays not supported"}
+			}
 		}
 		// intermediate arrays have to be instantiated
 		arr, err := sliceMapToSlice(t)
@@ -998,7 +1007,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		fmt.Printf("arr: %+v\n", arr)
 		resultArr := make([]interface{}, len(arr))
 		for i := range arr {
-			res, err := buildResObj(mobj, mapKeys, strconv.Itoa(i), schema.Value.Items)
+			res, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
 				return nil, err
 			}
@@ -1010,14 +1019,14 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		resultMap := make(map[string]interface{})
 		// TODO: additionalProperties
 		for k, propSchema := range schema.Value.Properties {
-			resultMap[k], err = buildResObj(mobj, mapKeys, k, propSchema)
+			resultMap[k], err = buildResObj(params, mapKeys, k, propSchema)
 			if err != nil {
 				return nil, err
 			}
 		}
 		return resultMap, nil
 	default:
-		val, ok := deepGet(mobj, mapKeys...)
+		val, ok := deepGet(params, mapKeys...)
 		if !ok {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
