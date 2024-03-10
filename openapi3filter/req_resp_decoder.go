@@ -1021,11 +1021,26 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		return resultArr, nil
 	case schema.Value.Type.Is("object"):
 		resultMap := make(map[string]interface{})
-		// TODO: additionalProperties
 		for k, propSchema := range schema.Value.Properties {
 			resultMap[k], err = buildResObj(params, mapKeys, k, propSchema)
 			if err != nil {
 				return nil, err
+			}
+		}
+		// TODO: additionalProperties
+		if s := schema.Value.AdditionalProperties.Schema; s != nil {
+			additProps, ok := deepGet(params, mapKeys...)
+			if !ok {
+				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
+			}
+			fmt.Printf("additProps: %v\n", additProps)
+			// create for each param value
+			for k := range additProps.(map[string]interface{}) {
+				fmt.Printf("additionalProperty k: %v\n", k)
+				resultMap[k], err = buildResObj(params, mapKeys, k, s)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 		return resultMap, nil
