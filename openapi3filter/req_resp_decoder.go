@@ -983,7 +983,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		// check type and convert to []interface{} if required
 		mobjArr, ok := deepGet(mobj, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
 		fmt.Printf("mobjArray: %+v\n", mobjArr)
 		t, ok := mobjArr.(map[string]interface{})
@@ -993,14 +993,14 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		// intermediate arrays have to be instantiated
 		arr, err := sliceMapToSlice(t)
 		if err != nil {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
 		}
 		fmt.Printf("arr: %+v\n", arr)
 		resultArr := make([]interface{}, len(arr))
 		for i := range arr {
 			res, err := buildResObj(mobj, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
-				return nil, handlePropParseError(mapKeys, err)
+				return nil, err
 			}
 			resultArr[i] = res
 			fmt.Printf("res i=%v: %v\n", i, res)
@@ -1012,25 +1012,23 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		for k, propSchema := range schema.Value.Properties {
 			resultMap[k], err = buildResObj(mobj, mapKeys, k, propSchema)
 			if err != nil {
-				return nil, handlePropParseError(mapKeys, err)
+				return nil, err
 			}
 		}
 		return resultMap, nil
 	default:
 		val, ok := deepGet(mobj, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
-		fmt.Printf("val: %v\n", val)
 
 		ival, err := parsePrimitive(val.(string), schema)
 		if err != nil {
-			handlePropParseError(mapKeys, err)
+			return nil, handlePropParseError(mapKeys, err)
 		}
 		if ival == nil { // parsing failed but there is a value in params
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s has an invalid value", strings.Join(mapKeys, "."))}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Value: val, Reason: fmt.Sprintf("path %s has an invalid value", strings.Join(mapKeys, "."))}
 		}
-		fmt.Printf("ival: %v val: %v\n", ival, val)
 
 		return ival, nil
 
