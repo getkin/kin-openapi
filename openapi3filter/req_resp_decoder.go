@@ -933,7 +933,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	fmt.Printf("o: %v\n", string(o))
 	r, err := buildResObj(mobj, nil, "", schema)
 	if err != nil {
-		return nil, &ParseError{Cause: err, Reason: "could not construct parameter object"}
+		return nil, &ParseError{Reason: fmt.Sprintf("could not construct parameter object: %v", err)}
 	}
 	result = r.(map[string]interface{})
 
