@@ -930,12 +930,13 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	}
 
 	fmt.Printf("mobj: %v\n", mobj)
-	for propName, propSchema := range schema.Value.Properties {
-		fmt.Printf("propName: %v\n", propName)
-		if err := buildResObj(result, mobj, nil, propName, propSchema); err != nil {
-			panic(err)
-		}
+	dst, err := buildResObj(result, mobj, nil, "", schema)
+	if err != nil {
+		panic(err)
 	}
+	result = dst.(map[string]interface{})
+
+	fmt.Printf("result: %v\n", result)
 
 	return result, nil
 }
@@ -968,52 +969,67 @@ func mapToArray(m map[string]interface{}) ([]interface{}, error) {
 	return result, nil
 }
 
-func buildResObj(dst interface{}, mobj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) error {
-	for key, val := range mobj { // first always map
-		mapKeys := append(parentKeys, key)
-		nestedSchema, err := findNestedSchema(schema, mapKeys)
-		if err != nil {
-			return &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
-		}
+func buildResObj(dst interface{}, mobj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
+	mapKeys := parentKeys
+	if key != "" {
+		mapKeys = append(mapKeys, key)
+	}
+	switch {
+	case schema.Value.Type.Is("array"):
+		fmt.Printf("arr key: %v \n", key)
 
 		// check type and convert to []interface{} if required
-		fmt.Printf("val: %v\n", val)
-		fmt.Printf("(path=%s) schema: %v - nested schema: %v \n", strings.Join(mapKeys, "."), schema.Value.Type.Slice(), nestedSchema.Value.Type.Slice())
-		switch {
-		case schema.Value.Type.Is("array"):
-			fmt.Printf("array --: %v\n", val)
-			mobjArr, ok := deepGet(mobj, mapKeys...)
-			if !ok {
-				return &ParseError{path: pathFromKeys(mapKeys), Reason: "not found"}
-			}
-			fmt.Printf("mobjArray: %+v\n", mobjArr)
-			t := mobjArr.(map[string]interface{})
-			// intermediate arrays have to be instantiated
-			arr, err := mapToArray(t)
-			if err != nil {
-				return &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
-			}
-			fmt.Printf("arr: %+v\n", arr)
-			// for arri := range t {
-			// 	d := []interface{}{}
-			// 	if err := buildResObj(d, t, mapKeys, arri, nestedSchema.Value.Items); err != nil {
-			// 		panic(err)
-			// 	}
-			// 	fmt.Printf("d: %v\n", d)
-			// }
-		case schema.Value.Type.Is("object"):
-			fmt.Printf("object --: %v\n", val)
-			// recurse
-		default:
-			fmt.Printf("default --: %v\n", val)
-			// set val
+		mobjArr, ok := deepGet(mobj, mapKeys...)
+		if !ok {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: "not found"}
 		}
+		fmt.Printf("mobjArray: %+v\n", mobjArr)
+		t := mobjArr.(map[string]interface{})
+		// intermediate arrays have to be instantiated
+		arr, err := mapToArray(t)
+		if err != nil {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
+		}
+		fmt.Printf("arr: %+v\n", arr)
 
+		res, err := buildResObj(arr, mobj, parentKeys, key, nestedSchema)
+		if err != nil {
+			panic(err)
+		}
+		dst.(map[string]interface{})[key] = res
+		// for arri := range t {
+		// 	d := []interface{}{}
+		// 	if err := buildResObj(d, t, mapKeys, arri, nestedSchema.Value.Items); err != nil {
+		// 		panic(err)
+		// 	}
+		// 	fmt.Printf("d: %v\n", d)
+		// }
+	case schema.Value.Type.Is("object"):
+		for key, val := range mobj { // first always map
+			fmt.Printf("object -- key:%s val=%v\n", key, val)
+			// recurse
+
+			nestedSchema, err := findNestedSchema(schema, mapKeys)
+			if err != nil {
+				return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
+			}
+			fmt.Printf("(path=%s) schema: %v - nested schema: %v \n", strings.Join(mapKeys, "."), schema.Value.Type.Slice(), nestedSchema.Value.Type.Slice())
+
+			res, err := buildResObj(dst, mobj, parentKeys, key, nestedSchema)
+			if err != nil {
+				panic(err)
+			}
+			dst.(map[string]interface{})[key] = res
+		}
+	default:
+		val := mobj[key]
+		fmt.Printf("default --: %v\n", val)
+		// set val
 	}
 
 	fmt.Printf("dst: %+v \n", dst)
 
-	return nil
+	return dst, nil
 }
 
 func oldmakeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
