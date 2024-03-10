@@ -984,7 +984,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		// check type and convert to []interface{} if required
 		mobjArr, ok := deepGet(mobj, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: "not found"}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
 		fmt.Printf("mobjArray: %+v\n", mobjArr)
 		t := mobjArr.(map[string]interface{})
@@ -994,26 +994,32 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
 		}
 		fmt.Printf("arr: %+v\n", arr)
-
-		res, err := buildResObj(mobj, parentKeys, key, schema.Value.Items)
-		if err != nil {
-			panic(err)
+		resultArr := make([]interface{}, len(arr))
+		for i := range arr {
+			res, err := buildResObj(mobj, mapKeys, strconv.Itoa(i), schema.Value.Items)
+			if err != nil {
+				panic(err)
+			}
+			resultArr[i] = res
+			fmt.Printf("res i=%v: %v\n", i, res)
 		}
-		return res, nil
+		return resultArr, nil
 	case schema.Value.Type.Is("object"):
 		resultMap := make(map[string]interface{})
 		for k, propSchema := range schema.Value.Properties {
-			resultMap[key], err = buildResObj(mobj, parentKeys, k, propSchema)
+			resultMap[k], err = buildResObj(mobj, mapKeys, k, propSchema)
 			if err != nil {
 				return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not build nested object: %v", err)}
 			}
 		}
+		fmt.Printf("resultMap: %v\n", resultMap)
 		return resultMap, nil
 	default:
 		val, ok := deepGet(mobj, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: "not found"}
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
+		// TODO: parse primitive
 		fmt.Printf("default --: %v\n", val)
 		// set val
 		return val, nil
