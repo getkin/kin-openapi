@@ -919,7 +919,6 @@ func buildObj(obj map[string]interface{}, parentKeys []string, key string, props
 // A value of every property is parsed as a primitive value.
 // The function returns an error when an error happened while parse object's properties.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
-	fmt.Printf("props: %v\n", props)
 	mobj := make(map[string]interface{})
 	result := make(map[string]interface{})
 	_ = result
@@ -929,11 +928,9 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 		deepSet(mobj, strings.Split(keys, urlDecoderDelimiter), value)
 	}
 
-	o, _ := json.MarshalIndent(mobj, "", "  ")
-	fmt.Printf("o: %v\n", string(o))
 	r, err := buildResObj(mobj, nil, "", schema)
 	if err != nil {
-		return nil, &ParseError{Reason: fmt.Sprintf("could not construct parameter object: %v", err)}
+		return nil, err
 	}
 	result = r.(map[string]interface{})
 
@@ -989,7 +986,10 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
 		fmt.Printf("mobjArray: %+v\n", mobjArr)
-		t := mobjArr.(map[string]interface{})
+		t, ok := mobjArr.(map[string]interface{})
+		if !ok {
+			fmt.Printf("mobjArray !ok: %+v\n", mobjArr)
+		}
 		// intermediate arrays have to be instantiated
 		arr, err := sliceMapToSlice(t)
 		if err != nil {
@@ -1000,7 +1000,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		for i := range arr {
 			res, err := buildResObj(mobj, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
-				return nil, err
+				return nil, handlePropParseError(mapKeys, err)
 			}
 			resultArr[i] = res
 			fmt.Printf("res i=%v: %v\n", i, res)
@@ -1008,10 +1008,11 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		return resultArr, nil
 	case schema.Value.Type.Is("object"):
 		resultMap := make(map[string]interface{})
+		// TODO: additionalProperties
 		for k, propSchema := range schema.Value.Properties {
 			resultMap[k], err = buildResObj(mobj, mapKeys, k, propSchema)
 			if err != nil {
-				return nil, err
+				return nil, handlePropParseError(mapKeys, err)
 			}
 		}
 		return resultMap, nil
@@ -1020,18 +1021,19 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		if !ok {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
+		fmt.Printf("val: %v\n", val)
 
-		v, err := parsePrimitive(val.(string), schema)
+		ival, err := parsePrimitive(val.(string), schema)
 		if err != nil {
-			return nil, handlePropParseError(mapKeys, err)
+			handlePropParseError(mapKeys, err)
 		}
-		fmt.Printf("v: %v\n", v)
+		if ival == nil { // parsing failed but there is a value in params
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s has an invalid value", strings.Join(mapKeys, "."))}
+		}
+		fmt.Printf("ival: %v val: %v\n", ival, val)
 
-		ival, err := convertParamValueToType(val.(string), schema.Value.Type)
-		if err != nil {
-			return nil, handlePropParseError(mapKeys, err)
-		}
 		return ival, nil
+
 	}
 
 	return nil, err

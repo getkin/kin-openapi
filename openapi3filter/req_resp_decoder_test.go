@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -579,21 +580,21 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", integerSchema)},
 					path:  "/foo,bar",
 					found: true,
-					err:   &ParseError{Reason: "could not construct parameter object: path foo: value bar: an invalid integer: invalid syntax"},
+					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:  "invalid number prop",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", numberSchema)},
 					path:  "/foo,bar",
 					found: true,
-					err:   &ParseError{Reason: "could not construct parameter object: path foo: value bar: an invalid number: invalid syntax"},
+					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 				{
 					name:  "invalid boolean prop",
 					param: &openapi3.Parameter{Name: "param", In: "path", Schema: objectOf("foo", booleanSchema)},
 					path:  "/foo,bar",
 					found: true,
-					err:   &ParseError{Reason: "could not construct parameter object: path foo: value bar: an invalid boolean: invalid syntax"},
+					err:   &ParseError{path: []interface{}{"foo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bar"}},
 				},
 			},
 		},
@@ -1031,7 +1032,7 @@ func TestDecodeParameter(t *testing.T) {
 						),
 					},
 					query: "param[arr][4][key]=true&param[arr][0][key]=false",
-					err:   &ParseError{path: []interface{}{"arr"}, Cause: &ParseError{Kind: KindOther, Value: "", Reason: "missing array value at index 0"}},
+					err:   &ParseError{path: []interface{}{"arr"}, Cause: &ParseError{Kind: KindOther, Reason: "could not convert value map to array: missing array value at index 0"}},
 				},
 				// FIXME: SUPPORT NESTED ARRAY OF OBJECTS
 				{
@@ -1456,7 +1457,7 @@ func TestDecodeParameter(t *testing.T) {
 
 					if tc.err != nil {
 						require.Error(t, err)
-						require.Truef(t, matchParseError(err, tc.err), "got error:\n%v\nwant error:\n%v", err, tc.err)
+						matchParseError(t, err, tc.err)
 
 						return
 					}
@@ -1683,7 +1684,7 @@ func TestDecodeBody(t *testing.T) {
 
 			if tc.wantErr != nil {
 				require.Error(t, err)
-				require.Truef(t, matchParseError(err, tc.wantErr), "got error:\n%v\nwant error:\n%v", err, tc.wantErr)
+				matchParseError(t, err, tc.wantErr)
 				return
 			}
 
@@ -1766,26 +1767,24 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	}, err)
 }
 
-func matchParseError(got, want error) bool {
+func matchParseError(t *testing.T, got, want error) {
+	t.Helper()
+
 	wErr, ok := want.(*ParseError)
 	if !ok {
-		return false
+		t.Errorf("want error is not a ParseError")
+		return
 	}
 	gErr, ok := got.(*ParseError)
 	if !ok {
-		return false
+		t.Errorf("got error is not a ParseError")
+		return
 	}
-	if wErr.Kind != gErr.Kind {
-		return false
-	}
-	if !reflect.DeepEqual(wErr.Value, gErr.Value) {
-		return false
-	}
-	if !reflect.DeepEqual(wErr.Path(), gErr.Path()) {
-		return false
-	}
+	assert.Equalf(t, wErr.Kind, gErr.Kind, "ParseError Kind differs")
+	assert.Equalf(t, wErr.Value, gErr.Value, "ParseError Value differs")
+	assert.Equalf(t, wErr.Path(), gErr.Path(), "ParseError Path differs")
+
 	if wErr.Cause != nil {
-		return matchParseError(gErr.Cause, wErr.Cause)
+		matchParseError(t, gErr.Cause, wErr.Cause)
 	}
-	return true
 }
