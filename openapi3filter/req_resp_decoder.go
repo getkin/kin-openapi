@@ -905,6 +905,7 @@ func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
 
 func deepSet(m map[string]interface{}, keys []string, value interface{}, schema *openapi3.SchemaRef) {
 	var currentPathElement, previousPathElement interface{}
+	_ = previousPathElement
 	currentPathElement = m
 	setLen := len(keys) - 1
 	for i := 0; i < setLen; i++ {
@@ -914,12 +915,8 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}, schema 
 		if err != nil {
 			panic(err)
 		}
-		// fmt.Printf("key: %v (%s)\n", key, nestedSchema.Value.Type.Slice())
-		// fmt.Printf("currentPathElement(%[1]T): %[1]s\n", currentPathElement)
-		// fmt.Printf("m: %[1]s\n", m)
 		switch x := nestedSchema.Value; {
 		case x.Type.Permits(openapi3.TypeArray):
-			fmt.Printf("keys[:i] array: %v\n", keys[:i])
 			index, err := strconv.Atoi(keys[i])
 			if err != nil || index < 0 {
 				break
@@ -928,23 +925,22 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}, schema 
 			if !ok {
 				cpe = []interface{}{map[string]interface{}{}}
 			} else if index >= len(cpe) {
-				// Extend the slice if needed
+				// extend if needed, but path keys should be already sorted
 				for j := len(cpe); j <= index; j++ {
 					cpe = append(cpe, make(map[string]interface{}))
 				}
 			}
-			previousPathElement.(map[string]interface{})[keys[i-1]] = cpe // assume obj
 			currentPathElement = cpe[index]
+			// set back into the original map's parent - assumes map
+			m[keys[i-1]] = cpe
 			i++
 		case x.Type.Permits(openapi3.TypeObject):
-			fmt.Printf("keys[:i] object: %v\n", keys[:i])
 			cpe := currentPathElement.(map[string]interface{})
 			if _, ok := m[key]; !ok {
 				cpe[key] = make(map[string]interface{})
 			}
 			currentPathElement = cpe[key]
 		default:
-			fmt.Printf("keys[:i] default: %v\n", keys[:i])
 		}
 
 	}
