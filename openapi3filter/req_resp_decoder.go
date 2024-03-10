@@ -933,7 +933,7 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	fmt.Printf("o: %v\n", string(o))
 	r, err := buildResObj(mobj, nil, "", schema)
 	if err != nil {
-		panic(err)
+		return nil, &ParseError{Cause: err, Reason: "could not construct parameter object"}
 	}
 	result = r.(map[string]interface{})
 
@@ -942,14 +942,15 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	return result, nil
 }
 
-func mapToArray(m map[string]interface{}) ([]interface{}, error) {
+// example: map[0:map[key:true] 1:map[key:false]] -> [map[key:true] map[key:false]]
+func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 	var result []interface{}
 
 	keys := make([]int, 0, len(m))
 	for k := range m {
 		key, err := strconv.Atoi(k)
 		if err != nil {
-			return nil, fmt.Errorf("map array keys must be integers: %w", err)
+			return nil, fmt.Errorf("array indexes must be integers: %w", err)
 		} else {
 			keys = append(keys, key)
 		}
@@ -990,7 +991,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		fmt.Printf("mobjArray: %+v\n", mobjArr)
 		t := mobjArr.(map[string]interface{})
 		// intermediate arrays have to be instantiated
-		arr, err := mapToArray(t)
+		arr, err := sliceMapToSlice(t)
 		if err != nil {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
 		}
@@ -999,7 +1000,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		for i := range arr {
 			res, err := buildResObj(mobj, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 			resultArr[i] = res
 			fmt.Printf("res i=%v: %v\n", i, res)
@@ -1010,7 +1011,7 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		for k, propSchema := range schema.Value.Properties {
 			resultMap[k], err = buildResObj(mobj, mapKeys, k, propSchema)
 			if err != nil {
-				return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not build nested object: %v", err)}
+				return nil, err
 			}
 		}
 		return resultMap, nil
@@ -1019,6 +1020,12 @@ func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, s
 		if !ok {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("path %s does not exist", strings.Join(mapKeys, "."))}
 		}
+
+		v, err := parsePrimitive(val.(string), schema)
+		if err != nil {
+			return nil, handlePropParseError(mapKeys, err)
+		}
+		fmt.Printf("v: %v\n", v)
 
 		ival, err := convertParamValueToType(val.(string), schema.Value.Type)
 		if err != nil {
