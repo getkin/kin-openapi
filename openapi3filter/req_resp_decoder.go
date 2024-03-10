@@ -930,11 +930,11 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	}
 
 	fmt.Printf("mobj: %v\n", mobj)
-	dst, err := buildResObj(result, mobj, nil, "", schema)
+	r, err := buildResObj(mobj, nil, "", schema)
 	if err != nil {
 		panic(err)
 	}
-	result = dst.(map[string]interface{})
+	result = r.(map[string]interface{})
 
 	fmt.Printf("result: %v\n", result)
 
@@ -969,7 +969,10 @@ func mapToArray(m map[string]interface{}) ([]interface{}, error) {
 	return result, nil
 }
 
-func buildResObj(dst interface{}, mobj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
+// buildResObj constructs an object based on a given schema and param values
+// mobj: pure map of maps containing all param values indexed by either key or array indexes
+func buildResObj(mobj map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
+	var err error
 	mapKeys := parentKeys
 	if key != "" {
 		mapKeys = append(mapKeys, key)
@@ -992,44 +995,31 @@ func buildResObj(dst interface{}, mobj map[string]interface{}, parentKeys []stri
 		}
 		fmt.Printf("arr: %+v\n", arr)
 
-		res, err := buildResObj(arr, mobj, parentKeys, key, nestedSchema)
+		res, err := buildResObj(mobj, parentKeys, key, schema.Value.Items)
 		if err != nil {
 			panic(err)
 		}
-		dst.(map[string]interface{})[key] = res
-		// for arri := range t {
-		// 	d := []interface{}{}
-		// 	if err := buildResObj(d, t, mapKeys, arri, nestedSchema.Value.Items); err != nil {
-		// 		panic(err)
-		// 	}
-		// 	fmt.Printf("d: %v\n", d)
-		// }
+		return res, nil
 	case schema.Value.Type.Is("object"):
-		for key, val := range mobj { // first always map
-			fmt.Printf("object -- key:%s val=%v\n", key, val)
-			// recurse
-
-			nestedSchema, err := findNestedSchema(schema, mapKeys)
+		resultMap := make(map[string]interface{})
+		for k, propSchema := range schema.Value.Properties {
+			resultMap[key], err = buildResObj(mobj, parentKeys, k, propSchema)
 			if err != nil {
-				return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
+				return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: fmt.Sprintf("could not build nested object: %v", err)}
 			}
-			fmt.Printf("(path=%s) schema: %v - nested schema: %v \n", strings.Join(mapKeys, "."), schema.Value.Type.Slice(), nestedSchema.Value.Type.Slice())
-
-			res, err := buildResObj(dst, mobj, parentKeys, key, nestedSchema)
-			if err != nil {
-				panic(err)
-			}
-			dst.(map[string]interface{})[key] = res
 		}
+		return resultMap, nil
 	default:
-		val := mobj[key]
+		val, ok := deepGet(mobj, mapKeys...)
+		if !ok {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: "not found"}
+		}
 		fmt.Printf("default --: %v\n", val)
 		// set val
+		return val, nil
 	}
 
-	fmt.Printf("dst: %+v \n", dst)
-
-	return dst, nil
+	return nil, err
 }
 
 func oldmakeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
