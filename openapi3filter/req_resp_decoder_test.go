@@ -837,10 +837,17 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name:  "deepObject explode array",
+					name:  "deepObject explode array - missing indexes",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", stringArraySchema)},
 					query: "param[items]=f%26oo&param[items]=bar",
-					want:  map[string]interface{}{"items": []string{"f%26oo", "bar"}},
+					found: true,
+					err:   &ParseError{path: []interface{}{"items"}, Cause: &ParseError{Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}},
+				},
+				{
+					name:  "deepObject explode array",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", stringArraySchema)},
+					query: "param[items][1]=f%26oo&param[items][0]=bar",
+					want:  map[string]interface{}{"items": []string{"bar", "f%26oo"}},
 					found: true,
 				},
 				{
@@ -958,7 +965,7 @@ func TestDecodeParameter(t *testing.T) {
 							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
-					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo]=f%26oo&param[objTwo]=bar",
+					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][0]=f%26oo&param[objTwo][1]=bar",
 					want: map[string]interface{}{
 						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
 						"objTwo": []string{"f%26oo", "bar"},
@@ -988,7 +995,7 @@ func TestDecodeParameter(t *testing.T) {
 							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
-					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items]=f%26oo&param[objTwo][items]=bar",
+					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items][0]=f%26oo&param[objTwo][items][1]=bar",
 					want: map[string]interface{}{
 						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
 						"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
@@ -1004,7 +1011,7 @@ func TestDecodeParameter(t *testing.T) {
 							"objTwo", objectOf("items", stringArraySchema),
 						),
 					},
-					query: "param[obj][nestedObjOne][items]=baz&param[objTwo][items]=foo&param[objTwo][items]=bar",
+					query: "param[obj][nestedObjOne][items][0]=baz&param[objTwo][items][0]=foo&param[objTwo][items][1]=bar",
 					want: map[string]interface{}{
 						"obj":    map[string]interface{}{"nestedObjOne": map[string]interface{}{"items": []string{"baz"}}},
 						"objTwo": map[string]interface{}{"items": []string{"foo", "bar"}},
