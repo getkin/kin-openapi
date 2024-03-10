@@ -957,7 +957,6 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}, schema 
 
 	}
 
-	fmt.Printf("m final: %[1]s\n", m)
 	if cpe, ok := currentPathElement.(map[string]interface{}); ok {
 		cpe[keys[setLen]] = value
 	} else if cpe, ok := currentPathElement.([]interface{}); ok {
@@ -966,9 +965,11 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}, schema 
 			panic(err)
 		}
 		if index >= len(cpe) {
-			cpe = append(cpe, make(map[string]interface{}))
+			cpe = append(cpe, nil)
 		}
+
 		cpe[index] = value
+		m[keys[setLen-1]] = cpe
 	} else {
 		panic(fmt.Sprintf("unexpected type %T", currentPathElement))
 	}
