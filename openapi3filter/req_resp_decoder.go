@@ -469,6 +469,7 @@ func (d *pathParamDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	if err != nil {
 		return nil, ok, err
 	}
+
 	val, err := makeObject(props, schema)
 	return val, ok, err
 }
@@ -678,7 +679,6 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	if props == nil {
 		return nil, false, nil
 	}
-	fmt.Printf("props: %v\n", props)
 	val, err := makeObject(props, schema)
 	if err != nil {
 		return nil, false, err
@@ -903,6 +903,9 @@ func deepGet(m map[string]interface{}, keys ...string) (interface{}, bool) {
 	return m, true
 }
 
+// TODO: deepSet and deepGet should just use maps and index by array index,
+// then convert the nested maps in makeObject to []interface{} using prop schema.
+// will simplify everything dramatically.
 func deepSet(m map[string]interface{}, keys []string, value interface{}, schema *openapi3.SchemaRef) {
 	var currentPathElement, previousPathElement interface{}
 	_ = previousPathElement
@@ -999,6 +1002,8 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 // A value of every property is parsed as a primitive value.
 // The function returns an error when an error happened while parse object's properties.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
+	fmt.Printf("props: %v\n", props)
+	// TODO: assign arrays with maps via deepget deepset, then convert to actual representation based on schema
 	obj := make(map[string]interface{})
 
 	for propName, propSchema := range schema.Value.Properties {
