@@ -234,6 +234,18 @@ func TestDeepSet(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:      "Array of Arrays",
+			inputMap:  map[string]interface{}{},
+			keys:      []string{"nested", "0", "0"},
+			value:     false,
+			schemaRef: objectOf("nested", arrayOf(arrayOf(booleanSchema))),
+			expected: map[string]interface{}{
+				"nested": []interface{}{
+					[]interface{}{false},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {

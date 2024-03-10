@@ -932,7 +932,19 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}, schema 
 			}
 			currentPathElement = cpe[index]
 			// set back into the original map's parent - assumes map
-			m[keys[i-1]] = cpe
+			parentKey := keys[i-1]
+			switch m[parentKey].(type) {
+			case map[string]interface{}:
+				m[parentKey] = cpe
+			case []interface{}:
+				pidx, err := strconv.Atoi(parentKey)
+				if err != nil || pidx < 0 {
+					break
+				}
+
+				m[parentKey].([]interface{})[pidx].([]interface{})[index] = cpe
+			default:
+			}
 			i++
 		case x.Type.Permits(openapi3.TypeObject):
 			cpe := currentPathElement.(map[string]interface{})
