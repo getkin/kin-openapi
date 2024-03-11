@@ -841,7 +841,7 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", stringArraySchema)},
 					query: "param[items]=f%26oo&param[items]=bar",
 					found: true,
-					err:   &ParseError{path: []interface{}{"items"}, Cause: &ParseError{Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}},
+					err:   &ParseError{path: []interface{}{"items"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
 				},
 				{
 					name:  "deepObject explode array",
@@ -893,7 +893,7 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param[obj][prop1]=bar&param[obj][prop2][badindex]=bad&param[objTwo]=string",
 					err: &ParseError{
 						path:   []interface{}{"obj", "prop2"},
-						Reason: `nested schema for key "badindex" not found`,
+						Reason: `path is not convertible to primitive`,
 						Kind:   KindInvalidFormat,
 						Value:  map[string]interface{}(map[string]interface{}{"badindex": "bad"}),
 					},
@@ -915,6 +915,7 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
+				// FIXME:
 				{
 					name: "deepObject explode nested object - bad index",
 					param: &openapi3.Parameter{
@@ -987,7 +988,7 @@ func TestDecodeParameter(t *testing.T) {
 							"objIgnored", objectOf("items", stringArraySchema),
 						),
 					},
-					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo]=f%26oo&param[objTwo]=bar",
+					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=bad&param[objTwo][0]=f%26oo&param[objTwo][1]=bar",
 					err:   &ParseError{path: []interface{}{"obj", "nestedObjTwo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "bad"}},
 				},
 				{
@@ -1023,6 +1024,7 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
+				// FIXME:
 				{
 					name: "deepObject explode nested objects - misplaced parameter",
 					param: &openapi3.Parameter{
@@ -1800,6 +1802,9 @@ func matchParseError(t *testing.T, got, want error) {
 	assert.Equalf(t, wErr.Value, gErr.Value, "ParseError Value differs")
 	assert.Equalf(t, wErr.Path(), gErr.Path(), "ParseError Path differs")
 
+	if wErr.Reason != "" {
+		assert.Equalf(t, wErr.Reason, gErr.Reason, "ParseError Reason differs")
+	}
 	if wErr.Cause != nil {
 		matchParseError(t, gErr.Cause, wErr.Cause)
 	}

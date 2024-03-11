@@ -194,16 +194,16 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "deepobject query parameter type",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans]=true&deepFilter[integers]=1&deepFilter[strings]=foo%26o&deepFilter[numbers]=1", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans][0]=true&deepFilter[integers][0]=1&deepFilter[strings][0]=foo%26o&deepFilter[numbers][0]=1", nil),
 			},
 		},
 		{
 			name: "error - incorrect deepobject query parameter type bool",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans]=notbool", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans][0]=notbool", nil),
 			},
 			wantErrParam:   "deepFilter",
-			wantErrBody:    `parameter "deepFilter" in query has an error: path booleans: value notbool: an invalid boolean: invalid syntax`,
+			wantErrBody:    "parameter \"deepFilter\" in query has an error: path booleans.0: value notbool: an invalid boolean: invalid syntax",
 			wantErrParamIn: "query",
 			wantErrResponse: &ValidationError{
 				Status: http.StatusBadRequest,
@@ -213,10 +213,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "error - incorrect deepobject query parameter type integer",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[integers]=1.234", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[integers][0]=1.234", nil),
 			},
 			wantErrParam:   "deepFilter",
-			wantErrBody:    `parameter "deepFilter" in query has an error: path integers: value 1.234: an invalid integer: invalid syntax`,
+			wantErrBody:    "parameter \"deepFilter\" in query has an error: path integers.0: value 1.234: an invalid integer: invalid syntax",
 			wantErrParamIn: "query",
 			wantErrResponse: &ValidationError{
 				Status: http.StatusBadRequest,
@@ -226,10 +226,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "error - incorrect deepobject query parameter type integer",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[numbers]=aaa", nil),
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[numbers][0]=aaa", nil),
 			},
 			wantErrParam:   "deepFilter",
-			wantErrBody:    `parameter "deepFilter" in query has an error: path numbers: value aaa: an invalid number: invalid syntax`,
+			wantErrBody:    "parameter \"deepFilter\" in query has an error: path numbers.0: value aaa: an invalid number: invalid syntax",
 			wantErrParamIn: "query",
 			wantErrResponse: &ValidationError{
 				Status: http.StatusBadRequest,
@@ -633,7 +633,7 @@ func TestValidationErrorEncoder(t *testing.T) {
 			req.NoError(err)
 
 			err = h.validateRequest(tt.args.r)
-			req.Equal(tt.wantErr, err != nil)
+			req.Equal(tt.wantErr, err != nil, "wantError: %v", tt.wantErr)
 
 			if err != nil {
 				encoder.Encode(tt.args.r.Context(), err, httptest.NewRecorder())
