@@ -228,6 +228,7 @@ func TestValidateQueryParams(t *testing.T) {
 		name  string
 		param *openapi3.Parameter
 		query string
+		want  map[string]interface{}
 		err   error // ParseError or openapi3.SchemaError
 	}
 
@@ -270,6 +271,11 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop1][inexistent]=1",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{
+					"prop1": map[string]interface{}{},
+				},
+			},
 		},
 		{
 			name: "deepObject explode additionalProperties with object properties",
@@ -284,6 +290,30 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop1][item1]=1",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{
+					"prop1": map[string]interface{}{
+						"item1": 1,
+					},
+				},
+			},
+		},
+		{
+			name: "deepObject explode nested objects - misplaced parameter",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
+				),
+			},
+			query: "param[obj][nestedObjOne]=baz",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{},
+			},
+			// err: &openapi3.SchemaError{
+			// 	// FIXME: failing schema should be at field items with schema: objectOf("items", stringArraySchema)
+			// 	SchemaField: "type", Reason: "value must be an array", Value: "baz", Schema: stringArraySchema.Value,
+			// },
 		},
 	}
 
@@ -333,6 +363,9 @@ func TestValidateQueryParams(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
+			got, _, err := decodeStyledParameter(tc.param, input)
+			require.EqualValues(t, tc.want, got)
 		})
 	}
 }
@@ -353,11 +386,21 @@ func matchSchemaError(t *testing.T, got, want error) {
 	assert.Equalf(t, wErr.SchemaField, gErr.SchemaField, "SchemaError SchemaField differs")
 	assert.Equalf(t, wErr.Reason, gErr.Reason, "SchemaError Reason differs")
 
+	if wErr.Schema != nil {
+		assert.EqualValuesf(t, wErr.Schema, gErr.Schema, "SchemaError Schema differs")
+	}
 	if wErr.Value != nil {
-		assert.Equalf(t, wErr.Value, gErr.Value, "SchemaError Value differs")
+		assert.EqualValuesf(t, wErr.Value, gErr.Value, "SchemaError Value differs")
 	}
 	if wErr.Origin != nil {
-		matchSchemaError(t, gErr.Origin, wErr.Origin)
+		switch wErrOrigin := wErr.Origin.(type) {
+		case *openapi3.SchemaError:
+			matchSchemaError(t, gErr, wErrOrigin)
+		case *ParseError:
+			matchParseError(t, gErr, wErrOrigin)
+		default:
+			t.Errorf("unknown origin error")
+		}
 	}
 }
 

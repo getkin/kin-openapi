@@ -1086,18 +1086,6 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name: "deepObject explode nested objects - misplaced parameter",
-					param: &openapi3.Parameter{
-						Name: "param", In: "query", Style: "deepObject", Explode: explode,
-						Schema: objectOf(
-							"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
-						),
-					},
-					query: "param[obj][nestedObjOne]=baz",
-					found: true,
-					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Kind: KindInvalidFormat, Value: "baz", Reason: "expected object"},
-				},
-				{
 					name: "deepObject explode array of arrays not supported",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
@@ -1120,12 +1108,16 @@ func TestDecodeParameter(t *testing.T) {
 							"arr", arrayOf(objectOf("key", booleanSchema)),
 						),
 					},
-					query: "param[arr][4][key]=true&param[arr][0][key]=false",
-					err: &ParseError{
-						path:   []interface{}{"arr"},
-						Kind:   KindInvalidFormat,
-						Reason: "could not convert value map to array: missing array value at index 1",
+					query: "param[arr][3][key]=true&param[arr][0][key]=false",
+					want: map[string]interface{}{
+						"arr": []interface{}{
+							map[string]interface{}{"key": false},
+							nil,
+							nil,
+							map[string]interface{}{"key": true},
+						},
 					},
+					found: true,
 				},
 				{
 					name: "deepObject explode nested array of objects",

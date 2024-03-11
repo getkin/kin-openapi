@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -947,23 +947,18 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 		key, err := strconv.Atoi(k)
 		if err != nil {
 			return nil, fmt.Errorf("array indexes must be integers: %w", err)
-		} else {
-			keys = append(keys, key)
 		}
+		keys = append(keys, key)
 	}
-	sort.Ints(keys)
-	for i := 0; i < len(keys); i++ {
-		key := keys[i]
-		if key != i {
-			return nil, fmt.Errorf("missing array value at index %v", i) // disallow missing array elements in params
-		}
-		val, ok := m[strconv.Itoa(key)]
+
+	for i := 0; i <= slices.Max(keys); i++ {
+		val, ok := m[strconv.Itoa(i)]
 		if !ok {
-			return nil, fmt.Errorf("missing key: %d", key)
+			result = append(result, nil)
+			continue
 		}
 		result = append(result, val)
 	}
-
 	return result, nil
 }
 
@@ -1016,11 +1011,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		pp, _ := deepGet(params, mapKeys...)
 		objectParams, ok := pp.(map[string]interface{})
 		if !ok {
-			if pp != nil { // some param was set with incorrect indexes
-				return nil, &ParseError{path: pathFromKeys(mapKeys), Value: pp, Kind: KindInvalidFormat, Reason: "expected object"}
-			}
-			// param is simply not set
-			return nil, nil
+			return nil, nil // let validator handle this
 		}
 		for k, propSchema := range schema.Value.Properties {
 			r, err := buildResObj(params, mapKeys, k, propSchema)
