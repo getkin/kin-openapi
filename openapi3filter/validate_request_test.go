@@ -228,33 +228,65 @@ func TestValidateQueryParams(t *testing.T) {
 		name  string
 		param *openapi3.Parameter
 		query string
-		want  interface{}
-		err   error
+		err   error // ParseError or openapi3.SchemaError
 	}
 
 	testCases := []testCase{
 		// TODO: move tests and any logic regarding schema validation in req_resp_decoder to use ValidateParameter.
 		// those should just decode
 		{
-			name: "deepObject explode additionalProperties with object properties - missing property",
+			name: "deepObject explode additionalProperties with object properties - missing required property",
 			param: &openapi3.Parameter{
 				Name: "param", In: "query", Style: "deepObject", Explode: explode,
 				Schema: objectOf(
-					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
+					"obj", additionalPropertiesObjectOf(func() *openapi3.SchemaRef {
+						sc := openapi3.SchemaRef{}
+						s := objectOf(
+							"item1", integerSchema,
+							"requiredProp", stringSchema,
+						)
+						sc = *s
+						sc.Value.Required = []string{"requiredProp"}
+
+						return &sc
+					}()),
 					"objIgnored", objectOf("items", stringArraySchema),
 				),
 			},
 			query: "param[obj][prop1][item1]=1",
-			want: map[string]interface{}{
-				"obj": map[string]interface{}{
-					"prop1": map[string]interface{}{
-						"item1": 1,
-					},
-				},
+			err:   &openapi3.SchemaError{SchemaField: "required", Reason: "property \"requiredProp\" is missing"},
+		},
+		{
+			// XXX should this error out?
+			name: "deepObject explode additionalProperties with object properties - extraneous nested param property ignored",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf(
+						"item1", integerSchema,
+						"requiredProp", stringSchema,
+					)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
 			},
-			err: &ParseError{path: []interface{}{"obj", "prop1", "item2"}, Kind: KindInvalidFormat, Reason: `path does not exist`},
+			query: "param[obj][prop1][inexistent]=1",
+		},
+		{
+			name: "deepObject explode additionalProperties with object properties",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf(
+						"item1", integerSchema,
+						"requiredProp", stringSchema,
+					)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][item1]=1",
 		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &openapi3.Info{
@@ -282,18 +314,50 @@ func TestValidateQueryParams(t *testing.T) {
 
 			if tc.err != nil {
 				require.Error(t, err)
-				e, ok := tc.err.(*ParseError)
+				e, ok := err.(*RequestError)
 				if !ok {
 					t.Errorf("error is not a RequestError")
+
 					return
 				}
-				matchParseError(t, e, tc.err)
+				switch err := e.Unwrap().(type) {
+				case *openapi3.SchemaError:
+					matchSchemaError(t, err, tc.err)
+				case *ParseError:
+					matchParseError(t, err, tc.err)
+				default:
+					t.Errorf("unknown RequestError wrapped error type")
+				}
 
 				return
 			}
 
 			require.NoError(t, err)
 		})
+	}
+}
+
+func matchSchemaError(t *testing.T, got, want error) {
+	t.Helper()
+
+	wErr, ok := want.(*openapi3.SchemaError)
+	if !ok {
+		t.Errorf("want error is not a SchemaError")
+		return
+	}
+	gErr, ok := got.(*openapi3.SchemaError)
+	if !ok {
+		t.Errorf("got error is not a SchemaError")
+		return
+	}
+	assert.Equalf(t, wErr.SchemaField, gErr.SchemaField, "SchemaError SchemaField differs")
+	assert.Equalf(t, wErr.Reason, gErr.Reason, "SchemaError Reason differs")
+
+	if wErr.Value != nil {
+		assert.Equalf(t, wErr.Value, gErr.Value, "SchemaError Value differs")
+	}
+	if wErr.Origin != nil {
+		matchSchemaError(t, gErr.Origin, wErr.Origin)
 	}
 }
 

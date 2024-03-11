@@ -940,19 +940,6 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name: "deepObject explode additionalProperties with object properties - bad key",
-					param: &openapi3.Parameter{
-						Name: "param", In: "query", Style: "deepObject", Explode: explode,
-						Schema: objectOf(
-							"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
-							"objIgnored", objectOf("items", stringArraySchema),
-						),
-					},
-					query: "param[obj][prop1][item1]=1&param[obj][prop1][wrongkey]=abc",
-					found: true,
-					err:   &ParseError{path: []interface{}{"obj", "prop1", "wrongkey"}, Kind: KindInvalidFormat, Reason: `property does not exist in schema`},
-				},
-				{
 					name: "deepObject explode nested object additionalProperties - bad value",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
@@ -1000,18 +987,7 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-				{
-					name: "deepObject explode nested object - bad index",
-					param: &openapi3.Parameter{
-						Name: "param", In: "query", Style: "deepObject", Explode: explode,
-						Schema: objectOf(
-							"obj", objectOf("nestedObjOne", stringSchema),
-						),
-					},
-					query: "param[obj][badindex]=bar",
-					found: true,
-					err:   &ParseError{path: []interface{}{"obj", "badindex"}, Kind: KindInvalidFormat, Reason: `property does not exist in schema`},
-				},
+
 				{
 					// Currently allowing
 					name: "deepObject explode nested object - extraneous param ignored",

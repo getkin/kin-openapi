@@ -1022,11 +1022,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 			// param is simply not set
 			return nil, nil
 		}
-		for k := range objectParams { // validate all params before building object
-			if _, err := schema.Value.Properties.JSONLookup(k); err != nil && additPropsSchema == nil {
-				return nil, &ParseError{path: pathFromKeys(append(mapKeys, k)), Kind: KindInvalidFormat, Reason: "property does not exist in schema"}
-			}
-		}
 		for k, propSchema := range schema.Value.Properties {
 			r, err := buildResObj(params, mapKeys, k, propSchema)
 			if err != nil {
@@ -1053,11 +1048,8 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
-			// TODO: should ignore if property is nullable
-			if schema.Value.Nullable {
-				return nil, nil
-			}
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
+			// leave validation up to ValidateParameter
+			return nil, nil
 		}
 		v, ok := val.(string)
 		if !ok {
