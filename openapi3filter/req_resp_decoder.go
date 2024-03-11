@@ -1015,7 +1015,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	case schema.Value.Type.Is("object"):
 		resultMap := make(map[string]interface{})
 		additPropsSchema := schema.Value.AdditionalProperties.Schema
-		pp, hasParamsSet := deepGet(params, mapKeys...)
+		pp, _ := deepGet(params, mapKeys...)
 		objectParams, ok := pp.(map[string]interface{})
 		if !ok {
 			if pp != nil { // some param was set with incorrect indexes
@@ -1039,9 +1039,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 			}
 		}
 		if additPropsSchema != nil {
-			if !hasParamsSet {
-				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
-			}
+			// dynamic creation of possibly nested objects
 			for k := range objectParams {
 				r, err := buildResObj(params, mapKeys, k, additPropsSchema)
 				if err != nil {
