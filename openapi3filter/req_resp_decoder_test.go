@@ -968,7 +968,7 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][0]=f%26oo&param[objTwo][1]=bar",
 					want: map[string]interface{}{
 						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
-						"objTwo": []string{"f%26oo", "bar"},
+						"objTwo": []interface{}{"f%26oo", "bar"},
 					},
 					found: true,
 				},
@@ -998,7 +998,7 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param[obj][nestedObjOne]=bar&param[obj][nestedObjTwo]=foo&param[objTwo][items][0]=f%26oo&param[objTwo][items][1]=bar",
 					want: map[string]interface{}{
 						"obj":    map[string]interface{}{"nestedObjOne": "bar", "nestedObjTwo": "foo"},
-						"objTwo": map[string]interface{}{"items": []string{"f%26oo", "bar"}},
+						"objTwo": map[string]interface{}{"items": []interface{}{"f%26oo", "bar"}},
 					},
 					found: true,
 				},
@@ -1013,8 +1013,8 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					query: "param[obj][nestedObjOne][items][0]=baz&param[objTwo][items][0]=foo&param[objTwo][items][1]=bar",
 					want: map[string]interface{}{
-						"obj":    map[string]interface{}{"nestedObjOne": map[string]interface{}{"items": []string{"baz"}}},
-						"objTwo": map[string]interface{}{"items": []string{"foo", "bar"}},
+						"obj":    map[string]interface{}{"nestedObjOne": map[string]interface{}{"items": []interface{}{"baz"}}},
+						"objTwo": map[string]interface{}{"items": []interface{}{"foo", "bar"}},
 					},
 					found: true,
 				},

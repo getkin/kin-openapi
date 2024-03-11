@@ -938,8 +938,6 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	}
 	result = r.(map[string]interface{})
 
-	fmt.Printf("result: %v\n", result)
-
 	return result, nil
 }
 
@@ -980,16 +978,20 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	if key != "" {
 		mapKeys = append(mapKeys, key)
 	}
+	// FIXME: exit early below if no params set for k, i.e. deepGet(params, parentKeys...) !ok
+	// if we do it here we get nils
+	_, ok := deepGet(params, mapKeys...)
+	if !ok {
+		return nil, nil
+	}
+
 	switch {
 	case schema.Value.Type.Is("array"):
-		fmt.Printf("arr key: %v \n", key)
-
 		// check type and convert to []interface{} if required
 		paramArr, ok := deepGet(params, mapKeys...)
 		if !ok {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 		}
-		fmt.Printf("mobjArray: %+v\n", paramArr)
 		t, isMap := paramArr.(map[string]interface{})
 		_, isArrayOfArrays := paramArr.([]interface{})
 		if !isMap {
@@ -1008,7 +1010,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		if err != nil {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
 		}
-		fmt.Printf("arr: %+v\n", arr)
 		resultArr := make([]interface{}, len(arr))
 		for i := range arr {
 			res, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
@@ -1016,7 +1017,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				return nil, err
 			}
 			resultArr[i] = res
-			fmt.Printf("res i=%v: %v\n", i, res)
 		}
 		return resultArr, nil
 	case schema.Value.Type.Is("object"):
@@ -1027,16 +1027,12 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				return nil, err
 			}
 		}
-		// TODO: additionalProperties
 		if s := schema.Value.AdditionalProperties.Schema; s != nil {
 			additProps, ok := deepGet(params, mapKeys...)
 			if !ok {
 				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 			}
-			fmt.Printf("additProps: %v\n", additProps)
-			// create for each param value
 			for k := range additProps.(map[string]interface{}) {
-				fmt.Printf("additionalProperty k: %v\n", k)
 				resultMap[k], err = buildResObj(params, mapKeys, k, s)
 				if err != nil {
 					return nil, err
@@ -1049,13 +1045,20 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		if !ok {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 		}
-
-		ival, err := parsePrimitive(val.(string), schema)
+		v, ok := val.(string)
+		if !ok {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Value: val, Reason: "path is not convertible to primitive"}
+		}
+		prim, err := parsePrimitive(v, schema)
 		if err != nil {
 			return nil, handlePropParseError(mapKeys, err)
 		}
-		if ival == nil { // parsing failed but there is a value in params
+		if prim == nil { // parsing failed but there is a value in params
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Value: val, Reason: fmt.Sprintf("path %s has an invalid value", strings.Join(mapKeys, "."))}
+		}
+		ival, err := convertParamValueToType(v, schema.Value.Type)
+		if err != nil {
+			return nil, handlePropParseError(mapKeys, err)
 		}
 
 		return ival, nil
