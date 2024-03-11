@@ -979,9 +979,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 			return nil, nil
 		}
 		t, isMap := paramArr.(map[string]interface{})
-		if schema.Value.Items.Value.Type.Permits("array") {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "array of arrays not supported"}
-		}
 		if !isMap {
 			res, err := buildResObj(params, mapKeys, "", schema.Value.Items)
 			if err != nil {

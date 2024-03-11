@@ -1086,19 +1086,21 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name: "deepObject explode array of arrays not supported",
+					name: "deepObject explode array of arrays",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(
 							"arr", arrayOf(arrayOf(integerSchema)),
 						),
 					},
-					query: "param[arr][0][1]=123&param[arr][0][0]=456",
-					err: &ParseError{
-						path:   []interface{}{"arr"},
-						Kind:   KindInvalidFormat,
-						Reason: "array of arrays not supported",
+					query: "param[arr][1][1]=123&param[arr][1][2]=456",
+					want: map[string]interface{}{
+						"arr": []interface{}{
+							nil,
+							[]interface{}{nil, 123, 456},
+						},
 					},
+					found: true,
 				},
 				{
 					name: "deepObject explode nested array of objects - missing array index",
