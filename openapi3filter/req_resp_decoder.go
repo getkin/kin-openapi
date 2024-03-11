@@ -923,13 +923,14 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	result := make(map[string]interface{})
 	_ = result
 
-	for keys, value := range props {
+	for kk, value := range props {
+		keys := strings.Split(kk, urlDecoderDelimiter)
 		if strings.Contains(value, urlDecoderDelimiter) {
 			// don't support implicit array indexes anymore
-			p := pathFromKeys(strings.Split(keys, urlDecoderDelimiter))
+			p := pathFromKeys(keys)
 			return nil, &ParseError{path: p, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}
 		}
-		deepSet(mobj, strings.Split(keys, urlDecoderDelimiter), value)
+		deepSet(mobj, keys, value)
 	}
 
 	r, err := buildResObj(mobj, nil, "", schema)
@@ -970,6 +971,10 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 	return result, nil
 }
 
+type Length interface {
+	Len() int
+}
+
 // buildResObj constructs an object based on a given schema and param values
 // mobj: pure map of maps containing all param values indexed by either key or array indexes
 func buildResObj(params map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
@@ -987,7 +992,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 			// FIXME: unset nullable params should be skipped without issue... if returning nil, nil to parent
 			// the parent should return nil as well
 			// return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
-			return []interface{}{}, nil
+			return nil, nil
 		}
 		t, isMap := paramArr.(map[string]interface{})
 		_, isArrayOfArrays := paramArr.([]interface{})
@@ -1051,6 +1056,19 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				}
 				if r != nil {
 					resultMap[k] = r
+				}
+			}
+		}
+		// dont set key in parent if empty map or slice. maybe can handle beforehand
+		for k, v := range resultMap {
+			switch t := v.(type) {
+			case map[string]interface{}:
+				if len(t) == 0 {
+					delete(resultMap, k)
+				}
+			case []interface{}:
+				if len(t) == 0 {
+					delete(resultMap, k)
 				}
 			}
 		}
