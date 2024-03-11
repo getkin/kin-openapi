@@ -1038,6 +1038,21 @@ func TestDecodeParameter(t *testing.T) {
 					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Kind: KindInvalidFormat, Value: "baz", Reason: "expected object"},
 				},
 				{
+					name: "deepObject explode array of arrays not supported",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"arr", arrayOf(arrayOf(integerSchema)),
+						),
+					},
+					query: "param[arr][0][1]=123&param[arr][0][0]=456",
+					err: &ParseError{
+						path:   []interface{}{"arr"},
+						Kind:   KindInvalidFormat,
+						Reason: "array of arrays not supported",
+					},
+				},
+				{
 					name: "deepObject explode nested array of objects - missing array index",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
