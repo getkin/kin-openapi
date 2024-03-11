@@ -915,7 +915,6 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-				// FIXME:
 				{
 					name: "deepObject explode nested object - bad index",
 					param: &openapi3.Parameter{
@@ -924,11 +923,15 @@ func TestDecodeParameter(t *testing.T) {
 							"obj", objectOf("nestedObjOne", stringSchema),
 						),
 					},
+					// FIXME: got map[string]interface {}(map[string]interface {}{"obj":map[string]interface {}{}}) without error
+					// should error out on object invalid index
 					query: "param[obj][badindex]=bar",
 					found: true,
-					err:   &ParseError{path: []interface{}{"obj", "badindex"}, Reason: `nested schema for key "badindex" not found`},
+
+					err: &ParseError{path: []interface{}{"obj", "badindex"}, Kind: KindInvalidFormat, Reason: `property does not exist in schema`},
 				},
 				{
+					// Currently allowing. Behavior cannot be defined in spec
 					name: "deepObject explode nested object - extraneous param ignored",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,

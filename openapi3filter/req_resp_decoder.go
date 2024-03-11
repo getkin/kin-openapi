@@ -978,32 +978,29 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	if key != "" {
 		mapKeys = append(mapKeys, key)
 	}
-	// FIXME: exit early below if no params set for k, i.e. deepGet(params, parentKeys...) !ok
-	// if we do it here we get nils
-	_, ok := deepGet(params, mapKeys...)
-	if !ok {
-		return nil, nil
-	}
 
 	switch {
 	case schema.Value.Type.Is("array"):
 		// check type and convert to []interface{} if required
 		paramArr, ok := deepGet(params, mapKeys...)
 		if !ok {
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
+			// FIXME: unset nullable params should be skipped without issue... if returning nil, nil to parent
+			// the parent should return nil as well
+			// return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
+			return []interface{}{}, nil
 		}
 		t, isMap := paramArr.(map[string]interface{})
 		_, isArrayOfArrays := paramArr.([]interface{})
 		if !isMap {
-			if !isArrayOfArrays {
-				res, err := buildResObj(params, mapKeys, "", schema.Value.Items)
-				if err != nil {
-					return nil, err
-				}
-				return res, nil
-			} else {
+			if isArrayOfArrays {
 				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "array of arrays not supported"}
 			}
+			res, err := buildResObj(params, mapKeys, "", schema.Value.Items)
+			if err != nil {
+				return nil, err
+			}
+			return res, nil
+
 		}
 		// intermediate arrays have to be instantiated
 		arr, err := sliceMapToSlice(t)
@@ -1023,6 +1020,17 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		return resultArr, nil
 	case schema.Value.Type.Is("object"):
 		resultMap := make(map[string]interface{})
+		additPropsSchema := schema.Value.AdditionalProperties.Schema
+		pp, hasParamsSet := deepGet(params, mapKeys...)
+		objectParams, ok := pp.(map[string]interface{})
+		if !ok {
+			objectParams = make(map[string]interface{})
+		}
+		for k := range objectParams { // validate all params before building object
+			if _, err := schema.Value.Properties.JSONLookup(k); err != nil && additPropsSchema == nil {
+				return nil, &ParseError{path: pathFromKeys(append(mapKeys, k)), Kind: KindInvalidFormat, Reason: "property does not exist in schema"}
+			}
+		}
 		for k, propSchema := range schema.Value.Properties {
 			r, err := buildResObj(params, mapKeys, k, propSchema)
 			if err != nil {
@@ -1032,13 +1040,12 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				resultMap[k] = r
 			}
 		}
-		if s := schema.Value.AdditionalProperties.Schema; s != nil {
-			additProps, ok := deepGet(params, mapKeys...)
-			if !ok {
+		if additPropsSchema != nil {
+			if !hasParamsSet {
 				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 			}
-			for k := range additProps.(map[string]interface{}) {
-				r, err := buildResObj(params, mapKeys, k, s)
+			for k := range objectParams {
+				r, err := buildResObj(params, mapKeys, k, additPropsSchema)
 				if err != nil {
 					return nil, err
 				}
