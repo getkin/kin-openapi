@@ -1012,19 +1012,24 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		}
 		resultArr := make([]interface{}, len(arr))
 		for i := range arr {
-			res, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
+			r, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
 				return nil, err
 			}
-			resultArr[i] = res
+			if r != nil {
+				resultArr[i] = r
+			}
 		}
 		return resultArr, nil
 	case schema.Value.Type.Is("object"):
 		resultMap := make(map[string]interface{})
 		for k, propSchema := range schema.Value.Properties {
-			resultMap[k], err = buildResObj(params, mapKeys, k, propSchema)
+			r, err := buildResObj(params, mapKeys, k, propSchema)
 			if err != nil {
 				return nil, err
+			}
+			if r != nil {
+				resultMap[k] = r
 			}
 		}
 		if s := schema.Value.AdditionalProperties.Schema; s != nil {
@@ -1033,9 +1038,12 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 			}
 			for k := range additProps.(map[string]interface{}) {
-				resultMap[k], err = buildResObj(params, mapKeys, k, s)
+				r, err := buildResObj(params, mapKeys, k, s)
 				if err != nil {
 					return nil, err
+				}
+				if r != nil {
+					resultMap[k] = r
 				}
 			}
 		}

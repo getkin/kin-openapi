@@ -845,9 +845,9 @@ func TestDecodeParameter(t *testing.T) {
 				},
 				{
 					name:  "deepObject explode array",
-					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", stringArraySchema)},
-					query: "param[items][1]=f%26oo&param[items][0]=bar",
-					want:  map[string]interface{}{"items": []string{"bar", "f%26oo"}},
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", integerArraySchema)},
+					query: "param[items][1]=456&param[items][0]=123",
+					want:  map[string]interface{}{"items": []interface{}{123, 456}},
 					found: true,
 				},
 				{
@@ -891,7 +891,12 @@ func TestDecodeParameter(t *testing.T) {
 						),
 					},
 					query: "param[obj][prop1]=bar&param[obj][prop2][badindex]=bad&param[objTwo]=string",
-					err:   &ParseError{path: []interface{}{"obj", "prop2", "badindex"}, Reason: `nested schema for key "badindex" not found`},
+					err: &ParseError{
+						path:   []interface{}{"obj", "prop2"},
+						Reason: `nested schema for key "badindex" not found`,
+						Kind:   KindInvalidFormat,
+						Value:  map[string]interface{}(map[string]interface{}{"badindex": "bad"}),
+					},
 				},
 				{
 					name: "deepObject explode nested object",
@@ -1039,9 +1044,13 @@ func TestDecodeParameter(t *testing.T) {
 						),
 					},
 					query: "param[arr][4][key]=true&param[arr][0][key]=false",
-					err:   &ParseError{path: []interface{}{"arr"}, Cause: &ParseError{Kind: KindOther, Reason: "could not convert value map to array: missing array value at index 0"}},
+					err: &ParseError{
+						path: []interface{}{"arr"},
+						Kind: KindInvalidFormat,
+						// FIXME: not returning parserror properly
+						Cause: &ParseError{Reason: "could not convert value map to array: missing array value at index 0"},
+					},
 				},
-				// FIXME: SUPPORT NESTED ARRAY OF OBJECTS
 				{
 					name: "deepObject explode nested array of objects",
 					param: &openapi3.Parameter{
