@@ -851,7 +851,7 @@ func TestDecodeParameter(t *testing.T) {
 					name:  "deepObject explode array",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", integerArraySchema)},
 					query: "param[items][1]=456&param[items][0]=123",
-					want:  map[string]interface{}{"items": []interface{}{123, 456}},
+					want:  map[string]interface{}{"items": []interface{}{int64(123), int64(456)}},
 					found: true,
 				},
 				{
@@ -871,56 +871,7 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-				{
-					name: "deepObject explode additionalProperties with object properties - multiple properties",
-					param: &openapi3.Parameter{
-						Name: "param", In: "query", Style: "deepObject", Explode: explode,
-						Schema: objectOf(
-							"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
-							"objIgnored", objectOf("items", stringArraySchema),
-						),
-					},
-					query: "param[obj][prop1][item1]=1&param[obj][prop1][item2]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2]=def",
-					want: map[string]interface{}{
-						"obj": map[string]interface{}{
-							"prop1": map[string]interface{}{
-								"item1": 1,
-								"item2": "abc",
-							},
-							"prop2": map[string]interface{}{
-								"item1": 2,
-								"item2": "def",
-							},
-						},
-					},
-					found: true,
-				},
-				{
-					name: "deepObject explode additionalProperties with object properties - missing property - allowed if nullable",
-					param: &openapi3.Parameter{
-						Name: "param", In: "query", Style: "deepObject", Explode: explode,
-						Schema: objectOf(
-							"obj", additionalPropertiesObjectOf(func() *openapi3.SchemaRef {
-								s := objectOf(
-									"item1", integerSchema,
-									"nullable", &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}, Nullable: true}},
-								)
 
-								return s
-							}()),
-							"objIgnored", objectOf("items", stringArraySchema),
-						),
-					},
-					query: "param[obj][prop1][item1]=1",
-					want: map[string]interface{}{
-						"obj": map[string]interface{}{
-							"prop1": map[string]interface{}{
-								"item1": 1,
-							},
-						},
-					},
-					found: true,
-				},
 				{
 					name: "deepObject explode additionalProperties with object properties - sharing property",
 					param: &openapi3.Parameter{
@@ -933,7 +884,7 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param[obj][prop1][item1]=1&param[obj][prop1][item2]=abc",
 					want: map[string]interface{}{
 						"obj": map[string]interface{}{"prop1": map[string]interface{}{
-							"item1": 1,
+							"item1": int64(1),
 							"item2": "abc",
 						}},
 					},
@@ -1097,7 +1048,7 @@ func TestDecodeParameter(t *testing.T) {
 					want: map[string]interface{}{
 						"arr": []interface{}{
 							nil,
-							[]interface{}{nil, 123, 456},
+							[]interface{}{nil, int64(123), int64(456)},
 						},
 					},
 					found: true,

@@ -233,8 +233,6 @@ func TestValidateQueryParams(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		// TODO: move tests and any logic regarding schema validation in req_resp_decoder to use ValidateParameter.
-		// those should just decode
 		{
 			name: "deepObject explode additionalProperties with object properties - missing required property",
 			param: &openapi3.Parameter{
@@ -283,17 +281,17 @@ func TestValidateQueryParams(t *testing.T) {
 				Name: "param", In: "query", Style: "deepObject", Explode: explode,
 				Schema: objectOf(
 					"obj", additionalPropertiesObjectOf(objectOf(
-						"item1", integerSchema,
+						"item1", numberSchema,
 						"requiredProp", stringSchema,
 					)),
 					"objIgnored", objectOf("items", stringArraySchema),
 				),
 			},
-			query: "param[obj][prop1][item1]=1",
+			query: "param[obj][prop1][item1]=1.123",
 			want: map[string]interface{}{
 				"obj": map[string]interface{}{
 					"prop1": map[string]interface{}{
-						"item1": 1,
+						"item1": float64(1.123),
 					},
 				},
 			},
@@ -310,10 +308,33 @@ func TestValidateQueryParams(t *testing.T) {
 			want: map[string]interface{}{
 				"obj": map[string]interface{}{},
 			},
-			// err: &openapi3.SchemaError{
-			// 	// FIXME: failing schema should be at field items with schema: objectOf("items", stringArraySchema)
-			// 	SchemaField: "type", Reason: "value must be an array", Value: "baz", Schema: stringArraySchema.Value,
-			// },
+			err: &openapi3.SchemaError{
+				// FIXME: failing schema should be at field items with schema: objectOf("items", stringArraySchema)
+				SchemaField: "type", Reason: "value must be an array", Value: "baz", Schema: stringArraySchema.Value,
+			},
+		},
+		{
+			name: "deepObject explode additionalProperties with object properties - multiple properties",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][item1]=1&param[obj][prop1][item2]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2]=def",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{
+					"prop1": map[string]interface{}{
+						"item1": int64(1),
+						"item2": "abc",
+					},
+					"prop2": map[string]interface{}{
+						"item1": int64(2),
+						"item2": "def",
+					},
+				},
+			},
 		},
 	}
 
@@ -344,17 +365,17 @@ func TestValidateQueryParams(t *testing.T) {
 
 			if tc.err != nil {
 				require.Error(t, err)
-				e, ok := err.(*RequestError)
+				re, ok := err.(*RequestError)
 				if !ok {
 					t.Errorf("error is not a RequestError")
 
 					return
 				}
-				switch err := e.Unwrap().(type) {
+				switch gErr := re.Unwrap().(type) {
 				case *openapi3.SchemaError:
-					matchSchemaError(t, err, tc.err)
+					matchSchemaError(t, gErr, tc.err)
 				case *ParseError:
-					matchParseError(t, err, tc.err)
+					matchParseError(t, gErr, tc.err)
 				default:
 					t.Errorf("unknown RequestError wrapped error type")
 				}

@@ -1008,7 +1008,8 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		pp, _ := deepGet(params, mapKeys...)
 		objectParams, ok := pp.(map[string]interface{})
 		if !ok {
-			return nil, nil // let validator handle this
+			// leave validation up to ValidateParameter
+			return nil, nil
 		}
 		for k, propSchema := range schema.Value.Properties {
 			r, err := buildResObj(params, mapKeys, k, propSchema)
@@ -1047,45 +1048,11 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		if err != nil {
 			return nil, handlePropParseError(mapKeys, err)
 		}
-		if prim == nil { // parsing failed but there is a value in params
-			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Value: val, Reason: fmt.Sprintf("path %s has an invalid value", strings.Join(mapKeys, "."))}
-		}
-		ival, err := convertParamValueToType(v, schema.Value.Type)
-		if err != nil {
-			return nil, handlePropParseError(mapKeys, err)
-		}
 
-		return ival, nil
+		return prim, nil
 	}
 
 	return nil, err
-}
-
-func convertParamValueToType(val string, typ *openapi3.Types) (interface{}, error) {
-	switch {
-	case typ.Permits(openapi3.TypeBoolean):
-		v, err := strconv.ParseBool(val)
-		if err != nil {
-			return nil, err
-		}
-		return v, nil
-	case typ.Permits(openapi3.TypeInteger):
-		v, err := strconv.Atoi(val)
-		if err != nil {
-			return nil, err
-		}
-		return v, nil
-	case typ.Permits(openapi3.TypeNumber):
-		v, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			return nil, err
-		}
-		return v, nil
-	case typ.Permits(openapi3.TypeString):
-		return val, nil
-	default:
-		return nil, fmt.Errorf("unsupported parameter array type: %s", typ)
-	}
 }
 
 func handlePropParseError(path []string, err error) error {
