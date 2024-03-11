@@ -760,6 +760,23 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		sort.Strings(examples)
 		for _, name := range examples {
 			example := contentType.Examples[name]
+			if exampleRef := example.Ref; strings.HasPrefix(exampleRef, "#/components/schemas") {
+				parsedUrl, err := url.Parse(exampleRef)
+				if err != nil {
+					return err
+				}
+				var resolved SchemaRef
+				_, err = loader.resolveComponent(doc, exampleRef, parsedUrl, &resolved)
+				if err != nil {
+					return err
+				}
+				contentType.Examples[name] = &ExampleRef{
+					Ref:   exampleRef,
+					Value: NewExample(resolved.Value),
+				}
+				continue
+
+			}
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
 			}
