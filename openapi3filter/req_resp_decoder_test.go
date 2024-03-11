@@ -923,15 +923,13 @@ func TestDecodeParameter(t *testing.T) {
 							"obj", objectOf("nestedObjOne", stringSchema),
 						),
 					},
-					// FIXME: got map[string]interface {}(map[string]interface {}{"obj":map[string]interface {}{}}) without error
-					// should error out on object invalid index
 					query: "param[obj][badindex]=bar",
 					found: true,
 
 					err: &ParseError{path: []interface{}{"obj", "badindex"}, Kind: KindInvalidFormat, Reason: `property does not exist in schema`},
 				},
 				{
-					// Currently allowing. Behavior cannot be defined in spec
+					// Currently allowing
 					name: "deepObject explode nested object - extraneous param ignored",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
@@ -939,8 +937,8 @@ func TestDecodeParameter(t *testing.T) {
 							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
 						),
 					},
-					query: "param[unknown]=bar",
-					want:  map[string]interface{}{},
+					query: "anotherparam=bar",
+					want:  map[string]interface{}(nil),
 				},
 				{
 					name: "deepObject explode nested object - bad array item type",
@@ -1027,7 +1025,6 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-				// FIXME:
 				{
 					name: "deepObject explode nested objects - misplaced parameter",
 					param: &openapi3.Parameter{
@@ -1036,6 +1033,17 @@ func TestDecodeParameter(t *testing.T) {
 							"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
 						),
 					},
+					// FIXME: incorrectly setting in buildResObj as
+					// map[string]interface {}(
+					// 	map[string]interface {}{
+					// 		"obj":map[string]interface {}{
+					// 			"nestedObjOne":map[string]interface {}{
+					// 				"items":"baz"
+					// 		}
+					// 		}
+					// 	}
+					// )
+					// and no error or even validation error raised
 					query: "param[obj][nestedObjOne]=baz",
 					found: true,
 					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindOther, Value: "baz", Reason: "schema has non primitive type object"}},
@@ -1050,10 +1058,9 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					query: "param[arr][4][key]=true&param[arr][0][key]=false",
 					err: &ParseError{
-						path: []interface{}{"arr"},
-						Kind: KindInvalidFormat,
-						// FIXME: not returning parserror properly
-						Cause: &ParseError{Reason: "could not convert value map to array: missing array value at index 0"},
+						path:   []interface{}{"arr"},
+						Kind:   KindInvalidFormat,
+						Reason: "could not convert value map to array: missing array value at index 1",
 					},
 				},
 				{

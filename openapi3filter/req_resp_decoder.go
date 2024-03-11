@@ -921,7 +921,6 @@ func buildObj(obj map[string]interface{}, parentKeys []string, key string, props
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	mobj := make(map[string]interface{})
 	result := make(map[string]interface{})
-	_ = result
 
 	for kk, value := range props {
 		keys := strings.Split(kk, urlDecoderDelimiter)
@@ -971,10 +970,6 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 	return result, nil
 }
 
-type Length interface {
-	Len() int
-}
-
 // buildResObj constructs an object based on a given schema and param values
 // mobj: pure map of maps containing all param values indexed by either key or array indexes
 func buildResObj(params map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
@@ -989,9 +984,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		// check type and convert to []interface{} if required
 		paramArr, ok := deepGet(params, mapKeys...)
 		if !ok {
-			// FIXME: unset nullable params should be skipped without issue... if returning nil, nil to parent
-			// the parent should return nil as well
-			// return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 			return nil, nil
 		}
 		t, isMap := paramArr.(map[string]interface{})
@@ -1005,7 +997,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				return nil, err
 			}
 			return res, nil
-
 		}
 		// intermediate arrays have to be instantiated
 		arr, err := sliceMapToSlice(t)
@@ -1093,9 +1084,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		if err != nil {
 			return nil, handlePropParseError(mapKeys, err)
 		}
-
 		return ival, nil
-
 	}
 
 	return nil, err
