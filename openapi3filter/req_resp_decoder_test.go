@@ -895,28 +895,6 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-				// TODO: move tests any logic regarding schema validation to use ValidateParameter.
-				// we just need to pass a generic input *RequestValidationInput
-				// these should just decode
-				{
-					name: "deepObject explode additionalProperties with object properties - missing property",
-					param: &openapi3.Parameter{
-						Name: "param", In: "query", Style: "deepObject", Explode: explode,
-						Schema: objectOf(
-							"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
-							"objIgnored", objectOf("items", stringArraySchema),
-						),
-					},
-					query: "param[obj][prop1][item1]=1",
-					want: map[string]interface{}{
-						"obj": map[string]interface{}{
-							"prop1": map[string]interface{}{
-								"item1": 1,
-							},
-						},
-					},
-					err: &ParseError{path: []interface{}{"obj", "prop1", "item2"}, Kind: KindInvalidFormat, Reason: `path does not exist`},
-				},
 				{
 					name: "deepObject explode additionalProperties with object properties - missing property - allowed if nullable",
 					param: &openapi3.Parameter{

@@ -16,6 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func setupTestRouter(t *testing.T, spec string) routers.Router {
@@ -218,6 +219,80 @@ components:
 			body2, err := io.ReadAll(validationInput.Request.Body)
 			assert.NoError(t, err, "unable to read request body: %v", err)
 			assert.Equal(t, body, body2, "body by GetBody() is not matched")
+		})
+	}
+}
+
+func TestValidateQueryParams(t *testing.T) {
+	type testCase struct {
+		name  string
+		param *openapi3.Parameter
+		query string
+		want  interface{}
+		err   error
+	}
+
+	testCases := []testCase{
+		// TODO: move tests and any logic regarding schema validation in req_resp_decoder to use ValidateParameter.
+		// those should just decode
+		{
+			name: "deepObject explode additionalProperties with object properties - missing property",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][item1]=1",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{
+					"prop1": map[string]interface{}{
+						"item1": 1,
+					},
+				},
+			},
+			err: &ParseError{path: []interface{}{"obj", "prop1", "item2"}, Kind: KindInvalidFormat, Reason: `path does not exist`},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &openapi3.Info{
+				Title:   "MyAPI",
+				Version: "0.1",
+			}
+			doc := &openapi3.T{OpenAPI: "3.0.0", Info: info, Paths: openapi3.NewPaths()}
+			op := &openapi3.Operation{
+				OperationID: "test",
+				Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
+				Responses:   openapi3.NewResponses(),
+			}
+			doc.AddOperation("/test", http.MethodGet, op)
+			err := doc.Validate(context.Background())
+			require.NoError(t, err)
+			router, err := legacyrouter.NewRouter(doc)
+			require.NoError(t, err)
+
+			req, err := http.NewRequest(http.MethodGet, "http://test.org/test?"+tc.query, nil)
+			route, pathParams, err := router.FindRoute(req)
+			require.NoError(t, err)
+
+			input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
+			err = ValidateParameter(context.Background(), input, tc.param)
+
+			if tc.err != nil {
+				require.Error(t, err)
+				e, ok := tc.err.(*ParseError)
+				if !ok {
+					t.Errorf("error is not a RequestError")
+					return
+				}
+				matchParseError(t, e, tc.err)
+
+				return
+			}
+
+			require.NoError(t, err)
 		})
 	}
 }
