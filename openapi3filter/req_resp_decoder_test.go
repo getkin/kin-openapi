@@ -872,7 +872,76 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name: "deepObject explode additionalProperties with object properties",
+					name: "deepObject explode additionalProperties with object properties - multiple properties",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
+							"objIgnored", objectOf("items", stringArraySchema),
+						),
+					},
+					query: "param[obj][prop1][item1]=1&param[obj][prop1][item2]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2]=def",
+					want: map[string]interface{}{
+						"obj": map[string]interface{}{
+							"prop1": map[string]interface{}{
+								"item1": 1,
+								"item2": "abc",
+							},
+							"prop2": map[string]interface{}{
+								"item1": 2,
+								"item2": "def",
+							},
+						},
+					},
+					found: true,
+				},
+				{
+					name: "deepObject explode additionalProperties with object properties - missing property",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
+							"objIgnored", objectOf("items", stringArraySchema),
+						),
+					},
+					query: "param[obj][prop1][item1]=1",
+					want: map[string]interface{}{
+						"obj": map[string]interface{}{
+							"prop1": map[string]interface{}{
+								"item1": 1,
+							},
+						},
+					},
+					err: &ParseError{path: []interface{}{"obj", "prop1", "item2"}, Kind: KindInvalidFormat, Reason: `path does not exist`},
+				},
+				{
+					name: "deepObject explode additionalProperties with object properties - missing property - allowed if nullable",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectOf(func() *openapi3.SchemaRef {
+								s := objectOf(
+									"item1", integerSchema,
+									"nullable", &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}, Nullable: true}},
+								)
+
+								return s
+							}()),
+							"objIgnored", objectOf("items", stringArraySchema),
+						),
+					},
+					query: "param[obj][prop1][item1]=1",
+					want: map[string]interface{}{
+						"obj": map[string]interface{}{
+							"prop1": map[string]interface{}{
+								"item1": 1,
+							},
+						},
+					},
+					found: true,
+				},
+				{
+					name: "deepObject explode additionalProperties with object properties - sharing property",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(

@@ -916,8 +916,6 @@ func buildObj(obj map[string]interface{}, parentKeys []string, key string, props
 }
 
 // makeObject returns an object that contains properties from props.
-// A value of every property is parsed as a primitive value.
-// The function returns an error when an error happened while parse object's properties.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	mobj := make(map[string]interface{})
 	result := make(map[string]interface{})
@@ -1055,6 +1053,10 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
+			// TODO: should ignore if property is nullable
+			if schema.Value.Nullable {
+				return nil, nil
+			}
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "path does not exist"}
 		}
 		v, ok := val.(string)
