@@ -1,0 +1,17 @@
+openapi: 3.0.0
+info:
+  title: "OAI Specification in YAML"
+  version: 0.0.1
+paths: {}
+components:
+  schemas:
+    TestSchema:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+    TestSchema2:
+      type: object
+      additionalProperties:
+        type: string
