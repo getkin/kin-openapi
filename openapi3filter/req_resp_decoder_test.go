@@ -895,6 +895,9 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
+				// TODO: move tests any logic regarding schema validation to use ValidateParameter.
+				// we just need to pass a generic input *RequestValidationInput
+				// these should just decode
 				{
 					name: "deepObject explode additionalProperties with object properties - missing property",
 					param: &openapi3.Parameter{
