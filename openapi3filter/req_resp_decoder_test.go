@@ -1033,20 +1033,9 @@ func TestDecodeParameter(t *testing.T) {
 							"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
 						),
 					},
-					// FIXME: incorrectly setting in buildResObj as
-					// map[string]interface {}(
-					// 	map[string]interface {}{
-					// 		"obj":map[string]interface {}{
-					// 			"nestedObjOne":map[string]interface {}{
-					// 				"items":"baz"
-					// 		}
-					// 		}
-					// 	}
-					// )
-					// and no error or even validation error raised
 					query: "param[obj][nestedObjOne]=baz",
 					found: true,
-					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindOther, Value: "baz", Reason: "schema has non primitive type object"}},
+					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Kind: KindInvalidFormat, Value: "baz", Reason: "expected object"},
 				},
 				{
 					name: "deepObject explode nested array of objects - missing array index",

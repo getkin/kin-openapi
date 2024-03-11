@@ -931,7 +931,6 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 		}
 		deepSet(mobj, keys, value)
 	}
-
 	r, err := buildResObj(mobj, nil, "", schema)
 	if err != nil {
 		return nil, err
@@ -1020,7 +1019,11 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		pp, hasParamsSet := deepGet(params, mapKeys...)
 		objectParams, ok := pp.(map[string]interface{})
 		if !ok {
-			objectParams = make(map[string]interface{})
+			if pp != nil { // some param was set with incorrect indexes
+				return nil, &ParseError{path: pathFromKeys(mapKeys), Value: pp, Kind: KindInvalidFormat, Reason: "expected object"}
+			}
+			// param is simply not set
+			return nil, nil
 		}
 		for k := range objectParams { // validate all params before building object
 			if _, err := schema.Value.Properties.JSONLookup(k); err != nil && additPropsSchema == nil {
@@ -1050,19 +1053,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 				}
 			}
 		}
-		// dont set key in parent if empty map or slice. maybe can handle beforehand
-		for k, v := range resultMap {
-			switch t := v.(type) {
-			case map[string]interface{}:
-				if len(t) == 0 {
-					delete(resultMap, k)
-				}
-			case []interface{}:
-				if len(t) == 0 {
-					delete(resultMap, k)
-				}
-			}
-		}
+
 		return resultMap, nil
 	default:
 		val, ok := deepGet(params, mapKeys...)
@@ -1084,6 +1075,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		if err != nil {
 			return nil, handlePropParseError(mapKeys, err)
 		}
+
 		return ival, nil
 	}
 
