@@ -1027,32 +1027,11 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 
 		return resultMap, nil
 	case len(schema.Value.AnyOf) > 0:
-		for _, anyOfSchema := range schema.Value.AnyOf {
-			val, err := buildResObj(params, mapKeys, key, anyOfSchema)
-			if err == nil {
-				return val, nil
-			}
-		}
-		return nil, nil
+		return buildFromSchemas(schema.Value.AnyOf, params, mapKeys, key)
 	case len(schema.Value.OneOf) > 0:
-		var lastValue interface{}
-		for _, oneOfSchema := range schema.Value.OneOf {
-			val, err := buildResObj(params, mapKeys, key, oneOfSchema)
-			if err == nil {
-				lastValue = val
-			}
-		}
-		return lastValue, nil
+		return buildFromSchemas(schema.Value.OneOf, params, mapKeys, key)
 	case len(schema.Value.AllOf) > 0:
-		var lastValue interface{}
-		for _, allOfSchema := range schema.Value.AllOf {
-			val, err := buildResObj(params, mapKeys, key, allOfSchema)
-			if err != nil {
-				return nil, err
-			}
-			lastValue = val
-		}
-		return lastValue, nil
+		return buildFromSchemas(schema.Value.AllOf, params, mapKeys, key)
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
@@ -1070,6 +1049,17 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 
 		return prim, nil
 	}
+}
+
+func buildFromSchemas(schemas openapi3.SchemaRefs, params map[string]interface{}, mapKeys []string, key string) (interface{}, error) {
+	for _, s := range schemas {
+		val, err := buildResObj(params, mapKeys, key, s)
+		if err == nil {
+			return val, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func handlePropParseError(path []string, err error) error {

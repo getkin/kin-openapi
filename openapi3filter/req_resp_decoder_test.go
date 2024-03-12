@@ -74,9 +74,18 @@ var (
 			},
 		},
 	}
+	oneofSchemaObject = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			OneOf: []*openapi3.SchemaRef{
+				objectSchema,
+				objectTwoSchema,
+			},
+		},
+	}
 	stringArraySchema  = arrayOf(stringSchema)
 	integerArraySchema = arrayOf(integerSchema)
 	objectSchema       = objectOf("id", stringSchema, "name", stringSchema)
+	objectTwoSchema    = objectOf("id2", stringSchema, "name2", stringSchema)
 )
 
 func TestDeepGet(t *testing.T) {
