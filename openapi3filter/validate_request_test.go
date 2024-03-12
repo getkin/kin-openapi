@@ -341,6 +341,50 @@ func TestValidateQueryParams(t *testing.T) {
 				},
 			},
 		},
+
+		//
+		//
+		{
+			name: "deepObject explode nested object anyOf",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", anyofSchema,
+				),
+			},
+			query: "param[obj]=1",
+			want: map[string]interface{}{
+				"obj": int64(1),
+			},
+		},
+		{
+			name: "deepObject explode nested object allOf",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", allofSchema,
+				),
+			},
+			query: "param[obj]=1",
+			want: map[string]interface{}{
+				"obj": float64(1),
+			},
+		},
+		{
+			name: "deepObject explode nested object oneOf",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchema,
+				),
+			},
+			query: "param[obj]=true",
+			want: map[string]interface{}{
+				"obj": true,
+			},
+		},
+		//
+		//
 	}
 
 	for _, tc := range testCases {
