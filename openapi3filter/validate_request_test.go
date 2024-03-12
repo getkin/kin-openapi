@@ -353,12 +353,11 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop2][item2]=def",
+			// not a ParseError since it doesn't fail during decode when we only set one param (no delimiter while decoding)
 			err: &openapi3.SchemaError{
 				SchemaField: "type",
 				Reason:      "value must be an array",
 				Value:       "def",
-				// no origin set
-				// Origin: &ParseError{path: []interface{}{"obj", "prop2", "item2"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
 			},
 		},
 	}
