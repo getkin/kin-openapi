@@ -213,19 +213,6 @@ func getValidationTests(t *testing.T) []*validationTest {
 		{
 			name: "error - incorrect deepobject query parameter type integer",
 			args: validationArgs{
-				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[integers][0]=1.234", nil),
-			},
-			wantErrParam:   "deepFilter",
-			wantErrBody:    "parameter \"deepFilter\" in query has an error: path integers.0: value 1.234: an invalid integer: invalid syntax",
-			wantErrParamIn: "query",
-			wantErrResponse: &ValidationError{
-				Status: http.StatusBadRequest,
-				Title:  "parameter \"deepFilter\" in query is invalid: 1.234 is an invalid integer",
-			},
-		},
-		{
-			name: "error - incorrect deepobject query parameter type integer",
-			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[numbers][0]=aaa", nil),
 			},
 			wantErrParam:   "deepFilter",

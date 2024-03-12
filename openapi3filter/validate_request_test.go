@@ -239,15 +239,13 @@ func TestValidateQueryParams(t *testing.T) {
 				Name: "param", In: "query", Style: "deepObject", Explode: explode,
 				Schema: objectOf(
 					"obj", additionalPropertiesObjectOf(func() *openapi3.SchemaRef {
-						sc := openapi3.SchemaRef{}
 						s := objectOf(
 							"item1", integerSchema,
 							"requiredProp", stringSchema,
 						)
-						sc = *s
-						sc.Value.Required = []string{"requiredProp"}
+						s.Value.Required = []string{"requiredProp"}
 
-						return &sc
+						return s
 					}()),
 					"objIgnored", objectOf("items", stringArraySchema),
 				),
@@ -353,12 +351,7 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop2][item2]=def",
-			// not a ParseError since it doesn't fail during decode when we only set one param (no delimiter while decoding)
-			err: &openapi3.SchemaError{
-				SchemaField: "type",
-				Reason:      "value must be an array",
-				Value:       "def",
-			},
+			err:   &ParseError{path: []interface{}{"obj", "prop2", "item2"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
 		},
 	}
 

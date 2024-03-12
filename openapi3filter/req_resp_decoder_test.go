@@ -840,20 +840,18 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}{"id": "foo", "name": "bar"},
 					found: true,
 				},
-				// NOTE: does not error out when only one array element is present (no delimiter found),
-				// so it is only catched as request error with a generic schema error
-				// {
-				// 	name: "deepObject explode additionalProperties with object properties - missing index on nested array",
-				// 	param: &openapi3.Parameter{
-				// 		Name: "param", In: "query", Style: "deepObject", Explode: explode,
-				// 		Schema: objectOf(
-				// 			"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringArraySchema)),
-				// 			"objIgnored", objectOf("items", stringArraySchema),
-				// 		),
-				// 	},
-				// 	query: "param[obj][prop2][item2]=def",
-				// 	err:   &ParseError{path: []interface{}{"obj", "prop2", "item2"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
-				// },
+				{
+					name: "deepObject explode additionalProperties with object properties - missing index on nested array",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringArraySchema)),
+							"objIgnored", objectOf("items", stringArraySchema),
+						),
+					},
+					query: "param[obj][prop2][item2]=def",
+					err:   &ParseError{path: []interface{}{"obj", "prop2", "item2"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
+				},
 				{
 					name:  "deepObject explode array - missing indexes",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", stringArraySchema)},
@@ -971,8 +969,8 @@ func TestDecodeParameter(t *testing.T) {
 							"objTwo", integerArraySchema,
 						),
 					},
-					query: "param[objTwo]=badint",
-					err:   &ParseError{path: []interface{}{"objTwo"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
+					query: "param[objTwo][0]=badint",
+					err:   &ParseError{path: []interface{}{"objTwo", "0"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
 				},
 				{
 					name: "deepObject explode deeply nested object - bad array item type",
@@ -982,8 +980,19 @@ func TestDecodeParameter(t *testing.T) {
 							"obj", objectOf("nestedObjOne", integerArraySchema),
 						),
 					},
-					query: "param[obj][nestedObjOne]=badint",
-					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
+					query: "param[obj][nestedObjOne][0]=badint",
+					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne", "0"}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "badint"}},
+				},
+				{
+					name: "deepObject explode deeply nested object - array index not an int",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", integerArraySchema),
+						),
+					},
+					query: "param[obj][nestedObjOne][badindex]=badint",
+					err:   &ParseError{path: []interface{}{"obj", "nestedObjOne"}, Kind: KindInvalidFormat, Reason: "could not convert value map to array: array indexes must be integers: strconv.Atoi: parsing \"badindex\": invalid syntax"},
 				},
 				{
 					name: "deepObject explode nested object with array",

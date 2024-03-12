@@ -963,7 +963,6 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 }
 
 // buildResObj constructs an object based on a given schema and param values
-// mobj: pure map of maps containing all param values indexed by either key or array indexes
 func buildResObj(params map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
 	var err error
 	mapKeys := parentKeys
@@ -973,18 +972,13 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 
 	switch {
 	case schema.Value.Type.Is("array"):
-		// check type and convert to []interface{} if required
 		paramArr, ok := deepGet(params, mapKeys...)
 		if !ok {
 			return nil, nil
 		}
 		t, isMap := paramArr.(map[string]interface{})
 		if !isMap {
-			res, err := buildResObj(params, mapKeys, "", schema.Value.Items)
-			if err != nil {
-				return nil, err
-			}
-			return res, nil
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}
 		}
 		// intermediate arrays have to be instantiated
 		arr, err := sliceMapToSlice(t)
