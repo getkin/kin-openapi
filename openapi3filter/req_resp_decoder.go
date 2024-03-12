@@ -912,9 +912,6 @@ func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi
 	return currentSchema, nil
 }
 
-func buildObj(obj map[string]interface{}, parentKeys []string, key string, props map[string]string) {
-}
-
 // makeObject returns an object that contains properties from props.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	mobj := make(map[string]interface{})
