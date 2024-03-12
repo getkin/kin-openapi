@@ -14,10 +14,10 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
