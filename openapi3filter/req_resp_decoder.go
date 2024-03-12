@@ -1026,6 +1026,15 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		}
 
 		return resultMap, nil
+	case len(schema.Value.AnyOf) > 0 || len(schema.Value.OneOf) > 0 || len(schema.Value.AllOf) > 0 || schema.Value.Not != nil:
+		// TODO: attempt type conversion if primitive in []schemas
+		// else buildResObj for obj or array
+		val, ok := deepGet(params, mapKeys...)
+		if !ok {
+			// leave validation up to ValidateParameter. here there really is not parameter set
+			return nil, nil
+		}
+		return val, nil
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
