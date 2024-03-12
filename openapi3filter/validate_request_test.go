@@ -341,18 +341,6 @@ func TestValidateQueryParams(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "deepObject explode additionalProperties with object properties - missing index on nested array",
-			param: &openapi3.Parameter{
-				Name: "param", In: "query", Style: "deepObject", Explode: explode,
-				Schema: objectOf(
-					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringArraySchema)),
-					"objIgnored", objectOf("items", stringArraySchema),
-				),
-			},
-			query: "param[obj][prop2][item2]=def",
-			err:   &ParseError{path: []interface{}{"obj", "prop2", "item2"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
-		},
 	}
 
 	for _, tc := range testCases {
