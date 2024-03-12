@@ -918,7 +918,6 @@ func buildObj(obj map[string]interface{}, parentKeys []string, key string, props
 // makeObject returns an object that contains properties from props.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
 	mobj := make(map[string]interface{})
-	result := make(map[string]interface{})
 
 	for kk, value := range props {
 		keys := strings.Split(kk, urlDecoderDelimiter)
@@ -933,7 +932,10 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	if err != nil {
 		return nil, err
 	}
-	result = r.(map[string]interface{})
+	result, ok := r.(map[string]interface{})
+	if !ok {
+		return nil, &ParseError{Kind: KindOther, Reason: "invalid param object", Value: result}
+	}
 
 	return result, nil
 }
@@ -964,7 +966,6 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 
 // buildResObj constructs an object based on a given schema and param values
 func buildResObj(params map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
-	var err error
 	mapKeys := parentKeys
 	if key != "" {
 		mapKeys = append(mapKeys, key)
@@ -1045,8 +1046,6 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 
 		return prim, nil
 	}
-
-	return nil, err
 }
 
 func handlePropParseError(path []string, err error) error {
