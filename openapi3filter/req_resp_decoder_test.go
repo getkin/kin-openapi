@@ -871,7 +871,6 @@ func TestDecodeParameter(t *testing.T) {
 					},
 					found: true,
 				},
-
 				{
 					name: "deepObject explode additionalProperties with object properties - sharing property",
 					param: &openapi3.Parameter{
@@ -918,7 +917,7 @@ func TestDecodeParameter(t *testing.T) {
 						path:   []interface{}{"obj", "prop2"},
 						Reason: `path is not convertible to primitive`,
 						Kind:   KindInvalidFormat,
-						Value:  map[string]interface{}(map[string]interface{}{"badindex": "bad"}),
+						Value:  map[string]interface{}{"badindex": "bad"},
 					},
 				},
 				{
@@ -940,7 +939,6 @@ func TestDecodeParameter(t *testing.T) {
 				},
 
 				{
-					// Currently allowing
 					name: "deepObject explode nested object - extraneous param ignored",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
@@ -1054,7 +1052,7 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
-					name: "deepObject explode nested array of objects - missing array index",
+					name: "deepObject explode nested array of objects - missing intermediate array index",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
 						Schema: objectOf(

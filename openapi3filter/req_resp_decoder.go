@@ -1008,8 +1008,8 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		pp, _ := deepGet(params, mapKeys...)
 		objectParams, ok := pp.(map[string]interface{})
 		if !ok {
-			// leave validation up to ValidateParameter
-			return nil, nil
+			// not the expected type, but return it either way and leave validation up to ValidateParameter
+			return pp, nil
 		}
 		for k, propSchema := range schema.Value.Properties {
 			r, err := buildResObj(params, mapKeys, k, propSchema)
@@ -1037,7 +1037,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
-			// leave validation up to ValidateParameter
+			// leave validation up to ValidateParameter. here there really is not parameter set
 			return nil, nil
 		}
 		v, ok := val.(string)

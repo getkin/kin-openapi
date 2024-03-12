@@ -305,35 +305,60 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][nestedObjOne]=baz",
-			want: map[string]interface{}{
-				"obj": map[string]interface{}{},
-			},
 			err: &openapi3.SchemaError{
-				// FIXME: failing schema should be at field items with schema: objectOf("items", stringArraySchema)
-				SchemaField: "type", Reason: "value must be an array", Value: "baz", Schema: stringArraySchema.Value,
+				SchemaField: "type", Reason: "value must be an object", Value: "baz", Schema: objectOf("items", stringArraySchema).Value,
 			},
+		},
+		{
+			name: "deepObject explode nested object - extraneous param ignored",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+				),
+			},
+			query: "anotherparam=bar",
+			want:  map[string]interface{}(nil),
 		},
 		{
 			name: "deepObject explode additionalProperties with object properties - multiple properties",
 			param: &openapi3.Parameter{
 				Name: "param", In: "query", Style: "deepObject", Explode: explode,
 				Schema: objectOf(
-					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringSchema)),
+					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringArraySchema)),
 					"objIgnored", objectOf("items", stringArraySchema),
 				),
 			},
-			query: "param[obj][prop1][item1]=1&param[obj][prop1][item2]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2]=def",
+			query: "param[obj][prop1][item1]=1&param[obj][prop1][item2][0]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2][0]=def",
 			want: map[string]interface{}{
 				"obj": map[string]interface{}{
 					"prop1": map[string]interface{}{
 						"item1": int64(1),
-						"item2": "abc",
+						"item2": []interface{}{"abc"},
 					},
 					"prop2": map[string]interface{}{
 						"item1": int64(2),
-						"item2": "def",
+						"item2": []interface{}{"def"},
 					},
 				},
+			},
+		},
+		{
+			name: "deepObject explode additionalProperties with object properties - missing index on nested array",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringArraySchema)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop2][item2]=def",
+			err: &openapi3.SchemaError{
+				SchemaField: "type",
+				Reason:      "value must be an array",
+				Value:       "def",
+				// no origin set
+				// Origin: &ParseError{path: []interface{}{"obj", "prop2", "item2"}, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"},
 			},
 		},
 	}
@@ -413,12 +438,16 @@ func matchSchemaError(t *testing.T, got, want error) {
 	if wErr.Value != nil {
 		assert.EqualValuesf(t, wErr.Value, gErr.Value, "SchemaError Value differs")
 	}
-	if wErr.Origin != nil {
-		switch wErrOrigin := wErr.Origin.(type) {
+
+	if gErr.Origin == nil && wErr.Origin != nil {
+		t.Errorf("expected error origin but got nothing")
+	}
+	if gErr.Origin != nil {
+		switch gErrOrigin := gErr.Origin.(type) {
 		case *openapi3.SchemaError:
-			matchSchemaError(t, gErr, wErrOrigin)
+			matchSchemaError(t, gErrOrigin, wErr.Origin)
 		case *ParseError:
-			matchParseError(t, gErr, wErrOrigin)
+			matchParseError(t, gErrOrigin, wErr.Origin)
 		default:
 			t.Errorf("unknown origin error")
 		}
