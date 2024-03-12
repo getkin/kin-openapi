@@ -229,7 +229,7 @@ func TestValidateQueryParams(t *testing.T) {
 		param *openapi3.Parameter
 		query string
 		want  map[string]interface{}
-		err   error // ParseError or openapi3.SchemaError
+		err   *openapi3.SchemaError // test ParseError in decoder tests
 	}
 
 	testCases := []testCase{
@@ -376,14 +376,12 @@ func TestValidateQueryParams(t *testing.T) {
 
 					return
 				}
-				switch gErr := re.Unwrap().(type) {
-				case *openapi3.SchemaError:
-					matchSchemaError(t, gErr, tc.err)
-				case *ParseError:
-					matchParseError(t, gErr, tc.err)
-				default:
+
+				gErr, ok := re.Unwrap().(*openapi3.SchemaError)
+				if !ok {
 					t.Errorf("unknown RequestError wrapped error type")
 				}
+				matchSchemaError(t, gErr, tc.err)
 
 				return
 			}
