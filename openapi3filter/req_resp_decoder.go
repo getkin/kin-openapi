@@ -1027,11 +1027,11 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 
 		return resultMap, nil
 	case len(schema.Value.AnyOf) > 0:
-		return buildFromSchemas(schema.Value.AnyOf, params, mapKeys, key)
+		return buildFromSchemas(schema.Value.AnyOf, params, parentKeys, key)
 	case len(schema.Value.OneOf) > 0:
-		return buildFromSchemas(schema.Value.OneOf, params, mapKeys, key)
+		return buildFromSchemas(schema.Value.OneOf, params, parentKeys, key)
 	case len(schema.Value.AllOf) > 0:
-		return buildFromSchemas(schema.Value.AllOf, params, mapKeys, key)
+		return buildFromSchemas(schema.Value.AllOf, params, parentKeys, key)
 	default:
 		val, ok := deepGet(params, mapKeys...)
 		if !ok {
@@ -1051,12 +1051,21 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	}
 }
 
+// TODO: maybe better adhoc logic
 func buildFromSchemas(schemas openapi3.SchemaRefs, params map[string]interface{}, mapKeys []string, key string) (interface{}, error) {
 	for _, s := range schemas {
 		val, err := buildResObj(params, mapKeys, key, s)
-		if err == nil {
+		if err == nil && val != nil {
+			if m, ok := val.(map[string]interface{}); ok && len(m) == 0 {
+				continue
+			}
+			if m, ok := val.([]interface{}); ok && len(m) == 0 {
+				continue
+			}
+
 			return val, nil
 		}
+
 	}
 
 	return nil, nil

@@ -77,15 +77,35 @@ var (
 	oneofSchemaObject = &openapi3.SchemaRef{
 		Value: &openapi3.Schema{
 			OneOf: []*openapi3.SchemaRef{
-				objectSchema,
-				objectTwoSchema,
+				objectOneRSchema,
+				objectTwoRSchema,
+			},
+		},
+	}
+	anyofSchemaObject = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			AnyOf: []*openapi3.SchemaRef{
+				objectOneRSchema,
+				objectTwoRSchema,
 			},
 		},
 	}
 	stringArraySchema  = arrayOf(stringSchema)
 	integerArraySchema = arrayOf(integerSchema)
 	objectSchema       = objectOf("id", stringSchema, "name", stringSchema)
-	objectTwoSchema    = objectOf("id2", stringSchema, "name2", stringSchema)
+	objectTwoRSchema   = func() *openapi3.SchemaRef {
+		s := objectOf("id2", stringSchema, "name2", stringSchema)
+		s.Value.Required = []string{"id2"}
+
+		return s
+	}()
+
+	objectOneRSchema = func() *openapi3.SchemaRef {
+		s := objectOf("id", stringSchema, "name", stringSchema)
+		s.Value.Required = []string{"id"}
+
+		return s
+	}()
 )
 
 func TestDeepGet(t *testing.T) {

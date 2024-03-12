@@ -383,23 +383,41 @@ func TestValidateQueryParams(t *testing.T) {
 				"obj": true,
 			},
 		},
-		// FIXME: cannot build objects
-		// {
-		// 	name: "deepObject explode nested object oneOf - object",
-		// 	param: &openapi3.Parameter{
-		// 		Name: "param", In: "query", Style: "deepObject", Explode: explode,
-		// 		Schema: objectOf(
-		// 			"obj", oneofSchemaObject,
-		// 		),
-		// 	},
-		// 	query: "param[obj][id2]=1&param[obj][name2]=abc",
-		// 	want: map[string]interface{}{
-		// 		"obj": map[string]interface{}{
-		// 			"id2":   "1",
-		// 			"name2": "abc",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "deepObject explode nested object oneOf - object",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchemaObject,
+				),
+			},
+			query: "param[obj][id2]=1&param[obj][name2]=abc",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{
+					"id2":   "1",
+					"name2": "abc",
+				},
+			},
+		},
+		// FIXME: should assign values from both maps in buildFromSchemas
+		// and therefore raise schemaError in validator.
+		// TODO: test want object in decoder is complete
+		{
+			name: "deepObject explode nested object oneOf - object",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchemaObject,
+				),
+			},
+			query: "param[obj][id]=1&param[obj][id2]=2",
+			want: map[string]interface{}{
+				"obj": map[string]interface{}{
+					"id":  "1",
+					"id2": "2",
+				},
+			},
+		},
 		//
 		//
 	}
