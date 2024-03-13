@@ -399,11 +399,8 @@ func TestValidateQueryParams(t *testing.T) {
 				},
 			},
 		},
-		// FIXME: should assign values from both maps in buildFromSchemas
-		// and therefore raise schemaError in validator.
-		// TODO: test want object in decoder is complete
 		{
-			name: "deepObject explode nested object oneOf - object",
+			name: "deepObject explode nested object oneOf - object - more than one match",
 			param: &openapi3.Parameter{
 				Name: "param", In: "query", Style: "deepObject", Explode: explode,
 				Schema: objectOf(
@@ -411,10 +408,26 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][id]=1&param[obj][id2]=2",
+			err: &openapi3.SchemaError{
+				SchemaField: "oneOf",
+				Value:       map[string]interface{}{"id": "1", "id2": "2"},
+				Reason:      "value matches more than one schema from \"oneOf\" (matches schemas at indices [0 1])",
+				Schema:      oneofSchemaObject.Value,
+			},
+		},
+		{
+			name: "deepObject explode nested object oneOf - array",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchemaArrayObject,
+				),
+			},
+			query: "param[obj][0]=a&param[obj][1]=b",
 			want: map[string]interface{}{
-				"obj": map[string]interface{}{
-					"id":  "1",
-					"id2": "2",
+				"obj": []interface{}{
+					"a",
+					"b",
 				},
 			},
 		},
@@ -499,7 +512,7 @@ func matchSchemaError(t *testing.T, got, want error) {
 	if gErr.Origin == nil && wErr.Origin != nil {
 		t.Errorf("expected error origin but got nothing")
 	}
-	if gErr.Origin != nil {
+	if gErr.Origin != nil && wErr.Origin != nil {
 		switch gErrOrigin := gErr.Origin.(type) {
 		case *openapi3.SchemaError:
 			matchSchemaError(t, gErrOrigin, wErr.Origin)

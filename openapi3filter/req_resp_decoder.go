@@ -1051,21 +1051,34 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 	}
 }
 
-// TODO: maybe better adhoc logic
+// buildFromSchemas decodes params with anyOf, oneOf, allOf schemas.
 func buildFromSchemas(schemas openapi3.SchemaRefs, params map[string]interface{}, mapKeys []string, key string) (interface{}, error) {
+	resultMap := make(map[string]interface{})
 	for _, s := range schemas {
 		val, err := buildResObj(params, mapKeys, key, s)
 		if err == nil && val != nil {
-			if m, ok := val.(map[string]interface{}); ok && len(m) == 0 {
-				continue
-			}
-			if m, ok := val.([]interface{}); ok && len(m) == 0 {
+
+			if m, ok := val.(map[string]interface{}); ok {
+				for k, v := range m {
+					resultMap[k] = v
+				}
 				continue
 			}
 
+			if a, ok := val.([]interface{}); ok {
+				if len(a) > 0 {
+					return a, nil
+				}
+				continue
+			}
+
+			// if its a primitive and not nil just return that and let it be validated
 			return val, nil
 		}
+	}
 
+	if len(resultMap) > 0 {
+		return resultMap, nil
 	}
 
 	return nil, nil

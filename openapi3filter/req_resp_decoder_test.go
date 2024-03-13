@@ -106,6 +106,15 @@ var (
 
 		return s
 	}()
+
+	oneofSchemaArrayObject = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			AnyOf: []*openapi3.SchemaRef{
+				stringArraySchema,
+				objectTwoRSchema,
+			},
+		},
+	}
 )
 
 func TestDeepGet(t *testing.T) {
