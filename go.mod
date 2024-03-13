@@ -9,7 +9,6 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/perimeterx/marshmallow v1.1.5
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	gopkg.in/yaml.v3 v3.0.1
 )
 

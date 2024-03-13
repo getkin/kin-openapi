@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -949,8 +948,13 @@ func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
 		}
 		keys = append(keys, key)
 	}
-
-	for i := 0; i <= slices.Max(keys); i++ {
+	max := -1
+	for _, k := range keys {
+		if k > max {
+			max = k
+		}
+	}
+	for i := 0; i <= max; i++ {
 		val, ok := m[strconv.Itoa(i)]
 		if !ok {
 			result = append(result, nil)
