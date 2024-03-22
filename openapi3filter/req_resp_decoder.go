@@ -469,6 +469,7 @@ func (d *pathParamDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	if err != nil {
 		return nil, ok, err
 	}
+
 	val, err := makeObject(props, schema)
 	return val, ok, err
 }
@@ -654,9 +655,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 				case l == 0:
 					// A query parameter's name does not match the required format, so skip it.
 					continue
-				case l == 1:
-					props[matches[0][1]] = strings.Join(values, urlDecoderDelimiter)
-				case l > 1:
+				case l >= 1:
 					kk := []string{}
 					for _, m := range matches {
 						kk = append(kk, m[1])
@@ -680,7 +679,6 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 	if props == nil {
 		return nil, false, nil
 	}
-
 	val, err := makeObject(props, schema)
 	if err != nil {
 		return nil, false, err
@@ -896,127 +894,198 @@ func deepSet(m map[string]interface{}, keys []string, value interface{}) {
 func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
 	currentSchema := parentSchema
 	for _, key := range keys {
-		propertySchema, ok := currentSchema.Value.Properties[key]
-		if !ok {
-			if currentSchema.Value.AdditionalProperties.Schema == nil {
-				return nil, fmt.Errorf("nested schema for key %q not found", key)
+		if currentSchema.Value.Type.Includes(openapi3.TypeArray) {
+			currentSchema = currentSchema.Value.Items
+		} else {
+			propertySchema, ok := currentSchema.Value.Properties[key]
+			if !ok {
+				if currentSchema.Value.AdditionalProperties.Schema == nil {
+					return nil, fmt.Errorf("nested schema for key %q not found", key)
+				}
+				currentSchema = currentSchema.Value.AdditionalProperties.Schema
+				continue
 			}
-			currentSchema = currentSchema.Value.AdditionalProperties.Schema
-			continue
+			currentSchema = propertySchema
 		}
-		currentSchema = propertySchema
 	}
 	return currentSchema, nil
 }
 
 // makeObject returns an object that contains properties from props.
-// A value of every property is parsed as a primitive value.
-// The function returns an error when an error happened while parse object's properties.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]interface{}, error) {
-	obj := make(map[string]interface{})
+	mobj := make(map[string]interface{})
 
-	for propName, propSchema := range schema.Value.Properties {
-		switch {
-		case propSchema.Value.Type.Is("array"):
-			vals := strings.Split(props[propName], urlDecoderDelimiter)
-			for _, v := range vals {
-				_, err := parsePrimitive(v, propSchema.Value.Items)
-				if err != nil {
-					return nil, handlePropParseError([]string{propName}, err)
-				}
-			}
-
-			ivals, err := convertArrayParameterToType(vals, propSchema.Value.Items.Value.Type)
-			if err != nil {
-				return nil, handlePropParseError([]string{propName}, err)
-			}
-			obj[propName] = ivals
-		case propSchema.Value.Type.Is("object"):
-			for prop := range props {
-				if !strings.HasPrefix(prop, propName+urlDecoderDelimiter) {
-					continue
-				}
-				mapKeys := strings.Split(prop, urlDecoderDelimiter)
-				nestedSchema, err := findNestedSchema(schema, mapKeys)
-				if err != nil {
-					return nil, &ParseError{path: pathFromKeys(mapKeys), Reason: err.Error()}
-				}
-				if nestedSchema.Value.Type.Permits("array") {
-					vals := strings.Split(props[prop], urlDecoderDelimiter)
-					for _, v := range vals {
-						_, err := parsePrimitive(v, nestedSchema.Value.Items)
-						if err != nil {
-							return nil, handlePropParseError(mapKeys, err)
-						}
-					}
-					ivals, err := convertArrayParameterToType(vals, nestedSchema.Value.Items.Value.Type)
-					if err != nil {
-						return nil, handlePropParseError(mapKeys, err)
-					}
-					deepSet(obj, mapKeys, ivals)
-					continue
-				}
-				value, err := parsePrimitive(props[prop], nestedSchema)
-				if err != nil {
-					return nil, handlePropParseError(mapKeys, err)
-				}
-				deepSet(obj, mapKeys, value)
-			}
-		default:
-			value, err := parsePrimitive(props[propName], propSchema)
-			if err != nil {
-				return nil, handlePropParseError([]string{propName}, err)
-			}
-			obj[propName] = value
+	for kk, value := range props {
+		keys := strings.Split(kk, urlDecoderDelimiter)
+		if strings.Contains(value, urlDecoderDelimiter) {
+			// don't support implicit array indexes anymore
+			p := pathFromKeys(keys)
+			return nil, &ParseError{path: p, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}
 		}
+		deepSet(mobj, keys, value)
+	}
+	r, err := buildResObj(mobj, nil, "", schema)
+	if err != nil {
+		return nil, err
+	}
+	result, ok := r.(map[string]interface{})
+	if !ok {
+		return nil, &ParseError{Kind: KindOther, Reason: "invalid param object", Value: result}
 	}
 
-	return obj, nil
+	return result, nil
 }
 
-func convertArrayParameterToType(strArray []string, typ *openapi3.Types) (interface{}, error) {
-	var iarr []interface{}
-	switch {
-	case typ.Permits(openapi3.TypeBoolean):
-		for _, str := range strArray {
-			if str == "" {
-				continue
-			}
-			parsedBool, err := strconv.ParseBool(str)
-			if err != nil {
-				return nil, err
-			}
-			iarr = append(iarr, parsedBool)
+// example: map[0:map[key:true] 1:map[key:false]] -> [map[key:true] map[key:false]]
+func sliceMapToSlice(m map[string]interface{}) ([]interface{}, error) {
+	var result []interface{}
+
+	keys := make([]int, 0, len(m))
+	for k := range m {
+		key, err := strconv.Atoi(k)
+		if err != nil {
+			return nil, fmt.Errorf("array indexes must be integers: %w", err)
 		}
-	case typ.Permits(openapi3.TypeInteger):
-		for _, str := range strArray {
-			if str == "" {
-				continue
-			}
-			parsedInt, err := strconv.Atoi(str)
-			if err != nil {
-				return nil, err
-			}
-			iarr = append(iarr, parsedInt)
+		keys = append(keys, key)
+	}
+	max := -1
+	for _, k := range keys {
+		if k > max {
+			max = k
 		}
-	case typ.Permits(openapi3.TypeNumber):
-		for _, str := range strArray {
-			if str == "" {
-				continue
-			}
-			parsedFloat, err := strconv.ParseFloat(str, 64)
-			if err != nil {
-				return nil, err
-			}
-			iarr = append(iarr, parsedFloat)
+	}
+	for i := 0; i <= max; i++ {
+		val, ok := m[strconv.Itoa(i)]
+		if !ok {
+			result = append(result, nil)
+			continue
 		}
-	case typ.Permits(openapi3.TypeString):
-		return strArray, nil
-	default:
-		return nil, fmt.Errorf("unsupported parameter array type: %s", typ)
+		result = append(result, val)
+	}
+	return result, nil
+}
+
+// buildResObj constructs an object based on a given schema and param values
+func buildResObj(params map[string]interface{}, parentKeys []string, key string, schema *openapi3.SchemaRef) (interface{}, error) {
+	mapKeys := parentKeys
+	if key != "" {
+		mapKeys = append(mapKeys, key)
 	}
 
-	return iarr, nil
+	switch {
+	case schema.Value.Type.Is("array"):
+		paramArr, ok := deepGet(params, mapKeys...)
+		if !ok {
+			return nil, nil
+		}
+		t, isMap := paramArr.(map[string]interface{})
+		if !isMap {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}
+		}
+		// intermediate arrays have to be instantiated
+		arr, err := sliceMapToSlice(t)
+		if err != nil {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
+		}
+		resultArr := make([]interface{}, len(arr))
+		for i := range arr {
+			r, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
+			if err != nil {
+				return nil, err
+			}
+			if r != nil {
+				resultArr[i] = r
+			}
+		}
+		return resultArr, nil
+	case schema.Value.Type.Is("object"):
+		resultMap := make(map[string]interface{})
+		additPropsSchema := schema.Value.AdditionalProperties.Schema
+		pp, _ := deepGet(params, mapKeys...)
+		objectParams, ok := pp.(map[string]interface{})
+		if !ok {
+			// not the expected type, but return it either way and leave validation up to ValidateParameter
+			return pp, nil
+		}
+		for k, propSchema := range schema.Value.Properties {
+			r, err := buildResObj(params, mapKeys, k, propSchema)
+			if err != nil {
+				return nil, err
+			}
+			if r != nil {
+				resultMap[k] = r
+			}
+		}
+		if additPropsSchema != nil {
+			// dynamic creation of possibly nested objects
+			for k := range objectParams {
+				r, err := buildResObj(params, mapKeys, k, additPropsSchema)
+				if err != nil {
+					return nil, err
+				}
+				if r != nil {
+					resultMap[k] = r
+				}
+			}
+		}
+
+		return resultMap, nil
+	case len(schema.Value.AnyOf) > 0:
+		return buildFromSchemas(schema.Value.AnyOf, params, parentKeys, key)
+	case len(schema.Value.OneOf) > 0:
+		return buildFromSchemas(schema.Value.OneOf, params, parentKeys, key)
+	case len(schema.Value.AllOf) > 0:
+		return buildFromSchemas(schema.Value.AllOf, params, parentKeys, key)
+	default:
+		val, ok := deepGet(params, mapKeys...)
+		if !ok {
+			// leave validation up to ValidateParameter. here there really is not parameter set
+			return nil, nil
+		}
+		v, ok := val.(string)
+		if !ok {
+			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Value: val, Reason: "path is not convertible to primitive"}
+		}
+		prim, err := parsePrimitive(v, schema)
+		if err != nil {
+			return nil, handlePropParseError(mapKeys, err)
+		}
+
+		return prim, nil
+	}
+}
+
+// buildFromSchemas decodes params with anyOf, oneOf, allOf schemas.
+func buildFromSchemas(schemas openapi3.SchemaRefs, params map[string]interface{}, mapKeys []string, key string) (interface{}, error) {
+	resultMap := make(map[string]interface{})
+	for _, s := range schemas {
+		val, err := buildResObj(params, mapKeys, key, s)
+		if err == nil && val != nil {
+
+			if m, ok := val.(map[string]interface{}); ok {
+				for k, v := range m {
+					resultMap[k] = v
+				}
+				continue
+			}
+
+			if a, ok := val.([]interface{}); ok {
+				if len(a) > 0 {
+					return a, nil
+				}
+				continue
+			}
+
+			// if its a primitive and not nil just return that and let it be validated
+			return val, nil
+		}
+	}
+
+	if len(resultMap) > 0 {
+		return resultMap, nil
+	}
+
+	return nil, nil
 }
 
 func handlePropParseError(path []string, err error) error {
