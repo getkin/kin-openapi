@@ -59,9 +59,7 @@ func UseAllExportedFields() Option {
 }
 
 func CreateTypeNameGenerator(tngnrt TypeNameGenerator) Option {
-	return func(x *generatorOpt) {
-		x.typeNameGenerator = tngnrt
-	}
+	return func(x *generatorOpt) { x.typeNameGenerator = tngnrt }
 }
 
 // ThrowErrorOnCycle changes the default behavior of creating cycle
