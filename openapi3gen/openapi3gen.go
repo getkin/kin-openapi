@@ -133,8 +133,10 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 		}
 
 		if _, ok := g.componentSchemaRefs[refName]; ok && schemas != nil {
-			schemas[refName] = &openapi3.SchemaRef{
-				Value: ref.Value,
+			if ref.Value != nil && ref.Value.Properties != nil {
+				schemas[refName] = &openapi3.SchemaRef{
+					Value: ref.Value,
+				}
 			}
 		}
 		if strings.HasPrefix(ref.Ref, "#/components/schemas/") {
@@ -321,7 +323,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 		} else {
 			typeName := g.generateTypeName(t)
 
-			if g.opts.exportComponentSchemas.ExportComponentSchemas && g.componentSchemaRefs[typeName] != struct{}{} {
+			if _, ok := g.componentSchemaRefs[typeName]; ok && g.opts.exportComponentSchemas.ExportComponentSchemas {
 				// Check if we have already parsed this component schema ref based on the name of the struct
 				// and use that if so
 				return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
@@ -383,8 +385,6 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			if schema.Properties != nil {
 				schema.Type = &openapi3.Types{"object"}
 			}
-
-			// TODO move the export here!
 		}
 
 	}

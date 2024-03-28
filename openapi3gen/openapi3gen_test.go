@@ -14,7 +14,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
-	"github.com/getkin/kin-openapi/openapi3gen/subpkg"
+	"github.com/getkin/kin-openapi/openapi3gen/internal/subpkg"
 )
 
 func ExampleGenerator_SchemaRefs() {
@@ -593,7 +593,7 @@ func ExampleNewSchemaRefForValue_recursive() {
 }
 
 // Make sure that custom schema name generator is employed and results produced with it are properly used
-func TestNewSchemaRefWithSubPackages(t *testing.T) {
+func ExampleNewSchemaRefWithSubPackages() {
 	type Parent struct {
 		Field1 string       `json:"field1"`
 		Child  subpkg.Child `json:"child"`
@@ -636,51 +636,37 @@ func TestNewSchemaRefWithSubPackages(t *testing.T) {
 	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
 		panic(err)
 	}
+
 	fmt.Printf("schemaRef: %s\n", data)
-	// Output
+	// Output:
 	// schemas: {
-	// 	"CHILD_TYPE": {
-	// 	  "properties": {
-	// 		"name": {
-	// 		  "type": "string"
-	// 		}
-	// 	  },
-	// 	  "type": "object"
-	// 	},
-	// 	"PARENT_TYPE": {
-	// 	  "properties": {
-	// 		"child": {
-	// 		  "$ref": "#/components/schemas/CHILD_TYPE"
-	// 		},
-	// 		"field1": {
-	// 		  "type": "string"
-	// 		}
-	// 	  },
-	// 	  "type": "object"
-	// 	}
+	//   "CHILD_TYPE": {
+	//     "properties": {
+	//       "name": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
+	//   },
+	//   "PARENT_TYPE": {
+	//     "properties": {
+	//       "child": {
+	//         "$ref": "#/components/schemas/CHILD_TYPE"
+	//       },
+	//       "field1": {
+	//         "type": "string"
+	//       }
+	//     },
+	//     "type": "object"
 	//   }
-	//   schemaRef: {
-	// 		"$ref": "#/components/schemas/PARENT_TYPE"
-	//   }
+	// }
+	// schemaRef: {
+	//   "$ref": "#/components/schemas/PARENT_TYPE"
+	// }
 
-	numberOfDetectedSchemas := 0
-	for schemaName, _ := range schemas {
-		switch schemaName {
-		case parentSchemaName,
-			childSchemaName:
-			numberOfDetectedSchemas++
-		default:
-			// unknown schema
-			t.Errorf("Unknown schema: %s", schemaName)
-		}
-	}
-
-	if numberOfDetectedSchemas != 2 {
-		t.Errorf("Required number of expected schema names was not produced. Want 2, have %d", numberOfDetectedSchemas)
-	}
 }
 
-func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
+func ExampleSchemaRefWithExportingSchemas() {
 	type Child struct {
 		Age string `json:"age"`
 	}
@@ -718,18 +704,18 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 		panic(err)
 	}
 
-	var data []byte
-	if data, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
+	var schemasByte []byte
+	if schemasByte, err = json.MarshalIndent(&schemas, "", "  "); err != nil {
 		panic(err)
 	}
-	fmt.Printf("schemas: %s\n", data)
-	if data, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
+	var schemaRefByte []byte
+	if schemaRefByte, err = json.MarshalIndent(&schemaRef, "", "  "); err != nil {
 		panic(err)
 	}
-	fmt.Printf("schemaRef: %s\n", data)
+	fmt.Printf("schemas: %s\nschemaRef: %s\n", schemasByte, schemaRefByte)
 	// Output:
 	// schemas: {
-	//   "AnotherStruct": {
+	//   "openapi3gen_test_AnotherStruct": {
 	//     "properties": {
 	//       "field1": {
 	//         "type": "string"
@@ -743,18 +729,17 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 	//     },
 	//     "type": "object"
 	//   },
-	//   "RecursiveType": {
+	//   "openapi3gen_test_Child": {
 	//     "properties": {
-	//       "children": {
-	//         "$ref": "#/components/schemas/AnotherStruct"
-	//       },
-	//       "field1": {
+	//       "age": {
 	//         "type": "string"
-	//       },
-	//       "field2": {
-	//         "type": "string"
-	//       },
-	//       "field3": {
+	//       }
+	//     },
+	//     "type": "object"
+	//   },
+	//   "subpkg_Child": {
+	//     "properties": {
+	//       "name": {
 	//         "type": "string"
 	//       }
 	//     },
@@ -762,11 +747,31 @@ func TestNewSchemaRefWithExportingSchemas(t *testing.T) {
 	//   }
 	// }
 	// schemaRef: {
-	//   "$ref": "#/components/schemas/RecursiveType"
+	//   "properties": {
+	//     "child": {
+	//       "$ref": "#/components/schemas/subpkg_Child"
+	//     },
+	//     "child2": {
+	//       "$ref": "#/components/schemas/openapi3gen_test_Child"
+	//     },
+	//     "children": {
+	//       "$ref": "#/components/schemas/openapi3gen_test_AnotherStruct"
+	//     },
+	//     "field1": {
+	//       "type": "string"
+	//     },
+	//     "field2": {
+	//       "type": "string"
+	//     },
+	//     "field3": {
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
 	// }
 }
 
-func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
+func ExampleSchemaRefWithExportingSchemasIgnoreTopLevelParent() {
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
 		Field2 string `json:"field2"`
@@ -781,7 +786,7 @@ func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
 
 	schemas := make(openapi3.Schemas)
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&RecursiveType{}, schemas, openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-		ExportComponentSchemas: true, ExportTopLevelSchema: true,
+		ExportComponentSchemas: true, ExportTopLevelSchema: false,
 	}))
 	if err != nil {
 		panic(err)
@@ -832,7 +837,7 @@ func TestNewSchemaRefWithExportingSchemasIgnoreTopLevelParent(t *testing.T) {
 	// }
 }
 
-func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
+func ExampleSchemaRefWithExportingSchemasWithGeneric() {
 	type Child struct {
 		Age string `json:"age"`
 	}
@@ -850,8 +855,7 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		Field2        string                `json:"field2"`
 		Field3        string                `json:"field3"`
 		AnotherStruct AnotherStruct         `json:"children,omitempty"`
-		Child         subpkg.Child          `json:"child"`
-		Child2        Child                 `json:"child2"`
+		Child         Child                 `json:"child"`
 		GenericStruct GenericStruct[string] `json:"genericChild"`
 	}
 
@@ -860,7 +864,7 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 		&RecursiveType{},
 		schemas,
 		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
-			ExportComponentSchemas: true, ExportTopLevelSchema: false, ExportGenerics: true,
+			ExportComponentSchemas: true, ExportTopLevelSchema: true, ExportGenerics: false,
 		}),
 		openapi3gen.UseAllExportedFields(),
 	)
@@ -903,6 +907,9 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 	//   },
 	//   "RecursiveType": {
 	//     "properties": {
+	//       "child": {
+	//         "$ref": "#/components/schemas/Child"
+	//       },
 	//       "children": {
 	//         "$ref": "#/components/schemas/AnotherStruct"
 	//       },
@@ -935,7 +942,7 @@ func TestNewSchemaRefWithExportingSchemasWithGeneric(t *testing.T) {
 	// }
 }
 
-func TestNewSchemaRefWithExportingSchemasWithMap(t *testing.T) {
+func ExampleNewSchemaRefWithExportingSchemasWithMap() {
 	type Child struct {
 		Age string `json:"age"`
 	}
@@ -977,27 +984,27 @@ func TestNewSchemaRefWithExportingSchemasWithMap(t *testing.T) {
 	//       }
 	//     },
 	//     "type": "object"
-	//   },
+	//   }
+	// }
 	// schemaRef: {
 	//   "properties": {
-	//   	"anymap": {
-	//   	  "additionalProperties": {},
-	//   	  "type": "object"
-	//   	},
-	//   	"anymapChild": {
-	//   	  "additionalProperties": {
-	//   		"$ref": "#/components/schemas/Child"
-	//   	  },
-	//   	  "type": "object"
-	//   	},
-	//   	"field1": {
-	//   	  "type": "string"
-	//   	},
-	//   	"field2": {
-	//   	  "type": "string"
-	//   	}
+	//     "anymap": {
+	//       "additionalProperties": {},
+	//       "type": "object"
 	//     },
-	//     "type": "object"
-	//   }
+	//     "anymapChild": {
+	//       "additionalProperties": {
+	//         "$ref": "#/components/schemas/Child"
+	//       },
+	//       "type": "object"
+	//     },
+	//     "field1": {
+	//       "type": "string"
+	//     },
+	//     "field2": {
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
 	// }
 }
