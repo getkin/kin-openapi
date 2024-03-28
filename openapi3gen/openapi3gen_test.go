@@ -593,7 +593,7 @@ func ExampleNewSchemaRefForValue_recursive() {
 }
 
 // Make sure that custom schema name generator is employed and results produced with it are properly used
-func ExampleNewSchemaRefWithSubPackages() {
+func ExampleNewSchemaRefForValue_withSubPackages() {
 	type Parent struct {
 		Field1 string       `json:"field1"`
 		Child  subpkg.Child `json:"child"`
@@ -666,7 +666,7 @@ func ExampleNewSchemaRefWithSubPackages() {
 
 }
 
-func ExampleSchemaRefWithExportingSchemas() {
+func ExampleNewSchemaRefForValue_withExportingSchemas() {
 	type Child struct {
 		Age string `json:"age"`
 	}
@@ -771,7 +771,7 @@ func ExampleSchemaRefWithExportingSchemas() {
 	// }
 }
 
-func ExampleSchemaRefWithExportingSchemasIgnoreTopLevelParent() {
+func ExampleNewSchemaRefForValue_withExportingSchemasIgnoreTopLevelParent() {
 	type AnotherStruct struct {
 		Field1 string `json:"field1"`
 		Field2 string `json:"field2"`
@@ -837,7 +837,7 @@ func ExampleSchemaRefWithExportingSchemasIgnoreTopLevelParent() {
 	// }
 }
 
-func ExampleSchemaRefWithExportingSchemasWithGeneric() {
+func ExampleNewSchemaRefForValue_withExportingSchemasWithGeneric() {
 	type Child struct {
 		Age string `json:"age"`
 	}
@@ -942,7 +942,7 @@ func ExampleSchemaRefWithExportingSchemasWithGeneric() {
 	// }
 }
 
-func ExampleNewSchemaRefWithExportingSchemasWithMap() {
+func ExampleNewSchemaRefForValue_withExportingSchemasWithMap() {
 	type Child struct {
 		Age string `json:"age"`
 	}
