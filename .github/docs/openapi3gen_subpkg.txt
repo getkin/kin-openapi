@@ -1,9 +1,0 @@
-package subpkg // import "github.com/getkin/kin-openapi/openapi3gen/subpkg"
-
-
-TYPES
-
-type Child struct {
-	Name string `yaml:"name"`
-}
-
