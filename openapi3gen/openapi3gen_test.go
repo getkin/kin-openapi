@@ -590,3 +590,32 @@ func ExampleNewSchemaRefForValue_recursive() {
 	//   "type": "object"
 	// }
 }
+
+type ID [16]byte
+
+// T implements SetSchemar, allowing it to set an OpenAPI schema.
+type T struct {
+	ID ID `json:"id"`
+}
+
+func (_ *ID) SetSchema(schema *openapi3.Schema) {
+	schema.Type = &openapi3.Types{"string"} // Assuming this matches your custom implementation
+	schema.Format = "uuid"
+}
+func TestNewSchemaRefForValueWithSetSchemar(t *testing.T) {
+	schemas := make(openapi3.Schemas)
+	instance := &T{
+		ID: ID{},
+	}
+
+	// Generate the schema for the instance
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(instance, schemas)
+	require.NoError(t, err, "should not error when generating schema ref")
+
+	// Optional: Marshal and inspect the schemas and schemaRef if needed for further verification
+	_, err = json.MarshalIndent(schemas, "", "  ")
+	require.NoError(t, err, "error marshaling schemas")
+
+	_, err = json.MarshalIndent(schemaRef, "", "  ")
+	require.NoError(t, err, "error marshaling schemaRef")
+}

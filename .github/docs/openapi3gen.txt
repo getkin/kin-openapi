@@ -70,3 +70,10 @@ type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag,
     A SchemaCustomizerFn can return an ExcludeSchemaSentinel error to indicate
     that the schema for this field should not be included in the final output
 
+type SetSchemar interface {
+	SetSchema(*openapi3.Schema)
+}
+    SetSchemar allows client to set their own schema definition according to
+    their specification. Useful when some custom datatype is needed and/or some
+    custom logic is needed on how the schema values would be generated
+
