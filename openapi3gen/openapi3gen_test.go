@@ -602,7 +602,8 @@ func (_ *ID) SetSchema(schema *openapi3.Schema) {
 	schema.Type = &openapi3.Types{"string"} // Assuming this matches your custom implementation
 	schema.Format = "uuid"
 }
-func TestNewSchemaRefForValueWithSetSchemar(t *testing.T) {
+
+func ExampleID_SetSchema() {
 	schemas := make(openapi3.Schemas)
 	instance := &T{
 		ID: ID{},
@@ -610,12 +611,22 @@ func TestNewSchemaRefForValueWithSetSchemar(t *testing.T) {
 
 	// Generate the schema for the instance
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(instance, schemas)
-	require.NoError(t, err, "should not error when generating schema ref")
-
-	// Optional: Marshal and inspect the schemas and schemaRef if needed for further verification
-	_, err = json.MarshalIndent(schemas, "", "  ")
-	require.NoError(t, err, "error marshaling schemas")
-
-	_, err = json.MarshalIndent(schemaRef, "", "  ")
-	require.NoError(t, err, "error marshaling schemaRef")
+	if err != nil {
+		panic(err)
+	}
+	data, err := json.MarshalIndent(schemaRef, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemaRef: {
+	//   "properties": {
+	//     "id": {
+	//       "format": "uuid",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
 }
