@@ -963,6 +963,9 @@ func (paths *Paths) Map() (m map[string]*PathItem)
 func (paths *Paths) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Paths.
 
+func (paths *Paths) MarshalYAML() (any, error)
+    Support YAML Marshaler interface for gopkg.in/yaml
+
 func (paths *Paths) Set(key string, value *PathItem)
     Set adds or replaces key 'key' of 'paths' with 'value'. Note: 'paths' MUST
     be non-nil
@@ -1173,6 +1176,9 @@ func (responses *Responses) Map() (m map[string]*ResponseRef)
 
 func (responses *Responses) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Responses.
+
+func (responses *Responses) MarshalYAML() (any, error)
+    Support YAML Marshaler interface for gopkg.in/yaml
 
 func (responses *Responses) Set(key string, value *ResponseRef)
     Set adds or replaces key 'key' of 'responses' with 'value'. Note:
