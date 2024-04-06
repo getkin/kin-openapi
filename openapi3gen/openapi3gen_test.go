@@ -590,3 +590,43 @@ func ExampleNewSchemaRefForValue_recursive() {
 	//   "type": "object"
 	// }
 }
+
+type ID [16]byte
+
+// T implements SetSchemar, allowing it to set an OpenAPI schema.
+type T struct {
+	ID ID `json:"id"`
+}
+
+func (_ *ID) SetSchema(schema *openapi3.Schema) {
+	schema.Type = &openapi3.Types{"string"} // Assuming this matches your custom implementation
+	schema.Format = "uuid"
+}
+
+func ExampleID_SetSchema() {
+	schemas := make(openapi3.Schemas)
+	instance := &T{
+		ID: ID{},
+	}
+
+	// Generate the schema for the instance
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(instance, schemas)
+	if err != nil {
+		panic(err)
+	}
+	data, err := json.MarshalIndent(schemaRef, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemaRef: {
+	//   "properties": {
+	//     "id": {
+	//       "format": "uuid",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
+}
