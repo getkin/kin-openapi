@@ -1696,7 +1696,7 @@ func (doc *T) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (doc T) MarshalJSON() ([]byte, error)
+func (doc *T) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of T.
 
 func (doc *T) UnmarshalJSON(data []byte) error
