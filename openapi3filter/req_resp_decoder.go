@@ -987,7 +987,7 @@ func buildResObj(params map[string]interface{}, parentKeys []string, key string,
 		if err != nil {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
 		}
-		resultArr := make([]interface{}, len(arr))
+		resultArr := make([]interface{} /*not 0,*/, len(arr))
 		for i := range arr {
 			r, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
@@ -1096,9 +1096,9 @@ func handlePropParseError(path []string, err error) error {
 }
 
 func pathFromKeys(kk []string) []interface{} {
-	path := make([]interface{}, len(kk))
-	for i, v := range kk {
-		path[i] = v
+	path := make([]interface{}, 0, len(kk))
+	for _, v := range kk {
+		path = append(path, v)
 	}
 	return path
 }
@@ -1135,8 +1135,7 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v interface{}, err 
 		return nil, nil
 	}
 	for _, typ := range schema.Value.Type.Slice() {
-		v, err = parsePrimitiveCase(raw, schema, typ)
-		if err == nil {
+		if v, err = parsePrimitiveCase(raw, schema, typ); err == nil {
 			return
 		}
 	}
