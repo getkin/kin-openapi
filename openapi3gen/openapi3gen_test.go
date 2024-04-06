@@ -603,7 +603,7 @@ func (_ *ID) SetSchema(schema *openapi3.Schema) {
 	schema.Format = "uuid"
 }
 
-func ExampleID_SetSchema() {
+func ExampleSetSchemar() {
 	schemas := make(openapi3.Schemas)
 	instance := &T{
 		ID: ID{},
