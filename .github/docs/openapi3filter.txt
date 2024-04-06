@@ -69,6 +69,8 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
     body decoders should not be created/destroyed by multiple goroutines.
 
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
+    RegisterBodyEncoder enables package-wide decoding of contentType values
+
 func TrimJSONPrefix(data []byte) []byte
     TrimJSONPrefix trims one of the possible prefixes
 
@@ -80,8 +82,7 @@ func UnregisterBodyDecoder(contentType string)
     goroutines.
 
 func UnregisterBodyEncoder(contentType string)
-    This call is not thread-safe: body encoders should not be created/destroyed
-    by multiple goroutines.
+    UnregisterBodyEncoder disables package-wide decoding of contentType values
 
 func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error
     ValidateParameter validates a parameter's value by JSON schema. The function
@@ -152,14 +153,13 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder
     by multiple goroutines.
 
 type BodyEncoder func(body interface{}) ([]byte, error)
+    BodyEncoder really is an (encoding/json).Marshaler
 
 func RegisteredBodyEncoder(contentType string) BodyEncoder
     RegisteredBodyEncoder returns the registered body encoder for the given
     content type.
 
     If no encoder was registered for the given content type, nil is returned.
-    This call is not thread-safe: body encoders should not be created/destroyed
-    by multiple goroutines.
 
 type ContentParameterDecoder func(param *openapi3.Parameter, values []string) (interface{}, *openapi3.Schema, error)
     A ContentParameterDecoder takes a parameter definition from the OpenAPI
