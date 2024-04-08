@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/perimeterx/marshmallow"
@@ -570,9 +572,49 @@ type SchemaRef struct {
 	Ref   string
 	Value *Schema
 	extra []string
+
+	// Only non-nil if Ref is non-empty, might be nil even if Ref is non-empty
+	// if loaded from a in-memory schema that has been merged.
+	refURL *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
+
+// refersToSameDocument returns if the $ref refers to the same document.
+//
+// Documents in different directories will have distinct $ref values that resolve to
+// the same document.
+// For example, consider the 3 files:
+//
+//	/records.yaml
+//	/root.yaml         $ref: records.yaml
+//	/schema/other.yaml $ref: ../records.yaml
+//
+// The records.yaml reference in the 2 latter refers to the same document.
+func (x *SchemaRef) refersToSameDocument(o *SchemaRef) bool {
+	if x == nil || x.refURL == nil || o == nil || o.refURL == nil {
+		return false
+	}
+
+	// refURL is relative to the working directory & base spec file.
+	return x.refURL.String() == o.refURL.String()
+}
+
+// referencesRootDocument returns if the given schema matches the root document of the OpenAPI spec.
+//
+// If the document has no location, perhaps loaded from data in memory, it always returns false.
+func (x *SchemaRef) referencesRootDocument(doc *T) bool {
+	if doc.url == nil || x == nil || x.refURL == nil {
+		return false
+	}
+
+	refURL := *x.refURL
+
+	refURL.Path, _, _ = strings.Cut(refURL.Path, "#") // remove the document element reference
+
+	// Check referenced element was in the root document.
+	return doc.url.String() == refURL.String()
+}
 
 func (x *SchemaRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 

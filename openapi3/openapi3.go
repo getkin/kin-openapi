@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
+	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -24,6 +27,96 @@ type T struct {
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	visited visitedComponent
+	url     *url.URL
+}
+
+// MatchesSchemaInRootDocument returns if the given schema is identical
+// to a schema defined in the root document's '#/components/schemas'.
+// It returns a reference to the schema in the form
+// '#/components/schemas/NameXXX'
+//
+// Of course given it a schema from the root document will always match.
+//
+// https://swagger.io/docs/specification/using-ref/#syntax
+//
+// Case 1: Directly via
+//
+//	../openapi.yaml#/components/schemas/Record
+//
+// Case 2: Or indirectly by using a $ref which matches a schema
+// in the root document's '#/components/schemas' using the same
+// $ref.
+//
+// In schemas/record.yaml
+//
+//	$ref: ./record.yaml
+//
+// In openapi.yaml
+//
+//	  components:
+//	    schemas:
+//		  Record:
+//		    $ref: schemas/record.yaml
+func (doc *T) MatchesSchemaInRootDocument(sch *SchemaRef) (string, bool) {
+	// Case 1:
+	// Something like: ../another-folder/document.json#/myElement
+	if isRemoteReference(sch.Ref) && isSchemaReference(sch.Ref) {
+		// Determine if it is *this* root doc.
+		if sch.referencesRootDocument(doc) {
+			_, name, _ := strings.Cut(sch.Ref, "#/components/schemas")
+
+			return path.Join("#/components/schemas", name), true
+		}
+	}
+
+	// If there are no schemas defined in the root document return early.
+	if doc.Components == nil || doc.Components.Schemas == nil {
+		return "", false
+	}
+
+	// Case 2:
+	// Something like: ../openapi.yaml#/components/schemas/myElement
+	for name, s := range doc.Components.Schemas {
+		// Must be a reference to a YAML file.
+		if !isWholeDocumentReference(s.Ref) {
+			continue
+		}
+
+		// Is the schema a ref to the same resource.
+		if !sch.refersToSameDocument(s) {
+			continue
+		}
+
+		// Transform the remote ref to the equivalent schema in the root document.
+		return path.Join("#/components/schemas", name), true
+	}
+
+	return "", false
+}
+
+// isElementReference takes a $ref value and checks if it references a specific element.
+func isElementReference(ref string) bool {
+	return ref != "" && !isWholeDocumentReference(ref)
+}
+
+// isSchemaReference takes a $ref value and checks if it references a schema element.
+func isSchemaReference(ref string) bool {
+	return isElementReference(ref) && strings.Contains(ref, "#/components/schemas")
+}
+
+// isWholeDocumentReference takes a $ref value and checks if it is whole document reference.
+func isWholeDocumentReference(ref string) bool {
+	return ref != "" && !strings.ContainsAny(ref, "#")
+}
+
+// isRemoteReference takes a $ref value and checks if it is remote reference.
+func isRemoteReference(ref string) bool {
+	return ref != "" && !strings.HasPrefix(ref, "#") && !isURLReference(ref)
+}
+
+// isURLReference takes a $ref value and checks if it is URL reference.
+func isURLReference(ref string) bool {
+	return strings.HasPrefix(ref, "http://") || strings.HasPrefix(ref, "https://") || strings.HasPrefix(ref, "//")
 }
 
 var _ jsonpointer.JSONPointable = (*T)(nil)
