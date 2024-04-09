@@ -27,12 +27,6 @@ type ExcludeSchemaSentinel struct{}
 
 func (err *ExcludeSchemaSentinel) Error() string
 
-type ExportComponentSchemasOptions struct {
-	ExportComponentSchemas bool
-	ExportTopLevelSchema   bool
-	ExportGenerics         bool
-}
-
 type Generator struct {
 	Types map[reflect.Type]*openapi3.SchemaRef
 
@@ -55,12 +49,6 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 
 type Option func(*generatorOpt)
     Option allows tweaking SchemaRef generation
-
-func CreateComponentSchemas(exso ExportComponentSchemasOptions) Option
-    CreateComponents changes the default behavior to add all schemas as
-    components Reduces duplicate schemas in routes
-
-func CreateTypeNameGenerator(tngnrt TypeNameGenerator) Option
 
 func SchemaCustomizer(sc SchemaCustomizerFn) Option
     SchemaCustomizer allows customization of the schema that is generated for a
@@ -88,6 +76,4 @@ type SetSchemar interface {
     SetSchemar allows client to set their own schema definition according to
     their specification. Useful when some custom datatype is needed and/or some
     custom logic is needed on how the schema values would be generated
-
-type TypeNameGenerator func(t reflect.Type) string
 
