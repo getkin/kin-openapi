@@ -2119,14 +2119,16 @@ type SchemaError struct {
 var _ interface{ Unwrap() error } = SchemaError{}
 
 func markSchemaErrorKey(err error, key string) error {
-	var me multiErrorForOneOf
-
-	if errors.As(err, &me) {
-		err = me.Unwrap()
-	}
 
 	if v, ok := err.(*SchemaError); ok {
 		v.reversePath = append(v.reversePath, key)
+		if v.Origin != nil {
+			if unwrapped := errors.Unwrap(v.Origin); unwrapped != nil {
+				if me, ok := unwrapped.(multiErrorForOneOf); ok {
+					_ = markSchemaErrorKey(MultiError(me), key)
+				}
+			}
+		}
 		return v
 	}
 	if v, ok := err.(MultiError); ok {
