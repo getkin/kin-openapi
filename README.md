@@ -27,6 +27,7 @@ Be sure to [give back to this project](https://github.com/sponsors/fenollp) like
 </p>
 
 Here's some projects that depend on _kin-openapi_:
+  * [github.com/a-h/rest](https://github.com/a-h/rest) - "Generate OpenAPI 3.0 specifications from Go code without annotations or magic comments"
   * [github.com/Tufin/oasdiff](https://github.com/Tufin/oasdiff) - "A diff tool for OpenAPI Specification 3"
   * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
   * [github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen) - "Generate Go client and server boilerplate from OpenAPI 3 specifications"
