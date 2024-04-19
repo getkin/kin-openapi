@@ -222,7 +222,7 @@ func (addProps AdditionalProperties) MarshalYAML() (interface{}, error) {
 		return false, nil
 	}
 	if x := addProps.Schema; x != nil {
-		return x.Value, nil
+		return x, nil
 	}
 	return nil, nil
 }
