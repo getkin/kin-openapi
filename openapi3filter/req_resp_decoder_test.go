@@ -999,6 +999,17 @@ func TestDecodeParameter(t *testing.T) {
 					want:  map[string]interface{}(nil),
 				},
 				{
+					name: "deepObject explode nested object - extraneous deep object param ignored",
+					param: &openapi3.Parameter{
+						Name: "param", In: "query", Style: "deepObject", Explode: explode,
+						Schema: objectOf(
+							"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+						),
+					},
+					query: "anotherparam[obj][nestedObjOne]=one&anotherparam[obj][nestedObjTwo]=two",
+					want:  map[string]interface{}(nil),
+				},
+				{
 					name: "deepObject explode nested object - bad array item type",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,

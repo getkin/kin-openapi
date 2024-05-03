@@ -650,6 +650,10 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 		propsFn = func(params url.Values) (map[string]string, error) {
 			props := make(map[string]string)
 			for key, values := range params {
+				if !regexp.MustCompile(fmt.Sprintf(`^%s\[`, regexp.QuoteMeta(param))).MatchString(key) {
+					continue
+				}
+
 				matches := regexp.MustCompile(`\[(.*?)\]`).FindAllStringSubmatch(key, -1)
 				switch l := len(matches); {
 				case l == 0:
