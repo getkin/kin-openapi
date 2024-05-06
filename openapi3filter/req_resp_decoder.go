@@ -1572,7 +1572,6 @@ func csvBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaR
 			return nil, err
 		}
 
-		content += strings.Join(record, ",") + "\n"
 		sb.WriteString(strings.Join(record, ","))
 		sb.WriteString("\n")
 	}
