@@ -1562,7 +1562,7 @@ func zipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 func csvBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	r := csv.NewReader(body)
 
-	var content string
+	var sb strings.Builder
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
@@ -1572,8 +1572,9 @@ func csvBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaR
 			return nil, err
 		}
 
-		content += strings.Join(record, ",") + "\n"
+		sb.WriteString(strings.Join(record, ","))
+		sb.WriteString("\n")
 	}
 
-	return content, nil
+	return sb.String(), nil
 }
