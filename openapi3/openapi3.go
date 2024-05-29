@@ -62,7 +62,7 @@ func (doc *T) MatchesSchemaInRootDocument(sch *SchemaRef) (string, bool) {
 	// Something like: ../another-folder/document.json#/myElement
 	if isRemoteReference(sch.Ref) && isSchemaReference(sch.Ref) {
 		// Determine if it is *this* root doc.
-		if sch.referencesRootDocument(doc) {
+		if referencesRootDocument(doc, sch) {
 			_, name, _ := strings.Cut(sch.Ref, "#/components/schemas")
 
 			return path.Join("#/components/schemas", name), true
@@ -83,7 +83,7 @@ func (doc *T) MatchesSchemaInRootDocument(sch *SchemaRef) (string, bool) {
 		}
 
 		// Is the schema a ref to the same resource.
-		if !sch.refersToSameDocument(s) {
+		if !refersToSameDocument(s, sch) {
 			continue
 		}
 

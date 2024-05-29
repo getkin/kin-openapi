@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
-	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/perimeterx/marshmallow"
@@ -18,12 +17,17 @@ import (
 type CallbackRef struct {
 	Ref   string
 	Value *Callback
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
 func (x *CallbackRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *CallbackRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (interface{}, error) {
@@ -97,12 +101,17 @@ func (x *CallbackRef) JSONLookup(token string) (interface{}, error) {
 type ExampleRef struct {
 	Ref   string
 	Value *Example
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
 
 func (x *ExampleRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *ExampleRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (interface{}, error) {
@@ -176,12 +185,17 @@ func (x *ExampleRef) JSONLookup(token string) (interface{}, error) {
 type HeaderRef struct {
 	Ref   string
 	Value *Header
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
 func (x *HeaderRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *HeaderRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (interface{}, error) {
@@ -255,12 +269,17 @@ func (x *HeaderRef) JSONLookup(token string) (interface{}, error) {
 type LinkRef struct {
 	Ref   string
 	Value *Link
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*LinkRef)(nil)
 
 func (x *LinkRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *LinkRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (interface{}, error) {
@@ -334,12 +353,17 @@ func (x *LinkRef) JSONLookup(token string) (interface{}, error) {
 type ParameterRef struct {
 	Ref   string
 	Value *Parameter
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
 
 func (x *ParameterRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *ParameterRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (interface{}, error) {
@@ -413,12 +437,17 @@ func (x *ParameterRef) JSONLookup(token string) (interface{}, error) {
 type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
 func (x *RequestBodyRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *RequestBodyRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (interface{}, error) {
@@ -492,12 +521,17 @@ func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 type ResponseRef struct {
 	Ref   string
 	Value *Response
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
 
 func (x *ResponseRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *ResponseRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (interface{}, error) {
@@ -571,52 +605,17 @@ func (x *ResponseRef) JSONLookup(token string) (interface{}, error) {
 type SchemaRef struct {
 	Ref   string
 	Value *Schema
-	extra []string
 
-	// Only non-nil if Ref is non-empty, might be nil even if Ref is non-empty
-	// if loaded from a in-memory schema that has been merged.
-	refURL *url.URL
+	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
-// refersToSameDocument returns if the $ref refers to the same document.
-//
-// Documents in different directories will have distinct $ref values that resolve to
-// the same document.
-// For example, consider the 3 files:
-//
-//	/records.yaml
-//	/root.yaml         $ref: records.yaml
-//	/schema/other.yaml $ref: ../records.yaml
-//
-// The records.yaml reference in the 2 latter refers to the same document.
-func (x *SchemaRef) refersToSameDocument(o *SchemaRef) bool {
-	if x == nil || x.refURL == nil || o == nil || o.refURL == nil {
-		return false
-	}
-
-	// refURL is relative to the working directory & base spec file.
-	return x.refURL.String() == o.refURL.String()
-}
-
-// referencesRootDocument returns if the given schema matches the root document of the OpenAPI spec.
-//
-// If the document has no location, perhaps loaded from data in memory, it always returns false.
-func (x *SchemaRef) referencesRootDocument(doc *T) bool {
-	if doc.url == nil || x == nil || x.refURL == nil {
-		return false
-	}
-
-	refURL := *x.refURL
-
-	refURL.Path, _, _ = strings.Cut(refURL.Path, "#") // remove the document element reference
-
-	// Check referenced element was in the root document.
-	return doc.url.String() == refURL.String()
-}
-
 func (x *SchemaRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *SchemaRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (interface{}, error) {
@@ -690,12 +689,17 @@ func (x *SchemaRef) JSONLookup(token string) (interface{}, error) {
 type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
+
 	extra []string
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
 
 func (x *SecuritySchemeRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *SecuritySchemeRef) RefPath() *url.URL { return x.refPath }
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (interface{}, error) {

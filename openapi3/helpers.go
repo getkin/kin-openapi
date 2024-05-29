@@ -2,7 +2,9 @@ package openapi3
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
+	"strings"
 )
 
 const identifierPattern = `^[a-zA-Z0-9._-]+$`
@@ -38,4 +40,47 @@ func Int64Ptr(value int64) *int64 {
 // Uint64Ptr is a helper for defining OpenAPI schemas.
 func Uint64Ptr(value uint64) *uint64 {
 	return &value
+}
+
+type refPath interface {
+	RefPath() *url.URL
+}
+
+// refersToSameDocument returns if the $ref refers to the same document.
+//
+// Documents in different directories will have distinct $ref values that resolve to
+// the same document.
+// For example, consider the 3 files:
+//
+//	/records.yaml
+//	/root.yaml         $ref: records.yaml
+//	/schema/other.yaml $ref: ../records.yaml
+//
+// The records.yaml reference in the 2 latter refers to the same document.
+func refersToSameDocument(o1 refPath, o2 refPath) bool {
+	if o1 == nil || o2 == nil {
+		return false
+	}
+
+	r1 := o1.RefPath()
+	r2 := o2.RefPath()
+
+	// refURL is relative to the working directory & base spec file.
+	return r1.String() == r2.String()
+}
+
+// referencesRootDocument returns if the $ref points to the root document of the OpenAPI spec.
+//
+// If the document has no location, perhaps loaded from data in memory, it always returns false.
+func referencesRootDocument(doc *T, ref refPath) bool {
+	if doc.url == nil || ref == nil {
+		return false
+	}
+
+	refURL := *ref.RefPath()
+
+	refURL.Path, _, _ = strings.Cut(refURL.Path, "#") // remove the document element reference
+
+	// Check referenced element was in the root document.
+	return doc.url.String() == refURL.String()
 }

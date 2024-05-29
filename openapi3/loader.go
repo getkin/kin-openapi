@@ -546,6 +546,12 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var header Header
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
@@ -596,6 +602,12 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var param Parameter
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
@@ -656,6 +668,12 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
@@ -723,6 +741,12 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var resp Response
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
@@ -802,9 +826,9 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 
 	if ref := component.Ref; ref != "" {
 		if documentPath != nil {
-			refURL := *documentPath // shallow-clone
-			refURL.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refURL = &refURL
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
 		}
 
 		if isSingleRefElement(ref) {
@@ -898,6 +922,12 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
@@ -938,6 +968,12 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var example Example
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
@@ -978,6 +1014,12 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var resolved Callback
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
@@ -1028,6 +1070,12 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 	}
 
 	if ref := component.Ref; ref != "" {
+		if documentPath != nil {
+			refPath := *documentPath // shallow-clone
+			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
+			component.refPath = &refPath
+		}
+
 		if isSingleRefElement(ref) {
 			var link Link
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {

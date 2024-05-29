@@ -23,6 +23,9 @@ var _ jsonpointer.JSONPointable = (*{{ $type }}Ref)(nil)
 
 func (x *{{ $type }}Ref) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+// RefPath returns the path of the \$ref relative to the root document.
+func (x *{{ $type }}Ref) RefPath() *url.URL { return x.refPath }
+
 // MarshalYAML returns the YAML encoding of {{ $type }}Ref.
 func (x {{ $type }}Ref) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
