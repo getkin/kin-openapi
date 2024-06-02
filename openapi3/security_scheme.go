@@ -52,6 +52,15 @@ func NewJWTSecurityScheme() *SecurityScheme {
 
 // MarshalJSON returns the JSON encoding of SecurityScheme.
 func (ss SecurityScheme) MarshalJSON() ([]byte, error) {
+	x, err := ss.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of SecurityScheme.
+func (ss SecurityScheme) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 8+len(ss.Extensions))
 	for k, v := range ss.Extensions {
 		m[k] = v
@@ -80,7 +89,7 @@ func (ss SecurityScheme) MarshalJSON() ([]byte, error) {
 	if x := ss.OpenIdConnectUrl; x != "" {
 		m["openIdConnectUrl"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets SecurityScheme to a copy of data.
@@ -225,6 +234,15 @@ const (
 
 // MarshalJSON returns the JSON encoding of OAuthFlows.
 func (flows OAuthFlows) MarshalJSON() ([]byte, error) {
+	x, err := flows.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of OAuthFlows.
+func (flows OAuthFlows) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 4+len(flows.Extensions))
 	for k, v := range flows.Extensions {
 		m[k] = v
@@ -241,7 +259,7 @@ func (flows OAuthFlows) MarshalJSON() ([]byte, error) {
 	if x := flows.AuthorizationCode; x != nil {
 		m["authorizationCode"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets OAuthFlows to a copy of data.
@@ -307,6 +325,15 @@ type OAuthFlow struct {
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.
 func (flow OAuthFlow) MarshalJSON() ([]byte, error) {
+	x, err := flow.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of OAuthFlow.
+func (flow OAuthFlow) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 4+len(flow.Extensions))
 	for k, v := range flow.Extensions {
 		m[k] = v
@@ -321,7 +348,7 @@ func (flow OAuthFlow) MarshalJSON() ([]byte, error) {
 		m["refreshUrl"] = x
 	}
 	m["scopes"] = flow.Scopes
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets OAuthFlow to a copy of data.

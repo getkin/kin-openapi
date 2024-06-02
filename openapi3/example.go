@@ -23,6 +23,15 @@ func NewExample(value interface{}) *Example {
 
 // MarshalJSON returns the JSON encoding of Example.
 func (example Example) MarshalJSON() ([]byte, error) {
+	x, err := example.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Example.
+func (example Example) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 4+len(example.Extensions))
 	for k, v := range example.Extensions {
 		m[k] = v
@@ -39,7 +48,7 @@ func (example Example) MarshalJSON() ([]byte, error) {
 	if x := example.ExternalValue; x != "" {
 		m["externalValue"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Example to a copy of data.

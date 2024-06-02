@@ -150,6 +150,15 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
 
 // MarshalJSON returns the JSON encoding of Parameter.
 func (parameter Parameter) MarshalJSON() ([]byte, error) {
+	x, err := parameter.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Parameter.
+func (parameter Parameter) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 13+len(parameter.Extensions))
 	for k, v := range parameter.Extensions {
 		m[k] = v
@@ -195,7 +204,7 @@ func (parameter Parameter) MarshalJSON() ([]byte, error) {
 		m["content"] = x
 	}
 
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Parameter to a copy of data.

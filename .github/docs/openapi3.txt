@@ -170,6 +170,9 @@ func (callback *Callback) Map() (m map[string]*PathItem)
 func (callback *Callback) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Callback.
 
+func (callback *Callback) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Callback.
+
 func (callback *Callback) Set(key string, value *PathItem)
     Set adds or replaces key 'key' of 'callback' with 'value'. Note: 'callback'
     MUST be non-nil
@@ -235,6 +238,9 @@ func NewComponents() Components
 func (components Components) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Components.
 
+func (components Components) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Components.
+
 func (components *Components) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Components to a copy of data.
 
@@ -254,6 +260,9 @@ type Contact struct {
 
 func (contact Contact) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Contact.
+
+func (contact Contact) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Contact.
 
 func (contact *Contact) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Contact to a copy of data.
@@ -295,6 +304,9 @@ type Discriminator struct {
 func (discriminator Discriminator) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Discriminator.
 
+func (discriminator Discriminator) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Discriminator.
+
 func (discriminator *Discriminator) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Discriminator to a copy of data.
 
@@ -318,6 +330,9 @@ func NewEncoding() *Encoding
 
 func (encoding Encoding) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Encoding.
+
+func (encoding Encoding) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Encoding.
 
 func (encoding *Encoding) SerializationMethod() *SerializationMethod
     SerializationMethod returns a serialization method of request body.
@@ -349,6 +364,9 @@ func NewExample(value interface{}) *Example
 
 func (example Example) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Example.
+
+func (example Example) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Example.
 
 func (example *Example) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Example to a copy of data.
@@ -398,6 +416,9 @@ type ExternalDocs struct {
 
 func (e ExternalDocs) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ExternalDocs.
+
+func (e ExternalDocs) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of ExternalDocs.
 
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ExternalDocs to a copy of data.
@@ -487,6 +508,9 @@ type Info struct {
 func (info Info) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Info.
 
+func (info Info) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Info.
+
 func (info *Info) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Info to a copy of data.
 
@@ -504,6 +528,9 @@ type License struct {
 
 func (license License) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of License.
+
+func (license License) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of License.
 
 func (license *License) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets License to a copy of data.
@@ -526,6 +553,9 @@ type Link struct {
 
 func (link Link) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Link.
+
+func (link Link) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Link.
 
 func (link *Link) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Link to a copy of data.
@@ -622,6 +652,9 @@ func (mediaType MediaType) JSONLookup(token string) (interface{}, error)
 func (mediaType MediaType) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of MediaType.
 
+func (mediaType MediaType) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of MediaType.
+
 func (mediaType *MediaType) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets MediaType to a copy of data.
 
@@ -687,6 +720,9 @@ type OAuthFlow struct {
 func (flow OAuthFlow) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of OAuthFlow.
 
+func (flow OAuthFlow) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of OAuthFlow.
+
 func (flow *OAuthFlow) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets OAuthFlow to a copy of data.
 
@@ -707,6 +743,9 @@ type OAuthFlows struct {
 
 func (flows OAuthFlows) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of OAuthFlows.
+
+func (flows OAuthFlows) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of OAuthFlows.
 
 func (flows *OAuthFlows) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets OAuthFlows to a copy of data.
@@ -769,6 +808,9 @@ func (operation Operation) JSONLookup(token string) (interface{}, error)
 func (operation Operation) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Operation.
 
+func (operation Operation) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Operation.
+
 func (operation *Operation) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Operation to a copy of data.
 
@@ -810,6 +852,9 @@ func (parameter Parameter) JSONLookup(token string) (interface{}, error)
 
 func (parameter Parameter) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Parameter.
+
+func (parameter Parameter) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Parameter.
 
 func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error)
     SerializationMethod returns a parameter's serialization method. When a
@@ -901,6 +946,9 @@ func (pathItem *PathItem) GetOperation(method string) *Operation
 func (pathItem PathItem) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of PathItem.
 
+func (pathItem PathItem) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of PathItem.
+
 func (pathItem *PathItem) Operations() map[string]*Operation
 
 func (pathItem *PathItem) SetOperation(method string, operation *Operation)
@@ -963,8 +1011,8 @@ func (paths *Paths) Map() (m map[string]*PathItem)
 func (paths *Paths) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Paths.
 
-func (paths *Paths) MarshalYAML() (any, error)
-    Support YAML Marshaler interface for gopkg.in/yaml
+func (paths *Paths) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Paths.
 
 func (paths *Paths) Set(key string, value *PathItem)
     Set adds or replaces key 'key' of 'paths' with 'value'. Note: 'paths' MUST
@@ -1031,6 +1079,9 @@ func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType
 func (requestBody RequestBody) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of RequestBody.
 
+func (requestBody RequestBody) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of RequestBody.
+
 func (requestBody *RequestBody) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets RequestBody to a copy of data.
 
@@ -1096,6 +1147,9 @@ func NewResponse() *Response
 
 func (response Response) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Response.
+
+func (response Response) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Response.
 
 func (response *Response) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Response to a copy of data.
@@ -1177,8 +1231,8 @@ func (responses *Responses) Map() (m map[string]*ResponseRef)
 func (responses *Responses) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Responses.
 
-func (responses *Responses) MarshalYAML() (any, error)
-    Support YAML Marshaler interface for gopkg.in/yaml
+func (responses *Responses) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Responses.
 
 func (responses *Responses) Set(key string, value *ResponseRef)
     Set adds or replaces key 'key' of 'responses' with 'value'. Note:
@@ -1306,6 +1360,9 @@ func (schema Schema) JSONLookup(token string) (interface{}, error)
 
 func (schema Schema) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Schema.
+
+func (schema Schema) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Schema.
 
 func (schema *Schema) NewRef() *SchemaRef
 
@@ -1536,6 +1593,9 @@ func NewSecurityScheme() *SecurityScheme
 func (ss SecurityScheme) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of SecurityScheme.
 
+func (ss SecurityScheme) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of SecurityScheme.
+
 func (ss *SecurityScheme) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets SecurityScheme to a copy of data.
 
@@ -1611,6 +1671,9 @@ func (server *Server) BasePath() (string, error)
 func (server Server) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Server.
 
+func (server Server) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Server.
+
 func (server Server) MatchRawURL(input string) ([]string, string, bool)
 
 func (server Server) ParameterNames() ([]string, error)
@@ -1633,6 +1696,9 @@ type ServerVariable struct {
 
 func (serverVariable ServerVariable) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ServerVariable.
+
+func (serverVariable ServerVariable) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of ServerVariable.
 
 func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ServerVariable to a copy of data.
@@ -1699,6 +1765,9 @@ func (doc *T) JSONLookup(token string) (interface{}, error)
 func (doc *T) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of T.
 
+func (doc *T) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of T.
+
 func (doc *T) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets T to a copy of data.
 
@@ -1718,6 +1787,9 @@ type Tag struct {
 
 func (t Tag) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Tag.
+
+func (t Tag) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of Tag.
 
 func (t *Tag) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Tag to a copy of data.
@@ -1812,6 +1884,9 @@ type XML struct {
 
 func (xml XML) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of XML.
+
+func (xml XML) MarshalYAML() (interface{}, error)
+    MarshalYAML returns the YAML encoding of XML.
 
 func (xml *XML) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets XML to a copy of data.

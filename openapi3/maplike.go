@@ -76,8 +76,8 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 	}
 }
 
-// MarshalJSON returns the JSON encoding of Responses.
-func (responses *Responses) MarshalJSON() ([]byte, error) {
+// MarshalYAML returns the YAML encoding of Responses.
+func (responses *Responses) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, responses.Len()+len(responses.Extensions))
 	for k, v := range responses.Extensions {
 		m[k] = v
@@ -85,7 +85,16 @@ func (responses *Responses) MarshalJSON() ([]byte, error) {
 	for k, v := range responses.Map() {
 		m[k] = v
 	}
-	return json.Marshal(m)
+	return m, nil
+}
+
+// MarshalJSON returns the JSON encoding of Responses.
+func (responses *Responses) MarshalJSON() ([]byte, error) {
+	responsesYaml, err := responses.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(responsesYaml)
 }
 
 // UnmarshalJSON sets Responses to a copy of data.
@@ -195,8 +204,8 @@ func (callback Callback) JSONLookup(token string) (interface{}, error) {
 	}
 }
 
-// MarshalJSON returns the JSON encoding of Callback.
-func (callback *Callback) MarshalJSON() ([]byte, error) {
+// MarshalYAML returns the YAML encoding of Callback.
+func (callback *Callback) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, callback.Len()+len(callback.Extensions))
 	for k, v := range callback.Extensions {
 		m[k] = v
@@ -204,7 +213,16 @@ func (callback *Callback) MarshalJSON() ([]byte, error) {
 	for k, v := range callback.Map() {
 		m[k] = v
 	}
-	return json.Marshal(m)
+	return m, nil
+}
+
+// MarshalJSON returns the JSON encoding of Callback.
+func (callback *Callback) MarshalJSON() ([]byte, error) {
+	callbackYaml, err := callback.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(callbackYaml)
 }
 
 // UnmarshalJSON sets Callback to a copy of data.
@@ -314,8 +332,8 @@ func (paths Paths) JSONLookup(token string) (interface{}, error) {
 	}
 }
 
-// MarshalJSON returns the JSON encoding of Paths.
-func (paths *Paths) MarshalJSON() ([]byte, error) {
+// MarshalYAML returns the YAML encoding of Paths.
+func (paths *Paths) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, paths.Len()+len(paths.Extensions))
 	for k, v := range paths.Extensions {
 		m[k] = v
@@ -323,7 +341,16 @@ func (paths *Paths) MarshalJSON() ([]byte, error) {
 	for k, v := range paths.Map() {
 		m[k] = v
 	}
-	return json.Marshal(m)
+	return m, nil
+}
+
+// MarshalJSON returns the JSON encoding of Paths.
+func (paths *Paths) MarshalJSON() ([]byte, error) {
+	pathsYaml, err := paths.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(pathsYaml)
 }
 
 // UnmarshalJSON sets Paths to a copy of data.

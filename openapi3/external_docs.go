@@ -19,6 +19,15 @@ type ExternalDocs struct {
 
 // MarshalJSON returns the JSON encoding of ExternalDocs.
 func (e ExternalDocs) MarshalJSON() ([]byte, error) {
+	x, err := e.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of ExternalDocs.
+func (e ExternalDocs) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 2+len(e.Extensions))
 	for k, v := range e.Extensions {
 		m[k] = v
@@ -29,7 +38,7 @@ func (e ExternalDocs) MarshalJSON() ([]byte, error) {
 	if x := e.URL; x != "" {
 		m["url"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets ExternalDocs to a copy of data.

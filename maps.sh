@@ -156,8 +156,8 @@ EOF
 
 maplike_UnMarsh() {
 	cat <<EOF >>"$maplike"
-// MarshalJSON returns the JSON encoding of ${type#'*'}.
-func (${name} ${type}) MarshalJSON() ([]byte, error) {
+// MarshalYAML returns the YAML encoding of ${type#'*'}.
+func (${name} ${type}) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, ${name}.Len()+len(${name}.Extensions))
 	for k, v := range ${name}.Extensions {
 		m[k] = v
@@ -165,7 +165,16 @@ func (${name} ${type}) MarshalJSON() ([]byte, error) {
 	for k, v := range ${name}.Map() {
 		m[k] = v
 	}
-	return json.Marshal(m)
+	return m, nil
+}
+
+// MarshalJSON returns the JSON encoding of ${type#'*'}.
+func (${name} ${type}) MarshalJSON() ([]byte, error) {
+	${name}Yaml, err := ${name}.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(${name}Yaml)
 }
 
 // UnmarshalJSON sets ${type#'*'} to a copy of data.

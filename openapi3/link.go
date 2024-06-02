@@ -22,6 +22,15 @@ type Link struct {
 
 // MarshalJSON returns the JSON encoding of Link.
 func (link Link) MarshalJSON() ([]byte, error) {
+	x, err := link.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Link.
+func (link Link) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 6+len(link.Extensions))
 	for k, v := range link.Extensions {
 		m[k] = v
@@ -46,7 +55,7 @@ func (link Link) MarshalJSON() ([]byte, error) {
 		m["requestBody"] = x
 	}
 
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Link to a copy of data.

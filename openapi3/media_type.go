@@ -65,6 +65,15 @@ func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType 
 
 // MarshalJSON returns the JSON encoding of MediaType.
 func (mediaType MediaType) MarshalJSON() ([]byte, error) {
+	x, err := mediaType.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of MediaType.
+func (mediaType MediaType) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 4+len(mediaType.Extensions))
 	for k, v := range mediaType.Extensions {
 		m[k] = v
@@ -81,7 +90,7 @@ func (mediaType MediaType) MarshalJSON() ([]byte, error) {
 	if x := mediaType.Encoding; len(x) != 0 {
 		m["encoding"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets MediaType to a copy of data.

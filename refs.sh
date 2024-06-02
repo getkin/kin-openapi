@@ -46,29 +46,17 @@ func (x ${type}Ref) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
-	return x.Value, nil
+	return x.Value.MarshalYAML()
 }
 
 // MarshalJSON returns the JSON encoding of ${type}Ref.
 func (x ${type}Ref) MarshalJSON() ([]byte, error) {
-	if ref := x.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
 	}
+	return json.Marshal(y)
 EOF
-
-	case $type in
-		# Callback) echo '	return x.Value.MarshalJSON()' ;; TODO: when https://github.com/getkin/kin-openapi/issues/687
-		Example) echo '	return x.Value.MarshalJSON()' ;;
-		Header) echo '	return x.Value.MarshalJSON()' ;;
-		Link) echo '	return x.Value.MarshalJSON()' ;;
-		Parameter) echo '	return x.Value.MarshalJSON()' ;;
-		RequestBody) echo '	return x.Value.MarshalJSON()' ;;
-		Response) echo '	return x.Value.MarshalJSON()' ;;
-		Schema) echo '	return x.Value.MarshalJSON()' ;;
-		SecurityScheme) echo '	return x.Value.MarshalJSON()' ;;
-		*) echo '	return json.Marshal(x.Value)'
-	esac
-
 	cat <<EOF
 }
 

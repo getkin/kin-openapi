@@ -16,6 +16,15 @@ type Discriminator struct {
 
 // MarshalJSON returns the JSON encoding of Discriminator.
 func (discriminator Discriminator) MarshalJSON() ([]byte, error) {
+	x, err := discriminator.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Discriminator.
+func (discriminator Discriminator) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 2+len(discriminator.Extensions))
 	for k, v := range discriminator.Extensions {
 		m[k] = v
@@ -24,7 +33,7 @@ func (discriminator Discriminator) MarshalJSON() ([]byte, error) {
 	if x := discriminator.Mapping; len(x) != 0 {
 		m["mapping"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Discriminator to a copy of data.

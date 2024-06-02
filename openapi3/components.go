@@ -43,6 +43,15 @@ func NewComponents() Components {
 
 // MarshalJSON returns the JSON encoding of Components.
 func (components Components) MarshalJSON() ([]byte, error) {
+	x, err := components.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Components.
+func (components Components) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 9+len(components.Extensions))
 	for k, v := range components.Extensions {
 		m[k] = v
@@ -74,7 +83,7 @@ func (components Components) MarshalJSON() ([]byte, error) {
 	if x := components.Callbacks; len(x) != 0 {
 		m["callbacks"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Components to a copy of data.

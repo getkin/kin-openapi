@@ -75,6 +75,15 @@ func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType {
 
 // MarshalJSON returns the JSON encoding of RequestBody.
 func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
+	x, err := requestBody.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of RequestBody.
+func (requestBody RequestBody) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 3+len(requestBody.Extensions))
 	for k, v := range requestBody.Extensions {
 		m[k] = v
@@ -88,7 +97,7 @@ func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
 	if x := requestBody.Content; true {
 		m["content"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets RequestBody to a copy of data.

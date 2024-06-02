@@ -42,6 +42,15 @@ type Tag struct {
 
 // MarshalJSON returns the JSON encoding of Tag.
 func (t Tag) MarshalJSON() ([]byte, error) {
+	x, err := t.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Tag.
+func (t Tag) MarshalYAML() (interface{}, error) {
 	m := make(map[string]interface{}, 3+len(t.Extensions))
 	for k, v := range t.Extensions {
 		m[k] = v
@@ -55,7 +64,7 @@ func (t Tag) MarshalJSON() ([]byte, error) {
 	if x := t.ExternalDocs; x != nil {
 		m["externalDocs"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Tag to a copy of data.

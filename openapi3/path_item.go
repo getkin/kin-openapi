@@ -31,8 +31,17 @@ type PathItem struct {
 
 // MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem PathItem) MarshalJSON() ([]byte, error) {
+	x, err := pathItem.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of PathItem.
+func (pathItem PathItem) MarshalYAML() (interface{}, error) {
 	if ref := pathItem.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+		return Ref{Ref: ref}, nil
 	}
 
 	m := make(map[string]interface{}, 13+len(pathItem.Extensions))
@@ -78,7 +87,7 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 	if x := pathItem.Parameters; len(x) != 0 {
 		m["parameters"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets PathItem to a copy of data.
