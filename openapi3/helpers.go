@@ -98,7 +98,8 @@ func referencesRootDocument(doc *T, ref componentRef) bool {
 //
 // Of course given it a component from the root document will always match.
 //
-// https://swagger.io/docs/specification/using-ref/#syntax
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#relative-references-in-urls
 //
 // Case 1: Directly via
 //
