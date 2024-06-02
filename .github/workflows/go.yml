@@ -52,7 +52,7 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - run: ./refs.sh | tee openapi3/refs.go
+    - run: go generate openapi3/refsgenerator.go
     - run: git --no-pager diff --exit-code
 
     - run: ./maps.sh
