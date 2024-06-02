@@ -1,7 +1,7 @@
 {
   "components": {
     "parameters": {
-      "number": {
+      "parameters_number": {
         "in": "query",
         "name": "someNumber",
         "schema": {
@@ -26,10 +26,6 @@
         "example": "bar",
         "type": "string"
       },
-      "Error":{
-        "title":"ErrorDetails",
-        "type":"object"
-      },
       "Foo": {
         "properties": {
           "bar": {
@@ -46,7 +42,7 @@
         },
         "type": "object"
       },
-      "error":{
+      "Error":{
         "title":"ErrorDetails",
         "type":"object"
       },
@@ -102,7 +98,7 @@
       },
       "parameters": [
         {
-          "$ref": "#/components/parameters/number"
+          "$ref": "#/components/parameters/parameters_number"
         }
       ]
     }

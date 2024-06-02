@@ -78,13 +78,21 @@ FUNCTIONS
 func BoolPtr(value bool) *bool
     BoolPtr is a helper for defining OpenAPI schemas.
 
-func DefaultRefNameResolver(ref string) string
+func DefaultRefNameResolver(doc *T, ref componentRef) string
     DefaultRefResolver is a default implementation of refNameResolver for the
     InternalizeRefs function.
 
-    If a reference points to an element inside a document, it returns the last
-    element in the reference using filepath.Base. Otherwise if the reference
-    points to a file, it returns the file name trimmed of all extensions.
+    If the referenced component matches one already in the root component
+    section, that is used.
+
+    In most other cases the path relative to loading working directory is
+    transformed into a (hopefully) unique name.
+
+    The transformation involves:
+      - Cutting the "#/components/<type>" part.
+      - Cutting the file extensions (.yaml/.json) from documents.
+      - Trimming the common directory with the root spec.
+      - Replace directory seperators with underscores.
 
 func DefineIPv4Format()
     DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
@@ -1171,7 +1179,7 @@ type Ref struct {
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 
-type RefNameResolver func(string) string
+type RefNameResolver func(*T, componentRef) string
 
 type RequestBodies map[string]*RequestBodyRef
 
@@ -1922,7 +1930,7 @@ func (doc *T) AddServer(server *Server)
 
 func (doc *T) AddServers(servers ...*Server)
 
-func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string)
+func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, componentRef) string)
     InternalizeRefs removes all references to external files from the spec and
     moves them to the components section.
 

@@ -14,7 +14,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/record"
+                  "$ref": "#/components/schemas/schemas_book_record"
                 }
               }
             }
@@ -31,7 +31,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/record"
+                  "$ref": "#/components/schemas/schemas_cd_record"
                 }
               }
             }
@@ -42,7 +42,7 @@
   },
   "components": {
     "schemas": {
-      "record": {
+      "schemas_book_record": {
         "type": "object",
         "required": [
           "id"
@@ -52,6 +52,20 @@
             "type": "number"
           },
           "pages": {
+            "type": "number"
+          }
+        }
+      },
+      "schemas_cd_record": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "tracks": {
             "type": "number"
           }
         }

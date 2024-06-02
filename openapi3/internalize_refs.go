@@ -2,31 +2,117 @@ package openapi3
 
 import (
 	"context"
+	"path"
 	"path/filepath"
 	"strings"
 )
 
-type RefNameResolver func(string) string
+type RefNameResolver func(*T, componentRef) string
 
 // DefaultRefResolver is a default implementation of refNameResolver for the
 // InternalizeRefs function.
 //
-// If a reference points to an element inside a document, it returns the last
-// element in the reference using filepath.Base. Otherwise if the reference points
-// to a file, it returns the file name trimmed of all extensions.
-func DefaultRefNameResolver(ref string) string {
-	if ref == "" {
+// If the referenced component matches one already in the root component section,
+// that is used.
+//
+// In most other cases the path relative to loading working directory is transformed
+// into a (hopefully) unique name.
+//
+// The transformation involves:
+//   - Cutting the "#/components/<type>" part.
+//   - Cutting the file extensions (.yaml/.json) from documents.
+//   - Trimming the common directory with the root spec.
+//   - Replace directory seperators with underscores.
+func DefaultRefNameResolver(doc *T, ref componentRef) string {
+	if ref.RefString() == "" || ref.RefPath() == nil {
 		return ""
 	}
-	split := strings.SplitN(ref, "#", 2)
-	if len(split) == 2 {
-		return filepath.Base(split[1])
+
+	name := *ref.RefPath()
+
+	// If refering to a component in the root spec, no need to internalize just use
+	// the existing component.
+	if nameInRoot, found := ReferencesComponentInRootDocument(doc, ref); found {
+		c := *ref.RefPath()
+		nameInRoot = strings.TrimPrefix(nameInRoot, "#")
+		c.Fragment = nameInRoot
+		name = c
 	}
-	ref = split[0]
-	for ext := filepath.Ext(ref); len(ext) > 0; ext = filepath.Ext(ref) {
-		ref = strings.TrimSuffix(ref, ext)
+
+	filePath, componentPath := name.Path, name.Fragment
+
+	// Cut out the "#/components/<type>" to make the names shorter.
+	// XXX(alb): This might cause collisions. Think about.
+	if b, a, ok := strings.Cut(componentPath, path.Join("/components/", ref.CollectionName(), "")); ok {
+		componentPath = path.Join(b, a)
 	}
-	return filepath.Base(ref)
+
+	if filePath != "" {
+		// Remove the path extentions to make this JSON/YAML agnostic.
+		for ext := filepath.Ext(filePath); len(ext) > 0; ext = filepath.Ext(filePath) {
+			filePath = strings.TrimSuffix(filePath, ext)
+		}
+
+		if doc.url != nil {
+			// Trim the common prefix with the root spec path.
+			commonDir := filepath.Dir(doc.url.Path)
+			for {
+				if commonDir == "." { // no common prefix
+					break
+				}
+
+				if p, found := cutDirectories(filePath, commonDir); found {
+					filePath = p
+					break
+				}
+
+				commonDir = filepath.Dir(commonDir)
+			}
+		}
+	}
+
+	name.Path = ""
+
+	if filePath != "" {
+		name.Path = strings.TrimLeft(filePath, "/")
+	}
+
+	if componentPath != "" {
+		if name.Path != "" {
+			name.Path += "_"
+		}
+		name.Path += strings.TrimLeft(componentPath, "/")
+	}
+
+	// XXX(alb): These should really be escaped to ~1
+	// But kin-openapi doesn't support refs with ~ at the moment.
+	// https://swagger.io/docs/specification/using-ref/#escape
+	return strings.ReplaceAll(name.Path, "/", "_")
+}
+
+// cutDirectories removes the given directories from the start of the path if
+// the path is a child.
+func cutDirectories(p, dirs string) (string, bool) {
+	if dirs == "" || p == "" {
+		return p, false
+	}
+
+	p = strings.TrimRight(p, string(filepath.Separator))
+	dirs = strings.TrimRight(dirs, string(filepath.Separator))
+
+	var sb strings.Builder
+	sb.Grow(len(ParameterInHeader))
+	for _, segments := range filepath.SplitList(p) {
+		sb.WriteString(segments)
+
+		if sb.String() == p {
+			return strings.TrimPrefix(p, dirs), true
+		}
+
+		sb.WriteRune(filepath.Separator)
+	}
+
+	return p, false
 }
 
 func schemaNames(s Schemas) []string {
@@ -54,7 +140,7 @@ func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver, par
 		return false
 	}
 
-	name := refNameResolver(s.Ref)
+	name := refNameResolver(doc, s)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Schemas[name]; ok {
 			s.Ref = "#/components/schemas/" + name
@@ -77,7 +163,7 @@ func (doc *T) addParameterToSpec(p *ParameterRef, refNameResolver RefNameResolve
 	if p == nil || !isExternalRef(p.Ref, parentIsExternal) {
 		return false
 	}
-	name := refNameResolver(p.Ref)
+	name := refNameResolver(doc, p)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Parameters[name]; ok {
 			p.Ref = "#/components/parameters/" + name
@@ -100,7 +186,7 @@ func (doc *T) addHeaderToSpec(h *HeaderRef, refNameResolver RefNameResolver, par
 	if h == nil || !isExternalRef(h.Ref, parentIsExternal) {
 		return false
 	}
-	name := refNameResolver(h.Ref)
+	name := refNameResolver(doc, h)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Headers[name]; ok {
 			h.Ref = "#/components/headers/" + name
@@ -123,7 +209,7 @@ func (doc *T) addRequestBodyToSpec(r *RequestBodyRef, refNameResolver RefNameRes
 	if r == nil || !isExternalRef(r.Ref, parentIsExternal) {
 		return false
 	}
-	name := refNameResolver(r.Ref)
+	name := refNameResolver(doc, r)
 	if doc.Components != nil {
 		if _, ok := doc.Components.RequestBodies[name]; ok {
 			r.Ref = "#/components/requestBodies/" + name
@@ -146,7 +232,7 @@ func (doc *T) addResponseToSpec(r *ResponseRef, refNameResolver RefNameResolver,
 	if r == nil || !isExternalRef(r.Ref, parentIsExternal) {
 		return false
 	}
-	name := refNameResolver(r.Ref)
+	name := refNameResolver(doc, r)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Responses[name]; ok {
 			r.Ref = "#/components/responses/" + name
@@ -169,7 +255,7 @@ func (doc *T) addSecuritySchemeToSpec(ss *SecuritySchemeRef, refNameResolver Ref
 	if ss == nil || !isExternalRef(ss.Ref, parentIsExternal) {
 		return
 	}
-	name := refNameResolver(ss.Ref)
+	name := refNameResolver(doc, ss)
 	if doc.Components != nil {
 		if _, ok := doc.Components.SecuritySchemes[name]; ok {
 			ss.Ref = "#/components/securitySchemes/" + name
@@ -192,7 +278,7 @@ func (doc *T) addExampleToSpec(e *ExampleRef, refNameResolver RefNameResolver, p
 	if e == nil || !isExternalRef(e.Ref, parentIsExternal) {
 		return
 	}
-	name := refNameResolver(e.Ref)
+	name := refNameResolver(doc, e)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Examples[name]; ok {
 			e.Ref = "#/components/examples/" + name
@@ -215,7 +301,7 @@ func (doc *T) addLinkToSpec(l *LinkRef, refNameResolver RefNameResolver, parentI
 	if l == nil || !isExternalRef(l.Ref, parentIsExternal) {
 		return
 	}
-	name := refNameResolver(l.Ref)
+	name := refNameResolver(doc, l)
 	if doc.Components != nil {
 		if _, ok := doc.Components.Links[name]; ok {
 			l.Ref = "#/components/links/" + name
@@ -238,7 +324,7 @@ func (doc *T) addCallbackToSpec(c *CallbackRef, refNameResolver RefNameResolver,
 	if c == nil || !isExternalRef(c.Ref, parentIsExternal) {
 		return false
 	}
-	name := refNameResolver(c.Ref)
+	name := refNameResolver(doc, c)
 
 	if doc.Components == nil {
 		doc.Components = &Components{}
@@ -391,7 +477,7 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 // Example:
 //
 //	doc.InternalizeRefs(context.Background(), nil)
-func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref string) string) {
+func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, componentRef) string) {
 	doc.resetVisited()
 
 	if refNameResolver == nil {
