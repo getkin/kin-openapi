@@ -68,6 +68,10 @@ func refersToSameDocument(o1 componentRef, o2 componentRef) bool {
 	r1 := o1.RefPath()
 	r2 := o2.RefPath()
 
+	if r1 == nil || r2 == nil {
+		return false
+	}
+
 	// refURL is relative to the working directory & base spec file.
 	return r1.String() == r2.String()
 }
