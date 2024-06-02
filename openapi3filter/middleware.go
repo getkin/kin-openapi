@@ -13,23 +13,17 @@ import (
 // Validator provides HTTP request and response validation middleware.
 type Validator struct {
 	router  routers.Router
-	errFunc ErrContextFunc
-	logFunc LogContextFunc
+	errFunc ErrFunc
+	logFunc LogFunc
 	strict  bool
 	options Options
 }
 
 // ErrFunc handles errors that may occur during validation.
-type ErrFunc func(w http.ResponseWriter, status int, code ErrCode, err error)
-
-// ErrContextFunc handles errors that may occur during validation with the ability to use the request's context.
-type ErrContextFunc func(ctx context.Context, w http.ResponseWriter, status int, code ErrCode, err error)
+type ErrFunc func(ctx context.Context, w http.ResponseWriter, status int, code ErrCode, err error)
 
 // LogFunc handles log messages that may occur during validation.
-type LogFunc func(message string, err error)
-
-// LogContextFunc handles log messages that may occur during validation with the ability to use the request's context.
-type LogContextFunc func(ctx context.Context, message string, err error)
+type LogFunc func(ctx context.Context, message string, err error)
 
 // ErrCode is used for classification of different types of errors that may
 // occur during validation. These may be used to write an appropriate response
@@ -90,15 +84,6 @@ type ValidatorOption func(*Validator)
 // prescribing a particular form. This callback is only called on response
 // validator errors in Strict mode.
 func OnErr(f ErrFunc) ValidatorOption {
-	return OnErrContext(func(_ context.Context, w http.ResponseWriter, status int, code ErrCode, err error) {
-		f(w, status, code, err)
-	})
-}
-
-// OnErrContext provides a callback that handles writing an HTTP response
-// on a validation error, just as OnErr with the addition of the request's
-// context being added to the callback.
-func OnErrContext(f ErrContextFunc) ValidatorOption {
 	return func(v *Validator) {
 		v.errFunc = f
 	}
@@ -108,14 +93,6 @@ func OnErrContext(f ErrContextFunc) ValidatorOption {
 // the validator to integrate with a services' existing logging system without
 // prescribing a particular one.
 func OnLog(f LogFunc) ValidatorOption {
-	return OnLogContext(func(_ context.Context, message string, err error) {
-		f(message, err)
-	})
-}
-
-// OnLogContext provides a callback  that handles logging, just as OnLog with the
-// addition of the request's context being added to the callback.
-func OnLogContext(f LogContextFunc) ValidatorOption {
 	return func(v *Validator) {
 		v.logFunc = f
 	}
