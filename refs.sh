@@ -36,7 +36,7 @@ type ${type}Ref struct {
 	Ref   string
 	Value *${type}
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 

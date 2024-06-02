@@ -91,12 +91,12 @@ func referencesRootDocument(doc *T, ref componentRef) bool {
 	return doc.url.String() == refURL.String()
 }
 
-// MatchesSchemaInRootDocument returns if the given schema is identical
-// to a schema defined in the root document's '#/components/schemas'.
+// MatchesComponentInRootDocument returns if the given component is identical
+// to a component defined in the root document's '#/components/<type>'.
 // It returns a reference to the schema in the form
-// '#/components/schemas/NameXXX'
+// '#/components/<type>/NameXXX'
 //
-// Of course given it a schema from the root document will always match.
+// Of course given it a component from the root document will always match.
 //
 // https://swagger.io/docs/specification/using-ref/#syntax
 //
@@ -114,10 +114,10 @@ func referencesRootDocument(doc *T, ref componentRef) bool {
 //
 // In openapi.yaml
 //
-//	  components:
-//	    schemas:
-//		  Record:
-//		    $ref: schemas/record.yaml
+//	components:
+//	  schemas:
+//	    Record:
+//	      $ref: schemas/record.yaml
 func MatchesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
 	// Case 1:
 	// Something like: ../another-folder/document.json#/myElement

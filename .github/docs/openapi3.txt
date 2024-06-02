@@ -107,6 +107,33 @@ func Float64Ptr(value float64) *float64
 func Int64Ptr(value int64) *int64
     Int64Ptr is a helper for defining OpenAPI schemas.
 
+func MatchesComponentInRootDocument(doc *T, ref componentRef) (string, bool)
+    MatchesComponentInRootDocument returns if the given component is identical
+    to a component defined in the root document's '#/components/<type>'. It
+    returns a reference to the schema in the form '#/components/<type>/NameXXX'
+
+    Of course given it a component from the root document will always match.
+
+    https://swagger.io/docs/specification/using-ref/#syntax
+
+    Case 1: Directly via
+
+        ../openapi.yaml#/components/schemas/Record
+
+    Case 2: Or indirectly by using a $ref which matches a schema in the root
+    document's '#/components/schemas' using the same $ref.
+
+    In schemas/record.yaml
+
+        $ref: ./record.yaml
+
+    In openapi.yaml
+
+        components:
+          schemas:
+            Record:
+              $ref: schemas/record.yaml
+
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
     ReadFromFile is a ReadFromURIFunc which reads local file URIs.
 
@@ -191,10 +218,13 @@ func (callback *Callback) Value(key string) *PathItem
 type CallbackRef struct {
 	Ref   string
 	Value *Callback
+
 	// Has unexported fields.
 }
     CallbackRef represents either a Callback or a $ref to a Callback. When
     serializing and both fields are set, Ref is preferred over Value.
+
+func (x *CallbackRef) ComponentType() string
 
 func (x *CallbackRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -205,6 +235,11 @@ func (x CallbackRef) MarshalJSON() ([]byte, error)
 
 func (x CallbackRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of CallbackRef.
+
+func (x *CallbackRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *CallbackRef) RefString() string
 
 func (x *CallbackRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets CallbackRef to a copy of data.
@@ -379,10 +414,13 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 type ExampleRef struct {
 	Ref   string
 	Value *Example
+
 	// Has unexported fields.
 }
     ExampleRef represents either a Example or a $ref to a Example. When
     serializing and both fields are set, Ref is preferred over Value.
+
+func (x *ExampleRef) ComponentType() string
 
 func (x *ExampleRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -393,6 +431,11 @@ func (x ExampleRef) MarshalJSON() ([]byte, error)
 
 func (x ExampleRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of ExampleRef.
+
+func (x *ExampleRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *ExampleRef) RefString() string
 
 func (x *ExampleRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ExampleRef to a copy of data.
@@ -466,10 +509,13 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 type HeaderRef struct {
 	Ref   string
 	Value *Header
+
 	// Has unexported fields.
 }
     HeaderRef represents either a Header or a $ref to a Header. When serializing
     and both fields are set, Ref is preferred over Value.
+
+func (x *HeaderRef) ComponentType() string
 
 func (x *HeaderRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -480,6 +526,11 @@ func (x HeaderRef) MarshalJSON() ([]byte, error)
 
 func (x HeaderRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of HeaderRef.
+
+func (x *HeaderRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *HeaderRef) RefString() string
 
 func (x *HeaderRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets HeaderRef to a copy of data.
@@ -568,10 +619,13 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error
 type LinkRef struct {
 	Ref   string
 	Value *Link
+
 	// Has unexported fields.
 }
     LinkRef represents either a Link or a $ref to a Link. When serializing and
     both fields are set, Ref is preferred over Value.
+
+func (x *LinkRef) ComponentType() string
 
 func (x *LinkRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -582,6 +636,11 @@ func (x LinkRef) MarshalJSON() ([]byte, error)
 
 func (x LinkRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of LinkRef.
+
+func (x *LinkRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *LinkRef) RefString() string
 
 func (x *LinkRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets LinkRef to a copy of data.
@@ -879,10 +938,13 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter
 type ParameterRef struct {
 	Ref   string
 	Value *Parameter
+
 	// Has unexported fields.
 }
     ParameterRef represents either a Parameter or a $ref to a Parameter.
     When serializing and both fields are set, Ref is preferred over Value.
+
+func (x *ParameterRef) ComponentType() string
 
 func (x *ParameterRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -893,6 +955,11 @@ func (x ParameterRef) MarshalJSON() ([]byte, error)
 
 func (x ParameterRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of ParameterRef.
+
+func (x *ParameterRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *ParameterRef) RefString() string
 
 func (x *ParameterRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ParameterRef to a copy of data.
@@ -1112,10 +1179,13 @@ func (requestBody *RequestBody) WithSchemaRef(value *SchemaRef, consumes []strin
 type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
+
 	// Has unexported fields.
 }
     RequestBodyRef represents either a RequestBody or a $ref to a RequestBody.
     When serializing and both fields are set, Ref is preferred over Value.
+
+func (x *RequestBodyRef) ComponentType() string
 
 func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1126,6 +1196,11 @@ func (x RequestBodyRef) MarshalJSON() ([]byte, error)
 
 func (x RequestBodyRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of RequestBodyRef.
+
+func (x *RequestBodyRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *RequestBodyRef) RefString() string
 
 func (x *RequestBodyRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets RequestBodyRef to a copy of data.
@@ -1176,10 +1251,13 @@ func (m ResponseBodies) JSONLookup(token string) (interface{}, error)
 type ResponseRef struct {
 	Ref   string
 	Value *Response
+
 	// Has unexported fields.
 }
     ResponseRef represents either a Response or a $ref to a Response. When
     serializing and both fields are set, Ref is preferred over Value.
+
+func (x *ResponseRef) ComponentType() string
 
 func (x *ResponseRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1190,6 +1268,11 @@ func (x ResponseRef) MarshalJSON() ([]byte, error)
 
 func (x ResponseRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of ResponseRef.
+
+func (x *ResponseRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *ResponseRef) RefString() string
 
 func (x *ResponseRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ResponseRef to a copy of data.
@@ -1471,6 +1554,7 @@ func (err SchemaError) Unwrap() error
 type SchemaRef struct {
 	Ref   string
 	Value *Schema
+
 	// Has unexported fields.
 }
     SchemaRef represents either a Schema or a $ref to a Schema. When serializing
@@ -1478,6 +1562,8 @@ type SchemaRef struct {
 
 func NewSchemaRef(ref string, value *Schema) *SchemaRef
     NewSchemaRef simply builds a SchemaRef
+
+func (x *SchemaRef) ComponentType() string
 
 func (x *SchemaRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1488,6 +1574,11 @@ func (x SchemaRef) MarshalJSON() ([]byte, error)
 
 func (x SchemaRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of SchemaRef.
+
+func (x *SchemaRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *SchemaRef) RefString() string
 
 func (x *SchemaRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets SchemaRef to a copy of data.
@@ -1620,11 +1711,14 @@ func (ss *SecurityScheme) WithType(value string) *SecurityScheme
 type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
+
 	// Has unexported fields.
 }
     SecuritySchemeRef represents either a SecurityScheme or a $ref to a
     SecurityScheme. When serializing and both fields are set, Ref is preferred
     over Value.
+
+func (x *SecuritySchemeRef) ComponentType() string
 
 func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1635,6 +1729,11 @@ func (x SecuritySchemeRef) MarshalJSON() ([]byte, error)
 
 func (x SecuritySchemeRef) MarshalYAML() (interface{}, error)
     MarshalYAML returns the YAML encoding of SecuritySchemeRef.
+
+func (x *SecuritySchemeRef) RefPath() *url.URL
+    RefPath returns the path of the $ref relative to the root document.
+
+func (x *SecuritySchemeRef) RefString() string
 
 func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets SecuritySchemeRef to a copy of data.

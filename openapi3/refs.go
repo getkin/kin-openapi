@@ -18,7 +18,7 @@ type CallbackRef struct {
 	Ref   string
 	Value *Callback
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -107,7 +107,7 @@ type ExampleRef struct {
 	Ref   string
 	Value *Example
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -196,7 +196,7 @@ type HeaderRef struct {
 	Ref   string
 	Value *Header
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -285,7 +285,7 @@ type LinkRef struct {
 	Ref   string
 	Value *Link
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -374,7 +374,7 @@ type ParameterRef struct {
 	Ref   string
 	Value *Parameter
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -463,7 +463,7 @@ type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -552,7 +552,7 @@ type ResponseRef struct {
 	Ref   string
 	Value *Response
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -641,7 +641,7 @@ type SchemaRef struct {
 	Ref   string
 	Value *Schema
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
@@ -730,7 +730,7 @@ type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
 
-	extra []string
+	extra   []string
 	refPath *url.URL
 }
 
