@@ -82,18 +82,9 @@ func TestRefsYAML(t *testing.T) {
 	require.NoError(t, err)
 	dataB, err := yaml.Marshal(docB)
 	require.NoError(t, err)
-	eqYAML(t, data, specYAML)
-	eqYAML(t, data, dataA)
-	eqYAML(t, data, dataB)
-}
-
-func eqYAML(t *testing.T, expected, actual []byte) {
-	var e, a interface{}
-	err := yaml.Unmarshal(expected, &e)
-	require.NoError(t, err)
-	err = yaml.Unmarshal(actual, &a)
-	require.NoError(t, err)
-	require.Equal(t, e, a)
+	require.YAMLEq(t, string(data), string(specYAML))
+	require.YAMLEq(t, string(data), string(dataA))
+	require.YAMLEq(t, string(data), string(dataB))
 }
 
 var specYAML = []byte(`
