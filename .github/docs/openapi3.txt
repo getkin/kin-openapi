@@ -225,6 +225,8 @@ type CallbackRef struct {
     serializing and both fields are set, Ref is preferred over Value.
 
 func (x *CallbackRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *CallbackRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -240,6 +242,7 @@ func (x *CallbackRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *CallbackRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *CallbackRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets CallbackRef to a copy of data.
@@ -421,6 +424,8 @@ type ExampleRef struct {
     serializing and both fields are set, Ref is preferred over Value.
 
 func (x *ExampleRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *ExampleRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -436,6 +441,7 @@ func (x *ExampleRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *ExampleRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *ExampleRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ExampleRef to a copy of data.
@@ -516,6 +522,8 @@ type HeaderRef struct {
     and both fields are set, Ref is preferred over Value.
 
 func (x *HeaderRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *HeaderRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -531,6 +539,7 @@ func (x *HeaderRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *HeaderRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *HeaderRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets HeaderRef to a copy of data.
@@ -626,6 +635,8 @@ type LinkRef struct {
     both fields are set, Ref is preferred over Value.
 
 func (x *LinkRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *LinkRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -641,6 +652,7 @@ func (x *LinkRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *LinkRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *LinkRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets LinkRef to a copy of data.
@@ -945,6 +957,8 @@ type ParameterRef struct {
     When serializing and both fields are set, Ref is preferred over Value.
 
 func (x *ParameterRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *ParameterRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -960,6 +974,7 @@ func (x *ParameterRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *ParameterRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *ParameterRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ParameterRef to a copy of data.
@@ -1186,6 +1201,8 @@ type RequestBodyRef struct {
     When serializing and both fields are set, Ref is preferred over Value.
 
 func (x *RequestBodyRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1201,6 +1218,7 @@ func (x *RequestBodyRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *RequestBodyRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *RequestBodyRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets RequestBodyRef to a copy of data.
@@ -1258,6 +1276,8 @@ type ResponseRef struct {
     serializing and both fields are set, Ref is preferred over Value.
 
 func (x *ResponseRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *ResponseRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1273,6 +1293,7 @@ func (x *ResponseRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *ResponseRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *ResponseRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ResponseRef to a copy of data.
@@ -1564,6 +1585,8 @@ func NewSchemaRef(ref string, value *Schema) *SchemaRef
     NewSchemaRef simply builds a SchemaRef
 
 func (x *SchemaRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *SchemaRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1579,6 +1602,7 @@ func (x *SchemaRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *SchemaRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *SchemaRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets SchemaRef to a copy of data.
@@ -1719,6 +1743,8 @@ type SecuritySchemeRef struct {
     over Value.
 
 func (x *SecuritySchemeRef) ComponentType() string
+    ComponentType returns the name of this component type used in the spec's
+    component section.
 
 func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error)
     JSONLookup implements
@@ -1734,6 +1760,7 @@ func (x *SecuritySchemeRef) RefPath() *url.URL
     RefPath returns the path of the $ref relative to the root document.
 
 func (x *SecuritySchemeRef) RefString() string
+    RefString returns the $ref value.
 
 func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets SecuritySchemeRef to a copy of data.

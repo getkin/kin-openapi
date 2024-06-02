@@ -44,10 +44,11 @@ var _ jsonpointer.JSONPointable = (*${type}Ref)(nil)
 
 func (x *${type}Ref) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+// RefString returns the \$ref value.
 func (x *${type}Ref) RefString() string { return x.Ref }
 
+// ComponentType returns the name of this component type used in the spec's component section.
 func (x *${type}Ref) ComponentType() string { return "$(echo "$type" | tr '[:upper:]' '[:lower:]')s" }
-
 
 // RefPath returns the path of the \$ref relative to the root document.
 func (x *${type}Ref) RefPath() *url.URL { return x.refPath }
