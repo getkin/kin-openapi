@@ -43,8 +43,10 @@ func Uint64Ptr(value uint64) *uint64 {
 	return &value
 }
 
-type refPath interface {
+type componentRef interface {
+	RefString() string
 	RefPath() *url.URL
+	ComponentType() string
 }
 
 // refersToSameDocument returns if the $ref refers to the same document.
@@ -58,7 +60,7 @@ type refPath interface {
 //	/schema/other.yaml $ref: ../records.yaml
 //
 // The records.yaml reference in the 2 latter refers to the same document.
-func refersToSameDocument(o1 refPath, o2 refPath) bool {
+func refersToSameDocument(o1 componentRef, o2 componentRef) bool {
 	if o1 == nil || o2 == nil {
 		return false
 	}
@@ -73,13 +75,12 @@ func refersToSameDocument(o1 refPath, o2 refPath) bool {
 // referencesRootDocument returns if the $ref points to the root document of the OpenAPI spec.
 //
 // If the document has no location, perhaps loaded from data in memory, it always returns false.
-func referencesRootDocument(doc *T, ref refPath) bool {
+func referencesRootDocument(doc *T, ref componentRef) bool {
 	if doc.url == nil || ref == nil {
 		return false
 	}
 
 	refURL := *ref.RefPath()
-
 	refURL.Path, _, _ = strings.Cut(refURL.Path, "#") // remove the document element reference
 
 	// Check referenced element was in the root document.
@@ -113,15 +114,15 @@ func referencesRootDocument(doc *T, ref refPath) bool {
 //	    schemas:
 //		  Record:
 //		    $ref: schemas/record.yaml
-func MatchesSchemaInRootDocument(doc *T, sch *SchemaRef) (string, bool) {
+func MatchesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
 	// Case 1:
 	// Something like: ../another-folder/document.json#/myElement
-	if isRemoteReference(sch.Ref) && isSchemaReference(sch.Ref) {
+	if isRemoteReference(ref.RefString()) && isRootComponentReference(ref.RefString(), ref.ComponentType()) {
 		// Determine if it is *this* root doc.
-		if referencesRootDocument(doc, sch) {
-			_, name, _ := strings.Cut(sch.Ref, "#/components/schemas")
+		if referencesRootDocument(doc, ref) {
+			_, name, _ := strings.Cut(ref.RefString(), path.Join("#/components/", ref.ComponentType()))
 
-			return path.Join("#/components/schemas", name), true
+			return path.Join("#/components/", ref.ComponentType(), name), true
 		}
 	}
 
@@ -139,12 +140,12 @@ func MatchesSchemaInRootDocument(doc *T, sch *SchemaRef) (string, bool) {
 		}
 
 		// Is the schema a ref to the same resource.
-		if !refersToSameDocument(s, sch) {
+		if !refersToSameDocument(s, ref) {
 			continue
 		}
 
 		// Transform the remote ref to the equivalent schema in the root document.
-		return path.Join("#/components/schemas", name), true
+		return path.Join("#/components/", ref.ComponentType(), name), true
 	}
 
 	return "", false
@@ -156,8 +157,8 @@ func isElementReference(ref string) bool {
 }
 
 // isSchemaReference takes a $ref value and checks if it references a schema element.
-func isSchemaReference(ref string) bool {
-	return isElementReference(ref) && strings.Contains(ref, "#/components/schemas")
+func isRootComponentReference(ref string, compType string) bool {
+	return isElementReference(ref) && strings.Contains(ref, path.Join("#/components/", compType))
 }
 
 // isWholeDocumentReference takes a $ref value and checks if it is whole document reference.

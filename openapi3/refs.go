@@ -26,6 +26,11 @@ var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
 
 func (x *CallbackRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+func (x *CallbackRef) RefString() string { return x.Ref }
+
+func (x *CallbackRef) ComponentType() string { return "callbacks" }
+
+
 // RefPath returns the path of the $ref relative to the root document.
 func (x *CallbackRef) RefPath() *url.URL { return x.refPath }
 
@@ -109,6 +114,11 @@ type ExampleRef struct {
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
 
 func (x *ExampleRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+func (x *ExampleRef) RefString() string { return x.Ref }
+
+func (x *ExampleRef) ComponentType() string { return "examples" }
+
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *ExampleRef) RefPath() *url.URL { return x.refPath }
@@ -194,6 +204,11 @@ var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
 
 func (x *HeaderRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+func (x *HeaderRef) RefString() string { return x.Ref }
+
+func (x *HeaderRef) ComponentType() string { return "headers" }
+
+
 // RefPath returns the path of the $ref relative to the root document.
 func (x *HeaderRef) RefPath() *url.URL { return x.refPath }
 
@@ -277,6 +292,11 @@ type LinkRef struct {
 var _ jsonpointer.JSONPointable = (*LinkRef)(nil)
 
 func (x *LinkRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+func (x *LinkRef) RefString() string { return x.Ref }
+
+func (x *LinkRef) ComponentType() string { return "links" }
+
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *LinkRef) RefPath() *url.URL { return x.refPath }
@@ -362,6 +382,11 @@ var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
 
 func (x *ParameterRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+func (x *ParameterRef) RefString() string { return x.Ref }
+
+func (x *ParameterRef) ComponentType() string { return "parameters" }
+
+
 // RefPath returns the path of the $ref relative to the root document.
 func (x *ParameterRef) RefPath() *url.URL { return x.refPath }
 
@@ -445,6 +470,11 @@ type RequestBodyRef struct {
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
 
 func (x *RequestBodyRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+func (x *RequestBodyRef) RefString() string { return x.Ref }
+
+func (x *RequestBodyRef) ComponentType() string { return "requestbodys" }
+
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *RequestBodyRef) RefPath() *url.URL { return x.refPath }
@@ -530,6 +560,11 @@ var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
 
 func (x *ResponseRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+func (x *ResponseRef) RefString() string { return x.Ref }
+
+func (x *ResponseRef) ComponentType() string { return "responses" }
+
+
 // RefPath returns the path of the $ref relative to the root document.
 func (x *ResponseRef) RefPath() *url.URL { return x.refPath }
 
@@ -614,6 +649,11 @@ var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
 func (x *SchemaRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+func (x *SchemaRef) RefString() string { return x.Ref }
+
+func (x *SchemaRef) ComponentType() string { return "schemas" }
+
+
 // RefPath returns the path of the $ref relative to the root document.
 func (x *SchemaRef) RefPath() *url.URL { return x.refPath }
 
@@ -697,6 +737,11 @@ type SecuritySchemeRef struct {
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
 
 func (x *SecuritySchemeRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+func (x *SecuritySchemeRef) RefString() string { return x.Ref }
+
+func (x *SecuritySchemeRef) ComponentType() string { return "securityschemes" }
+
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *SecuritySchemeRef) RefPath() *url.URL { return x.refPath }

@@ -44,6 +44,11 @@ var _ jsonpointer.JSONPointable = (*${type}Ref)(nil)
 
 func (x *${type}Ref) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
+func (x *${type}Ref) RefString() string { return x.Ref }
+
+func (x *${type}Ref) ComponentType() string { return "$(echo "$type" | tr '[:upper:]' '[:lower:]')s" }
+
+
 // RefPath returns the path of the \$ref relative to the root document.
 func (x *${type}Ref) RefPath() *url.URL { return x.refPath }
 
