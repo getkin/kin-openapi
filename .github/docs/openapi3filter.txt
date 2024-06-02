@@ -182,7 +182,7 @@ type ErrCode int
     occur during validation. These may be used to write an appropriate response
     in ErrFunc.
 
-type ErrFunc func(w http.ResponseWriter, status int, code ErrCode, err error)
+type ErrFunc func(ctx context.Context, w http.ResponseWriter, status int, code ErrCode, err error)
     ErrFunc handles errors that may occur during validation.
 
 type ErrorEncoder func(ctx context.Context, err error, w http.ResponseWriter)
@@ -198,7 +198,7 @@ type Headerer interface {
     Headerer, the provided headers will be applied to the response writer,
     after the Content-Type is set.
 
-type LogFunc func(message string, err error)
+type LogFunc func(ctx context.Context, message string, err error)
     LogFunc handles log messages that may occur during validation.
 
 type Options struct {
