@@ -278,6 +278,9 @@ This will change the schema validation errors to return only the `Reason` field,
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.125.0
+* The `openapi3filter.ErrFunc` and `openapi3filter.LogFunc` func types now take the validated request's context as first argument.
+
 ### v0.122.0
 * `Paths` field of `openapi3.T` is now a pointer
 * `Responses` field of `openapi3.Operation` is now a pointer
