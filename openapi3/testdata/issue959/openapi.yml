@@ -1,0 +1,16 @@
+openapi: 3.0.0
+info:
+  title: foo
+  version: 0.0.0
+paths:
+  /{external1}:
+    parameters:
+      - in: path
+        name: external1
+        required: true
+        schema:
+          $ref: './components.yml#/components/schemas/External1'
+    get:
+      responses:
+        '204':
+          description: No content
