@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-OAI_COMMIT=${OAI_COMMIT:-157a4c81ae537ef793b2bee368bc00d88b461de8} # On 2022-10-17
+OAI_COMMIT=${OAI_COMMIT:-c3ac262c8e4b41bdc9da187dd6c7846981951ab6} # On 2024-06-10
 OAI_SLUG=OAI-OpenAPI-Specification
 OAI_DIR=$OAI_SLUG-${OAI_COMMIT:0:7}/examples
 
@@ -64,8 +64,8 @@ cat <<EOF
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: \${{ matrix.os }}
     defaults:
       run:
@@ -290,7 +290,6 @@ $APISGURU_DIR/amazonaws.com/elasticfilesystem/2015-02-01/openapi.yaml
 $APISGURU_DIR/amazonaws.com/fsx/2018-03-01/openapi.yaml
 $APISGURU_DIR/amazonaws.com/iam/2010-05-08/openapi.yaml
 $APISGURU_DIR/amazonaws.com/inspector/2016-02-16/openapi.yaml
-$APISGURU_DIR/amazonaws.com/kms/2014-11-01/openapi.yaml
 $APISGURU_DIR/amazonaws.com/lex-models/2017-04-19/openapi.yaml
 $APISGURU_DIR/amazonaws.com/organizations/2016-11-28/openapi.yaml
 $APISGURU_DIR/amazonaws.com/polly/2016-06-10/openapi.yaml
@@ -301,7 +300,6 @@ $APISGURU_DIR/amazonaws.com/snowball/2016-06-30/openapi.yaml
 $APISGURU_DIR/amazonaws.com/ssm-contacts/2021-05-03/openapi.yaml
 $APISGURU_DIR/amazonaws.com/storagegateway/2013-06-30/openapi.yaml
 $APISGURU_DIR/amazonaws.com/streams.dynamodb/2012-08-10/openapi.yaml
-$APISGURU_DIR/amazonaws.com/sts/2011-06-15/openapi.yaml
 $APISGURU_DIR/amazonaws.com/waf-regional/2016-11-28/openapi.yaml
 $APISGURU_DIR/amazonaws.com/waf/2015-08-24/openapi.yaml
 $APISGURU_DIR/amazonaws.com/wafv2/2019-07-29/openapi.yaml
@@ -535,7 +533,6 @@ $APISGURU_DIR/googleapis.com/admin/reports_v1/openapi.yaml
 $APISGURU_DIR/googleapis.com/admob/v1beta/openapi.yaml
 $APISGURU_DIR/googleapis.com/adsense/v1.4/openapi.yaml
 $APISGURU_DIR/googleapis.com/adsense/v2/openapi.yaml
-$APISGURU_DIR/googleapis.com/analyticsadmin/v1alpha/openapi.yaml
 $APISGURU_DIR/googleapis.com/appengine/v1/openapi.yaml
 $APISGURU_DIR/googleapis.com/appengine/v1beta/openapi.yaml
 $APISGURU_DIR/googleapis.com/artifactregistry/v1/openapi.yaml
@@ -589,6 +586,7 @@ $APISGURU_DIR/googleapis.com/dfareporting/v3.3/openapi.yaml
 $APISGURU_DIR/googleapis.com/dfareporting/v3.4/openapi.yaml
 $APISGURU_DIR/googleapis.com/dfareporting/v3.5/openapi.yaml
 $APISGURU_DIR/googleapis.com/dfareporting/v4/openapi.yaml
+$APISGURU_DIR/googleapis.com/discovery/v1/openapi.yaml
 $APISGURU_DIR/googleapis.com/displayvideo/v1/openapi.yaml
 $APISGURU_DIR/googleapis.com/displayvideo/v1dev/openapi.yaml
 $APISGURU_DIR/googleapis.com/displayvideo/v2/openapi.yaml

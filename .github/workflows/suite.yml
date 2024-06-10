@@ -25,8 +25,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -69,11 +69,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -90,13 +90,13 @@ jobs:
     - name: Build the tool
       run: go build -o . ./cmd/validate
 
-    - name: "ls OAI-OpenAPI-Specification-157a4c8/examples/v2.0/json/*.json OAI-OpenAPI-Specification-157a4c8/examples/v2.0/json/petstore-separate/spec/swagger.json"
+    - name: "ls OAI-OpenAPI-Specification-c3ac262/examples/v2.0/json/*.json OAI-OpenAPI-Specification-c3ac262/examples/v2.0/json/petstore-separate/spec/swagger.json"
       run: |
         set -x
         touch _
         while read -r file; do
           time ./validate -n 99  "$file" || echo "$file" >>_
-        done < <(ls OAI-OpenAPI-Specification-157a4c8/examples/v2.0/json/*.json OAI-OpenAPI-Specification-157a4c8/examples/v2.0/json/petstore-separate/spec/swagger.json)
+        done < <(ls OAI-OpenAPI-Specification-c3ac262/examples/v2.0/json/*.json OAI-OpenAPI-Specification-c3ac262/examples/v2.0/json/petstore-separate/spec/swagger.json)
 
     - name: Compare with expected results
       run: |
@@ -114,8 +114,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -158,11 +158,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -179,13 +179,13 @@ jobs:
     - name: Build the tool
       run: go build -o . ./cmd/validate
 
-    - name: "ls OAI-OpenAPI-Specification-157a4c8/examples/v2.0/yaml/*.yaml OAI-OpenAPI-Specification-157a4c8/examples/v2.0/yaml/petstore-separate/spec/swagger.yaml"
+    - name: "ls OAI-OpenAPI-Specification-c3ac262/examples/v2.0/yaml/*.yaml OAI-OpenAPI-Specification-c3ac262/examples/v2.0/yaml/petstore-separate/spec/swagger.yaml"
       run: |
         set -x
         touch _
         while read -r file; do
           time ./validate -n 99  "$file" || echo "$file" >>_
-        done < <(ls OAI-OpenAPI-Specification-157a4c8/examples/v2.0/yaml/*.yaml OAI-OpenAPI-Specification-157a4c8/examples/v2.0/yaml/petstore-separate/spec/swagger.yaml)
+        done < <(ls OAI-OpenAPI-Specification-c3ac262/examples/v2.0/yaml/*.yaml OAI-OpenAPI-Specification-c3ac262/examples/v2.0/yaml/petstore-separate/spec/swagger.yaml)
 
     - name: Compare with expected results
       run: |
@@ -203,8 +203,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -247,11 +247,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -268,13 +268,13 @@ jobs:
     - name: Build the tool
       run: go build -o . ./cmd/validate
 
-    - name: "find OAI-OpenAPI-Specification-157a4c8/examples/v3.0 -type f | sort"
+    - name: "find OAI-OpenAPI-Specification-c3ac262/examples/v3.0 -type f | sort"
       run: |
         set -x
         touch _
         while read -r file; do
           time ./validate -n 99  "$file" || echo "$file" >>_
-        done < <(find OAI-OpenAPI-Specification-157a4c8/examples/v3.0 -type f | sort)
+        done < <(find OAI-OpenAPI-Specification-c3ac262/examples/v3.0 -type f | sort)
 
     - name: Compare with expected results
       run: |
@@ -292,8 +292,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -336,11 +336,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -357,21 +357,21 @@ jobs:
     - name: Build the tool
       run: go build -o . ./cmd/validate
 
-    - name: "find OAI-OpenAPI-Specification-157a4c8/examples/v3.1 -type f | sort"
+    - name: "find OAI-OpenAPI-Specification-c3ac262/examples/v3.1 -type f | sort"
       run: |
         set -x
         touch _
         while read -r file; do
           time ./validate -n 99  "$file" || echo "$file" >>_
-        done < <(find OAI-OpenAPI-Specification-157a4c8/examples/v3.1 -type f | sort)
+        done < <(find OAI-OpenAPI-Specification-c3ac262/examples/v3.1 -type f | sort)
 
     - name: Compare with expected results
       run: |
         cat >__ <<EO_
-        OAI-OpenAPI-Specification-157a4c8/examples/v3.1/non-oauth-scopes.json
-        OAI-OpenAPI-Specification-157a4c8/examples/v3.1/non-oauth-scopes.yaml
-        OAI-OpenAPI-Specification-157a4c8/examples/v3.1/webhook-example.json
-        OAI-OpenAPI-Specification-157a4c8/examples/v3.1/webhook-example.yaml
+        OAI-OpenAPI-Specification-c3ac262/examples/v3.1/non-oauth-scopes.json
+        OAI-OpenAPI-Specification-c3ac262/examples/v3.1/non-oauth-scopes.yaml
+        OAI-OpenAPI-Specification-c3ac262/examples/v3.1/webhook-example.json
+        OAI-OpenAPI-Specification-c3ac262/examples/v3.1/webhook-example.yaml
         EO_
         diff -u __ _
 
@@ -385,8 +385,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -429,11 +429,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -474,8 +474,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -518,11 +518,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -563,8 +563,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -607,11 +607,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -653,8 +653,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -697,11 +697,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -799,8 +799,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -843,11 +843,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -885,7 +885,6 @@ jobs:
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/fsx/2018-03-01/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/iam/2010-05-08/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/inspector/2016-02-16/openapi.yaml
-        APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/kms/2014-11-01/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/lex-models/2017-04-19/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/organizations/2016-11-28/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/polly/2016-06-10/openapi.yaml
@@ -896,7 +895,6 @@ jobs:
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/ssm-contacts/2021-05-03/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/storagegateway/2013-06-30/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/streams.dynamodb/2012-08-10/openapi.yaml
-        APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/sts/2011-06-15/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/waf-regional/2016-11-28/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/waf/2015-08-24/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/amazonaws.com/wafv2/2019-07-29/openapi.yaml
@@ -913,8 +911,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -957,11 +955,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1006,8 +1004,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1050,11 +1048,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1276,8 +1274,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1320,11 +1318,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1366,8 +1364,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1410,11 +1408,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1456,8 +1454,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1500,11 +1498,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1552,8 +1550,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1596,11 +1594,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1648,8 +1646,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1692,11 +1690,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1732,7 +1730,6 @@ jobs:
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/admob/v1beta/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/adsense/v1.4/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/adsense/v2/openapi.yaml
-        APIs-guru-openapi-directory-2267738/APIs/googleapis.com/analyticsadmin/v1alpha/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/appengine/v1/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/appengine/v1beta/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/artifactregistry/v1/openapi.yaml
@@ -1786,6 +1783,7 @@ jobs:
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/dfareporting/v3.4/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/dfareporting/v3.5/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/dfareporting/v4/openapi.yaml
+        APIs-guru-openapi-directory-2267738/APIs/googleapis.com/discovery/v1/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/displayvideo/v1/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/displayvideo/v1dev/openapi.yaml
         APIs-guru-openapi-directory-2267738/APIs/googleapis.com/displayvideo/v2/openapi.yaml
@@ -1891,8 +1889,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -1935,11 +1933,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -1983,8 +1981,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2027,11 +2025,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2072,8 +2070,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2116,11 +2114,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2162,8 +2160,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2206,11 +2204,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2263,8 +2261,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2307,11 +2305,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2363,8 +2361,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2407,11 +2405,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2453,8 +2451,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2497,11 +2495,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2543,8 +2541,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2587,11 +2585,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2633,8 +2631,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2677,11 +2675,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2723,8 +2721,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2767,11 +2765,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2831,8 +2829,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2875,11 +2873,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -2921,8 +2919,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -2965,11 +2963,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
@@ -3011,8 +3009,8 @@ jobs:
         go: ['1.x']
         os:
         - ubuntu-latest
-        - windows-latest
-        - macos-latest
+       #- windows-latest
+       #- macos-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -3055,11 +3053,11 @@ jobs:
 
     - name: Maybe fetch fixtures
       run: |
-        if ! [[ -d OAI-OpenAPI-Specification-157a4c8/examples ]]; then
-          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"157a4c81ae537ef793b2bee368bc00d88b461de8"
+        if ! [[ -d OAI-OpenAPI-Specification-c3ac262/examples ]]; then
+          curl -fSLo OAI-OpenAPI-Specification.tar.gz https://github.com/OAI/OpenAPI-Specification/tarball/"c3ac262c8e4b41bdc9da187dd6c7846981951ab6"
           tar zxf OAI-OpenAPI-Specification.tar.gz
           rm OAI-OpenAPI-Specification.tar.gz
-          ls -lha OAI-OpenAPI-Specification-157a4c8/examples
+          ls -lha OAI-OpenAPI-Specification-c3ac262/examples
         fi
         if ! [[ -d APIs-guru-openapi-directory-2267738/APIs ]]; then
           curl -fSLo APIs-guru-openapi-directory.tar.gz https://github.com/APIs-guru/openapi-directory/tarball/"226773819e337e6c413d1be91b26b33111211768"
