@@ -17,9 +17,9 @@ import (
 type CallbackRef struct {
 	Ref   string
 	Value *Callback
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*CallbackRef)(nil)
@@ -29,11 +29,11 @@ func (x *CallbackRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value
 // RefString returns the $ref value.
 func (x *CallbackRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *CallbackRef) ComponentType() string { return "callbacks" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *CallbackRef) CollectionName() string { return "callbacks" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *CallbackRef) RefPath() *url.URL { return x.refPath }
+func (x *CallbackRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (interface{}, error) {
@@ -107,9 +107,9 @@ func (x *CallbackRef) JSONLookup(token string) (interface{}, error) {
 type ExampleRef struct {
 	Ref   string
 	Value *Example
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*ExampleRef)(nil)
@@ -119,11 +119,11 @@ func (x *ExampleRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value 
 // RefString returns the $ref value.
 func (x *ExampleRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *ExampleRef) ComponentType() string { return "examples" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *ExampleRef) CollectionName() string { return "examples" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *ExampleRef) RefPath() *url.URL { return x.refPath }
+func (x *ExampleRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (interface{}, error) {
@@ -197,9 +197,9 @@ func (x *ExampleRef) JSONLookup(token string) (interface{}, error) {
 type HeaderRef struct {
 	Ref   string
 	Value *Header
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*HeaderRef)(nil)
@@ -209,11 +209,11 @@ func (x *HeaderRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value =
 // RefString returns the $ref value.
 func (x *HeaderRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *HeaderRef) ComponentType() string { return "headers" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *HeaderRef) CollectionName() string { return "headers" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *HeaderRef) RefPath() *url.URL { return x.refPath }
+func (x *HeaderRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (interface{}, error) {
@@ -287,9 +287,9 @@ func (x *HeaderRef) JSONLookup(token string) (interface{}, error) {
 type LinkRef struct {
 	Ref   string
 	Value *Link
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*LinkRef)(nil)
@@ -299,11 +299,11 @@ func (x *LinkRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == 
 // RefString returns the $ref value.
 func (x *LinkRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *LinkRef) ComponentType() string { return "links" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *LinkRef) CollectionName() string { return "links" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *LinkRef) RefPath() *url.URL { return x.refPath }
+func (x *LinkRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (interface{}, error) {
@@ -377,9 +377,9 @@ func (x *LinkRef) JSONLookup(token string) (interface{}, error) {
 type ParameterRef struct {
 	Ref   string
 	Value *Parameter
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*ParameterRef)(nil)
@@ -389,11 +389,11 @@ func (x *ParameterRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Valu
 // RefString returns the $ref value.
 func (x *ParameterRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *ParameterRef) ComponentType() string { return "parameters" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *ParameterRef) CollectionName() string { return "parameters" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *ParameterRef) RefPath() *url.URL { return x.refPath }
+func (x *ParameterRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (interface{}, error) {
@@ -467,9 +467,9 @@ func (x *ParameterRef) JSONLookup(token string) (interface{}, error) {
 type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
@@ -479,11 +479,11 @@ func (x *RequestBodyRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Va
 // RefString returns the $ref value.
 func (x *RequestBodyRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *RequestBodyRef) ComponentType() string { return "requestbodys" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *RequestBodyRef) CollectionName() string { return "requestBodies" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *RequestBodyRef) RefPath() *url.URL { return x.refPath }
+func (x *RequestBodyRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (interface{}, error) {
@@ -557,9 +557,9 @@ func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error) {
 type ResponseRef struct {
 	Ref   string
 	Value *Response
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
@@ -569,11 +569,11 @@ func (x *ResponseRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value
 // RefString returns the $ref value.
 func (x *ResponseRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *ResponseRef) ComponentType() string { return "responses" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *ResponseRef) CollectionName() string { return "responses" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *ResponseRef) RefPath() *url.URL { return x.refPath }
+func (x *ResponseRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (interface{}, error) {
@@ -647,9 +647,9 @@ func (x *ResponseRef) JSONLookup(token string) (interface{}, error) {
 type SchemaRef struct {
 	Ref   string
 	Value *Schema
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
@@ -659,11 +659,11 @@ func (x *SchemaRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value =
 // RefString returns the $ref value.
 func (x *SchemaRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *SchemaRef) ComponentType() string { return "schemas" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *SchemaRef) CollectionName() string { return "schemas" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *SchemaRef) RefPath() *url.URL { return x.refPath }
+func (x *SchemaRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (interface{}, error) {
@@ -737,9 +737,9 @@ func (x *SchemaRef) JSONLookup(token string) (interface{}, error) {
 type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
+	extra []string
 
-	extra   []string
-	refPath *url.URL
+	refPath url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*SecuritySchemeRef)(nil)
@@ -749,11 +749,11 @@ func (x *SecuritySchemeRef) isEmpty() bool { return x == nil || x.Ref == "" && x
 // RefString returns the $ref value.
 func (x *SecuritySchemeRef) RefString() string { return x.Ref }
 
-// ComponentType returns the name of this component type used in the spec's component section.
-func (x *SecuritySchemeRef) ComponentType() string { return "securityschemes" }
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *SecuritySchemeRef) CollectionName() string { return "securitySchemes" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *SecuritySchemeRef) RefPath() *url.URL { return x.refPath }
+func (x *SecuritySchemeRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (interface{}, error) {

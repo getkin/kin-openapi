@@ -46,7 +46,7 @@ func Uint64Ptr(value uint64) *uint64 {
 type componentRef interface {
 	RefString() string
 	RefPath() *url.URL
-	ComponentType() string
+	CollectionName() string
 }
 
 // refersToSameDocument returns if the $ref refers to the same document.
@@ -73,74 +73,152 @@ func refersToSameDocument(o1 componentRef, o2 componentRef) bool {
 	}
 
 	// refURL is relative to the working directory & base spec file.
-	return r1.String() == r2.String()
+	return referenceURIMatch(r1, r2)
 }
 
 // referencesRootDocument returns if the $ref points to the root document of the OpenAPI spec.
 //
 // If the document has no location, perhaps loaded from data in memory, it always returns false.
 func referencesRootDocument(doc *T, ref componentRef) bool {
-	if doc.url == nil || ref == nil {
+	if doc.url == nil || ref == nil || ref.RefPath() == nil {
 		return false
 	}
 
 	refURL := *ref.RefPath()
-	refURL.Path, _, _ = strings.Cut(refURL.Path, "#") // remove the document element reference
+	refURL.Fragment = ""
 
 	// Check referenced element was in the root document.
-	return doc.url.String() == refURL.String()
+	return referenceURIMatch(doc.url, &refURL)
 }
 
-// MatchesComponentInRootDocument returns if the given component is identical
-// to a component defined in the root document's '#/components/<type>'.
-// It returns a reference to the schema in the form
+func referenceURIMatch(u1 *url.URL, u2 *url.URL) bool {
+	s1, s2 := *u1, *u2
+	if s1.Scheme == "" {
+		s1.Scheme = "file"
+	}
+	if s2.Scheme == "" {
+		s2.Scheme = "file"
+	}
+
+	return s1.String() == s2.String()
+}
+
+// ReferencesComponentInRootDocument returns if the given component reference references
+// the same document or element as another component reference in the root document's
+// '#/components/<type>'. If it does, it returns the name of it in the form
 // '#/components/<type>/NameXXX'
 //
-// Of course given it a component from the root document will always match.
+// Of course given a component from the root document will always match itself.
 //
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#relative-references-in-urls
 //
-// Case 1: Directly via
+// Example. Take the spec with directory structure:
 //
-//	../openapi.yaml#/components/schemas/Record
+//	openapi.yaml
+//	schemas/
+//	├─ record.yaml
+//	├─ records.yaml
 //
-// Case 2: Or indirectly by using a $ref which matches a schema
-// in the root document's '#/components/schemas' using the same
-// $ref.
-//
-// In schemas/record.yaml
-//
-//	$ref: ./record.yaml
-//
-// In openapi.yaml
+// In openapi.yaml we have:
 //
 //	components:
 //	  schemas:
 //	    Record:
 //	      $ref: schemas/record.yaml
-func MatchesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
+//
+// Case 1: records.yml references a component in the root document
+//
+//	$ref: ../openapi.yaml#/components/schemas/Record
+//
+// This would return...
+//
+//	#/components/schemas/Record
+//
+// Case 2: records.yml indirectly refers to the same schema
+// as a schema the root document's '#/components/schemas'.
+//
+//	$ref: ./record.yaml
+//
+// This would also return...
+//
+//	#/components/schemas/Record
+func ReferencesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
+	if ref == nil || ref.RefString() == "" {
+		return "", false
+	}
+
 	// Case 1:
 	// Something like: ../another-folder/document.json#/myElement
-	if isRemoteReference(ref.RefString()) && isRootComponentReference(ref.RefString(), ref.ComponentType()) {
+	if isRemoteReference(ref.RefString()) && isRootComponentReference(ref.RefString(), ref.CollectionName()) {
 		// Determine if it is *this* root doc.
 		if referencesRootDocument(doc, ref) {
-			_, name, _ := strings.Cut(ref.RefString(), path.Join("#/components/", ref.ComponentType()))
+			_, name, _ := strings.Cut(ref.RefString(), path.Join("#/components/", ref.CollectionName()))
 
-			return path.Join("#/components/", ref.ComponentType(), name), true
+			return path.Join("#/components/", ref.CollectionName(), name), true
 		}
 	}
 
 	// If there are no schemas defined in the root document return early.
-	if doc.Components == nil || doc.Components.Schemas == nil {
+	if doc.Components == nil {
 		return "", false
+	}
+
+	var components map[string]componentRef
+
+	switch ref.CollectionName() {
+	case "callbacks":
+		components = make(map[string]componentRef, len(doc.Components.Callbacks))
+		for k, x := range doc.Components.Callbacks {
+			components[k] = x
+		}
+	case "examples":
+		components = make(map[string]componentRef, len(doc.Components.Examples))
+		for k, x := range doc.Components.Examples {
+			components[k] = x
+		}
+	case "headers":
+		components = make(map[string]componentRef, len(doc.Components.Headers))
+		for k, x := range doc.Components.Headers {
+			components[k] = x
+		}
+	case "links":
+		components = make(map[string]componentRef, len(doc.Components.Links))
+		for k, x := range doc.Components.Links {
+			components[k] = x
+		}
+	case "parameters":
+		components = make(map[string]componentRef, len(doc.Components.Parameters))
+		for k, x := range doc.Components.Parameters {
+			components[k] = x
+		}
+	case "requestBodies":
+		components = make(map[string]componentRef, len(doc.Components.RequestBodies))
+		for k, x := range doc.Components.RequestBodies {
+			components[k] = x
+		}
+	case "responses":
+		components = make(map[string]componentRef, len(doc.Components.Responses))
+		for k, x := range doc.Components.Responses {
+			components[k] = x
+		}
+	case "schemas":
+		components = make(map[string]componentRef, len(doc.Components.Schemas))
+		for k, x := range doc.Components.Schemas {
+			components[k] = x
+		}
+	case "securitySchemes":
+		components = make(map[string]componentRef, len(doc.Components.SecuritySchemes))
+		for k, x := range doc.Components.SecuritySchemes {
+			components[k] = x
+		}
 	}
 
 	// Case 2:
 	// Something like: ../openapi.yaml#/components/schemas/myElement
-	for name, s := range doc.Components.Schemas {
+	for name, s := range components {
 		// Must be a reference to a YAML file.
-		if !isWholeDocumentReference(s.Ref) {
+		if !isWholeDocumentReference(s.RefString()) {
 			continue
 		}
 
@@ -150,7 +228,7 @@ func MatchesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
 		}
 
 		// Transform the remote ref to the equivalent schema in the root document.
-		return path.Join("#/components/", ref.ComponentType(), name), true
+		return path.Join("#/components/", ref.CollectionName(), name), true
 	}
 
 	return "", false

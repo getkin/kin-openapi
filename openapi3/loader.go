@@ -173,6 +173,11 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	}
 
 	doc := &T{}
+	if location != nil {
+		specURL := *location
+		doc.url = &specURL // shallow-copy
+	}
+
 	loader.visitedDocuments[uri] = doc
 
 	if err := unmarshal(data, doc); err != nil {
@@ -193,11 +198,6 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 
 	if loader.visitedPathItemRefs == nil {
 		loader.resetVisitedPathItemRefs()
-	}
-
-	if location != nil {
-		specURL := *location
-		doc.url = &specURL // shallow-copy
 	}
 
 	if components := doc.Components; components != nil {
@@ -546,18 +546,13 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var header Header
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
 				return err
 			}
 			component.Value = &header
+			component.refPath = *documentPath
 		} else {
 			var resolved HeaderRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -571,6 +566,7 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	value := component.Value
@@ -602,18 +598,13 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var param Parameter
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
 				return err
 			}
 			component.Value = &param
+			component.refPath = *documentPath
 		} else {
 			var resolved ParameterRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -627,6 +618,7 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	value := component.Value
@@ -668,18 +660,13 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
 				return err
 			}
 			component.Value = &requestBody
+			component.refPath = *documentPath
 		} else {
 			var resolved RequestBodyRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -693,6 +680,7 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	value := component.Value
@@ -741,18 +729,13 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var resp Response
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
 				return err
 			}
 			component.Value = &resp
+			component.refPath = *documentPath
 		} else {
 			var resolved ResponseRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -766,6 +749,7 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	value := component.Value
@@ -825,18 +809,13 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var schema Schema
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
 				return err
 			}
 			component.Value = &schema
+			component.refPath = *documentPath
 		} else {
 			if visitedLimit(visited, ref) {
 				visited = append(visited, ref)
@@ -856,6 +835,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 		if loader.visitedSchema == nil {
 			loader.visitedSchema = make(map[*Schema]struct{})
@@ -922,18 +902,13 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
 				return err
 			}
 			component.Value = &scheme
+			component.refPath = *documentPath
 		} else {
 			var resolved SecuritySchemeRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -947,6 +922,7 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	return nil
@@ -968,18 +944,13 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var example Example
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
 				return err
 			}
 			component.Value = &example
+			component.refPath = *documentPath
 		} else {
 			var resolved ExampleRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -993,6 +964,7 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	return nil
@@ -1014,18 +986,13 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var resolved Callback
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
 			component.Value = &resolved
+			component.refPath = *documentPath
 		} else {
 			var resolved CallbackRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1039,6 +1006,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	value := component.Value
@@ -1070,18 +1038,13 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 	}
 
 	if ref := component.Ref; ref != "" {
-		if documentPath != nil {
-			refPath := *documentPath // shallow-clone
-			refPath.Path = path.Join(path.Dir(documentPath.Path), ref)
-			component.refPath = &refPath
-		}
-
 		if isSingleRefElement(ref) {
 			var link Link
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
 				return err
 			}
 			component.Value = &link
+			component.refPath = *documentPath
 		} else {
 			var resolved LinkRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1095,6 +1058,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 				return err
 			}
 			component.Value = resolved.Value
+			component.refPath = resolved.refPath
 		}
 	}
 	return nil

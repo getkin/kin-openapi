@@ -5,37 +5,46 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/perimeterx/marshmallow"
 )
 {{ range $type := .Types }}
-// {{ $type }}Ref represents either a {{ $type }} or a $ref to a {{ $type }}.
+// {{ $type.Name }}Ref represents either a {{ $type.Name }} or a $ref to a {{ $type.Name }}.
 // When serializing and both fields are set, Ref is preferred over Value.
-type {{ $type }}Ref struct {
+type {{ $type.Name }}Ref struct {
 	Ref   string
-	Value *{{ $type }}
+	Value *{{ $type.Name }}
 	extra []string
+
+	refPath url.URL
 }
 
-var _ jsonpointer.JSONPointable = (*{{ $type }}Ref)(nil)
+var _ jsonpointer.JSONPointable = (*{{ $type.Name }}Ref)(nil)
 
-func (x *{{ $type }}Ref) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+func (x *{{ $type.Name }}Ref) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
 
-// RefPath returns the path of the \$ref relative to the root document.
-func (x *{{ $type }}Ref) RefPath() *url.URL { return x.refPath }
+// RefString returns the $ref value.
+func (x *{{ $type.Name }}Ref) RefString() string { return x.Ref }
 
-// MarshalYAML returns the YAML encoding of {{ $type }}Ref.
-func (x {{ $type }}Ref) MarshalYAML() (interface{}, error) {
+// CollectionName returns the JSON string used for a collection of these components.
+func (x *{{ $type.Name }}Ref) CollectionName() string { return "{{ $type.CollectionName }}" }
+
+// RefPath returns the path of the $ref relative to the root document.
+func (x *{{ $type.Name }}Ref) RefPath() *url.URL { return &x.refPath }
+
+// MarshalYAML returns the YAML encoding of {{ $type.Name }}Ref.
+func (x {{ $type.Name }}Ref) MarshalYAML() (interface{}, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
 	return x.Value.MarshalYAML()
 }
 
-// MarshalJSON returns the JSON encoding of {{ $type }}Ref.
-func (x {{ $type }}Ref) MarshalJSON() ([]byte, error) {
+// MarshalJSON returns the JSON encoding of {{ $type.Name }}Ref.
+func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 	y, err := x.MarshalYAML()
 	if err != nil {
 		return nil, err
@@ -43,8 +52,8 @@ func (x {{ $type }}Ref) MarshalJSON() ([]byte, error) {
 	return json.Marshal(y)
 }
 
-// UnmarshalJSON sets {{ $type }}Ref to a copy of data.
-func (x *{{ $type }}Ref) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON sets {{ $type.Name }}Ref to a copy of data.
+func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
 	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
 		x.Ref = refOnly.Ref
@@ -60,8 +69,8 @@ func (x *{{ $type }}Ref) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &x.Value)
 }
 
-// Validate returns an error if {{ $type }}Ref does not comply with the OpenAPI spec.
-func (x *{{ $type }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
+// Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
+func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	if extra := x.extra; len(extra) != 0 {
 		extras := make([]string, 0, len(extra))
@@ -85,7 +94,7 @@ func (x *{{ $type }}Ref) Validate(ctx context.Context, opts ...ValidationOption)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *{{ $type }}Ref) JSONLookup(token string) (interface{}, error) {
+func (x *{{ $type.Name }}Ref) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
