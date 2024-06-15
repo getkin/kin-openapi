@@ -274,6 +274,31 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 }
 ```
 
+## Reconciling component $ref types
+
+`ReferencesComponentInRootDocument` is a useful helper function to check if a component reference
+coincides with a reference in the root document's component objects fixed fields.
+
+This can be used to determine if two schema definitions are of the same structure, helpful for
+code generation tools when generating go type models.
+
+```go
+doc, err = loader.LoadFromFile("openapi.yml")
+
+for _, path := range doc.Paths.InMatchingOrder() {
+	pathItem := doc.Paths.Find(path)
+
+	if pathItem.Get == nil || pathItem.Get.Responses.Status(200) {
+		continue
+	}
+
+	for _, s := range pathItem.Get.Responses.Status(200).Value.Content {
+		name, match := ReferencesComponentInRootDocument(doc, s.Schema)
+		fmt.Println(path, match, name) // /record true #/components/schemas/BookRecord
+	}
+}
+```
+
 This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
 
 ## CHANGELOG: Sub-v1 breaking API changes
