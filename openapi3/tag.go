@@ -33,7 +33,7 @@ func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error {
 // Tag is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#tag-object
 type Tag struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
@@ -50,8 +50,8 @@ func (t Tag) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of Tag.
-func (t Tag) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 3+len(t.Extensions))
+func (t Tag) MarshalYAML() (any, error) {
+	m := make(map[string]any, 3+len(t.Extensions))
 	for k, v := range t.Extensions {
 		m[k] = v
 	}

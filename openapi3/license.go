@@ -9,7 +9,7 @@ import (
 // License is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#license-object
 type License struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -25,8 +25,8 @@ func (license License) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of License.
-func (license License) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 2+len(license.Extensions))
+func (license License) MarshalYAML() (any, error) {
+	m := make(map[string]any, 2+len(license.Extensions))
 	for k, v := range license.Extensions {
 		m[k] = v
 	}

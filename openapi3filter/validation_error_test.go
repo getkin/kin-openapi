@@ -43,14 +43,14 @@ type validationTest struct {
 	wantErrReason             string
 	wantErrSchemaReason       string
 	wantErrSchemaPath         string
-	wantErrSchemaValue        interface{}
+	wantErrSchemaValue        any
 	wantErrSchemaOriginReason string
 	wantErrSchemaOriginPath   string
-	wantErrSchemaOriginValue  interface{}
+	wantErrSchemaOriginValue  any
 	wantErrParam              string
 	wantErrParamIn            string
 	wantErrParseKind          ParseErrorKind
-	wantErrParseValue         interface{}
+	wantErrParseValue         any
 	wantErrParseReason        string
 	wantErrResponse           *ValidationError
 }

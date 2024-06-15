@@ -236,7 +236,7 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 		}
 		if parameter.Name != "" {
 			if result.Extensions == nil {
-				result.Extensions = make(map[string]interface{}, 1)
+				result.Extensions = make(map[string]any, 1)
 			}
 			result.Extensions["x-originalParamName"] = parameter.Name
 		}
@@ -252,7 +252,7 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			format, typ = "binary", &openapi3.Types{"string"}
 		}
 		if parameter.Extensions == nil {
-			parameter.Extensions = make(map[string]interface{}, 1)
+			parameter.Extensions = make(map[string]any, 1)
 		}
 		parameter.Extensions["x-formData-name"] = parameter.Name
 		var required []string
@@ -828,7 +828,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	if schema.Value.PermitsNull() {
 		schema.Value.Nullable = false
 		if schema.Value.Extensions == nil {
-			schema.Value.Extensions = make(map[string]interface{})
+			schema.Value.Extensions = make(map[string]any)
 		}
 		schema.Value.Extensions["x-nullable"] = true
 	}
@@ -1184,7 +1184,7 @@ var attemptedBodyParameterNames = []string{
 }
 
 // stripNonExtensions removes invalid extensions: those not prefixed by "x-" and returns them
-func stripNonExtensions(extensions map[string]interface{}) map[string]interface{} {
+func stripNonExtensions(extensions map[string]any) map[string]any {
 	for extName := range extensions {
 		if !strings.HasPrefix(extName, "x-") {
 			delete(extensions, extName)
@@ -1193,7 +1193,7 @@ func stripNonExtensions(extensions map[string]interface{}) map[string]interface{
 	return extensions
 }
 
-func addPathExtensions(doc2 *openapi2.T, path string, extensions map[string]interface{}) {
+func addPathExtensions(doc2 *openapi2.T, path string, extensions map[string]any) {
 	if doc2.Paths == nil {
 		doc2.Paths = make(map[string]*openapi2.PathItem)
 	}

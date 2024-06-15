@@ -10,8 +10,8 @@ import (
 type testCase struct {
 	name             string
 	schema           *Schema
-	value            interface{}
-	extraNotContains []interface{}
+	value            any
+	extraNotContains []any
 	options          []SchemaValidationOption
 }
 
@@ -100,60 +100,60 @@ func TestIssue735(t *testing.T) {
 		{
 			name:             "items",
 			schema:           NewSchema().WithItems(NewStringSchema()),
-			value:            []interface{}{42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "min items",
 			schema:           NewSchema().WithMinItems(100),
-			value:            []interface{}{42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "max items",
 			schema:           NewSchema().WithMaxItems(0),
-			value:            []interface{}{42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "unique items",
 			schema:           NewSchema().WithUniqueItems(true),
-			value:            []interface{}{42, 42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42, 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "min properties",
 			schema:           NewSchema().WithMinProperties(100),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "max properties",
 			schema:           NewSchema().WithMaxProperties(0),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "additional properties other schema type",
 			schema:           NewSchema().WithAdditionalProperties(NewStringSchema()),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name: "additional properties false",
 			schema: &Schema{AdditionalProperties: AdditionalProperties{
 				Has: BoolPtr(false),
 			}},
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name: "invalid properties schema",
 			schema: NewSchema().WithProperties(map[string]*Schema{
 				"foo": NewStringSchema(),
 			}),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		// TODO: uncomment when https://github.com/getkin/kin-openapi/issues/502 is fixed
 		//{
@@ -182,8 +182,8 @@ func TestIssue735(t *testing.T) {
 				},
 				Required: []string{"bar"},
 			},
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name: "one of (matches more then one)",

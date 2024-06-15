@@ -93,7 +93,7 @@ func (loader *Loader) allowsExternalRefs(ref string) (err error) {
 	return
 }
 
-func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element interface{}) (*url.URL, error) {
+func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element any) (*url.URL, error) {
 	if err := loader.allowsExternalRefs(ref); err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
 
-func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolved interface{}) (
+func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolved any) (
 	componentDoc *T,
 	componentPath *url.URL,
 	err error,
@@ -320,7 +320,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		return nil, nil, fmt.Errorf("expected fragment prefix '#/' in URI %q", ref)
 	}
 
-	drill := func(cursor interface{}) (interface{}, error) {
+	drill := func(cursor any) (any, error) {
 		for _, pathPart := range strings.Split(fragment[1:], "/") {
 			pathPart = unescapeRefString(pathPart)
 			attempted := false
@@ -366,7 +366,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		}
 		return cursor, nil
 	}
-	var cursor interface{}
+	var cursor any
 	if cursor, err = drill(componentDoc); err != nil {
 		if path == nil {
 			return nil, nil, err
@@ -390,8 +390,8 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentDoc, componentPath, nil
 
-	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]interface{}{}):
-		codec := func(got, expect interface{}) error {
+	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]any{}):
+		codec := func(got, expect any) error {
 			enc, err := json.Marshal(got)
 			if err != nil {
 				return err
@@ -411,7 +411,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	}
 }
 
-func readableType(x interface{}) string {
+func readableType(x any) string {
 	switch x.(type) {
 	case *Callback:
 		return "callback object"
@@ -440,7 +440,7 @@ func readableType(x interface{}) string {
 	}
 }
 
-func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
+func drillIntoField(cursor any, fieldName string) (any, error) {
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 
 	case reflect.Map:
@@ -481,7 +481,7 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 		}
 		if hasFields {
 			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "Extensions" {
-				extensions := val.Field(0).Interface().(map[string]interface{})
+				extensions := val.Field(0).Interface().(map[string]any)
 				if enc, ok := extensions[fieldName]; ok {
 					return enc, nil
 				}

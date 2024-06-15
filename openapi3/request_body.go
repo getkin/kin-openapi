@@ -9,7 +9,7 @@ import (
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#request-body-object
 type RequestBody struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
@@ -83,8 +83,8 @@ func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of RequestBody.
-func (requestBody RequestBody) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 3+len(requestBody.Extensions))
+func (requestBody RequestBody) MarshalYAML() (any, error) {
+	m := make(map[string]any, 3+len(requestBody.Extensions))
 	for k, v := range requestBody.Extensions {
 		m[k] = v
 	}

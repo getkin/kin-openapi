@@ -35,14 +35,14 @@ info:
 	require.NoError(t, err)
 
 	// verify that the expected format works
-	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06.789Z",
 	})
 	require.NoError(t, err)
 
 	// verify that the issue is fixed
-	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06:789Z",
 	})

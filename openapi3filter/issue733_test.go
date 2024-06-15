@@ -76,7 +76,7 @@ paths:
 
 			dec := json.NewDecoder(req.Body)
 			dec.UseNumber()
-			var jsonAfter map[string]interface{}
+			var jsonAfter map[string]any
 			err = dec.Decode(&jsonAfter)
 			require.NoError(t, err)
 

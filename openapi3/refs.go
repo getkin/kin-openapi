@@ -36,7 +36,7 @@ func (x *CallbackRef) CollectionName() string { return "callbacks" }
 func (x *CallbackRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of CallbackRef.
-func (x CallbackRef) MarshalYAML() (interface{}, error) {
+func (x CallbackRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -94,7 +94,7 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *CallbackRef) JSONLookup(token string) (interface{}, error) {
+func (x *CallbackRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -126,7 +126,7 @@ func (x *ExampleRef) CollectionName() string { return "examples" }
 func (x *ExampleRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
-func (x ExampleRef) MarshalYAML() (interface{}, error) {
+func (x ExampleRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -184,7 +184,7 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *ExampleRef) JSONLookup(token string) (interface{}, error) {
+func (x *ExampleRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -216,7 +216,7 @@ func (x *HeaderRef) CollectionName() string { return "headers" }
 func (x *HeaderRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of HeaderRef.
-func (x HeaderRef) MarshalYAML() (interface{}, error) {
+func (x HeaderRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -274,7 +274,7 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *HeaderRef) JSONLookup(token string) (interface{}, error) {
+func (x *HeaderRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -306,7 +306,7 @@ func (x *LinkRef) CollectionName() string { return "links" }
 func (x *LinkRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of LinkRef.
-func (x LinkRef) MarshalYAML() (interface{}, error) {
+func (x LinkRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -364,7 +364,7 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error 
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *LinkRef) JSONLookup(token string) (interface{}, error) {
+func (x *LinkRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -396,7 +396,7 @@ func (x *ParameterRef) CollectionName() string { return "parameters" }
 func (x *ParameterRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of ParameterRef.
-func (x ParameterRef) MarshalYAML() (interface{}, error) {
+func (x ParameterRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -454,7 +454,7 @@ func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) e
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *ParameterRef) JSONLookup(token string) (interface{}, error) {
+func (x *ParameterRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -486,7 +486,7 @@ func (x *RequestBodyRef) CollectionName() string { return "requestBodies" }
 func (x *RequestBodyRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
-func (x RequestBodyRef) MarshalYAML() (interface{}, error) {
+func (x RequestBodyRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -544,7 +544,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error) {
+func (x *RequestBodyRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -576,7 +576,7 @@ func (x *ResponseRef) CollectionName() string { return "responses" }
 func (x *ResponseRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of ResponseRef.
-func (x ResponseRef) MarshalYAML() (interface{}, error) {
+func (x ResponseRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -634,7 +634,7 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *ResponseRef) JSONLookup(token string) (interface{}, error) {
+func (x *ResponseRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -666,7 +666,7 @@ func (x *SchemaRef) CollectionName() string { return "schemas" }
 func (x *SchemaRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of SchemaRef.
-func (x SchemaRef) MarshalYAML() (interface{}, error) {
+func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -724,7 +724,7 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *SchemaRef) JSONLookup(token string) (interface{}, error) {
+func (x *SchemaRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
@@ -756,7 +756,7 @@ func (x *SecuritySchemeRef) CollectionName() string { return "securitySchemes" }
 func (x *SecuritySchemeRef) RefPath() *url.URL { return &x.refPath }
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
-func (x SecuritySchemeRef) MarshalYAML() (interface{}, error) {
+func (x SecuritySchemeRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	}
@@ -814,7 +814,7 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error) {
+func (x *SecuritySchemeRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}

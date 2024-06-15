@@ -66,7 +66,7 @@ type SchemaRefs []*SchemaRef
 var _ jsonpointer.JSONPointable = (*SchemaRefs)(nil)
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
+func (s SchemaRefs) JSONLookup(token string) (any, error) {
 	i, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (s SchemaRefs) JSONLookup(token string) (interface{}, error) {
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
 type Schema struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
@@ -97,9 +97,9 @@ type Schema struct {
 	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
 	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default      interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
-	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
+	Enum         []any         `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default      any           `json:"default,omitempty" yaml:"default,omitempty"`
+	Example      any           `json:"example,omitempty" yaml:"example,omitempty"`
 	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	// Array-related, here for struct compactness
@@ -180,7 +180,7 @@ func (pTypes *Types) MarshalJSON() ([]byte, error) {
 	return json.Marshal(x)
 }
 
-func (pTypes *Types) MarshalYAML() (interface{}, error) {
+func (pTypes *Types) MarshalYAML() (any, error) {
 	if pTypes == nil {
 		return nil, nil
 	}
@@ -214,7 +214,7 @@ type AdditionalProperties struct {
 }
 
 // MarshalYAML returns the YAML encoding of AdditionalProperties.
-func (addProps AdditionalProperties) MarshalYAML() (interface{}, error) {
+func (addProps AdditionalProperties) MarshalYAML() (any, error) {
 	if x := addProps.Has; x != nil {
 		if *x {
 			return true, nil
@@ -238,7 +238,7 @@ func (addProps AdditionalProperties) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets AdditionalProperties to a copy of data.
 func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
-	var x interface{}
+	var x any
 	if err := json.Unmarshal(data, &x); err != nil {
 		return unmarshalError(err)
 	}
@@ -246,7 +246,7 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
 	case nil:
 	case bool:
 		addProps.Has = &y
-	case map[string]interface{}:
+	case map[string]any:
 		if len(y) == 0 {
 			addProps.Schema = &SchemaRef{Value: &Schema{}}
 		} else {
@@ -279,8 +279,8 @@ func (schema Schema) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of Schema.
-func (schema Schema) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 36+len(schema.Extensions))
+func (schema Schema) MarshalYAML() (any, error) {
+	m := make(map[string]any, 36+len(schema.Extensions))
 	for k, v := range schema.Extensions {
 		m[k] = v
 	}
@@ -483,7 +483,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (schema Schema) JSONLookup(token string) (interface{}, error) {
+func (schema Schema) JSONLookup(token string) (any, error) {
 	switch token {
 	case "additionalProperties":
 		if addProps := schema.AdditionalProperties.Has; addProps != nil {
@@ -714,12 +714,12 @@ func (schema *Schema) WithExclusiveMax(value bool) *Schema {
 	return schema
 }
 
-func (schema *Schema) WithEnum(values ...interface{}) *Schema {
+func (schema *Schema) WithEnum(values ...any) *Schema {
 	schema.Enum = values
 	return schema
 }
 
-func (schema *Schema) WithDefault(defaultValue interface{}) *Schema {
+func (schema *Schema) WithDefault(defaultValue any) *Schema {
 	schema.Default = defaultValue
 	return schema
 }
@@ -1106,7 +1106,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	return stack, validateExtensions(ctx, schema.Extensions)
 }
 
-func (schema *Schema) IsMatching(value interface{}) bool {
+func (schema *Schema) IsMatching(value any) bool {
 	settings := newSchemaValidationSettings(FailFast())
 	return schema.visitJSON(settings, value) == nil
 }
@@ -1126,22 +1126,22 @@ func (schema *Schema) IsMatchingJSONString(value string) bool {
 	return schema.visitJSON(settings, value) == nil
 }
 
-func (schema *Schema) IsMatchingJSONArray(value []interface{}) bool {
+func (schema *Schema) IsMatchingJSONArray(value []any) bool {
 	settings := newSchemaValidationSettings(FailFast())
 	return schema.visitJSON(settings, value) == nil
 }
 
-func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool {
+func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool {
 	settings := newSchemaValidationSettings(FailFast())
 	return schema.visitJSON(settings, value) == nil
 }
 
-func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOption) error {
+func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error {
 	settings := newSchemaValidationSettings(opts...)
 	return schema.visitJSON(settings, value)
 }
 
-func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interface{}) (err error) {
+func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (err error) {
 	switch value := value.(type) {
 	case nil:
 		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
@@ -1206,12 +1206,12 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 		return schema.visitJSONNumber(settings, value)
 	case string:
 		return schema.visitJSONString(settings, value)
-	case []interface{}:
+	case []any:
 		return schema.visitJSONArray(settings, value)
-	case map[string]interface{}:
+	case map[string]any:
 		return schema.visitJSONObject(settings, value)
-	case map[interface{}]interface{}: // for YAML cf. issue #444
-		values := make(map[string]interface{}, len(value))
+	case map[any]any:
+		values := make(map[string]any, len(value))
 		for key, v := range value {
 			if k, ok := key.(string); ok {
 				values[k] = v
@@ -1225,7 +1225,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	// Catch slice of non-empty interface type
 	if reflect.TypeOf(value).Kind() == reflect.Slice {
 		valueR := reflect.ValueOf(value)
-		newValue := make([]interface{}, 0, valueR.Len())
+		newValue := make([]any, 0, valueR.Len())
 		for i := 0; i < valueR.Len(); i++ {
 			newValue = append(newValue, valueR.Index(i).Interface())
 		}
@@ -1241,7 +1241,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 	}
 }
 
-func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, value interface{}) (err error) {
+func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, value any) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
 			switch c := value.(type) {
@@ -1278,7 +1278,7 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 	return
 }
 
-func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value interface{}) (err error) {
+func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value any) (err error) {
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
@@ -1301,13 +1301,13 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 
 // If the XOF operations pass successfully, abort further run of validation, as they will already be satisfied (unless the schema
 // itself is badly specified
-func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value interface{}) (err error, run bool) {
+func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
 		var discriminatorRef string
 		if schema.Discriminator != nil {
 			pn := schema.Discriminator.PropertyName
-			if valuemap, okcheck := value.(map[string]interface{}); okcheck {
+			if valuemap, okcheck := value.(map[string]any); okcheck {
 				discriminatorVal, okcheck := valuemap[pn]
 				if !okcheck {
 					return &SchemaError{
@@ -1792,12 +1792,12 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	return nil
 }
 
-func (schema *Schema) VisitJSONArray(value []interface{}) error {
+func (schema *Schema) VisitJSONArray(value []any) error {
 	settings := newSchemaValidationSettings()
 	return schema.visitJSONArray(settings, value)
 }
 
-func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value []interface{}) error {
+func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value []any) error {
 	if !schema.Type.Permits(TypeArray) {
 		return schema.expectedType(settings, value)
 	}
@@ -1891,12 +1891,12 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 	return nil
 }
 
-func (schema *Schema) VisitJSONObject(value map[string]interface{}) error {
+func (schema *Schema) VisitJSONObject(value map[string]any) error {
 	settings := newSchemaValidationSettings()
 	return schema.visitJSONObject(settings, value)
 }
 
-func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]interface{}) error {
+func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]any) error {
 	if !schema.Type.Permits(TypeObject) {
 		return schema.expectedType(settings, value)
 	}
@@ -2075,7 +2075,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	return nil
 }
 
-func (schema *Schema) expectedType(settings *schemaValidationSettings, value interface{}) error {
+func (schema *Schema) expectedType(settings *schemaValidationSettings, value any) error {
 	if settings.failfast {
 		return errSchema
 	}
@@ -2105,7 +2105,7 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, value int
 // SchemaError is an error that occurs during schema validation.
 type SchemaError struct {
 	// Value is the value that failed validation.
-	Value interface{}
+	Value any
 	// reversePath is the path to the value that failed validation.
 	reversePath []string
 	// Schema is the schema that failed validation.
@@ -2212,7 +2212,7 @@ func (err SchemaError) Unwrap() error {
 	return err.Origin
 }
 
-func isSliceOfUniqueItems(xs []interface{}) bool {
+func isSliceOfUniqueItems(xs []any) bool {
 	s := len(xs)
 	m := make(map[string]struct{}, s)
 	for _, x := range xs {
@@ -2226,7 +2226,7 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 
 // SliceUniqueItemsChecker is an function used to check if an given slice
 // have unique items.
-type SliceUniqueItemsChecker func(items []interface{}) bool
+type SliceUniqueItemsChecker func(items []any) bool
 
 // By default using predefined func isSliceOfUniqueItems which make use of
 // json.Marshal to generate a key for map used to check if a given slice

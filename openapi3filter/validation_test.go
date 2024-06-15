@@ -23,13 +23,13 @@ type ExampleRequest struct {
 	Method      string
 	URL         string
 	ContentType string
-	Body        interface{}
+	Body        any
 }
 
 type ExampleResponse struct {
 	Status      int
 	ContentType string
-	Body        interface{}
+	Body        any
 }
 
 type ExampleSecurityScheme struct {
@@ -333,8 +333,8 @@ func TestFilter(t *testing.T) {
 	require.IsType(t, &RequestError{}, err)
 
 	// Now, repeat the above two test cases using a custom parameter decoder.
-	customDecoder := func(param *openapi3.Parameter, values []string) (interface{}, *openapi3.Schema, error) {
-		var value interface{}
+	customDecoder := func(param *openapi3.Parameter, values []string) (any, *openapi3.Schema, error) {
+		var value any
 		err := json.Unmarshal([]byte(values[0]), &value)
 		schema := param.Content.Get("application/something_funny").Schema.Value
 		return value, schema, err
@@ -356,7 +356,7 @@ func TestFilter(t *testing.T) {
 	require.IsType(t, &RequestError{}, err)
 }
 
-func marshalReader(value interface{}) io.ReadCloser {
+func marshalReader(value any) io.ReadCloser {
 	if value == nil {
 		return nil
 	}
@@ -464,7 +464,7 @@ func matchReqBodyError(want, got error) bool {
 	return false
 }
 
-func toJSON(v interface{}) io.Reader {
+func toJSON(v any) io.Reader {
 	data, err := json.Marshal(v)
 	if err != nil {
 		panic(err)

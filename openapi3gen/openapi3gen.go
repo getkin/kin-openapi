@@ -89,7 +89,7 @@ func CreateComponentSchemas(exso ExportComponentSchemasOptions) Option {
 }
 
 // NewSchemaRefForValue is a shortcut for NewGenerator(...).NewSchemaRefForValue(...)
-func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
+func NewSchemaRefForValue(value any, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error) {
 	g := NewGenerator(opts...)
 	return g.NewSchemaRefForValue(value, schemas)
 }
@@ -128,7 +128,7 @@ func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, erro
 }
 
 // NewSchemaRefForValue uses reflection on the given value to produce a SchemaRef, and updates a supplied map with any dependent component schemas if they lead to cycles
-func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+func (g *Generator) NewSchemaRefForValue(value any, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
 	ref, err := g.GenerateSchemaRef(reflect.TypeOf(value))
 	if err != nil {
 		return nil, err

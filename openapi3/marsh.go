@@ -16,7 +16,7 @@ func unmarshalError(jsonUnmarshalErr error) error {
 	return jsonUnmarshalErr
 }
 
-func unmarshal(data []byte, v interface{}) error {
+func unmarshal(data []byte, v any) error {
 	var jsonErr, yamlErr error
 
 	// See https://github.com/getkin/kin-openapi/issues/680

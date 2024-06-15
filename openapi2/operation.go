@@ -7,7 +7,7 @@ import (
 )
 
 type Operation struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
@@ -25,7 +25,7 @@ type Operation struct {
 
 // MarshalJSON returns the JSON encoding of Operation.
 func (operation Operation) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 12+len(operation.Extensions))
+	m := make(map[string]any, 12+len(operation.Extensions))
 	for k, v := range operation.Extensions {
 		m[k] = v
 	}

@@ -12,7 +12,7 @@ func TestIssue746(t *testing.T) {
 	err := schema.UnmarshalJSON([]byte(`{"additionalProperties": false}`))
 	require.NoError(t, err)
 
-	var value interface{}
+	var value any
 	err = json.Unmarshal([]byte(`{"foo": "bar"}`), &value)
 	require.NoError(t, err)
 

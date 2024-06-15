@@ -13,7 +13,7 @@ import (
 // T is the root of an OpenAPI v3 document
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#openapi-object
 type T struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
@@ -31,7 +31,7 @@ type T struct {
 var _ jsonpointer.JSONPointable = (*T)(nil)
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (doc *T) JSONLookup(token string) (interface{}, error) {
+func (doc *T) JSONLookup(token string) (any, error) {
 	switch token {
 	case "openapi":
 		return doc.OpenAPI, nil
@@ -65,8 +65,8 @@ func (doc *T) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of T.
-func (doc *T) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 4+len(doc.Extensions))
+func (doc *T) MarshalYAML() (any, error) {
+	m := make(map[string]any, 4+len(doc.Extensions))
 	for k, v := range doc.Extensions {
 		m[k] = v
 	}

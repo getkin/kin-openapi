@@ -46,7 +46,7 @@ func TestOneOfErrorPreserved(t *testing.T) {
 	err = s.Validate(context.Background())
 	require.NoError(t, err)
 
-	obj := make(map[string]interface{})
+	obj := make(map[string]any)
 	err = json.Unmarshal([]byte(raw), &obj)
 	require.NoError(t, err)
 

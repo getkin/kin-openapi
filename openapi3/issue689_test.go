@@ -14,7 +14,7 @@ func TestIssue689(t *testing.T) {
 	tests := [...]struct {
 		name     string
 		schema   *openapi3.Schema
-		value    map[string]interface{}
+		value    map[string]any
 		opts     []openapi3.SchemaValidationOption
 		checkErr require.ErrorAssertionFunc
 	}{
@@ -23,7 +23,7 @@ func TestIssue689(t *testing.T) {
 			name: "read-only property succeeds when read-only validation is disabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
 				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: true}}),
-			value: map[string]interface{}{"foo": true},
+			value: map[string]any{"foo": true},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
 				openapi3.DisableReadOnlyValidation()},
@@ -35,7 +35,7 @@ func TestIssue689(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest()},
-			value:    map[string]interface{}{"foo": true},
+			value:    map[string]any{"foo": true},
 			checkErr: require.NoError,
 		},
 		{
@@ -44,7 +44,7 @@ func TestIssue689(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: true}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest()},
-			value:    map[string]interface{}{"foo": true},
+			value:    map[string]any{"foo": true},
 			checkErr: require.Error,
 		},
 		{
@@ -53,7 +53,7 @@ func TestIssue689(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, ReadOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest()},
-			value:    map[string]interface{}{"foo": true},
+			value:    map[string]any{"foo": true},
 			checkErr: require.NoError,
 		},
 		// write-only
@@ -61,7 +61,7 @@ func TestIssue689(t *testing.T) {
 			name: "write-only property succeeds when write-only validation is disabled",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
 				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: true}}),
-			value: map[string]interface{}{"foo": true},
+			value: map[string]any{"foo": true},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse(),
 				openapi3.DisableWriteOnlyValidation()},
@@ -73,7 +73,7 @@ func TestIssue689(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse()},
-			value:    map[string]interface{}{"foo": true},
+			value:    map[string]any{"foo": true},
 			checkErr: require.NoError,
 		},
 		{
@@ -82,7 +82,7 @@ func TestIssue689(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: true}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse()},
-			value:    map[string]interface{}{"foo": true},
+			value:    map[string]any{"foo": true},
 			checkErr: require.Error,
 		},
 		{
@@ -91,7 +91,7 @@ func TestIssue689(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, WriteOnly: false}}),
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsResponse()},
-			value:    map[string]interface{}{"foo": true},
+			value:    map[string]any{"foo": true},
 			checkErr: require.NoError,
 		},
 	}

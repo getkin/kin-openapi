@@ -451,7 +451,7 @@ paths:
 			panic(err)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		result := map[string]interface{}{"result": x * x}
+		result := map[string]any{"result": x * x}
 		if x == 42 {
 			// An easter egg. Unfortunately, the spec does not allow additional properties...
 			result["comment"] = "the answer to the ultimate question of life, the universe, and everything"
@@ -494,7 +494,7 @@ paths:
 			// Customize validation error responses to use JSON
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(status)
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"status":  status,
 				"message": http.StatusText(status),
 			})

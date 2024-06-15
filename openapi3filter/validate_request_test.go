@@ -228,7 +228,7 @@ func TestValidateQueryParams(t *testing.T) {
 		name  string
 		param *openapi3.Parameter
 		query string
-		want  map[string]interface{}
+		want  map[string]any
 		err   *openapi3.SchemaError // test ParseError in decoder tests
 	}
 
@@ -267,9 +267,9 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop1][inexistent]=1",
-			want: map[string]interface{}{
-				"obj": map[string]interface{}{
-					"prop1": map[string]interface{}{},
+			want: map[string]any{
+				"obj": map[string]any{
+					"prop1": map[string]any{},
 				},
 			},
 		},
@@ -286,9 +286,9 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop1][item1]=1.123",
-			want: map[string]interface{}{
-				"obj": map[string]interface{}{
-					"prop1": map[string]interface{}{
+			want: map[string]any{
+				"obj": map[string]any{
+					"prop1": map[string]any{
 						"item1": float64(1.123),
 					},
 				},
@@ -316,7 +316,7 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "anotherparam=bar",
-			want:  map[string]interface{}(nil),
+			want:  map[string]any(nil),
 		},
 		{
 			name: "deepObject explode additionalProperties with object properties - multiple properties",
@@ -328,15 +328,15 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][prop1][item1]=1&param[obj][prop1][item2][0]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2][0]=def",
-			want: map[string]interface{}{
-				"obj": map[string]interface{}{
-					"prop1": map[string]interface{}{
+			want: map[string]any{
+				"obj": map[string]any{
+					"prop1": map[string]any{
 						"item1": int64(1),
-						"item2": []interface{}{"abc"},
+						"item2": []any{"abc"},
 					},
-					"prop2": map[string]interface{}{
+					"prop2": map[string]any{
 						"item1": int64(2),
-						"item2": []interface{}{"def"},
+						"item2": []any{"def"},
 					},
 				},
 			},
@@ -353,7 +353,7 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj]=1",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"obj": int64(1),
 			},
 		},
@@ -366,7 +366,7 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj]=1",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"obj": int64(1),
 			},
 		},
@@ -379,7 +379,7 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj]=true",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"obj": true,
 			},
 		},
@@ -392,8 +392,8 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][id2]=1&param[obj][name2]=abc",
-			want: map[string]interface{}{
-				"obj": map[string]interface{}{
+			want: map[string]any{
+				"obj": map[string]any{
 					"id2":   "1",
 					"name2": "abc",
 				},
@@ -410,7 +410,7 @@ func TestValidateQueryParams(t *testing.T) {
 			query: "param[obj][id]=1&param[obj][id2]=2",
 			err: &openapi3.SchemaError{
 				SchemaField: "oneOf",
-				Value:       map[string]interface{}{"id": "1", "id2": "2"},
+				Value:       map[string]any{"id": "1", "id2": "2"},
 				Reason:      "value matches more than one schema from \"oneOf\" (matches schemas at indices [0 1])",
 				Schema:      oneofSchemaObject.Value,
 			},
@@ -424,8 +424,8 @@ func TestValidateQueryParams(t *testing.T) {
 				),
 			},
 			query: "param[obj][0]=a&param[obj][1]=b",
-			want: map[string]interface{}{
-				"obj": []interface{}{
+			want: map[string]any{
+				"obj": []any{
 					"a",
 					"b",
 				},

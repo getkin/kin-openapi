@@ -24,7 +24,7 @@ func (ps Parameters) Less(i, j int) bool {
 }
 
 type Parameter struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
@@ -42,7 +42,7 @@ type Parameter struct {
 	ExclusiveMax     bool                `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
 	Schema           *openapi3.SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Items            *openapi3.SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
-	Enum             []interface{}       `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Enum             []any               `json:"enum,omitempty" yaml:"enum,omitempty"`
 	MultipleOf       *float64            `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
 	Minimum          *float64            `json:"minimum,omitempty" yaml:"minimum,omitempty"`
 	Maximum          *float64            `json:"maximum,omitempty" yaml:"maximum,omitempty"`
@@ -50,7 +50,7 @@ type Parameter struct {
 	MaxItems         *uint64             `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
 	MinLength        uint64              `json:"minLength,omitempty" yaml:"minLength,omitempty"`
 	MinItems         uint64              `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	Default          interface{}         `json:"default,omitempty" yaml:"default,omitempty"`
+	Default          any                 `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Parameter.
@@ -59,7 +59,7 @@ func (parameter Parameter) MarshalJSON() ([]byte, error) {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
 
-	m := make(map[string]interface{}, 24+len(parameter.Extensions))
+	m := make(map[string]any, 24+len(parameter.Extensions))
 	for k, v := range parameter.Extensions {
 		m[k] = v
 	}
