@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/go-openapi/jsonpointer"
 )
 
 const identifierPattern = `^[a-zA-Z0-9._-]+$`
@@ -164,54 +167,27 @@ func ReferencesComponentInRootDocument(doc *T, ref componentRef) (string, bool) 
 		return "", false
 	}
 
+	collection, _, err := jsonpointer.GetForToken(doc.Components, ref.CollectionName())
+	if err != nil {
+		panic(err) // unreachable
+	}
+
 	var components map[string]componentRef
 
-	switch ref.CollectionName() {
-	case "callbacks":
-		components = make(map[string]componentRef, len(doc.Components.Callbacks))
-		for k, x := range doc.Components.Callbacks {
-			components[k] = x
+	componentRefType := reflect.TypeOf(new(componentRef)).Elem()
+	if t := reflect.TypeOf(collection); t.Kind() == reflect.Map &&
+		t.Key().Kind() == reflect.String &&
+		t.Elem().AssignableTo(componentRefType) {
+		v := reflect.ValueOf(collection)
+
+		components = make(map[string]componentRef, v.Len())
+		for _, key := range v.MapKeys() {
+			strct := v.MapIndex(key)
+			// Type assertion safe, already checked via reflection above.
+			components[key.Interface().(string)] = strct.Interface().(componentRef)
 		}
-	case "examples":
-		components = make(map[string]componentRef, len(doc.Components.Examples))
-		for k, x := range doc.Components.Examples {
-			components[k] = x
-		}
-	case "headers":
-		components = make(map[string]componentRef, len(doc.Components.Headers))
-		for k, x := range doc.Components.Headers {
-			components[k] = x
-		}
-	case "links":
-		components = make(map[string]componentRef, len(doc.Components.Links))
-		for k, x := range doc.Components.Links {
-			components[k] = x
-		}
-	case "parameters":
-		components = make(map[string]componentRef, len(doc.Components.Parameters))
-		for k, x := range doc.Components.Parameters {
-			components[k] = x
-		}
-	case "requestBodies":
-		components = make(map[string]componentRef, len(doc.Components.RequestBodies))
-		for k, x := range doc.Components.RequestBodies {
-			components[k] = x
-		}
-	case "responses":
-		components = make(map[string]componentRef, len(doc.Components.Responses))
-		for k, x := range doc.Components.Responses {
-			components[k] = x
-		}
-	case "schemas":
-		components = make(map[string]componentRef, len(doc.Components.Schemas))
-		for k, x := range doc.Components.Schemas {
-			components[k] = x
-		}
-	case "securitySchemes":
-		components = make(map[string]componentRef, len(doc.Components.SecuritySchemes))
-		for k, x := range doc.Components.SecuritySchemes {
-			components[k] = x
-		}
+	} else {
+		return "", false
 	}
 
 	// Case 2:
