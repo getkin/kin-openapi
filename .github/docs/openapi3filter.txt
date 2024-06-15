@@ -51,10 +51,10 @@ func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter)
     encoded form of the error will be used. If the error implements StatusCoder,
     the provided StatusCode will be used instead of 500.
 
-func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error)
+func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
     FileBodyDecoder is a body decoder that decodes a file body to a string.
 
-func JSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error)
+func JSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
     JSONBodyDecoder decodes a JSON formatted body. It is public so that is easy
     to register additional JSON based formats.
 
@@ -139,7 +139,7 @@ type AuthenticationInput struct {
 
 func (input *AuthenticationInput) NewError(err error) error
 
-type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (interface{}, error)
+type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (any, error)
     BodyDecoder is an interface to decode a body of a request or response.
     An implementation must return a value that is a primitive, []interface{},
     or map[string]interface{}.
@@ -152,7 +152,7 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder
     This call is not thread-safe: body decoders should not be created/destroyed
     by multiple goroutines.
 
-type BodyEncoder func(body interface{}) ([]byte, error)
+type BodyEncoder func(body any) ([]byte, error)
     BodyEncoder really is an (encoding/json).Marshaler
 
 func RegisteredBodyEncoder(contentType string) BodyEncoder
@@ -161,7 +161,7 @@ func RegisteredBodyEncoder(contentType string) BodyEncoder
 
     If no encoder was registered for the given content type, nil is returned.
 
-type ContentParameterDecoder func(param *openapi3.Parameter, values []string) (interface{}, *openapi3.Schema, error)
+type ContentParameterDecoder func(param *openapi3.Parameter, values []string) (any, *openapi3.Schema, error)
     A ContentParameterDecoder takes a parameter definition from the OpenAPI
     spec, and the value which we received for it. It is expected to return the
     value unmarshaled into an interface which can be traversed for validation,
@@ -243,7 +243,7 @@ func (o *Options) WithCustomSchemaErrorFunc(f CustomSchemaErrorFunc)
 
 type ParseError struct {
 	Kind   ParseErrorKind
-	Value  interface{}
+	Value  any
 	Reason string
 	Cause  error
 
@@ -254,7 +254,7 @@ type ParseError struct {
 
 func (e *ParseError) Error() string
 
-func (e *ParseError) Path() []interface{}
+func (e *ParseError) Path() []any
     Path returns a path to the root cause.
 
 func (e *ParseError) RootCause() error
