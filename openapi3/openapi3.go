@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -24,6 +25,7 @@ type T struct {
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	visited visitedComponent
+	url     *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*T)(nil)

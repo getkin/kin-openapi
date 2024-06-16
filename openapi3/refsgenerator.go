@@ -27,21 +27,26 @@ func main() {
 
 	packageTemplate := template.Must(template.New("openapi3-refs").Parse(tmplData))
 
+	type componentType struct {
+		Name           string
+		CollectionName string
+	}
+
 	if err := packageTemplate.Execute(file, struct {
 		Package string
-		Types   []string
+		Types   []componentType
 	}{
 		Package: os.Getenv("GOPACKAGE"), // set by the go:generate directive
-		Types: []string{
-			"Callback",
-			"Example",
-			"Header",
-			"Link",
-			"Parameter",
-			"RequestBody",
-			"Response",
-			"Schema",
-			"SecurityScheme",
+		Types: []componentType{
+			{Name: "Callback", CollectionName: "callbacks"},
+			{Name: "Example", CollectionName: "examples"},
+			{Name: "Header", CollectionName: "headers"},
+			{Name: "Link", CollectionName: "links"},
+			{Name: "Parameter", CollectionName: "parameters"},
+			{Name: "RequestBody", CollectionName: "requestBodies"},
+			{Name: "Response", CollectionName: "responses"},
+			{Name: "Schema", CollectionName: "schemas"},
+			{Name: "SecurityScheme", CollectionName: "securitySchemes"},
 		},
 	}); err != nil {
 		panic(err)

@@ -2,7 +2,13 @@ package openapi3
 
 import (
 	"fmt"
+	"net/url"
+	"path"
+	"reflect"
 	"regexp"
+	"strings"
+
+	"github.com/go-openapi/jsonpointer"
 )
 
 const identifierPattern = `^[a-zA-Z0-9._-]+$`
@@ -38,4 +44,193 @@ func Int64Ptr(value int64) *int64 {
 // Uint64Ptr is a helper for defining OpenAPI schemas.
 func Uint64Ptr(value uint64) *uint64 {
 	return &value
+}
+
+type componentRef interface {
+	RefString() string
+	RefPath() *url.URL
+	CollectionName() string
+}
+
+// refersToSameDocument returns if the $ref refers to the same document.
+//
+// Documents in different directories will have distinct $ref values that resolve to
+// the same document.
+// For example, consider the 3 files:
+//
+//	/records.yaml
+//	/root.yaml         $ref: records.yaml
+//	/schema/other.yaml $ref: ../records.yaml
+//
+// The records.yaml reference in the 2 latter refers to the same document.
+func refersToSameDocument(o1 componentRef, o2 componentRef) bool {
+	if o1 == nil || o2 == nil {
+		return false
+	}
+
+	r1 := o1.RefPath()
+	r2 := o2.RefPath()
+
+	if r1 == nil || r2 == nil {
+		return false
+	}
+
+	// refURL is relative to the working directory & base spec file.
+	return referenceURIMatch(r1, r2)
+}
+
+// referencesRootDocument returns if the $ref points to the root document of the OpenAPI spec.
+//
+// If the document has no location, perhaps loaded from data in memory, it always returns false.
+func referencesRootDocument(doc *T, ref componentRef) bool {
+	if doc.url == nil || ref == nil || ref.RefPath() == nil {
+		return false
+	}
+
+	refURL := *ref.RefPath()
+	refURL.Fragment = ""
+
+	// Check referenced element was in the root document.
+	return referenceURIMatch(doc.url, &refURL)
+}
+
+func referenceURIMatch(u1 *url.URL, u2 *url.URL) bool {
+	s1, s2 := *u1, *u2
+	if s1.Scheme == "" {
+		s1.Scheme = "file"
+	}
+	if s2.Scheme == "" {
+		s2.Scheme = "file"
+	}
+
+	return s1.String() == s2.String()
+}
+
+// ReferencesComponentInRootDocument returns if the given component reference references
+// the same document or element as another component reference in the root document's
+// '#/components/<type>'. If it does, it returns the name of it in the form
+// '#/components/<type>/NameXXX'
+//
+// Of course given a component from the root document will always match itself.
+//
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#relative-references-in-urls
+//
+// Example. Take the spec with directory structure:
+//
+//	openapi.yaml
+//	schemas/
+//	├─ record.yaml
+//	├─ records.yaml
+//
+// In openapi.yaml we have:
+//
+//	components:
+//	  schemas:
+//	    Record:
+//	      $ref: schemas/record.yaml
+//
+// Case 1: records.yml references a component in the root document
+//
+//	$ref: ../openapi.yaml#/components/schemas/Record
+//
+// This would return...
+//
+//	#/components/schemas/Record
+//
+// Case 2: records.yml indirectly refers to the same schema
+// as a schema the root document's '#/components/schemas'.
+//
+//	$ref: ./record.yaml
+//
+// This would also return...
+//
+//	#/components/schemas/Record
+func ReferencesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
+	if ref == nil || ref.RefString() == "" {
+		return "", false
+	}
+
+	// Case 1:
+	// Something like: ../another-folder/document.json#/myElement
+	if isRemoteReference(ref.RefString()) && isRootComponentReference(ref.RefString(), ref.CollectionName()) {
+		// Determine if it is *this* root doc.
+		if referencesRootDocument(doc, ref) {
+			_, name, _ := strings.Cut(ref.RefString(), path.Join("#/components/", ref.CollectionName()))
+
+			return path.Join("#/components/", ref.CollectionName(), name), true
+		}
+	}
+
+	// If there are no schemas defined in the root document return early.
+	if doc.Components == nil {
+		return "", false
+	}
+
+	collection, _, err := jsonpointer.GetForToken(doc.Components, ref.CollectionName())
+	if err != nil {
+		panic(err) // unreachable
+	}
+
+	var components map[string]componentRef
+
+	componentRefType := reflect.TypeOf(new(componentRef)).Elem()
+	if t := reflect.TypeOf(collection); t.Kind() == reflect.Map &&
+		t.Key().Kind() == reflect.String &&
+		t.Elem().AssignableTo(componentRefType) {
+		v := reflect.ValueOf(collection)
+
+		components = make(map[string]componentRef, v.Len())
+		for _, key := range v.MapKeys() {
+			strct := v.MapIndex(key)
+			// Type assertion safe, already checked via reflection above.
+			components[key.Interface().(string)] = strct.Interface().(componentRef)
+		}
+	} else {
+		return "", false
+	}
+
+	// Case 2:
+	// Something like: ../openapi.yaml#/components/schemas/myElement
+	for name, s := range components {
+		// Must be a reference to a YAML file.
+		if !isWholeDocumentReference(s.RefString()) {
+			continue
+		}
+
+		// Is the schema a ref to the same resource.
+		if !refersToSameDocument(s, ref) {
+			continue
+		}
+
+		// Transform the remote ref to the equivalent schema in the root document.
+		return path.Join("#/components/", ref.CollectionName(), name), true
+	}
+
+	return "", false
+}
+
+// isElementReference takes a $ref value and checks if it references a specific element.
+func isElementReference(ref string) bool {
+	return ref != "" && !isWholeDocumentReference(ref)
+}
+
+// isSchemaReference takes a $ref value and checks if it references a schema element.
+func isRootComponentReference(ref string, compType string) bool {
+	return isElementReference(ref) && strings.Contains(ref, path.Join("#/components/", compType))
+}
+
+// isWholeDocumentReference takes a $ref value and checks if it is whole document reference.
+func isWholeDocumentReference(ref string) bool {
+	return ref != "" && !strings.ContainsAny(ref, "#")
+}
+
+// isRemoteReference takes a $ref value and checks if it is remote reference.
+func isRemoteReference(ref string) bool {
+	return ref != "" && !strings.HasPrefix(ref, "#") && !isURLReference(ref)
+}
+
+// isURLReference takes a $ref value and checks if it is URL reference.
+func isURLReference(ref string) bool {
+	return strings.HasPrefix(ref, "http://") || strings.HasPrefix(ref, "https://") || strings.HasPrefix(ref, "//")
 }
