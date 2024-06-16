@@ -991,7 +991,7 @@ func buildResObj(params map[string]any, parentKeys []string, key string, schema 
 		if err != nil {
 			return nil, &ParseError{path: pathFromKeys(mapKeys), Kind: KindInvalidFormat, Reason: fmt.Sprintf("could not convert value map to array: %v", err)}
 		}
-		resultArr := make([]any, len(arr))
+		resultArr := make([]any /*not 0,*/, len(arr))
 		for i := range arr {
 			r, err := buildResObj(params, mapKeys, strconv.Itoa(i), schema.Value.Items)
 			if err != nil {
