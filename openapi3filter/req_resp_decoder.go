@@ -1184,7 +1184,7 @@ func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any
 type EncodingFn func(partName string) *openapi3.Encoding
 
 // BodyDecoder is an interface to decode a body of a request or response.
-// An implementation must return a value that is a primitive, []interface{}, or map[string]interface{}.
+// An implementation must return a value that is a primitive, []any, or map[string]any.
 type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (any, error)
 
 // bodyDecoders contains decoders for supported content types of a body.

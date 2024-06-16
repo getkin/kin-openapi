@@ -141,8 +141,8 @@ func (input *AuthenticationInput) NewError(err error) error
 
 type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (any, error)
     BodyDecoder is an interface to decode a body of a request or response.
-    An implementation must return a value that is a primitive, []interface{},
-    or map[string]interface{}.
+    An implementation must return a value that is a primitive, []any,
+    or map[string]any.
 
 func RegisteredBodyDecoder(contentType string) BodyDecoder
     RegisteredBodyDecoder returns the registered body decoder for the given

@@ -161,8 +161,8 @@ func TestIssue735(t *testing.T) {
 		//	schema: NewSchema().WithProperties(map[string]*Schema{
 		//		"foo": {ReadOnly: true},
 		//	}).WithoutAdditionalProperties(),
-		//	value:            map[string]interface{}{"foo": 42},
-		//	extraNotContains: []interface{}{42},
+		//	value:            map[string]any{"foo": 42},
+		//	extraNotContains: []any{42},
 		//	options:          []SchemaValidationOption{VisitAsRequest()},
 		//},
 		//{
@@ -170,8 +170,8 @@ func TestIssue735(t *testing.T) {
 		//	schema: NewSchema().WithProperties(map[string]*Schema{
 		//		"foo": {WriteOnly: true},
 		//	}).WithoutAdditionalProperties(),
-		//	value:            map[string]interface{}{"foo": 42},
-		//	extraNotContains: []interface{}{42},
+		//	value:            map[string]any{"foo": 42},
+		//	extraNotContains: []any{42},
 		//	options:          []SchemaValidationOption{VisitAsResponse()},
 		//},
 		{
