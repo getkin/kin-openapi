@@ -1210,7 +1210,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		return schema.visitJSONArray(settings, value)
 	case map[string]any:
 		return schema.visitJSONObject(settings, value)
-	case map[any]any:
+	case map[any]any: // for YAML cf. issue https://github.com/getkin/kin-openapi/issues/444
 		values := make(map[string]any, len(value))
 		for key, v := range value {
 			if k, ok := key.(string); ok {
