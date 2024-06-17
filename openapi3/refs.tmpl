@@ -40,6 +40,8 @@ func (x *{{ $type.Name }}Ref) CollectionName() string { return "{{ $type.Collect
 // RefPath returns the path of the $ref relative to the root document.
 func (x *{{ $type.Name }}Ref) RefPath() *url.URL { return &x.refPath }
 
+func (x *{{ $type.Name }}Ref) setRefPath(u *url.URL) { x.refPath = *u }
+
 // MarshalYAML returns the YAML encoding of {{ $type.Name }}Ref.
 func (x {{ $type.Name }}Ref) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {

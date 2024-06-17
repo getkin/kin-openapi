@@ -407,8 +407,22 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		err = nil
 	}
 
+	setComponent := func(target any) {
+		if componentPath != nil {
+			if i, ok := target.(interface {
+				setRefPath(*url.URL)
+			}); ok {
+				copy := *componentPath
+				copy.Fragment = parsedURL.Fragment
+				i.setRefPath(&copy)
+			}
+		}
+	}
+
 	switch {
 	case reflect.TypeOf(cursor) == reflect.TypeOf(resolved):
+		setComponent(cursor)
+
 		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentDoc, componentPath, nil
 
@@ -421,6 +435,8 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			if err = json.Unmarshal(enc, expect); err != nil {
 				return err
 			}
+
+			setComponent(expect)
 			return nil
 		}
 		if err := codec(cursor, resolved); err != nil {

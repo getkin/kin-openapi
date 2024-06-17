@@ -40,6 +40,8 @@ func (x *CallbackRef) CollectionName() string { return "callbacks" }
 // RefPath returns the path of the $ref relative to the root document.
 func (x *CallbackRef) RefPath() *url.URL { return &x.refPath }
 
+func (x *CallbackRef) setRefPath(u *url.URL) { x.refPath = *u }
+
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
@@ -165,6 +167,8 @@ func (x *ExampleRef) CollectionName() string { return "examples" }
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *ExampleRef) RefPath() *url.URL { return &x.refPath }
+
+func (x *ExampleRef) setRefPath(u *url.URL) { x.refPath = *u }
 
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (any, error) {
@@ -292,6 +296,8 @@ func (x *HeaderRef) CollectionName() string { return "headers" }
 // RefPath returns the path of the $ref relative to the root document.
 func (x *HeaderRef) RefPath() *url.URL { return &x.refPath }
 
+func (x *HeaderRef) setRefPath(u *url.URL) { x.refPath = *u }
+
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
@@ -417,6 +423,8 @@ func (x *LinkRef) CollectionName() string { return "links" }
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *LinkRef) RefPath() *url.URL { return &x.refPath }
+
+func (x *LinkRef) setRefPath(u *url.URL) { x.refPath = *u }
 
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (any, error) {
@@ -544,6 +552,8 @@ func (x *ParameterRef) CollectionName() string { return "parameters" }
 // RefPath returns the path of the $ref relative to the root document.
 func (x *ParameterRef) RefPath() *url.URL { return &x.refPath }
 
+func (x *ParameterRef) setRefPath(u *url.URL) { x.refPath = *u }
+
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
@@ -669,6 +679,8 @@ func (x *RequestBodyRef) CollectionName() string { return "requestBodies" }
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *RequestBodyRef) RefPath() *url.URL { return &x.refPath }
+
+func (x *RequestBodyRef) setRefPath(u *url.URL) { x.refPath = *u }
 
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (any, error) {
@@ -796,6 +808,8 @@ func (x *ResponseRef) CollectionName() string { return "responses" }
 // RefPath returns the path of the $ref relative to the root document.
 func (x *ResponseRef) RefPath() *url.URL { return &x.refPath }
 
+func (x *ResponseRef) setRefPath(u *url.URL) { x.refPath = *u }
+
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
@@ -922,6 +936,8 @@ func (x *SchemaRef) CollectionName() string { return "schemas" }
 // RefPath returns the path of the $ref relative to the root document.
 func (x *SchemaRef) RefPath() *url.URL { return &x.refPath }
 
+func (x *SchemaRef) setRefPath(u *url.URL) { x.refPath = *u }
+
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
@@ -1047,6 +1063,8 @@ func (x *SecuritySchemeRef) CollectionName() string { return "securitySchemes" }
 
 // RefPath returns the path of the $ref relative to the root document.
 func (x *SecuritySchemeRef) RefPath() *url.URL { return &x.refPath }
+
+func (x *SecuritySchemeRef) setRefPath(u *url.URL) { x.refPath = *u }
 
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (any, error) {
