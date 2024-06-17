@@ -274,6 +274,8 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 }
 ```
 
+This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
+
 ## Reconciling component $ref types
 
 `ReferencesComponentInRootDocument` is a useful helper function to check if a component reference
@@ -298,8 +300,6 @@ for _, path := range doc.Paths.InMatchingOrder() {
 	}
 }
 ```
-
-This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
