@@ -1,7 +1,7 @@
 {
   "components": {
     "parameters": {
-      "parameters_number": {
+      "testdata_recursiveRef_parameters_number": {
         "in": "query",
         "name": "someNumber",
         "schema": {
@@ -10,11 +10,21 @@
       }
     },
     "responses": {
+      "testdata_recursiveRef_openapi_400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/testdata_recursiveRef_components_models_error"
+            }
+          }
+        },
+        "description": "400 Bad Request"
+      },
       "400": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Error"
+              "$ref": "#/components/schemas/testdata_recursiveRef_components_models_error"
             }
           }
         },
@@ -22,14 +32,50 @@
       }
     },
     "schemas": {
-      "Bar": {
+      "testdata_recursiveRef_openapi_Bar": {
+        "example": "bar",
+        "type": "string"
+      },
+      "testdata_recursiveRef_openapi_Foo": {
+        "properties": {
+          "bar": {
+            "$ref": "#/components/schemas/testdata_recursiveRef_components_Bar"
+          }
+        },
+        "type": "object"
+      },
+      "testdata_recursiveRef_openapi_Foo2": {
+        "properties": {
+          "foo": {
+            "$ref": "#/components/schemas/testdata_recursiveRef_openapi_Foo"
+          }
+        },
+        "type": "object"
+      },
+       "testdata_recursiveRef_components_models_error":{
+        "title":"ErrorDetails",
+        "type":"object"
+      },
+      "testdata_recursiveRef_components_models_error_Error":{
+        "title":"ErrorDetails",
+        "type":"object"
+      },
+      "testdata_recursiveRef_openapi_Cat": {
+        "properties": {
+          "cat": {
+            "$ref": "#/components/schemas/testdata_recursiveRef_openapi_Cat"
+          }
+        },
+        "type": "object"
+      },
+       "Bar": {
         "example": "bar",
         "type": "string"
       },
       "Foo": {
         "properties": {
           "bar": {
-            "$ref": "#/components/schemas/Bar"
+            "$ref": "#/components/schemas/testdata_recursiveRef_components_Bar"
           }
         },
         "type": "object"
@@ -37,7 +83,7 @@
       "Foo2": {
         "properties": {
           "foo": {
-            "$ref": "#/components/schemas/Foo"
+            "$ref": "#/components/schemas/testdata_recursiveRef_openapi_Foo"
           }
         },
         "type": "object"
@@ -49,7 +95,7 @@
       "Cat": {
         "properties": {
           "cat": {
-            "$ref": "#/components/schemas/Cat"
+            "$ref": "#/components/schemas/testdata_recursiveRef_openapi_Cat"
           }
         },
         "type": "object"
@@ -82,7 +128,7 @@
                 "schema": {
                   "properties": {
                     "foo2": {
-                      "$ref": "#/components/schemas/Foo2"
+                      "$ref": "#/components/schemas/testdata_recursiveRef_openapi_Foo2"
                     }
                   },
                   "type": "object"
@@ -92,13 +138,13 @@
             "description": "OK"
           },
           "400": {
-            "$ref": "#/components/responses/400"
+            "$ref": "#/components/responses/testdata_recursiveRef_openapi_400"
           }
         }
       },
       "parameters": [
         {
-          "$ref": "#/components/parameters/parameters_number"
+          "$ref": "#/components/parameters/testdata_recursiveRef_parameters_number"
         }
       ]
     }

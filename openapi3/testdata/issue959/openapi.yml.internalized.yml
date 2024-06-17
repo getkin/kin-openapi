@@ -1,7 +1,7 @@
 {
   "components": {
     "schemas": {
-      "External1": {
+      "testdata_issue959_components_External1": {
         "type": "string"
       }
     }
@@ -26,7 +26,7 @@
           "name": "external1",
           "required": true,
           "schema": {
-            "$ref": "#/components/schemas/External1"
+            "$ref": "#/components/schemas/testdata_issue959_components_External1"
           }
         }
       ]

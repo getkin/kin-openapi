@@ -14,7 +14,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/schemas_book_record"
+                  "$ref": "#/components/schemas/testdata_interalizationNameCollision_schemas_book_record"
                 }
               }
             }
@@ -31,7 +31,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/schemas_cd_record"
+                  "$ref": "#/components/schemas/testdata_interalizationNameCollision_schemas_cd_record"
                 }
               }
             }
@@ -42,7 +42,7 @@
   },
   "components": {
     "schemas": {
-      "schemas_book_record": {
+      "testdata_interalizationNameCollision_schemas_book_record": {
         "type": "object",
         "required": [
           "id"
@@ -56,7 +56,7 @@
           }
         }
       },
-      "schemas_cd_record": {
+      "testdata_interalizationNameCollision_schemas_cd_record": {
         "type": "object",
         "required": [
           "id"
