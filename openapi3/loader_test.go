@@ -171,7 +171,7 @@ paths:
 
 	example := doc.Paths.Value("/").Get.Responses.Status(200).Value.Content.Get("application/json").Examples["test"]
 	require.NotNil(t, example.Value)
-	require.Equal(t, example.Value.Value.(map[string]interface{})["error"].(bool), false)
+	require.Equal(t, example.Value.Value.(map[string]any)["error"].(bool), false)
 }
 
 func TestLoadErrorOnRefMisuse(t *testing.T) {
@@ -520,7 +520,7 @@ func TestLinksFromOAISpec(t *testing.T) {
 	require.NoError(t, err)
 	response := doc.Paths.Value("/2.0/repositories/{username}/{slug}").Get.Responses.Status(200).Value
 	link := response.Links[`repositoryPullRequests`].Value
-	require.Equal(t, map[string]interface{}{
+	require.Equal(t, map[string]any{
 		"username": "$response.body#/owner/username",
 		"slug":     "$response.body#/slug",
 	}, link.Parameters)

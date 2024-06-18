@@ -167,8 +167,8 @@ func main() {
 	}
 }
 
-func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded interface{}, err error) {
-	// Decode body to a primitive, []interface{}, or map[string]interface{}.
+func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded any, err error) {
+	// Decode body to a primitive, []any, or map[string]any.
 }
 ```
 
@@ -177,7 +177,7 @@ func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, e
 By default, the library checks unique items using the following predefined function:
 
 ```go
-func isSliceOfUniqueItems(xs []interface{}) bool {
+func isSliceOfUniqueItems(xs []any) bool {
 	s := len(xs)
 	m := make(map[string]struct{}, s)
 	for _, x := range xs {
@@ -203,7 +203,7 @@ func main() {
 	// ... other validate codes
 }
 
-func arrayUniqueItemsChecker(items []interface{}) bool {
+func arrayUniqueItemsChecker(items []any) bool {
 	// Check the uniqueness of the input slice
 }
 ```
@@ -327,7 +327,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * The string format `email` has been removed by default. To use it please call `openapi3.DefineStringFormat("email", openapi3.FormatOfStringForEmail)`.
 * Field `openapi3.T.Components` is now a pointer.
 * Fields `openapi3.Schema.AdditionalProperties` and `openapi3.Schema.AdditionalPropertiesAllowed` are replaced by `openapi3.Schema.AdditionalProperties.Schema` and `openapi3.Schema.AdditionalProperties.Has` respectively.
-* Type `openapi3.ExtensionProps` is now just `map[string]interface{}` and extensions are accessible through the `Extensions` field.
+* Type `openapi3.ExtensionProps` is now just `map[string]any` and extensions are accessible through the `Extensions` field.
 
 ### v0.112.0
 * `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.

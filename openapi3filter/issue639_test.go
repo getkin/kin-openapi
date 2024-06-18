@@ -52,7 +52,7 @@ func TestIssue639(t *testing.T) {
 	tests := []struct {
 		name               string
 		options            *Options
-		expectedDefaultVal interface{}
+		expectedDefaultVal any
 	}{
 		{
 			name: "no defaults are added to requests",
@@ -90,7 +90,7 @@ func TestIssue639(t *testing.T) {
 			bodyAfterValidation, err := io.ReadAll(httpReq.Body)
 			require.NoError(t, err)
 
-			raw := map[string]interface{}{}
+			raw := map[string]any{}
 			err = json.Unmarshal(bodyAfterValidation, &raw)
 			require.NoError(t, err)
 			require.Equal(t, testcase.expectedDefaultVal,

@@ -16,9 +16,9 @@ import (
 type schemaExample struct {
 	Title         string
 	Schema        *Schema
-	Serialization interface{}
-	AllValid      []interface{}
-	AllInvalid    []interface{}
+	Serialization any
+	AllValid      []any
+	AllInvalid    []any
 }
 
 func TestSchemas(t *testing.T) {
@@ -56,32 +56,32 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 			}
 		}
 		// NaN and Inf aren't valid JSON but are handled
-		for index, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
+		for index, value := range []any{math.NaN(), math.Inf(-1), math.Inf(+1)} {
 			err := schema.VisitJSON(value)
 			require.Errorf(t, err, "NaNAndInf #%d: %#v", index, value)
 		}
 	}
 }
 
-func validateSchemaJSON(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error {
+func validateSchemaJSON(t *testing.T, schema *Schema, value any, opts ...SchemaValidationOption) error {
 	data, err := json.Marshal(value)
 	require.NoError(t, err)
-	var val interface{}
+	var val any
 	err = json.Unmarshal(data, &val)
 	require.NoError(t, err)
 	return schema.VisitJSON(val, opts...)
 }
 
-func validateSchemaYAML(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error {
+func validateSchemaYAML(t *testing.T, schema *Schema, value any, opts ...SchemaValidationOption) error {
 	data, err := yaml.Marshal(value)
 	require.NoError(t, err)
-	var val interface{}
+	var val any
 	err = yaml.Unmarshal(data, &val)
 	require.NoError(t, err)
 	return schema.VisitJSON(val, opts...)
 }
 
-type validateSchemaFunc func(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error
+type validateSchemaFunc func(t *testing.T, schema *Schema, value any, opts ...SchemaValidationOption) error
 
 var validateSchemaFuncs = []validateSchemaFunc{
 	validateSchemaJSON,
@@ -92,19 +92,16 @@ var schemaExamples = []schemaExample{
 	{
 		Title:         "EMPTY SCHEMA",
 		Schema:        &Schema{},
-		Serialization: map[string]interface{}{
-			// This OA3 schema is exactly this draft-04 schema:
-			//   {"not": {"type": "null"}}
-		},
-		AllValid: []interface{}{
+		Serialization: map[string]any{},
+		AllValid: []any{
 			false,
 			true,
 			3.14,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 		},
 	},
@@ -112,13 +109,13 @@ var schemaExamples = []schemaExample{
 	{
 		Title:  "JUST NULLABLE",
 		Schema: NewSchema().WithNullable(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			// This OA3 schema is exactly both this draft-04 schema: {} and:
 			// {anyOf: [type:string, type:number, type:integer, type:boolean
 			//         ,{type:array, items:{}}, type:object]}
 			"nullable": true,
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			nil,
 			false,
 			true,
@@ -126,30 +123,30 @@ var schemaExamples = []schemaExample{
 			0.0,
 			3.14,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 
 	{
 		Title:  "NULLABLE BOOLEAN",
 		Schema: NewBoolSchema().WithNullable(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"nullable": true,
 			"type":     "boolean",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			nil,
 			false,
 			true,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			0,
 			0.0,
 			3.14,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 
@@ -158,13 +155,13 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Type: &Types{TypeString, TypeBoolean},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			"",
 			"xyz",
 			true,
 			false,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			1,
 			nil,
 		},
@@ -175,15 +172,15 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Type: &Types{TypeNumber, TypeNull},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			0,
 			1,
 			2.3,
 			nil,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			"x",
-			[]interface{}{},
+			[]any{},
 		},
 	},
 
@@ -193,23 +190,23 @@ var schemaExamples = []schemaExample{
 			NewIntegerSchema(),
 			NewFloat64Schema(),
 		).WithNullable(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"nullable": true,
-			"anyOf": []interface{}{
-				map[string]interface{}{"type": "integer"},
-				map[string]interface{}{"type": "number"},
+			"anyOf": []any{
+				map[string]any{"type": "integer"},
+				map[string]any{"type": "number"},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			nil,
 			42,
 			4.2,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			true,
-			[]interface{}{42},
+			[]any{42},
 			"bla",
-			map[string]interface{}{},
+			map[string]any{},
 		},
 	},
 
@@ -219,22 +216,22 @@ var schemaExamples = []schemaExample{
 			NewIntegerSchema().WithNullable(),
 			NewFloat64Schema(),
 		),
-		Serialization: map[string]interface{}{
-			"anyOf": []interface{}{
-				map[string]interface{}{"type": "integer", "nullable": true},
-				map[string]interface{}{"type": "number"},
+		Serialization: map[string]any{
+			"anyOf": []any{
+				map[string]any{"type": "integer", "nullable": true},
+				map[string]any{"type": "number"},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			nil,
 			42,
 			4.2,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			true,
-			[]interface{}{42},
+			[]any{42},
 			"bla",
-			map[string]interface{}{},
+			map[string]any{},
 		},
 	},
 
@@ -244,23 +241,23 @@ var schemaExamples = []schemaExample{
 			NewBoolSchema().WithNullable(),
 			NewBoolSchema().WithNullable(),
 		),
-		Serialization: map[string]interface{}{
-			"allOf": []interface{}{
-				map[string]interface{}{"type": "boolean", "nullable": true},
-				map[string]interface{}{"type": "boolean", "nullable": true},
+		Serialization: map[string]any{
+			"allOf": []any{
+				map[string]any{"type": "boolean", "nullable": true},
+				map[string]any{"type": "boolean", "nullable": true},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			nil,
 			true,
 			false,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			2,
 			4.2,
-			[]interface{}{42},
+			[]any{42},
 			"bla",
-			map[string]interface{}{},
+			map[string]any{},
 		},
 	},
 
@@ -273,46 +270,46 @@ var schemaExamples = []schemaExample{
 			"stringProp": NewStringSchema().WithMaxLength(18),
 			"boolProp":   NewBoolSchema(),
 		}),
-		Serialization: map[string]interface{}{
-			"properties": map[string]interface{}{
-				"stringProp": map[string]interface{}{"type": "string", "maxLength": 18},
-				"boolProp":   map[string]interface{}{"type": "boolean"},
+		Serialization: map[string]any{
+			"properties": map[string]any{
+				"stringProp": map[string]any{"type": "string", "maxLength": 18},
+				"boolProp":   map[string]any{"type": "boolean"},
 			},
-			"anyOf": []interface{}{
-				map[string]interface{}{"type": "object", "required": []string{"stringProp"}},
-				map[string]interface{}{"type": "object", "required": []string{"boolProp"}},
+			"anyOf": []any{
+				map[string]any{"type": "object", "required": []string{"stringProp"}},
+				map[string]any{"type": "object", "required": []string{"boolProp"}},
 			},
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{"stringProp": "valid string value"},
-			map[string]interface{}{"boolProp": true},
-			map[string]interface{}{"stringProp": "valid string value", "boolProp": true},
+		AllValid: []any{
+			map[string]any{"stringProp": "valid string value"},
+			map[string]any{"boolProp": true},
+			map[string]any{"stringProp": "valid string value", "boolProp": true},
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			1,
-			map[string]interface{}{},
-			map[string]interface{}{"invalidProp": false},
-			map[string]interface{}{"stringProp": "invalid string value"},
-			map[string]interface{}{"stringProp": "invalid string value", "boolProp": true},
+			map[string]any{},
+			map[string]any{"invalidProp": false},
+			map[string]any{"stringProp": "invalid string value"},
+			map[string]any{"stringProp": "invalid string value", "boolProp": true},
 		},
 	},
 
 	{
 		Title:  "BOOLEAN",
 		Schema: NewBoolSchema(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type": "boolean",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			false,
 			true,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			3.14,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 
@@ -321,25 +318,25 @@ var schemaExamples = []schemaExample{
 		Schema: NewFloat64Schema().
 			WithMin(2.5).
 			WithMax(3.5),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":    "number",
 			"minimum": 2.5,
 			"maximum": 3.5,
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			2.5,
 			3.14,
 			3.5,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			false,
 			true,
 			2.4,
 			3.6,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 
@@ -348,17 +345,17 @@ var schemaExamples = []schemaExample{
 		Schema: NewInt64Schema().
 			WithMin(2).
 			WithMax(5),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":    "integer",
 			"format":  "int64",
 			"minimum": 2,
 			"maximum": 5,
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			2,
 			5,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			false,
 			true,
@@ -366,49 +363,49 @@ var schemaExamples = []schemaExample{
 			6,
 			3.5,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 	{
 		Title:  "INTEGER OPTIONAL INT64 FORMAT",
 		Schema: NewInt64Schema(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":   "integer",
 			"format": "int64",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			1,
 			256,
 			65536,
 			int64(math.MaxInt32) + 10,
 			int64(math.MinInt32) - 10,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			false,
 			3.5,
 			true,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 	{
 		Title:  "INTEGER OPTIONAL INT32 FORMAT",
 		Schema: NewInt32Schema(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":   "integer",
 			"format": "int32",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			1,
 			256,
 			65536,
 			int64(math.MaxInt32),
 			int64(math.MaxInt32),
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			false,
 			3.5,
@@ -416,8 +413,8 @@ var schemaExamples = []schemaExample{
 			int64(math.MinInt32) - 10,
 			true,
 			"",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 	{
@@ -426,17 +423,17 @@ var schemaExamples = []schemaExample{
 			WithMinLength(2).
 			WithMaxLength(3).
 			WithPattern("^[abc]+$"),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":      "string",
 			"minLength": 2,
 			"maxLength": 3,
 			"pattern":   "^[abc]+$",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			"ab",
 			"abc",
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			false,
 			true,
@@ -444,19 +441,19 @@ var schemaExamples = []schemaExample{
 			"a",
 			"xy",
 			"aaaa",
-			[]interface{}{},
-			map[string]interface{}{},
+			[]any{},
+			map[string]any{},
 		},
 	},
 
 	{
 		Title:  "STRING: optional format 'uuid'",
 		Schema: NewUUIDSchema(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":   "string",
 			"format": "uuid",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			"dd7d8481-81a3-407f-95f0-a2f1cb382a4b",
 			"dcba3901-2fba-48c1-9db2-00422055804e",
 			"ace8e3be-c254-4c10-8859-1401d9a9d52a",
@@ -467,7 +464,7 @@ var schemaExamples = []schemaExample{
 			"DCBA3901-2FBA-48C1-9db2-00422055804e",
 			"ACE8E3BE-c254-4C10-8859-1401D9A9D52A",
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			"g39840b1-d0ef-446d-e555-48fcca50a90a",
 			"4cf3i040-ea14-4daa-b0b5-ea9329473519",
@@ -486,11 +483,11 @@ var schemaExamples = []schemaExample{
 	{
 		Title:  "STRING: format 'date-time'",
 		Schema: NewDateTimeSchema(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":   "string",
 			"format": "date-time",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			"2017-12-31T11:59:59",
 			"2017-12-31T11:59:59Z",
 			"2017-12-31T11:59:59-11:30",
@@ -498,7 +495,7 @@ var schemaExamples = []schemaExample{
 			"2017-12-31T11:59:59.999+11:30",
 			"2017-12-31T11:59:59.999Z",
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			3.14,
 			"2017-12-31",
@@ -511,11 +508,11 @@ var schemaExamples = []schemaExample{
 	{
 		Title:  "STRING: format 'date-time'",
 		Schema: NewBytesSchema(),
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":   "string",
 			"format": "byte",
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			"",
 			base64.StdEncoding.EncodeToString(func() []byte {
 				data := make([]byte, 0, 1024)
@@ -532,7 +529,7 @@ var schemaExamples = []schemaExample{
 				return data
 			}()),
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			" ",
 			"\n\n", // a \n is ok for JSON but not for YAML decoder/encoder
@@ -549,33 +546,33 @@ var schemaExamples = []schemaExample{
 			UniqueItems: true,
 			Items:       NewFloat64Schema().NewRef(),
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":        "array",
 			"minItems":    2,
 			"maxItems":    3,
 			"uniqueItems": true,
-			"items": map[string]interface{}{
+			"items": map[string]any{
 				"type": "number",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
+		AllValid: []any{
+			[]any{
 				1, 2,
 			},
-			[]interface{}{
+			[]any{
 				1, 2, 3,
 			},
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			3.14,
-			[]interface{}{
+			[]any{
 				1,
 			},
-			[]interface{}{
+			[]any{
 				42, 42,
 			},
-			[]interface{}{
+			[]any{
 				1, 2, 3, 4,
 			},
 		},
@@ -592,45 +589,45 @@ var schemaExamples = []schemaExample{
 				},
 			}).NewRef(),
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":        "array",
 			"uniqueItems": true,
-			"items": map[string]interface{}{
-				"properties": map[string]interface{}{
-					"key1": map[string]interface{}{
+			"items": map[string]any{
+				"properties": map[string]any{
+					"key1": map[string]any{
 						"type": "number",
 					},
 				},
 				"type": "object",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
+		AllValid: []any{
+			[]any{
+				map[string]any{
 					"key1": 1,
 					"key2": 1,
 					// Additional properties will make object different
 					// By default additionalProperties is true
 				},
-				map[string]interface{}{
+				map[string]any{
 					"key1": 1,
 				},
 			},
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"key1": 1,
 				},
-				map[string]interface{}{
+				map[string]any{
 					"key1": 2,
 				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
+		AllInvalid: []any{
+			[]any{
+				map[string]any{
 					"key1": 1,
 				},
-				map[string]interface{}{
+				map[string]any{
 					"key1": 1,
 				},
 			},
@@ -653,15 +650,15 @@ var schemaExamples = []schemaExample{
 				},
 			}).NewRef(),
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":        "array",
 			"uniqueItems": true,
-			"items": map[string]interface{}{
-				"properties": map[string]interface{}{
-					"key1": map[string]interface{}{
+			"items": map[string]any{
+				"properties": map[string]any{
+					"key1": map[string]any{
 						"type":        "array",
 						"uniqueItems": true,
-						"items": map[string]interface{}{
+						"items": map[string]any{
 							"type": "number",
 						},
 					},
@@ -669,53 +666,53 @@ var schemaExamples = []schemaExample{
 				"type": "object",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
-					"key1": []interface{}{
+		AllValid: []any{
+			[]any{
+				map[string]any{
+					"key1": []any{
 						1, 2,
 					},
 				},
-				map[string]interface{}{
-					"key1": []interface{}{
+				map[string]any{
+					"key1": []any{
 						3, 4,
 					},
 				},
 			},
-			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
-				map[string]interface{}{
-					"key1": []interface{}{
+			[]any{
+				map[string]any{
+					"key1": []any{
 						10, 9,
 					},
 				},
-				map[string]interface{}{
-					"key1": []interface{}{
+				map[string]any{
+					"key1": []any{
 						9, 10,
 					},
 				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{ // Violate outer array uniqueItems: true
-				map[string]interface{}{
-					"key1": []interface{}{
+		AllInvalid: []any{
+			[]any{
+				map[string]any{
+					"key1": []any{
 						9, 9,
 					},
 				},
-				map[string]interface{}{
-					"key1": []interface{}{
+				map[string]any{
+					"key1": []any{
 						9, 9,
 					},
 				},
 			},
-			[]interface{}{ // Violate inner(array in object) array uniqueItems: true
-				map[string]interface{}{
-					"key1": []interface{}{
+			[]any{
+				map[string]any{
+					"key1": []any{
 						9, 9,
 					},
 				},
-				map[string]interface{}{
-					"key1": []interface{}{
+				map[string]any{
+					"key1": []any{
 						8, 8,
 					},
 				},
@@ -734,35 +731,35 @@ var schemaExamples = []schemaExample{
 				Items:       NewFloat64Schema().NewRef(),
 			}).NewRef(),
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":        "array",
 			"uniqueItems": true,
-			"items": map[string]interface{}{
-				"items": map[string]interface{}{
+			"items": map[string]any{
+				"items": map[string]any{
 					"type": "number",
 				},
 				"uniqueItems": true,
 				"type":        "array",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				[]interface{}{1, 2},
-				[]interface{}{3, 4},
+		AllValid: []any{
+			[]any{
+				[]any{1, 2},
+				[]any{3, 4},
 			},
-			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
-				[]interface{}{1, 2},
-				[]interface{}{2, 1},
+			[]any{
+				[]any{1, 2},
+				[]any{2, 1},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{ // Violate outer array uniqueItems: true
-				[]interface{}{8, 9},
-				[]interface{}{8, 9},
+		AllInvalid: []any{
+			[]any{
+				[]any{8, 9},
+				[]any{8, 9},
 			},
-			[]interface{}{ // Violate inner array uniqueItems: true
-				[]interface{}{9, 9},
-				[]interface{}{8, 8},
+			[]any{
+				[]any{9, 9},
+				[]any{8, 8},
 			},
 		},
 	},
@@ -783,14 +780,14 @@ var schemaExamples = []schemaExample{
 				}).NewRef(),
 			}).NewRef(),
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":        "array",
 			"uniqueItems": true,
-			"items": map[string]interface{}{
-				"items": map[string]interface{}{
+			"items": map[string]any{
+				"items": map[string]any{
 					"type": "object",
-					"properties": map[string]interface{}{
-						"key1": map[string]interface{}{
+					"properties": map[string]any{
+						"key1": map[string]any{
 							"type": "number",
 						},
 					},
@@ -799,71 +796,71 @@ var schemaExamples = []schemaExample{
 				"type":        "array",
 			},
 		},
-		AllValid: []interface{}{
-			[]interface{}{
-				[]interface{}{
-					map[string]interface{}{
+		AllValid: []any{
+			[]any{
+				[]any{
+					map[string]any{
 						"key1": 1,
 					},
 				},
-				[]interface{}{
-					map[string]interface{}{
+				[]any{
+					map[string]any{
 						"key1": 2,
 					},
 				},
 			},
-			[]interface{}{ // Slice have items with the same value but with different index will treated as different slices
-				[]interface{}{
-					map[string]interface{}{
+			[]any{
+				[]any{
+					map[string]any{
 						"key1": 1,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key1": 2,
 					},
 				},
-				[]interface{}{
-					map[string]interface{}{
+				[]any{
+					map[string]any{
 						"key1": 2,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key1": 1,
 					},
 				},
 			},
 		},
-		AllInvalid: []interface{}{
-			[]interface{}{ // Violate outer array uniqueItems: true
-				[]interface{}{
-					map[string]interface{}{
+		AllInvalid: []any{
+			[]any{
+				[]any{
+					map[string]any{
 						"key1": 1,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key1": 2,
 					},
 				},
-				[]interface{}{
-					map[string]interface{}{
+				[]any{
+					map[string]any{
 						"key1": 1,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key1": 2,
 					},
 				},
 			},
-			[]interface{}{ // Violate inner array uniqueItems: true
-				[]interface{}{
-					map[string]interface{}{
+			[]any{
+				[]any{
+					map[string]any{
 						"key1": 1,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key1": 1,
 					},
 				},
-				[]interface{}{
-					map[string]interface{}{
+				[]any{
+					map[string]any{
 						"key1": 2,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key1": 2,
 					},
 				},
@@ -880,36 +877,36 @@ var schemaExamples = []schemaExample{
 				"numberProperty": NewFloat64Schema().NewRef(),
 			},
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":          "object",
 			"maxProperties": 2,
-			"properties": map[string]interface{}{
-				"numberProperty": map[string]interface{}{
+			"properties": map[string]any{
+				"numberProperty": map[string]any{
 					"type": "number",
 				},
 			},
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{},
-			map[string]interface{}{
+		AllValid: []any{
+			map[string]any{},
+			map[string]any{
 				"numberProperty": 3.14,
 			},
-			map[string]interface{}{
+			map[string]any{
 				"numberProperty": 3.14,
 				"some prop":      nil,
 			},
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			false,
 			true,
 			3.14,
 			"",
-			[]interface{}{},
-			map[string]interface{}{
+			[]any{},
+			map[string]any{
 				"numberProperty": "abc",
 			},
-			map[string]interface{}{
+			map[string]any{
 				"numberProperty": 3.14,
 				"some prop":      42,
 				"third":          "prop",
@@ -925,21 +922,21 @@ var schemaExamples = []schemaExample{
 				},
 			}},
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type": "object",
-			"additionalProperties": map[string]interface{}{
+			"additionalProperties": map[string]any{
 				"type": "number",
 			},
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{},
-			map[string]interface{}{
+		AllValid: []any{
+			map[string]any{},
+			map[string]any{
 				"x": 3.14,
 				"y": 3.14,
 			},
 		},
-		AllInvalid: []interface{}{
-			map[string]interface{}{
+		AllInvalid: []any{
+			map[string]any{
 				"x": "abc",
 			},
 		},
@@ -949,13 +946,13 @@ var schemaExamples = []schemaExample{
 			Type:                 &Types{"object"},
 			AdditionalProperties: AdditionalProperties{Has: BoolPtr(true)},
 		},
-		Serialization: map[string]interface{}{
+		Serialization: map[string]any{
 			"type":                 "object",
 			"additionalProperties": true,
 		},
-		AllValid: []interface{}{
-			map[string]interface{}{},
-			map[string]interface{}{
+		AllValid: []any{
+			map[string]any{},
+			map[string]any{
 				"x": false,
 				"y": 3.14,
 			},
@@ -967,7 +964,7 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Not: &SchemaRef{
 				Value: &Schema{
-					Enum: []interface{}{
+					Enum: []any{
 						nil,
 						true,
 						3.14,
@@ -976,9 +973,9 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		Serialization: map[string]interface{}{
-			"not": map[string]interface{}{
-				"enum": []interface{}{
+		Serialization: map[string]any{
+			"not": map[string]any{
+				"enum": []any{
 					nil,
 					true,
 					3.14,
@@ -986,12 +983,12 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			false,
 			2,
 			"abc",
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			nil,
 			true,
 			3.14,
@@ -1015,26 +1012,26 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		Serialization: map[string]interface{}{
-			"anyOf": []interface{}{
-				map[string]interface{}{
+		Serialization: map[string]any{
+			"anyOf": []any{
+				map[string]any{
 					"type":    "number",
 					"minimum": 1,
 					"maximum": 2,
 				},
-				map[string]interface{}{
+				map[string]any{
 					"type":    "number",
 					"minimum": 2,
 					"maximum": 3,
 				},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			1,
 			2,
 			3,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			0,
 			4,
 		},
@@ -1056,24 +1053,24 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		Serialization: map[string]interface{}{
-			"allOf": []interface{}{
-				map[string]interface{}{
+		Serialization: map[string]any{
+			"allOf": []any{
+				map[string]any{
 					"type":    "number",
 					"minimum": 1,
 					"maximum": 2,
 				},
-				map[string]interface{}{
+				map[string]any{
 					"type":    "number",
 					"minimum": 2,
 					"maximum": 3,
 				},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			2,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			0,
 			1,
 			3,
@@ -1097,25 +1094,25 @@ var schemaExamples = []schemaExample{
 				},
 			},
 		},
-		Serialization: map[string]interface{}{
-			"oneOf": []interface{}{
-				map[string]interface{}{
+		Serialization: map[string]any{
+			"oneOf": []any{
+				map[string]any{
 					"type":    "number",
 					"minimum": 1,
 					"maximum": 2,
 				},
-				map[string]interface{}{
+				map[string]any{
 					"type":    "number",
 					"minimum": 2,
 					"maximum": 3,
 				},
 			},
 		},
-		AllValid: []interface{}{
+		AllValid: []any{
 			1,
 			3,
 		},
-		AllInvalid: []interface{}{
+		AllInvalid: []any{
 			0,
 			2,
 			4,
@@ -1247,7 +1244,7 @@ var schemaErrorExamples = []schemaErrorExample{
 type schemaMultiErrorExample struct {
 	Title          string
 	Schema         *Schema
-	Values         []interface{}
+	Values         []any
 	ExpectedErrors []MultiError
 }
 
@@ -1296,7 +1293,7 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 			WithMinLength(2).
 			WithMaxLength(3).
 			WithPattern("^[abc]+$"),
-		Values: []interface{}{
+		Values: []any{
 			"f",
 			"foobar",
 		},
@@ -1310,7 +1307,7 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 		Schema: NewIntegerSchema().
 			WithMin(1).
 			WithMax(10),
-		Values: []interface{}{
+		Values: []any{
 			0.5,
 			10.1,
 		},
@@ -1326,9 +1323,9 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 			WithMaxItems(2).
 			WithItems(NewStringSchema().
 				WithPattern("^[abc]+$")),
-		Values: []interface{}{
-			[]interface{}{"foo"},
-			[]interface{}{"foo", "bar", "fizz"},
+		Values: []any{
+			[]any{"foo"},
+			[]any{"foo", "bar", "fizz"},
 		},
 		ExpectedErrors: []MultiError{
 			{
@@ -1352,9 +1349,9 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 					"key2": NewIntegerSchema(),
 				}),
 			),
-		Values: []interface{}{
-			[]interface{}{
-				map[string]interface{}{
+		Values: []any{
+			[]any{
+				map[string]any{
 					"key1": 100, // not a string
 					"key2": "not an integer",
 				},
@@ -1377,11 +1374,11 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 					WithItems(NewStringSchema().
 						WithPattern("^[abc]+$")),
 			}),
-		Values: []interface{}{
-			map[string]interface{}{
+		Values: []any{
+			map[string]any{
 				"key1": 100, // not a string
 				"key2": "not an integer",
-				"key3": []interface{}{"abc", "def"},
+				"key3": []any{"abc", "def"},
 			},
 		},
 		ExpectedErrors: []MultiError{
@@ -1413,7 +1410,7 @@ components:
       type: object
 `[1:])
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"name":      "kin-openapi",
 		"ownerName": true,
 	}
@@ -1463,22 +1460,22 @@ enum:
 	err = schema.VisitJSON(1337)
 	require.Error(t, err)
 
-	err = schema.VisitJSON([]interface{}{})
+	err = schema.VisitJSON([]any{})
 	require.NoError(t, err)
 
-	err = schema.VisitJSON([]interface{}{"a"})
+	err = schema.VisitJSON([]any{"a"})
 	require.NoError(t, err)
 
-	err = schema.VisitJSON([]interface{}{"b"})
+	err = schema.VisitJSON([]any{"b"})
 	require.Error(t, err)
 
-	err = schema.VisitJSON(map[string]interface{}{})
+	err = schema.VisitJSON(map[string]any{})
 	require.NoError(t, err)
 
-	err = schema.VisitJSON(map[string]interface{}{"b": "c"})
+	err = schema.VisitJSON(map[string]any{"b": "c"})
 	require.NoError(t, err)
 
-	err = schema.VisitJSON(map[string]interface{}{"d": "e"})
+	err = schema.VisitJSON(map[string]any{"d": "e"})
 	require.Error(t, err)
 }
 

@@ -78,7 +78,7 @@ func Example() {
 		panic(err)
 	}
 
-	p, err := json.Marshal(map[string]interface{}{
+	p, err := json.Marshal(map[string]any{
 		"pet_type": "Cat",
 		"breed":    "Dingo",
 		"bark":     true,

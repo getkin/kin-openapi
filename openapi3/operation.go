@@ -13,7 +13,7 @@ import (
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -66,8 +66,8 @@ func (operation Operation) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of Operation.
-func (operation Operation) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 12+len(operation.Extensions))
+func (operation Operation) MarshalYAML() (any, error) {
+	m := make(map[string]any, 12+len(operation.Extensions))
 	for k, v := range operation.Extensions {
 		m[k] = v
 	}
@@ -136,7 +136,7 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (operation Operation) JSONLookup(token string) (interface{}, error) {
+func (operation Operation) JSONLookup(token string) (any, error) {
 	switch token {
 	case "requestBody":
 		if operation.RequestBody != nil {

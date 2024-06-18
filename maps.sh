@@ -138,7 +138,7 @@ maplike_Pointable() {
 var _ jsonpointer.JSONPointable = (${type})(nil)
 
 // JSONLookup implements https://github.com/go-openapi/jsonpointer#JSONPointable
-func (${name} ${type#'*'}) JSONLookup(token string) (interface{}, error) {
+func (${name} ${type#'*'}) JSONLookup(token string) (any, error) {
 	if v := ${name}.Value(token); v == nil {
 		vv, _, err := jsonpointer.GetForToken(${name}.Extensions, token)
 		return vv, err
@@ -157,8 +157,8 @@ EOF
 maplike_UnMarsh() {
 	cat <<EOF >>"$maplike"
 // MarshalYAML returns the YAML encoding of ${type#'*'}.
-func (${name} ${type}) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, ${name}.Len()+len(${name}.Extensions))
+func (${name} ${type}) MarshalYAML() (any, error) {
+	m := make(map[string]any, ${name}.Len()+len(${name}.Extensions))
 	for k, v := range ${name}.Extensions {
 		m[k] = v
 	}
@@ -179,7 +179,7 @@ func (${name} ${type}) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets ${type#'*'} to a copy of data.
 func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
-	var m map[string]interface{}
+	var m map[string]any
 	if err = json.Unmarshal(data, &m); err != nil {
 		return
 	}
@@ -191,7 +191,7 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 	sort.Strings(ks)
 
 	x := ${type#'*'}{
-		Extensions: make(map[string]interface{}),
+		Extensions: make(map[string]any),
 		m:          make(map[string]${value_type}, len(m)),
 	}
 

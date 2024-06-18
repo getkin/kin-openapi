@@ -226,7 +226,7 @@ components:
 	require.NoError(t, err)
 
 	var ptr jsonpointer.Pointer
-	var v interface{}
+	var v any
 	var kind reflect.Kind
 
 	ptr, err = jsonpointer.New("/paths")

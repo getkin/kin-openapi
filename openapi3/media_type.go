@@ -13,10 +13,10 @@ import (
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
 type MediaType struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
+	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
@@ -41,7 +41,7 @@ func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType {
 	return mediaType
 }
 
-func (mediaType *MediaType) WithExample(name string, value interface{}) *MediaType {
+func (mediaType *MediaType) WithExample(name string, value any) *MediaType {
 	example := mediaType.Examples
 	if example == nil {
 		example = make(map[string]*ExampleRef)
@@ -73,8 +73,8 @@ func (mediaType MediaType) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of MediaType.
-func (mediaType MediaType) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 4+len(mediaType.Extensions))
+func (mediaType MediaType) MarshalYAML() (any, error) {
+	m := make(map[string]any, 4+len(mediaType.Extensions))
 	for k, v := range mediaType.Extensions {
 		m[k] = v
 	}
@@ -158,7 +158,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
+func (mediaType MediaType) JSONLookup(token string) (any, error) {
 	switch token {
 	case "schema":
 		if mediaType.Schema != nil {

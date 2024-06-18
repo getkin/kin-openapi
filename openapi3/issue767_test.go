@@ -14,7 +14,7 @@ func TestIssue767(t *testing.T) {
 	tests := [...]struct {
 		name     string
 		schema   *openapi3.Schema
-		value    map[string]interface{}
+		value    map[string]any
 		opts     []openapi3.SchemaValidationOption
 		checkErr require.ErrorAssertionFunc
 	}{
@@ -22,7 +22,7 @@ func TestIssue767(t *testing.T) {
 			name: "default values disabled should fail with minProps 1",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
 				"foo": {Type: &openapi3.Types{"boolean"}, Default: true}}).WithMinProperties(1),
-			value: map[string]interface{}{},
+			value: map[string]any{},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
 			},
@@ -32,7 +32,7 @@ func TestIssue767(t *testing.T) {
 			name: "default values enabled should pass with minProps 1",
 			schema: openapi3.NewSchema().WithProperties(map[string]*openapi3.Schema{
 				"foo": {Type: &openapi3.Types{"boolean"}, Default: true}}).WithMinProperties(1),
-			value: map[string]interface{}{},
+			value: map[string]any{},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
 				openapi3.DefaultsSet(func() {}),
@@ -45,7 +45,7 @@ func TestIssue767(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, Default: true},
 				"bar": {Type: &openapi3.Types{"boolean"}},
 			}).WithMinProperties(2),
-			value: map[string]interface{}{"bar": false},
+			value: map[string]any{"bar": false},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
 				openapi3.DefaultsSet(func() {}),
@@ -58,7 +58,7 @@ func TestIssue767(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, Default: true},
 				"bar": {Type: &openapi3.Types{"boolean"}},
 			}).WithMaxProperties(1),
-			value: map[string]interface{}{"bar": false},
+			value: map[string]any{"bar": false},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
 				openapi3.DefaultsSet(func() {}),
@@ -71,7 +71,7 @@ func TestIssue767(t *testing.T) {
 				"foo": {Type: &openapi3.Types{"boolean"}, Default: true},
 				"bar": {Type: &openapi3.Types{"boolean"}},
 			}).WithMaxProperties(1),
-			value: map[string]interface{}{"bar": false},
+			value: map[string]any{"bar": false},
 			opts: []openapi3.SchemaValidationOption{
 				openapi3.VisitAsRequest(),
 			},

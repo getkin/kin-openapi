@@ -41,7 +41,7 @@ paths: {}
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
-	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]interface{}{
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
 		"name":    "kin-openapi",
 		"address": "127.0.0.1",
 	})

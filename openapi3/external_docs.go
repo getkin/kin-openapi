@@ -11,7 +11,7 @@ import (
 // ExternalDocs is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#external-documentation-object
 type ExternalDocs struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -27,8 +27,8 @@ func (e ExternalDocs) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of ExternalDocs.
-func (e ExternalDocs) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 2+len(e.Extensions))
+func (e ExternalDocs) MarshalYAML() (any, error) {
+	m := make(map[string]any, 2+len(e.Extensions))
 	for k, v := range e.Extensions {
 		m[k] = v
 	}

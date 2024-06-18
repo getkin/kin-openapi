@@ -366,10 +366,10 @@ func ExampleNewSchemaRefForValue_withExportingSchemasWithMap() {
 		Age string `json:"age"`
 	}
 	type MyType struct {
-		Field1 string                 `json:"field1"`
-		Field2 string                 `json:"field2"`
-		Map1   map[string]interface{} `json:"anymap"`
-		Map2   map[string]Child       `json:"anymapChild"`
+		Field1 string           `json:"field1"`
+		Field2 string           `json:"field2"`
+		Map1   map[string]any   `json:"anymap"`
+		Map2   map[string]Child `json:"anymapChild"`
 	}
 
 	schemas := make(openapi3.Schemas)

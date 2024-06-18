@@ -11,7 +11,7 @@ import (
 // PathItem is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
 type PathItem struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
@@ -39,12 +39,12 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of PathItem.
-func (pathItem PathItem) MarshalYAML() (interface{}, error) {
+func (pathItem PathItem) MarshalYAML() (any, error) {
 	if ref := pathItem.Ref; ref != "" {
 		return Ref{Ref: ref}, nil
 	}
 
-	m := make(map[string]interface{}, 13+len(pathItem.Extensions))
+	m := make(map[string]any, 13+len(pathItem.Extensions))
 	for k, v := range pathItem.Extensions {
 		m[k] = v
 	}

@@ -50,17 +50,17 @@ TYPES
 
 type Node struct {
 	VariableNames []string
-	Value         interface{}
+	Value         any
 	Suffixes      SuffixList
 }
 
-func (currentNode *Node) Add(path string, value interface{}, options *Options) error
+func (currentNode *Node) Add(path string, value any, options *Options) error
 
 func (currentNode *Node) CreateNode(path string, options *Options) (*Node, error)
 
 func (currentNode *Node) Match(path string) (*Node, []string)
 
-func (currentNode *Node) MustAdd(path string, value interface{}, options *Options)
+func (currentNode *Node) MustAdd(path string, value any, options *Options)
 
 func (currentNode *Node) String() string
 

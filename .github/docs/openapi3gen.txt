@@ -9,7 +9,7 @@ var RefSchemaRef = openapi3.NewSchemaRef("Ref",
 
 FUNCTIONS
 
-func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error)
+func NewSchemaRefForValue(value any, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error)
     NewSchemaRefForValue is a shortcut for
     NewGenerator(...).NewSchemaRefForValue(...)
 
@@ -48,7 +48,7 @@ func NewGenerator(opts ...Option) *Generator
 
 func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, error)
 
-func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error)
+func (g *Generator) NewSchemaRefForValue(value any, schemas openapi3.Schemas) (*openapi3.SchemaRef, error)
     NewSchemaRefForValue uses reflection on the given value to produce a
     SchemaRef, and updates a supplied map with any dependent component schemas
     if they lead to cycles

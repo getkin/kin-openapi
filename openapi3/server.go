@@ -51,7 +51,7 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 // Server is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
 type Server struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	URL         string                     `json:"url" yaml:"url"` // Required
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -92,8 +92,8 @@ func (server Server) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of Server.
-func (server Server) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 3+len(server.Extensions))
+func (server Server) MarshalYAML() (any, error) {
+	m := make(map[string]any, 3+len(server.Extensions))
 	for k, v := range server.Extensions {
 		m[k] = v
 	}
@@ -234,7 +234,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
@@ -251,8 +251,8 @@ func (serverVariable ServerVariable) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of ServerVariable.
-func (serverVariable ServerVariable) MarshalYAML() (interface{}, error) {
-	m := make(map[string]interface{}, 4+len(serverVariable.Extensions))
+func (serverVariable ServerVariable) MarshalYAML() (any, error) {
+	m := make(map[string]any, 4+len(serverVariable.Extensions))
 	for k, v := range serverVariable.Extensions {
 		m[k] = v
 	}

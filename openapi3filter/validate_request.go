@@ -121,7 +121,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		options = &Options{}
 	}
 
-	var value interface{}
+	var value any
 	var err error
 	var found bool
 	var schema *openapi3.Schema

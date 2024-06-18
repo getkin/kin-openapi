@@ -178,14 +178,14 @@ type AdditionalProperties struct {
 func (addProps AdditionalProperties) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of AdditionalProperties.
 
-func (addProps AdditionalProperties) MarshalYAML() (interface{}, error)
+func (addProps AdditionalProperties) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of AdditionalProperties.
 
 func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets AdditionalProperties to a copy of data.
 
 type Callback struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	// Has unexported fields.
 }
@@ -201,7 +201,7 @@ func NewCallbackWithCapacity(cap int) *Callback
 func (callback *Callback) Delete(key string)
     Delete removes the entry associated with key 'key' from 'callback'.
 
-func (callback Callback) JSONLookup(token string) (interface{}, error)
+func (callback Callback) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -214,7 +214,7 @@ func (callback *Callback) Map() (m map[string]*PathItem)
 func (callback *Callback) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Callback.
 
-func (callback *Callback) MarshalYAML() (interface{}, error)
+func (callback *Callback) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Callback.
 
 func (callback *Callback) Set(key string, value *PathItem)
@@ -243,14 +243,14 @@ func (x *CallbackRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *CallbackRef) JSONLookup(token string) (interface{}, error)
+func (x *CallbackRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x CallbackRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of CallbackRef.
 
-func (x CallbackRef) MarshalYAML() (interface{}, error)
+func (x CallbackRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of CallbackRef.
 
 func (x *CallbackRef) RefPath() *url.URL
@@ -268,12 +268,12 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 
 type Callbacks map[string]*CallbackRef
 
-func (m Callbacks) JSONLookup(token string) (interface{}, error)
+func (m Callbacks) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 type Components struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -293,7 +293,7 @@ func NewComponents() Components
 func (components Components) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Components.
 
-func (components Components) MarshalYAML() (interface{}, error)
+func (components Components) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Components.
 
 func (components *Components) UnmarshalJSON(data []byte) error
@@ -304,7 +304,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
     spec.
 
 type Contact struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -316,7 +316,7 @@ type Contact struct {
 func (contact Contact) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Contact.
 
-func (contact Contact) MarshalYAML() (interface{}, error)
+func (contact Contact) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Contact.
 
 func (contact *Contact) UnmarshalJSON(data []byte) error
@@ -348,7 +348,7 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
     Validate returns an error if Content does not comply with the OpenAPI spec.
 
 type Discriminator struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	PropertyName string            `json:"propertyName" yaml:"propertyName"` // required
 	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
@@ -359,7 +359,7 @@ type Discriminator struct {
 func (discriminator Discriminator) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Discriminator.
 
-func (discriminator Discriminator) MarshalYAML() (interface{}, error)
+func (discriminator Discriminator) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Discriminator.
 
 func (discriminator *Discriminator) UnmarshalJSON(data []byte) error
@@ -370,7 +370,7 @@ func (discriminator *Discriminator) Validate(ctx context.Context, opts ...Valida
     spec.
 
 type Encoding struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
 	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -386,7 +386,7 @@ func NewEncoding() *Encoding
 func (encoding Encoding) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Encoding.
 
-func (encoding Encoding) MarshalYAML() (interface{}, error)
+func (encoding Encoding) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Encoding.
 
 func (encoding *Encoding) SerializationMethod() *SerializationMethod
@@ -405,22 +405,22 @@ func (encoding *Encoding) WithHeader(name string, header *Header) *Encoding
 func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
 
 type Example struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Summary       string      `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description   string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Value         interface{} `json:"value,omitempty" yaml:"value,omitempty"`
-	ExternalValue string      `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
+	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
+	Value         any    `json:"value,omitempty" yaml:"value,omitempty"`
+	ExternalValue string `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
 }
     Example is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#example-object
 
-func NewExample(value interface{}) *Example
+func NewExample(value any) *Example
 
 func (example Example) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Example.
 
-func (example Example) MarshalYAML() (interface{}, error)
+func (example Example) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Example.
 
 func (example *Example) UnmarshalJSON(data []byte) error
@@ -442,14 +442,14 @@ func (x *ExampleRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *ExampleRef) JSONLookup(token string) (interface{}, error)
+func (x *ExampleRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x ExampleRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ExampleRef.
 
-func (x ExampleRef) MarshalYAML() (interface{}, error)
+func (x ExampleRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of ExampleRef.
 
 func (x *ExampleRef) RefPath() *url.URL
@@ -467,12 +467,12 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 
 type Examples map[string]*ExampleRef
 
-func (m Examples) JSONLookup(token string) (interface{}, error)
+func (m Examples) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 type ExternalDocs struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -483,7 +483,7 @@ type ExternalDocs struct {
 func (e ExternalDocs) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ExternalDocs.
 
-func (e ExternalDocs) MarshalYAML() (interface{}, error)
+func (e ExternalDocs) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of ExternalDocs.
 
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error
@@ -508,14 +508,14 @@ type Header struct {
     Header is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#header-object
 
-func (header Header) JSONLookup(token string) (interface{}, error)
+func (header Header) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (header Header) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Header.
 
-func (header Header) MarshalYAML() (interface{}, error)
+func (header Header) MarshalYAML() (any, error)
     MarshalYAML returns the JSON encoding of Header.
 
 func (header *Header) SerializationMethod() (*SerializationMethod, error)
@@ -540,14 +540,14 @@ func (x *HeaderRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *HeaderRef) JSONLookup(token string) (interface{}, error)
+func (x *HeaderRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x HeaderRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of HeaderRef.
 
-func (x HeaderRef) MarshalYAML() (interface{}, error)
+func (x HeaderRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of HeaderRef.
 
 func (x *HeaderRef) RefPath() *url.URL
@@ -565,12 +565,12 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 type Headers map[string]*HeaderRef
 
-func (m Headers) JSONLookup(token string) (interface{}, error)
+func (m Headers) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 type Info struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Title          string   `json:"title" yaml:"title"` // Required
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
@@ -585,7 +585,7 @@ type Info struct {
 func (info Info) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Info.
 
-func (info Info) MarshalYAML() (interface{}, error)
+func (info Info) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Info.
 
 func (info *Info) UnmarshalJSON(data []byte) error
@@ -595,7 +595,7 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Info does not comply with the OpenAPI spec.
 
 type License struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -606,7 +606,7 @@ type License struct {
 func (license License) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of License.
 
-func (license License) MarshalYAML() (interface{}, error)
+func (license License) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of License.
 
 func (license *License) UnmarshalJSON(data []byte) error
@@ -616,14 +616,14 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
     Validate returns an error if License does not comply with the OpenAPI spec.
 
 type Link struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
-	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
-	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Parameters   map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Server       *Server                `json:"server,omitempty" yaml:"server,omitempty"`
-	RequestBody  interface{}            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
+	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	Description  string         `json:"description,omitempty" yaml:"description,omitempty"`
+	Parameters   map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Server       *Server        `json:"server,omitempty" yaml:"server,omitempty"`
+	RequestBody  any            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 }
     Link is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#link-object
@@ -631,7 +631,7 @@ type Link struct {
 func (link Link) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Link.
 
-func (link Link) MarshalYAML() (interface{}, error)
+func (link Link) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Link.
 
 func (link *Link) UnmarshalJSON(data []byte) error
@@ -653,14 +653,14 @@ func (x *LinkRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *LinkRef) JSONLookup(token string) (interface{}, error)
+func (x *LinkRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x LinkRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of LinkRef.
 
-func (x LinkRef) MarshalYAML() (interface{}, error)
+func (x LinkRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of LinkRef.
 
 func (x *LinkRef) RefPath() *url.URL
@@ -677,7 +677,7 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error
 
 type Links map[string]*LinkRef
 
-func (m Links) JSONLookup(token string) (interface{}, error)
+func (m Links) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -721,10 +721,10 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error)
     ResolveRefsIn expands references if for instance spec was just unmarshaled
 
 type MediaType struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
+	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
@@ -733,14 +733,14 @@ type MediaType struct {
 
 func NewMediaType() *MediaType
 
-func (mediaType MediaType) JSONLookup(token string) (interface{}, error)
+func (mediaType MediaType) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (mediaType MediaType) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of MediaType.
 
-func (mediaType MediaType) MarshalYAML() (interface{}, error)
+func (mediaType MediaType) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of MediaType.
 
 func (mediaType *MediaType) UnmarshalJSON(data []byte) error
@@ -752,7 +752,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 
 func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType
 
-func (mediaType *MediaType) WithExample(name string, value interface{}) *MediaType
+func (mediaType *MediaType) WithExample(name string, value any) *MediaType
 
 func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType
 
@@ -762,7 +762,7 @@ type MultiError []error
     MultiError is a collection of errors, intended for when multiple issues need
     to be reported upstream
 
-func (me MultiError) As(target interface{}) bool
+func (me MultiError) As(target any) bool
     As allows you to use `errors.As()` to set target to the first error within
     the multi error that matches the target type
 
@@ -795,7 +795,7 @@ func WithStatus(status int, responseRef *ResponseRef) NewResponsesOption
     WithStatus adds a status code keyed ResponseRef
 
 type OAuthFlow struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
@@ -808,7 +808,7 @@ type OAuthFlow struct {
 func (flow OAuthFlow) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of OAuthFlow.
 
-func (flow OAuthFlow) MarshalYAML() (interface{}, error)
+func (flow OAuthFlow) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of OAuthFlow.
 
 func (flow *OAuthFlow) UnmarshalJSON(data []byte) error
@@ -819,7 +819,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
     spec.
 
 type OAuthFlows struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
@@ -832,7 +832,7 @@ type OAuthFlows struct {
 func (flows OAuthFlows) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of OAuthFlows.
 
-func (flows OAuthFlows) MarshalYAML() (interface{}, error)
+func (flows OAuthFlows) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of OAuthFlows.
 
 func (flows *OAuthFlows) UnmarshalJSON(data []byte) error
@@ -843,7 +843,7 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
     spec.
 
 type Operation struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -889,14 +889,14 @@ func (operation *Operation) AddParameter(p *Parameter)
 
 func (operation *Operation) AddResponse(status int, response *Response)
 
-func (operation Operation) JSONLookup(token string) (interface{}, error)
+func (operation Operation) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (operation Operation) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Operation.
 
-func (operation Operation) MarshalYAML() (interface{}, error)
+func (operation Operation) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Operation.
 
 func (operation *Operation) UnmarshalJSON(data []byte) error
@@ -907,21 +907,21 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
     spec.
 
 type Parameter struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Style           string      `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode         *bool       `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	AllowReserved   bool        `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
-	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required        bool        `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema          *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         interface{} `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples        Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content         Content     `json:"content,omitempty" yaml:"content,omitempty"`
+	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
+	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
+	Description     string     `json:"description,omitempty" yaml:"description,omitempty"`
+	Style           string     `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode         *bool      `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowEmptyValue bool       `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool       `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	Deprecated      bool       `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Required        bool       `json:"required,omitempty" yaml:"required,omitempty"`
+	Schema          *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example         any        `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples        Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Content         Content    `json:"content,omitempty" yaml:"content,omitempty"`
 }
     Parameter is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameter-object
@@ -934,14 +934,14 @@ func NewPathParameter(name string) *Parameter
 
 func NewQueryParameter(name string) *Parameter
 
-func (parameter Parameter) JSONLookup(token string) (interface{}, error)
+func (parameter Parameter) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (parameter Parameter) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Parameter.
 
-func (parameter Parameter) MarshalYAML() (interface{}, error)
+func (parameter Parameter) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Parameter.
 
 func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error)
@@ -975,14 +975,14 @@ func (x *ParameterRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *ParameterRef) JSONLookup(token string) (interface{}, error)
+func (x *ParameterRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x ParameterRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ParameterRef.
 
-func (x ParameterRef) MarshalYAML() (interface{}, error)
+func (x ParameterRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of ParameterRef.
 
 func (x *ParameterRef) RefPath() *url.URL
@@ -1005,7 +1005,7 @@ func NewParameters() Parameters
 
 func (parameters Parameters) GetByInAndName(in string, name string) *Parameter
 
-func (p Parameters) JSONLookup(token string) (interface{}, error)
+func (p Parameters) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1015,12 +1015,12 @@ func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOpt
 
 type ParametersMap map[string]*ParameterRef
 
-func (m ParametersMap) JSONLookup(token string) (interface{}, error)
+func (m ParametersMap) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 type PathItem struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
@@ -1045,7 +1045,7 @@ func (pathItem *PathItem) GetOperation(method string) *Operation
 func (pathItem PathItem) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of PathItem.
 
-func (pathItem PathItem) MarshalYAML() (interface{}, error)
+func (pathItem PathItem) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of PathItem.
 
 func (pathItem *PathItem) Operations() map[string]*Operation
@@ -1059,7 +1059,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
 
 type Paths struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	// Has unexported fields.
 }
@@ -1097,7 +1097,7 @@ func (paths *Paths) InMatchingOrder() []string
     When matching URLs, concrete (non-templated) paths would be matched before
     their templated counterparts.
 
-func (paths Paths) JSONLookup(token string) (interface{}, error)
+func (paths Paths) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1110,7 +1110,7 @@ func (paths *Paths) Map() (m map[string]*PathItem)
 func (paths *Paths) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Paths.
 
-func (paths *Paths) MarshalYAML() (interface{}, error)
+func (paths *Paths) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Paths.
 
 func (paths *Paths) Set(key string, value *PathItem)
@@ -1157,12 +1157,12 @@ type RefNameResolver func(string) string
 
 type RequestBodies map[string]*RequestBodyRef
 
-func (m RequestBodies) JSONLookup(token string) (interface{}, error)
+func (m RequestBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 type RequestBody struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
@@ -1178,7 +1178,7 @@ func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType
 func (requestBody RequestBody) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of RequestBody.
 
-func (requestBody RequestBody) MarshalYAML() (interface{}, error)
+func (requestBody RequestBody) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of RequestBody.
 
 func (requestBody *RequestBody) UnmarshalJSON(data []byte) error
@@ -1219,14 +1219,14 @@ func (x *RequestBodyRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *RequestBodyRef) JSONLookup(token string) (interface{}, error)
+func (x *RequestBodyRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x RequestBodyRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of RequestBodyRef.
 
-func (x RequestBodyRef) MarshalYAML() (interface{}, error)
+func (x RequestBodyRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of RequestBodyRef.
 
 func (x *RequestBodyRef) RefPath() *url.URL
@@ -1243,7 +1243,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
     spec.
 
 type Response struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -1258,7 +1258,7 @@ func NewResponse() *Response
 func (response Response) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Response.
 
-func (response Response) MarshalYAML() (interface{}, error)
+func (response Response) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Response.
 
 func (response *Response) UnmarshalJSON(data []byte) error
@@ -1277,7 +1277,7 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response
 
 type ResponseBodies map[string]*ResponseRef
 
-func (m ResponseBodies) JSONLookup(token string) (interface{}, error)
+func (m ResponseBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1294,14 +1294,14 @@ func (x *ResponseRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *ResponseRef) JSONLookup(token string) (interface{}, error)
+func (x *ResponseRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x ResponseRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ResponseRef.
 
-func (x ResponseRef) MarshalYAML() (interface{}, error)
+func (x ResponseRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of ResponseRef.
 
 func (x *ResponseRef) RefPath() *url.URL
@@ -1318,7 +1318,7 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
     spec.
 
 type Responses struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	// Has unexported fields.
 }
@@ -1339,7 +1339,7 @@ func (responses *Responses) Default() *ResponseRef
 func (responses *Responses) Delete(key string)
     Delete removes the entry associated with key 'key' from 'responses'.
 
-func (responses Responses) JSONLookup(token string) (interface{}, error)
+func (responses Responses) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1352,7 +1352,7 @@ func (responses *Responses) Map() (m map[string]*ResponseRef)
 func (responses *Responses) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Responses.
 
-func (responses *Responses) MarshalYAML() (interface{}, error)
+func (responses *Responses) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Responses.
 
 func (responses *Responses) Set(key string, value *ResponseRef)
@@ -1376,7 +1376,7 @@ func (responses *Responses) Value(key string) *ResponseRef
     Value returns the responses for key or nil
 
 type Schema struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
@@ -1386,9 +1386,9 @@ type Schema struct {
 	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
 	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enum         []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default      interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
-	Example      interface{}   `json:"example,omitempty" yaml:"example,omitempty"`
+	Enum         []any         `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Default      any           `json:"default,omitempty" yaml:"default,omitempty"`
+	Example      any           `json:"example,omitempty" yaml:"example,omitempty"`
 	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
 	// Array-related, here for struct compactness
@@ -1463,26 +1463,26 @@ func NewUUIDSchema() *Schema
 func (schema *Schema) IsEmpty() bool
     IsEmpty tells whether schema is equivalent to the empty schema `{}`.
 
-func (schema *Schema) IsMatching(value interface{}) bool
+func (schema *Schema) IsMatching(value any) bool
 
-func (schema *Schema) IsMatchingJSONArray(value []interface{}) bool
+func (schema *Schema) IsMatchingJSONArray(value []any) bool
 
 func (schema *Schema) IsMatchingJSONBoolean(value bool) bool
 
 func (schema *Schema) IsMatchingJSONNumber(value float64) bool
 
-func (schema *Schema) IsMatchingJSONObject(value map[string]interface{}) bool
+func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool
 
 func (schema *Schema) IsMatchingJSONString(value string) bool
 
-func (schema Schema) JSONLookup(token string) (interface{}, error)
+func (schema Schema) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (schema Schema) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Schema.
 
-func (schema Schema) MarshalYAML() (interface{}, error)
+func (schema Schema) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Schema.
 
 func (schema *Schema) NewRef() *SchemaRef
@@ -1495,15 +1495,15 @@ func (schema *Schema) UnmarshalJSON(data []byte) error
 func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Schema does not comply with the OpenAPI spec.
 
-func (schema *Schema) VisitJSON(value interface{}, opts ...SchemaValidationOption) error
+func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
 
-func (schema *Schema) VisitJSONArray(value []interface{}) error
+func (schema *Schema) VisitJSONArray(value []any) error
 
 func (schema *Schema) VisitJSONBoolean(value bool) error
 
 func (schema *Schema) VisitJSONNumber(value float64) error
 
-func (schema *Schema) VisitJSONObject(value map[string]interface{}) error
+func (schema *Schema) VisitJSONObject(value map[string]any) error
 
 func (schema *Schema) VisitJSONString(value string) error
 
@@ -1511,9 +1511,9 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema
 
 func (schema *Schema) WithAnyAdditionalProperties() *Schema
 
-func (schema *Schema) WithDefault(defaultValue interface{}) *Schema
+func (schema *Schema) WithDefault(defaultValue any) *Schema
 
-func (schema *Schema) WithEnum(values ...interface{}) *Schema
+func (schema *Schema) WithEnum(values ...any) *Schema
 
 func (schema *Schema) WithExclusiveMax(value bool) *Schema
 
@@ -1565,7 +1565,7 @@ func (schema *Schema) WithoutAdditionalProperties() *Schema
 
 type SchemaError struct {
 	// Value is the value that failed validation.
-	Value interface{}
+	Value any
 
 	// Schema is the schema that failed validation.
 	Schema *Schema
@@ -1603,14 +1603,14 @@ func (x *SchemaRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *SchemaRef) JSONLookup(token string) (interface{}, error)
+func (x *SchemaRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x SchemaRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of SchemaRef.
 
-func (x SchemaRef) MarshalYAML() (interface{}, error)
+func (x SchemaRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of SchemaRef.
 
 func (x *SchemaRef) RefPath() *url.URL
@@ -1628,7 +1628,7 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 type SchemaRefs []*SchemaRef
 
-func (s SchemaRefs) JSONLookup(token string) (interface{}, error)
+func (s SchemaRefs) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1673,7 +1673,7 @@ func VisitAsResponse() SchemaValidationOption
 
 type Schemas map[string]*SchemaRef
 
-func (m Schemas) JSONLookup(token string) (interface{}, error)
+func (m Schemas) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1700,7 +1700,7 @@ func (srs SecurityRequirements) Validate(ctx context.Context, opts ...Validation
 func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *SecurityRequirements
 
 type SecurityScheme struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
 	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1725,7 +1725,7 @@ func NewSecurityScheme() *SecurityScheme
 func (ss SecurityScheme) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of SecurityScheme.
 
-func (ss SecurityScheme) MarshalYAML() (interface{}, error)
+func (ss SecurityScheme) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of SecurityScheme.
 
 func (ss *SecurityScheme) UnmarshalJSON(data []byte) error
@@ -1761,14 +1761,14 @@ func (x *SecuritySchemeRef) CollectionName() string
     CollectionName returns the JSON string used for a collection of these
     components.
 
-func (x *SecuritySchemeRef) JSONLookup(token string) (interface{}, error)
+func (x *SecuritySchemeRef) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (x SecuritySchemeRef) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of SecuritySchemeRef.
 
-func (x SecuritySchemeRef) MarshalYAML() (interface{}, error)
+func (x SecuritySchemeRef) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 
 func (x *SecuritySchemeRef) RefPath() *url.URL
@@ -1786,7 +1786,7 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 
 type SecuritySchemes map[string]*SecuritySchemeRef
 
-func (m SecuritySchemes) JSONLookup(token string) (interface{}, error)
+func (m SecuritySchemes) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
@@ -1798,7 +1798,7 @@ type SerializationMethod struct {
     parameters and body.
 
 type Server struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	URL         string                     `json:"url" yaml:"url"` // Required
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1814,7 +1814,7 @@ func (server *Server) BasePath() (string, error)
 func (server Server) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Server.
 
-func (server Server) MarshalYAML() (interface{}, error)
+func (server Server) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Server.
 
 func (server Server) MatchRawURL(input string) ([]string, string, bool)
@@ -1828,7 +1828,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
     Validate returns an error if Server does not comply with the OpenAPI spec.
 
 type ServerVariable struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
@@ -1840,7 +1840,7 @@ type ServerVariable struct {
 func (serverVariable ServerVariable) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ServerVariable.
 
-func (serverVariable ServerVariable) MarshalYAML() (interface{}, error)
+func (serverVariable ServerVariable) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of ServerVariable.
 
 func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
@@ -1861,12 +1861,12 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string)
 func (servers Servers) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Servers does not comply with the OpenAPI spec.
 
-type SliceUniqueItemsChecker func(items []interface{}) bool
+type SliceUniqueItemsChecker func(items []any) bool
     SliceUniqueItemsChecker is an function used to check if an given slice have
     unique items.
 
 type T struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
@@ -1901,14 +1901,14 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(ref stri
 
         doc.InternalizeRefs(context.Background(), nil)
 
-func (doc *T) JSONLookup(token string) (interface{}, error)
+func (doc *T) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 func (doc *T) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of T.
 
-func (doc *T) MarshalYAML() (interface{}, error)
+func (doc *T) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of T.
 
 func (doc *T) UnmarshalJSON(data []byte) error
@@ -1919,7 +1919,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
     Validations Options can be provided to modify the validation behavior.
 
 type Tag struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1931,7 +1931,7 @@ type Tag struct {
 func (t Tag) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Tag.
 
-func (t Tag) MarshalYAML() (interface{}, error)
+func (t Tag) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of Tag.
 
 func (t *Tag) UnmarshalJSON(data []byte) error
@@ -1956,7 +1956,7 @@ func (types *Types) Is(typ string) bool
 
 func (pTypes *Types) MarshalJSON() ([]byte, error)
 
-func (pTypes *Types) MarshalYAML() (interface{}, error)
+func (pTypes *Types) MarshalYAML() (any, error)
 
 func (types *Types) Permits(typ string) bool
 
@@ -2014,7 +2014,7 @@ type ValidationOptions struct {
     ValidationOptions provides configuration for validating OpenAPI documents.
 
 type XML struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
@@ -2028,7 +2028,7 @@ type XML struct {
 func (xml XML) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of XML.
 
-func (xml XML) MarshalYAML() (interface{}, error)
+func (xml XML) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of XML.
 
 func (xml *XML) UnmarshalJSON(data []byte) error

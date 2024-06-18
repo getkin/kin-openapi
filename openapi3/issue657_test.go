@@ -52,7 +52,7 @@ components:
 		{
 			name:  "no valid value",
 			value: "ABCDE",
-			checkErr: func(t require.TestingT, err error, i ...interface{}) {
+			checkErr: func(t require.TestingT, err error, i ...any) {
 				require.ErrorContains(t, err, "doesn't match schema due to: minimum string length is 10")
 
 				wErr := &openapi3.MultiError{}

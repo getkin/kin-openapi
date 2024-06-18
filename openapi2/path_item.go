@@ -9,7 +9,7 @@ import (
 )
 
 type PathItem struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
@@ -29,7 +29,7 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
 
-	m := make(map[string]interface{}, 8+len(pathItem.Extensions))
+	m := make(map[string]any, 8+len(pathItem.Extensions))
 	for k, v := range pathItem.Extensions {
 		m[k] = v
 	}

@@ -7,14 +7,14 @@ import (
 )
 
 type Response struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
-	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Schema      *openapi3.SchemaRef    `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Headers     map[string]*Header     `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Examples    map[string]interface{} `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Description string              `json:"description,omitempty" yaml:"description,omitempty"`
+	Schema      *openapi3.SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Headers     map[string]*Header  `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Examples    map[string]any      `json:"examples,omitempty" yaml:"examples,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Response.
@@ -23,7 +23,7 @@ func (response Response) MarshalJSON() ([]byte, error) {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
 
-	m := make(map[string]interface{}, 4+len(response.Extensions))
+	m := make(map[string]any, 4+len(response.Extensions))
 	for k, v := range response.Extensions {
 		m[k] = v
 	}
