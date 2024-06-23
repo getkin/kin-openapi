@@ -68,14 +68,14 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	var internalisedName string
 
 	if filePath != "" {
-		internalisedName = strings.TrimLeft(filePath, "."+string(filepath.Separator))
+		internalisedName = strings.TrimLeft(filePath, "./"+string(filepath.Separator))
 	}
 
 	if componentPath != "" {
 		if internalisedName != "" {
 			internalisedName += "_"
 		}
-		internalisedName += strings.TrimLeft(componentPath, "."+string(filepath.Separator))
+		internalisedName += strings.TrimLeft(componentPath, "./"+string(filepath.Separator))
 	}
 
 	// Replace invalid characters in component fixed field names.
@@ -91,8 +91,8 @@ func cutDirectories(p, dirs string) (string, bool) {
 		return p, false
 	}
 
-	p = strings.TrimRight(p, string(filepath.Separator))
-	dirs = strings.TrimRight(dirs, string(filepath.Separator))
+	p = strings.TrimRight(p, "/"+string(filepath.Separator))
+	dirs = strings.TrimRight(dirs, "/"+string(filepath.Separator))
 
 	var sb strings.Builder
 	sb.Grow(len(ParameterInHeader))

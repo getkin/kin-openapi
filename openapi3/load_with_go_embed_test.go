@@ -7,6 +7,7 @@ import (
 	"embed"
 	"fmt"
 	"net/url"
+	"path/filepath"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -18,7 +19,7 @@ func Example() {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, uri *url.URL) ([]byte, error) {
-		return fs.ReadFile(uri.Path)
+		return fs.ReadFile(filepath.ToSlash(uri.Path))
 	}
 
 	doc, err := loader.LoadFromFile("testdata/recursiveRef/openapi.yml")

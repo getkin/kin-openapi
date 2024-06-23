@@ -67,8 +67,8 @@ func (loader *Loader) LoadFromURI(location *url.URL) (*T, error) {
 
 // LoadFromFile loads a spec from a local file path
 func (loader *Loader) LoadFromFile(location string) (*T, error) {
-	loader.rootDir = path.Dir(location)
-	return loader.LoadFromURI(&url.URL{Path: filepath.ToSlash(location)})
+	loader.rootDir = filepath.FromSlash(path.Dir(location))
+	return loader.LoadFromURI(&url.URL{Path: filepath.FromSlash(location)})
 }
 
 func (loader *Loader) loadFromURIInternal(location *url.URL) (*T, error) {
@@ -262,16 +262,17 @@ func join(basePath *url.URL, relativePath *url.URL) *url.URL {
 		return relativePath
 	}
 	newPath := *basePath
-	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
+	newPath.Path = filepath.Join(filepath.Dir(newPath.Path), relativePath.Path)
 	return &newPath
 }
 
 func resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
 	if is_file(componentPath) {
 		// support absolute paths
-		if componentPath.Path[0] == '/' {
+		if filepath.IsAbs(componentPath.Path) {
 			return componentPath
 		}
+		componentPath.Path = filepath.FromSlash(componentPath.Path)
 		return join(basePath, componentPath)
 	}
 	return componentPath
@@ -281,6 +282,10 @@ func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
 	parsedURL, err := url.Parse(ref)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse reference: %q: %w", ref, err)
+	}
+
+	if is_file(parsedURL) {
+		parsedURL.Path = filepath.FromSlash(parsedURL.Path)
 	}
 
 	resolvedPath := resolvePath(rootPath, parsedURL)

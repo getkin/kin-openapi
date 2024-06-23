@@ -7,6 +7,7 @@ import (
 	"embed"
 	"encoding/json"
 	"net/url"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func TestLoadCircularRefFromFile(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, uri *url.URL) ([]byte, error) {
-		return circularResSpecs.ReadFile(uri.Path)
+		return circularResSpecs.ReadFile(filepath.ToSlash(uri.Path))
 	}
 
 	got, err := loader.LoadFromFile("testdata/circularRef/base.yml")
