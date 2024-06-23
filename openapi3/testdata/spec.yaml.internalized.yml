@@ -4,19 +4,19 @@
       "Test": {
         "properties": {
           "test": {
-            "$ref": "#/components/schemas/testdata_ext_definitions_b"
+            "$ref": "#/components/schemas/ext_definitions_b"
           }
         },
         "type": "object"
       },
-      "testdata_ext_definitions_a": {
+      "ext_definitions_a": {
         "type": "string"
       },
-      "testdata_ext_definitions_b": {
+      "ext_definitions_b": {
         "description": "I use a local reference.",
         "properties": {
           "name": {
-            "$ref": "#/components/schemas/testdata_ext_definitions_a"
+            "$ref": "#/components/schemas/ext_definitions_a"
           }
         },
         "type": "object"
