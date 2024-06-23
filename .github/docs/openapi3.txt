@@ -85,9 +85,6 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string
     DefaultRefResolver is a default implementation of refNameResolver for the
     InternalizeRefs function.
 
-    If the referenced component matches one already in the root component
-    section, that is used.
-
     In most other cases the path relative to loading working directory is
     transformed into a (hopefully) unique name.
 

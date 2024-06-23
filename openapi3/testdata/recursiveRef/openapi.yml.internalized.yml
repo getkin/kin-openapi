@@ -14,7 +14,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/components_models_error"
+              "$ref": "#/components/schemas/openapi_Error"
             }
           }
         },
@@ -24,7 +24,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/components_models_error"
+              "$ref": "#/components/schemas/openapi_Error"
             }
           }
         },
@@ -32,38 +32,34 @@
       }
     },
     "schemas": {
-      "openapi_Bar": {
+      "components_Bar": {
         "example": "bar",
         "type": "string"
       },
-      "openapi_Foo": {
+      "components_Foo": {
         "properties": {
           "bar": {
-            "$ref": "#/components/schemas/openapi_Bar"
+            "$ref": "#/components/schemas/components_Bar"
           }
         },
         "type": "object"
       },
-      "openapi_Foo2": {
+      "components_Foo_Foo2": {
         "properties": {
           "foo": {
-            "$ref": "#/components/schemas/openapi_Foo"
+            "$ref": "#/components/schemas/components_Foo"
           }
         },
         "type": "object"
       },
-       "components_models_error":{
+      "openapi_Error":{
         "title":"ErrorDetails",
         "type":"object"
       },
-      "components_models_error_Error":{
-        "title":"ErrorDetails",
-        "type":"object"
-      },
-      "openapi_Cat": {
+      "components_Cat": {
         "properties": {
           "cat": {
-            "$ref": "#/components/schemas/openapi_Cat"
+            "$ref": "#/components/schemas/components_Cat"
           }
         },
         "type": "object"
@@ -75,7 +71,7 @@
       "Foo": {
         "properties": {
           "bar": {
-            "$ref": "#/components/schemas/openapi_Bar"
+            "$ref": "#/components/schemas/components_Bar"
           }
         },
         "type": "object"
@@ -83,7 +79,7 @@
       "Foo2": {
         "properties": {
           "foo": {
-            "$ref": "#/components/schemas/openapi_Foo"
+            "$ref": "#/components/schemas/components_Foo"
           }
         },
         "type": "object"
@@ -95,7 +91,7 @@
       "Cat": {
         "properties": {
           "cat": {
-            "$ref": "#/components/schemas/openapi_Cat"
+            "$ref": "#/components/schemas/components_Cat"
           }
         },
         "type": "object"
@@ -128,7 +124,7 @@
                 "schema": {
                   "properties": {
                     "foo2": {
-                      "$ref": "#/components/schemas/openapi_Foo2"
+                      "$ref": "#/components/schemas/components_Foo_Foo2"
                     }
                   },
                   "type": "object"

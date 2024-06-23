@@ -17,9 +17,6 @@ type RefNameResolver func(*T, componentRef) string
 // DefaultRefResolver is a default implementation of refNameResolver for the
 // InternalizeRefs function.
 //
-// If the referenced component matches one already in the root component section,
-// that is used.
-//
 // In most other cases the path relative to loading working directory is transformed
 // into a (hopefully) unique name.
 //
@@ -37,15 +34,6 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	}
 
 	name := *ref.RefPath()
-
-	// If refering to a component in the root spec, no need to internalize just use
-	// the existing component.
-	if nameInRoot, found := ReferencesComponentInRootDocument(doc, ref); found {
-		c := *ref.RefPath()
-		nameInRoot = strings.TrimPrefix(nameInRoot, "#")
-		c.Fragment = nameInRoot
-		name = c
-	}
 
 	filePath, componentPath := name.Path, name.Fragment
 
@@ -82,14 +70,14 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	var internalisedName string
 
 	if filePath != "" {
-		internalisedName = strings.TrimLeft(filePath, "/")
+		internalisedName = strings.TrimLeft(filePath, "./")
 	}
 
 	if componentPath != "" {
 		if internalisedName != "" {
 			internalisedName += "_"
 		}
-		internalisedName += strings.TrimLeft(componentPath, "/")
+		internalisedName += strings.TrimLeft(componentPath, "./")
 	}
 
 	// Replace invalid characters in component fixed field names.

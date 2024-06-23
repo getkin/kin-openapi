@@ -48,7 +48,7 @@ func TestIssue341(t *testing.T) {
 	require.JSONEq(t, `{
 		"components": {
 		  "responses": {
-			"testpath_200_response": {
+			"testpath_testpath_200_response": {
 			  "content": {
 				"application/json": {
 				  "schema": {
@@ -70,7 +70,7 @@ func TestIssue341(t *testing.T) {
 			"get": {
 			  "responses": {
 				"200": {
-				  "$ref": "#/components/responses/testpath_200_response"
+				  "$ref": "#/components/responses/testpath_testpath_200_response"
 				}
 			  }
 			}
