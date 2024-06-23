@@ -44,13 +44,13 @@ const (
 VARIABLES
 
 var (
-	IdentifierRegExp            = regexp.MustCompile(`^[` + idenifierCharacters + `]+$`)
-	InvalidIdentifierCharRegExp = regexp.MustCompile(`[^` + idenifierCharacters + `]`)
+	IdentifierRegExp            = regexp.MustCompile(`^[` + identifierChars + `]+$`)
+	InvalidIdentifierCharRegExp = regexp.MustCompile(`[^` + identifierChars + `]`)
 )
-    IdentifierRegExp verifies whether Component object key matches contains
-    just 'idenifierCharacters', according to OpenAPI v3.x. However, to be able
-    supporting legacy OpenAPI v2.x, there is a need to customize above pattern
-    in order not to fail converted v2-v3 validation
+    IdentifierRegExp verifies whether Component object key matches contains just
+    'identifierChars', according to OpenAPI v3.x. However, to be able supporting
+    legacy OpenAPI v2.x, there is a need to customize above pattern in order not
+    to fail converted v2-v3 validation
 
 var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
@@ -85,8 +85,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string
     DefaultRefResolver is a default implementation of refNameResolver for the
     InternalizeRefs function.
 
-    In most other cases the path relative to loading working directory is
-    transformed into a (hopefully) unique name.
+    The external reference is internalised to (hopefully) a unique name.
 
     The transformation involves:
       - Cutting the "#/components/<type>" part.
@@ -94,8 +93,8 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string
       - Trimming the common directory with the root spec.
       - Replace invalid characters with with underscores.
 
-    This should be injective over a "reasonable" amount of the possible openapi
-    spec domain space but is not perfect. There might be edge cases.
+    This is an injective mapping over a "reasonable" amount of the possible
+    openapi spec domain space but is not perfect. There might be edge cases.
 
 func DefineIPv4Format()
     DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec

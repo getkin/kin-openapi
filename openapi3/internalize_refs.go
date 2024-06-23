@@ -4,7 +4,6 @@ import (
 	"context"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -17,8 +16,7 @@ type RefNameResolver func(*T, componentRef) string
 // DefaultRefResolver is a default implementation of refNameResolver for the
 // InternalizeRefs function.
 //
-// In most other cases the path relative to loading working directory is transformed
-// into a (hopefully) unique name.
+// The external reference is internalised to (hopefully) a unique name.
 //
 // The transformation involves:
 //   - Cutting the "#/components/<type>" part.
@@ -26,11 +24,11 @@ type RefNameResolver func(*T, componentRef) string
 //   - Trimming the common directory with the root spec.
 //   - Replace invalid characters with with underscores.
 //
-// This should be injective over a "reasonable" amount of the possible openapi
+// This is an injective mapping over a "reasonable" amount of the possible openapi
 // spec domain space but is not perfect. There might be edge cases.
 func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	if ref.RefString() == "" || ref.RefPath() == nil {
-		return ""
+		panic("unable to resolve reference to name")
 	}
 
 	name := *ref.RefPath()
@@ -70,14 +68,14 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	var internalisedName string
 
 	if filePath != "" {
-		internalisedName = strings.TrimLeft(filePath, "./")
+		internalisedName = strings.TrimLeft(filePath, "."+string(filepath.Separator))
 	}
 
 	if componentPath != "" {
 		if internalisedName != "" {
 			internalisedName += "_"
 		}
-		internalisedName += strings.TrimLeft(componentPath, "./")
+		internalisedName += strings.TrimLeft(componentPath, "."+string(filepath.Separator))
 	}
 
 	// Replace invalid characters in component fixed field names.
@@ -109,16 +107,6 @@ func cutDirectories(p, dirs string) (string, bool) {
 	}
 
 	return p, false
-}
-
-// componentNames returns the map keys in a sorted slice.
-func componentNames[E any](s map[string]E) []string {
-	out := make([]string, 0, len(s))
-	for i := range s {
-		out = append(out, i)
-	}
-	sort.Strings(out)
-	return out
 }
 
 func isExternalRef(ref string, parentIsExternal bool) bool {
