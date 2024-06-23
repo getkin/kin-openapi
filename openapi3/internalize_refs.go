@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+// RefNameResolver maps a component to an name that is used as it's internalised name.
+//
+// The function should avoid name collisions (i.e. be a injective mapping).
+// It must only contain characters valid for fixed field names: [IdentifierRegExp].
 type RefNameResolver func(*T, componentRef) string
 
 // DefaultRefResolver is a default implementation of refNameResolver for the
@@ -23,7 +27,10 @@ type RefNameResolver func(*T, componentRef) string
 //   - Cutting the "#/components/<type>" part.
 //   - Cutting the file extensions (.yaml/.json) from documents.
 //   - Trimming the common directory with the root spec.
-//   - Replace directory seperators with underscores.
+//   - Replace invalid characters with with underscores.
+//
+// This should be injective over a "reasonable" amount of the possible openapi
+// spec domain space but is not perfect. There might be edge cases.
 func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	if ref.RefString() == "" || ref.RefPath() == nil {
 		return ""
@@ -54,8 +61,8 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 			filePath = strings.TrimSuffix(filePath, ext)
 		}
 
+		// Trim the common prefix with the root spec path.
 		if doc.url != nil {
-			// Trim the common prefix with the root spec path.
 			commonDir := filepath.Dir(doc.url.Path)
 			for {
 				if commonDir == "." { // no common prefix
@@ -72,23 +79,23 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 		}
 	}
 
-	name.Path = ""
+	var internalisedName string
 
 	if filePath != "" {
-		name.Path = strings.TrimLeft(filePath, "/")
+		internalisedName = strings.TrimLeft(filePath, "/")
 	}
 
 	if componentPath != "" {
-		if name.Path != "" {
-			name.Path += "_"
+		if internalisedName != "" {
+			internalisedName += "_"
 		}
-		name.Path += strings.TrimLeft(componentPath, "/")
+		internalisedName += strings.TrimLeft(componentPath, "/")
 	}
 
-	// XXX(alb): These should really be escaped to ~1
-	// But kin-openapi doesn't support refs with ~ at the moment.
-	// https://swagger.io/docs/specification/using-ref/#escape
-	return strings.ReplaceAll(name.Path, "/", "_")
+	// Replace invalid characters in component fixed field names.
+	internalisedName = InvalidIdentifierCharRegExp.ReplaceAllString(internalisedName, "_")
+
+	return internalisedName
 }
 
 // cutDirectories removes the given directories from the start of the path if

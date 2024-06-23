@@ -44,6 +44,15 @@ const (
 VARIABLES
 
 var (
+	IdentifierRegExp            = regexp.MustCompile(`^[` + idenifierCharacters + `]+$`)
+	InvalidIdentifierCharRegExp = regexp.MustCompile(`[^` + idenifierCharacters + `]`)
+)
+    IdentifierRegExp verifies whether Component object key matches contains
+    just 'idenifierCharacters', according to OpenAPI v3.x. However, to be able
+    supporting legacy OpenAPI v2.x, there is a need to customize above pattern
+    in order not to fail converted v2-v3 validation
+
+var (
 	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
 	SchemaErrorDetailsDisabled = false
 
@@ -62,12 +71,6 @@ var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClien
 var ErrURINotSupported = errors.New("unsupported URI")
     ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle
     a given URI.
-
-var IdentifierRegExp = regexp.MustCompile(identifierPattern)
-    IdentifierRegExp verifies whether Component object key matches
-    'identifierPattern' pattern, according to OpenAPI v3.x. However, to be able
-    supporting legacy OpenAPI v2.x, there is a need to customize above pattern
-    in order not to fail converted v2-v3 validation
 
 var SchemaStringFormats = make(map[string]Format, 4)
     SchemaStringFormats allows for validating string formats
@@ -92,7 +95,10 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string
       - Cutting the "#/components/<type>" part.
       - Cutting the file extensions (.yaml/.json) from documents.
       - Trimming the common directory with the root spec.
-      - Replace directory seperators with underscores.
+      - Replace invalid characters with with underscores.
+
+    This should be injective over a "reasonable" amount of the possible openapi
+    spec domain space but is not perfect. There might be edge cases.
 
 func DefineIPv4Format()
     DefineIPv4Format opts in ipv4 format validation on top of OAS 3 spec
@@ -1180,6 +1186,11 @@ type Ref struct {
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 
 type RefNameResolver func(*T, componentRef) string
+    RefNameResolver maps a component to an name that is used as it's
+    internalised name.
+
+    The function should avoid name collisions (i.e. be a injective mapping). It
+    must only contain characters valid for fixed field names: IdentifierRegExp.
 
 type RequestBodies map[string]*RequestBodyRef
 

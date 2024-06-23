@@ -11,19 +11,22 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
-const identifierPattern = `^[a-zA-Z0-9._-]+$`
+const idenifierCharacters = `a-zA-Z0-9._-`
 
-// IdentifierRegExp verifies whether Component object key matches 'identifierPattern' pattern, according to OpenAPI v3.x.
+// IdentifierRegExp verifies whether Component object key matches contains just 'idenifierCharacters', according to OpenAPI v3.x.
 // However, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in order not to fail
 // converted v2-v3 validation
-var IdentifierRegExp = regexp.MustCompile(identifierPattern)
+var (
+	IdentifierRegExp            = regexp.MustCompile(`^[` + idenifierCharacters + `]+$`)
+	InvalidIdentifierCharRegExp = regexp.MustCompile(`[^` + idenifierCharacters + `]`)
+)
 
 // ValidateIdentifier returns an error if the given component name does not match IdentifierRegExp.
 func ValidateIdentifier(value string) error {
 	if IdentifierRegExp.MatchString(value) {
 		return nil
 	}
-	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (regexp: %q)", value, identifierPattern)
+	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (charset: [%q])", value, idenifierCharacters)
 }
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
