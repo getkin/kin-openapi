@@ -11,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -195,50 +194,50 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	}
 
 	if components := doc.Components; components != nil {
-		for _, component := range components.Headers {
+		for _, name := range componentNames(components.Headers) {
+			component := components.Headers[name]
 			if err = loader.resolveHeaderRef(doc, component, location); err != nil {
 				return
 			}
 		}
-		for _, component := range components.Parameters {
+		for _, name := range componentNames(components.Parameters) {
+			component := components.Parameters[name]
 			if err = loader.resolveParameterRef(doc, component, location); err != nil {
 				return
 			}
 		}
-		for _, component := range components.RequestBodies {
+		for _, name := range componentNames(components.RequestBodies) {
+			component := components.RequestBodies[name]
 			if err = loader.resolveRequestBodyRef(doc, component, location); err != nil {
 				return
 			}
 		}
-		for _, component := range components.Responses {
+		for _, name := range componentNames(components.Responses) {
+			component := components.Responses[name]
 			if err = loader.resolveResponseRef(doc, component, location); err != nil {
 				return
 			}
 		}
-		for _, component := range components.Schemas {
+		for _, name := range componentNames(components.Schemas) {
+			component := components.Schemas[name]
 			if err = loader.resolveSchemaRef(doc, component, location, []string{}); err != nil {
 				return
 			}
 		}
-		for _, component := range components.SecuritySchemes {
+		for _, name := range componentNames(components.SecuritySchemes) {
+			component := components.SecuritySchemes[name]
 			if err = loader.resolveSecuritySchemeRef(doc, component, location); err != nil {
 				return
 			}
 		}
-
-		examples := make([]string, 0, len(components.Examples))
-		for name := range components.Examples {
-			examples = append(examples, name)
-		}
-		sort.Strings(examples)
-		for _, name := range examples {
+		for _, name := range componentNames(components.Examples) {
 			component := components.Examples[name]
 			if err = loader.resolveExampleRef(doc, component, location); err != nil {
 				return
 			}
 		}
-
-		for _, component := range components.Callbacks {
+		for _, name := range componentNames(components.Callbacks) {
+			component := components.Callbacks[name]
 			if err = loader.resolveCallbackRef(doc, component, location); err != nil {
 				return
 			}
@@ -246,7 +245,9 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	}
 
 	// Visit all operations
-	for _, pathItem := range doc.Paths.Map() {
+	pathItems := doc.Paths.Map()
+	for _, name := range componentNames(pathItems) {
+		pathItem := pathItems[name]
 		if pathItem == nil {
 			continue
 		}
@@ -667,7 +668,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 	if value.Content != nil && value.Schema != nil {
 		return errors.New("cannot contain both schema and content in a parameter")
 	}
-	for _, contentType := range value.Content {
+	for _, name := range componentNames(value.Content) {
+		contentType := value.Content[name]
 		if schema := contentType.Schema; schema != nil {
 			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
 				return err
@@ -726,16 +728,12 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		return nil
 	}
 
-	for _, contentType := range value.Content {
+	for _, name := range componentNames(value.Content) {
+		contentType := value.Content[name]
 		if contentType == nil {
 			continue
 		}
-		examples := make([]string, 0, len(contentType.Examples))
-		for name := range contentType.Examples {
-			examples = append(examples, name)
-		}
-		sort.Strings(examples)
-		for _, name := range examples {
+		for _, name := range componentNames(contentType.Examples) {
 			example := contentType.Examples[name]
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
@@ -795,21 +793,18 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		return nil
 	}
 
-	for _, header := range value.Headers {
+	for _, name := range componentNames(value.Headers) {
+		header := value.Headers[name]
 		if err := loader.resolveHeaderRef(doc, header, documentPath); err != nil {
 			return err
 		}
 	}
-	for _, contentType := range value.Content {
+	for _, name := range componentNames(value.Content) {
+		contentType := value.Content[name]
 		if contentType == nil {
 			continue
 		}
-		examples := make([]string, 0, len(contentType.Examples))
-		for name := range contentType.Examples {
-			examples = append(examples, name)
-		}
-		sort.Strings(examples)
-		for _, name := range examples {
+		for _, name := range componentNames(contentType.Examples) {
 			example := contentType.Examples[name]
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
@@ -823,7 +818,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 			contentType.Schema = schema
 		}
 	}
-	for _, link := range value.Links {
+	for _, name := range componentNames(value.Links) {
+		link := value.Links[name]
 		if err := loader.resolveLinkRef(doc, link, documentPath); err != nil {
 			return err
 		}
@@ -881,7 +877,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
-	for _, v := range value.Properties {
+	for _, name := range componentNames(value.Properties) {
+		v := value.Properties[name]
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err
 		}
@@ -1038,7 +1035,9 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		return nil
 	}
 
-	for _, pathItem := range value.Map() {
+	pathItems := value.Map()
+	for _, name := range componentNames(pathItems) {
+		pathItem := pathItems[name]
 		if err = loader.resolvePathItemRef(doc, pathItem, documentPath); err != nil {
 			return err
 		}
@@ -1130,7 +1129,9 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			return
 		}
 	}
-	for _, operation := range pathItem.Operations() {
+	operations := pathItem.Operations()
+	for _, name := range componentNames(operations) {
+		operation := operations[name]
 		for _, parameter := range operation.Parameters {
 			if err = loader.resolveParameterRef(doc, parameter, documentPath); err != nil {
 				return
@@ -1141,12 +1142,15 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 				return
 			}
 		}
-		for _, response := range operation.Responses.Map() {
+		responses := operation.Responses.Map()
+		for _, name := range componentNames(responses) {
+			response := responses[name]
 			if err = loader.resolveResponseRef(doc, response, documentPath); err != nil {
 				return
 			}
 		}
-		for _, callback := range operation.Callbacks {
+		for _, name := range componentNames(operation.Callbacks) {
+			callback := operation.Callbacks[name]
 			if err = loader.resolveCallbackRef(doc, callback, documentPath); err != nil {
 				return
 			}
