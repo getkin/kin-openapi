@@ -166,16 +166,14 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	}
 
 	doc := &T{}
-	if location != nil {
-		specURL := *location
-		doc.url = &specURL // shallow-copy
-	}
-
 	loader.visitedDocuments[uri] = doc
 
 	if err := unmarshal(data, doc); err != nil {
 		return nil, err
 	}
+
+	doc.url = copyURI(location)
+
 	if err := loader.ResolveRefsIn(doc, location); err != nil {
 		return nil, err
 	}

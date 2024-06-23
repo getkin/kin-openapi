@@ -46,6 +46,15 @@ func Uint64Ptr(value uint64) *uint64 {
 	return &value
 }
 
+func copyURI(u *url.URL) *url.URL {
+	if u == nil {
+		return nil
+	}
+
+	c := *u // shallow-copy
+	return &c
+}
+
 type componentRef interface {
 	RefString() string
 	RefPath() *url.URL
