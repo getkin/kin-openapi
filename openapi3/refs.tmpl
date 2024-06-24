@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/perimeterx/marshmallow"
@@ -15,6 +16,10 @@ import (
 // {{ $type.Name }}Ref represents either a {{ $type.Name }} or a $ref to a {{ $type.Name }}.
 // When serializing and both fields are set, Ref is preferred over Value.
 type {{ $type.Name }}Ref struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *{{ $type.Name }}
 	extra []string
@@ -63,6 +68,14 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -72,8 +85,9 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 // Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
 func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -81,15 +95,33 @@ func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOp
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -98,6 +130,11 @@ func (x *{{ $type.Name }}Ref) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }

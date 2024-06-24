@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/perimeterx/marshmallow"
@@ -15,6 +16,10 @@ import (
 // CallbackRef represents either a Callback or a $ref to a Callback.
 // When serializing and both fields are set, Ref is preferred over Value.
 type CallbackRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Callback
 	extra []string
@@ -63,6 +68,14 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -72,8 +85,9 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if CallbackRef does not comply with the OpenAPI spec.
 func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -81,15 +95,33 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -98,6 +130,11 @@ func (x *CallbackRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -105,6 +142,10 @@ func (x *CallbackRef) JSONLookup(token string) (any, error) {
 // ExampleRef represents either a Example or a $ref to a Example.
 // When serializing and both fields are set, Ref is preferred over Value.
 type ExampleRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Example
 	extra []string
@@ -153,6 +194,14 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -162,8 +211,9 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if ExampleRef does not comply with the OpenAPI spec.
 func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -171,15 +221,33 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -188,6 +256,11 @@ func (x *ExampleRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -195,6 +268,10 @@ func (x *ExampleRef) JSONLookup(token string) (any, error) {
 // HeaderRef represents either a Header or a $ref to a Header.
 // When serializing and both fields are set, Ref is preferred over Value.
 type HeaderRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Header
 	extra []string
@@ -243,6 +320,14 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -252,8 +337,9 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if HeaderRef does not comply with the OpenAPI spec.
 func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -261,15 +347,33 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -278,6 +382,11 @@ func (x *HeaderRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -285,6 +394,10 @@ func (x *HeaderRef) JSONLookup(token string) (any, error) {
 // LinkRef represents either a Link or a $ref to a Link.
 // When serializing and both fields are set, Ref is preferred over Value.
 type LinkRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Link
 	extra []string
@@ -333,6 +446,14 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -342,8 +463,9 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if LinkRef does not comply with the OpenAPI spec.
 func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -351,15 +473,33 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error 
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -368,6 +508,11 @@ func (x *LinkRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -375,6 +520,10 @@ func (x *LinkRef) JSONLookup(token string) (any, error) {
 // ParameterRef represents either a Parameter or a $ref to a Parameter.
 // When serializing and both fields are set, Ref is preferred over Value.
 type ParameterRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Parameter
 	extra []string
@@ -423,6 +572,14 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -432,8 +589,9 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if ParameterRef does not comply with the OpenAPI spec.
 func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -441,15 +599,33 @@ func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) e
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -458,6 +634,11 @@ func (x *ParameterRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -465,6 +646,10 @@ func (x *ParameterRef) JSONLookup(token string) (any, error) {
 // RequestBodyRef represents either a RequestBody or a $ref to a RequestBody.
 // When serializing and both fields are set, Ref is preferred over Value.
 type RequestBodyRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *RequestBody
 	extra []string
@@ -513,6 +698,14 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -522,8 +715,9 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if RequestBodyRef does not comply with the OpenAPI spec.
 func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -531,15 +725,33 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -548,6 +760,11 @@ func (x *RequestBodyRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -555,6 +772,10 @@ func (x *RequestBodyRef) JSONLookup(token string) (any, error) {
 // ResponseRef represents either a Response or a $ref to a Response.
 // When serializing and both fields are set, Ref is preferred over Value.
 type ResponseRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Response
 	extra []string
@@ -603,6 +824,14 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -612,8 +841,9 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if ResponseRef does not comply with the OpenAPI spec.
 func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -621,15 +851,33 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -638,6 +886,11 @@ func (x *ResponseRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -645,6 +898,10 @@ func (x *ResponseRef) JSONLookup(token string) (any, error) {
 // SchemaRef represents either a Schema or a $ref to a Schema.
 // When serializing and both fields are set, Ref is preferred over Value.
 type SchemaRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Schema
 	extra []string
@@ -693,6 +950,14 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -702,8 +967,9 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if SchemaRef does not comply with the OpenAPI spec.
 func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -711,15 +977,33 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -728,6 +1012,11 @@ func (x *SchemaRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }
@@ -735,6 +1024,10 @@ func (x *SchemaRef) JSONLookup(token string) (any, error) {
 // SecuritySchemeRef represents either a SecurityScheme or a $ref to a SecurityScheme.
 // When serializing and both fields are set, Ref is preferred over Value.
 type SecuritySchemeRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *SecurityScheme
 	extra []string
@@ -783,6 +1076,14 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 				x.extra = append(x.extra, key)
 			}
 			sort.Strings(x.extra)
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					delete(extra, k)
+				}
+			}
+			if len(extra) != 0 {
+				x.Extensions = extra
+			}
 		}
 		return nil
 	}
@@ -792,8 +1093,9 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 // Validate returns an error if SecuritySchemeRef does not comply with the OpenAPI spec.
 func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	var extras []string
 	if extra := x.extra; len(extra) != 0 {
-		extras := make([]string, 0, len(extra))
 		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 		for _, ex := range extra {
 			if allowed != nil {
@@ -801,15 +1103,33 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 					continue
 				}
 			}
-			extras = append(extras, ex)
-		}
-		if len(extras) != 0 {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			// extras in the Extensions checked below
+			if _, ok := x.Extensions[ex]; !ok {
+				extras = append(extras, ex)
+			}
 		}
 	}
+
+	if extra := x.Extensions; exProhibited && len(extra) != 0 {
+		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
+		for ex := range extra {
+			if allowed != nil {
+				if _, ok := allowed[ex]; ok {
+					continue
+				}
+			}
+			extras = append(extras, ex)
+		}
+	}
+
+	if len(extras) != 0 {
+		return fmt.Errorf("extra sibling fields: %+v", extras)
+	}
+
 	if v := x.Value; v != nil {
 		return v.Validate(ctx)
 	}
+
 	return foundUnresolvedRef(x.Ref)
 }
 
@@ -818,6 +1138,11 @@ func (x *SecuritySchemeRef) JSONLookup(token string) (any, error) {
 	if token == "$ref" {
 		return x.Ref, nil
 	}
+
+	if v, ok := x.Extensions[token]; ok {
+		return v, nil
+	}
+
 	ptr, _, err := jsonpointer.GetForToken(x.Value, token)
 	return ptr, err
 }

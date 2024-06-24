@@ -231,6 +231,10 @@ func (callback *Callback) Value(key string) *PathItem
     Value returns the callback for key or nil
 
 type CallbackRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Callback
 
@@ -430,6 +434,10 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
     Validate returns an error if Example does not comply with the OpenAPI spec.
 
 type ExampleRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Example
 
@@ -528,6 +536,10 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
     Validate returns an error if Header does not comply with the OpenAPI spec.
 
 type HeaderRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Header
 
@@ -641,6 +653,10 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Link does not comply with the OpenAPI spec.
 
 type LinkRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Link
 
@@ -963,6 +979,10 @@ func (parameter *Parameter) WithRequired(value bool) *Parameter
 func (parameter *Parameter) WithSchema(value *Schema) *Parameter
 
 type ParameterRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Parameter
 
@@ -1207,6 +1227,10 @@ func (requestBody *RequestBody) WithSchema(value *Schema, consumes []string) *Re
 func (requestBody *RequestBody) WithSchemaRef(value *SchemaRef, consumes []string) *RequestBody
 
 type RequestBodyRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *RequestBody
 
@@ -1282,6 +1306,10 @@ func (m ResponseBodies) JSONLookup(token string) (any, error)
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
 type ResponseRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Response
 
@@ -1588,6 +1616,10 @@ func (err *SchemaError) JSONPointer() []string
 func (err SchemaError) Unwrap() error
 
 type SchemaRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *Schema
 
@@ -1748,6 +1780,10 @@ func (ss *SecurityScheme) WithScheme(value string) *SecurityScheme
 func (ss *SecurityScheme) WithType(value string) *SecurityScheme
 
 type SecuritySchemeRef struct {
+	// Extensions only captures fields starting with 'x-' as no other fields
+	// are allowed by the openapi spec.
+	Extensions map[string]any
+
 	Ref   string
 	Value *SecurityScheme
 
@@ -1968,6 +2004,12 @@ type ValidationOption func(options *ValidationOptions)
     ValidationOption allows the modification of how the OpenAPI document is
     validated.
 
+func AllowExtensionsWithRef() ValidationOption
+    AllowExtensionsWithRef allows extensions (fields starting with 'x-') as
+    siblings for $ref fields. This is the default. Non-extension fields are
+    prohibited unless allowed explicitly with the AllowExtraSiblingFields
+    option.
+
 func AllowExtraSiblingFields(fields ...string) ValidationOption
     AllowExtraSiblingFields called as AllowExtraSiblingFields("description")
     makes Validate not return an error when said field appears next to a $ref.
@@ -2007,6 +2049,12 @@ func EnableSchemaPatternValidation() ValidationOption
     EnableSchemaPatternValidation does the opposite of
     DisableSchemaPatternValidation. By default, schema pattern validation is
     enabled.
+
+func ProhibitExtensionsWithRef() ValidationOption
+    ProhibitExtensionsWithRef causes the validation to return an error if
+    extensions (fields starting with 'x-') are found as siblings for $ref
+    fields. Non-extension fields are prohibited unless allowed explicitly with
+    the AllowExtraSiblingFields option.
 
 type ValidationOptions struct {
 	// Has unexported fields.
