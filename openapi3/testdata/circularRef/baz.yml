@@ -1,0 +1,9 @@
+BazNested:
+  type: object
+  properties:
+    baz:
+      $ref: "#/BazNested"
+    bazArray:
+      type: array
+      items:
+        $ref: "#/BazNested"

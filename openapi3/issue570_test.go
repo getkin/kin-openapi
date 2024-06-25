@@ -9,5 +9,5 @@ import (
 func TestIssue570(t *testing.T) {
 	loader := NewLoader()
 	_, err := loader.LoadFromFile("testdata/issue570.json")
-	require.ErrorContains(t, err, CircularReferenceError)
+	require.NoError(t, err)
 }

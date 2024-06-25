@@ -59,7 +59,6 @@ func main() {
 
 	switch {
 	case vd.OpenAPI == "3" || strings.HasPrefix(vd.OpenAPI, "3."):
-		openapi3.CircularReferenceCounter = *circular
 		loader := openapi3.NewLoader()
 		loader.IsExternalRefsAllowed = *ext
 
