@@ -304,7 +304,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ## CHANGELOG: Sub-v1 breaking API changes
 
 ### v0.126.0
-* `openapi3.CircularReferenceError` and `CircularReferenceCounter` are removed. `openapi3.Loader` now implements reference backtracking, so any kind of circular references should be properly resolved.
+* `openapi3.CircularReferenceError` and `openapi3.CircularReferenceCounter` are removed. `openapi3.Loader` now implements reference backtracking, so any kind of circular references should be properly resolved.
 
 ### v0.125.0
 * The `openapi3filter.ErrFunc` and `openapi3filter.LogFunc` func types now take the validated request's context as first argument.
