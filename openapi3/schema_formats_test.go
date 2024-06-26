@@ -39,6 +39,7 @@ func TestIssue430(t *testing.T) {
 		"::FFFF:192.168.0.1": false,
 		// "[::FFFF:C0A8:1]:80" doesn't parse per net.ParseIP()
 		// "[::FFFF:C0A8:1%1]:80" doesn't parse per net.ParseIP()
+		"2001:db8::": false,
 	}
 
 	for datum := range data {
@@ -53,11 +54,11 @@ func TestIssue430(t *testing.T) {
 		err = schema.VisitJSON(datum)
 		require.NoError(t, err)
 		if isV4 {
-			require.Nil(t, validateIPv4(datum), "%q should be IPv4", datum)
-			require.NotNil(t, validateIPv6(datum), "%q should not be IPv6", datum)
+			assert.Nil(t, validateIPv4(datum), "%q should be IPv4", datum)
+			assert.NotNil(t, validateIPv6(datum), "%q should not be IPv6", datum)
 		} else {
-			require.NotNil(t, validateIPv4(datum), "%q should not be IPv4", datum)
-			require.Nil(t, validateIPv6(datum), "%q should be IPv6", datum)
+			assert.NotNil(t, validateIPv4(datum), "%q should not be IPv4", datum)
+			assert.Nil(t, validateIPv6(datum), "%q should be IPv6", datum)
 		}
 	}
 }
