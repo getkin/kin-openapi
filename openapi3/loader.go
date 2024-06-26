@@ -912,12 +912,12 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 			component.Value = &scheme
 			component.refPath = *documentPath
 		} else {
-			var resolved SecuritySchemeRef
 			if !loader.shouldVisitRef(ref, func(value any) {
 				component.Value = value.(*SecurityScheme)
 			}) {
 				return nil
 			}
+			var resolved SecuritySchemeRef
 			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			defer loader.unvisitRef(ref, resolved.Value)
