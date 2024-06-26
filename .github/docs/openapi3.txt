@@ -56,7 +56,15 @@ var (
 	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
 )
 var CircularReferenceCounter = 3
+    CircularReferenceCounter is deprecated. kin-openapi does not use this
+    counter anymore, and it's kept for compatibility reasons Deprecated:
+    CircularReferenceCounter is deprecated.
+
 var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
+    CircularReferenceError is deprecated. kin-openapi will never throw this
+    error anymore, and it's kept for compatibility reasons Deprecated:
+    CircularReferenceError is deprecated.
+
 var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
     DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
     HTTP URIs and local file URIs.
