@@ -55,8 +55,6 @@ var (
 	// ErrSchemaInputInf may be returned when validating a number
 	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
 )
-var CircularReferenceCounter = 3
-var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
 var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
     DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
     HTTP URIs and local file URIs.
