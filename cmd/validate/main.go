@@ -13,11 +13,6 @@ import (
 )
 
 var (
-	defaultCircular = openapi3.CircularReferenceCounter
-	circular        = flag.Int("circular", defaultCircular, "bump this (upper) limit when there's trouble with cyclic schema references")
-)
-
-var (
 	defaultDefaults = true
 	defaults        = flag.Bool("defaults", defaultDefaults, "when false, disables schemas' default field validation")
 )
@@ -89,9 +84,6 @@ func main() {
 
 	case vd.OpenAPI == "2" || strings.HasPrefix(vd.OpenAPI, "2."),
 		vd.Swagger == "2" || strings.HasPrefix(vd.Swagger, "2."):
-		if *circular != defaultCircular {
-			log.Fatal("Flag --circular is only for OpenAPIv3")
-		}
 		if *defaults != defaultDefaults {
 			log.Fatal("Flag --defaults is only for OpenAPIv3")
 		}

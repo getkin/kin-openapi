@@ -16,16 +16,6 @@ import (
 	"strings"
 )
 
-// CircularReferenceError is deprecated.
-// kin-openapi will never throw this error anymore, and it's kept for compatibility reasons
-// Deprecated: CircularReferenceError is deprecated.
-var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
-
-// CircularReferenceCounter is deprecated.
-// kin-openapi does not use this counter anymore, and it's kept for compatibility reasons
-// Deprecated: CircularReferenceCounter is deprecated.
-var CircularReferenceCounter = 3
-
 func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
 }
@@ -321,8 +311,7 @@ func (loader *Loader) unvisitRef(ref string, value any) {
 }
 
 func (loader *Loader) shouldVisitRef(ref string, fn func(value any)) bool {
-	_, ok := loader.visitedRefs[ref]
-	if ok {
+	if _, ok := loader.visitedRefs[ref]; ok {
 		loader.backtrack[ref] = append(loader.backtrack[ref], fn)
 		return false
 	}
@@ -523,8 +512,6 @@ func drillIntoField(cursor any, fieldName string) (any, error) {
 		return nil, errors.New("not a map, slice nor struct")
 	}
 }
-
-var errAlreadyResolved = errors.New("already resolved")
 
 func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
 	if ref != "" && ref[0] == '#' {
@@ -847,8 +834,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}) {
 				return nil
 			}
-			loader.visitRef(ref)
 			var resolved SchemaRef
+			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
@@ -1057,8 +1044,15 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 			component.Value = &link
 			component.refPath = *documentPath
 		} else {
+			if !loader.shouldVisitRef(ref, func(value any) {
+				component.Value = value.(*Link)
+			}) {
+				return nil
+			}
 			var resolved LinkRef
+			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
+			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -1092,8 +1086,16 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			}
 			*pathItem = p
 		} else {
+			if !loader.shouldVisitRef(ref, func(value any) {
+				*pathItem = *value.(*PathItem)
+			}) {
+				return nil
+			}
 			var resolved PathItem
-			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
+			loader.visitRef(ref)
+			doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved)
+			defer loader.unvisitRef(ref, &resolved)
+			if err != nil {
 				if err == errMUSTPathItem {
 					return nil
 				}
