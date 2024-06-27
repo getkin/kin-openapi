@@ -2,9 +2,8 @@ package openapi3
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"regexp"
-	"strings"
 )
 
 const (
@@ -43,23 +42,15 @@ func DefineStringFormatCallback(name string, callback FormatCallback) {
 	SchemaStringFormats[name] = Format{callback: callback}
 }
 
-func validateIP(ip string) error {
-	parsed := net.ParseIP(ip)
-	if parsed == nil {
+func validateIPv4(ip string) error {
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
 		return &SchemaError{
 			Value:  ip,
 			Reason: "Not an IP address",
 		}
 	}
-	return nil
-}
-
-func validateIPv4(ip string) error {
-	if err := validateIP(ip); err != nil {
-		return err
-	}
-
-	if !(strings.Count(ip, ":") < 2) {
+	if !addr.Is4() {
 		return &SchemaError{
 			Value:  ip,
 			Reason: "Not an IPv4 address (it's IPv6)",
@@ -69,11 +60,15 @@ func validateIPv4(ip string) error {
 }
 
 func validateIPv6(ip string) error {
-	if err := validateIP(ip); err != nil {
-		return err
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
+		return &SchemaError{
+			Value:  ip,
+			Reason: "Not an IP address",
+			Origin: err,
+		}
 	}
-
-	if !(strings.Count(ip, ":") >= 2) {
+	if !addr.Is6() {
 		return &SchemaError{
 			Value:  ip,
 			Reason: "Not an IPv6 address (it's IPv4)",
