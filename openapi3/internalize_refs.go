@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -62,13 +61,13 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 		}
 
 		// Remove the path extentions to make this JSON/YAML agnostic.
-		for ext := filepath.Ext(filePath); len(ext) > 0; ext = filepath.Ext(filePath) {
+		for ext := path.Ext(filePath); len(ext) > 0; ext = path.Ext(filePath) {
 			filePath = strings.TrimSuffix(filePath, ext)
 		}
 
 		// Trim the common prefix with the root doc path.
 		if doc.url != nil {
-			commonDir := filepath.Dir(doc.url.Path)
+			commonDir := path.Dir(doc.url.Path)
 			for {
 				if commonDir == "." { // no common prefix
 					break
@@ -79,7 +78,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 					break
 				}
 
-				commonDir = filepath.Dir(commonDir)
+				commonDir = path.Dir(commonDir)
 			}
 		}
 	}
@@ -88,7 +87,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 
 	// Trim .'s & slashes from start e.g. otherwise ./doc.yaml would end up as __doc
 	if filePath != "" {
-		internalisedName = strings.TrimLeft(filePath, "./"+string(filepath.Separator))
+		internalisedName = strings.TrimLeft(filePath, "./")
 	}
 
 	if componentPath != "" {
@@ -96,7 +95,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 			internalisedName += "_"
 		}
 
-		internalisedName += strings.TrimLeft(componentPath, "./"+string(filepath.Separator))
+		internalisedName += strings.TrimLeft(componentPath, "./")
 	}
 
 	// Replace invalid characters in component fixed field names.
@@ -112,19 +111,19 @@ func cutDirectories(p, dirs string) (string, bool) {
 		return p, false
 	}
 
-	p = strings.TrimRight(p, "/"+string(filepath.Separator))
-	dirs = strings.TrimRight(dirs, "/"+string(filepath.Separator))
+	p = strings.TrimRight(p, "/")
+	dirs = strings.TrimRight(dirs, "/")
 
 	var sb strings.Builder
 	sb.Grow(len(ParameterInHeader))
-	for _, segments := range filepath.SplitList(p) {
+	for _, segments := range strings.Split(p, "/") {
 		sb.WriteString(segments)
 
 		if sb.String() == p {
 			return strings.TrimPrefix(p, dirs), true
 		}
 
-		sb.WriteRune(filepath.Separator)
+		sb.WriteRune('/')
 	}
 
 	return p, false
