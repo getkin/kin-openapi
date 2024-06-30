@@ -41,7 +41,10 @@ func (x *{{ $type.Name }}Ref) CollectionName() string { return "{{ $type.Collect
 func (x *{{ $type.Name }}Ref) RefPath() *url.URL { return &x.refPath }
 
 func (x *{{ $type.Name }}Ref) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 

@@ -41,7 +41,10 @@ func (x *CallbackRef) CollectionName() string { return "callbacks" }
 func (x *CallbackRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *CallbackRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -175,7 +178,10 @@ func (x *ExampleRef) CollectionName() string { return "examples" }
 func (x *ExampleRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *ExampleRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -309,7 +315,10 @@ func (x *HeaderRef) CollectionName() string { return "headers" }
 func (x *HeaderRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *HeaderRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -443,7 +452,10 @@ func (x *LinkRef) CollectionName() string { return "links" }
 func (x *LinkRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *LinkRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -577,7 +589,10 @@ func (x *ParameterRef) CollectionName() string { return "parameters" }
 func (x *ParameterRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *ParameterRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -711,7 +726,10 @@ func (x *RequestBodyRef) CollectionName() string { return "requestBodies" }
 func (x *RequestBodyRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *RequestBodyRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -845,7 +863,10 @@ func (x *ResponseRef) CollectionName() string { return "responses" }
 func (x *ResponseRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *ResponseRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -979,7 +1000,10 @@ func (x *SchemaRef) CollectionName() string { return "schemas" }
 func (x *SchemaRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *SchemaRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
@@ -1113,7 +1137,10 @@ func (x *SecuritySchemeRef) CollectionName() string { return "securitySchemes" }
 func (x *SecuritySchemeRef) RefPath() *url.URL { return &x.refPath }
 
 func (x *SecuritySchemeRef) setRefPath(u *url.URL) {
-	if x.refPath != (url.URL{}) || u == nil {
+	// Do not set to null or override a path already set.
+	// References can be loaded multiple times not all with access
+	// to the correct path info.
+	if u == nil || x.refPath != (url.URL{}) {
 		return
 	}
 
