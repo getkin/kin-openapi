@@ -29,9 +29,6 @@
       },
       "SomePayload": {
         "type": "object"
-      },
-       "callbacks_SomePayload": {
-        "type": "object"
       }
     }
   },
@@ -85,7 +82,7 @@
                   "content": {
                     "application/json": {
                       "schema": {
-                        "$ref": "#/components/schemas/callbacks_SomePayload"
+                        "$ref": "#/components/schemas/SomePayload"
                       }
                     }
                   },

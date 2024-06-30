@@ -10,21 +10,11 @@
       }
     },
     "responses": {
-      "openapi_400": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/openapi_Error"
-            }
-          }
-        },
-        "description": "400 Bad Request"
-      },
       "400": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/openapi_Error"
+              "$ref": "#/components/schemas/Error"
             }
           }
         },
@@ -35,6 +25,14 @@
       "components_Bar": {
         "example": "bar",
         "type": "string"
+      },
+      "components_Cat": {
+        "properties": {
+          "cat": {
+            "$ref": "#/components/schemas/components_Cat"
+          }
+        },
+        "type": "object"
       },
       "components_Foo": {
         "properties": {
@@ -52,21 +50,13 @@
         },
         "type": "object"
       },
-      "openapi_Error":{
-        "title":"ErrorDetails",
-        "type":"object"
-      },
-      "components_Cat": {
-        "properties": {
-          "cat": {
-            "$ref": "#/components/schemas/components_Cat"
-          }
-        },
-        "type": "object"
-      },
       "Bar": {
         "example": "bar",
         "type": "string"
+      },
+      "Error":{
+        "title":"ErrorDetails",
+        "type":"object"
       },
       "Foo": {
         "properties": {
@@ -83,10 +73,6 @@
           }
         },
         "type": "object"
-      },
-      "Error":{
-        "title":"ErrorDetails",
-        "type":"object"
       },
       "Cat": {
         "properties": {
@@ -134,7 +120,7 @@
             "description": "OK"
           },
           "400": {
-            "$ref": "#/components/responses/openapi_400"
+            "$ref": "#/components/responses/400"
           }
         }
       },

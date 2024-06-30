@@ -31,23 +31,42 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 		panic("unable to resolve reference to name")
 	}
 
-	name := *ref.RefPath()
+	name := ref.RefPath()
+
+	// If refering to a component in the root spec, no need to internalize just use
+	// the existing component.
+	// XXX(alb): since this function call is iterating over components behind the
+	// scenes during an internalization it actually starts interating over
+	// internalized components. While this is odd, it is fine as none of them are
+	// $refs so are not considered.
+	if nameInRoot, found := ReferencesComponentInRootDocument(doc, ref); found {
+		nameInRoot = strings.TrimPrefix(nameInRoot, "#")
+
+		rootCompURI := copyURI(doc.url)
+		rootCompURI.Fragment = nameInRoot
+		name = rootCompURI
+	}
 
 	filePath, componentPath := name.Path, name.Fragment
 
 	// Cut out the "#/components/<type>" to make the names shorter.
 	// XXX(alb): This might cause collisions. Think about.
-	if b, a, ok := strings.Cut(componentPath, path.Join("/components/", ref.CollectionName(), "")); ok {
+	if b, a, ok := strings.Cut(componentPath, path.Join("components", ref.CollectionName(), "")); ok {
 		componentPath = path.Join(b, a)
 	}
 
 	if filePath != "" {
+		// If the path is the same as the root doc, just remove.
+		if doc.url != nil && filePath == doc.url.Path {
+			filePath = ""
+		}
+
 		// Remove the path extentions to make this JSON/YAML agnostic.
 		for ext := filepath.Ext(filePath); len(ext) > 0; ext = filepath.Ext(filePath) {
 			filePath = strings.TrimSuffix(filePath, ext)
 		}
 
-		// Trim the common prefix with the root spec path.
+		// Trim the common prefix with the root doc path.
 		if doc.url != nil {
 			commonDir := filepath.Dir(doc.url.Path)
 			for {
@@ -67,6 +86,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 
 	var internalisedName string
 
+	// Trim .'s & slashes from start e.g. otherwise ./doc.yaml would end up as __doc
 	if filePath != "" {
 		internalisedName = strings.TrimLeft(filePath, "./"+string(filepath.Separator))
 	}
@@ -75,6 +95,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 		if internalisedName != "" {
 			internalisedName += "_"
 		}
+
 		internalisedName += strings.TrimLeft(componentPath, "./"+string(filepath.Separator))
 	}
 
