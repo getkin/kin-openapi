@@ -3,5 +3,5 @@ properties:
     children:
         type: array
         items:
-            $ref: './AWSEnvironmentSettings.yaml'
+            $ref: './AwsEnvironmentSettings.yaml'
 description: test

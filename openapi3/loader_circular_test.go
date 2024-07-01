@@ -14,7 +14,7 @@ func TestLoadCircular(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 
-	ref := "./AWSEnvironmentSettings.yaml"
+	ref := "./AwsEnvironmentSettings.yaml"
 
 	arr := NewArraySchema()
 	obj := NewObjectSchema()
