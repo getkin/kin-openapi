@@ -55,6 +55,9 @@ func NewLoader() *Loader {
 
 func (loader *Loader) resetVisitedPathItemRefs() {
 	loader.visitedPathItemRefs = make(map[string]struct{})
+	loader.visitedRefs = make(map[string]struct{})
+	loader.visitedPath = nil
+	loader.backtrack = make(map[string][]func(value any))
 }
 
 // LoadFromURI loads a spec from a remote URL
@@ -558,6 +561,12 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Header)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var header Header
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
@@ -566,15 +575,8 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			component.Value = &header
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Header)
-			}) {
-				return nil
-			}
 			var resolved HeaderRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -587,6 +589,7 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -610,6 +613,12 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Parameter)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var param Parameter
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
@@ -618,15 +627,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			component.Value = &param
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Parameter)
-			}) {
-				return nil
-			}
 			var resolved ParameterRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -639,6 +641,7 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -672,6 +675,12 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*RequestBody)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
@@ -680,15 +689,8 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 			component.Value = &requestBody
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*RequestBody)
-			}) {
-				return nil
-			}
 			var resolved RequestBodyRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -701,6 +703,7 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -741,6 +744,12 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Response)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var resp Response
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
@@ -749,15 +758,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 			component.Value = &resp
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Response)
-			}) {
-				return nil
-			}
 			var resolved ResponseRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -770,6 +772,7 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -821,6 +824,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Schema)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var schema Schema
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
@@ -829,15 +838,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			component.Value = &schema
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Schema)
-			}) {
-				return nil
-			}
 			var resolved SchemaRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -850,6 +852,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -904,6 +907,12 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*SecurityScheme)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
@@ -912,15 +921,8 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 			component.Value = &scheme
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*SecurityScheme)
-			}) {
-				return nil
-			}
 			var resolved SecuritySchemeRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -933,6 +935,7 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	return nil
 }
@@ -942,6 +945,12 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Example)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var example Example
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
@@ -950,15 +959,8 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 			component.Value = &example
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Example)
-			}) {
-				return nil
-			}
 			var resolved ExampleRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -971,6 +973,7 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	return nil
 }
@@ -984,6 +987,12 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Callback)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var resolved Callback
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
@@ -992,15 +1001,8 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 			component.Value = &resolved
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Callback)
-			}) {
-				return nil
-			}
 			var resolved CallbackRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -1013,6 +1015,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -1036,6 +1039,12 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		if component.Value != nil {
 			return nil
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			component.Value = value.(*Link)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var link Link
 			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
@@ -1044,15 +1053,8 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 			component.Value = &link
 			component.refPath = *documentPath
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				component.Value = value.(*Link)
-			}) {
-				return nil
-			}
 			var resolved LinkRef
-			loader.visitRef(ref)
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, resolved.Value)
 			if err != nil {
 				return err
 			}
@@ -1065,6 +1067,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 			component.Value = resolved.Value
 			component.refPath = resolved.refPath
 		}
+		defer loader.unvisitRef(ref, component.Value)
 	}
 	return nil
 }
@@ -1079,6 +1082,12 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		if !pathItem.isEmpty() {
 			return
 		}
+		if !loader.shouldVisitRef(ref, func(value any) {
+			*pathItem = *value.(*PathItem)
+		}) {
+			return nil
+		}
+		loader.visitRef(ref)
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
@@ -1086,15 +1095,8 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			}
 			*pathItem = p
 		} else {
-			if !loader.shouldVisitRef(ref, func(value any) {
-				*pathItem = *value.(*PathItem)
-			}) {
-				return nil
-			}
 			var resolved PathItem
-			loader.visitRef(ref)
 			doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved)
-			defer loader.unvisitRef(ref, &resolved)
 			if err != nil {
 				if err == errMUSTPathItem {
 					return nil
@@ -1104,6 +1106,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			*pathItem = resolved
 		}
 		pathItem.Ref = ref
+		defer loader.unvisitRef(ref, pathItem)
 	}
 
 	for _, parameter := range pathItem.Parameters {
