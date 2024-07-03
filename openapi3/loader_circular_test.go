@@ -22,6 +22,7 @@ func TestLoadCircular(t *testing.T) {
 		Ref:   ref,
 		Value: obj,
 	}
+	arr.Items.setRefPath(&url.URL{Path: "testdata/circularRef2/AwsEnvironmentSettings.yaml"})
 	obj.Description = "test"
 	obj.Properties = map[string]*SchemaRef{
 		"children": {
@@ -35,7 +36,6 @@ func TestLoadCircular(t *testing.T) {
 	}
 
 	actual := doc.Paths.Map()["/sample"].Put.RequestBody.Value.Content.Get("application/json").Schema
-	actual.refPath = url.URL{}
 
 	require.Equal(t, expected.Value, actual.Value)
 }

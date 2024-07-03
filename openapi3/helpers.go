@@ -6,24 +6,29 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 )
 
-const identifierPattern = `^[a-zA-Z0-9._-]+$`
+const identifierChars = `a-zA-Z0-9._-`
 
-// IdentifierRegExp verifies whether Component object key matches 'identifierPattern' pattern, according to OpenAPI v3.x.
+// IdentifierRegExp verifies whether Component object key matches contains just 'identifierChars', according to OpenAPI v3.x.
+// InvalidIdentifierCharRegExp matches all characters not contained in 'identifierChars'.
 // However, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in order not to fail
 // converted v2-v3 validation
-var IdentifierRegExp = regexp.MustCompile(identifierPattern)
+var (
+	IdentifierRegExp            = regexp.MustCompile(`^[` + identifierChars + `]+$`)
+	InvalidIdentifierCharRegExp = regexp.MustCompile(`[^` + identifierChars + `]`)
+)
 
-// ValidateIdentifier returns an error if the given component name does not match IdentifierRegExp.
+// ValidateIdentifier returns an error if the given component name does not match [IdentifierRegExp].
 func ValidateIdentifier(value string) error {
 	if IdentifierRegExp.MatchString(value) {
 		return nil
 	}
-	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (regexp: %q)", value, identifierPattern)
+	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (charset: [%q])", value, identifierChars)
 }
 
 // Float64Ptr is a helper for defining OpenAPI schemas.
@@ -44,6 +49,26 @@ func Int64Ptr(value int64) *int64 {
 // Uint64Ptr is a helper for defining OpenAPI schemas.
 func Uint64Ptr(value uint64) *uint64 {
 	return &value
+}
+
+// componentNames returns the map keys in a sorted slice.
+func componentNames[E any](s map[string]E) []string {
+	out := make([]string, 0, len(s))
+	for i := range s {
+		out = append(out, i)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// copyURI makes a copy of the pointer.
+func copyURI(u *url.URL) *url.URL {
+	if u == nil {
+		return nil
+	}
+
+	c := *u // shallow-copy
+	return &c
 }
 
 type componentRef interface {

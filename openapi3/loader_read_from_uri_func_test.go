@@ -14,7 +14,7 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *Loader, url *url.URL) ([]byte, error) {
-		return os.ReadFile(filepath.Join("testdata", url.Path))
+		return os.ReadFile(filepath.Join("testdata", filepath.FromSlash(url.Path)))
 	}
 	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	require.NoError(t, err)

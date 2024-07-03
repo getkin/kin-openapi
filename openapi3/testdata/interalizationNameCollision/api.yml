@@ -1,0 +1,25 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Internalise ref name collision.
+paths:
+  /book/record:
+    get:
+      operationId: getBookRecord
+      responses:
+        200:
+          description: A Book record.
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/book/record.yml'
+  /cd/record:
+    get:
+      operationId: getCDRecord
+      responses:
+        200:
+          description: A CD record.
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/cd/record.yml'

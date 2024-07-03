@@ -1,0 +1,75 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Internalise ref name collision."
+  },
+  "paths": {
+    "/book/record": {
+      "get": {
+        "operationId": "getBookRecord",
+        "responses": {
+          "200": {
+            "description": "A Book record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/schemas_book_record"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cd/record": {
+      "get": {
+        "operationId": "getCDRecord",
+        "responses": {
+          "200": {
+            "description": "A CD record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/schemas_cd_record"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "schemas_book_record": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "pages": {
+            "type": "number"
+          }
+        }
+      },
+      "schemas_cd_record": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "tracks": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}
