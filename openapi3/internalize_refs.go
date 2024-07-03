@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// RefNameResolver maps a component to an name that is used as it's internalised name.
+// RefNameResolver maps a component to an name that is used as it's internalized name.
 //
 // The function should avoid name collisions (i.e. be a injective mapping).
 // It must only contain characters valid for fixed field names: [IdentifierRegExp].
@@ -15,7 +15,7 @@ type RefNameResolver func(*T, componentRef) string
 // DefaultRefResolver is a default implementation of refNameResolver for the
 // InternalizeRefs function.
 //
-// The external reference is internalised to (hopefully) a unique name. If
+// The external reference is internalized to (hopefully) a unique name. If
 // the external reference matches (by path) to another reference in the root
 // document then the name of that component is used.
 //
@@ -86,25 +86,25 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 		}
 	}
 
-	var internalisedName string
+	var internalizedName string
 
 	// Trim .'s & slashes from start e.g. otherwise ./doc.yaml would end up as __doc
 	if filePath != "" {
-		internalisedName = strings.TrimLeft(filePath, "./")
+		internalizedName = strings.TrimLeft(filePath, "./")
 	}
 
 	if componentPath != "" {
-		if internalisedName != "" {
-			internalisedName += "_"
+		if internalizedName != "" {
+			internalizedName += "_"
 		}
 
-		internalisedName += strings.TrimLeft(componentPath, "./")
+		internalizedName += strings.TrimLeft(componentPath, "./")
 	}
 
 	// Replace invalid characters in component fixed field names.
-	internalisedName = InvalidIdentifierCharRegExp.ReplaceAllString(internalisedName, "_")
+	internalizedName = InvalidIdentifierCharRegExp.ReplaceAllString(internalizedName, "_")
 
-	return internalisedName
+	return internalizedName
 }
 
 // cutDirectories removes the given directories from the start of the path if

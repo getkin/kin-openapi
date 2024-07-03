@@ -86,7 +86,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string
     DefaultRefResolver is a default implementation of refNameResolver for the
     InternalizeRefs function.
 
-    The external reference is internalised to (hopefully) a unique name.
+    The external reference is internalized to (hopefully) a unique name.
     If the external reference matches (by path) to another reference in the root
     document then the name of that component is used.
 
@@ -1186,7 +1186,7 @@ type Ref struct {
 
 type RefNameResolver func(*T, componentRef) string
     RefNameResolver maps a component to an name that is used as it's
-    internalised name.
+    internalized name.
 
     The function should avoid name collisions (i.e. be a injective mapping). It
     must only contain characters valid for fixed field names: IdentifierRegExp.
