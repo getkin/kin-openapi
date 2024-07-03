@@ -2,8 +2,9 @@ package openapi3
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIssue82(t *testing.T) {
