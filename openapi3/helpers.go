@@ -15,6 +15,7 @@ import (
 const identifierChars = `a-zA-Z0-9._-`
 
 // IdentifierRegExp verifies whether Component object key matches contains just 'identifierChars', according to OpenAPI v3.x.
+// InvalidIdentifierCharRegExp matches all characters not contained in 'identifierChars'.
 // However, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in order not to fail
 // converted v2-v3 validation
 var (
@@ -22,7 +23,7 @@ var (
 	InvalidIdentifierCharRegExp = regexp.MustCompile(`[^` + identifierChars + `]`)
 )
 
-// ValidateIdentifier returns an error if the given component name does not match IdentifierRegExp.
+// ValidateIdentifier returns an error if the given component name does not match [IdentifierRegExp].
 func ValidateIdentifier(value string) error {
 	if IdentifierRegExp.MatchString(value) {
 		return nil

@@ -15,7 +15,9 @@ type RefNameResolver func(*T, componentRef) string
 // DefaultRefResolver is a default implementation of refNameResolver for the
 // InternalizeRefs function.
 //
-// The external reference is internalised to (hopefully) a unique name.
+// The external reference is internalised to (hopefully) a unique name. If
+// the external reference matches (by path) to another reference in the root
+// document then the name of that component is used.
 //
 // The transformation involves:
 //   - Cutting the "#/components/<type>" part.
@@ -34,10 +36,11 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 
 	// If refering to a component in the root spec, no need to internalize just use
 	// the existing component.
-	// XXX(alb): since this function call is iterating over components behind the
-	// scenes during an internalization it actually starts interating over
-	// internalized components. While this is odd, it is fine as none of them are
-	// $refs so are not considered.
+	// XXX(percivalalb): since this function call is iterating over components behind the
+	// scenes during an internalization call it actually starts interating over
+	// new & replaced internalized components. This might caused some edge cases,
+	// haven't found one yet but this might need to actually be used on a frozen copy
+	// of doc.
 	if nameInRoot, found := ReferencesComponentInRootDocument(doc, ref); found {
 		nameInRoot = strings.TrimPrefix(nameInRoot, "#")
 
@@ -49,7 +52,7 @@ func DefaultRefNameResolver(doc *T, ref componentRef) string {
 	filePath, componentPath := name.Path, name.Fragment
 
 	// Cut out the "#/components/<type>" to make the names shorter.
-	// XXX(alb): This might cause collisions. Think about.
+	// XXX(percivalalb): This might cause collisions but is worth the brevity.
 	if b, a, ok := strings.Cut(componentPath, path.Join("components", ref.CollectionName(), "")); ok {
 		componentPath = path.Join(b, a)
 	}
