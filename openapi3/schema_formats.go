@@ -71,7 +71,7 @@ type stringRegexpFormatValidator struct {
 
 func (s stringRegexpFormatValidator) Validate(value string) error {
 	if !s.re.MatchString(value) {
-		return fmt.Errorf("string doesn't match pattern %q", s.re.String())
+		return fmt.Errorf(`string doesn't match pattern "%s"`, s.re.String())
 	}
 	return nil
 }
