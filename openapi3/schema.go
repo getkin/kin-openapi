@@ -28,12 +28,6 @@ const (
 	TypeObject  = "object"
 	TypeString  = "string"
 	TypeNull    = "null"
-
-	// constants for integer formats
-	formatMinInt32 = float64(math.MinInt32)
-	formatMaxInt32 = float64(math.MaxInt32)
-	formatMinInt64 = float64(math.MinInt64)
-	formatMaxInt64 = float64(math.MaxInt64)
 )
 
 var (
@@ -988,7 +982,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				switch format {
 				case "float", "double":
 				default:
-					if validationOpts.schemaFormatValidationEnabled {
+					// Try to check for custom defined formats
+					if _, ok := SchemaNumberFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 						return stack, unsupportedFormat(format)
 					}
 				}
@@ -998,7 +993,8 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				switch format {
 				case "int32", "int64":
 				default:
-					if validationOpts.schemaFormatValidationEnabled {
+					// Try to check for custom defined formats
+					if _, ok := SchemaIntegerFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 						return stack, unsupportedFormat(format)
 					}
 				}
@@ -1523,37 +1519,54 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	// formats
-	if requireInteger && schema.Format != "" {
-		formatMin := float64(0)
-		formatMax := float64(0)
-		switch schema.Format {
-		case "int32":
-			formatMin = formatMinInt32
-			formatMax = formatMaxInt32
-		case "int64":
-			formatMin = formatMinInt64
-			formatMax = formatMaxInt64
-		default:
-			if settings.formatValidationEnabled {
-				return unsupportedFormat(schema.Format)
+	var formatStrErr string
+	var formatErr error
+	format := schema.Format
+	if format != "" {
+		if requireInteger {
+			if f, ok := SchemaIntegerFormats[format]; ok {
+				if err := f.Validate(int64(value)); err != nil {
+					var reason string
+					schemaErr := &SchemaError{}
+					if errors.As(err, &schemaErr) {
+						reason = schemaErr.Reason
+					} else {
+						reason = err.Error()
+					}
+					formatStrErr = fmt.Sprintf(`integer doesn't match the format %q (%v)`, format, reason)
+					formatErr = err
+				}
+			}
+		} else {
+			if f, ok := SchemaNumberFormats[format]; ok {
+				if err := f.Validate(value); err != nil {
+					var reason string
+					schemaErr := &SchemaError{}
+					if errors.As(err, &schemaErr) {
+						reason = schemaErr.Reason
+					} else {
+						reason = err.Error()
+					}
+					formatStrErr = fmt.Sprintf(`number doesn't match the format %q (%v)`, format, reason)
+					formatErr = err
+				}
 			}
 		}
-		if formatMin != 0 && formatMax != 0 && !(formatMin <= value && value <= formatMax) {
-			if settings.failfast {
-				return errSchema
-			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "format",
-				Reason:                fmt.Sprintf("number must be an %s", schema.Format),
-				customizeMessageError: settings.customizeMessageError,
-			}
-			if !settings.multiError {
-				return err
-			}
-			me = append(me, err)
+	}
+
+	if formatStrErr != "" || formatErr != nil {
+		err := &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "format",
+			Reason:                formatStrErr,
+			Origin:                formatErr,
+			customizeMessageError: settings.customizeMessageError,
 		}
+		if !settings.multiError {
+			return err
+		}
+		me = append(me, err)
 	}
 
 	// "exclusiveMinimum"
@@ -1749,23 +1762,16 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	var formatErr error
 	if format := schema.Format; format != "" {
 		if f, ok := SchemaStringFormats[format]; ok {
-			switch {
-			case f.regexp != nil && f.callback == nil:
-				if cp := f.regexp; !cp.MatchString(value) {
-					formatStrErr = fmt.Sprintf(`string doesn't match the format %q (regular expression "%s")`, format, cp.String())
+			if err := f.Validate(value); err != nil {
+				var reason string
+				schemaErr := &SchemaError{}
+				if errors.As(err, &schemaErr) {
+					reason = schemaErr.Reason
+				} else {
+					reason = err.Error()
 				}
-			case f.regexp == nil && f.callback != nil:
-				if err := f.callback(value); err != nil {
-					schemaErr := &SchemaError{}
-					if errors.As(err, &schemaErr) {
-						formatStrErr = fmt.Sprintf(`string doesn't match the format %q (%s)`, format, schemaErr.Reason)
-					} else {
-						formatStrErr = fmt.Sprintf(`string doesn't match the format %q (%v)`, format, err)
-					}
-					formatErr = err
-				}
-			default:
-				formatStrErr = fmt.Sprintf("corrupted entry %q in SchemaStringFormats", format)
+				formatStrErr = fmt.Sprintf(`string doesn't match the format %q (%v)`, format, reason)
+				formatErr = err
 			}
 		}
 	}

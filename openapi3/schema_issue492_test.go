@@ -46,5 +46,5 @@ info:
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06:789Z",
 	})
-	require.ErrorContains(t, err, `Error at "/time": string doesn't match the format "date-time" (regular expression "^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$")`)
+	require.ErrorContains(t, err, `string doesn't match pattern "^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|(\\+|-)[0-9]{2}:[0-9]{2})?$"`)
 }
