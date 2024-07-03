@@ -1534,7 +1534,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 						reason = err.Error()
 					}
 					formatStrErr = fmt.Sprintf(`integer doesn't match the format %q (%v)`, format, reason)
-					formatErr = err
+					formatErr = fmt.Errorf("integer doesn't match the format %q: %w", format, err)
 				}
 			}
 		} else {
@@ -1548,7 +1548,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 						reason = err.Error()
 					}
 					formatStrErr = fmt.Sprintf(`number doesn't match the format %q (%v)`, format, reason)
-					formatErr = err
+					formatErr = fmt.Errorf("number doesn't match the format %q: %w", format, err)
 				}
 			}
 		}
@@ -1771,7 +1771,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 					reason = err.Error()
 				}
 				formatStrErr = fmt.Sprintf(`string doesn't match the format %q (%v)`, format, reason)
-				formatErr = err
+				formatErr = fmt.Errorf("string doesn't match the format %q: %w", format, err)
 			}
 		}
 	}

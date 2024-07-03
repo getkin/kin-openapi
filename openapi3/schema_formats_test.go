@@ -105,7 +105,7 @@ components:
 		`ip`: `123.0.0.11111`,
 	})
 
-	require.EqualError(t, err, `Error at "/ip": Not an IP address`)
+	require.EqualError(t, err, `Error at "/ip": string doesn't match the format "ipv4": Not an IP address`)
 
 	delete(SchemaStringFormats, "ipv4")
 	SchemaErrorDetailsDisabled = false
