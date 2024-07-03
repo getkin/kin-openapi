@@ -982,7 +982,6 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				switch format {
 				case "float", "double":
 				default:
-					// Try to check for custom defined formats
 					if _, ok := SchemaNumberFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 						return stack, unsupportedFormat(format)
 					}
@@ -993,7 +992,6 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				switch format {
 				case "int32", "int64":
 				default:
-					// Try to check for custom defined formats
 					if _, ok := SchemaIntegerFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 						return stack, unsupportedFormat(format)
 					}
@@ -1015,7 +1013,6 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				// Defined in some other specification
 				case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 				default:
-					// Try to check for custom defined formats
 					if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
 						return stack, unsupportedFormat(format)
 					}
