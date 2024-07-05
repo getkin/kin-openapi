@@ -22,13 +22,13 @@ type schemaExample struct {
 }
 
 func TestSchemas(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
+	DefineStringFormatValidator("uuid", NewRegexpFormatValidator(FormatOfStringForUUIDOfRFC4122))
 	for _, example := range schemaExamples {
-		t.Run(example.Title, testSchema(t, example))
+		t.Run(example.Title, testSchema(example))
 	}
 }
 
-func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
+func testSchema(example schemaExample) func(*testing.T) {
 	return func(t *testing.T) {
 		schema := example.Schema
 		if serialized := example.Serialization; serialized != nil {

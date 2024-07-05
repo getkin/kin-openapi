@@ -16,8 +16,8 @@ type testCase struct {
 }
 
 func TestIssue735(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
-	DefineStringFormat("email", FormatOfStringForEmail)
+	DefineStringFormatValidator("uuid", NewRegexpFormatValidator(FormatOfStringForUUIDOfRFC4122))
+	DefineStringFormatValidator("email", NewRegexpFormatValidator(FormatOfStringForEmail))
 	DefineIPv4Format()
 	DefineIPv6Format()
 

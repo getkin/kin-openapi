@@ -50,15 +50,18 @@ func TestIssue430(t *testing.T) {
 	DefineIPv4Format()
 	DefineIPv6Format()
 
+	ipv4Validator := NewIPValidator(true)
+	ipv6Validator := NewIPValidator(false)
+
 	for datum, isV4 := range data {
 		err = schema.VisitJSON(datum)
 		require.NoError(t, err)
 		if isV4 {
-			assert.Nil(t, validateIPv4(datum), "%q should be IPv4", datum)
-			assert.NotNil(t, validateIPv6(datum), "%q should not be IPv6", datum)
+			assert.Nil(t, ipv4Validator.Validate(datum), "%q should be IPv4", datum)
+			assert.NotNil(t, ipv6Validator.Validate(datum), "%q should not be IPv6", datum)
 		} else {
-			assert.NotNil(t, validateIPv4(datum), "%q should not be IPv4", datum)
-			assert.Nil(t, validateIPv6(datum), "%q should be IPv6", datum)
+			assert.NotNil(t, ipv4Validator.Validate(datum), "%q should not be IPv4", datum)
+			assert.Nil(t, ipv6Validator.Validate(datum), "%q should be IPv6", datum)
 		}
 	}
 }
@@ -66,9 +69,9 @@ func TestIssue430(t *testing.T) {
 func TestFormatCallback_WrapError(t *testing.T) {
 	var errSomething = errors.New("something error")
 
-	DefineStringFormatCallback("foobar", func(value string) error {
+	DefineStringFormatValidator("foobar", NewCallbackValidator(func(value string) error {
 		return errSomething
-	})
+	}))
 
 	s := &Schema{Format: "foobar"}
 	err := s.VisitJSONString("blablabla")
@@ -102,7 +105,7 @@ components:
 		`ip`: `123.0.0.11111`,
 	})
 
-	require.EqualError(t, err, `Error at "/ip": Not an IP address`)
+	require.EqualError(t, err, `Error at "/ip": string doesn't match the format "ipv4": Not an IP address`)
 
 	delete(SchemaStringFormats, "ipv4")
 	SchemaErrorDetailsDisabled = false
@@ -116,7 +119,7 @@ func TestUuidFormat(t *testing.T) {
 		wantErr bool
 	}
 
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
+	DefineStringFormatValidator("uuid", NewRegexpFormatValidator(FormatOfStringForUUIDOfRFC4122))
 	testCases := []testCase{
 		{
 			name:    "invalid",
@@ -142,6 +145,84 @@ func TestUuidFormat(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := NewUUIDSchema().VisitJSON(tc.value)
+			var schemaError = &SchemaError{}
+			if tc.wantErr {
+				require.Error(t, err)
+				require.ErrorAs(t, err, &schemaError)
+
+				require.NotZero(t, schemaError.Reason)
+				require.NotContains(t, schemaError.Reason, fmt.Sprint(tc.value))
+			} else {
+				require.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestNumberFormats(t *testing.T) {
+	type testCase struct {
+		name    string
+		typ     string
+		format  string
+		value   any
+		wantErr bool
+	}
+	DefineNumberFormatValidator("lessThan10", NewCallbackValidator(func(value float64) error {
+		if value >= 10 {
+			return fmt.Errorf("not less than 10")
+		}
+		return nil
+	}))
+	DefineIntegerFormatValidator("odd", NewCallbackValidator(func(value int64) error {
+		if value%2 == 0 {
+			return fmt.Errorf("not odd")
+		}
+		return nil
+	}))
+	testCases := []testCase{
+		{
+			name:    "invalid number",
+			value:   "test",
+			typ:     "number",
+			format:  "",
+			wantErr: true,
+		},
+		{
+			name:    "zero float64",
+			value:   0.0,
+			typ:     "number",
+			format:  "lessThan10",
+			wantErr: false,
+		},
+		{
+			name:    "11",
+			value:   11.0,
+			typ:     "number",
+			format:  "lessThan10",
+			wantErr: true,
+		},
+		{
+			name:    "odd 11",
+			value:   11.0,
+			typ:     "integer",
+			format:  "odd",
+			wantErr: false,
+		},
+		{
+			name:    "even 12",
+			value:   12.0,
+			typ:     "integer",
+			format:  "odd",
+			wantErr: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := &Schema{
+				Type:   &Types{tc.typ},
+				Format: tc.format,
+			}
+			err := schema.VisitJSON(tc.value)
 			var schemaError = &SchemaError{}
 			if tc.wantErr {
 				require.Error(t, err)
