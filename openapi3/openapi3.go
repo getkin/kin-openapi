@@ -66,6 +66,9 @@ func (doc *T) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML returns the YAML encoding of T.
 func (doc *T) MarshalYAML() (any, error) {
+	if doc == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, 4+len(doc.Extensions))
 	for k, v := range doc.Extensions {
 		m[k] = v

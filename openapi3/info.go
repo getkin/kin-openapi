@@ -29,7 +29,10 @@ func (info Info) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML returns the YAML encoding of Info.
-func (info Info) MarshalYAML() (any, error) {
+func (info *Info) MarshalYAML() (any, error) {
+	if info == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, 6+len(info.Extensions))
 	for k, v := range info.Extensions {
 		m[k] = v
