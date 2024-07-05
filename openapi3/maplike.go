@@ -78,6 +78,9 @@ func (responses Responses) JSONLookup(token string) (any, error) {
 
 // MarshalYAML returns the YAML encoding of Responses.
 func (responses *Responses) MarshalYAML() (any, error) {
+	if responses == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, responses.Len()+len(responses.Extensions))
 	for k, v := range responses.Extensions {
 		m[k] = v
@@ -206,6 +209,9 @@ func (callback Callback) JSONLookup(token string) (any, error) {
 
 // MarshalYAML returns the YAML encoding of Callback.
 func (callback *Callback) MarshalYAML() (any, error) {
+	if callback == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, callback.Len()+len(callback.Extensions))
 	for k, v := range callback.Extensions {
 		m[k] = v
@@ -334,6 +340,9 @@ func (paths Paths) JSONLookup(token string) (any, error) {
 
 // MarshalYAML returns the YAML encoding of Paths.
 func (paths *Paths) MarshalYAML() (any, error) {
+	if paths == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, paths.Len()+len(paths.Extensions))
 	for k, v := range paths.Extensions {
 		m[k] = v

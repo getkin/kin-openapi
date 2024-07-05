@@ -1140,8 +1140,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			*pathItem = p
 		} else {
 			var resolved PathItem
-			doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved)
-			if err != nil {
+			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
 				if err == errMUSTPathItem {
 					return nil
 				}

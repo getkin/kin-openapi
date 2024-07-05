@@ -169,13 +169,13 @@ func TestNumberFormats(t *testing.T) {
 	}
 	DefineNumberFormatValidator("lessThan10", NewCallbackValidator(func(value float64) error {
 		if value >= 10 {
-			return fmt.Errorf("not less than 10")
+			return errors.New("not less than 10")
 		}
 		return nil
 	}))
 	DefineIntegerFormatValidator("odd", NewCallbackValidator(func(value int64) error {
 		if value%2 == 0 {
-			return fmt.Errorf("not odd")
+			return errors.New("not odd")
 		}
 		return nil
 	}))

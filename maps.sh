@@ -155,9 +155,16 @@ EOF
 
 
 maplike_UnMarsh() {
+	if [[ "$type" != '*'* ]]; then
+		echo "TODO: impl non-pointer receiver YAML Marshaler"
+		exit 2
+	fi
 	cat <<EOF >>"$maplike"
 // MarshalYAML returns the YAML encoding of ${type#'*'}.
 func (${name} ${type}) MarshalYAML() (any, error) {
+	if ${name} == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, ${name}.Len()+len(${name}.Extensions))
 	for k, v := range ${name}.Extensions {
 		m[k] = v
