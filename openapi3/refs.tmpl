@@ -24,7 +24,7 @@ type {{ $type.Name }}Ref struct {
 	Value *{{ $type.Name }}
 	extra []string
 
-	refPath url.URL
+	refPath *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*{{ $type.Name }}Ref)(nil)
@@ -38,17 +38,16 @@ func (x *{{ $type.Name }}Ref) RefString() string { return x.Ref }
 func (x *{{ $type.Name }}Ref) CollectionName() string { return "{{ $type.CollectionName }}" }
 
 // RefPath returns the path of the $ref relative to the root document.
-func (x *{{ $type.Name }}Ref) RefPath() *url.URL { return &x.refPath }
+func (x *{{ $type.Name }}Ref) RefPath() *url.URL { return copyURI(x.refPath) }
 
 func (x *{{ $type.Name }}Ref) setRefPath(u *url.URL) {
-	// Do not set to null or override a path already set.
-	// References can be loaded multiple times not all with access
-	// to the correct path info.
-	if u == nil || x.refPath != (url.URL{}) {
+	// Once the refPath is set don't override. References can be loaded
+	// multiple times not all with access to the correct path info.
+	if x.refPath != nil {
 		return
 	}
 
-	x.refPath = *u
+	x.refPath = copyURI(u)
 }
 
 // MarshalYAML returns the YAML encoding of {{ $type.Name }}Ref.
