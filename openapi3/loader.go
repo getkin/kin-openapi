@@ -288,6 +288,31 @@ func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
 	return resolvedPath, nil
 }
 
+func (loader *Loader) resolveRefPath(ref string, path *url.URL) (*url.URL, error) {
+	if ref != "" && ref[0] == '#' {
+		path = copyURI(path)
+		// Resolving internal refs of a doc loaded from memory
+		// has no path, so just set the Fragment.
+		if path == nil {
+			path = new(url.URL)
+		}
+
+		path.Fragment = ref
+		return path, nil
+	}
+
+	if err := loader.allowsExternalRefs(ref); err != nil {
+		return nil, err
+	}
+
+	resolvedPath, err := resolvePathWithRef(ref, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return resolvedPath, nil
+}
+
 func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
@@ -325,7 +350,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	componentPath *url.URL,
 	err error,
 ) {
-	if componentDoc, ref, componentPath, err = loader.resolveRef(doc, ref, path); err != nil {
+	if componentDoc, ref, componentPath, err = loader.resolveRefAndDocument(doc, ref, path); err != nil {
 		return nil, nil, err
 	}
 
@@ -406,21 +431,25 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		err = nil
 	}
 
-	setComponent := func(target any) {
-		if componentPath != nil {
-			if i, ok := target.(interface {
-				setRefPath(*url.URL)
-			}); ok {
-				copy := *componentPath
-				copy.Fragment = parsedURL.Fragment
-				i.setRefPath(&copy)
+	setPathRef := func(target any) {
+		if i, ok := target.(interface {
+			setRefPath(*url.URL)
+		}); ok {
+			pathRef := copyURI(componentPath)
+			// Resolving internal refs of a doc loaded from memory
+			// has no path, so just set the Fragment.
+			if pathRef == nil {
+				pathRef = new(url.URL)
 			}
+			pathRef.Fragment = fragment
+
+			i.setRefPath(pathRef)
 		}
 	}
 
 	switch {
 	case reflect.TypeOf(cursor) == reflect.TypeOf(resolved):
-		setComponent(cursor)
+		setPathRef(cursor)
 
 		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentDoc, componentPath, nil
@@ -435,7 +464,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 				return err
 			}
 
-			setComponent(expect)
+			setPathRef(expect)
 			return nil
 		}
 		if err := codec(cursor, resolved); err != nil {
@@ -531,12 +560,12 @@ func drillIntoField(cursor any, fieldName string) (any, error) {
 	}
 }
 
-func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
+func (loader *Loader) resolveRefAndDocument(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
 	if ref != "" && ref[0] == '#' {
 		return doc, ref, path, nil
 	}
 
-	fragment, resolvedPath, err := loader.resolveRefPath(ref, path)
+	fragment, resolvedPath, err := loader.resolveRef(ref, path)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -548,23 +577,15 @@ func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string,
 	return doc, fragment, resolvedPath, nil
 }
 
-func (loader *Loader) resolveRefPath(ref string, path *url.URL) (string, *url.URL, error) {
-	if ref != "" && ref[0] == '#' {
-		return ref, path, nil
-	}
-
-	if err := loader.allowsExternalRefs(ref); err != nil {
-		return "", nil, err
-	}
-
-	resolvedPath, err := resolvePathWithRef(ref, path)
+func (loader *Loader) resolveRef(ref string, path *url.URL) (string, *url.URL, error) {
+	resolvedPathRef, err := loader.resolveRefPath(ref, path)
 	if err != nil {
 		return "", nil, err
 	}
 
-	fragment := "#" + resolvedPath.Fragment
-	resolvedPath.Fragment = ""
-	return fragment, resolvedPath, nil
+	fragment := "#" + resolvedPathRef.Fragment
+	resolvedPathRef.Fragment = ""
+	return fragment, resolvedPathRef, nil
 }
 
 var (
@@ -591,8 +612,8 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Header)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -645,8 +666,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Parameter)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -710,8 +731,8 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*RequestBody)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -777,8 +798,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Response)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -857,8 +878,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Schema)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -943,8 +964,8 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*SecurityScheme)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -983,8 +1004,8 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Example)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -1027,8 +1048,8 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Callback)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
@@ -1083,8 +1104,8 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Link)
-			_, refDocPath, _ := loader.resolveRefPath(ref, documentPath)
-			component.setRefPath(refDocPath)
+			refPath, _ := loader.resolveRefPath(ref, documentPath)
+			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
