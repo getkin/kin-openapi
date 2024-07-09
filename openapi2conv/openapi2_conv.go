@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"slices"
 	"sort"
 	"strings"
+
+	"slices"
 
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
