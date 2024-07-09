@@ -7,8 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"slices"
-
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -475,7 +473,7 @@ func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef {
 	if schema.Value.Items != nil {
 		schema.Value.Items = ToV3SchemaRef(schema.Value.Items)
 	}
-	if slices.Equal(schema.Value.Type.Slice(), openapi3.Types{"file"}) {
+	if schema.Value.Type.Is("file") {
 		schema.Value.Format, schema.Value.Type = "binary", &openapi3.Types{"string"}
 	}
 	for k, v := range schema.Value.Properties {
