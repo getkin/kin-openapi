@@ -1,0 +1,41 @@
+oneOf:
+  - title: "text"
+    description: |
+      type "text": **text** is a simple string.
+    type: object
+    required:
+      - type
+    properties:
+      default:
+        type: string
+      position:
+        type: number
+        format: int32
+        minimum: 0
+        description: |
+          Position of the parameter in the output.
+      name:
+        type: string
+        description: "name of the parameter as used in the API"
+  - title: "table"
+    description: |
+      type "table"
+    type: object
+    required:
+      - type
+    properties:
+      default:
+        type: string
+      position:
+        type: number
+        format: int32
+        minimum: 0
+        description: |
+          Position of the parameter in the output.
+      name:
+        type: string
+        description: "name of the parameter as used in the API"
+      fields:
+        type: array
+        items:
+          $ref: '#'
