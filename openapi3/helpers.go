@@ -71,7 +71,7 @@ func copyURI(u *url.URL) *url.URL {
 	return &c
 }
 
-type componentRef interface {
+type ComponentRef interface {
 	RefString() string
 	RefPath() *url.URL
 	CollectionName() string
@@ -88,7 +88,7 @@ type componentRef interface {
 //	/schema/other.yaml $ref: ../records.yaml
 //
 // The records.yaml reference in the 2 latter refers to the same document.
-func refersToSameDocument(o1 componentRef, o2 componentRef) bool {
+func refersToSameDocument(o1 ComponentRef, o2 ComponentRef) bool {
 	if o1 == nil || o2 == nil {
 		return false
 	}
@@ -107,7 +107,7 @@ func refersToSameDocument(o1 componentRef, o2 componentRef) bool {
 // referencesRootDocument returns if the $ref points to the root document of the OpenAPI spec.
 //
 // If the document has no location, perhaps loaded from data in memory, it always returns false.
-func referencesRootDocument(doc *T, ref componentRef) bool {
+func referencesRootDocument(doc *T, ref ComponentRef) bool {
 	if doc.url == nil || ref == nil || ref.RefPath() == nil {
 		return false
 	}
@@ -171,7 +171,7 @@ func referenceURIMatch(u1 *url.URL, u2 *url.URL) bool {
 // This would also return...
 //
 //	#/components/schemas/Record
-func ReferencesComponentInRootDocument(doc *T, ref componentRef) (string, bool) {
+func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool) {
 	if ref == nil || ref.RefString() == "" {
 		return "", false
 	}
@@ -197,19 +197,19 @@ func ReferencesComponentInRootDocument(doc *T, ref componentRef) (string, bool) 
 		panic(err) // unreachable
 	}
 
-	var components map[string]componentRef
+	var components map[string]ComponentRef
 
-	componentRefType := reflect.TypeOf(new(componentRef)).Elem()
+	componentRefType := reflect.TypeOf(new(ComponentRef)).Elem()
 	if t := reflect.TypeOf(collection); t.Kind() == reflect.Map &&
 		t.Key().Kind() == reflect.String &&
 		t.Elem().AssignableTo(componentRefType) {
 		v := reflect.ValueOf(collection)
 
-		components = make(map[string]componentRef, v.Len())
+		components = make(map[string]ComponentRef, v.Len())
 		for _, key := range v.MapKeys() {
 			strct := v.MapIndex(key)
 			// Type assertion safe, already checked via reflection above.
-			components[key.Interface().(string)] = strct.Interface().(componentRef)
+			components[key.Interface().(string)] = strct.Interface().(ComponentRef)
 		}
 	} else {
 		return "", false
