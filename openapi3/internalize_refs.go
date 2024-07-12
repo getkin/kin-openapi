@@ -10,7 +10,7 @@ import (
 //
 // The function should avoid name collisions (i.e. be a injective mapping).
 // It must only contain characters valid for fixed field names: [IdentifierRegExp].
-type RefNameResolver func(*T, componentRef) string
+type RefNameResolver func(*T, ComponentRef) string
 
 // DefaultRefResolver is a default implementation of refNameResolver for the
 // InternalizeRefs function.
@@ -27,7 +27,7 @@ type RefNameResolver func(*T, componentRef) string
 //
 // This is an injective mapping over a "reasonable" amount of the possible openapi
 // spec domain space but is not perfect. There might be edge cases.
-func DefaultRefNameResolver(doc *T, ref componentRef) string {
+func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 	if ref.RefString() == "" || ref.RefPath() == nil {
 		panic("unable to resolve reference to name")
 	}
@@ -490,7 +490,7 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 // Example:
 //
 //	doc.InternalizeRefs(context.Background(), nil)
-func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, componentRef) string) {
+func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, ComponentRef) string) {
 	doc.resetVisited()
 
 	if refNameResolver == nil {
