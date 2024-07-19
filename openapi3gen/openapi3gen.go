@@ -195,14 +195,16 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			return nil, &CycleError{}
 		}
 	}
-
-	if cap(parents) == 0 {
+	isRoot := cap(parents) == 0
+	if isRoot {
 		parents = make([]*theTypeInfo, 0, 4)
 	}
 	parents = append(parents, typeInfo)
 
+	isNullable := false
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
+		isNullable = !isRoot
 	}
 
 	if strings.HasSuffix(t.Name(), "Ref") {
@@ -231,6 +233,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 	}
 
 	schema := &openapi3.Schema{}
+	schema.Nullable = isNullable
 
 	switch t.Kind() {
 	case reflect.Func, reflect.Chan:
