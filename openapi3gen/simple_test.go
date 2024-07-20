@@ -70,11 +70,13 @@ func Example() {
 	//     "json": {},
 	//     "map": {
 	//       "additionalProperties": {
+	//         "nullable": true,
 	//         "type": "string"
 	//       },
 	//       "type": "object"
 	//     },
 	//     "ptr": {
+	//       "nullable": true,
 	//       "type": "string"
 	//     },
 	//     "slice": {

@@ -108,11 +108,13 @@ func ExampleGenerator_SchemaRefs() {
 	//     "json": {},
 	//     "map": {
 	//       "additionalProperties": {
+	//         "nullable": true,
 	//         "type": "string"
 	//       },
 	//       "type": "object"
 	//     },
 	//     "ptr": {
+	//       "nullable": true,
 	//       "type": "string"
 	//     },
 	//     "slice": {
@@ -178,6 +180,7 @@ func ExampleThrowErrorOnCycle() {
 	// schemaRef: {
 	//   "properties": {
 	//     "a": {
+	//       "nullable": true,
 	//       "properties": {
 	//         "b": {
 	//           "$ref": "#/components/schemas/CyclicType0"
@@ -192,6 +195,7 @@ func ExampleThrowErrorOnCycle() {
 	//   "CyclicType0": {
 	//     "properties": {
 	//       "a": {
+	//         "nullable": true,
 	//         "properties": {
 	//           "b": {
 	//             "$ref": "#/components/schemas/CyclicType0"
