@@ -879,6 +879,22 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "no param, for arrays",
+					param: &openapi3.Parameter{Name: "something", In: "query", Schema: stringArraySchema},
+					query: "",
+					want:  nil,
+					found: false,
+					err:   nil,
+				},
+				{
+					name:  "missing param, for arrays",
+					param: &openapi3.Parameter{Name: "something", In: "query", Schema: stringArraySchema},
+					query: "foo=bar",
+					want:  nil,
+					found: false,
+					err:   nil,
+				},
+				{
 					name: "deepObject explode additionalProperties with object properties - missing index on nested array",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,

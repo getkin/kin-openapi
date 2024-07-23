@@ -320,6 +320,10 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 		switch {
 		case schema.Value.Type.Is("array"):
 			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (any, bool, error) {
+				res, b, e := dec.DecodeArray(param, sm, schema)
+				if len(res) == 0 {
+					return nil, b, e
+				}
 				return dec.DecodeArray(param, sm, schema)
 			}
 		case schema.Value.Type.Is("object"):
