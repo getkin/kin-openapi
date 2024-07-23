@@ -431,8 +431,6 @@ func TestValidateQueryParams(t *testing.T) {
 				},
 			},
 		},
-		//
-		//
 	}
 
 	for _, tc := range testCases {
@@ -568,4 +566,95 @@ paths:
 		},
 	})
 	require.Error(t, err)
+}
+
+var (
+	StringArraySchemaWithDefault = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			Type:    &openapi3.Types{"array"},
+			Items:   stringSchema,
+			Default: []string{"A", "B", "C"},
+		},
+	}
+	FloatArraySchemaWithDefault = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			Type:    &openapi3.Types{"array"},
+			Items:   numberSchema,
+			Default: []float64{1.5, 2.5, 3.5},
+		},
+	}
+)
+
+func TestValidateRequestDefault(t *testing.T) {
+	type testCase struct {
+		name       string
+		param      *openapi3.Parameter
+		query      string
+		wantQuery  map[string][]string
+		wantHeader map[string]any
+	}
+
+	testCases := []testCase{
+		{
+			name: "String Array In Query",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "form", Explode: explode,
+				Schema: StringArraySchemaWithDefault,
+			},
+			wantQuery: map[string][]string{
+				"param": {
+					"A",
+					"B",
+					"C",
+				},
+			},
+		},
+		{
+			name: "Float Array In Query",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "form", Explode: explode,
+				Schema: FloatArraySchemaWithDefault,
+			},
+			wantQuery: map[string][]string{
+				"param": {
+					"1.5",
+					"2.5",
+					"3.5",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &openapi3.Info{
+				Title:   "MyAPI",
+				Version: "0.1",
+			}
+			doc := &openapi3.T{OpenAPI: "3.0.0", Info: info, Paths: openapi3.NewPaths()}
+			op := &openapi3.Operation{
+				OperationID: "test",
+				Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
+				Responses:   openapi3.NewResponses(),
+			}
+			doc.AddOperation("/test", http.MethodGet, op)
+			err := doc.Validate(context.Background())
+			require.NoError(t, err)
+			router, err := legacyrouter.NewRouter(doc)
+			require.NoError(t, err)
+
+			req, err := http.NewRequest(http.MethodGet, "http://test.org/test?"+tc.query, nil)
+			route, pathParams, err := router.FindRoute(req)
+			require.NoError(t, err)
+
+			input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
+
+			err = ValidateParameter(context.Background(), input, tc.param)
+			require.NoError(t, err)
+
+			for k, v := range tc.wantQuery {
+				require.Equal(t, v, input.Request.URL.Query()[k])
+			}
+		})
+	}
 }
