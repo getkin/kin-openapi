@@ -324,7 +324,7 @@ func decodeValue(dec valueDecoder, param string, sm *openapi3.SerializationMetho
 				if len(res) == 0 {
 					return nil, b, e
 				}
-				return dec.DecodeArray(param, sm, schema)
+				return res, b, e
 			}
 		case schema.Value.Type.Is("object"):
 			decodeFn = func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (any, bool, error) {
