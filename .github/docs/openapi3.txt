@@ -96,7 +96,7 @@ FUNCTIONS
 func BoolPtr(value bool) *bool
     BoolPtr is a helper for defining OpenAPI schemas.
 
-func DefaultRefNameResolver(doc *T, ref componentRef) string
+func DefaultRefNameResolver(doc *T, ref ComponentRef) string
     DefaultRefResolver is a default implementation of refNameResolver for the
     InternalizeRefs function.
 
@@ -150,7 +150,7 @@ func Int64Ptr(value int64) *int64
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
     ReadFromFile is a ReadFromURIFunc which reads local file URIs.
 
-func ReferencesComponentInRootDocument(doc *T, ref componentRef) (string, bool)
+func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool)
     ReferencesComponentInRootDocument returns if the given component reference
     references the same document or element as another component reference in
     the root document's '#/components/<type>'. If it does, it returns the name
@@ -315,6 +315,12 @@ type Callbacks map[string]*CallbackRef
 func (m Callbacks) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type ComponentRef interface {
+	RefString() string
+	RefPath() *url.URL
+	CollectionName() string
+}
 
 type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1227,7 +1233,7 @@ type Ref struct {
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 
-type RefNameResolver func(*T, componentRef) string
+type RefNameResolver func(*T, ComponentRef) string
     RefNameResolver maps a component to an name that is used as it's
     internalized name.
 
@@ -1990,7 +1996,7 @@ func (doc *T) AddServer(server *Server)
 
 func (doc *T) AddServers(servers ...*Server)
 
-func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, componentRef) string)
+func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, ComponentRef) string)
     InternalizeRefs removes all references to external files from the spec and
     moves them to the components section.
 
