@@ -14,17 +14,7 @@ Licensed under the [MIT License](./LICENSE).
 ## Contributors, users and sponsors
 The project has received pull requests [from many people](https://github.com/getkin/kin-openapi/graphs/contributors). Thanks to everyone!
 
-Be sure to [give back to this project](https://github.com/sponsors/fenollp) like our sponsors:
-
-<p align="center">
-	<a href="https://speakeasyapi.dev/?utm_source=kinopenapi+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-github-sponsor-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-github-sponsor-dark.svg">
-		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-github-sponsor-dark.svg" height="100px">
-		</picture>
-	</a>
-</p>
+Please, [give back to this project](https://github.com/sponsors/fenollp) by becoming a sponsor.
 
 Here's some projects that depend on _kin-openapi_:
   * [github.com/a-h/rest](https://github.com/a-h/rest) - "Generate OpenAPI 3.0 specifications from Go code without annotations or magic comments"
@@ -302,6 +292,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ```
 
 ## CHANGELOG: Sub-v1 breaking API changes
+
+### v0.127.0
+* Downgraded `github.com/gorilla/mux` dep from `1.8.1` to `1.8.0`.
 
 ### v0.126.0
 * `openapi3.CircularReferenceError` and `openapi3.CircularReferenceCounter` are removed. `openapi3.Loader` now implements reference backtracking, so any kind of circular references should be properly resolved.
