@@ -1515,6 +1515,7 @@ type Schema struct {
 	// Object
 	Required             []string             `json:"required,omitempty" yaml:"required,omitempty"`
 	Properties           Schemas              `json:"properties,omitempty" yaml:"properties,omitempty"`
+	PropertyKeys         []string             `json:"-" yaml:"-"` // deterministically ordered keys
 	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
