@@ -1490,3 +1490,26 @@ func TestIssue751(t *testing.T) {
 	require.NoError(t, schema.VisitJSON(validData))
 	require.ErrorContains(t, schema.VisitJSON(invalidData), "duplicate items found")
 }
+
+func TestSchemaOrderedProperties(t *testing.T) {
+	const api = `
+openapi: "3.0.1"
+components:
+  schemas:
+    Pet:
+      properties:
+        z_name:
+          type: string
+          description: Diamond
+        a_ownerName:
+          not:
+            type: boolean
+      type: object
+`
+	s, err := NewLoader().LoadFromData([]byte(api))
+	require.NoError(t, err)
+	require.NotNil(t, s)
+
+	pet := s.Components.Schemas["Pet"].Value
+	require.Equal(t, []string{"z_name", "a_ownerName"}, pet.PropertyKeys)
+}

@@ -127,6 +127,7 @@ type Schema struct {
 	// Object
 	Required             []string             `json:"required,omitempty" yaml:"required,omitempty"`
 	Properties           Schemas              `json:"properties,omitempty" yaml:"properties,omitempty"`
+	PropertyKeys         []string             `json:"-" yaml:"-"` // deterministically ordered keys
 	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
@@ -410,6 +411,23 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &x); err != nil {
 		return unmarshalError(err)
 	}
+
+	if x.Properties != nil {
+		var rawProperties struct {
+			Properties json.RawMessage `json:"properties"`
+		}
+		if err := json.Unmarshal(data, &rawProperties); err != nil {
+			// Straight up panic because UnmarshalJSON should already guarantee
+			// a valid input.
+			panic(err)
+		}
+		k, err := extractObjectKeys(rawProperties.Properties)
+		if err != nil {
+			panic(err)
+		}
+		x.PropertyKeys = k
+	}
+
 	_ = json.Unmarshal(data, &x.Extensions)
 
 	delete(x.Extensions, "oneOf")

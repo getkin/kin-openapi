@@ -2,6 +2,8 @@ module github.com/getkin/kin-openapi
 
 go 1.20
 
+replace github.com/invopop/yaml => github.com/diamondburned/invopop-yaml v0.3.2-0.20240812084936-33aae275be98
+
 require (
 	github.com/go-openapi/jsonpointer v0.21.0
 	github.com/gorilla/mux v1.8.0
