@@ -1220,6 +1220,26 @@ components:
 	require.Contains(t, err.Error(), `Error at "/ownerName": Doesn't match schema "not"`)
 }
 
+func TestSchemaOrderedProperties(t *testing.T) {
+	const api = `
+openapi: "3.0.1"
+components:
+  schemas:
+    Pet:
+      properties:
+        z_name:
+          type: string
+        a_ownerName:
+          not:
+            type: boolean
+      type: object
+`
+	s, err := NewLoader().LoadFromData([]byte(api))
+	require.NoError(t, err)
+	require.NotNil(t, s)
+	require.Equal(t, []string{"z_name", "a_ownerName"}, s.Components.Schemas["Pet"].Value.propertyKeys)
+}
+
 func TestValidationFailsOnInvalidPattern(t *testing.T) {
 	schema := Schema{
 		Pattern: "[",

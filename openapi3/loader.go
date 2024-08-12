@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ghodss/yaml"
+	"github.com/ghodss/yaml/v2"
 )
 
 func foundUnresolvedRef(ref string) error {

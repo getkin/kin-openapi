@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/big"
 	"regexp"
+	"sort"
 	"strconv"
 	"unicode/utf16"
 
@@ -150,6 +151,7 @@ type Schema struct {
 	// Object
 	Required                    []string       `json:"required,omitempty" yaml:"required,omitempty"`
 	Properties                  Schemas        `json:"properties,omitempty" yaml:"properties,omitempty"`
+	propertyKeys                []string       // order kept
 	MinProps                    uint64         `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProps                    *uint64        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalPropertiesAllowed *bool          `multijson:"additionalProperties,omitempty" json:"-" yaml:"-"` // In this order...
@@ -157,7 +159,10 @@ type Schema struct {
 	Discriminator               *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
 
-var _ jsonpointer.JSONPointable = (*Schema)(nil)
+var (
+	_ jsonpointer.JSONPointable = (*Schema)(nil)
+	_ json.Unmarshaler          = (*Schema)(nil)
+)
 
 func NewSchema() *Schema {
 	return &Schema{}
@@ -168,7 +173,42 @@ func (schema *Schema) MarshalJSON() ([]byte, error) {
 }
 
 func (schema *Schema) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, schema)
+	if err := jsoninfo.UnmarshalStrictStruct(data, schema); err != nil {
+		return err
+	}
+
+	var rawProperties struct {
+		Properties json.RawMessage `json:"properties"`
+	}
+
+	if err := json.Unmarshal(data, &rawProperties); err != nil {
+		return fmt.Errorf("failed to extract raw schema properties: %w", err)
+	}
+
+	if schema.Type == "object" && rawProperties.Properties != nil {
+		keys, _ := jsoninfo.ExtractObjectKeys(rawProperties.Properties)
+		schema.propertyKeys = keys
+	}
+
+	return nil
+}
+
+// OrderedPropertyKeys returns the keys of the properties in the order they were
+// defined. This is useful for generating code that needs to iterate over the
+// properties in a consistent order. If the keys could not be extracted for some
+// reason, then this method automatically sorts the keys to be deterministic.
+func (schema Schema) OrderedPropertyKeys() []string {
+	if schema.propertyKeys != nil {
+		return schema.propertyKeys
+	}
+
+	keys := make([]string, 0, len(schema.Properties))
+	for k := range schema.Properties {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+	return keys
 }
 
 func (schema Schema) JSONLookup(token string) (interface{}, error) {
