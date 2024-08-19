@@ -10,6 +10,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#request-body-object
 type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     Origin         `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
@@ -108,6 +109,7 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "origin")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "required")
 	delete(x.Extensions, "content")

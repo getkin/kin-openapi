@@ -25,7 +25,7 @@ func unmarshal(data []byte, v any) error {
 	}
 
 	// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
-	if yamlErr = yaml.Unmarshal(data, v); yamlErr == nil {
+	if yamlErr = yaml.UnmarshalWithOrigin(data, v); yamlErr == nil {
 		return nil
 	}
 

@@ -12,6 +12,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
 type Responses struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     Origin         `json:"-" yaml:"-"`
 
 	m map[string]*ResponseRef
 }
@@ -102,6 +103,7 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     Origin         `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -171,6 +173,7 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "origin")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "headers")
 	delete(x.Extensions, "content")

@@ -476,3 +476,11 @@ func TestAddRemoveServer(t *testing.T) {
 
 	doc3.Servers = Servers{}
 }
+
+func TestLocation(t *testing.T) {
+	loader := NewLoader()
+	loader.Context = context.Background()
+	doc, err := loader.LoadFromFile("testdata/testpath.yaml")
+	require.NoError(t, err)
+	require.NotEmpty(t, doc)
+}
