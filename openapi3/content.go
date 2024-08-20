@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"strings"
 )
@@ -120,5 +121,17 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
 			return err
 		}
 	}
+	return nil
+}
+
+// UnmarshalJSON sets Content to a copy of data.
+func (content *Content) UnmarshalJSON(data []byte) error {
+	type ContentBis Content
+	var x ContentBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*content = Content(x)
 	return nil
 }
