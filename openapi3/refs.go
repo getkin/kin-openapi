@@ -19,7 +19,7 @@ type CallbackRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Callback
@@ -157,7 +157,7 @@ type ExampleRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Example
@@ -295,7 +295,7 @@ type HeaderRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Header
@@ -433,7 +433,7 @@ type LinkRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Link
@@ -571,7 +571,7 @@ type ParameterRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Parameter
@@ -709,7 +709,7 @@ type RequestBodyRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *RequestBody
@@ -847,7 +847,7 @@ type ResponseRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Response
@@ -985,7 +985,7 @@ type SchemaRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *Schema
@@ -1123,7 +1123,7 @@ type SecuritySchemeRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *SecurityScheme

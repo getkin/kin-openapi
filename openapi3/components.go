@@ -25,6 +25,7 @@ type (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#components-object
 type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -94,6 +95,7 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "origin")
 	delete(x.Extensions, "schemas")
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "headers")
@@ -107,6 +109,106 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*components = Components(x)
+	return nil
+}
+
+// TODO: replace these unmarshallers with a generic one
+func (callbacks *Callbacks) UnmarshalJSON(data []byte) error {
+	type CallbacksBis Callbacks
+	var x CallbacksBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*callbacks = Callbacks(x)
+	return nil
+}
+
+func (examples *Examples) UnmarshalJSON(data []byte) error {
+	type ExamplesBis Examples
+	var x ExamplesBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*examples = Examples(x)
+	return nil
+}
+
+func (headers *Headers) UnmarshalJSON(data []byte) error {
+	type HeadersBis Headers
+	var x HeadersBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*headers = Headers(x)
+	return nil
+}
+
+func (links *Links) UnmarshalJSON(data []byte) error {
+	type LinksBis Links
+	var x LinksBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*links = Links(x)
+	return nil
+}
+
+func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) error {
+	type ParametersMapBis ParametersMap
+	var x ParametersMapBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*parametersMap = ParametersMap(x)
+	return nil
+}
+
+func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) error {
+	type RequestBodiesBis RequestBodies
+	var x RequestBodiesBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*requestBodies = RequestBodies(x)
+	return nil
+}
+
+func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) error {
+	type ResponseBodiesBis ResponseBodies
+	var x ResponseBodiesBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*responseBodies = ResponseBodies(x)
+	return nil
+}
+
+func (schemas *Schemas) UnmarshalJSON(data []byte) error {
+	type SchemasBis Schemas
+	var x SchemasBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*schemas = Schemas(x)
+	return nil
+}
+
+func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) error {
+	type SecuritySchemesBis SecuritySchemes
+	var x SecuritySchemesBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	delete(x, "origin")
+	*securitySchemes = SecuritySchemes(x)
 	return nil
 }
 

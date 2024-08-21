@@ -1,7 +1,7 @@
 package openapi3
 
 type Origin struct {
-	Key    Location            `json:"key,omitempty" yaml:"key,omitempty"`
+	Key    *Location           `json:"key,omitempty" yaml:"key,omitempty"`
 	Fields map[string]Location `json:"fields,omitempty" yaml:"fields,omitempty"`
 }
 

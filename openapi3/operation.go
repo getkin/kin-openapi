@@ -14,7 +14,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     Origin         `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin         `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`

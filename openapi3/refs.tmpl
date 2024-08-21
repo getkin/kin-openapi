@@ -19,7 +19,7 @@ type {{ $type.Name }}Ref struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
-	Origin     Origin
+	Origin     *Origin
 
 	Ref   string
 	Value *{{ $type.Name }}
