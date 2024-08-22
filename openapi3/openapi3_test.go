@@ -477,8 +477,9 @@ func TestAddRemoveServer(t *testing.T) {
 	doc3.Servers = Servers{}
 }
 
-func TestLocation(t *testing.T) {
+func TestOrigin(t *testing.T) {
 	loader := NewLoader()
+	loader.IncludeOrigin = true
 	loader.Context = context.Background()
 	doc, err := loader.LoadFromFile("testdata/testpath.yaml")
 	require.NoError(t, err)

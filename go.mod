@@ -4,7 +4,7 @@ go 1.22.5
 
 replace gopkg.in/yaml.v3 => github.com/oasdiff/yaml3 v0.0.0-20240819204501-233901bce7fe
 
-replace github.com/invopop/yaml => github.com/oasdiff/yaml v0.0.0-20240819205339-a96ddf1b7c90
+replace github.com/invopop/yaml => github.com/oasdiff/yaml v0.0.0-20240822113848-2830227c9671
 
 require (
 	github.com/go-openapi/jsonpointer v0.21.0
