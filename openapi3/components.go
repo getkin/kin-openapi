@@ -112,104 +112,77 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// TODO: replace these unmarshallers with a generic one
-func (callbacks *Callbacks) UnmarshalJSON(data []byte) error {
-	type CallbacksBis Callbacks
-	var x CallbacksBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*callbacks = Callbacks(x)
-	return nil
+type MapValue interface {
+	CallbackRef | ExampleRef | HeaderRef | LinkRef | ParameterRef | RequestBodyRef | ResponseRef | SchemaRef | SecuritySchemeRef |
+		MediaType
 }
 
-func (examples *Examples) UnmarshalJSON(data []byte) error {
-	type ExamplesBis Examples
-	var x ExamplesBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
+// TODO: add origin to all components
+func unmarshalStringMap[V MapValue](data []byte) (map[string]*V, error) {
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, unmarshalError(err)
 	}
-	delete(x, "origin")
-	*examples = Examples(x)
-	return nil
+	delete(m, "origin")
+	result := make(map[string]*V, len(m))
+	for k, v := range m {
+		if data, err := json.Marshal(v); err != nil {
+			return nil, err
+		} else {
+			var v V
+			if err = json.Unmarshal(data, &v); err != nil {
+				return nil, err
+			}
+			result[k] = &v
+		}
+	}
+
+	return result, nil
 }
 
-func (headers *Headers) UnmarshalJSON(data []byte) error {
-	type HeadersBis Headers
-	var x HeadersBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*headers = Headers(x)
-	return nil
+func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error) {
+	*callbacks, err = unmarshalStringMap[CallbackRef](data)
+	return
 }
 
-func (links *Links) UnmarshalJSON(data []byte) error {
-	type LinksBis Links
-	var x LinksBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*links = Links(x)
-	return nil
+func (examples *Examples) UnmarshalJSON(data []byte) (err error) {
+	*examples, err = unmarshalStringMap[ExampleRef](data)
+	return
 }
 
-func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) error {
-	type ParametersMapBis ParametersMap
-	var x ParametersMapBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*parametersMap = ParametersMap(x)
-	return nil
+func (headers *Headers) UnmarshalJSON(data []byte) (err error) {
+	*headers, err = unmarshalStringMap[HeaderRef](data)
+	return
 }
 
-func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) error {
-	type RequestBodiesBis RequestBodies
-	var x RequestBodiesBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*requestBodies = RequestBodies(x)
-	return nil
+func (links *Links) UnmarshalJSON(data []byte) (err error) {
+	*links, err = unmarshalStringMap[LinkRef](data)
+	return
 }
 
-func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) error {
-	type ResponseBodiesBis ResponseBodies
-	var x ResponseBodiesBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*responseBodies = ResponseBodies(x)
-	return nil
+func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error) {
+	*parametersMap, err = unmarshalStringMap[ParameterRef](data)
+	return
 }
 
-func (schemas *Schemas) UnmarshalJSON(data []byte) error {
-	type SchemasBis Schemas
-	var x SchemasBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*schemas = Schemas(x)
-	return nil
+func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error) {
+	*requestBodies, err = unmarshalStringMap[RequestBodyRef](data)
+	return
 }
 
-func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) error {
-	type SecuritySchemesBis SecuritySchemes
-	var x SecuritySchemesBis
-	if err := json.Unmarshal(data, &x); err != nil {
-		return unmarshalError(err)
-	}
-	delete(x, "origin")
-	*securitySchemes = SecuritySchemes(x)
-	return nil
+func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error) {
+	*responseBodies, err = unmarshalStringMap[ResponseRef](data)
+	return
+}
+
+func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
+	*schemas, err = unmarshalStringMap[SchemaRef](data)
+	return
+}
+
+func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error) {
+	*securitySchemes, err = unmarshalStringMap[SecuritySchemeRef](data)
+	return
 }
 
 // Validate returns an error if Components does not comply with the OpenAPI spec.
