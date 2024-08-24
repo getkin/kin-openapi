@@ -316,6 +316,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	if options.ExcludeReadOnlyValidations {
 		opts = append(opts, openapi3.DisableReadOnlyValidation())
 	}
+	if options.RegexCompiler != nil {
+		opts = append(opts, openapi3.SetSchemaRegexCompiler(options.RegexCompiler))
+	}
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
