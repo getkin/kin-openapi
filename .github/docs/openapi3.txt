@@ -1228,7 +1228,7 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
     documents.
 
 type Ref struct {
-	Ref string `json:"$ref" yaml:"$ref"`
+	Ref        string         `json:"$ref" yaml:"$ref"`
 	Extensions map[string]any `json:"extensions,omitempty" yaml:"$ref,omitempty"`
 }
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
