@@ -53,7 +53,7 @@ func (x *CallbackRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -189,7 +189,7 @@ func (x *ExampleRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -325,7 +325,7 @@ func (x *HeaderRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -461,7 +461,7 @@ func (x *LinkRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -597,7 +597,7 @@ func (x *ParameterRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -733,7 +733,7 @@ func (x *RequestBodyRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -869,7 +869,7 @@ func (x *ResponseRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1005,7 +1005,7 @@ func (x *SchemaRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1141,7 +1141,7 @@ func (x *SecuritySchemeRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref}, nil
+		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
 	}
 	return x.Value.MarshalYAML()
 }
