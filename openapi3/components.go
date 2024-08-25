@@ -112,18 +112,16 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type MapValue interface {
-	CallbackRef | ExampleRef | HeaderRef | LinkRef | ParameterRef | RequestBodyRef | ResponseRef | SchemaRef | SecuritySchemeRef |
-		MediaType
-}
-
-// TODO: add origin to all components
-func unmarshalStringMap[V MapValue](data []byte) (map[string]*V, error) {
+// unmarshalStringMapP unmarshals given json into a map[string]*V
+func unmarshalStringMapP[V any](data []byte) (map[string]*V, error) {
 	var m map[string]any
 	if err := json.Unmarshal(data, &m); err != nil {
-		return nil, unmarshalError(err)
+		return nil, err
 	}
+
+	// TODO: add origin to the result
 	delete(m, "origin")
+
 	result := make(map[string]*V, len(m))
 	for k, v := range m {
 		if data, err := json.Marshal(v); err != nil {
@@ -140,48 +138,83 @@ func unmarshalStringMap[V MapValue](data []byte) (map[string]*V, error) {
 	return result, nil
 }
 
+// unmarshalStringMap unmarshals given json into a map[string]V
+func unmarshalStringMap[V any](data []byte) (map[string]V, error) {
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+
+	// TODO: add origin to the result
+	delete(m, "origin")
+
+	result := make(map[string]V, len(m))
+	for k, v := range m {
+		if data, err := json.Marshal(v); err != nil {
+			return nil, err
+		} else {
+			var v V
+			if err = json.Unmarshal(data, &v); err != nil {
+				return nil, err
+			}
+			result[k] = v
+		}
+	}
+
+	return result, nil
+}
+
+// UnmarshalJSON sets Callbacks to a copy of data.
 func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error) {
-	*callbacks, err = unmarshalStringMap[CallbackRef](data)
+	*callbacks, err = unmarshalStringMapP[CallbackRef](data)
 	return
 }
 
+// UnmarshalJSON sets Examples to a copy of data.
 func (examples *Examples) UnmarshalJSON(data []byte) (err error) {
-	*examples, err = unmarshalStringMap[ExampleRef](data)
+	*examples, err = unmarshalStringMapP[ExampleRef](data)
 	return
 }
 
+// UnmarshalJSON sets Headers to a copy of data.
 func (headers *Headers) UnmarshalJSON(data []byte) (err error) {
-	*headers, err = unmarshalStringMap[HeaderRef](data)
+	*headers, err = unmarshalStringMapP[HeaderRef](data)
 	return
 }
 
+// UnmarshalJSON sets Links to a copy of data.
 func (links *Links) UnmarshalJSON(data []byte) (err error) {
-	*links, err = unmarshalStringMap[LinkRef](data)
+	*links, err = unmarshalStringMapP[LinkRef](data)
 	return
 }
 
+// UnmarshalJSON sets ParametersMap to a copy of data.
 func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error) {
-	*parametersMap, err = unmarshalStringMap[ParameterRef](data)
+	*parametersMap, err = unmarshalStringMapP[ParameterRef](data)
 	return
 }
 
+// UnmarshalJSON sets RequestBodies to a copy of data.
 func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error) {
-	*requestBodies, err = unmarshalStringMap[RequestBodyRef](data)
+	*requestBodies, err = unmarshalStringMapP[RequestBodyRef](data)
 	return
 }
 
+// UnmarshalJSON sets ResponseBodies to a copy of data.
 func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error) {
-	*responseBodies, err = unmarshalStringMap[ResponseRef](data)
+	*responseBodies, err = unmarshalStringMapP[ResponseRef](data)
 	return
 }
 
+// UnmarshalJSON sets Schemas to a copy of data.
 func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
-	*schemas, err = unmarshalStringMap[SchemaRef](data)
+	*schemas, err = unmarshalStringMapP[SchemaRef](data)
 	return
 }
 
+// UnmarshalJSON sets SecuritySchemes to a copy of data.
 func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error) {
-	*securitySchemes, err = unmarshalStringMap[SecuritySchemeRef](data)
+	*securitySchemes, err = unmarshalStringMapP[SecuritySchemeRef](data)
 	return
 }
 

@@ -52,6 +52,7 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
 type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	URL         string                     `json:"url" yaml:"url"` // Required
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -115,6 +116,7 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "origin")
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "variables")
@@ -235,6 +237,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
@@ -276,6 +279,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "origin")
 	delete(x.Extensions, "enum")
 	delete(x.Extensions, "default")
 	delete(x.Extensions, "description")

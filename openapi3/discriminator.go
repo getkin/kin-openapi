@@ -9,6 +9,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	PropertyName string            `json:"propertyName" yaml:"propertyName"` // required
 	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
@@ -44,6 +45,7 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "origin")
 	delete(x.Extensions, "propertyName")
 	delete(x.Extensions, "mapping")
 	if len(x.Extensions) == 0 {
