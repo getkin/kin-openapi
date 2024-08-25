@@ -209,7 +209,7 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 			continue
 		}
 
-		if k == "origin" {
+		if k == originKey {
 			var data []byte
 			if data, err = json.Marshal(v); err != nil {
 				return

@@ -217,7 +217,7 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	delete(x.Extensions, "origin")
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "in")
 	delete(x.Extensions, "description")

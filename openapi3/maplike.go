@@ -125,7 +125,7 @@ func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
 			continue
 		}
 
-		if k == "origin" {
+		if k == originKey {
 			var data []byte
 			if data, err = json.Marshal(v); err != nil {
 				return
@@ -267,7 +267,7 @@ func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
 			continue
 		}
 
-		if k == "origin" {
+		if k == originKey {
 			var data []byte
 			if data, err = json.Marshal(v); err != nil {
 				return
@@ -409,7 +409,7 @@ func (paths *Paths) UnmarshalJSON(data []byte) (err error) {
 			continue
 		}
 
-		if k == "origin" {
+		if k == originKey {
 			var data []byte
 			if data, err = json.Marshal(v); err != nil {
 				return

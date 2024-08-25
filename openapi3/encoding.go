@@ -81,7 +81,7 @@ func (encoding *Encoding) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, "origin")
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "contentType")
 	delete(x.Extensions, "headers")
 	delete(x.Extensions, "style")

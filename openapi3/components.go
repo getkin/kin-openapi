@@ -95,7 +95,7 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, "origin")
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "schemas")
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "headers")
@@ -110,58 +110,6 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	}
 	*components = Components(x)
 	return nil
-}
-
-// unmarshalStringMapP unmarshals given json into a map[string]*V
-func unmarshalStringMapP[V any](data []byte) (map[string]*V, error) {
-	var m map[string]any
-	if err := json.Unmarshal(data, &m); err != nil {
-		return nil, err
-	}
-
-	// TODO: add origin to the result
-	delete(m, "origin")
-
-	result := make(map[string]*V, len(m))
-	for k, v := range m {
-		if data, err := json.Marshal(v); err != nil {
-			return nil, err
-		} else {
-			var v V
-			if err = json.Unmarshal(data, &v); err != nil {
-				return nil, err
-			}
-			result[k] = &v
-		}
-	}
-
-	return result, nil
-}
-
-// unmarshalStringMap unmarshals given json into a map[string]V
-func unmarshalStringMap[V any](data []byte) (map[string]V, error) {
-	var m map[string]any
-	if err := json.Unmarshal(data, &m); err != nil {
-		return nil, err
-	}
-
-	// TODO: add origin to the result
-	delete(m, "origin")
-
-	result := make(map[string]V, len(m))
-	for k, v := range m {
-		if data, err := json.Marshal(v); err != nil {
-			return nil, err
-		} else {
-			var v V
-			if err = json.Unmarshal(data, &v); err != nil {
-				return nil, err
-			}
-			result[k] = v
-		}
-	}
-
-	return result, nil
 }
 
 // UnmarshalJSON sets Callbacks to a copy of data.
