@@ -470,7 +470,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	*schema = Schema(x)
 
 	if schema.Format == "date" {
-		// This is a fix for: https://github.com/oasdiff/kin-openapi/issues/697
+		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
 		if eg, ok := schema.Example.(string); ok {
 			schema.Example = strings.TrimSuffix(eg, "T00:00:00Z")
 		}
@@ -1205,7 +1205,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		return schema.visitJSONArray(settings, value)
 	case map[string]any:
 		return schema.visitJSONObject(settings, value)
-	case map[any]any: // for YAML cf. issue https://github.com/oasdiff/kin-openapi/issues/444
+	case map[any]any: // for YAML cf. issue https://github.com/getkin/kin-openapi/issues/444
 		values := make(map[string]any, len(value))
 		for key, v := range value {
 			if k, ok := key.(string); ok {
