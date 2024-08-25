@@ -316,6 +316,8 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 	return validateExtensions(ctx, flows.Extensions)
 }
 
+type Scopes map[string]string
+
 // OAuthFlow is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
 type OAuthFlow struct {
@@ -364,6 +366,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+
 	delete(x.Extensions, originKey)
 	delete(x.Extensions, "authorizationUrl")
 	delete(x.Extensions, "tokenUrl")

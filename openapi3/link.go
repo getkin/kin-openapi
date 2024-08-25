@@ -67,6 +67,7 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+
 	delete(x.Extensions, originKey)
 	delete(x.Extensions, "operationRef")
 	delete(x.Extensions, "operationId")
