@@ -1240,6 +1240,12 @@ type RefNameResolver func(*T, ComponentRef) string
     The function should avoid name collisions (i.e. be a injective mapping). It
     must only contain characters valid for fixed field names: IdentifierRegExp.
 
+type RegexCompilerFunc func(expr string) (RegexMatcher, error)
+
+type RegexMatcher interface {
+	MatchString(s string) bool
+}
+
 type RequestBodies map[string]*RequestBodyRef
 
 func (m RequestBodies) JSONLookup(token string) (any, error)
@@ -1764,6 +1770,10 @@ func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaVali
     If the passed function returns an empty string, it returns to the previous
     Error() implementation.
 
+func SetSchemaRegexCompiler(c RegexCompilerFunc) SchemaValidationOption
+    SetSchemaRegexCompiler allows to override the regex implementation used to
+    validate field "pattern".
+
 func VisitAsRequest() SchemaValidationOption
 
 func VisitAsResponse() SchemaValidationOption
@@ -2127,6 +2137,10 @@ func ProhibitExtensionsWithRef() ValidationOption
     extensions (fields starting with 'x-') are found as siblings for $ref
     fields. Non-extension fields are prohibited unless allowed explicitly with
     the AllowExtraSiblingFields option.
+
+func SetRegexCompiler(c RegexCompilerFunc) ValidationOption
+    SetRegexCompiler allows to override the regex implementation used to
+    validate field "pattern".
 
 type ValidationOptions struct {
 	// Has unexported fields.
