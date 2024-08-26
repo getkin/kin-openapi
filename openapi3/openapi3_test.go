@@ -3,6 +3,8 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -479,9 +481,32 @@ func TestAddRemoveServer(t *testing.T) {
 
 func TestOrigin(t *testing.T) {
 	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
-	doc, err := loader.LoadFromFile("testdata/testpath.yaml")
-	require.NoError(t, err)
-	require.NotEmpty(t, doc)
+
+	const dir = "testdata"
+	items, _ := os.ReadDir(dir)
+	for _, item := range items {
+		if item.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(item.Name(), ".json") {
+			continue
+		}
+		if item.Name() == "issue235.spec0-typo.yml" ||
+			item.Name() == "callbacks.yml.internalized.yml" ||
+			item.Name() == "spec.yaml.internalized.yml" ||
+			item.Name() == "testref.openapi.yml.internalized.yml" {
+			continue
+		}
+		t.Run(item.Name(), func(t *testing.T) {
+			doc, err := loader.LoadFromFile(fmt.Sprintf("%s/%s", dir, item.Name()))
+			require.NoError(t, err)
+			if doc.Paths == nil {
+				t.Skip("no paths")
+			}
+			require.NotEmpty(t, doc.Paths.Origin)
+		})
+	}
 }
