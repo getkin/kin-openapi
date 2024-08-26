@@ -316,8 +316,6 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 	return validateExtensions(ctx, flows.Extensions)
 }
 
-type Scopes map[string]string
-
 // OAuthFlow is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
 type OAuthFlow struct {
@@ -435,6 +433,10 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 
 	return flow.Validate(ctx, opts...)
 }
+
+// Scopes is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
+type Scopes map[string]string
 
 // UnmarshalJSON sets Scopes to a copy of data.
 func (scopes *Scopes) UnmarshalJSON(data []byte) (err error) {
