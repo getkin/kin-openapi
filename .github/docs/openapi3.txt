@@ -1234,6 +1234,10 @@ type Ref struct {
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 
+func (e *Ref) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Extensions does not comply with the OpenAPI
+    spec.
+
 type RefNameResolver func(*T, ComponentRef) string
     RefNameResolver maps a component to an name that is used as it's
     internalized name.
