@@ -26,7 +26,7 @@ func (x Ref) MarshalYAML() (any, error) {
 	return m, nil
 }
 
-// // MarshalJSON returns the JSON encoding of Ref.
+// MarshalJSON returns the JSON encoding of Ref.
 func (x Ref) MarshalJSON() ([]byte, error) {
 	y, err := x.MarshalYAML()
 	if err != nil {
