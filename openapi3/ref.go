@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 )
 
 //go:generate go run refsgenerator.go
@@ -10,7 +11,28 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 type Ref struct {
 	Ref        string         `json:"$ref" yaml:"$ref"`
-	Extensions map[string]any `json:"extensions,omitempty" yaml:"$ref,omitempty"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+}
+
+// MarshalYAML returns the YAML encoding of Ref.
+func (x Ref) MarshalYAML() (any, error) {
+	m := make(map[string]any, 1+len(x.Extensions))
+	for k, v := range x.Extensions {
+		m[k] = v
+	}
+	if x := x.Ref; x != "" {
+		m["$ref"] = x
+	}
+	return m, nil
+}
+
+// // MarshalJSON returns the JSON encoding of Ref.
+func (x Ref) MarshalJSON() ([]byte, error) {
+	y, err := x.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(y)
 }
 
 // Validate returns an error if Extensions does not comply with the OpenAPI spec.
