@@ -346,6 +346,7 @@ func formDataBody(bodies map[string]*openapi3.SchemaRef, reqs map[string]bool, c
 			bodies[s] = ref
 		}
 	}
+	sort.Strings(requireds)
 	schema := &openapi3.Schema{
 		Type:       &openapi3.Types{"object"},
 		Properties: ToV3Schemas(bodies),
