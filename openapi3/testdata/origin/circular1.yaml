@@ -37,4 +37,3 @@ components:
     circular6:
       oneOf:
         - $ref: '#/components/schemas/circular6'
-

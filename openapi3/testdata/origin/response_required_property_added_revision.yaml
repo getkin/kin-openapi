@@ -46,4 +46,3 @@ components:
           required:
             - name
             - new
-

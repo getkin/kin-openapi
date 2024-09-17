@@ -20,4 +20,3 @@ paths:
       responses:
         "200":
           description: OK
-
