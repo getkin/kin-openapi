@@ -1,0 +1,269 @@
+info:
+  title: Tufin1
+  version: 1.0.1
+  contact:
+    email: support@tufin.com
+    url: www.tufin.com
+  license:
+    name: apache
+openapi: 3.0.3
+x-extension-test2: nogo
+externalDocs:
+  url: https://tufin.io
+tags:
+- name: reuven
+  description: harrison
+paths:
+  /api/{domain}/{project}/badges/security-score:
+    get:
+      operationId: GetSecurityScore
+      x-beta: true
+      parameters:
+      - in: query
+        name: image
+        examples:
+          0:
+            value: 'reuven1'
+          1:
+            value: 'test'
+        x-extension-test:
+        schema:
+          not:
+            description: alphanumeric with underscore, dash, period, slash and colon
+            example: tufinim/generic-bank:cia-latest
+            format: general string
+            pattern: ^(?:[\w-./:]+)$
+            type: string
+      - in: query
+        name: token
+        schema:
+          description: RFC 4122 UUID
+          example: 26734565-dbcc-449a-a370-0beaaf04b0e7
+          format: uuid
+          pattern: ^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12})$
+          type: string
+          maxLength: 30
+      - in: header
+        name: X-Auth-Name
+        required: true
+        schema:
+          description: empty string
+          format: empty string
+          pattern: ^(?:)$
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          description: Hyphen-separated list of lowercase string
+          example: generic-bank
+          format: hyphen-separated list
+          pattern: ^(?:([a-z]+-)*([a-z]+)?)$
+          type: string
+      - in: path
+        name: project
+        required: true
+        schema:
+          description: Lowercase string
+          example: retail
+          format: lowercase string
+          pattern: ^(?:[a-z]+)$
+          type: string
+      responses:
+        default:
+          description: Tufin
+      servers: []
+  /api/{domain}/{project}/install-command:
+    get:
+      parameters:
+      - in: header
+        name: X-Auth-Name
+        required: true
+        schema:
+          description: any string
+          example: Joe
+          format: any string
+          pattern: ^(?:.*)$
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          enum:
+          - tufin
+          - generic-bank
+          type: string
+      - in: path
+        name: project
+        required: true
+        schema:
+          enum:
+          - retail
+          - my-project
+          - test
+          - eks
+          - test1
+          type: string
+      responses:
+        default:
+          x-test:
+          description: Tufin
+          x-extension-test:
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per min.
+              x-test:
+      servers:
+        - url: 'https://api.oasdiff.com'
+        - url: 'https://www.oasdiff.com'
+          description: "1"
+          variables:
+            title:
+              default: "CEO"
+          x-extension-test:
+    servers:
+      - url: 'https://api.oasdiff.com'
+    parameters:
+    - in: header
+      name: name
+      schema:
+        enum:
+        - tufin
+  /register:
+    post:
+      security:
+      - OAuth: 
+        - write:pets
+      summary: Subscribe to a webhook
+      callbacks:   # Callback definition
+        myEvent:   # Event name
+          'hi':
+            post:
+              requestBody:   # Contents of the callback message
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+              responses:   # Expected responses to the callback message
+                '200':
+                  description: Your server returns this code if it accepts the callback
+      responses:
+        default:
+          description: Tufin
+  /subscribe:
+    post:
+      summary: Subscribe to a webhook
+      callbacks:   # Callback definition
+        myEvent:   # Event name
+          'hi':
+            post:
+              requestBody:   # Contents of the callback message
+                required: true
+                content:
+                  application/json:
+                    x-extension-test:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Some event happened
+                      required:
+                        - message
+                    encoding:
+                      profileImage:
+                        # only accept png
+                        contentType: image/png
+                        headers:
+                          i:
+                            x-extension-test:
+                            schema:
+                              type: integer
+                            description: number
+              responses:   # Expected responses to the callback message
+                '200':
+                  description: Your server returns this code if it accepts the callback
+                  links:
+                    "test":
+                      operationId: "reuven"
+                    "test2":
+                      operationId: "GetSecurityScore"
+          '{$request.body#/callbackUrl}':   # The callback URL,
+                                            # Refers to the passed URL
+            post:
+              requestBody:   # Contents of the callback message
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Some event happened
+                      required:
+                        - message
+              responses:   # Expected responses to the callback message
+                '200':
+                  description: Your server returns this code if it accepts the callback
+          'bye':
+            post:
+              responses:   # Expected responses to the callback message
+                '200':
+                  description: Your server returns this code if it accepts the callback
+      responses:
+        default:
+          description: Tufin
+components:
+  callbacks:
+    test:  
+      'reuven':
+        post:
+          requestBody:   
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+          responses:   
+            '200':
+              description: Your server returns this code if it accepts the callback
+  requestBodies:
+      reuven:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                meter_name:
+                    type: string
+                tenant:
+                  type: string
+                meter_value:
+                  type: integer
+                time:
+                  type: integer
+                dimensions:
+                  type: object
+  securitySchemes:
+    OAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.org/auth
+          tokenUrl: https://example.org/token
+          scopes:
+            accountRead: Allows account data to be read
+            accountWrite: Allows accounts data to be written
+            admin: read
+        clientCredentials:
+          tokenUrl: tufin.io/token        
+  examples:
+    a:
+      description: reuven
+  links:
+    b:
+      description: reuven

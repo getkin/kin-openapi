@@ -1,0 +1,181 @@
+info:
+  title: Tufin1
+  version: 1.0.1
+  contact:
+    email: support@tufin.com
+    url: www.tufin.com
+  license:
+    name: apache
+openapi: 3.0.3
+paths:
+  /api/{domain}/{project}/badges/security-score:
+    get:
+      parameters:
+      - in: query
+        name: filter
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                color:
+                  type: string
+              required:
+              - type
+      - in: header
+        name: user
+        schema:
+          type: string
+      - in: cookie
+        name: test
+        content:
+          application/json:
+            schema:
+              type: string
+      - in: query
+        name: image
+        schema:
+          description: alphanumeric 
+          example: tufinim/generic-bank:cia-latest
+          format: general string
+          pattern: ^(?:[\w-./:]+)$
+          type: string
+      - in: query
+        name: token
+        schema:
+          description: RFC 4122 UUID
+          example: 26734565-dbcc-449a-a370-0beaaf04b0e8
+          format: uuid
+          pattern: ^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12})$
+          type: string
+      - in: header
+        name: X-Auth-Name
+        required: true
+        schema:
+          description: empty string
+          format: empty string
+          pattern: ^(?:)$
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          description: Hyphen-separated list of lowercase string
+          example: generic-bank
+          format: hyphen-separated list
+          pattern: ^(?:([a-z]+-)*([a-z]+)?)$
+          type: string
+      - in: path
+        name: project
+        required: true
+        schema:
+          description: Lowercase string
+          example: retail
+          format: lowercase string
+          pattern: ^(?:[a-z]+)$
+          type: string
+      responses:
+        default:
+          description: Tufin
+        '201':
+          description: none
+          content:
+            application/xml:
+              schema:
+                type: object
+      servers: []
+  /api/{domain}/{project}/install-command:
+    get:
+      parameters:
+      - in: header
+        name: X-Auth-Name
+        required: true
+        schema:
+          description: any string
+          example: Joe
+          format: any string
+          pattern: ^(?:.*)$
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          enum:
+          - generic-bank
+          - tufin
+          type: string
+      - in: path
+        name: project
+        required: true
+        schema:
+          enum:
+          - retail
+          - my-project
+          - test
+          - eks
+          type: string
+      responses:
+        default:
+          description: Tufin
+      servers:
+        - url: 'https://www.oasdiff.com'
+          description: "2"
+          variables:
+            name: 
+              default: "joe"
+              enum: ["joe", "bill"]
+            title:
+              default: "developer"
+          x-test:
+components:
+  schemas:
+    requests:
+      additionalProperties: false
+      properties:
+        email:
+          description: Email address
+          example: road.runner@acme.com
+          format: email
+          pattern: ^(?:[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)$
+          type: string
+      type: object
+    network-policies:
+      additionalProperties: false
+      properties:
+        netpols:
+          type: string
+      type: object
+    rules:
+      additionalProperties: false
+      properties:
+        netpols:
+          type: string
+      type: object      
+  responses:
+    default:
+      description: Tufin
+  headers:
+    test:
+      schema: 
+        $ref: '#/components/schemas/network-policies'
+    testc:
+      content: 
+        application/json:
+          schema:
+            type: string
+  securitySchemes:
+    bearerAuth:      
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
+    AccessToken:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/api/oauth/dialog
+          scopes:
+            write:pets: modify pets in your account
+            read:pets": read your pets
+

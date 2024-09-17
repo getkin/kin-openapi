@@ -1,0 +1,25 @@
+openapi: 3.0.3
+
+components:
+  parameters:
+    differentComponentName_A:
+      name: sameParamName
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+          - option_1
+          - option_2
+        default: option_1
+      description: Let's mention both options, option_1 and option_2.
+    differentComponentName_B:
+      name: sameParamName
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - option_1
+        default: option_1
+      description: Let's mention the only option, option_1.

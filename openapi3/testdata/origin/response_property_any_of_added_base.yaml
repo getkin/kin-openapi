@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: ACME
+  version: 1.0.0
+
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Dog"
+                  - $ref: "#/components/schemas/Cat"
+
+components:
+  schemas:
+    Dog:
+      type: object
+      properties:
+        name:
+          type: string
+        breed:
+          type: object
+          anyOf:
+            - $ref: "#/components/schemas/Breed1"
+            - $ref: "#/components/schemas/Breed2"
+
+    Breed1:
+      type: object
+      properties:
+        name:
+          type: string
+    Breed2:
+      type: object
+      properties:
+        name:
+          type: string
+
+    Cat:
+      type: object
+      properties:
+        name:
+          type: string

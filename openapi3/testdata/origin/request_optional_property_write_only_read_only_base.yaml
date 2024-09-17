@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  version: 1.0.0
+paths:
+  /api/v1.0/groups:
+    post:
+      operationId: createOneGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  writeOnly: false
+                name:
+                  type: string
+                  writeOnly: false  # Set this to true in the next version for testing

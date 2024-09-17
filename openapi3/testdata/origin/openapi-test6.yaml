@@ -1,0 +1,23 @@
+openapi: "3.0.0"
+info:
+  title: "Test API"
+  version: "1.0.0"
+paths:
+  /health:
+    get:
+      summary: "Get health status"
+      responses:
+        200:
+          description: "Success"
+  /health/live:
+    get:
+      summary: "Get live health status"
+      responses:
+        200:
+          description: "Success"
+  /health/ready:
+    get:
+      summary: "Get readiness status"
+      responses:
+        200:
+          description: "Success"

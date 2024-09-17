@@ -1,0 +1,61 @@
+openapi: 3.0.0
+info:
+  title: ACME
+  version: 1.0.0
+
+paths:
+  /pets:
+    post:
+      operationId: updatePets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/Dog"
+                - $ref: "#/components/schemas/Cat"
+              discriminator:
+                propertyName: petType2
+                mapping:
+                  cat: "#/components/schemas/Cat"
+                  dog: "#/components/schemas/Dog"
+
+components:
+  schemas:
+    Dog:
+      type: object
+      properties:
+        petType2:
+          type: string
+        name:
+          type: string
+        breed:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/Breed1"
+            - $ref: "#/components/schemas/Breed2"
+          discriminator:
+            propertyName: name2
+            mapping:
+              breed1: "#/components/schemas/Breed1"
+              breed2: "#/components/schemas/Breed2"
+
+    Breed1:
+      type: object
+      properties:
+        name2:
+          type: string
+
+    Breed2:
+      type: object
+      properties:
+        name2:
+          type: string
+
+    Cat:
+      type: object
+      properties:
+        petType2:
+          type: string
+        name:
+          type: string

@@ -1,0 +1,43 @@
+openapi: 3.0.1
+info:
+  title: Pet Store
+  version: 1.0.0
+paths:
+  /pets:
+    post:
+      operationId: updatePet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+        description: Update an existing pet
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - available
+            - pending
+            - sold
+        category:
+          type: string
+          enum:
+            - dog
+            - cat
+            - bird
+      required:
+        - name
+        - status
+        - category

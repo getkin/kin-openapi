@@ -1,0 +1,20 @@
+openapi: 3.0.3
+
+components:
+  headers:
+    differentComponentName_A:
+      schema:
+        type: string
+        enum:
+          - option_1
+          - option_2
+        default: option_1
+      description: Let's mention both options, option_1 and option_2.
+    differentComponentName_B:
+      schema:
+        type: string
+        enum:
+          - option_1
+        default: option_1
+      description: Let's mention the only option, option_1.
+      

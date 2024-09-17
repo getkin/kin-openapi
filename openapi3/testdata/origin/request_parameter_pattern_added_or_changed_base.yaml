@@ -1,0 +1,17 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: "1.0"
+paths:
+  /test:
+    post:
+      parameters:
+        - in: query
+          name: category
+          required: true
+          schema:
+            type: string
+            pattern: '^\w+$'
+      responses:
+        '200':
+          description: OK

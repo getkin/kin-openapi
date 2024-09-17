@@ -1,0 +1,19 @@
+info:
+  title: Tufin
+  version: 1.0.0
+openapi: 3.0.3
+paths:
+  /api/test:
+    get:
+      parameters:
+        - name: a
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+    post:
+      responses:
+        201:
+          description: OK

@@ -1,0 +1,72 @@
+openapi: 3.0.1
+info:
+  title: Tufin
+  version: "2.0"
+servers:
+- url: https://localhost:9080
+paths:
+  /api/v1.0/groups:
+    post:
+      operationId: createOneGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupView'
+        description: Creates one project.
+        required: true
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: token
+        schema:
+          description: RFC 4122 UUID
+          example: 26734565-dbcc-449a-a370-0beaaf04b0e8
+          format: uuid
+          pattern: ^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12})$
+          type: string
+          maxLength: 29
+      - in: header
+        name: X-Request-ID
+        schema:
+          type: string
+          format: uuid
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupView'
+          description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupView'
+          description: Conflict
+      summary: Create One Project
+components:
+  schemas:
+    GroupView:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            created:
+              type: string
+              format: date-time
+              readOnly: true
+              pattern: "^[a-z]+$"
+            id:
+              type: string
+              readOnly: true
+            name:
+              type: string
+          required:
+            - name

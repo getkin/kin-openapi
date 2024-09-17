@@ -1,0 +1,16 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: 1.0.0
+paths:
+  /pets:
+    post:
+      operationId: addPet
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        responses:
+        "200":
+          description: OK

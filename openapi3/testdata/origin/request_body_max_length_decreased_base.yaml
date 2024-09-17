@@ -1,0 +1,29 @@
+openapi: 3.0.1
+info:
+  title: Pet Store API
+  version: "1.0"
+servers:
+  - url: https://api.example.com/v1
+paths:
+  /pets:
+    post:
+      operationId: addPet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 100
+        required: true
+      responses:
+        "200":
+          description: OK
+components: {}

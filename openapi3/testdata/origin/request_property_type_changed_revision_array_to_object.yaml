@@ -1,0 +1,61 @@
+openapi: 3.0.1
+info:
+  title: Sample API
+  version: 1.0.0
+paths:
+  /pets:
+    post:
+      summary: Add a new pet
+      operationId: addPet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        format: string
+                      age:
+                        type: integer
+                        format: int32
+                    required:
+                      - name
+  /dogs:
+    post:
+      summary: Add a new dog
+      operationId: addDog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  format: string
+                colors:
+                  type: object
+                  properties:
+                    red:
+                      type: integer
+                    green:
+                      type: integer
+                    blue:
+                      type: integer
+                  required:
+                    - red
+                    - blue
+                    - green
+              required:
+                - name
+

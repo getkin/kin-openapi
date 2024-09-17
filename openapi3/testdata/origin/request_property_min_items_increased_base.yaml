@@ -1,0 +1,21 @@
+openapi: 3.0.1
+info:
+  title: Product API
+  version: "1.0"
+servers:
+  - url: https://api.example.com/v1
+paths:
+  /products:
+    post:
+      operationId: addProduct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              minItems: 10
+      responses:
+        "200":
+          description: OK

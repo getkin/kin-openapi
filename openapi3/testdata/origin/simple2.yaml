@@ -1,0 +1,10 @@
+info:
+  title: Tufin
+  version: 1.0.0
+openapi: 3.0.3
+paths:
+  /api/test:
+    post:
+      responses:
+        200:
+          description: OK

@@ -1,0 +1,80 @@
+openapi: 3.0.1
+paths:
+  /groups:
+    get:
+      operationId: getGroups
+      summary: Get groups
+      parameters:
+        - name: skip
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: take
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: filters
+          required: false
+          in: query
+          style: deepObject
+          explode: true
+          schema:
+            $ref: '#/components/schemas/GroupFilters'
+      responses:
+        "200":
+          description: Successfully received results
+          content:
+            application/json:
+              schema:
+                type: object
+                title: BaseGroupListResponse
+                required:
+                  - total
+                  - skip
+                  - take
+                  - results
+                properties:
+                  total:
+                    type: integer
+                  skip:
+                    type: integer
+                  take:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BaseGroup'
+info:
+  title: Backend
+  description: ""
+  version: v1
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    GroupFilters:
+      type: object
+      properties:
+        groupId:
+          #
+          #   👇🏻 Breaking change here
+          #
+          type: number
+          nullable: true
+        name:
+          type: array
+          items:
+            type: string
+    BaseGroup:
+      type: object
+      properties:
+        groupId:
+          type: number
+        name:
+          type: string
+      required:
+        - groupId
+        - name

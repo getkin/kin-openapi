@@ -1,0 +1,25 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: "1.0"
+paths:
+  /test:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestRequest'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    TestRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          pattern: ''
+        age:
+          type: integer

@@ -1,0 +1,17 @@
+openapi: "3.0.0"
+info:
+  title: "Test API"
+  version: "1.0.0"
+paths:
+  /resource/new:
+    get:
+      summary: "Get new resource"
+      responses:
+        200:
+          description: "Success"
+  /resource/newest:
+    get:
+      summary: "Get newest resource"
+      responses:
+        200:
+          description: "Success"

@@ -1,0 +1,19 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: v1
+paths:
+  /partner-api/test/some-method:
+    get:
+      tags:
+        - Test
+      responses:
+        "200":
+          description: Success
+  /partner-api/test/another-method:
+    get:
+      tags:
+        - Test
+      responses:
+        "200":
+          description: Success

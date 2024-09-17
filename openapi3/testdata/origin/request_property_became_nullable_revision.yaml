@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  version: 2.0.0  # Updated version
+paths:
+  /products:
+    post:
+      operationId: addProduct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  nullable: true
+              required:
+                - name
+      responses:
+        '200':
+          description: OK

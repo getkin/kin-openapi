@@ -1,0 +1,490 @@
+openapi: 3.0.0
+info:
+  title: SmartChef API
+  version: 1.0.0
+
+paths:
+  /products:
+    get:
+      summary: Returns a list of all products
+      tags: 
+        - Products
+      parameters: 
+        - $ref: '#/components/parameters/takeParam'
+        - $ref: '#/components/parameters/skipParam'
+        - in: query
+          name: gtin
+          schema:
+            type: string
+            maxLength: 13
+        - in: query
+          name: name
+          schema: 
+            type: string
+        - in: query
+          name: beschreibung
+          schema: 
+            type: string
+      responses:
+        '200':
+          description: JSON Array of products
+          content:
+            application/javascript:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+    
+    post:
+      summary: Creates a new product
+      tags:
+        - Products
+      responses:
+        '201':
+          description: Returns the created product as JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '409':
+          description: GTIN already taken
+                
+  /products/{productId}:
+    get:
+      summary: Gets the product with the specified productId
+      parameters: 
+        - in: path
+          name: productId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The UUID of the requested product
+            
+      tags: 
+        - Products
+      responses:
+        '200':
+          description: Returns the requested product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '404':
+          description: Product with provided ID does not exist
+          
+  /products/{productId}/categories:
+    get:
+      summary: Gets the categories of the specified product
+      parameters: 
+        - in: path
+          name: productId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The UUID of the requested product
+            
+      tags: 
+        - Products
+      responses:
+        '200':
+          description: Returns the categories of the requested product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '404':
+          description: Product with provided ID does not exist
+          
+        '500':
+          description: Internal Server Error
+        '400':
+          description: Bad Request
+          
+  /users:          
+    get:
+      tags:
+        - Users
+      summary: Gets all users
+      parameters:
+        - $ref: '#/components/parameters/takeParam'
+        - $ref: '#/components/parameters/skipParam'
+        - in: query
+          name: vorname
+          schema:
+            type: string
+        - in: query
+          name: nachname
+          schema: 
+            type: string
+      responses:
+        '200':
+          description: Returns public users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicUserDto'
+                  
+    post:
+      tags: 
+        - Users
+      summary: Creates a new user
+      requestBody:
+        description: Data for the new user
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDto'
+      responses:
+        '201':
+          description: The created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserDto'
+        '409':
+          description: Email already taken
+          
+                  
+  /users/{userId}:
+    get:
+      tags: 
+       - Users
+      summary: Gets the requested user
+      parameters: 
+        - in: path
+          name: userId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The UUID of the requested user
+      responses:
+        '200':
+          description: Returns the requested user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUserDto'
+                
+    put:
+      tags:
+        - Users
+      summary: Updates a user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The UUID of the user to be updated
+      requestBody:
+        description: User update data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        '200':
+          description: Returns the updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUserDto'
+          
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Logs in the user
+      requestBody:
+        description: User credentials
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+              
+      responses:
+        '201':
+          description: Returns the created token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '403':
+          description: Wrong email and/or password
+                
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Gets a new access token using the provided refresh token
+      requestBody:
+        description: Refresh token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  format: jwt
+      responses:
+        '201':
+          description: Returns a new token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+          
+
+components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+      
+  schemas:
+    ResourceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: datetime
+        updatedAt:
+          type: string
+          format: datetime
+  
+    ProductDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - type: object
+          properties:
+            gtin:
+              type: string
+            name:
+              type: string
+            beschreibung:
+              type: string
+            menge:
+              type: number
+              minimum: 0
+            einheit:
+              type: string
+            kategorieId:
+              type: string
+              format: uuid
+            herstellerId:
+              type: string
+              format: uuid
+    
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          format: jwt
+        refreshToken:
+          type: string
+          format: jwt
+    
+    PublicUserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vorname:
+          type: string
+          maxLength: 255
+        nachname:
+          type: string
+          maxLength: 255
+          
+    PrivateUserDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/PublicUserDto'
+        - type: object
+          properties:
+            email:
+              type: string
+              format: email
+              maxLength: 255
+              
+    LoginDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        
+        password:
+          type: string
+          maxLength: 255
+    
+    HaushaltDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - type: object
+          properties:
+            name:
+              type: string
+              maxLength: 255
+        
+    HaushaltProduktDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - $ref: '#/components/schemas/ProductDto'
+        - type: object
+          properties:
+            haushaltId:
+              type: string
+              format: uuid
+            ist:
+              type: number
+            soll:
+              type: number
+    
+    HerstellerDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - type: object
+          properties:
+            name:
+              type: string
+              
+    ProduktKategorieDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - type: object
+          properties:
+            name: 
+              type: string
+              maxLength: 255
+            parentId:
+              type: string
+              format: uuid
+              
+    RezeptDto:
+      type: object
+      allOf:
+       - $ref: '#/components/schemas/ResourceDto'
+       - type: object
+         properties:
+          name: 
+            type: string
+            maxLength: 255
+          beschreibung:
+            type: string
+            maxLength: 255
+          anleitungText:
+            type: string
+            maxLength: 4000
+          url:
+            type: string
+            format: url
+            maxLength: 1024
+          kategorieId:
+            type: string
+            format: string
+            
+    RezeptKategorieDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - type: object
+          properties:
+            name:
+              type: string
+            parentId:
+              type: string
+              format: uuid
+            
+    ZutatenDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ResourceDto'
+        - type: object
+          properties:
+            produktKategorieId:
+              type: string
+              maxLength: 255
+            menge:
+              type: number
+              minimum: 0
+            einheit:
+              type: string
+              maxLength: 255
+            rezeptId:
+              type: string
+              format: uuid
+    
+    CreateUserDto:
+      type: object
+      required: 
+        - password
+        - vorname
+        - nachname
+      properties:
+        password:
+          type: string
+          minLength: 8
+          maxLength: 255
+        vorname:
+          type: string
+          maxLength: 255
+        nachname:
+          type: string
+          maxLength: 255
+      
+    UpdateUserDto:
+      type: object
+      properties:
+        password: 
+          type: string
+          maxLength: 255
+        vorname:
+          type: string
+          maxLength: 255
+        nachname:
+          type: string
+          maxLength: 255
+          
+  parameters:
+    takeParam:
+      in: query
+      name: take
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+      description: The amount of users to return
+    skipParam:
+        in: query
+        name: skip
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+        description: The amount of users to skip
+    
+        
+security:
+  - bearerAuth: []

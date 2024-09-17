@@ -1,0 +1,60 @@
+openapi: 3.0.1
+info:
+  title: Tufin
+  version: "2.0"
+servers:
+- url: https://localhost:9080
+paths:
+  /api/v1.0/groups:
+    post:
+      tags:
+        - Test
+      operationId: createOneGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupView'
+        description: Creates one project.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupView'
+          description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupView'
+          description: Conflict
+      summary: Create One Project
+components:
+  parameters:
+    groupId:
+      in: path
+      name: groupId
+      required: true
+      schema:
+        type: string
+  schemas:
+    GroupView:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            created:
+              type: string
+              format: date-time
+              readOnly: true
+              pattern: "^[a-z]+$"
+            id:
+              type: string
+              readOnly: true
+            name:
+              type: string
+          required:
+            - name

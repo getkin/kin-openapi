@@ -1,0 +1,10 @@
+openapi: 3.0.3
+
+components:
+  schemas:
+    differentComponentName_A:
+      name: sameParamName
+      type: string
+    differentComponentName_B:
+      name: sameParamName
+      type: string

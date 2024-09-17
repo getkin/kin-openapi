@@ -1,0 +1,40 @@
+openapi: 3.0.1
+info:
+  title: Circular Schema
+  version: v1
+paths:
+  /test:
+    post:
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/circular1'
+components:
+  schemas:
+    circular1:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/circular1'
+    circular2:
+      oneOf:
+       - $ref: '#/components/schemas/circular2'
+    circular3:
+      oneOf:
+        - $ref: '#/components/schemas/circular2'
+    circular4:
+      oneOf:
+        - oneOf:
+          - $ref: '#/components/schemas/circular4'
+    circular5:
+      oneOf:
+        - $ref: '#/components/schemas/circular1'
+    circular6:
+      oneOf:
+        - $ref: '#/components/schemas/circular6'
+        - $ref: '#/components/schemas/circular1'

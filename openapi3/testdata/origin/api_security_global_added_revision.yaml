@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: Security Requirement Example
+  version: 1.0.0
+security:
+- petstore_auth:
+  - write:pets
+  - read:pets
+paths:
+  /subscribe:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inProgressUrl:
+                  type: string
+                failedUrl:
+                  type: string
+                successUrl:
+                  type: string
+      responses:
+        "200":
+          description: OK
+components:
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows: 
+        implicit:
+          authorizationUrl: http://example.org/api/oauth/dialog
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+          
