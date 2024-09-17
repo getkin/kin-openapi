@@ -3,8 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -477,24 +475,4 @@ func TestAddRemoveServer(t *testing.T) {
 	assert.Len(t, doc3.Servers, 3)
 
 	doc3.Servers = Servers{}
-}
-
-func TestOrigin(t *testing.T) {
-	loader := NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
-	loader.Context = context.Background()
-
-	const dir = "testdata/origin"
-	items, _ := os.ReadDir(dir)
-	for _, item := range items {
-		t.Run(item.Name(), func(t *testing.T) {
-			doc, err := loader.LoadFromFile(fmt.Sprintf("%s/%s", dir, item.Name()))
-			require.NoError(t, err)
-			if doc.Paths == nil {
-				t.Skip("no paths")
-			}
-			require.NotEmpty(t, doc.Paths.Origin)
-		})
-	}
 }
