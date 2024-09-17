@@ -322,10 +322,10 @@ type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
-	AuthorizationURL string `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           Scopes `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string    `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           StringMap `json:"scopes" yaml:"scopes"` // required
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.
@@ -432,14 +432,4 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 	}
 
 	return flow.Validate(ctx, opts...)
-}
-
-// Scopes is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
-type Scopes map[string]string
-
-// UnmarshalJSON sets Scopes to a copy of data.
-func (scopes *Scopes) UnmarshalJSON(data []byte) (err error) {
-	*scopes, err = unmarshalStringMap[string](data)
-	return
 }
