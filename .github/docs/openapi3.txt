@@ -1524,7 +1524,7 @@ type Schema struct {
 	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Discriminator        any                  `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
     Schema is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
