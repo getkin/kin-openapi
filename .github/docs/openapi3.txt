@@ -543,6 +543,7 @@ func (examples *Examples) UnmarshalJSON(data []byte) (err error)
 
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
