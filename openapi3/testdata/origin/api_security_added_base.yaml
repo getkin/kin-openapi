@@ -24,7 +24,7 @@ components:
   securitySchemes:
     petstore_auth:
       type: oauth2
-      flows: 
+      flows:
         implicit:
           authorizationUrl: http://example.org/api/oauth/dialog
           scopes:

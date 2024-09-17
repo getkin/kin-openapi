@@ -27,7 +27,7 @@ components:
   securitySchemes:
     petstore_auth:
       type: oauth2
-      flows: 
+      flows:
         implicit:
           authorizationUrl: http://example.org/api/oauth/dialog
           scopes:
@@ -35,7 +35,7 @@ components:
             read:pets: read your pets
     catstore_auth:
       type: oauth2
-      flows: 
+      flows:
         implicit:
           authorizationUrl: http://example.org/api/oauth/dialog
           scopes:
