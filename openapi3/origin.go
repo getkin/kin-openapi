@@ -90,3 +90,12 @@ func deepCast[V any](value any) (*V, error) {
 	}
 	return &result, nil
 }
+
+// StringMap allows us to customize the unmarshalling of a map[string]string in order to support the `origin` field.
+type StringMap map[string]string
+
+// UnmarshalJSON sets StringMap to a copy of data.
+func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error) {
+	*stringMap, err = unmarshalStringMap[string](data)
+	return
+}
