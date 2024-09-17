@@ -63,7 +63,7 @@ paths:
           type: string
       responses:
         default:
-          description: Tufin 
+          description: Tufin
       servers: []
     post:
       responses:

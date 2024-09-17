@@ -134,7 +134,7 @@ paths:
   /register:
     post:
       security:
-      - OAuth: 
+      - OAuth:
         - write:pets
       summary: Subscribe to a webhook
       callbacks:   # Callback definition
@@ -219,16 +219,16 @@ paths:
           description: Tufin
 components:
   callbacks:
-    test:  
+    test:
       'reuven':
         post:
-          requestBody:   
+          requestBody:
             required: true
             content:
               application/json:
                 schema:
                   type: object
-          responses:   
+          responses:
             '200':
               description: Your server returns this code if it accepts the callback
   requestBodies:
@@ -237,7 +237,7 @@ components:
           application/json:
             schema:
               type: object
-              properties: 
+              properties:
                 meter_name:
                     type: string
                 tenant:
@@ -260,7 +260,7 @@ components:
             accountWrite: Allows accounts data to be written
             admin: read
         clientCredentials:
-          tokenUrl: tufin.io/token        
+          tokenUrl: tufin.io/token
   examples:
     a:
       description: reuven

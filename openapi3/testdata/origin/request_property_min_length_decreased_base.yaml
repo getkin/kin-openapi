@@ -24,7 +24,7 @@ paths:
                   type: string
                   minLength: 10
         required: true
-        
+
       responses:
         "200":
           description: OK

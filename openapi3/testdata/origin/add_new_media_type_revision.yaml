@@ -29,7 +29,7 @@ paths:
                     type: integer
                   name:
                     type: string
-                  fullTime: 
+                  fullTime:
                     type: boolean
           description: OK
         "409":

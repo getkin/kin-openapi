@@ -17,7 +17,7 @@ paths:
                   - $ref: "#/components/schemas/Cat"
                   - title: Rabbit
                     type: string
-                  - title: 
+                  - title:
                     type: string
 components:
   schemas:

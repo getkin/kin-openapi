@@ -13,4 +13,4 @@ paths:
             schema:
               type: string
               default: "NewDefault"
-        description: RequestBody   
+        description: RequestBody

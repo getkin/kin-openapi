@@ -2,24 +2,24 @@ info:
   title: Tufin
   version: 1.0.0
 openapi: 3.0.3
-x-extension-test: 
-x-extension-test2: go 
+x-extension-test:
+x-extension-test2: go
 externalDocs:
   url: https://tufin.com
 tags:
 - name: security
   description: control security
-  x-extension-test: 
+  x-extension-test:
 - name: reuven
   description: Harrison
-servers: 
+servers:
 - url: tufin.com
-  x-extension-test: 
+  x-extension-test:
 security:
 - bearerAuth: []
 paths:
   /api/{domain}/{project}/badges/security-score:
-    x-extension-test: 
+    x-extension-test:
     parameters:
     - in: path
       name: domain
@@ -32,17 +32,17 @@ paths:
         type: string
     get:
       operationId: GetSecurityScores
-      x-extension-test: 
+      x-extension-test:
       x-beta: true
       tags:
         - security
       parameters:
       - in: query
         name: filter
-        x-extension-test: 
+        x-extension-test:
         content:
           application/json:
-            x-extension-test: 
+            x-extension-test:
             schema:
               type: object
               properties:
@@ -72,7 +72,7 @@ paths:
             value: 'reuven'
         schema:
           x-extension-test:
-          description: alphanumeric 
+          description: alphanumeric
           example: tufinim/generic-bank:cia-latest
           format: general string
           pattern: ^(?:[\w-./:]+)$
@@ -160,7 +160,7 @@ paths:
           type: string
       - in: header
         name: network-policies
-        schema: 
+        schema:
           $ref: '#/components/schemas/network-policies'
       responses:
         default:
@@ -215,7 +215,7 @@ paths:
                       description: "test"
                     "test2":
                       operationId: "GetSecurityScores"
-                    
+
           'bye':
             post:
               requestBody:   # Contents of the callback message
@@ -223,7 +223,7 @@ paths:
                 content:
                   application/json:
                     schema:
-                      type: object          
+                      type: object
               responses:   # Expected responses to the callback message
                 '200':
                   description: Your server returns this code if it accepts the callback
@@ -269,22 +269,22 @@ components:
       properties:
         netpols:
           type: string
-      type: object      
+      type: object
   parameters:
       network-policies:
         name: network-policies
         in: header
-        schema: 
+        schema:
           $ref: '#/components/schemas/network-policies'
   headers:
     test:
-      schema: 
+      schema:
         $ref: '#/components/schemas/network-policies'
     new:
-      schema: 
+      schema:
         $ref: '#/components/schemas/network-policies'
     testc:
-      content: 
+      content:
         application/json:
           schema:
             type: object
@@ -296,7 +296,7 @@ components:
               type: object
               discriminator:
                 propertyName: meter_name
-              properties: 
+              properties:
                 meter_name:
                     type: string
                 tenant:
@@ -308,15 +308,15 @@ components:
                 dimensions:
                   type: object
   securitySchemes:
-    bearerAuth:      
+    bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT 
+      bearerFormat: JWT
     AccessToken:
       type: http
       scheme: bearer
     OAuth:
-      x-extension-test: 
+      x-extension-test:
       type: oauth2
       flows:
         authorizationCode:
@@ -324,7 +324,7 @@ components:
           tokenUrl: https://tufin.io/token
           scopes:
             accountRead: Allows account data to be read
-            accountWrite: Allows account data to be written      
+            accountWrite: Allows account data to be written
   responses:
     OK:
       description: 200 OK

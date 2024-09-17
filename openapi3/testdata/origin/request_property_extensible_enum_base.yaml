@@ -17,7 +17,7 @@ paths:
                   x-extensible-enum:
                     - available
                     - pending
-                    - sold 
+                    - sold
       responses:
         "200":
           description: OK

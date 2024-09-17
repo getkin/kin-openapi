@@ -17,4 +17,3 @@ components:
           - option_1
         default: option_1
       description: Let's mention the only option, option_1.
-      

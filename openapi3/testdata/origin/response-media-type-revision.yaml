@@ -7,9 +7,9 @@ paths:
   /products:
     get:
       summary: Returns a list of all products
-      tags: 
+      tags:
         - Products
-      parameters: 
+      parameters:
         - $ref: '#/components/parameters/takeParam'
         - $ref: '#/components/parameters/skipParam'
         - in: query
@@ -19,11 +19,11 @@ paths:
             maxLength: 13
         - in: query
           name: name
-          schema: 
+          schema:
             type: string
         - in: query
           name: beschreibung
-          schema: 
+          schema:
             type: string
       responses:
         '200':
@@ -32,7 +32,7 @@ paths:
             application/javascript:
               schema:
                 type: string
-    
+
     post:
       summary: Creates a new product
       tags:
@@ -46,11 +46,11 @@ paths:
                 $ref: '#/components/schemas/ProductDto'
         '409':
           description: GTIN already taken
-                
+
   /products/{productId}:
     get:
       summary: Gets the product with the specified productId
-      parameters: 
+      parameters:
         - in: path
           name: productId
           schema:
@@ -58,8 +58,8 @@ paths:
             format: uuid
           required: true
           description: The UUID of the requested product
-            
-      tags: 
+
+      tags:
         - Products
       responses:
         '200':
@@ -70,11 +70,11 @@ paths:
                 $ref: '#/components/schemas/ProductDto'
         '404':
           description: Product with provided ID does not exist
-          
+
   /products/{productId}/categories:
     get:
       summary: Gets the categories of the specified product
-      parameters: 
+      parameters:
         - in: path
           name: productId
           schema:
@@ -82,8 +82,8 @@ paths:
             format: uuid
           required: true
           description: The UUID of the requested product
-            
-      tags: 
+
+      tags:
         - Products
       responses:
         '200':
@@ -94,13 +94,13 @@ paths:
                 $ref: '#/components/schemas/ProductDto'
         '404':
           description: Product with provided ID does not exist
-          
+
         '500':
           description: Internal Server Error
         '400':
           description: Bad Request
-          
-  /users:          
+
+  /users:
     get:
       tags:
         - Users
@@ -114,7 +114,7 @@ paths:
             type: string
         - in: query
           name: nachname
-          schema: 
+          schema:
             type: string
       responses:
         '200':
@@ -125,9 +125,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PublicUserDto'
-                  
+
     post:
-      tags: 
+      tags:
         - Users
       summary: Creates a new user
       requestBody:
@@ -145,14 +145,14 @@ paths:
                 $ref: '#/components/schemas/PrivateUserDto'
         '409':
           description: Email already taken
-          
-                  
+
+
   /users/{userId}:
     get:
-      tags: 
+      tags:
        - Users
       summary: Gets the requested user
-      parameters: 
+      parameters:
         - in: path
           name: userId
           schema:
@@ -167,7 +167,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicUserDto'
-                
+
     put:
       tags:
         - Users
@@ -193,7 +193,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicUserDto'
-          
+
   /auth/login:
     post:
       tags:
@@ -205,7 +205,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginDto'
-              
+
       responses:
         '201':
           description: Returns the created token pair
@@ -215,7 +215,7 @@ paths:
                 $ref: '#/components/schemas/TokenResponse'
         '403':
           description: Wrong email and/or password
-                
+
   /auth/refresh:
     post:
       tags:
@@ -238,7 +238,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
-          
+
 
 components:
   securitySchemes:
@@ -246,8 +246,8 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      
-      
+
+
   schemas:
     ResourceDto:
       type: object
@@ -261,7 +261,7 @@ components:
         updatedAt:
           type: string
           format: datetime
-  
+
     ProductDto:
       type: object
       allOf:
@@ -285,7 +285,7 @@ components:
             herstellerId:
               type: string
               format: uuid
-    
+
     TokenResponse:
       type: object
       properties:
@@ -295,7 +295,7 @@ components:
         refreshToken:
           type: string
           format: jwt
-    
+
     PublicUserDto:
       type: object
       properties:
@@ -308,7 +308,7 @@ components:
         nachname:
           type: string
           maxLength: 255
-          
+
     PrivateUserDto:
       type: object
       allOf:
@@ -319,7 +319,7 @@ components:
               type: string
               format: email
               maxLength: 255
-              
+
     LoginDto:
       type: object
       properties:
@@ -327,11 +327,11 @@ components:
           type: string
           format: email
           maxLength: 255
-        
+
         password:
           type: string
           maxLength: 255
-    
+
     HaushaltDto:
       type: object
       allOf:
@@ -341,7 +341,7 @@ components:
             name:
               type: string
               maxLength: 255
-        
+
     HaushaltProduktDto:
       type: object
       allOf:
@@ -356,7 +356,7 @@ components:
               type: number
             soll:
               type: number
-    
+
     HerstellerDto:
       type: object
       allOf:
@@ -365,27 +365,27 @@ components:
           properties:
             name:
               type: string
-              
+
     ProduktKategorieDto:
       type: object
       allOf:
         - $ref: '#/components/schemas/ResourceDto'
         - type: object
           properties:
-            name: 
+            name:
               type: string
               maxLength: 255
             parentId:
               type: string
               format: uuid
-              
+
     RezeptDto:
       type: object
       allOf:
        - $ref: '#/components/schemas/ResourceDto'
        - type: object
          properties:
-          name: 
+          name:
             type: string
             maxLength: 255
           beschreibung:
@@ -401,7 +401,7 @@ components:
           kategorieId:
             type: string
             format: string
-            
+
     RezeptKategorieDto:
       type: object
       allOf:
@@ -413,7 +413,7 @@ components:
             parentId:
               type: string
               format: uuid
-            
+
     ZutatenDto:
       type: object
       allOf:
@@ -432,10 +432,10 @@ components:
             rezeptId:
               type: string
               format: uuid
-    
+
     CreateUserDto:
       type: object
-      required: 
+      required:
         - password
         - vorname
         - nachname
@@ -450,11 +450,11 @@ components:
         nachname:
           type: string
           maxLength: 255
-      
+
     UpdateUserDto:
       type: object
       properties:
-        password: 
+        password:
           type: string
           maxLength: 255
         vorname:
@@ -463,7 +463,7 @@ components:
         nachname:
           type: string
           maxLength: 255
-          
+
   parameters:
     takeParam:
       in: query
@@ -481,7 +481,7 @@ components:
           minimum: 1
           maximum: 50
         description: The amount of users to skip
-    
-        
+
+
 security:
   - bearerAuth: []

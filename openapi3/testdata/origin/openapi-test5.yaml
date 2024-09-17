@@ -37,7 +37,7 @@ paths:
       - in: query
         name: image
         schema:
-          description: alphanumeric 
+          description: alphanumeric
           example: tufinim/generic-bank:cia-latest
           format: general string
           pattern: ^(?:[\w-./:]+)$
@@ -123,7 +123,7 @@ paths:
         - url: 'https://www.oasdiff.com'
           description: "2"
           variables:
-            name: 
+            name:
               default: "joe"
               enum: ["joe", "bill"]
             title:
@@ -152,24 +152,24 @@ components:
       properties:
         netpols:
           type: string
-      type: object      
+      type: object
   responses:
     default:
       description: Tufin
   headers:
     test:
-      schema: 
+      schema:
         $ref: '#/components/schemas/network-policies'
     testc:
-      content: 
+      content:
         application/json:
           schema:
             type: string
   securitySchemes:
-    bearerAuth:      
+    bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT 
+      bearerFormat: JWT
     AccessToken:
       type: oauth2
       flows:

@@ -18,7 +18,7 @@ paths:
                   - title: Rabbit
                     type: number
                   - $ref: "#/components/schemas/Fox"
-                  - title: 
+                  - title:
                     type: number
 components:
   schemas:
@@ -54,4 +54,3 @@ components:
       properties:
         name:
           type: string
-      
