@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAll(t *testing.T) {
+func TestOrigin_All(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -29,7 +29,73 @@ func TestAll(t *testing.T) {
 	}
 }
 
-func TestSchemaInAdditionalProperties(t *testing.T) {
+func TestOrigin_Info(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
+	require.NoError(t, err)
+
+	require.NotNil(t, doc.Info.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   2,
+			Column: 1,
+		},
+		doc.Info.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   3,
+			Column: 3,
+		},
+		doc.Info.Origin.Fields["title"])
+
+	require.Equal(t,
+		Location{
+			Line:   4,
+			Column: 3,
+		},
+		doc.Info.Origin.Fields["version"])
+}
+
+func TestOrigin_Paths(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
+	require.NoError(t, err)
+
+	require.NotNil(t, doc.Paths.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   5,
+			Column: 1,
+		},
+		doc.Paths.Origin.Key)
+
+	require.NotNil(t, doc.Paths.Find("/partner-api/test/another-method").Origin)
+	require.Equal(t,
+		&Location{
+			Line:   13,
+			Column: 3,
+		},
+		doc.Paths.Find("/partner-api/test/another-method").Origin.Key)
+
+	require.NotNil(t, doc.Paths.Find("/partner-api/test/another-method").Get.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   14,
+			Column: 5,
+		},
+		doc.Paths.Find("/partner-api/test/another-method").Get.Origin.Key)
+}
+
+func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -57,7 +123,7 @@ func TestSchemaInAdditionalProperties(t *testing.T) {
 		additionalProperties.Schema.Value.Origin.Fields["type"])
 }
 
-func TestExternalDocs(t *testing.T) {
+func TestOrigin_ExternalDocs(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
