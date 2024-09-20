@@ -78,21 +78,91 @@ func TestOrigin_Paths(t *testing.T) {
 		},
 		doc.Paths.Origin.Key)
 
-	require.NotNil(t, doc.Paths.Find("/partner-api/test/another-method").Origin)
+	base := doc.Paths.Find("/partner-api/test/another-method")
+
+	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&Location{
 			Line:   13,
 			Column: 3,
 		},
-		doc.Paths.Find("/partner-api/test/another-method").Origin.Key)
+		base.Origin.Key)
 
-	require.NotNil(t, doc.Paths.Find("/partner-api/test/another-method").Get.Origin)
+	require.NotNil(t, base.Get.Origin)
 	require.Equal(t,
 		&Location{
 			Line:   14,
 			Column: 5,
 		},
-		doc.Paths.Find("/partner-api/test/another-method").Get.Origin.Key)
+		base.Get.Origin.Key)
+}
+
+func TestOrigin_Responses(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/partner-api/test/another-method").Get.Responses
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   17,
+			Column: 7,
+		},
+		base.Origin.Key)
+
+	require.NotNil(t, base.Origin)
+	require.Nil(t, base.Value("200").Origin)
+	require.Equal(t,
+		&Location{
+			Line:   18,
+			Column: 9,
+		},
+		base.Value("200").Value.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   19,
+			Column: 11,
+		},
+		base.Value("200").Value.Origin.Fields["description"])
+}
+
+func TestOrigin_Parameters(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/parameters.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/api/test").Get.Parameters[0].Value
+	require.NotNil(t, base)
+	require.Equal(t,
+		&Location{
+			Line:   9,
+			Column: 11,
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   10,
+			Column: 11,
+		},
+		base.Origin.Fields["in"])
+
+	require.Equal(t,
+		Location{
+			Line:   9,
+			Column: 11,
+		},
+		base.Origin.Fields["name"])
 }
 
 func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
@@ -104,23 +174,23 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 	doc, err := loader.LoadFromFile("testdata/origin/additional_properties.yaml")
 	require.NoError(t, err)
 
-	require.NotNil(t, doc.Paths.Find("/partner-api/test/some-method").Get.Responses.Value("200").Value.Content["application/json"].Schema.Value.AdditionalProperties)
-	additionalProperties := doc.Paths.Find("/partner-api/test/some-method").Get.Responses.Value("200").Value.Content["application/json"].Schema.Value.AdditionalProperties
+	base := doc.Paths.Find("/partner-api/test/some-method").Get.Responses.Value("200").Value.Content["application/json"].Schema.Value.AdditionalProperties
+	require.NotNil(t, base)
 
-	require.NotNil(t, additionalProperties.Schema.Value.Origin)
+	require.NotNil(t, base.Schema.Value.Origin)
 	require.Equal(t,
 		&Location{
 			Line:   14,
 			Column: 17,
 		},
-		additionalProperties.Schema.Value.Origin.Key)
+		base.Schema.Value.Origin.Key)
 
 	require.Equal(t,
 		Location{
 			Line:   15,
 			Column: 19,
 		},
-		additionalProperties.Schema.Value.Origin.Fields["type"])
+		base.Schema.Value.Origin.Fields["type"])
 }
 
 func TestOrigin_ExternalDocs(t *testing.T) {
@@ -132,26 +202,27 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 	doc, err := loader.LoadFromFile("testdata/origin/external_docs.yaml")
 	require.NoError(t, err)
 
-	require.NotNil(t, doc.ExternalDocs.Origin)
+	base := doc.ExternalDocs.Origin
+	require.NotNil(t, base)
 
 	require.Equal(t,
 		&Location{
 			Line:   13,
 			Column: 1,
 		},
-		doc.ExternalDocs.Origin.Key)
+		base.Key)
 
 	require.Equal(t,
 		Location{
 			Line:   14,
 			Column: 3,
 		},
-		doc.ExternalDocs.Origin.Fields["description"])
+		base.Fields["description"])
 
 	require.Equal(t,
 		Location{
 			Line:   15,
 			Column: 3,
 		},
-		doc.ExternalDocs.Origin.Fields["url"])
+		base.Fields["url"])
 }
