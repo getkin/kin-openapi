@@ -202,27 +202,75 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 	doc, err := loader.LoadFromFile("testdata/origin/external_docs.yaml")
 	require.NoError(t, err)
 
-	base := doc.ExternalDocs.Origin
-	require.NotNil(t, base)
+	base := doc.ExternalDocs
+	require.NotNil(t, base.Origin)
 
 	require.Equal(t,
 		&Location{
 			Line:   13,
 			Column: 1,
 		},
-		base.Key)
+		base.Origin.Key)
 
 	require.Equal(t,
 		Location{
 			Line:   14,
 			Column: 3,
 		},
-		base.Fields["description"])
+		base.Origin.Fields["description"])
 
 	require.Equal(t,
 		Location{
 			Line:   15,
 			Column: 3,
 		},
-		base.Fields["url"])
+		base.Origin.Fields["url"])
+}
+
+func TestOrigin_Security(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/security.yaml")
+	require.NoError(t, err)
+
+	base := doc.Components.SecuritySchemes["petstore_auth"].Value
+	require.NotNil(t, base)
+
+	require.Equal(t,
+		&Location{
+			Line:   29,
+			Column: 5,
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   30,
+			Column: 7,
+		},
+		base.Origin.Fields["type"])
+
+	require.Equal(t,
+		&Location{
+			Line:   31,
+			Column: 7,
+		},
+		base.Flows.Origin.Key)
+
+	require.Equal(t,
+		&Location{
+			Line:   32,
+			Column: 9,
+		},
+		base.Flows.Implicit.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   33,
+			Column: 11,
+		},
+		base.Flows.Implicit.Origin.Fields["authorizationUrl"])
 }
