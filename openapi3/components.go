@@ -114,55 +114,55 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 
 // UnmarshalJSON sets Callbacks to a copy of data.
 func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error) {
-	*callbacks, err = unmarshalStringMapP[CallbackRef](data)
+	*callbacks, _, err = unmarshalStringMapP[CallbackRef](data)
 	return
 }
 
 // UnmarshalJSON sets Examples to a copy of data.
 func (examples *Examples) UnmarshalJSON(data []byte) (err error) {
-	*examples, err = unmarshalStringMapP[ExampleRef](data)
+	*examples, _, err = unmarshalStringMapP[ExampleRef](data)
 	return
 }
 
 // UnmarshalJSON sets Headers to a copy of data.
 func (headers *Headers) UnmarshalJSON(data []byte) (err error) {
-	*headers, err = unmarshalStringMapP[HeaderRef](data)
+	*headers, _, err = unmarshalStringMapP[HeaderRef](data)
 	return
 }
 
 // UnmarshalJSON sets Links to a copy of data.
 func (links *Links) UnmarshalJSON(data []byte) (err error) {
-	*links, err = unmarshalStringMapP[LinkRef](data)
+	*links, _, err = unmarshalStringMapP[LinkRef](data)
 	return
 }
 
 // UnmarshalJSON sets ParametersMap to a copy of data.
 func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error) {
-	*parametersMap, err = unmarshalStringMapP[ParameterRef](data)
+	*parametersMap, _, err = unmarshalStringMapP[ParameterRef](data)
 	return
 }
 
 // UnmarshalJSON sets RequestBodies to a copy of data.
 func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error) {
-	*requestBodies, err = unmarshalStringMapP[RequestBodyRef](data)
+	*requestBodies, _, err = unmarshalStringMapP[RequestBodyRef](data)
 	return
 }
 
 // UnmarshalJSON sets ResponseBodies to a copy of data.
 func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error) {
-	*responseBodies, err = unmarshalStringMapP[ResponseRef](data)
+	*responseBodies, _, err = unmarshalStringMapP[ResponseRef](data)
 	return
 }
 
 // UnmarshalJSON sets Schemas to a copy of data.
 func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
-	*schemas, err = unmarshalStringMapP[SchemaRef](data)
+	*schemas, _, err = unmarshalStringMapP[SchemaRef](data)
 	return
 }
 
 // UnmarshalJSON sets SecuritySchemes to a copy of data.
 func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error) {
-	*securitySchemes, err = unmarshalStringMapP[SecuritySchemeRef](data)
+	*securitySchemes, _, err = unmarshalStringMapP[SecuritySchemeRef](data)
 	return
 }
 

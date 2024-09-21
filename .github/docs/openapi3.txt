@@ -2057,8 +2057,8 @@ func NewRegexpFormatValidator(pattern string) StringFormatValidator
     expression to validate the value.
 
 type StringMap map[string]string
-    StringMap allows us to customize the unmarshalling of a map[string]string in
-    order to support the `origin` field.
+    StringMap is a map[string]string that ignores the origin in the underlying
+    json representation.
 
 func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets StringMap to a copy of data.

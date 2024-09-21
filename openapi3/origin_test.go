@@ -97,6 +97,33 @@ func TestOrigin_Paths(t *testing.T) {
 		base.Get.Origin.Key)
 }
 
+func TestOrigin_RequestBody(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/request_body.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   8,
+			Column: 7,
+		},
+		base.Origin.Key)
+
+	require.NotNil(t, base.Content["application/json"].Origin)
+	require.Equal(t,
+		&Location{
+			Line:   10,
+			Column: 11,
+		},
+		base.Content["application/json"].Origin.Key)
+}
+
 func TestOrigin_Responses(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
