@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -53,15 +52,5 @@ func TestParsingDiscriminator(t *testing.T) {
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
 
-	discriminatorMap, ok := doc.Components.Schemas["MyResponseType"].Value.Discriminator.(map[string]interface{})
-	require.True(t, ok)
-
-	marshaledDiscriminator, err := json.Marshal(discriminatorMap)
-	require.NoError(t, err)
-
-	var discriminator *Discriminator
-	err = json.Unmarshal(marshaledDiscriminator, &discriminator)
-	require.NoError(t, err)
-
-	require.Len(t, discriminator.Mapping, 2)
+	require.Len(t, doc.Components.Schemas["MyResponseType"].Value.Discriminator.Mapping, 2)
 }

@@ -129,7 +129,7 @@ type Schema struct {
 	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Discriminator        any                  `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 }
 
 type Types []string
@@ -1298,33 +1298,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	if v := schema.OneOf; len(v) > 0 {
 		var discriminatorRef string
 		if schema.Discriminator != nil {
-			var discriminator *Discriminator
-			if descriminatorValuemap, okcheck := schema.Discriminator.(map[string]any); okcheck {
-				marshaledDiscriminator, err := json.Marshal(descriminatorValuemap)
-				if err != nil {
-					return &SchemaError{
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("unable to marshal the discriminator field in schema: %v", err),
-					}, false
-				}
-
-				if err := json.Unmarshal(marshaledDiscriminator, &discriminator); err != nil {
-					return &SchemaError{
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("unable to unmarshall the discriminator field in schema: %v", err),
-					}, false
-				}
-			} else {
-				return &SchemaError{
-					Schema:      schema,
-					SchemaField: "discriminator",
-					Reason:      fmt.Sprintf("discriminator is expected to be an object, but received an unknown type"),
-				}, false
-			}
-
-			pn := discriminator.PropertyName
+			pn := schema.Discriminator.PropertyName
 			if valuemap, okcheck := value.(map[string]any); okcheck {
 				discriminatorVal, okcheck := valuemap[pn]
 				if !okcheck {
@@ -1345,7 +1319,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 					}, false
 				}
 
-				if discriminatorRef, okcheck = discriminator.Mapping[discriminatorValString]; len(discriminator.Mapping) > 0 && !okcheck {
+				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
 					return &SchemaError{
 						Value:       discriminatorVal,
 						Schema:      schema,
