@@ -404,12 +404,42 @@ func (schema Schema) MarshalYAML() (any, error) {
 
 // UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
-	type SchemaBis Schema
+	type Alias Schema
+	type SchemaBis struct {
+		Alias
+		Discriminator json.RawMessage `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	}
+
 	var x SchemaBis
 	if err := json.Unmarshal(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+
+	type DiscriminatorObject struct {
+		Discriminator *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	}
+
+	if len(x.Discriminator) > 0 {
+		var ds *string
+		if err := json.Unmarshal(x.Discriminator, &ds); err == nil {
+			// In OpenAPI 2, the Discriminator is a string field, while in OpenAPI 3,
+			// it corresponds to the Discriminator.PropertyName field.
+			// If the OpenAPI 2 Discriminator (ds) is not nil, we assign it to
+			// the OpenAPI 3 equivalent, which is Discriminator.PropertyName.
+			if ds != nil {
+				x.Alias.Discriminator = &Discriminator{
+					PropertyName: *ds,
+				}
+			}
+		} else {
+			var do DiscriminatorObject
+			if err := json.Unmarshal(x.Discriminator, &do.Discriminator); err == nil && do.Discriminator != nil {
+				x.Alias.Discriminator = do.Discriminator
+			}
+		}
+	}
+
+	_ = json.Unmarshal(data, &x.Alias.Extensions)
 
 	delete(x.Extensions, "oneOf")
 	delete(x.Extensions, "anyOf")
@@ -464,7 +494,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 
-	*schema = Schema(x)
+	*schema = Schema(x.Alias)
 
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697

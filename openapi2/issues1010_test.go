@@ -94,4 +94,5 @@ func TestIssue1010(t *testing.T) {
 	var doc2 T
 	err := json.Unmarshal(v2, &doc2)
 	require.NoError(t, err)
+	require.Equal(t, "petType", doc2.Definitions["Pet"].Value.Discriminator.PropertyName)
 }
