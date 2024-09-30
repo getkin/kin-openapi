@@ -851,27 +851,6 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 	return result
 }
 
-func FromV3PathItem(doc3 *openapi3.T, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
-	result := &openapi2.PathItem{
-		Extensions: stripNonExtensions(pathItem.Extensions),
-	}
-	for method, operation := range pathItem.Operations() {
-		r, err := FromV3Operation(doc3, operation)
-		if err != nil {
-			return nil, err
-		}
-		result.SetOperation(method, r)
-	}
-	for _, parameter := range pathItem.Parameters {
-		p, err := FromV3Parameter(parameter, doc3.Components)
-		if err != nil {
-			return nil, err
-		}
-		result.Parameters = append(result.Parameters, p)
-	}
-	return result, nil
-}
-
 func findNameForRequestBody(operation *openapi3.Operation) string {
 nameSearch:
 	for _, name := range attemptedBodyParameterNames {
