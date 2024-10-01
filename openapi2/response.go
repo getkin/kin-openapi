@@ -11,10 +11,10 @@ type Response struct {
 
 	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
-	Description string              `json:"description,omitempty" yaml:"description,omitempty"`
-	Schema      *openapi3.SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Headers     map[string]*Header  `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Examples    map[string]any      `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Description string             `json:"description,omitempty" yaml:"description,omitempty"`
+	Schema      *SchemaRef         `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Headers     map[string]*Header `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Examples    map[string]any     `json:"examples,omitempty" yaml:"examples,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Response.

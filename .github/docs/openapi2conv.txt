@@ -16,8 +16,8 @@ func FromV3RequestBody(name string, requestBodyRef *openapi3.RequestBodyRef, med
 func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameters
 func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) (*openapi2.Response, error)
 func FromV3Responses(responses map[string]*openapi3.ResponseRef, components *openapi3.Components) (map[string]*openapi2.Response, error)
-func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components) (*openapi3.SchemaRef, *openapi2.Parameter)
-func FromV3Schemas(schemas map[string]*openapi3.SchemaRef, components *openapi3.Components) (map[string]*openapi3.SchemaRef, map[string]*openapi2.Parameter)
+func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components) (*openapi2.SchemaRef, *openapi2.Parameter)
+func FromV3Schemas(schemas map[string]*openapi3.SchemaRef, components *openapi3.Components) (map[string]*openapi2.SchemaRef, map[string]*openapi2.Parameter)
 func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) openapi2.SecurityRequirements
 func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error)
 func ToV3(doc2 *openapi2.T) (*openapi3.T, error)
@@ -29,8 +29,8 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, consumes []string) (*openapi3.PathItem, error)
 func ToV3Ref(ref string) string
 func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.ResponseRef, error)
-func ToV3SchemaRef(schema *openapi3.SchemaRef) *openapi3.SchemaRef
-func ToV3Schemas(defs map[string]*openapi3.SchemaRef) map[string]*openapi3.SchemaRef
+func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef
+func ToV3Schemas(defs map[string]*openapi2.SchemaRef) map[string]*openapi3.SchemaRef
 func ToV3SecurityRequirements(requirements openapi2.SecurityRequirements) openapi3.SecurityRequirements
 func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.SecuritySchemeRef, error)
 func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL) (*openapi3.T, error)

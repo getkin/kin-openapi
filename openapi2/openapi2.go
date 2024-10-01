@@ -10,21 +10,21 @@ import (
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Swagger             string                         `json:"swagger" yaml:"swagger"` // required
-	Info                openapi3.Info                  `json:"info" yaml:"info"`       // required
-	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Schemes             []string                       `json:"schemes,omitempty" yaml:"schemes,omitempty"`
-	Consumes            []string                       `json:"consumes,omitempty" yaml:"consumes,omitempty"`
-	Produces            []string                       `json:"produces,omitempty" yaml:"produces,omitempty"`
-	Host                string                         `json:"host,omitempty" yaml:"host,omitempty"`
-	BasePath            string                         `json:"basePath,omitempty" yaml:"basePath,omitempty"`
-	Paths               map[string]*PathItem           `json:"paths,omitempty" yaml:"paths,omitempty"`
-	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty" yaml:"definitions,omitempty"`
-	Parameters          map[string]*Parameter          `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses           map[string]*Response           `json:"responses,omitempty" yaml:"responses,omitempty"`
-	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
-	Security            SecurityRequirements           `json:"security,omitempty" yaml:"security,omitempty"`
-	Tags                openapi3.Tags                  `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Swagger             string                     `json:"swagger" yaml:"swagger"` // required
+	Info                openapi3.Info              `json:"info" yaml:"info"`       // required
+	ExternalDocs        *openapi3.ExternalDocs     `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Schemes             []string                   `json:"schemes,omitempty" yaml:"schemes,omitempty"`
+	Consumes            []string                   `json:"consumes,omitempty" yaml:"consumes,omitempty"`
+	Produces            []string                   `json:"produces,omitempty" yaml:"produces,omitempty"`
+	Host                string                     `json:"host,omitempty" yaml:"host,omitempty"`
+	BasePath            string                     `json:"basePath,omitempty" yaml:"basePath,omitempty"`
+	Paths               map[string]*PathItem       `json:"paths,omitempty" yaml:"paths,omitempty"`
+	Definitions         map[string]*SchemaRef      `json:"definitions,omitempty" yaml:"definitions,omitempty"`
+	Parameters          map[string]*Parameter      `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Responses           map[string]*Response       `json:"responses,omitempty" yaml:"responses,omitempty"`
+	SecurityDefinitions map[string]*SecurityScheme `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
+	Security            SecurityRequirements       `json:"security,omitempty" yaml:"security,omitempty"`
+	Tags                openapi3.Tags              `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of T.
