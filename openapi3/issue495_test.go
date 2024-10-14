@@ -107,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: http://json-schema.org/draft-04/schema
+                $ref: https://json-schema.org/draft-04/schema
 `[1:])
 
 	sl := NewLoader()
