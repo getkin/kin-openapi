@@ -295,6 +295,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.129.0
+* `openapi3.Discriminator.Mapping` and `openapi3.OAuthFlow.Scopes` fields went from a `map[string]string` to the new type `StringMap`
+
 ### v0.127.0
 * Downgraded `github.com/gorilla/mux` dep from `1.8.1` to `1.8.0`.
 
