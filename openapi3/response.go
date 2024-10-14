@@ -228,3 +228,9 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 
 	return validateExtensions(ctx, response.Extensions)
 }
+
+// UnmarshalJSON sets ResponseBodies to a copy of data.
+func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error) {
+	*responseBodies, _, err = unmarshalStringMapP[ResponseRef](data)
+	return
+}

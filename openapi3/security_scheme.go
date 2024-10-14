@@ -433,3 +433,9 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 
 	return flow.Validate(ctx, opts...)
 }
+
+// UnmarshalJSON sets SecuritySchemes to a copy of data.
+func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error) {
+	*securitySchemes, _, err = unmarshalStringMapP[SecuritySchemeRef](data)
+	return
+}

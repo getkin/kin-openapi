@@ -2247,3 +2247,9 @@ func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker) {
 func unsupportedFormat(format string) error {
 	return fmt.Errorf("unsupported 'format' value %q", format)
 }
+
+// UnmarshalJSON sets Schemas to a copy of data.
+func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
+	*schemas, _, err = unmarshalStringMapP[SchemaRef](data)
+	return
+}
