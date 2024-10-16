@@ -1,0 +1,15 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: v1
+paths:
+  /partner-api/test/some-method:
+    get:
+      tags:
+        - Test
+      responses:
+        "200":
+          description: Success
+externalDocs:
+  description: API Documentation
+  url: https://openweathermap.org/api

@@ -83,3 +83,9 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 
 	return validateExtensions(ctx, example.Extensions)
 }
+
+// UnmarshalJSON sets Examples to a copy of data.
+func (examples *Examples) UnmarshalJSON(data []byte) (err error) {
+	*examples, _, err = unmarshalStringMapP[ExampleRef](data)
+	return
+}
