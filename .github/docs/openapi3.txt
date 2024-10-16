@@ -400,8 +400,8 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	PropertyName string            `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
+	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
     Discriminator is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
@@ -873,10 +873,10 @@ type NumberFormatValidator = FormatValidator[float64]
 type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string    `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           StringMap `json:"scopes" yaml:"scopes"` // required
 }
     OAuthFlow is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
@@ -1982,6 +1982,10 @@ type StringFormatValidator = FormatValidator[string]
 func NewRegexpFormatValidator(pattern string) StringFormatValidator
     NewRegexpFormatValidator creates a new FormatValidator that uses a regular
     expression to validate the value.
+
+type StringMap map[string]string
+    StringMap is a map[string]string that ignores the origin in the underlying
+    json representation.
 
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

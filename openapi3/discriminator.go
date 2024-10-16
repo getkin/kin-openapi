@@ -10,8 +10,8 @@ import (
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	PropertyName string            `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
+	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Discriminator.
