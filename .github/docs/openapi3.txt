@@ -1027,7 +1027,6 @@ type Origin struct {
 	Key    *Location           `json:"key,omitempty" yaml:"key,omitempty"`
 	Fields map[string]Location `json:"fields,omitempty" yaml:"fields,omitempty"`
 }
-
     Origin contains the origin of a collection. Key is the location of the
     collection itself. Fields is a map of the location of each field in the
     collection.
@@ -1858,6 +1857,8 @@ func (m Schemas) JSONLookup(token string) (any, error)
 func (schemas *Schemas) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Schemas to a copy of data.
 
+type Scopes map[string]string
+
 type SecurityRequirement map[string][]string
     SecurityRequirement is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-requirement-object
@@ -2068,11 +2069,8 @@ func NewRegexpFormatValidator(pattern string) StringFormatValidator
     expression to validate the value.
 
 type StringMap map[string]string
-    StringMap allows us to customize the unmarshalling of a map[string]string in
-    order to support the `origin` field.
-
-func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets StringMap to a copy of data.
+    StringMap is a map[string]string that ignores the origin in the underlying
+    json representation.
 
 func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets StringMap to a copy of data.
@@ -2265,3 +2263,4 @@ func (xml *XML) UnmarshalJSON(data []byte) error
 
 func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if XML does not comply with the OpenAPI spec.
+
