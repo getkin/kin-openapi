@@ -1296,7 +1296,7 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
-		var discriminatorRef string
+		var discriminatorRef MappingRef
 		if schema.Discriminator != nil {
 			pn := schema.Discriminator.PropertyName
 			if valuemap, okcheck := value.(map[string]any); okcheck {
@@ -1342,7 +1342,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				return foundUnresolvedRef(item.Ref), false
 			}
 
-			if discriminatorRef != "" && discriminatorRef != item.Ref {
+			if discriminatorRef.Ref != "" && discriminatorRef.Ref != item.Ref {
 				continue
 			}
 

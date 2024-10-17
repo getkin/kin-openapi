@@ -1,0 +1,17 @@
+schemas:
+  Foo:
+    type: object
+    properties:
+      cat:
+        type: string
+        enum: [ "foo" ]
+      name:
+        type: string
+  Bar:
+    type: object
+    properties:
+      cat:
+        type: string
+        enum: [ "bar" ]
+      other:
+        type: string

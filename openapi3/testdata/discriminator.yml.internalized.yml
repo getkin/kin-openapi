@@ -1,0 +1,75 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "foo",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "operationId": "list",
+                "responses": {
+                    "200": {
+                        "description": "list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "oneOf": [
+                                            {
+                                                "$ref": "#/components/schemas/ext_schemas_Foo"
+                                            },
+                                            {
+                                                "$ref": "#/components/schemas/ext_schemas_Bar"
+                                            }
+                                        ],
+                                        "discriminator": {
+                                            "propertyName": "cat",
+                                            "mapping": {
+                                                "foo": "#/components/schemas/ext_schemas_Foo",
+                                                "bar": "#/components/schemas/ext_schemas_Bar"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ext_schemas_Foo": {
+                "type": "object",
+                "properties": {
+                    "cat": {
+                        "type": "string",
+                        "enum": [
+                            "foo"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ext_schemas_Bar": {
+                "type": "object",
+                "properties": {
+                    "cat": {
+                        "type": "string",
+                        "enum": [
+                            "bar"
+                        ]
+                    },
+                    "other": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

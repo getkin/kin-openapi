@@ -950,6 +950,16 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
+	// Discriminator mapping refs are a special case since they are not full
+	// ref objects but are plain strings that reference schema objects.
+	if value.Discriminator != nil && value.Discriminator.Mapping != nil {
+		for k, v := range value.Discriminator.Mapping {
+			if err := loader.resolveSchemaRef(doc, (*SchemaRef)(&v), documentPath, visited); err != nil {
+				return err
+			}
+			value.Discriminator.Mapping[k] = v
+		}
+	}
 	return nil
 }
 
