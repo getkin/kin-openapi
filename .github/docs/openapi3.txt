@@ -226,6 +226,7 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
 
 type Callback struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	// Has unexported fields.
 }
@@ -274,6 +275,7 @@ type CallbackRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Callback
@@ -316,6 +318,9 @@ func (m Callbacks) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Callbacks to a copy of data.
+
 type ComponentRef interface {
 	RefString() string
 	RefPath() *url.URL
@@ -324,6 +329,7 @@ type ComponentRef interface {
 
 type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -355,6 +361,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 
 type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -394,11 +401,15 @@ func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
 
 func (content Content) Get(mime string) *MediaType
 
+func (content *Content) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Content to a copy of data.
+
 func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Content does not comply with the OpenAPI spec.
 
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
 	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
@@ -421,6 +432,7 @@ func (discriminator *Discriminator) Validate(ctx context.Context, opts ...Valida
 
 type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
 	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -483,6 +495,7 @@ type ExampleRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Example
@@ -525,8 +538,12 @@ func (m Examples) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (examples *Examples) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Examples to a copy of data.
+
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -593,6 +610,7 @@ type HeaderRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Header
@@ -635,8 +653,12 @@ func (m Headers) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (headers *Headers) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Headers to a copy of data.
+
 type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Title          string   `json:"title" yaml:"title"` // Required
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
@@ -665,6 +687,7 @@ type IntegerFormatValidator = FormatValidator[int64]
 
 type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -686,6 +709,7 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
 	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
@@ -713,6 +737,7 @@ type LinkRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Link
@@ -754,9 +779,15 @@ func (m Links) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (links *Links) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Links to a copy of data.
+
 type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
+
+	// IncludeOrigin specifies whether to include the origin of the OpenAPI elements
+	IncludeOrigin bool
 
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
@@ -793,8 +824,15 @@ func (loader *Loader) LoadFromURI(location *url.URL) (*T, error)
 func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error)
     ResolveRefsIn expands references if for instance spec was just unmarshaled
 
+type Location struct {
+	Line   int `json:"line,omitempty" yaml:"line,omitempty"`
+	Column int `json:"column,omitempty" yaml:"column,omitempty"`
+}
+    Location is a struct that contains the location of a field.
+
 type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
@@ -872,6 +910,7 @@ type NumberFormatValidator = FormatValidator[float64]
 
 type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
@@ -896,6 +935,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
 
 type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
@@ -920,6 +960,7 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -982,8 +1023,17 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
     Validate returns an error if Operation does not comply with the OpenAPI
     spec.
 
+type Origin struct {
+	Key    *Location           `json:"key,omitempty" yaml:"key,omitempty"`
+	Fields map[string]Location `json:"fields,omitempty" yaml:"fields,omitempty"`
+}
+    Origin contains the origin of a collection. Key is the location of the
+    collection itself. Fields is a map of the location of each field in the
+    collection.
+
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
 	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
@@ -1042,6 +1092,7 @@ type ParameterRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Parameter
@@ -1099,8 +1150,12 @@ func (m ParametersMap) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets ParametersMap to a copy of data.
+
 type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
@@ -1140,6 +1195,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 
 type Paths struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	// Has unexported fields.
 }
@@ -1228,7 +1284,8 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
     documents.
 
 type Ref struct {
-	Ref string `json:"$ref" yaml:"$ref"`
+	Ref    string  `json:"$ref" yaml:"$ref"`
+	Origin *Origin `json:"origin,omitempty" yaml:"origin,omitempty"`
 }
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
@@ -1252,8 +1309,12 @@ func (m RequestBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets RequestBodies to a copy of data.
+
 type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
@@ -1301,6 +1362,7 @@ type RequestBodyRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *RequestBody
@@ -1339,6 +1401,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 
 type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -1376,10 +1439,14 @@ func (m ResponseBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets ResponseBodies to a copy of data.
+
 type ResponseRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Response
@@ -1418,6 +1485,7 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 
 type Responses struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
 	// Has unexported fields.
 }
@@ -1476,6 +1544,7 @@ func (responses *Responses) Value(key string) *ResponseRef
 
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
@@ -1690,6 +1759,7 @@ type SchemaRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *Schema
@@ -1784,6 +1854,9 @@ func (m Schemas) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (schemas *Schemas) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Schemas to a copy of data.
+
 type SecurityRequirement map[string][]string
     SecurityRequirement is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-requirement-object
@@ -1791,6 +1864,9 @@ type SecurityRequirement map[string][]string
 func NewSecurityRequirement() SecurityRequirement
 
 func (security SecurityRequirement) Authenticate(provider string, scopes ...string) SecurityRequirement
+
+func (security *SecurityRequirement) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets SecurityRequirement to a copy of data.
 
 func (security *SecurityRequirement) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if SecurityRequirement does not comply with the
@@ -1808,6 +1884,7 @@ func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *
 
 type SecurityScheme struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
 	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1858,6 +1935,7 @@ type SecuritySchemeRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
 	Extensions map[string]any
+	Origin     *Origin
 
 	Ref   string
 	Value *SecurityScheme
@@ -1901,6 +1979,9 @@ func (m SecuritySchemes) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets SecuritySchemes to a copy of data.
+
 type SerializationMethod struct {
 	Style   string
 	Explode bool
@@ -1910,6 +1991,7 @@ type SerializationMethod struct {
 
 type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	URL         string                     `json:"url" yaml:"url"` // Required
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1940,6 +2022,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
@@ -1986,6 +2069,9 @@ func NewRegexpFormatValidator(pattern string) StringFormatValidator
 type StringMap map[string]string
     StringMap is a map[string]string that ignores the origin in the underlying
     json representation.
+
+func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets StringMap to a copy of data.
 
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2042,6 +2128,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
 
 type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`

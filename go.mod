@@ -1,6 +1,10 @@
 module github.com/getkin/kin-openapi
 
-go 1.20
+go 1.22.5
+
+replace gopkg.in/yaml.v3 => github.com/oasdiff/yaml3 v0.0.0-20240920135353-c185dc6ea7c6
+
+replace github.com/invopop/yaml => github.com/oasdiff/yaml v0.0.0-20240920191703-3e5a9fb5bdf3
 
 require (
 	github.com/go-openapi/jsonpointer v0.21.0
