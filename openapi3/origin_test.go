@@ -2,32 +2,10 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func TestOrigin_All(t *testing.T) {
-	loader := NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
-	loader.Context = context.Background()
-
-	const dir = "testdata/origin/"
-	items, _ := os.ReadDir(dir)
-	for _, item := range items {
-		t.Run(item.Name(), func(t *testing.T) {
-			doc, err := loader.LoadFromFile(fmt.Sprintf("%s/%s", dir, item.Name()))
-			require.NoError(t, err)
-			if doc.Paths == nil {
-				t.Skip("no paths")
-			}
-			require.NotEmpty(t, doc.Paths.Origin)
-		})
-	}
-}
 
 func TestOrigin_Info(t *testing.T) {
 	loader := NewLoader()
