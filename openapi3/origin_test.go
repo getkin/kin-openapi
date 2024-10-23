@@ -2,32 +2,10 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func TestOrigin_All(t *testing.T) {
-	loader := NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
-	loader.Context = context.Background()
-
-	const dir = "testdata/origin/"
-	items, _ := os.ReadDir(dir)
-	for _, item := range items {
-		t.Run(item.Name(), func(t *testing.T) {
-			doc, err := loader.LoadFromFile(fmt.Sprintf("%s/%s", dir, item.Name()))
-			require.NoError(t, err)
-			if doc.Paths == nil {
-				t.Skip("no paths")
-			}
-			require.NotEmpty(t, doc.Paths.Origin)
-		})
-	}
-}
 
 func TestOrigin_Info(t *testing.T) {
 	loader := NewLoader()
@@ -300,4 +278,73 @@ func TestOrigin_Security(t *testing.T) {
 			Column: 11,
 		},
 		base.Flows.Implicit.Origin.Fields["authorizationUrl"])
+}
+
+func TestOrigin_Example(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/example.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Examples["bar"].Value
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   14,
+			Column: 15,
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   15,
+			Column: 17,
+		},
+		base.Origin.Fields["summary"])
+
+	//	Note:
+	//  Example.Value contains an extra field: "origin".
+	//
+	//	Explanation:
+	//  The example value is defined in the original yaml file as a json object: {"bar": "baz"}
+	//  This json object is also valid in YAML, so yaml.3 decodes it as a map and adds an "origin" field.
+	require.Contains(t,
+		base.Value,
+		originKey)
+}
+
+func TestOrigin_XML(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/xml.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["name"].Value.XML
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   21,
+			Column: 19,
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   22,
+			Column: 21,
+		},
+		base.Origin.Fields["namespace"])
+
+	require.Equal(t,
+		Location{
+			Line:   23,
+			Column: 21,
+		},
+		base.Origin.Fields["prefix"])
 }
