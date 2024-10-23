@@ -305,3 +305,36 @@ func TestOrigin_Example(t *testing.T) {
 		},
 		base.Origin.Fields["summary"])
 }
+
+func TestOrigin_XML(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/xml.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["name"].Value.XML
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   21,
+			Column: 19,
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   22,
+			Column: 21,
+		},
+		base.Origin.Fields["namespace"])
+
+	require.Equal(t,
+		Location{
+			Line:   23,
+			Column: 21,
+		},
+		base.Origin.Fields["prefix"])
+}
