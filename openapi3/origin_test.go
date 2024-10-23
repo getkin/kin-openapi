@@ -293,17 +293,27 @@ func TestOrigin_Example(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&Location{
-			Line:   24,
+			Line:   14,
 			Column: 15,
 		},
 		base.Origin.Key)
 
 	require.Equal(t,
 		Location{
-			Line:   25,
+			Line:   15,
 			Column: 17,
 		},
 		base.Origin.Fields["summary"])
+
+	//	Note:
+	//  Example.Value contains an extra field: "origin".
+	//
+	//	Explanation:
+	//  The example value is defined in the original yaml file as a json object: {"bar": "baz"}
+	//  This json object is also valid in YAML, so yaml.3 decodes it as a map and adds an "origin" field.
+	require.Contains(t,
+		base.Value,
+		originKey)
 }
 
 func TestOrigin_XML(t *testing.T) {
