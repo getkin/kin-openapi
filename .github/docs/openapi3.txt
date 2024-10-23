@@ -468,6 +468,7 @@ func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
 
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description   string `json:"description,omitempty" yaml:"description,omitempty"`

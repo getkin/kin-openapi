@@ -301,3 +301,29 @@ func TestOrigin_Security(t *testing.T) {
 		},
 		base.Flows.Implicit.Origin.Fields["authorizationUrl"])
 }
+
+func TestOrigin_Example(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/example.yaml")
+	require.NoError(t, err)
+
+	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Examples["bar"].Value
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			Line:   24,
+			Column: 15,
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			Line:   25,
+			Column: 17,
+		},
+		base.Origin.Fields["summary"])
+}
