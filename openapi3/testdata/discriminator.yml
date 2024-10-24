@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: foo
+  version: 1.0.0
+paths:
+  /:
+    get:
+      operationId: list
+      responses:
+        "200":
+          description: list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "./ext.yml#/schemas/Foo"
+                    - $ref: "./ext.yml#/schemas/Bar"
+                  discriminator:
+                    propertyName: cat
+                    mapping:
+                      foo: "./ext.yml#/schemas/Foo"
+                      bar: "./ext.yml#/schemas/Bar"

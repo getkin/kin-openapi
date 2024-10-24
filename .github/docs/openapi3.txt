@@ -411,8 +411,8 @@ type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
-	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
+	Mapping      StringMap[MappingRef] `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
     Discriminator is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
@@ -831,6 +831,15 @@ type Location struct {
 }
     Location is a struct that contains the location of a field.
 
+type MappingRef SchemaRef
+    MappingRef is a ref to a Schema objects. Unlike SchemaRefs it is serialised
+    as a plain string instead of an object with a $ref key, as such it also does
+    not support extensions.
+
+func (mr MappingRef) MarshalText() ([]byte, error)
+
+func (mr *MappingRef) UnmarshalText(data []byte) error
+
 type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
@@ -913,10 +922,10 @@ type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
-	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string    `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           StringMap `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           StringMap[string] `json:"scopes" yaml:"scopes"` // required
 }
     OAuthFlow is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
@@ -2067,11 +2076,11 @@ func NewRegexpFormatValidator(pattern string) StringFormatValidator
     NewRegexpFormatValidator creates a new FormatValidator that uses a regular
     expression to validate the value.
 
-type StringMap map[string]string
+type StringMap[V any] map[string]V
     StringMap is a map[string]string that ignores the origin in the underlying
     json representation.
 
-func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error)
+func (stringMap *StringMap[V]) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets StringMap to a copy of data.
 
 type T struct {
