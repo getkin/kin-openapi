@@ -11,8 +11,8 @@ type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
 
-	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string            `json:"propertyName" yaml:"propertyName"` // required
+	Mapping      StringMap[string] `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Discriminator.
