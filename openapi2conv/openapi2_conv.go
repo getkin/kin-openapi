@@ -516,6 +516,10 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 		AdditionalProperties: schema.Value.AdditionalProperties,
 	}
 
+	if schema.Value.AdditionalProperties.Schema != nil {
+		v3Schema.AdditionalProperties.Schema.Ref = ToV3Ref(schema.Value.AdditionalProperties.Schema.Ref)
+	}
+
 	if schema.Value.Discriminator != "" {
 		v3Schema.Discriminator = &openapi3.Discriminator{
 			PropertyName: schema.Value.Discriminator,
