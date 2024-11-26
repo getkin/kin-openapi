@@ -96,6 +96,8 @@ FUNCTIONS
 func BoolPtr(value bool) *bool
     BoolPtr is a helper for defining OpenAPI schemas.
 
+    Deprecated: Use Ptr instead.
+
 func DefaultRefNameResolver(doc *T, ref ComponentRef) string
     DefaultRefResolver is a default implementation of refNameResolver for the
     InternalizeRefs function.
@@ -147,8 +149,15 @@ func DefineStringFormatValidator(name string, validator StringFormatValidator)
 func Float64Ptr(value float64) *float64
     Float64Ptr is a helper for defining OpenAPI schemas.
 
+    Deprecated: Use Ptr instead.
+
 func Int64Ptr(value int64) *int64
     Int64Ptr is a helper for defining OpenAPI schemas.
+
+    Deprecated: Use Ptr instead.
+
+func Ptr[T any](value T) *T
+    Ptr is a helper for defining OpenAPI schemas.
 
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error)
     ReadFromFile is a ReadFromURIFunc which reads local file URIs.
@@ -201,6 +210,8 @@ func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
 
 func Uint64Ptr(value uint64) *uint64
     Uint64Ptr is a helper for defining OpenAPI schemas.
+
+    Deprecated: Use Ptr instead.
 
 func ValidateIdentifier(value string) error
     ValidateIdentifier returns an error if the given component name does not
