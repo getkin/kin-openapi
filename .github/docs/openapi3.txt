@@ -128,13 +128,16 @@ func DefineNumberFormatValidator(name string, validator NumberFormatValidator)
     number format.
 
 func DefineStringFormat(name string, pattern string)
-    DefineStringFormat defines a regexp pattern for a given string
-    format Deprecated: Use openapi3.DefineStringFormatValidator(name,
+    DefineStringFormat defines a regexp pattern for a given string format
+
+    Deprecated: Use openapi3.DefineStringFormatValidator(name,
     NewRegexpFormatValidator(pattern)) instead.
 
 func DefineStringFormatCallback(name string, callback func(string) error)
-    DefineStringFormatCallback defines a callback function for a given
-    string format Deprecated: Use openapi3.DefineStringFormatValidator(name,
+    DefineStringFormatCallback defines a callback function for a given string
+    format
+
+    Deprecated: Use openapi3.DefineStringFormatValidator(name,
     NewCallbackValidator(fn)) instead.
 
 func DefineStringFormatValidator(name string, validator StringFormatValidator)
