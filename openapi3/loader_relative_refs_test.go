@@ -927,7 +927,7 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 	require.Equal(t, "example request", nestedDirPath.Patch.RequestBody.Value.Description)
 
 	// check response schema and example
-	require.Equal(t, nestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Schema.Value.Type, &Types{"string"})
+	require.Equal(t, &Types{"string"}, nestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Schema.Value.Type)
 	expectedExample := "hello"
 	require.Equal(t, expectedExample, nestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
 
@@ -948,5 +948,5 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 
 	// check response schema and example
 	require.Equal(t, &Types{"string"}, moreNestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Schema.Value.Type)
-	require.Equal(t, moreNestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Examples["CustomTestExample"].Value.Value, expectedExample)
+	require.Equal(t, expectedExample, moreNestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
 }
