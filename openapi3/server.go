@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"net/url"
 	"sort"
 	"strings"
@@ -174,7 +173,7 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 			} else if ns < 0 {
 				i = np
 			} else {
-				i = int(math.Min(float64(np), float64(ns)))
+				i = min(np, ns)
 			}
 			if i < 0 {
 				i = len(input)
