@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	explode   = openapi3.BoolPtr(true)
-	noExplode = openapi3.BoolPtr(false)
+	explode   = openapi3.Ptr(true)
+	noExplode = openapi3.Ptr(false)
 	arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"array"}, Items: items}}
 	}
@@ -1712,7 +1712,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: openapi3.BoolPtr(false)},
+				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: openapi3.Ptr(false)},
 			},
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
@@ -1725,7 +1725,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationPipeDelimited, Explode: openapi3.BoolPtr(false)},
+				"c": {Style: openapi3.SerializationPipeDelimited, Explode: openapi3.Ptr(false)},
 			},
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
