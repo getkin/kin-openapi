@@ -6,6 +6,8 @@ replace gopkg.in/yaml.v3 => github.com/oasdiff/yaml3 v0.0.0-20240920135353-c185d
 
 replace github.com/invopop/yaml => github.com/oasdiff/yaml v0.0.0-20240920191703-3e5a9fb5bdf3
 
+replace github.com/invopop/yaml => github.com/diamondburned/invopop-yaml v0.3.2-0.20240812084936-33aae275be98
+
 require (
 	github.com/go-openapi/jsonpointer v0.21.0
 	github.com/gorilla/mux v1.8.0
