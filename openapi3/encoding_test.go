@@ -91,7 +91,7 @@ func TestEncodingSerializationMethod(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := tc.enc.SerializationMethod()
-			require.EqualValues(t, got, tc.want, "got %#v, want %#v", got, tc.want)
+			require.EqualValues(t, tc.want, got, "got %#v, want %#v", got, tc.want)
 		})
 	}
 }

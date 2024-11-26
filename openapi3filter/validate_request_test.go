@@ -212,7 +212,7 @@ components:
 			assert.NoError(t, err, "unable to read request body: %v", err)
 			assert.Equal(t, contentLen, bodySize, "expect ContentLength %d to equal body size %d", contentLen, bodySize)
 			bodyModified := originalBodySize != bodySize
-			assert.Equal(t, bodyModified, tc.expectedModification, "expect request body modification happened: %t, expected %t", bodyModified, tc.expectedModification)
+			assert.Equal(t, tc.expectedModification, bodyModified, "expect request body modification happened: %t, expected %t", bodyModified, tc.expectedModification)
 
 			validationInput.Request.Body, err = validationInput.Request.GetBody()
 			assert.NoError(t, err, "unable to re-generate body by GetBody(): %v", err)
