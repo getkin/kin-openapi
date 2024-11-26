@@ -131,12 +131,14 @@ func DefineIntegerFormatValidator(name string, validator IntegerFormatValidator)
 }
 
 // DefineStringFormat defines a regexp pattern for a given string format
+//
 // Deprecated: Use openapi3.DefineStringFormatValidator(name, NewRegexpFormatValidator(pattern)) instead.
 func DefineStringFormat(name string, pattern string) {
 	DefineStringFormatValidator(name, NewRegexpFormatValidator(pattern))
 }
 
 // DefineStringFormatCallback defines a callback function for a given string format
+//
 // Deprecated: Use openapi3.DefineStringFormatValidator(name, NewCallbackValidator(fn)) instead.
 func DefineStringFormatCallback(name string, callback func(string) error) {
 	DefineStringFormatValidator(name, NewCallbackValidator(callback))
