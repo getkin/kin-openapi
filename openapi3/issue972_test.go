@@ -3,8 +3,8 @@ package openapi3
 import (
 	"testing"
 
+	"github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 )
 
 func TestIssue972(t *testing.T) {
