@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
