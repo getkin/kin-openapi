@@ -6,7 +6,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/invopop/yaml"
+	"github.com/oasdiff/yaml"
 
 	"github.com/getkin/kin-openapi/openapi2"
 )

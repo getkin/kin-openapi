@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/oasdiff/yaml3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
