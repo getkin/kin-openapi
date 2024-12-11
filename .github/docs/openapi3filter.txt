@@ -93,7 +93,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
     defined. The function returns RequestError with a openapi3.SchemaError cause
     when a value is invalid by JSON schema.
 
-func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error)
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) error
     ValidateRequest is used to validate the given input according to previous
     loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec,
     a non-nil error will be returned.
