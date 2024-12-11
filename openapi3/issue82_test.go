@@ -8,7 +8,7 @@ import (
 )
 
 func TestIssue82(t *testing.T) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"prop1": "val",
 		"prop3": "val",
 	}
