@@ -105,3 +105,63 @@ func TestDateTimeZeroDay(t *testing.T) {
 	})
 	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
 }
+
+func TestDateTimeLeapSecond(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(DateTimeSpec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
+		"name":     "kin-openapi",
+		"datetime": "2016-12-31T23:59:60.000Z", // exact time of the most recent leap second
+	})
+	require.NoError(t, err)
+}
+
+func TestDateTimeHourOutOfBounds(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(DateTimeSpec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
+		"name":     "kin-openapi",
+		"datetime": "2016-12-31T24:00:00.000Z",
+	})
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+}
+
+func TestDateTimeMinuteOutOfBounds(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(DateTimeSpec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
+		"name":     "kin-openapi",
+		"datetime": "2016-12-31T23:60:00.000Z",
+	})
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+}
+
+func TestDateTimeSecondOutOfBounds(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(DateTimeSpec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	err = doc.Components.Schemas["Server"].Value.VisitJSON(map[string]any{
+		"name":     "kin-openapi",
+		"datetime": "2016-12-31T23:59:61.000Z",
+	})
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+}
