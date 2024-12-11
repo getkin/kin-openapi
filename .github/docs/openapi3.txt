@@ -35,10 +35,10 @@ const (
 	FormatOfStringByte = `(^$|^[a-zA-Z0-9+/\-_]*=*$)`
 
 	// FormatOfStringDate is a RFC3339 date format regexp, for example "2017-07-21".
-	FormatOfStringDate = `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)$`
+	FormatOfStringDate = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[1-2][0-9]|3[0-1])$`
 
 	// FormatOfStringDateTime is a RFC3339 date-time format regexp, for example "2017-07-21T17:32:28Z".
-	FormatOfStringDateTime = `^[0-9]{4}-(0[0-9]|10|11|12)-([0-2][0-9]|30|31)T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`
+	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[1-2][0-9]|3[0-1])T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`
 )
 const (
 	SerializationSimple         = "simple"
