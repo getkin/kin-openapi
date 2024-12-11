@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/invopop/yaml"
+	"github.com/oasdiff/yaml"
 )
 
 func unmarshalError(jsonUnmarshalErr error) error {

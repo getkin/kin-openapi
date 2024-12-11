@@ -3,9 +3,9 @@ package openapi3_test
 import (
 	"testing"
 
-	invopopYaml "github.com/invopop/yaml"
+	yaml "github.com/oasdiff/yaml"
+	yamlv3 "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
-	v3 "gopkg.in/yaml.v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -38,8 +38,8 @@ paths:
 	require.NoError(t, err)
 	require.NotNil(t, doc.Paths)
 
-	t.Run("Roundtrip invopop/yaml", func(t *testing.T) {
-		justPaths, err := invopopYaml.Marshal(doc.Paths)
+	t.Run("Roundtrip using yaml pkg", func(t *testing.T) {
+		justPaths, err := yaml.Marshal(doc.Paths)
 		require.NoError(t, err)
 		require.NotNil(t, doc.Paths)
 		require.YAMLEq(t, `
@@ -51,13 +51,13 @@ paths:
         description: OK
 `[1:], string(justPaths))
 
-		marshalledYaml, err := invopopYaml.Marshal(doc)
+		marshalledYaml, err := yaml.Marshal(doc)
 		require.NoError(t, err)
 		require.NotNil(t, doc.Paths)
 		require.YAMLEq(t, spec, string(marshalledYaml))
 
 		var newDoc openapi3.T
-		err = invopopYaml.Unmarshal(marshalledYaml, &newDoc)
+		err = yaml.Unmarshal(marshalledYaml, &newDoc)
 		require.NoError(t, err)
 		require.NotNil(t, newDoc.Paths)
 		require.Equal(t, doc, &newDoc)
@@ -76,7 +76,7 @@ paths:
         description: OK
 `[1:], string(justPaths))
 
-		justPaths, err = v3.Marshal(doc.Paths)
+		justPaths, err = yamlv3.Marshal(doc.Paths)
 		require.NoError(t, err)
 		require.NotNil(t, doc.Paths)
 		require.YAMLEq(t, `
@@ -88,14 +88,14 @@ paths:
         description: OK
 `[1:], string(justPaths))
 
-		marshalledYaml, err := v3.Marshal(doc)
+		marshalledYaml, err := yamlv3.Marshal(doc)
 		require.NoError(t, err)
 		require.NotNil(t, doc.Paths)
 		require.YAMLEq(t, spec, string(marshalledYaml))
 
-		t.Skip("TODO: impl https://pkg.go.dev/gopkg.in/yaml.v3#Unmarshaler on maplike types")
+		t.Skip("TODO: impl https://pkg.go.dev/github.com/oasdiff/yaml3#Unmarshaler on maplike types")
 		var newDoc openapi3.T
-		err = v3.Unmarshal(marshalledYaml, &newDoc)
+		err = yamlv3.Unmarshal(marshalledYaml, &newDoc)
 		require.NoError(t, err)
 		require.NotNil(t, newDoc.Paths)
 		require.Equal(t, doc, &newDoc)
