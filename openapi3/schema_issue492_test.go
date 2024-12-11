@@ -46,5 +46,5 @@ info:
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06:789Z",
 	})
-	require.ErrorContains(t, err, `Error at "/time": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/time": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
 }

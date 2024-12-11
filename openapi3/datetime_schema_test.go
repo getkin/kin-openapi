@@ -58,7 +58,7 @@ func TestDateZeroMonth(t *testing.T) {
 		"name": "kin-openapi",
 		"date": "2001-00-03",
 	})
-	require.ErrorContains(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+FormatOfStringDate+`"`)
+	require.EqualError(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+FormatOfStringDate+`"`)
 }
 
 func TestDateZeroDay(t *testing.T) {
@@ -73,7 +73,7 @@ func TestDateZeroDay(t *testing.T) {
 		"name": "kin-openapi",
 		"date": "2001-02-00",
 	})
-	require.ErrorContains(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+FormatOfStringDate+`"`)
+	require.EqualError(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+FormatOfStringDate+`"`)
 }
 
 func TestDateTimeZeroMonth(t *testing.T) {
@@ -88,7 +88,7 @@ func TestDateTimeZeroMonth(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2001-00-03T04:05:06.789Z",
 	})
-	require.ErrorContains(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
 }
 
 func TestDateTimeZeroDay(t *testing.T) {
@@ -103,5 +103,5 @@ func TestDateTimeZeroDay(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2001-02-00T04:05:06.789Z",
 	})
-	require.ErrorContains(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
 }
