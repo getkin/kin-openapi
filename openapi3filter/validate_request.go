@@ -114,7 +114,7 @@ func appendToQueryValues[T any](q url.Values, parameterName string, v []T) {
 // populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected
 func populateDefaultQueryParameters(q url.Values, parameterName string, value any) {
 	switch t := value.(type) {
-	case []interface{}:
+	case []any:
 		appendToQueryValues(q, parameterName, t)
 	default:
 		q.Add(parameterName, fmt.Sprintf("%v", value))
