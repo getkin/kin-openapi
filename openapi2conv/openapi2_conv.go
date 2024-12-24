@@ -513,7 +513,7 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 		MaxProps:             schema.Value.MaxProps,
 		AllOf:                make(openapi3.SchemaRefs, len(schema.Value.AllOf)),
 		Properties:           make(openapi3.Schemas),
-		AdditionalProperties: ToV3AdditionalProperties(schema.Value.AdditionalProperties),
+		AdditionalProperties: toV3AdditionalProperties(schema.Value.AdditionalProperties),
 	}
 
 	if schema.Value.Discriminator != "" {
@@ -547,7 +547,7 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 	}
 }
 
-func ToV3AdditionalProperties(from openapi3.AdditionalProperties) openapi3.AdditionalProperties {
+func toV3AdditionalProperties(from openapi3.AdditionalProperties) openapi3.AdditionalProperties {
 	return openapi3.AdditionalProperties{
 		Has:    from.Has,
 		Schema: convertRefsInV3SchemaRef(from.Schema),
@@ -563,7 +563,7 @@ func convertRefsInV3SchemaRef(from *openapi3.SchemaRef) *openapi3.SchemaRef {
 	if to.Value != nil {
 		v := *from.Value
 		to.Value = &v
-		to.Value.AdditionalProperties = ToV3AdditionalProperties(to.Value.AdditionalProperties)
+		to.Value.AdditionalProperties = toV3AdditionalProperties(to.Value.AdditionalProperties)
 	}
 	return &to
 }
