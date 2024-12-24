@@ -87,23 +87,37 @@ components:
 		shouldFail bool
 	}{
 		{
-			name:       "json",
+			name:       "json success",
 			endpoint:   "/api/path",
 			ct:         "application/json",
 			data:       `{"msg":"message", "name":"some+name"}`,
 			shouldFail: false,
 		},
+		{
+			name:       "json failure",
+			endpoint:   "/api/path",
+			ct:         "application/json",
+			data:       `{"name":"some+name"}`,
+			shouldFail: true,
+		},
 
 		// application/x-www-form-urlencoded
 		{
-			name:       "form",
+			name:       "form success",
 			endpoint:   "/api/path",
 			ct:         "application/x-www-form-urlencoded",
 			data:       "msg=message&name=some+name",
 			shouldFail: false,
 		},
+		{
+			name:       "form failure",
+			endpoint:   "/api/path",
+			ct:         "application/x-www-form-urlencoded",
+			data:       "name=some+name",
+			shouldFail: true,
+		},
 	} {
-		t.Run(testcase.ct, func(t *testing.T) {
+		t.Run(testcase.name, func(t *testing.T) {
 			data := strings.NewReader(testcase.data)
 			req, err := http.NewRequest("POST", testcase.endpoint, data)
 			require.NoError(t, err)
