@@ -407,7 +407,8 @@ func ExampleSchemaCustomizer() {
 			InnerFieldWithTag    int `mymintag:"-1" mymaxtag:"50"`
 			NestedInnerBla
 		}
-		Enum2Field string `json:"enum2" myenumtag:"c,d"`
+		Enum2Field string          `json:"enum2" myenumtag:"c,d"`
+		JsonField  json.RawMessage `json:"rawmsg" myjsontag:"raw"`
 	}
 
 	type Bla struct {
@@ -434,6 +435,9 @@ func ExampleSchemaCustomizer() {
 			for _, s := range strings.Split(tag.Get("myenumtag"), ",") {
 				schema.Enum = append(schema.Enum, s)
 			}
+		}
+		if tag.Get("myjsontag") != "" {
+			schema.Description = "description"
 		}
 		return nil
 	})
@@ -487,6 +491,9 @@ func ExampleSchemaCustomizer() {
 	//         "f"
 	//       ],
 	//       "type": "string"
+	//     },
+	//     "rawmsg": {
+	//       "description": "description"
 	//     }
 	//   },
 	//   "type": "object"

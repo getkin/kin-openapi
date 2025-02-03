@@ -290,11 +290,10 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
-			if t == rawMessageType {
-				return &openapi3.SchemaRef{Value: schema}, nil
+			if t != rawMessageType {
+				schema.Type = &openapi3.Types{"string"}
+				schema.Format = "byte"
 			}
-			schema.Type = &openapi3.Types{"string"}
-			schema.Format = "byte"
 		} else {
 			schema.Type = &openapi3.Types{"array"}
 			items, err := g.generateSchemaRefFor(parents, t.Elem(), name, tag)
