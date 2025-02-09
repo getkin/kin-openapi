@@ -429,6 +429,11 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 
 	// For structs we add the schemas to the component schemas
 	if len(parents) > 1 || g.opts.exportComponentSchemas.ExportTopLevelSchema {
+		// If struct is a time.Time instance, separate component shouldn't be generated
+		if t == timeType {
+			return openapi3.NewSchemaRef(t.Name(), schema), nil
+		}
+
 		typeName := g.generateTypeName(t)
 
 		g.componentSchemaRefs[typeName] = struct{}{}
