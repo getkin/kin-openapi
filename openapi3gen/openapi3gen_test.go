@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strconv"
 	"strings"
@@ -640,4 +641,29 @@ func ExampleSetSchemar() {
 	//   },
 	//   "type": "object"
 	// }
+}
+
+func TestExportComponentSchemasForTimeProp(t *testing.T) {
+	type Some struct {
+		Name      string
+		CreatedAt time.Time
+	}
+
+	schemas := make(openapi3.Schemas)
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true,
+		}),
+	)
+
+	ref, err := g.NewSchemaRefForValue(&Some{}, schemas)
+	require.NoError(t, err)
+
+	schema, err := json.MarshalIndent(ref, "", "  ")
+	require.NoError(t, err)
+
+	assert.Condition(t, func() bool {
+		return !strings.Contains(string(schema), "#/components/schemas/Time")
+	}, "Expected no schema for time.Time property but got one: %s", schema)
 }
