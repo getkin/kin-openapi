@@ -60,7 +60,7 @@ components:
 			name: "Valid request without type parameters set",
 			args: args{
 				url:      "/category",
-				expected: []string{"A", "B", "C"},
+				expected: []string{"A,B,C"},
 			},
 			expectedModification: false,
 			expectedErr:          nil,
