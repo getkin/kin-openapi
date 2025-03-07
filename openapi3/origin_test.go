@@ -348,3 +348,32 @@ func TestOrigin_XML(t *testing.T) {
 		},
 		base.Origin.Fields["prefix"])
 }
+
+// TestOrigin_OriginFieldInMap replicates https://github.com/getkin/kin-openapi/issues/1051
+func TestOrigin_OriginFieldInMap(t *testing.T) {
+	var data = `
+paths:
+  /foo:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Foo"
+components:
+  schemas:
+    Foo:
+      type: object
+      properties:
+        origin:
+          type: string
+`
+
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(data))
+	require.NoError(t, err)
+
+	require.NotEmpty(t, doc.Paths.Find("/foo").Get.Responses.Status(200).Value.Content.Get("application/json").Schema.Value.Properties["origin"])
+}
