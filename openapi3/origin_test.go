@@ -469,5 +469,6 @@ components:
 	defer unsetIncludeOrigin()
 
 	_, err := loader.LoadFromData([]byte(data))
-	require.Equal(t, "failed to unmarshal data: json error: invalid character 'p' looking for beginning of value, yaml error: error converting YAML to JSON: yaml: unmarshal errors:\n  line 0: mapping key \"origin\" already defined at line 17", err.Error())
+	require.Equal(t, `failed to unmarshal data: json error: invalid character 'p' looking for beginning of value, yaml error: error converting YAML to JSON: yaml: unmarshal errors:
+  line 0: mapping key "origin" already defined at line 17`, err.Error())
 }
