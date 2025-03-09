@@ -229,7 +229,7 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
 
 type Callback struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	// Has unexported fields.
 }
@@ -332,7 +332,7 @@ type ComponentRef interface {
 
 type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -364,7 +364,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 
 type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -412,7 +412,7 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
 
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
 	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
@@ -435,7 +435,7 @@ func (discriminator *Discriminator) Validate(ctx context.Context, opts ...Valida
 
 type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
 	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -471,7 +471,7 @@ func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
 
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -547,7 +547,7 @@ func (examples *Examples) UnmarshalJSON(data []byte) (err error)
 
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -662,7 +662,7 @@ func (headers *Headers) UnmarshalJSON(data []byte) (err error)
 
 type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Title          string   `json:"title" yaml:"title"` // Required
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
@@ -691,7 +691,7 @@ type IntegerFormatValidator = FormatValidator[int64]
 
 type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -713,7 +713,7 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
 	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
@@ -836,7 +836,7 @@ type Location struct {
 
 type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
@@ -914,7 +914,7 @@ type NumberFormatValidator = FormatValidator[float64]
 
 type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
@@ -939,7 +939,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
 
 type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
 	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
@@ -964,7 +964,7 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -1037,7 +1037,7 @@ type Origin struct {
 
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
 	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
@@ -1159,7 +1159,7 @@ func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error)
 
 type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
@@ -1199,7 +1199,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 
 type Paths struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	// Has unexported fields.
 }
@@ -1289,7 +1289,7 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
 
 type Ref struct {
 	Ref    string  `json:"$ref" yaml:"$ref"`
-	Origin *Origin `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin *Origin `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 }
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
@@ -1318,7 +1318,7 @@ func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error)
 
 type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
@@ -1405,7 +1405,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 
 type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -1548,7 +1548,7 @@ func (responses *Responses) Value(key string) *ResponseRef
 
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
@@ -1888,7 +1888,7 @@ func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *
 
 type SecurityScheme struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
 	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
@@ -1995,7 +1995,7 @@ type SerializationMethod struct {
 
 type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	URL         string                     `json:"url" yaml:"url"` // Required
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -2026,7 +2026,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
@@ -2132,7 +2132,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
 
 type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
@@ -2244,7 +2244,7 @@ type ValidationOptions struct {
 
 type XML struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"origin,omitempty" yaml:"origin,omitempty"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
