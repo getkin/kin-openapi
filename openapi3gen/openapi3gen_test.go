@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strconv"
 	"strings"
@@ -407,7 +408,8 @@ func ExampleSchemaCustomizer() {
 			InnerFieldWithTag    int `mymintag:"-1" mymaxtag:"50"`
 			NestedInnerBla
 		}
-		Enum2Field string `json:"enum2" myenumtag:"c,d"`
+		Enum2Field string          `json:"enum2" myenumtag:"c,d"`
+		JsonField  json.RawMessage `json:"rawmsg" myjsontag:"raw"`
 	}
 
 	type Bla struct {
@@ -434,6 +436,9 @@ func ExampleSchemaCustomizer() {
 			for _, s := range strings.Split(tag.Get("myenumtag"), ",") {
 				schema.Enum = append(schema.Enum, s)
 			}
+		}
+		if tag.Get("myjsontag") != "" {
+			schema.Description = "description"
 		}
 		return nil
 	})
@@ -487,6 +492,9 @@ func ExampleSchemaCustomizer() {
 	//         "f"
 	//       ],
 	//       "type": "string"
+	//     },
+	//     "rawmsg": {
+	//       "description": "description"
 	//     }
 	//   },
 	//   "type": "object"
@@ -633,4 +641,29 @@ func ExampleSetSchemar() {
 	//   },
 	//   "type": "object"
 	// }
+}
+
+func TestExportComponentSchemasForTimeProp(t *testing.T) {
+	type Some struct {
+		Name      string
+		CreatedAt time.Time
+	}
+
+	schemas := make(openapi3.Schemas)
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true,
+		}),
+	)
+
+	ref, err := g.NewSchemaRefForValue(&Some{}, schemas)
+	require.NoError(t, err)
+
+	schema, err := json.MarshalIndent(ref, "", "  ")
+	require.NoError(t, err)
+
+	assert.Condition(t, func() bool {
+		return !strings.Contains(string(schema), "#/components/schemas/Time")
+	}, "Expected no schema for time.Time property but got one: %s", schema)
 }
