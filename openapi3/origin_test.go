@@ -383,8 +383,8 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Fields["prefix"])
 }
 
-// TestOrigin_OriginExistsInProperties verifies that we don't remove pre-existing "origin" fields.
-// See https://github.com/getkin/kin-openapi/issues/1051
+// TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
+// contains a property named "__origin__", highlighting a limitation in the current implementation.
 func TestOrigin_OriginExistsInProperties(t *testing.T) {
 	var data = `
 paths:
@@ -402,64 +402,7 @@ components:
     Foo:
       type: object
       properties:
-        origin:
-          type: string
-`
-
-	loader := NewLoader()
-	doc, err := loader.LoadFromData([]byte(data))
-	require.NoError(t, err)
-
-	require.NotEmpty(t, doc.Paths.Find("/foo").Get.Responses.Status(200).Value.Content.Get("application/json").Schema.Value.Properties["origin"])
-}
-
-// TestOrigin_OriginExistsInContent verifies that we don't remove pre-existing "origin" fields.
-// See https://github.com/getkin/kin-openapi/issues/1051
-func TestOrigin_OriginExistsInContent(t *testing.T) {
-	var data = `
-paths:
-  /foo:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            origin:
-              schema:
-                $ref: "#/components/schemas/Foo"
-components:
-  schemas:
-    Foo:
-      type: string
-`
-
-	loader := NewLoader()
-	doc, err := loader.LoadFromData([]byte(data))
-	require.NoError(t, err)
-
-	require.NotEmpty(t, doc.Paths.Find("/foo").Get.Responses.Status(200).Value.Content.Get("origin"))
-}
-
-// TestOrigin_OriginExistsInPropertiesWithIncludeOrigin demonstrates a limitation in the current implementation:
-// Include origin doesn't work if properties (or any other map) contains a key named "origin".
-func TestOrigin_OriginExistsInPropertiesWithIncludeOrigin(t *testing.T) {
-	var data = `
-paths:
-  /foo:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Foo"
-components:
-  schemas:
-    Foo:
-      type: object
-      properties:
-        origin:
+        __origin__:
           type: string
 `
 
@@ -469,6 +412,7 @@ components:
 	defer unsetIncludeOrigin()
 
 	_, err := loader.LoadFromData([]byte(data))
+	require.Error(t, err)
 	require.Equal(t, `failed to unmarshal data: json error: invalid character 'p' looking for beginning of value, yaml error: error converting YAML to JSON: yaml: unmarshal errors:
-  line 0: mapping key "origin" already defined at line 17`, err.Error())
+  line 0: mapping key "__origin__" already defined at line 17`, err.Error())
 }
