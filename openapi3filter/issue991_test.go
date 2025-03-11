@@ -9,76 +9,48 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func generateSpec(explode bool) string {
+	explodeStr := "false"
+	if explode {
+		explodeStr = "true"
+	}
+	return `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Type"
+      responses:
+        '200':
+          description: Ok
+components:
+  parameters:
+    Type:
+      in: query
+      name: type
+      required: false
+      explode: ` + explodeStr + `
+      description: Type parameter
+      schema:
+        type: array
+        default:
+          - A
+          - B
+          - C
+        items:
+          type: string
+          enum:
+            - A
+            - B
+            - C
+`
+}
+
 func TestValidateRequestDefault(t *testing.T) {
-	const specExplodeFalse = `
-openapi: 3.0.0
-info:
-  title: 'Validator'
-  version: 0.0.1
-paths:
-  /category:
-    get:
-      parameters:
-        - $ref: "#/components/parameters/Type"
-      responses:
-        '200':
-          description: Ok
-components:
-  parameters:
-    Type:
-      in: query
-      name: type
-      required: false
-      description: Type parameter
-      schema:
-        type: array
-        default:
-          - A
-          - B
-          - C
-        items:
-          type: string
-          enum:
-            - A
-            - B
-            - C
-`
-
-	const specExplodeTrue = `
-openapi: 3.0.0
-info:
-  title: 'Validator'
-  version: 0.0.1
-paths:
-  /category:
-    get:
-      parameters:
-        - $ref: "#/components/parameters/Type"
-      responses:
-        '200':
-          description: Ok
-components:
-  parameters:
-    Type:
-      in: query
-      name: type
-      required: false
-      explode: true
-      description: Type parameter
-      schema:
-        type: array
-        default:
-          - A
-          - B
-          - C
-        items:
-          type: string
-          enum:
-            - A
-            - B
-            - C
-`
-
 	type args struct {
 		url      string
 		expected []string
@@ -98,7 +70,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          nil,
-			spec:                 specExplodeFalse,
+			spec:                 generateSpec(false),
 		},
 		{
 			name: "Valid request with 1 type parameters set and explode is false",
@@ -108,7 +80,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          nil,
-			spec:                 specExplodeFalse,
+			spec:                 generateSpec(false),
 		},
 		{
 			name: "Valid request with 2 type parameters set and explode is false",
@@ -118,7 +90,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          nil,
-			spec:                 specExplodeFalse,
+			spec:                 generateSpec(false),
 		},
 		{
 			name: "Valid request with 1 type parameters set out of enum and explode is false",
@@ -128,7 +100,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          &RequestError{},
-			spec:                 specExplodeFalse,
+			spec:                 generateSpec(false),
 		},
 		{
 			name: "Valid request without type parameters set and explode is true",
@@ -138,7 +110,7 @@ components:
 			},
 			expectedModification: false,
 			expectedErr:          nil,
-			spec:                 specExplodeTrue,
+			spec:                 generateSpec(true),
 		},
 	}
 	for _, tc := range tests {
