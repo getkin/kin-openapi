@@ -10,7 +10,7 @@ import (
 )
 
 func TestValidateRequestDefault(t *testing.T) {
-	const spec = `
+	const specExplodeFalse = `
 openapi: 3.0.0
 info:
   title: 'Validator'
@@ -44,7 +44,40 @@ components:
             - C
 `
 
-	router := setupTestRouter(t, spec)
+	const specExplodeTrue = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Type"
+      responses:
+        '200':
+          description: Ok
+components:
+  parameters:
+    Type:
+      in: query
+      name: type
+      required: false
+      explode: true
+      description: Type parameter
+      schema:
+        type: array
+        default:
+          - A
+          - B
+          - C
+        items:
+          type: string
+          enum:
+            - A
+            - B
+            - C
+`
 
 	type args struct {
 		url      string
@@ -55,42 +88,57 @@ components:
 		args                 args
 		expectedModification bool
 		expectedErr          error
+		spec                 string
 	}{
 		{
-			name: "Valid request without type parameters set",
+			name: "Valid request without type parameters set and explode is false",
 			args: args{
 				url:      "/category",
 				expected: []string{"A,B,C"},
 			},
 			expectedModification: false,
 			expectedErr:          nil,
+			spec:                 specExplodeFalse,
 		},
 		{
-			name: "Valid request with 1 type parameters set",
+			name: "Valid request with 1 type parameters set and explode is false",
 			args: args{
 				url:      "/category?type=A",
 				expected: []string{"A"},
 			},
 			expectedModification: false,
 			expectedErr:          nil,
+			spec:                 specExplodeFalse,
 		},
 		{
-			name: "Valid request with 2 type parameters set",
+			name: "Valid request with 2 type parameters set and explode is false",
 			args: args{
 				url:      "/category?type=A&type=C",
 				expected: []string{"A", "C"},
 			},
 			expectedModification: false,
 			expectedErr:          nil,
+			spec:                 specExplodeFalse,
 		},
 		{
-			name: "Valid request with 1 type parameters set out of enum",
+			name: "Valid request with 1 type parameters set out of enum and explode is false",
 			args: args{
 				url:      "/category?type=X",
 				expected: nil,
 			},
 			expectedModification: false,
 			expectedErr:          &RequestError{},
+			spec:                 specExplodeFalse,
+		},
+		{
+			name: "Valid request without type parameters set and explode is true",
+			args: args{
+				url:      "/category",
+				expected: []string{"A", "B", "C"},
+			},
+			expectedModification: false,
+			expectedErr:          nil,
+			spec:                 specExplodeTrue,
 		},
 	}
 	for _, tc := range tests {
@@ -99,6 +147,7 @@ components:
 			req, err := http.NewRequest(http.MethodGet, tc.args.url, nil)
 			require.NoError(t, err)
 
+			router := setupTestRouter(t, tc.spec)
 			route, pathParams, err := router.FindRoute(req)
 			require.NoError(t, err)
 
