@@ -7,10 +7,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func unsetIncludeOrigin() {
+	IncludeOrigin = false
+}
+
 func TestOrigin_Info(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -42,7 +49,10 @@ func TestOrigin_Info(t *testing.T) {
 func TestOrigin_Paths(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -78,7 +88,10 @@ func TestOrigin_Paths(t *testing.T) {
 func TestOrigin_RequestBody(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/request_body.yaml")
@@ -105,7 +118,10 @@ func TestOrigin_RequestBody(t *testing.T) {
 func TestOrigin_Responses(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -140,7 +156,10 @@ func TestOrigin_Responses(t *testing.T) {
 func TestOrigin_Parameters(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/parameters.yaml")
@@ -173,7 +192,10 @@ func TestOrigin_Parameters(t *testing.T) {
 func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/additional_properties.yaml")
@@ -201,7 +223,10 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 func TestOrigin_ExternalDocs(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/external_docs.yaml")
@@ -235,7 +260,10 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 func TestOrigin_Security(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/security.yaml")
@@ -283,7 +311,10 @@ func TestOrigin_Security(t *testing.T) {
 func TestOrigin_Example(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/example.yaml")
@@ -319,7 +350,10 @@ func TestOrigin_Example(t *testing.T) {
 func TestOrigin_XML(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/xml.yaml")
@@ -347,4 +381,38 @@ func TestOrigin_XML(t *testing.T) {
 			Column: 21,
 		},
 		base.Origin.Fields["prefix"])
+}
+
+// TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
+// contains a property named "__origin__", highlighting a limitation in the current implementation.
+func TestOrigin_OriginExistsInProperties(t *testing.T) {
+	var data = `
+paths:
+  /foo:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Foo"
+components:
+  schemas:
+    Foo:
+      type: object
+      properties:
+        __origin__:
+          type: string
+`
+
+	loader := NewLoader()
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
+	_, err := loader.LoadFromData([]byte(data))
+	require.Error(t, err)
+	require.Equal(t, `failed to unmarshal data: json error: invalid character 'p' looking for beginning of value, yaml error: error converting YAML to JSON: yaml: unmarshal errors:
+  line 0: mapping key "__origin__" already defined at line 17`, err.Error())
 }

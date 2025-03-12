@@ -90,6 +90,11 @@ var ErrURINotSupported = errors.New("unsupported URI")
     ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle
     a given URI.
 
+var IncludeOrigin = false
+    IncludeOrigin specifies whether to include the origin of the OpenAPI
+    elements Set this to true before loading a spec to include the origin of the
+    OpenAPI elements Note it is global and affects all loaders
+
 
 FUNCTIONS
 
@@ -789,9 +794,6 @@ func (links *Links) UnmarshalJSON(data []byte) (err error)
 type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
-
-	// IncludeOrigin specifies whether to include the origin of the OpenAPI elements
-	IncludeOrigin bool
 
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
