@@ -113,9 +113,9 @@ func appendToQueryValues[T any](q url.Values, parameterName string, v []T) {
 }
 
 func joinValues(values []any, sep string) string {
-	strValues := make([]string, len(values))
-	for i, v := range values {
-		strValues[i] = fmt.Sprintf("%v", v)
+	strValues := make([]string, 0, len(values))
+	for _, v := range values {
+		strValues = append(strValues, fmt.Sprintf("%v", v))
 	}
 	return strings.Join(strValues, sep)
 }
