@@ -592,13 +592,13 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 					req.Equal(tt.wantErrSchemaReason, innerErr.Reason)
 					pointer := toJSONPointer(innerErr.JSONPointer())
 					req.Equal(tt.wantErrSchemaPath, pointer)
-					req.Equal(fmt.Sprintf("%v", tt.wantErrSchemaValue), fmt.Sprintf("%v", innerErr.Value))
+					req.Equal(fmt.Sprint(tt.wantErrSchemaValue), fmt.Sprint(innerErr.Value))
 
 					if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
 						req.Equal(tt.wantErrSchemaOriginReason, originErr.Reason)
 						pointer := toJSONPointer(originErr.JSONPointer())
 						req.Equal(tt.wantErrSchemaOriginPath, pointer)
-						req.Equal(fmt.Sprintf("%v", tt.wantErrSchemaOriginValue), fmt.Sprintf("%v", originErr.Value))
+						req.Equal(fmt.Sprint(tt.wantErrSchemaOriginValue), fmt.Sprint(originErr.Value))
 					}
 				} else {
 					req.False(tt.wantErrSchemaReason != "" || tt.wantErrSchemaPath != "",

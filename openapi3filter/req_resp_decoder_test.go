@@ -1859,7 +1859,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 		}
 		return strings.Split(string(data), ","), nil
 	}
-	contentType := "application/csv"
+	const contentType = "application/csv"
 	h := make(http.Header)
 	h.Set(headerCT, contentType)
 
@@ -1867,7 +1867,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	require.Nil(t, originalDecoder)
 
 	RegisterBodyDecoder(contentType, decoder)
-	require.Equal(t, fmt.Sprintf("%v", decoder), fmt.Sprintf("%v", RegisteredBodyDecoder(contentType)))
+	require.Equal(t, fmt.Sprint(decoder), fmt.Sprint(RegisteredBodyDecoder(contentType)))
 
 	body := strings.NewReader("foo,bar")
 	schema := openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()

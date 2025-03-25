@@ -139,7 +139,7 @@ info:
 					}
 					apaStr := ""
 					if apa != nil {
-						apaStr = fmt.Sprintf("%v", *apa)
+						apaStr = fmt.Sprint(apa)
 					}
 
 					encoded, err := propSchema.MarshalJSON()

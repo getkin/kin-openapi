@@ -108,14 +108,14 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 // appendToQueryValues adds to query parameters each value in the provided slice
 func appendToQueryValues[T any](q url.Values, parameterName string, v []T) {
 	for _, i := range v {
-		q.Add(parameterName, fmt.Sprintf("%v", i))
+		q.Add(parameterName, fmt.Sprint(i))
 	}
 }
 
 func joinValues(values []any, sep string) string {
 	strValues := make([]string, 0, len(values))
 	for _, v := range values {
-		strValues = append(strValues, fmt.Sprintf("%v", v))
+		strValues = append(strValues, fmt.Sprint(v))
 	}
 	return strings.Join(strValues, sep)
 }
@@ -130,7 +130,7 @@ func populateDefaultQueryParameters(q url.Values, parameterName string, value an
 			q.Add(parameterName, joinValues(t, ","))
 		}
 	default:
-		q.Add(parameterName, fmt.Sprintf("%v", value))
+		q.Add(parameterName, fmt.Sprint(value))
 	}
 }
 
@@ -139,7 +139,7 @@ func populateDefaultQueryParameters(q url.Values, parameterName string, value an
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
 // The function returns RequestError with ErrInvalidEmptyValue cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
+func ValidateParameter(_ context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
 	if parameter.Schema == nil && parameter.Content == nil {
 		// We have no schema for the parameter. Assume that everything passes
 		// a schema-less check, but this could also be an error. The OpenAPI
@@ -191,11 +191,11 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				populateDefaultQueryParameters(q, parameter.Name, value, explode)
 				req.URL.RawQuery = q.Encode()
 			case openapi3.ParameterInHeader:
-				req.Header.Add(parameter.Name, fmt.Sprintf("%v", value))
+				req.Header.Add(parameter.Name, fmt.Sprint(value))
 			case openapi3.ParameterInCookie:
 				req.AddCookie(&http.Cookie{
 					Name:  parameter.Name,
-					Value: fmt.Sprintf("%v", value),
+					Value: fmt.Sprint(value),
 				})
 			}
 		}
@@ -237,7 +237,7 @@ const prefixInvalidCT = "header Content-Type has unexpected value"
 //
 // The function returns RequestError with ErrInvalidRequired cause when a value is required but not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
+func ValidateRequestBody(_ context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
 	var (
 		req  = input.Request
 		data []byte
