@@ -139,7 +139,7 @@ func populateDefaultQueryParameters(q url.Values, parameterName string, value an
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
 // The function returns RequestError with ErrInvalidEmptyValue cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateParameter(_ context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
+func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
 	if parameter.Schema == nil && parameter.Content == nil {
 		// We have no schema for the parameter. Assume that everything passes
 		// a schema-less check, but this could also be an error. The OpenAPI
@@ -237,7 +237,7 @@ const prefixInvalidCT = "header Content-Type has unexpected value"
 //
 // The function returns RequestError with ErrInvalidRequired cause when a value is required but not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
-func ValidateRequestBody(_ context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
+func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, requestBody *openapi3.RequestBody) error {
 	var (
 		req  = input.Request
 		data []byte
