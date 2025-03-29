@@ -2,7 +2,6 @@ package openapi3filter
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 	"testing"
 
@@ -14,15 +13,13 @@ func TestRegisterAndUnregisterBodyEncoder(t *testing.T) {
 	encoder = func(body any) (data []byte, err error) {
 		return []byte(strings.Join(body.([]string), ",")), nil
 	}
-	contentType := "text/csv"
-	h := make(http.Header)
-	h.Set(headerCT, contentType)
+	const contentType = "text/csv"
 
 	originalEncoder := RegisteredBodyEncoder(contentType)
 	require.Nil(t, originalEncoder)
 
 	RegisterBodyEncoder(contentType, encoder)
-	require.Equal(t, fmt.Sprintf("%v", encoder), fmt.Sprintf("%v", RegisteredBodyEncoder(contentType)))
+	require.Equal(t, fmt.Sprint(encoder), fmt.Sprint(RegisteredBodyEncoder(contentType)))
 
 	body := []string{"foo", "bar"}
 	got, err := encodeBody(body, contentType)
