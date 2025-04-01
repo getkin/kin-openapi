@@ -76,3 +76,14 @@ paths:
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 }
+
+func TestExtractObjectKeys(t *testing.T) {
+	const j = `{
+		"z_hello": "world",
+		"a_foo": "bar",
+	}`
+
+	keys, err := extractObjectKeys([]byte(j))
+	require.NoError(t, err)
+	require.Equal(t, []string{"z_hello", "a_foo"}, keys)
+}

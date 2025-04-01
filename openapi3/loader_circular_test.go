@@ -29,6 +29,7 @@ func TestLoadCircular(t *testing.T) {
 			Value: arr,
 		},
 	}
+	obj.PropertyKeys = []string{"children"}
 
 	expected := &SchemaRef{
 		Ref:   ref,
