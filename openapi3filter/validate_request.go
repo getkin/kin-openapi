@@ -416,6 +416,23 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 		securitySchemes = components.SecuritySchemes
 	}
 
+	// NOTE that because we could have an `AuthenticationFunc` that reads the request body, we need to provide a fresh `io.Reader` to each iteration of the loop. To make this more performant, we can read the request body once into memory (which may be costly) and then create a fresh `io.Reader` for each `AuthenticationFunc`
+	var data []byte
+
+	if input.Request != nil && input.Request.Body != http.NoBody && input.Request.Body != nil {
+		defer input.Request.Body.Close()
+
+		var err error
+		data, err = io.ReadAll(input.Request.Body)
+		if err != nil {
+			return &RequestError{
+				Input:  input,
+				Reason: "reading failed",
+				Err:    err,
+			}
+		}
+	}
+
 	// For each scheme for the requirement
 	for _, name := range names {
 		var securityScheme *openapi3.SecurityScheme
@@ -431,6 +448,26 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 			}
 		}
 		scopes := securityRequirement[name]
+
+		// if there was a request body, then make sure we provide a new copy of the body in the `input`
+		if data != nil {
+			var err error
+			// Put the data back into the input
+			input.Request.Body = nil
+			if input.Request.GetBody != nil {
+				if input.Request.Body, err = input.Request.GetBody(); err != nil {
+					input.Request.Body = nil
+				}
+			}
+			if input.Request.Body == nil {
+				input.Request.ContentLength = int64(len(data))
+				input.Request.GetBody = func() (io.ReadCloser, error) {
+					return io.NopCloser(bytes.NewReader(data)), nil
+				}
+				input.Request.Body, _ = input.Request.GetBody() // no error return
+			}
+		}
+
 		if err := f(ctx, &AuthenticationInput{
 			RequestValidationInput: input,
 			SecuritySchemeName:     name,
@@ -438,6 +475,25 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 			Scopes:                 scopes,
 		}); err != nil {
 			return err
+		}
+	}
+
+	// if there was a request body, then make sure we put it back into the `input`
+	if data != nil {
+		var err error
+		// Put the data back into the input
+		input.Request.Body = nil
+		if input.Request.GetBody != nil {
+			if input.Request.Body, err = input.Request.GetBody(); err != nil {
+				input.Request.Body = nil
+			}
+		}
+		if input.Request.Body == nil {
+			input.Request.ContentLength = int64(len(data))
+			input.Request.GetBody = func() (io.ReadCloser, error) {
+				return io.NopCloser(bytes.NewReader(data)), nil
+			}
+			input.Request.Body, _ = input.Request.GetBody() // no error return
 		}
 	}
 	return nil
