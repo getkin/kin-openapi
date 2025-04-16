@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/TykTechnologies/kin-openapi/openapi3"
 	legacyrouter "github.com/TykTechnologies/kin-openapi/routers/legacy"
-	"github.com/stretchr/testify/require"
 )
 
 func TestValidationWithDiscriminatorSelection(t *testing.T) {

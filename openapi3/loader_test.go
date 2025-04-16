@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -56,16 +55,51 @@ paths:
 `)
 
 	loader := NewLoader()
+
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
 	require.Equal(t, 1, len(doc.Paths))
-	def := doc.Paths["/items"].Put.Responses.Default().Value
-	desc := "unexpected error"
-	require.Equal(t, &desc, def.Description)
+	require.Equal(t, "unexpected error", *doc.Paths["/items"].Put.Responses.Default().Value.Description)
+
 	err = doc.Validate(loader.Context)
 	require.NoError(t, err)
+}
+
+func TestIssue731(t *testing.T) {
+	spec := []byte(`
+openapi: 3.0.0
+info:
+  title: An API
+  version: v1
+paths:
+  /items:
+    put:
+      description: ''
+      requestBody:
+        required: true
+      # Note mis-indented content block
+      content:
+        application/json:
+          schema:
+            type: object
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+`[1:])
+
+	loader := NewLoader()
+
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.ErrorContains(t, err, `content of the request body is required`)
 }
 
 func ExampleLoader() {
@@ -79,7 +113,7 @@ func ExampleLoader() {
 }
 
 func TestResolveSchemaRef(t *testing.T) {
-	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1",description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
+	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(source)
 	require.NoError(t, err)
@@ -89,15 +123,6 @@ func TestResolveSchemaRef(t *testing.T) {
 	refAVisited := doc.Components.Schemas["A"].Value.AllOf[0]
 	require.Equal(t, "#/components/schemas/B", refAVisited.Ref)
 	require.NotNil(t, refAVisited.Value)
-}
-
-func TestResolveSchemaRefWithNullSchemaRef(t *testing.T) {
-	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{"/foo":{"post":{"requestBody":{"content":{"application/json":{"schema":null}}}}}}}`)
-	loader := NewLoader()
-	doc, err := loader.LoadFromData(source)
-	require.NoError(t, err)
-	err = doc.Validate(loader.Context)
-	require.EqualError(t, err, `invalid paths: found unresolved ref: ""`)
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {
@@ -264,6 +289,40 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 	require.Equal(t, "string", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
 }
 
+func TestLoadWithRecursiveReferenceInLocalReferenceInParentSubdir(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInLocalRefInParentsSubdir/spec/openapi.json")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "object", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["definition_reference"].Value.Type)
+}
+
+func TestLoadWithRecursiveReferenceInRefrerenceInLocalReference(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInLocalRef/openapi.json")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "integer", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["data"].Value.Properties["definition_reference"].Value.Properties["ref_prop_part"].Value.Properties["idPart"].Value.Type)
+	require.Equal(t, "int64", doc.Paths["/api/test/ref/in/ref"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["data"].Value.Properties["definition_reference"].Value.Properties["ref_prop_part"].Value.Properties["idPart"].Value.Format)
+}
+
+func TestLoadWithReferenceInReferenceInProperty(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile("testdata/refInRefInProperty/openapi.yaml")
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	require.Equal(t, "Problem details", doc.Paths["/api/test/ref/in/ref/in/property"].Post.Responses["401"].Value.Content["application/json"].Schema.Value.Properties["error"].Value.Title)
+}
+
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
@@ -412,6 +471,7 @@ paths:
       parameters:
         - name: id,
           in: path
+          required: true
           schema:
             type: string
       responses:
@@ -435,6 +495,20 @@ paths:
 	require.NotNil(t, link)
 	require.Equal(t, "getUserById", link.OperationID)
 	require.Equal(t, "link to to the father", link.Description)
+}
+
+func TestLinksFromOAISpec(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromFile("testdata/link-example.yaml")
+	require.NoError(t, err)
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+	response := doc.Paths[`/2.0/repositories/{username}/{slug}`].Get.Responses.Get(200).Value
+	link := response.Links[`repositoryPullRequests`].Value
+	require.Equal(t, map[string]interface{}{
+		"username": "$response.body#/owner/username",
+		"slug":     "$response.body#/slug",
+	}, link.Parameters)
 }
 
 func TestResolveNonComponentsRef(t *testing.T) {
@@ -509,23 +583,27 @@ paths: {}
 servers:
 - @@@
 `
-	for value, expected := range map[string]error{
-		`{url: /}`:                            nil,
-		`{url: "http://{x}.{y}.example.com"}`: errors.New("invalid servers: server has undeclared variables"),
-		`{url: "http://{x}.y}.example.com"}`:  errors.New("invalid servers: server URL has mismatched { and }"),
-		`{url: "http://{x.example.com"}`:      errors.New("invalid servers: server URL has mismatched { and }"),
-		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                nil,
-		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: nil,
-		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New(`invalid servers: field default is required in {"enum":["www"]}`),
-		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
-		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 errors.New("invalid servers: server has undeclared variables"),
+	for value, expected := range map[string]string{
+		`{url: /}`:                            "",
+		`{url: "http://{x}.{y}.example.com"}`: "invalid servers: server has undeclared variables",
+		`{url: "http://{x}.y}.example.com"}`:  "invalid servers: server URL has mismatched { and }",
+		`{url: "http://{x.example.com"}`:      "invalid servers: server URL has mismatched { and }",
+		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                "",
+		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: "",
+		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 `invalid servers: field default is required in {"enum":["www"]}`,
+		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
+		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
 	} {
 		t.Run(value, func(t *testing.T) {
 			loader := NewLoader()
 			doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "@@@", value, 1)))
 			require.NoError(t, err)
 			err = doc.Validate(loader.Context)
-			require.Equal(t, expected, err)
+			if expected == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, expected)
+			}
 		})
 	}
 }

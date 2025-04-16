@@ -66,7 +66,7 @@ func Example() {
 
 	// (note invalid type for name and invalid status)
 	body := strings.NewReader(`{"name": 100, "photoUrls": [], "status": "invalidStatus"}`)
-	req, err := http.NewRequest("POST", ts.URL+"/pet", body)
+	req, err := http.NewRequest("POST", ts.URL+"/pet?num=0", body)
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ func Example() {
 	// Output:
 	// ===== Start New Error =====
 	// @body.name:
-	// 	Error at "/name": Field must be set to string or not be present
+	// 	Error at "/name": value must be a string
 	// Schema:
 	//   {
 	//     "example": "doggie",
@@ -89,11 +89,11 @@ func Example() {
 	//   }
 	//
 	// Value:
-	//   "number, integer"
+	//   100
 	//
 	// ===== Start New Error =====
 	// @body.status:
-	// 	Error at "/status": value is not one of the allowed values
+	// 	Error at "/status": value is not one of the allowed values ["available","pending","sold"]
 	// Schema:
 	//   {
 	//     "description": "pet status in the store",
@@ -108,17 +108,25 @@ func Example() {
 	// Value:
 	//   "invalidStatus"
 	//
+	// ===== Start New Error =====
+	// query.num:
+	// 	parameter "num" in query has an error: number must be at least 1
+	// Schema:
+	//   {
+	//     "minimum": 1,
+	//     "type": "integer"
+	//   }
+	//
+	// Value:
+	//   0
+	//
 	// response: 400 {}
 }
-
-const (
-	prefixBody = "@body"
-	unknown    = "@unknown"
-)
 
 func convertError(me openapi3.MultiError) map[string][]string {
 	issues := make(map[string][]string)
 	for _, err := range me {
+		const prefixBody = "@body"
 		switch err := err.(type) {
 		case *openapi3.SchemaError:
 			// Can inspect schema validation errors here, e.g. err.Value
@@ -126,47 +134,32 @@ func convertError(me openapi3.MultiError) map[string][]string {
 			if path := err.JSONPointer(); len(path) > 0 {
 				field = fmt.Sprintf("%s.%s", field, strings.Join(path, "."))
 			}
-			if _, ok := issues[field]; !ok {
-				issues[field] = make([]string, 0, 3)
-			}
 			issues[field] = append(issues[field], err.Error())
 		case *openapi3filter.RequestError: // possible there were multiple issues that failed validation
-			if err, ok := err.Err.(openapi3.MultiError); ok {
-				for k, v := range convertError(err) {
-					if _, ok := issues[k]; !ok {
-						issues[k] = make([]string, 0, 3)
-					}
-					issues[k] = append(issues[k], v...)
-				}
-				continue
-			}
 
 			// check if invalid HTTP parameter
 			if err.Parameter != nil {
 				prefix := err.Parameter.In
 				name := fmt.Sprintf("%s.%s", prefix, err.Parameter.Name)
-				if _, ok := issues[name]; !ok {
-					issues[name] = make([]string, 0, 3)
-				}
 				issues[name] = append(issues[name], err.Error())
+				continue
+			}
+
+			if err, ok := err.Err.(openapi3.MultiError); ok {
+				for k, v := range convertError(err) {
+					issues[k] = append(issues[k], v...)
+				}
 				continue
 			}
 
 			// check if requestBody
 			if err.RequestBody != nil {
-				if _, ok := issues[prefixBody]; !ok {
-					issues[prefixBody] = make([]string, 0, 3)
-				}
 				issues[prefixBody] = append(issues[prefixBody], err.Error())
 				continue
 			}
 		default:
-			reasons, ok := issues[unknown]
-			if !ok {
-				reasons = make([]string, 0, 3)
-			}
-			reasons = append(reasons, err.Error())
-			issues[unknown] = reasons
+			const unknown = "@unknown"
+			issues[unknown] = append(issues[unknown], err.Error())
 		}
 	}
 	return issues

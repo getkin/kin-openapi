@@ -6,10 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/TykTechnologies/kin-openapi/openapi3"
 	"github.com/TykTechnologies/kin-openapi/openapi3filter"
 	legacyrouter "github.com/TykTechnologies/kin-openapi/routers/legacy"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIssue444(t *testing.T) {

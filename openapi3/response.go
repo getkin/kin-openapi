@@ -2,15 +2,17 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
-	"github.com/TykTechnologies/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
 type Responses map[string]*ResponseRef
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -29,11 +31,21 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
-func (value Responses) Validate(ctx context.Context) error {
-	if len(value) == 0 {
+// Validate returns an error if Responses does not comply with the OpenAPI spec.
+func (responses Responses) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
+	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
-	for _, v := range value {
+
+	keys := make([]string, 0, len(responses))
+	for key := range responses {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		v := responses[key]
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
@@ -41,6 +53,7 @@ func (value Responses) Validate(ctx context.Context) error {
 	return nil
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (responses Responses) JSONLookup(token string) (interface{}, error) {
 	ref, ok := responses[token]
 	if ok == false {
@@ -54,8 +67,10 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
-	ExtensionProps
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
+
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
@@ -86,23 +101,83 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 	return response
 }
 
-func (response *Response) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(response)
+// MarshalJSON returns the JSON encoding of Response.
+func (response Response) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 4+len(response.Extensions))
+	for k, v := range response.Extensions {
+		m[k] = v
+	}
+	if x := response.Description; x != nil {
+		m["description"] = x
+	}
+	if x := response.Headers; len(x) != 0 {
+		m["headers"] = x
+	}
+	if x := response.Content; len(x) != 0 {
+		m["content"] = x
+	}
+	if x := response.Links; len(x) != 0 {
+		m["links"] = x
+	}
+	return json.Marshal(m)
 }
 
+// UnmarshalJSON sets Response to a copy of data.
 func (response *Response) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, response)
+	type ResponseBis Response
+	var x ResponseBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "headers")
+	delete(x.Extensions, "content")
+	delete(x.Extensions, "links")
+	*response = Response(x)
+	return nil
 }
 
-func (value *Response) Validate(ctx context.Context) error {
-	if value.Description == nil {
+// Validate returns an error if Response does not comply with the OpenAPI spec.
+func (response *Response) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
+	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
+	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
+		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, true
+	}
 
-	if content := value.Content; content != nil {
+	if content := response.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	return nil
+
+	headers := make([]string, 0, len(response.Headers))
+	for name := range response.Headers {
+		headers = append(headers, name)
+	}
+	sort.Strings(headers)
+	for _, name := range headers {
+		header := response.Headers[name]
+		if err := header.Validate(ctx); err != nil {
+			return err
+		}
+	}
+
+	links := make([]string, 0, len(response.Links))
+	for name := range response.Links {
+		links = append(links, name)
+	}
+	sort.Strings(links)
+	for _, name := range links {
+		link := response.Links[name]
+		if err := link.Validate(ctx); err != nil {
+			return err
+		}
+	}
+
+	return validateExtensions(ctx, response.Extensions)
 }

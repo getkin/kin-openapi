@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  description: Contains Patterns that can't be compiled by the go regexp engine
+  title: Issue 409
+  version: 0.0.1
+paths:
+  /v1/apis/{apiID}:
+    get:
+      description: Get a list of all Apis and there versions for a given workspace
+      operationId: getApisV1
+      parameters:
+        - description: The ID of the API
+          in: path
+          name: apiID
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-zA-Z0-9]{0,4096}$
+      responses:
+        "200":
+          description: OK

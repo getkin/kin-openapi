@@ -1,0 +1,36 @@
+{
+  "components": {
+    "schemas": {
+      "Test": {
+        "properties": {
+          "test": {
+            "$ref": "#/components/schemas/b"
+          }
+        },
+        "type": "object"
+      },
+      "a": {
+        "type": "string"
+      },
+      "b": {
+        "description": "I use a local reference.",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/a"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "license": {
+      "name": "MIT"
+    },
+    "title": "Some Swagger",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+  }
+}

@@ -1,0 +1,9 @@
+const SuffixKindConstant = SuffixKind(iota) ...
+var DefaultOptions = &Options{ ... }
+func EqualSuffix(a, b Suffix) bool
+func PathFromHost(host string, specialDashes bool) string
+type Node struct{ ... }
+type Options struct{ ... }
+type Suffix struct{ ... }
+type SuffixKind int
+type SuffixList []Suffix

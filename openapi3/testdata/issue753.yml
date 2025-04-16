@@ -1,0 +1,53 @@
+openapi: '3'
+info:
+  version: 0.0.1
+  title: 'test'
+paths:
+  /test1:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: 'test'
+      callbacks:
+        callback1:
+          '{$request.body#/callback}':
+            post:
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/test'
+              responses:
+                '200':
+                  description: 'test'
+  /test2:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: 'test'
+      callbacks:
+        callback2:
+          '{$request.body#/callback}':
+            post:
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/test'
+              responses:
+                '200':
+                  description: 'test'
+components:
+  schemas:
+    test:
+      type: string

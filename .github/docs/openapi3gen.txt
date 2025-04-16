@@ -1,0 +1,11 @@
+var RefSchemaRef = openapi3.NewSchemaRef("Ref", ...)
+func NewSchemaRefForValue(value interface{}, schemas openapi3.Schemas, opts ...Option) (*openapi3.SchemaRef, error)
+type CycleError struct{}
+type ExcludeSchemaSentinel struct{}
+type Generator struct{ ... }
+    func NewGenerator(opts ...Option) *Generator
+type Option func(*generatorOpt)
+    func SchemaCustomizer(sc SchemaCustomizerFn) Option
+    func ThrowErrorOnCycle() Option
+    func UseAllExportedFields() Option
+type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error

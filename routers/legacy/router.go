@@ -58,9 +58,9 @@ type Router struct {
 //
 // If the given OpenAPIv3 document has servers, router will use them.
 // All operations of the document will be added to the router.
-func NewRouter(doc *openapi3.T) (routers.Router, error) {
-	if err := doc.Validate(context.Background()); err != nil {
-		return nil, fmt.Errorf("validating OpenAPI failed: %v", err)
+func NewRouter(doc *openapi3.T, opts ...openapi3.ValidationOption) (routers.Router, error) {
+	if err := doc.Validate(context.Background(), opts...); err != nil {
+		return nil, fmt.Errorf("validating OpenAPI failed: %w", err)
 	}
 	router := &Router{doc: doc}
 	root := router.node()
@@ -124,7 +124,7 @@ func (router *Router) FindRoute(req *http.Request) (*routers.Route, map[string]s
 				Reason: routers.ErrPathNotFound.Error(),
 			}
 		}
-		pathParams = make(map[string]string, 8)
+		pathParams = make(map[string]string)
 		paramNames, err := server.ParameterNames()
 		if err != nil {
 			return nil, nil, err

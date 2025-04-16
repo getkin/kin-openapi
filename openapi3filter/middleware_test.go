@@ -328,6 +328,27 @@ func TestValidator(t *testing.T) {
 			body:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
 		},
 		strict: false,
+	}, {
+		name: "POST response status code not in spec (return 200, spec only has 201)",
+		handler: validatorTestHandler{
+			postBody:      `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
+			errStatusCode: 200,
+			errBody:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
+		}.withDefaults(),
+		options: []openapi3filter.ValidatorOption{openapi3filter.ValidationOptions(openapi3filter.Options{
+			IncludeResponseStatus: true,
+		})},
+		request: testRequest{
+			method:      "POST",
+			path:        "/test?version=1",
+			body:        `{"name": "foo", "expected": 9, "actual": 10}`,
+			contentType: "application/json",
+		},
+		response: testResponse{
+			statusCode: 200,
+			body:       `{"id": "42", "contents": {"name": "foo", "expected": 9, "actual": 10}, "extra": true}`,
+		},
+		strict: false,
 	}}
 	for i, test := range tests {
 		t.Logf("test#%d: %s", i, test.name)
@@ -383,7 +404,6 @@ func ExampleValidator() {
 	// OpenAPI specification for a simple service that squares integers, with
 	// some limitations.
 	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
-info:
 openapi: 3.0.0
 info:
   title: 'Validator - square example'
@@ -420,7 +440,7 @@ paths:
 	// requests.
 	squareHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		xParam := path.Base(r.URL.Path)
-		x, err := strconv.Atoi(xParam)
+		x, err := strconv.ParseInt(xParam, 10, 64)
 		if err != nil {
 			panic(err)
 		}
