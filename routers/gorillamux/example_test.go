@@ -53,12 +53,12 @@ func Example() {
 	err = openapi3filter.ValidateResponse(ctx, responseValidationInput)
 	fmt.Println(err)
 	// Output:
-	// response body doesn't match the schema: Field must be set to string or not be present
+	// response body doesn't match schema pathref.openapi.yml#/components/schemas/TestSchema: value must be a string
 	// Schema:
 	//   {
 	//     "type": "string"
 	//   }
 	//
 	// Value:
-	//   "object"
+	//   {}
 }

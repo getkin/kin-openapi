@@ -30,9 +30,15 @@ paths:
       summary: "Add a new pet to the store"
       description: ""
       operationId: "addPet"
+      parameters:
+      - name: num
+        in: query
+        schema:
+          type: integer
+          minimum: 1
       requestBody:
         required: true
-        content: 
+        content:
           'application/json':
             schema:
               $ref: '#/components/schemas/Pet'

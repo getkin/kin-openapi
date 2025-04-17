@@ -16,6 +16,7 @@ type Validator struct {
 	errFunc ErrFunc
 	logFunc LogFunc
 	strict  bool
+	options Options
 }
 
 // ErrFunc handles errors that may occur during validation.
@@ -106,6 +107,13 @@ func Strict(strict bool) ValidatorOption {
 	}
 }
 
+// ValidationOptions sets request/response validation options on the validator.
+func ValidationOptions(options Options) ValidatorOption {
+	return func(v *Validator) {
+		v.options = options
+	}
+}
+
 // Middleware returns an http.Handler which wraps the given handler with
 // request and response validation.
 func (v *Validator) Middleware(h http.Handler) http.Handler {
@@ -120,6 +128,7 @@ func (v *Validator) Middleware(h http.Handler) http.Handler {
 			Request:    r,
 			PathParams: pathParams,
 			Route:      route,
+			Options:    &v.options,
 		}
 		if err = ValidateRequest(r.Context(), requestValidationInput); err != nil {
 			v.logFunc("invalid request", err)
@@ -141,6 +150,7 @@ func (v *Validator) Middleware(h http.Handler) http.Handler {
 			Status:                 wr.statusCode(),
 			Header:                 wr.Header(),
 			Body:                   ioutil.NopCloser(bytes.NewBuffer(wr.bodyContents())),
+			Options:                &v.options,
 		}); err != nil {
 			v.logFunc("invalid response", err)
 			if v.strict {

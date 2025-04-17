@@ -1,0 +1,4 @@
+components:
+    schemas:
+        ReferenceToParentDirectory:
+            $ref: "../definitions.yml#/components/schemas/TestSchema"

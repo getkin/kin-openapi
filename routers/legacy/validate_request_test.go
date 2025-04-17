@@ -107,6 +107,6 @@ func Example() {
 		fmt.Println(err)
 	}
 	// Output:
-	// request body has an error: doesn't match the schema: input matches more than one oneOf schemas
+	// request body has an error: doesn't match schema: input matches more than one oneOf schemas
 
 }

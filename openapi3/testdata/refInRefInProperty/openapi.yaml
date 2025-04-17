@@ -1,0 +1,29 @@
+openapi: 3.0.3
+
+info:
+  title: "Reference in reference in property example"
+  version: "1.0.0"
+paths:
+  /api/test/ref/in/ref/in/property:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+        required: true
+      responses:
+        200:
+          description: "Files are saved successfully"
+        400:
+          $ref: "./components/errors.yaml#/components/responses/400"
+        401:
+          $ref: "./components/errors.yaml#/components/responses/401"
+        500:
+          $ref: "./components/errors.yaml#/components/responses/500"

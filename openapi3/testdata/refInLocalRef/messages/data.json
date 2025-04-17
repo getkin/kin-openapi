@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "ref_prop_part": {
+      "$ref": "./dataPart.json"
+    }
+  }
+}

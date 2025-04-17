@@ -1,0 +1,15 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: reference test part 1
+  description: reference test part 1
+components:
+  schemas:
+    test1a:
+      $ref: "test2.yaml#/components/schemas/test2a"
+    test1b:
+      $ref: "#/components/schemas/test1c"
+    test1c:
+      type: int
+    test1d:
+      $ref: "test2.yaml#/components/schemas/test2b"

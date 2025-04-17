@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"math"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 type schemaExample struct {
@@ -45,29 +45,47 @@ func testSchema(t *testing.T, example schemaExample) func(*testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, dataUnserialized, dataSchema)
 		}
-		for _, value := range example.AllValid {
-			err := validateSchema(t, schema, value)
-			require.NoError(t, err)
-		}
-		for _, value := range example.AllInvalid {
-			err := validateSchema(t, schema, value)
-			require.Error(t, err)
+		for validateFuncIndex, validateFunc := range validateSchemaFuncs {
+			for index, value := range example.AllValid {
+				err := validateFunc(t, schema, value)
+				require.NoErrorf(t, err, "ValidateFunc #%d, AllValid #%d: %#v", validateFuncIndex, index, value)
+			}
+			for index, value := range example.AllInvalid {
+				err := validateFunc(t, schema, value)
+				require.Errorf(t, err, "ValidateFunc #%d, AllInvalid #%d: %#v", validateFuncIndex, index, value)
+			}
 		}
 		// NaN and Inf aren't valid JSON but are handled
-		for _, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
+		for index, value := range []interface{}{math.NaN(), math.Inf(-1), math.Inf(+1)} {
 			err := schema.VisitJSON(value)
-			require.Error(t, err)
+			require.Errorf(t, err, "NaNAndInf #%d: %#v", index, value)
 		}
 	}
 }
 
-func validateSchema(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error {
+func validateSchemaJSON(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error {
 	data, err := json.Marshal(value)
 	require.NoError(t, err)
 	var val interface{}
 	err = json.Unmarshal(data, &val)
 	require.NoError(t, err)
 	return schema.VisitJSON(val, opts...)
+}
+
+func validateSchemaYAML(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error {
+	data, err := yaml.Marshal(value)
+	require.NoError(t, err)
+	var val interface{}
+	err = yaml.Unmarshal(data, &val)
+	require.NoError(t, err)
+	return schema.VisitJSON(val, opts...)
+}
+
+type validateSchemaFunc func(t *testing.T, schema *Schema, value interface{}, opts ...SchemaValidationOption) error
+
+var validateSchemaFuncs = []validateSchemaFunc{
+	validateSchemaJSON,
+	validateSchemaYAML,
 }
 
 var schemaExamples = []schemaExample{
@@ -234,7 +252,56 @@ var schemaExamples = []schemaExample{
 			map[string]interface{}{},
 		},
 	},
-
+	{
+		Title:  "INTEGER OPTIONAL INT64 FORMAT",
+		Schema: NewInt64Schema(),
+		Serialization: map[string]interface{}{
+			"type":   "integer",
+			"format": "int64",
+		},
+		AllValid: []interface{}{
+			1,
+			256,
+			65536,
+			int64(math.MaxInt32) + 10,
+			int64(math.MinInt32) - 10,
+		},
+		AllInvalid: []interface{}{
+			nil,
+			false,
+			3.5,
+			true,
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
+	{
+		Title:  "INTEGER OPTIONAL INT32 FORMAT",
+		Schema: NewInt32Schema(),
+		Serialization: map[string]interface{}{
+			"type":   "integer",
+			"format": "int32",
+		},
+		AllValid: []interface{}{
+			1,
+			256,
+			65536,
+			int64(math.MaxInt32),
+			int64(math.MaxInt32),
+		},
+		AllInvalid: []interface{}{
+			nil,
+			false,
+			3.5,
+			int64(math.MaxInt32) + 10,
+			int64(math.MinInt32) - 10,
+			true,
+			"",
+			[]interface{}{},
+			map[string]interface{}{},
+		},
+	},
 	{
 		Title: "STRING",
 		Schema: NewStringSchema().
@@ -350,7 +417,7 @@ var schemaExamples = []schemaExample{
 		AllInvalid: []interface{}{
 			nil,
 			" ",
-			"\n",
+			"\n\n", // a \n is ok for JSON but not for YAML decoder/encoder
 			"%",
 		},
 	},
@@ -734,11 +801,11 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &Schema{
 			Type: "object",
-			AdditionalProperties: &SchemaRef{
+			AdditionalProperties: AdditionalProperties{Schema: &SchemaRef{
 				Value: &Schema{
 					Type: "number",
 				},
-			},
+			}},
 		},
 		Serialization: map[string]interface{}{
 			"type": "object",
@@ -761,8 +828,8 @@ var schemaExamples = []schemaExample{
 	},
 	{
 		Schema: &Schema{
-			Type:                        "object",
-			AdditionalPropertiesAllowed: BoolPtr(true),
+			Type:                 "object",
+			AdditionalProperties: AdditionalProperties{Has: BoolPtr(true)},
 		},
 		Serialization: map[string]interface{}{
 			"type":                 "object",
@@ -961,7 +1028,8 @@ func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
 		}
 		for _, typ := range example.AllInvalid {
 			schema := baseSchema.WithFormat(typ)
-			err := schema.Validate(context.Background())
+			ctx := WithValidationOptions(context.Background(), EnableSchemaFormatValidation())
+			err := schema.Validate(ctx)
 			require.Error(t, err)
 		}
 	}
@@ -1074,28 +1142,30 @@ func TestSchemasMultiError(t *testing.T) {
 func testSchemaMultiError(t *testing.T, example schemaMultiErrorExample) func(*testing.T) {
 	return func(t *testing.T) {
 		schema := example.Schema
-		for i, value := range example.Values {
-			err := validateSchema(t, schema, value, MultiErrors())
-			require.Error(t, err)
-			require.IsType(t, MultiError{}, err)
+		for validateFuncIndex, validateFunc := range validateSchemaFuncs {
+			for i, value := range example.Values {
+				err := validateFunc(t, schema, value, MultiErrors())
+				require.Errorf(t, err, "ValidateFunc #%d, value #%d: %#", validateFuncIndex, i, value)
+				require.IsType(t, MultiError{}, err)
 
-			merr, _ := err.(MultiError)
-			expected := example.ExpectedErrors[i]
-			require.True(t, len(merr) > 0)
-			require.Len(t, merr, len(expected))
-			for _, e := range merr {
-				require.IsType(t, &SchemaError{}, e)
-				var found bool
-				scherr, _ := e.(*SchemaError)
-				for _, expectedErr := range expected {
-					expectedScherr, _ := expectedErr.(*SchemaError)
-					if reflect.DeepEqual(expectedScherr.reversePath, scherr.reversePath) &&
-						expectedScherr.SchemaField == scherr.SchemaField {
-						found = true
-						break
+				merr, _ := err.(MultiError)
+				expected := example.ExpectedErrors[i]
+				require.True(t, len(merr) > 0)
+				require.Len(t, merr, len(expected))
+				for _, e := range merr {
+					require.IsType(t, &SchemaError{}, e)
+					var found bool
+					scherr, _ := e.(*SchemaError)
+					for _, expectedErr := range expected {
+						expectedScherr, _ := expectedErr.(*SchemaError)
+						if reflect.DeepEqual(expectedScherr.reversePath, scherr.reversePath) &&
+							expectedScherr.SchemaField == scherr.SchemaField {
+							found = true
+							break
+						}
 					}
+					require.Truef(t, found, "ValidateFunc #%d, value #%d: missing %s error on %s", validateFunc, i, scherr.SchemaField, strings.Join(scherr.JSONPointer(), "."))
 				}
-				require.True(t, found, fmt.Sprintf("missing %s error on %s", scherr.SchemaField, strings.Join(scherr.JSONPointer(), ".")))
 			}
 		}
 	}
@@ -1239,6 +1309,60 @@ func TestValidationFailsOnInvalidPattern(t *testing.T) {
 		Type:    "string",
 	}
 
-	var err = schema.Validate(context.Background())
+	err := schema.Validate(context.Background())
 	require.Error(t, err)
+}
+
+func TestIssue646(t *testing.T) {
+	data := []byte(`
+enum:
+- 42
+- []
+- [a]
+- {}
+- {b: c}
+`[1:])
+
+	var schema Schema
+	err := yaml.Unmarshal(data, &schema)
+	require.NoError(t, err)
+
+	err = schema.Validate(context.Background())
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(42)
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(1337)
+	require.Error(t, err)
+
+	err = schema.VisitJSON([]interface{}{})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON([]interface{}{"a"})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON([]interface{}{"b"})
+	require.Error(t, err)
+
+	err = schema.VisitJSON(map[string]interface{}{})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(map[string]interface{}{"b": "c"})
+	require.NoError(t, err)
+
+	err = schema.VisitJSON(map[string]interface{}{"d": "e"})
+	require.Error(t, err)
+}
+
+func TestIssue751(t *testing.T) {
+	schema := &Schema{
+		Type:        "array",
+		UniqueItems: true,
+		Items:       NewStringSchema().NewRef(),
+	}
+	validData := []string{"foo", "bar"}
+	invalidData := []string{"foo", "foo"}
+	require.NoError(t, schema.VisitJSON(validData))
+	require.ErrorContains(t, schema.VisitJSON(invalidData), "duplicate items found")
 }

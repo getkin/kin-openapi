@@ -1,0 +1,9 @@
+type Header struct{ ... }
+type Operation struct{ ... }
+type Parameter struct{ ... }
+type Parameters []*Parameter
+type PathItem struct{ ... }
+type Response struct{ ... }
+type SecurityRequirements []map[string][]string
+type SecurityScheme struct{ ... }
+type T struct{ ... }

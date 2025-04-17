@@ -116,3 +116,88 @@ func newServerMatch(remaining string, args ...string) *serverMatch {
 		Args:      args,
 	}
 }
+
+func TestServersBasePath(t *testing.T) {
+	for _, testcase := range []struct {
+		title    string
+		servers  Servers
+		expected string
+	}{
+		{
+			title:    "empty servers",
+			servers:  nil,
+			expected: "/",
+		},
+		{
+			title:    "URL set, missing trailing slash",
+			servers:  Servers{&Server{URL: "https://example.com"}},
+			expected: "/",
+		},
+		{
+			title:    "URL set, with trailing slash",
+			servers:  Servers{&Server{URL: "https://example.com/"}},
+			expected: "/",
+		},
+		{
+			title:    "URL set",
+			servers:  Servers{&Server{URL: "https://example.com/b/l/a"}},
+			expected: "/b/l/a",
+		},
+		{
+			title: "URL set with variables",
+			servers: Servers{&Server{
+				URL: "{scheme}://example.com/b/l/a",
+				Variables: map[string]*ServerVariable{
+					"scheme": {
+						Enum:    []string{"http", "https"},
+						Default: "https",
+					},
+				},
+			}},
+			expected: "/b/l/a",
+		},
+		{
+			title: "URL set with variables in path",
+			servers: Servers{&Server{
+				URL: "http://example.com/b/{var1}/a",
+				Variables: map[string]*ServerVariable{
+					"var1": {
+						Default: "lllll",
+					},
+				},
+			}},
+			expected: "/b/lllll/a",
+		},
+		{
+			title: "URLs set with variables in path",
+			servers: Servers{
+				&Server{
+					URL: "http://example.com/b/{var2}/a",
+					Variables: map[string]*ServerVariable{
+						"var2": {
+							Default: "LLLLL",
+						},
+					},
+				},
+				&Server{
+					URL: "https://example.com/b/{var1}/a",
+					Variables: map[string]*ServerVariable{
+						"var1": {
+							Default: "lllll",
+						},
+					},
+				},
+			},
+			expected: "/b/LLLLL/a",
+		},
+	} {
+		t.Run(testcase.title, func(t *testing.T) {
+			err := testcase.servers.Validate(context.Background())
+			require.NoError(t, err)
+
+			got, err := testcase.servers.BasePath()
+			require.NoError(t, err)
+			require.Exactly(t, testcase.expected, got)
+		})
+	}
+}

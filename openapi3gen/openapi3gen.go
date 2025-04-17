@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TykTechnologies/kin-openapi/jsoninfo"
 	"github.com/TykTechnologies/kin-openapi/openapi3"
 )
 
@@ -18,6 +17,11 @@ type CycleError struct{}
 
 func (err *CycleError) Error() string { return "detected cycle" }
 
+// ExcludeSchemaSentinel indicates that the schema for a specific field should not be included in the final output.
+type ExcludeSchemaSentinel struct{}
+
+func (err *ExcludeSchemaSentinel) Error() string { return "schema excluded" }
+
 // Option allows tweaking SchemaRef generation
 type Option func(*generatorOpt)
 
@@ -25,7 +29,10 @@ type Option func(*generatorOpt)
 // the OpenAPI schema definition to be updated with additional
 // properties during the generation process, based on the
 // name of the field, the Go type, and the struct tags.
-// name will be "_root" for the top level object, and tag will be ""
+// name will be "_root" for the top level object, and tag will be "".
+// A SchemaCustomizerFn can return an ExcludeSchemaSentinel error to
+// indicate that the schema for this field should not be included in
+// the final output
 type SchemaCustomizerFn func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error
 
 type generatorOpt struct {
@@ -111,12 +118,16 @@ func (g *Generator) NewSchemaRefForValue(value interface{}, schemas openapi3.Sch
 	return ref, nil
 }
 
-func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
+func (g *Generator) generateSchemaRefFor(parents []*theTypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
 	if ref := g.Types[t]; ref != nil && g.opts.schemaCustomizer == nil {
 		g.SchemaRefs[ref]++
 		return ref, nil
 	}
 	ref, err := g.generateWithoutSaving(parents, t, name, tag)
+	if _, ok := err.(*ExcludeSchemaSentinel); ok {
+		// This schema should not be included in the final output
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -127,18 +138,21 @@ func (g *Generator) generateSchemaRefFor(parents []*jsoninfo.TypeInfo, t reflect
 	return ref, nil
 }
 
-func getStructField(t reflect.Type, fieldInfo jsoninfo.FieldInfo) reflect.StructField {
+func getStructField(t reflect.Type, fieldInfo theFieldInfo) reflect.StructField {
 	var ff reflect.StructField
 	// fieldInfo.Index is an array of indexes starting from the root of the type
 	for i := 0; i < len(fieldInfo.Index); i++ {
 		ff = t.Field(fieldInfo.Index[i])
 		t = ff.Type
+		for t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
 	}
 	return ff
 }
 
-func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
-	typeInfo := jsoninfo.GetTypeInfo(t)
+func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
+	typeInfo := getTypeInfo(t)
 	for _, parent := range parents {
 		if parent == typeInfo {
 			return nil, &CycleError{}
@@ -146,7 +160,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 	}
 
 	if cap(parents) == 0 {
-		parents = make([]*jsoninfo.TypeInfo, 0, 4)
+		parents = make([]*theTypeInfo, 0, 4)
 	}
 	parents = append(parents, typeInfo)
 
@@ -269,7 +283,7 @@ func (g *Generator) generateWithoutSaving(parents []*jsoninfo.TypeInfo, t reflec
 		}
 		if additionalProperties != nil {
 			g.SchemaRefs[additionalProperties]++
-			schema.AdditionalProperties = additionalProperties
+			schema.AdditionalProperties = openapi3.AdditionalProperties{Schema: additionalProperties}
 		}
 
 	case reflect.Struct:
@@ -359,7 +373,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 		ref := g.generateCycleSchemaRef(t.Elem(), schema)
 		mapSchema := openapi3.NewSchema()
 		mapSchema.Type = "object"
-		mapSchema.AdditionalProperties = ref
+		mapSchema.AdditionalProperties = openapi3.AdditionalProperties{Schema: ref}
 		return openapi3.NewSchemaRef("", mapSchema)
 	default:
 		typeName = t.Name()
