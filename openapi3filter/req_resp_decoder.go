@@ -1,8 +1,6 @@
 package openapi3filter
 
 import (
-	"archive/zip"
-	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -1014,7 +1012,6 @@ func init() {
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
 	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
-	RegisterBodyDecoder("application/zip", zipFileBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
 	RegisterBodyDecoder("text/csv", csvBodyDecoder)
 	RegisterBodyDecoder("text/plain", plainBodyDecoder)
@@ -1223,57 +1220,6 @@ func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 		return nil, err
 	}
 	return string(data), nil
-}
-
-// zipFileBodyDecoder is a body decoder that decodes a zip file body to a string.
-func zipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
-	buff := bytes.NewBuffer([]byte{})
-	size, err := io.Copy(buff, body)
-	if err != nil {
-		return nil, err
-	}
-
-	zr, err := zip.NewReader(bytes.NewReader(buff.Bytes()), size)
-	if err != nil {
-		return nil, err
-	}
-
-	const bufferSize = 256
-	content := make([]byte, 0, bufferSize*len(zr.File))
-	buffer := make([]byte /*0,*/, bufferSize)
-
-	for _, f := range zr.File {
-		err := func() error {
-			rc, err := f.Open()
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = rc.Close()
-			}()
-
-			for {
-				n, err := rc.Read(buffer)
-				if 0 < n {
-					content = append(content, buffer...)
-				}
-				if err == io.EOF {
-					break
-				}
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		}()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return string(content), nil
 }
 
 // csvBodyDecoder is a body decoder that decodes a csv body to a string.
