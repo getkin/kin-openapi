@@ -563,6 +563,9 @@ func convertRefsInV3SchemaRef(from *openapi3.SchemaRef) *openapi3.SchemaRef {
 	if to.Value != nil {
 		v := *from.Value
 		to.Value = &v
+		if to.Value.Items != nil {
+			to.Value.Items.Ref = ToV3Ref(to.Value.Items.Ref)
+		}
 		to.Value.AdditionalProperties = toV3AdditionalProperties(to.Value.AdditionalProperties)
 	}
 	return &to
