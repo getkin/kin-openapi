@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oasdiff/yaml3"
+	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1489,4 +1489,25 @@ func TestIssue751(t *testing.T) {
 	invalidData := []string{"foo", "foo"}
 	require.NoError(t, schema.VisitJSON(validData))
 	require.ErrorContains(t, schema.VisitJSON(invalidData), "duplicate items found")
+}
+
+func TestIssue817(t *testing.T) {
+	max := 999999999.99
+	min := -999999999.99
+	mulOf := 0.01
+	schema := &Schema{
+		Type:       &Types{"number"},
+		Max:        &max,
+		Min:        &min,
+		MultipleOf: &mulOf,
+	}
+	validData := []float64{2.07, 8.1, 19628.87, 323.39, 40428.2, 1.13}
+	for _, data := range validData {
+		require.NoError(t, schema.VisitJSON(data))
+	}
+
+	newMulOf := 3.0
+	schema.MultipleOf = &newMulOf
+	invalidData := 2.08
+	require.ErrorContains(t, schema.VisitJSON(invalidData), "number must be a multiple of 3")
 }
