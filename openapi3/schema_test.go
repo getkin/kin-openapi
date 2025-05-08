@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
+	"github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1506,8 +1507,25 @@ func TestIssue817(t *testing.T) {
 		require.NoError(t, schema.VisitJSON(data))
 	}
 
-	newMulOf := 3.0
-	schema.MultipleOf = &newMulOf
-	invalidData := 2.08
-	require.ErrorContains(t, schema.VisitJSON(invalidData), "number must be a multiple of 3")
+	invalidData := []struct {
+		mulfOf float64
+		data   float64
+	}{
+		{
+			mulfOf: 0.01,
+			data:   0.005,
+		},
+		{
+			mulfOf: 3.0,
+			data:   5.0,
+		},
+		{
+			mulfOf: 5.0,
+			data:   2.0,
+		},
+	}
+	for _, data := range invalidData {
+		schema.MultipleOf = &data.mulfOf
+		require.ErrorContains(t, schema.VisitJSON(data.data), fmt.Sprintf("number must be a multiple of %+v", data.mulfOf))
+	}
 }
