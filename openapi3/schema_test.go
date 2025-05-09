@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
@@ -1489,4 +1490,42 @@ func TestIssue751(t *testing.T) {
 	invalidData := []string{"foo", "foo"}
 	require.NoError(t, schema.VisitJSON(validData))
 	require.ErrorContains(t, schema.VisitJSON(invalidData), "duplicate items found")
+}
+
+func TestIssue817(t *testing.T) {
+	max := 999999999.99
+	min := -999999999.99
+	mulOf := 0.01
+	schema := &Schema{
+		Type:       &Types{"number"},
+		Max:        &max,
+		Min:        &min,
+		MultipleOf: &mulOf,
+	}
+	validData := []float64{2.07, 8.1, 19628.87, 323.39, 40428.2, 1.13}
+	for _, data := range validData {
+		require.NoError(t, schema.VisitJSON(data))
+	}
+
+	invalidData := []struct {
+		mulfOf float64
+		data   float64
+	}{
+		{
+			mulfOf: 0.01,
+			data:   0.005,
+		},
+		{
+			mulfOf: 3.0,
+			data:   5.0,
+		},
+		{
+			mulfOf: 5.0,
+			data:   2.0,
+		},
+	}
+	for _, data := range invalidData {
+		schema.MultipleOf = &data.mulfOf
+		require.ErrorContains(t, schema.VisitJSON(data.data), fmt.Sprintf("number must be a multiple of %+v", data.mulfOf))
+	}
 }

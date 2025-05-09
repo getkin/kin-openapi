@@ -10,6 +10,7 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90
 	github.com/perimeterx/marshmallow v1.1.5
 	github.com/stretchr/testify v1.9.0
+	github.com/woodsbury/decimal128 v1.3.0
 )
 
 require (
