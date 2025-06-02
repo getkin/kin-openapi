@@ -1377,7 +1377,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				e.Origin = ErrOneOfConflict
 				e.Reason = fmt.Sprintf(`value matches more than one schema from "oneOf" (matches schemas at indices %v)`, matchedOneOfIndices)
 			} else {
-				e.Origin = fmt.Errorf("doesn't match schema due to: %w", validationErrors)
+				e.Origin = validationErrors
 				e.Reason = `value doesn't match any schema from "oneOf"`
 			}
 
