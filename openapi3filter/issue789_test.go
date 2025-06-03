@@ -80,7 +80,7 @@ paths:
 			name:   "failed oneof string pattern match",
 			spec:   oneOfArraySpec,
 			req:    `/items?test=def`,
-			errStr: `parameter "test" in query has an error: doesn't match schema due to: string doesn't match the regular expression`,
+			errStr: `parameter "test" in query has an error: string doesn't match the regular expression`,
 		},
 		{
 			name:   "failed oneof string pattern match",

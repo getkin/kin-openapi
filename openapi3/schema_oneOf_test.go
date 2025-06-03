@@ -140,7 +140,7 @@ func TestVisitJSON_OneOf_MissingField(t *testing.T) {
 		"name":  "snoopy",
 		"$type": "dog",
 	})
-	require.ErrorContains(t, err, `doesn't match schema due to: Error at "/barks": property "barks" is missing`)
+	require.ErrorContains(t, err, `Error at "/barks": property "barks" is missing`)
 }
 
 func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
@@ -148,7 +148,7 @@ func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name": "snoopy",
 	})
-	require.ErrorContains(t, err, `doesn't match schema due to: Error at "/scratches": property "scratches" is missing`)
+	require.ErrorContains(t, err, `Error at "/scratches": property "scratches" is missing`)
 }
 
 func TestVisitJSON_OneOf_BadDiscriminatorType(t *testing.T) {
