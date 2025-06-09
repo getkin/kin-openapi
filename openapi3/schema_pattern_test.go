@@ -19,7 +19,6 @@ func TestPattern(t *testing.T) {
 }
 
 func TestSchemaPatternCache(t *testing.T) {
-
 	var schema Schema
 
 	schema.Pattern = `^[a-zA-Z\x{0080}-\x{024F}]+$`
