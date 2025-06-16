@@ -543,7 +543,7 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Type:        &Types{"array"},
 			MinItems:    2,
-			MaxItems:    Uint64Ptr(3),
+			MaxItems:    Ptr[uint64](3),
 			UniqueItems: true,
 			Items:       NewFloat64Schema().NewRef(),
 		},
@@ -873,7 +873,7 @@ var schemaExamples = []schemaExample{
 		Title: "OBJECT",
 		Schema: &Schema{
 			Type:     &Types{"object"},
-			MaxProps: Uint64Ptr(2),
+			MaxProps: Ptr[uint64](2),
 			Properties: Schemas{
 				"numberProperty": NewFloat64Schema().NewRef(),
 			},
@@ -945,7 +945,7 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &Schema{
 			Type:                 &Types{"object"},
-			AdditionalProperties: AdditionalProperties{Has: BoolPtr(true)},
+			AdditionalProperties: AdditionalProperties{Has: Ptr(true)},
 		},
 		Serialization: map[string]any{
 			"type":                 "object",
