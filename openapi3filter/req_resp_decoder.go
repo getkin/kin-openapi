@@ -1264,6 +1264,7 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 func init() {
 	RegisterBodyDecoder("application/json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/json-patch+json", JSONBodyDecoder)
+	RegisterBodyDecoder("application/merge-patch+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/ld+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/hal+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/vnd.api+json", JSONBodyDecoder)
