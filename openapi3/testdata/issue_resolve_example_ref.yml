@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: Test API
+  version: 1.0.0
+paths:
+  /test:
+    post:
+      summary: Test endpoint
+      parameters:
+        - $ref: '#/components/parameters/TestParameter'
+      requestBody:
+        $ref: '#/components/requestBodies/TestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/TestResponse'
+components:
+  examples:
+    TestExample:
+      summary: An example
+      value: 'hello'
+  headers:
+    TestHeader:
+      description: A test header
+      schema:
+        type: string
+      examples:
+        Test:
+          $ref: '#/components/examples/TestExample'
+  parameters:
+    TestParameter:
+      name: test
+      in: query
+      schema:
+        type: string
+      examples:
+        Test:
+          $ref: '#/components/examples/TestExample'
+  requestBodies:
+    TestBody:
+      content:
+        application/json:
+          examples:
+            Test:
+              $ref: '#/components/examples/TestExample'
+  responses:
+    TestResponse:
+      description: A test response
+      headers:
+        X-Test-Header:
+          $ref: '#/components/headers/TestHeader'
+      content:
+        application/json:
+          examples:
+            Test:
+              $ref: '#/components/examples/TestExample'
