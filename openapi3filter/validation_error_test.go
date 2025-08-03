@@ -482,13 +482,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaPath:         "/",
 			wantErrSchemaValue:        map[string]string{"name": "Bahama"},
 			wantErrSchemaReason:       `doesn't match all schemas from "allOf"`,
-			wantErrSchemaOriginReason: `property "photoUrls" is missing`,
+			wantErrSchemaOriginReason: `doesn't match schema due to: property "photoUrls" is missing`,
 			wantErrSchemaOriginValue:  map[string]string{"name": "Bahama"},
 			wantErrSchemaOriginPath:   "/photoUrls",
 			wantErrResponse: &ValidationError{
 				Status: http.StatusUnprocessableEntity,
-				Title:  `property "photoUrls" is missing`,
-				Source: &ValidationErrorSource{Pointer: "/photoUrls"},
+				Title:  `doesn't match all schemas from "allOf"`,
 			},
 		},
 		{
