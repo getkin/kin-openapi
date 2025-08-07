@@ -16,12 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
-func TestValidateZipFileUpload(t *testing.T) {
-	openapi3filter.RegisterBodyDecoder("application/zip", openapi3filter.ZipFileBodyDecoder)
-	t.Cleanup(func() {
-		openapi3filter.UnregisterBodyDecoder("application/zip")
-	})
-
+func TestValidateUploadArbitraryBinaryFile(t *testing.T) {
 	const spec = `
 openapi: 3.0.0
 info:
@@ -71,7 +66,7 @@ paths:
 			[]byte{
 				0x50, 0x4b, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			}, // No entry
-			true,
+			false,
 		},
 	}
 	for _, tt := range tests {

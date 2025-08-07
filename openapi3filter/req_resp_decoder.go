@@ -1233,6 +1233,13 @@ var headerCT = http.CanonicalHeaderKey("Content-Type")
 
 const prefixUnsupportedCT = "unsupported content type"
 
+func isBinary(schema *openapi3.SchemaRef) bool {
+	if schema == nil || schema.Value == nil {
+		return false
+	}
+	return schema.Value.Type.Is("string") && schema.Value.Format == "binary"
+}
+
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
 func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (
@@ -1246,8 +1253,13 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 			contentType = "text/plain"
 		}
 	}
+
 	mediaType := parseMediaType(contentType)
 	decoder, ok := bodyDecoders[mediaType]
+	if !ok && isBinary(schema) {
+		ok, decoder = true, FileBodyDecoder
+	}
+
 	if !ok {
 		return "", nil, &ParseError{
 			Kind:   KindUnsupportedFormat,
