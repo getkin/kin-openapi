@@ -1257,8 +1257,7 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	mediaType := parseMediaType(contentType)
 	decoder, ok := bodyDecoders[mediaType]
 	if !ok && isBinary(schema) {
-		ok = true
-		decoder = FileBodyDecoder
+		ok, decoder = true, FileBodyDecoder
 	}
 
 	if !ok {
