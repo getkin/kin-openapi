@@ -1429,6 +1429,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		visitedAnyOf = true
 	}
 
+	validationErrors := multiErrorForAllOf{}
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
@@ -1438,16 +1439,19 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if settings.failfast {
 				return errSchema, false
 			}
-			return &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "allOf",
-				Reason:                `doesn't match all schemas from "allOf"`,
-				Origin:                err,
-				customizeMessageError: settings.customizeMessageError,
-			}, false
+			validationErrors = append(validationErrors, err)
 		}
 		visitedAllOf = true
+	}
+	if len(validationErrors) > 0 {
+		return &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "allOf",
+			Reason:                `doesn't match all schemas from "allOf"`,
+			Origin:                fmt.Errorf("doesn't match schema due to: %w", validationErrors),
+			customizeMessageError: settings.customizeMessageError,
+		}, false
 	}
 
 	run = !((visitedOneOf || visitedAnyOf || visitedAllOf) && value == nil)
