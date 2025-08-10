@@ -3,6 +3,7 @@ package openapi3filter
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,6 +48,9 @@ type validationTest struct {
 	wantErrSchemaOriginReason string
 	wantErrSchemaOriginPath   string
 	wantErrSchemaOriginValue  any
+	wantMultiErrSchemaReasons []string
+	wantMultiErrSchemaPaths   []string
+	wantMultiErrSchemaValues  []any
 	wantErrParam              string
 	wantErrParamIn            string
 	wantErrParseKind          ParseErrorKind
@@ -478,17 +482,38 @@ func getValidationTests(t *testing.T) []*validationTest {
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodPost, "/pet2", bytes.NewBufferString(`{"name":"Bahama"}`)),
 			},
-			wantErrReason:             "doesn't match schema",
-			wantErrSchemaPath:         "/",
-			wantErrSchemaValue:        map[string]string{"name": "Bahama"},
-			wantErrSchemaReason:       `doesn't match all schemas from "allOf"`,
-			wantErrSchemaOriginReason: `property "photoUrls" is missing`,
-			wantErrSchemaOriginValue:  map[string]string{"name": "Bahama"},
-			wantErrSchemaOriginPath:   "/photoUrls",
+			wantErrReason:            "doesn't match schema",
+			wantErrSchemaPath:        "/",
+			wantErrSchemaValue:       map[string]string{"name": "Bahama"},
+			wantErrSchemaReason:      `doesn't match all schemas from "allOf"`,
+			wantMultiErrSchemaPaths:  []string{"/photoUrls"},
+			wantMultiErrSchemaValues: []any{map[string]string{"name": "Bahama"}},
+			wantMultiErrSchemaReasons: []string{
+				`property "photoUrls" is missing`,
+			},
 			wantErrResponse: &ValidationError{
 				Status: http.StatusUnprocessableEntity,
-				Title:  `property "photoUrls" is missing`,
-				Source: &ValidationErrorSource{Pointer: "/photoUrls"},
+				Title:  `doesn't match all schemas from "allOf"`,
+			},
+		},
+		{
+			name: "error - missing required object attribute and bad type from allOf required overlay",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodPost, "/pet2", bytes.NewBufferString(`{"name":1}`)),
+			},
+			wantErrReason:            "doesn't match schema",
+			wantErrSchemaPath:        "/",
+			wantErrSchemaValue:       map[string]float64{"name": 1},
+			wantErrSchemaReason:      `doesn't match all schemas from "allOf"`,
+			wantMultiErrSchemaPaths:  []string{"/name", "/photoUrls"},
+			wantMultiErrSchemaValues: []any{1, map[string]float64{"name": 1}},
+			wantMultiErrSchemaReasons: []string{
+				"value must be a string",
+				"property \"photoUrls\" is missing",
+			},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
+				Title:  `doesn't match all schemas from "allOf"`,
 			},
 		},
 		{
@@ -599,6 +624,23 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 						pointer := toJSONPointer(originErr.JSONPointer())
 						req.Equal(tt.wantErrSchemaOriginPath, pointer)
 						req.Equal(fmt.Sprint(tt.wantErrSchemaOriginValue), fmt.Sprint(originErr.Value))
+					} else if wrapErr := errors.Unwrap(innerErr.Origin); wrapErr != nil {
+						if multiErr, ok := errors.Unwrap(wrapErr).(openapi3.MultiError); ok {
+							req.Len(multiErr, len(tt.wantMultiErrSchemaReasons))
+							req.Len(multiErr, len(tt.wantMultiErrSchemaPaths))
+							req.Len(multiErr, len(tt.wantMultiErrSchemaValues))
+							for i, merr := range multiErr {
+								schemaErr, ok := merr.(*openapi3.SchemaError)
+								if !ok {
+									continue
+								}
+								req.Equal(tt.wantMultiErrSchemaReasons[i], schemaErr.Reason)
+								pointer := toJSONPointer(schemaErr.JSONPointer())
+								req.Equal(tt.wantMultiErrSchemaPaths[i], pointer)
+								req.Equal(fmt.Sprint(tt.wantMultiErrSchemaValues[i]), fmt.Sprint(schemaErr.Value))
+
+							}
+						}
 					}
 				} else {
 					req.False(tt.wantErrSchemaReason != "" || tt.wantErrSchemaPath != "",
