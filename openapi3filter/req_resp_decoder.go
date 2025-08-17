@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oasdiff/yaml3"
+	yaml "github.com/oasdiff/yaml3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -1472,13 +1472,26 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			}
 		}
 
+		partHeader := http.Header(part.Header)
 		var value any
-		if _, value, err = decodeBody(part, http.Header(part.Header), valueSchema, subEncFn); err != nil {
+		if _, value, err = decodeBody(part, partHeader, valueSchema, subEncFn); err != nil {
 			if v, ok := err.(*ParseError); ok {
 				return nil, &ParseError{path: []any{name}, Cause: v}
 			}
 			return nil, fmt.Errorf("part %s: %w", name, err)
 		}
+
+		// Parse primitive types when no content type is explicitely provided, or the content type is set to text/plain
+		contentType := partHeader.Get(headerCT)
+		if contentType == "" || contentType == "text/plain" {
+			if value, err = parsePrimitive(value.(string), valueSchema); err != nil {
+				if v, ok := err.(*ParseError); ok {
+					return nil, &ParseError{path: []any{name}, Cause: v}
+				}
+				return nil, fmt.Errorf("part %s: %w", name, err)
+			}
+		}
+
 		values[name] = append(values[name], value)
 	}
 
