@@ -56,7 +56,8 @@ type count struct {
 }
 
 func TestIssue949(t *testing.T) {
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(testSchema))
 	require.NoError(t, err)
 
 	err = doc.Validate(context.Background())
