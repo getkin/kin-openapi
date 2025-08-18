@@ -483,8 +483,14 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 		}
 	}
 
+	// Copy schema.Value.Extensions to avoid modifying the original
+	schemaExtensions := make(map[string]interface{})
+	for k, v := range schema.Value.Extensions {
+		schemaExtensions[k] = v
+	}
+
 	v3Schema := &openapi3.Schema{
-		Extensions:           schema.Extensions,
+		Extensions:           schemaExtensions,
 		Type:                 schema.Value.Type,
 		Title:                schema.Value.Title,
 		Format:               schema.Value.Format,
@@ -535,7 +541,7 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 	for i, v := range schema.Value.AllOf {
 		v3Schema.AllOf[i] = ToV3SchemaRef(v)
 	}
-	if val, ok := schema.Value.Extensions["x-nullable"]; ok {
+	if val, ok := v3Schema.Extensions["x-nullable"]; ok {
 		if nullable, valid := val.(bool); valid {
 			v3Schema.Nullable = nullable
 			delete(v3Schema.Extensions, "x-nullable")
