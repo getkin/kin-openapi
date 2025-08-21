@@ -1229,5 +1229,5 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 }
 
 func unescapeRefString(ref string) string {
-	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
+	return strings.ReplaceAll(strings.ReplaceAll(ref, "~1", "/"), "~0", "~")
 }

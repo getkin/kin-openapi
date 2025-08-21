@@ -423,8 +423,7 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 		defer input.Request.Body.Close()
 
 		var err error
-		data, err = io.ReadAll(input.Request.Body)
-		if err != nil {
+		if data, err = io.ReadAll(input.Request.Body); err != nil {
 			return &RequestError{
 				Input:  input,
 				Reason: "reading failed",

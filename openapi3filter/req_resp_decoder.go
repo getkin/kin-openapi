@@ -899,26 +899,6 @@ func deepSet(m map[string]any, keys []string, value any) {
 	m[keys[len(keys)-1]] = value
 }
 
-func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
-	currentSchema := parentSchema
-	for _, key := range keys {
-		if currentSchema.Value.Type.Includes(openapi3.TypeArray) {
-			currentSchema = currentSchema.Value.Items
-		} else {
-			propertySchema, ok := currentSchema.Value.Properties[key]
-			if !ok {
-				if currentSchema.Value.AdditionalProperties.Schema == nil {
-					return nil, fmt.Errorf("nested schema for key %q not found", key)
-				}
-				currentSchema = currentSchema.Value.AdditionalProperties.Schema
-				continue
-			}
-			currentSchema = propertySchema
-		}
-	}
-	return currentSchema, nil
-}
-
 // makeObject returns an object that contains properties from props.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]any, error) {
 	mobj := make(map[string]any)
@@ -1482,8 +1462,7 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		}
 
 		// Parse primitive types when no content type is explicitely provided, or the content type is set to text/plain
-		contentType := partHeader.Get(headerCT)
-		if contentType == "" || contentType == "text/plain" {
+		if contentType := partHeader.Get(headerCT); contentType == "" || contentType == "text/plain" {
 			if value, err = parsePrimitive(value.(string), valueSchema); err != nil {
 				if v, ok := err.(*ParseError); ok {
 					return nil, &ParseError{path: []any{name}, Cause: v}
