@@ -899,26 +899,6 @@ func deepSet(m map[string]any, keys []string, value any) {
 	m[keys[len(keys)-1]] = value
 }
 
-func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
-	currentSchema := parentSchema
-	for _, key := range keys {
-		if currentSchema.Value.Type.Includes(openapi3.TypeArray) {
-			currentSchema = currentSchema.Value.Items
-		} else {
-			propertySchema, ok := currentSchema.Value.Properties[key]
-			if !ok {
-				if currentSchema.Value.AdditionalProperties.Schema == nil {
-					return nil, fmt.Errorf("nested schema for key %q not found", key)
-				}
-				currentSchema = currentSchema.Value.AdditionalProperties.Schema
-				continue
-			}
-			currentSchema = propertySchema
-		}
-	}
-	return currentSchema, nil
-}
-
 // makeObject returns an object that contains properties from props.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]any, error) {
 	mobj := make(map[string]any)

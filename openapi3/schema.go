@@ -246,7 +246,7 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
 			addProps.Schema = &SchemaRef{Value: &Schema{}}
 		} else {
 			buf := new(bytes.Buffer)
-			json.NewEncoder(buf).Encode(y)
+			_ = json.NewEncoder(buf).Encode(y)
 			if err := json.NewDecoder(buf).Decode(&addProps.Schema); err != nil {
 				return err
 			}

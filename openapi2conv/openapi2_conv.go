@@ -28,7 +28,7 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 
 	if host := doc2.Host; host != "" {
 		if strings.Contains(host, "/") {
-			err := fmt.Errorf("invalid host %q. This MUST be the host only and does not include the scheme nor sub-paths.", host)
+			err := fmt.Errorf("invalid host %q. This MUST be the host only and does not include the scheme nor sub-paths", host)
 			return nil, err
 		}
 		schemes := doc2.Schemes
@@ -679,12 +679,11 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 	isHTTP := false
 	servers := doc3.Servers
 	for i, server := range servers {
-		parsedURL, err := url.Parse(server.URL)
-		if err == nil {
-			// See which schemes seem to be supported
-			if parsedURL.Scheme == "https" {
+		if parsedURL, err := url.Parse(server.URL); err == nil {
+			switch parsedURL.Scheme {
+			case "https":
 				isHTTPS = true
-			} else if parsedURL.Scheme == "http" {
+			case "http":
 				isHTTP = true
 			}
 			// The first server is assumed to provide the base path

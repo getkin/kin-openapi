@@ -15,9 +15,9 @@ value_types+=('*PathItem')
 value_types+=('*PathItem')
 
 deref_vs=()
-deref_vs+=('*Response = v.Value')
-deref_vs+=('*PathItem = v')
-deref_vs+=('*PathItem = v')
+deref_vs+=('v.Value')
+deref_vs+=('v')
+deref_vs+=('v')
 
 names=()
 names+=('responses')
@@ -145,8 +145,7 @@ func (${name} ${type#'*'}) JSONLookup(token string) (any, error) {
 	} else if ref := v.Ref; ref != "" {
 		return &Ref{Ref: ref}, nil
 	} else {
-		var vv ${deref_v}
-		return vv, nil
+		return ${deref_v}, nil
 	}
 }
 
