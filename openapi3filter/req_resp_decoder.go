@@ -1482,8 +1482,7 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 		}
 
 		// Parse primitive types when no content type is explicitely provided, or the content type is set to text/plain
-		contentType := partHeader.Get(headerCT)
-		if contentType == "" || contentType == "text/plain" {
+		if contentType := partHeader.Get(headerCT); contentType == "" || contentType == "text/plain" {
 			if value, err = parsePrimitive(value.(string), valueSchema); err != nil {
 				if v, ok := err.(*ParseError); ok {
 					return nil, &ParseError{path: []any{name}, Cause: v}
