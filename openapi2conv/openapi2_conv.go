@@ -483,14 +483,8 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 		}
 	}
 
-	// Copy schema.Value.Extensions to avoid modifying the original
-	schemaExtensions := make(map[string]interface{})
-	for k, v := range schema.Value.Extensions {
-		schemaExtensions[k] = v
-	}
-
 	v3Schema := &openapi3.Schema{
-		Extensions:           schemaExtensions,
+		Extensions:           schema.Value.Extensions,
 		Type:                 schema.Value.Type,
 		Title:                schema.Value.Title,
 		Format:               schema.Value.Format,
