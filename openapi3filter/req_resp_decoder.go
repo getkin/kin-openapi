@@ -565,6 +565,12 @@ func (d *urlValuesDecoder) parseArray(raw []string, sm *openapi3.SerializationMe
 		}
 		value = append(value, item)
 	}
+	// If the array has only one element and that element is an empty string, it means no value exists, so return nil.
+	if len(value) == 1 {
+		if str, ok := value[0].(string); ok && str == "" {
+			return nil, nil
+		}
+	}
 	return value, nil
 }
 
@@ -1116,13 +1122,13 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 }
 
 // parsePrimitive returns a value that is created by parsing a source string to a primitive type
-// that is specified by a schema. The function returns nil when the source string is empty.
+// that is specified by a schema. The function returns nil when the source string is empty and the type is not "string".
 // The function panics when a schema has a non-primitive type.
 func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
-	if raw == "" {
-		return nil, nil
-	}
 	for _, typ := range schema.Value.Type.Slice() {
+		if raw == "" && typ != "string" {
+			return nil, nil
+		}
 		if v, err = parsePrimitiveCase(raw, schema, typ); err == nil {
 			return
 		}

@@ -672,10 +672,24 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "string empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringSchema},
+					query: "param=",
+					want:  "",
+					found: true,
+				},
+				{
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
 					query: "param=1",
 					want:  int64(1),
+					found: true,
+				},
+				{
+					name:  "integer empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=",
+					want:  nil,
 					found: true,
 				},
 				{
@@ -693,6 +707,13 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "number empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=",
+					want:  nil,
+					found: true,
+				},
+				{
 					name:  "number invalid",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
 					query: "param=foo",
@@ -704,6 +725,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
 					query: "param=true",
 					want:  true,
+					found: true,
+				},
+				{
+					name:  "boolean empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
+					query: "param=",
+					want:  nil,
 					found: true,
 				},
 				{
