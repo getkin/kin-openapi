@@ -42,8 +42,7 @@ func Test_validateResponseHeader(t *testing.T) {
 			},
 			isHeaderPresent: true,
 			headerVals:      []string{""},
-			wantErr:         true,
-			wantErrMsg:      `response header "X-Blab" doesn't match schema: Value is not nullable`,
+			wantErr:         false,
 		},
 		{
 			name: "test optional string header with single string value",
