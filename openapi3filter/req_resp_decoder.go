@@ -1220,6 +1220,14 @@ func isBinary(schema *openapi3.SchemaRef) bool {
 	return schema.Value.Type.Is("string") && schema.Value.Format == "binary"
 }
 
+func hasEncodingContentType(encFn EncodingFn) bool {
+	var enc *openapi3.Encoding
+	if encFn != nil {
+		enc = encFn("")
+	}
+	return enc != nil && enc.ContentType != ""
+}
+
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
 func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (
@@ -1235,11 +1243,12 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	}
 
 	mediaType := parseMediaType(contentType)
-	decoder, ok := bodyDecoders[mediaType]
-	if !ok && isBinary(schema) {
-		ok, decoder = true, FileBodyDecoder
+	if isBinary(schema) && !hasEncodingContentType(encFn) {
+		value, err := FileBodyDecoder(body, header, schema, encFn)
+		return mediaType, value, err
 	}
 
+	decoder, ok := bodyDecoders[mediaType]
 	if !ok {
 		return "", nil, &ParseError{
 			Kind:   KindUnsupportedFormat,
