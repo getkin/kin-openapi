@@ -1211,13 +1211,30 @@ func UnregisterBodyDecoder(contentType string) {
 
 var headerCT = http.CanonicalHeaderKey("Content-Type")
 
-const prefixUnsupportedCT = "unsupported content type"
+const (
+	prefixUnsupportedCT = "unsupported content type"
+	prefixNotMatchingCT = "not matching content types"
+)
 
 func isBinary(schema *openapi3.SchemaRef) bool {
 	if schema == nil || schema.Value == nil {
 		return false
 	}
 	return schema.Value.Type.Is("string") && schema.Value.Format == "binary"
+}
+
+func getEncodingContentType(encFn EncodingFn) string {
+	var enc *openapi3.Encoding
+	if encFn != nil {
+		// encFn is passed to decodeBody only in form body decoders as a subEncFn, so key can be ""
+		// func(string) *openapi3.Encoding { return enc }
+		enc = encFn("")
+	}
+	if enc == nil {
+		return ""
+	}
+
+	return enc.ContentType
 }
 
 // decodeBody returns a decoded body.
@@ -1235,11 +1252,26 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	}
 
 	mediaType := parseMediaType(contentType)
-	decoder, ok := bodyDecoders[mediaType]
-	if !ok && isBinary(schema) {
-		ok, decoder = true, FileBodyDecoder
+	encodingContentType := getEncodingContentType(encFn)
+	if isBinary(schema) && encodingContentType == "" {
+		value, err := FileBodyDecoder(body, header, schema, encFn)
+		return mediaType, value, err
 	}
 
+	if encodingContentType != "" &&
+		mediaType != encodingContentType {
+		return "", nil, &ParseError{
+			Kind: KindOther,
+			Reason: fmt.Sprintf(
+				"%s: header %q, encoding %q",
+				prefixNotMatchingCT,
+				mediaType,
+				encodingContentType,
+			),
+		}
+	}
+
+	decoder, ok := bodyDecoders[mediaType]
 	if !ok {
 		return "", nil, &ParseError{
 			Kind:   KindUnsupportedFormat,
