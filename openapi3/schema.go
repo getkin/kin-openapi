@@ -2144,6 +2144,9 @@ func markSchemaErrorKey(err error, key string) error {
 				if me, ok := unwrapped.(multiErrorForOneOf); ok {
 					_ = markSchemaErrorKey(MultiError(me), key)
 				}
+				if me, ok := unwrapped.(multiErrorForAllOf); ok {
+					_ = markSchemaErrorKey(MultiError(me), key)
+				}
 			}
 		}
 		return v
