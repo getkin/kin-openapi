@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 type schemaExample struct {
@@ -542,7 +543,7 @@ var schemaExamples = []schemaExample{
 		Schema: &Schema{
 			Type:        &Types{"array"},
 			MinItems:    2,
-			MaxItems:    Uint64Ptr(3),
+			MaxItems:    Ptr[uint64](3),
 			UniqueItems: true,
 			Items:       NewFloat64Schema().NewRef(),
 		},
@@ -872,7 +873,7 @@ var schemaExamples = []schemaExample{
 		Title: "OBJECT",
 		Schema: &Schema{
 			Type:     &Types{"object"},
-			MaxProps: Uint64Ptr(2),
+			MaxProps: Ptr[uint64](2),
 			Properties: Schemas{
 				"numberProperty": NewFloat64Schema().NewRef(),
 			},
@@ -944,7 +945,7 @@ var schemaExamples = []schemaExample{
 	{
 		Schema: &Schema{
 			Type:                 &Types{"object"},
-			AdditionalProperties: AdditionalProperties{Has: BoolPtr(true)},
+			AdditionalProperties: AdditionalProperties{Has: Ptr(true)},
 		},
 		Serialization: map[string]any{
 			"type":                 "object",
@@ -1489,4 +1490,42 @@ func TestIssue751(t *testing.T) {
 	invalidData := []string{"foo", "foo"}
 	require.NoError(t, schema.VisitJSON(validData))
 	require.ErrorContains(t, schema.VisitJSON(invalidData), "duplicate items found")
+}
+
+func TestIssue817(t *testing.T) {
+	max := 999999999.99
+	min := -999999999.99
+	mulOf := 0.01
+	schema := &Schema{
+		Type:       &Types{"number"},
+		Max:        &max,
+		Min:        &min,
+		MultipleOf: &mulOf,
+	}
+	validData := []float64{2.07, 8.1, 19628.87, 323.39, 40428.2, 1.13}
+	for _, data := range validData {
+		require.NoError(t, schema.VisitJSON(data))
+	}
+
+	invalidData := []struct {
+		mulfOf float64
+		data   float64
+	}{
+		{
+			mulfOf: 0.01,
+			data:   0.005,
+		},
+		{
+			mulfOf: 3.0,
+			data:   5.0,
+		},
+		{
+			mulfOf: 5.0,
+			data:   2.0,
+		},
+	}
+	for _, data := range invalidData {
+		schema.MultipleOf = &data.mulfOf
+		require.ErrorContains(t, schema.VisitJSON(data.data), fmt.Sprintf("number must be a multiple of %+v", data.mulfOf))
+	}
 }

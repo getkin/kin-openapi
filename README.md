@@ -17,6 +17,7 @@ The project has received pull requests [from many people](https://github.com/get
 Please, [give back to this project](https://github.com/sponsors/fenollp) by becoming a sponsor.
 
 Here's some projects that depend on _kin-openapi_:
+  * [github.com/go-fuego/fuego](https://github.com/go-fuego/fuego) - "Framework generating OpenAPI 3 spec from source code"
   * [github.com/a-h/rest](https://github.com/a-h/rest) - "Generate OpenAPI 3.0 specifications from Go code without annotations or magic comments"
   * [github.com/Tufin/oasdiff](https://github.com/Tufin/oasdiff) - "A diff tool for OpenAPI Specification 3"
   * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
@@ -129,8 +130,7 @@ func main() {
 
 ## Custom content type for body of HTTP request/response
 
-By default, the library parses a body of the HTTP request and response
-if it has one of the following content types: `"text/plain"` or `"application/json"`.
+By default, the library parses a body of the HTTP request and response of [a few content types](https://github.com/getkin/kin-openapi/blob/6da871e0e170b7637eb568c265c08bc2b5d6e7a3/openapi3filter/req_resp_decoder.go#L1264) e.g. `"text/plain"` or `"application/json"`.
 To support other content types you must register decoders for them:
 
 ```go
@@ -293,6 +293,12 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ```
 
 ## CHANGELOG: Sub-v1 breaking API changes
+
+### v0.131.0
+* No longer `openapi3filter.RegisterBodyDecoder` the `openapi3filter.ZipFileBodyDecoder` by default.
+
+### v0.129.0
+* `openapi3.Discriminator.Mapping` and `openapi3.OAuthFlow.Scopes` fields went from a `map[string]string` to the new type `StringMap`
 
 ### v0.127.0
 * Downgraded `github.com/gorilla/mux` dep from `1.8.1` to `1.8.0`.

@@ -69,7 +69,7 @@ paths:
 			name:   "failed allof pattern",
 			spec:   allOfSpec,
 			req:    `/items?test=999999`,
-			errStr: `parameter "test" in query has an error: string doesn't match the regular expression "^[0-9]{1,4}$"`,
+			errStr: `parameter "test" in query has an error: doesn't match schema due to: string doesn't match the regular expression "^[0-9]{1,4}$"`,
 		},
 	}
 

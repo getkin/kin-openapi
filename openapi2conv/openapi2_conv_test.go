@@ -65,6 +65,134 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 	require.JSONEq(t, exampleV3, string(data))
 }
 
+func TestConvOpenAPIV2ToV3WithAdditionalPropertiesSchemaRef(t *testing.T) {
+	v2 := []byte(`
+{
+    "basePath": "/v2",
+    "host": "test.example.com",
+    "info": {
+        "title": "MyAPI",
+        "version": "0.1"
+    },
+    "paths": {
+        "/foo": {
+            "get": {
+                "operationId": "getFoo",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "returns all information",
+                        "schema":{
+                            "type":"object",
+                            "additionalProperties":{
+                               "$ref":"#/definitions/Foo"
+                            }
+                        }
+                    }
+                },
+                "summary": "get foo"
+            }
+        }
+    },
+	"definitions": {
+	    "Foo": {
+		    "type": "object",
+			"properties": {
+			    "a": {
+				    "type": "string"
+				}
+			}
+		}
+	},
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0"
+}
+`)
+
+	var doc2 openapi2.T
+	err := json.Unmarshal(v2, &doc2)
+	require.NoError(t, err)
+
+	doc3, err := ToV3(&doc2)
+	require.NoError(t, err)
+	err = doc3.Validate(context.Background())
+	require.NoError(t, err)
+
+	responseSchema := doc3.Paths.Value("/foo").Get.Responses.Value("200").Value.Content.Get("application/json").Schema.Value
+	require.Equal(t, &openapi3.Types{"object"}, responseSchema.Type)
+	require.Equal(t, "#/components/schemas/Foo", responseSchema.AdditionalProperties.Schema.Ref)
+}
+
+func TestConvOpenAPIV2ToV3WithNestedAdditionalPropertiesSchemaRef(t *testing.T) {
+	v2 := []byte(`
+{
+    "basePath": "/v2",
+    "host": "test.example.com",
+    "info": {
+        "title": "MyAPI",
+        "version": "0.1"
+    },
+    "paths": {
+        "/foo": {
+            "get": {
+                "operationId": "getFoo",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "returns all information",
+                        "schema":{
+                            "type":"object",
+                            "additionalProperties":{
+                               "type":"object",
+                               "additionalProperties":{
+                                   "$ref":"#/definitions/Foo"
+                               }
+                            }
+                        }
+                    }
+                },
+                "summary": "get foo"
+            }
+        }
+    },
+	"definitions": {
+	    "Foo": {
+		    "type": "object",
+			"properties": {
+			    "a": {
+				    "type": "string"
+				}
+			}
+		}
+	},
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0"
+}
+`)
+
+	var doc2 openapi2.T
+	err := json.Unmarshal(v2, &doc2)
+	require.NoError(t, err)
+
+	doc3, err := ToV3(&doc2)
+	require.NoError(t, err)
+	err = doc3.Validate(context.Background())
+	require.NoError(t, err)
+
+	responseSchema := doc3.Paths.Value("/foo").Get.Responses.Value("200").Value.Content.Get("application/json").Schema.Value
+	require.Equal(t, &openapi3.Types{"object"}, responseSchema.Type)
+	require.Equal(t, &openapi3.Types{"object"}, responseSchema.AdditionalProperties.Schema.Value.Type)
+	require.Equal(t, "#/components/schemas/Foo", responseSchema.AdditionalProperties.Schema.Value.AdditionalProperties.Schema.Ref)
+}
+
 const exampleV2 = `
 {
 	"basePath": "/v2",

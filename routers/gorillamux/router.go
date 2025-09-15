@@ -207,13 +207,13 @@ func newSrv(serverURL string, server *openapi3.Server, varsUpdater varsf) (srv, 
 var blURL, brURL = strings.Repeat("-", 50), strings.Repeat("_", 50)
 
 func bEncode(s string) string {
-	s = strings.Replace(s, "{", blURL, -1)
-	s = strings.Replace(s, "}", brURL, -1)
+	s = strings.ReplaceAll(s, "{", blURL)
+	s = strings.ReplaceAll(s, "}", brURL)
 	return s
 }
 func bDecode(s string) string {
-	s = strings.Replace(s, blURL, "{", -1)
-	s = strings.Replace(s, brURL, "}", -1)
+	s = strings.ReplaceAll(s, blURL, "{")
+	s = strings.ReplaceAll(s, brURL, "}")
 	return s
 }
 
@@ -250,7 +250,7 @@ func permutePart(part0 string, srv *openapi3.Server) []string {
 	for i := 0; i < max; i++ {
 		part := part0
 		for name, mas := range var2val {
-			part = strings.Replace(part, name, mas.s[i%len(mas.s)], -1)
+			part = strings.ReplaceAll(part, name, mas.s[i%len(mas.s)])
 		}
 		partsMap[part] = struct{}{}
 	}

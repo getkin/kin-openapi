@@ -15,6 +15,11 @@ import (
 	"strings"
 )
 
+// IncludeOrigin specifies whether to include the origin of the OpenAPI elements
+// Set this to true before loading a spec to include the origin of the OpenAPI elements
+// Note it is global and affects all loaders
+var IncludeOrigin = false
+
 func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
 }
@@ -103,7 +108,7 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 	if err != nil {
 		return nil, err
 	}
-	if err := unmarshal(data, element); err != nil {
+	if err := unmarshal(data, element, IncludeOrigin); err != nil {
 		return nil, err
 	}
 
@@ -139,7 +144,7 @@ func (loader *Loader) LoadFromIoReader(reader io.Reader) (*T, error) {
 func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
-	if err := unmarshal(data, doc); err != nil {
+	if err := unmarshal(data, doc, IncludeOrigin); err != nil {
 		return nil, err
 	}
 	if err := loader.ResolveRefsIn(doc, nil); err != nil {
@@ -168,7 +173,7 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	doc := &T{}
 	loader.visitedDocuments[uri] = doc
 
-	if err := unmarshal(data, doc); err != nil {
+	if err := unmarshal(data, doc, IncludeOrigin); err != nil {
 		return nil, err
 	}
 
@@ -422,7 +427,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		if err2 != nil {
 			return nil, nil, err
 		}
-		if err2 = unmarshal(data, &cursor); err2 != nil {
+		if err2 = unmarshal(data, &cursor, IncludeOrigin); err2 != nil {
 			return nil, nil, err
 		}
 		if cursor, err2 = drill(cursor); err2 != nil || cursor == nil {
@@ -652,6 +657,11 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			return err
 		}
 	}
+	for _, example := range value.Examples {
+		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -711,9 +721,19 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				return err
 			}
 		}
+		for _, example := range contentType.Examples {
+			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+				return err
+			}
+		}
 	}
 	if schema := value.Schema; schema != nil {
 		if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
+			return err
+		}
+	}
+	for _, example := range value.Examples {
+		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 			return err
 		}
 	}
@@ -1209,5 +1229,5 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 }
 
 func unescapeRefString(ref string) string {
-	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
+	return strings.ReplaceAll(strings.ReplaceAll(ref, "~1", "/"), "~0", "~")
 }

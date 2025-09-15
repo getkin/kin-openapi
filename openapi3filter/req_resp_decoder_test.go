@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	explode   = openapi3.BoolPtr(true)
-	noExplode = openapi3.BoolPtr(false)
+	explode   = openapi3.Ptr(true)
+	noExplode = openapi3.Ptr(false)
 	arrayOf   = func(items *openapi3.SchemaRef) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"array"}, Items: items}}
 	}
@@ -1649,6 +1649,23 @@ func TestDecodeBody(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	multipartBinaryEncodingCT, multipartMimeBinaryEncodingCT, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
+		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+		{name: "f", contentType: "application/json", data: strings.NewReader(`{"foo1": "foo1"}`), filename: "f1"},
+		{name: "f", contentType: "application/pdf", data: strings.NewReader("foo2"), filename: "f2"},
+	})
+
+	multipartBinaryEncodingCTUnsupported, multipartMimeBinaryEncodingCTUnsupported, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
+		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+	})
+
+	multipartBinaryEncodingCTNotMatching, multipartMimeBinaryEncodingCTNotMatching, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
+		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+	})
+
 	testCases := []struct {
 		name     string
 		mime     string
@@ -1712,7 +1729,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: openapi3.BoolPtr(false)},
+				"c": {Style: openapi3.SerializationSpaceDelimited, Explode: openapi3.Ptr(false)},
 			},
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
@@ -1725,7 +1742,7 @@ func TestDecodeBody(t *testing.T) {
 				WithProperty("b", openapi3.NewIntegerSchema()).
 				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
 			encoding: map[string]*openapi3.Encoding{
-				"c": {Style: openapi3.SerializationPipeDelimited, Explode: openapi3.BoolPtr(false)},
+				"c": {Style: openapi3.SerializationPipeDelimited, Explode: openapi3.Ptr(false)},
 			},
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
@@ -1786,6 +1803,65 @@ func TestDecodeBody(t *testing.T) {
 			mime: "application/octet-stream",
 			body: strings.NewReader("foo"),
 			want: "foo",
+		},
+		{
+			name: "multipartEncodingCT",
+			mime: multipartMimeBinaryEncodingCT,
+			body: multipartBinaryEncodingCT,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("f", openapi3.NewArraySchema().WithItems(
+					openapi3.NewStringSchema().WithFormat("binary"),
+				)),
+			want: map[string]any{"b": `{"bar1": "bar1"}`, "d": "doo1", "f": []any{`{"foo1": "foo1"}`, "foo2"}},
+		},
+		{
+			name: "multipartEncodingCTUnsupported",
+			mime: multipartMimeBinaryEncodingCTUnsupported,
+			body: multipartBinaryEncodingCTUnsupported,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")),
+			encoding: map[string]*openapi3.Encoding{
+				"b": {ContentType: "application/json"},
+				"d": {ContentType: "application/pdf"},
+			},
+			want: map[string]any{"b": map[string]any{"bar1": "bar1"}},
+			wantErr: &ParseError{
+				Kind: KindOther,
+				Cause: &ParseError{
+					Kind:   KindUnsupportedFormat,
+					Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, "application/pdf"),
+				},
+				path: []any{"d"},
+			},
+		},
+		{
+			name: "multipartEncodingCTNotMatching",
+			mime: multipartMimeBinaryEncodingCTNotMatching,
+			body: multipartBinaryEncodingCTNotMatching,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")),
+			encoding: map[string]*openapi3.Encoding{
+				"b": {ContentType: "application/json"},
+				"d": {ContentType: "application/test"},
+			},
+			want: map[string]any{"b": map[string]any{"bar1": "bar1"}},
+			wantErr: &ParseError{
+				Kind: KindOther,
+				Cause: &ParseError{
+					Kind: KindOther,
+					Reason: fmt.Sprintf(
+						"%s: header %q, encoding %q",
+						prefixNotMatchingCT,
+						"application/pdf",
+						"application/test",
+					),
+				},
+				path: []any{"d"},
+			},
 		},
 	}
 	for _, tc := range testCases {
@@ -1859,7 +1935,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 		}
 		return strings.Split(string(data), ","), nil
 	}
-	contentType := "application/csv"
+	const contentType = "application/csv"
 	h := make(http.Header)
 	h.Set(headerCT, contentType)
 
@@ -1867,7 +1943,7 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 	require.Nil(t, originalDecoder)
 
 	RegisterBodyDecoder(contentType, decoder)
-	require.Equal(t, fmt.Sprintf("%v", decoder), fmt.Sprintf("%v", RegisteredBodyDecoder(contentType)))
+	require.Equal(t, fmt.Sprint(decoder), fmt.Sprint(RegisteredBodyDecoder(contentType)))
 
 	body := strings.NewReader("foo,bar")
 	schema := openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema()).NewRef()

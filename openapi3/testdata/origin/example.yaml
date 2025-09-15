@@ -1,0 +1,19 @@
+openapi: 3.0.0
+info:
+  title: Security Requirement Example
+  version: 1.0.0
+paths:
+  /subscribe:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+            examples:
+              bar:
+                summary: A bar example
+                value: {"bar": "baz"}
+      responses:
+        "200":
+          description: OK

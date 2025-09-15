@@ -23,7 +23,7 @@ func TestIssue652(t *testing.T) {
 		require.Contains(t, spec.Components.Schemas, schemaName)
 
 		schema := spec.Components.Schemas[schemaName]
-		assert.Equal(t, schema.Ref, "../definitions.yml#/components/schemas/TestSchema")
-		assert.Equal(t, schema.Value.Type, &openapi3.Types{"string"})
+		assert.Equal(t, "../definitions.yml#/components/schemas/TestSchema", schema.Ref)
+		assert.Equal(t, &openapi3.Types{"string"}, schema.Value.Type)
 	})
 }

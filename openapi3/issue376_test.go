@@ -46,7 +46,7 @@ info:
 func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 	schema := &Schema{
 		AdditionalProperties: AdditionalProperties{
-			Has:    BoolPtr(false),
+			Has:    Ptr(false),
 			Schema: NewSchemaRef("", &Schema{}),
 		},
 	}
@@ -55,7 +55,7 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 
 	schema = &Schema{
 		AdditionalProperties: AdditionalProperties{
-			Has: BoolPtr(false),
+			Has: Ptr(false),
 		},
 	}
 	err = schema.Validate(context.Background())
@@ -139,7 +139,7 @@ info:
 					}
 					apaStr := ""
 					if apa != nil {
-						apaStr = fmt.Sprintf("%v", *apa)
+						apaStr = fmt.Sprint(apa)
 					}
 
 					encoded, err := propSchema.MarshalJSON()

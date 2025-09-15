@@ -42,6 +42,9 @@ FUNCTIONS
 func ConvertErrors(err error) error
     ConvertErrors converts all errors to the appropriate error format.
 
+func CsvBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
+    CsvBodyDecoder is a body decoder that decodes a csv body to a string.
+
 func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter)
     DefaultErrorEncoder writes the error to the ResponseWriter, by default a
     content type of text/plain, a body of the plain text of the error, and a
@@ -58,9 +61,11 @@ func JSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
     JSONBodyDecoder decodes a JSON formatted body. It is public so that is easy
     to register additional JSON based formats.
 
+func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
 func NoopAuthenticationFunc(context.Context, *AuthenticationInput) error
     NoopAuthenticationFunc is an AuthenticationFunc
 
+func PlainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
     RegisterBodyDecoder registers a request body's decoder for a content type.
 
@@ -84,6 +89,7 @@ func UnregisterBodyDecoder(contentType string)
 func UnregisterBodyEncoder(contentType string)
     UnregisterBodyEncoder disables package-wide decoding of contentType values
 
+func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
 func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error
     ValidateParameter validates a parameter's value by JSON schema. The function
     returns RequestError with a ParseError cause when unable to parse a value.
@@ -93,7 +99,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
     defined. The function returns RequestError with a openapi3.SchemaError cause
     when a value is invalid by JSON schema.
 
-func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error)
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) error
     ValidateRequest is used to validate the given input according to previous
     loaded OpenAPIv3 spec. If the input does not match the OpenAPIv3 spec,
     a non-nil error will be returned.
@@ -120,6 +126,12 @@ func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationI
     ValidateSecurityRequirements goes through multiple OpenAPI 3 security
     requirements in order and returns nil on the first valid requirement.
     If no requirement is met, errors are returned in order.
+
+func YamlBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
+func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error)
+    ZipFileBodyDecoder is a body decoder that decodes a zip file body to a
+    string. Use with caution as this implementation may be susceptible to a zip
+    bomb attack.
 
 
 TYPES
@@ -222,6 +234,9 @@ type Options struct {
 	IncludeResponseStatus bool
 
 	MultiError bool
+
+	// Set RegexCompiler to override the regex implementation
+	RegexCompiler openapi3.RegexCompilerFunc
 
 	// A document with security schemes defined will not pass validation
 	// unless an AuthenticationFunc is defined.

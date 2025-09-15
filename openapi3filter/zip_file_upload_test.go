@@ -17,6 +17,11 @@ import (
 )
 
 func TestValidateZipFileUpload(t *testing.T) {
+	openapi3filter.RegisterBodyDecoder("application/zip", openapi3filter.ZipFileBodyDecoder)
+	t.Cleanup(func() {
+		openapi3filter.UnregisterBodyDecoder("application/zip")
+	})
+
 	const spec = `
 openapi: 3.0.0
 info:
@@ -37,6 +42,9 @@ paths:
                 file:
                   type: string
                   format: binary
+            encoding:
+              file:
+                contentType: application/zip
       responses:
         '200':
           description: Created

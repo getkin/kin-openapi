@@ -3,7 +3,7 @@ package openapi2conv
 import (
 	"testing"
 
-	"github.com/invopop/yaml"
+	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 )
 
