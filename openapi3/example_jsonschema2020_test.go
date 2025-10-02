@@ -244,7 +244,7 @@ func Example_complexNestedSchema() {
 // Example demonstrates using both validators for comparison
 func Example_comparingValidators() {
 	schema := &openapi3.Schema{
-		Type: &openapi3.Types{"string"},
+		Type:      &openapi3.Types{"string"},
 		MinLength: 5,
 	}
 

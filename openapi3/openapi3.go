@@ -41,18 +41,12 @@ var _ jsonpointer.JSONPointable = (*T)(nil)
 
 // IsOpenAPI3_0 returns true if the document is OpenAPI 3.0.x
 func (doc *T) IsOpenAPI3_0() bool {
-	if doc == nil || doc.OpenAPI == "" {
-		return false
-	}
-	return doc.OpenAPI[0:3] == "3.0"
+	return doc.Version() == "3.0"
 }
 
 // IsOpenAPI3_1 returns true if the document is OpenAPI 3.1.x
 func (doc *T) IsOpenAPI3_1() bool {
-	if doc == nil || doc.OpenAPI == "" {
-		return false
-	}
-	return doc.OpenAPI[0:3] == "3.1"
+	return doc.Version() == "3.1"
 }
 
 // Version returns the major.minor version of the OpenAPI document
