@@ -13,8 +13,8 @@
 //
 // The implementation maintains 100% backward compatibility with OpenAPI 3.0.
 //
-// For OpenAPI 3.1 validation, enable the JSON Schema 2020-12 validator:
-//   openapi3.UseJSONSchema2020Validator = true
+// For OpenAPI 3.1 validation, use the JSON Schema 2020-12 validator option:
+//   schema.VisitJSON(value, openapi3.EnableJSONSchema2020())
 //
 // Version detection is available via helper methods:
 //   if doc.IsOpenAPI3_1() {

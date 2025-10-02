@@ -8,11 +8,6 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
-// UseJSONSchema2020Validator is a global flag to enable JSON Schema 2020-12 compliant validation.
-// When set to true, schema validation will use the jsonschema library instead of the built-in validator.
-// This enables support for OpenAPI 3.1 and JSON Schema 2020-12 features.
-var UseJSONSchema2020Validator = false
-
 // jsonSchemaValidator wraps the santhosh-tekuri/jsonschema validator
 type jsonSchemaValidator struct {
 	compiler *jsonschema.Compiler
