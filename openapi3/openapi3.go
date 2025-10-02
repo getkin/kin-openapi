@@ -12,6 +12,7 @@ import (
 
 // T is the root of an OpenAPI v3 document
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#openapi-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
@@ -24,11 +25,47 @@ type T struct {
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 
+	// OpenAPI 3.1.x specific fields
+	// Webhooks are a new feature in OpenAPI 3.1 that allow APIs to define callback operations
+	Webhooks map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`
+
+	// JSONSchemaDialect allows specifying the default JSON Schema dialect for Schema Objects
+	// See https://spec.openapis.org/oas/v3.1.0#schema-object
+	JSONSchemaDialect string `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
+
 	visited visitedComponent
 	url     *url.URL
 }
 
 var _ jsonpointer.JSONPointable = (*T)(nil)
+
+// IsOpenAPI3_0 returns true if the document is OpenAPI 3.0.x
+func (doc *T) IsOpenAPI3_0() bool {
+	if doc == nil || doc.OpenAPI == "" {
+		return false
+	}
+	return doc.OpenAPI[0:3] == "3.0"
+}
+
+// IsOpenAPI3_1 returns true if the document is OpenAPI 3.1.x
+func (doc *T) IsOpenAPI3_1() bool {
+	if doc == nil || doc.OpenAPI == "" {
+		return false
+	}
+	return doc.OpenAPI[0:3] == "3.1"
+}
+
+// Version returns the major.minor version of the OpenAPI document
+func (doc *T) Version() string {
+	if doc == nil || doc.OpenAPI == "" {
+		return ""
+	}
+	// Extract major.minor (e.g., "3.0" from "3.0.3")
+	if len(doc.OpenAPI) >= 3 {
+		return doc.OpenAPI[0:3]
+	}
+	return doc.OpenAPI
+}
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (doc *T) JSONLookup(token string) (any, error) {
@@ -49,6 +86,10 @@ func (doc *T) JSONLookup(token string) (any, error) {
 		return doc.Tags, nil
 	case "externalDocs":
 		return doc.ExternalDocs, nil
+	case "webhooks":
+		return doc.Webhooks, nil
+	case "jsonSchemaDialect":
+		return doc.JSONSchemaDialect, nil
 	}
 
 	v, _, err := jsonpointer.GetForToken(doc.Extensions, token)
@@ -91,6 +132,13 @@ func (doc *T) MarshalYAML() (any, error) {
 	if x := doc.ExternalDocs; x != nil {
 		m["externalDocs"] = x
 	}
+	// OpenAPI 3.1 fields
+	if x := doc.Webhooks; len(x) != 0 {
+		m["webhooks"] = x
+	}
+	if x := doc.JSONSchemaDialect; x != "" {
+		m["jsonSchemaDialect"] = x
+	}
 	return m, nil
 }
 
@@ -110,6 +158,9 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "tags")
 	delete(x.Extensions, "externalDocs")
+	// OpenAPI 3.1 fields
+	delete(x.Extensions, "webhooks")
+	delete(x.Extensions, "jsonSchemaDialect")
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
@@ -198,6 +249,19 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	if v := doc.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
+		}
+	}
+
+	// OpenAPI 3.1 webhooks validation
+	if doc.Webhooks != nil {
+		wrap = func(e error) error { return fmt.Errorf("invalid webhooks: %w", e) }
+		for name, pathItem := range doc.Webhooks {
+			if pathItem == nil {
+				return wrap(fmt.Errorf("webhook %q is nil", name))
+			}
+			if err := pathItem.Validate(ctx); err != nil {
+				return wrap(fmt.Errorf("webhook %q: %w", name, err))
+			}
 		}
 	}
 
