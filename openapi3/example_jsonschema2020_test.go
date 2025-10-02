@@ -48,9 +48,9 @@ func Example_jsonSchema2020Validator() {
 	}
 
 	if err := schema.VisitJSON(validData, openapi3.EnableJSONSchema2020()); err != nil {
-		fmt.Println("Validation failed:", err)
+		fmt.Println("validation failed:", err)
 	} else {
-		fmt.Println("Valid data passed")
+		fmt.Println("valid data passed")
 	}
 
 	// Valid with null age
@@ -61,9 +61,9 @@ func Example_jsonSchema2020Validator() {
 	}
 
 	if err := schema.VisitJSON(validWithNull, openapi3.EnableJSONSchema2020()); err != nil {
-		fmt.Println("Validation failed:", err)
+		fmt.Println("validation failed:", err)
 	} else {
-		fmt.Println("Valid data with null passed")
+		fmt.Println("valid data with null passed")
 	}
 
 	// Invalid: wrong const value
@@ -74,13 +74,13 @@ func Example_jsonSchema2020Validator() {
 	}
 
 	if err := schema.VisitJSON(invalidData, openapi3.EnableJSONSchema2020()); err != nil {
-		fmt.Println("Invalid data rejected")
+		fmt.Println("invalid data rejected")
 	}
 
 	// Output:
-	// Valid data passed
-	// Valid data with null passed
-	// Invalid data rejected
+	// valid data passed
+	// valid data with null passed
+	// invalid data rejected
 }
 
 // Example demonstrates type arrays with null support
@@ -92,21 +92,21 @@ func Example_typeArrayWithNull() {
 
 	// Both string and null are valid
 	if err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("String accepted")
+		fmt.Println("string accepted")
 	}
 
 	if err := schema.VisitJSON(nil, openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("Null accepted")
+		fmt.Println("null accepted")
 	}
 
 	if err := schema.VisitJSON(123, openapi3.EnableJSONSchema2020()); err != nil {
-		fmt.Println("Number rejected")
+		fmt.Println("number rejected")
 	}
 
 	// Output:
-	// String accepted
-	// Null accepted
-	// Number rejected
+	// string accepted
+	// null accepted
+	// number rejected
 }
 
 // Example demonstrates the const keyword
@@ -117,16 +117,16 @@ func Example_constKeyword() {
 	}
 
 	if err := schema.VisitJSON("production", openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("Const value accepted")
+		fmt.Println("const value accepted")
 	}
 
 	if err := schema.VisitJSON("development", openapi3.EnableJSONSchema2020()); err != nil {
-		fmt.Println("Other value rejected")
+		fmt.Println("other value rejected")
 	}
 
 	// Output:
-	// Const value accepted
-	// Other value rejected
+	// const value accepted
+	// other value rejected
 }
 
 // Example demonstrates the examples field
@@ -144,11 +144,11 @@ func Example_examplesField() {
 
 	// Examples don't affect validation, any string is valid
 	if err := schema.VisitJSON("yellow", openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("Any string accepted")
+		fmt.Println("any string accepted")
 	}
 
 	// Output:
-	// Any string accepted
+	// any string accepted
 }
 
 // Example demonstrates backward compatibility with nullable
@@ -162,16 +162,16 @@ func Example_nullableBackwardCompatibility() {
 
 	// Automatically converted to type array ["string", "null"]
 	if err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("String accepted")
+		fmt.Println("string accepted")
 	}
 
 	if err := schema.VisitJSON(nil, openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("Null accepted")
+		fmt.Println("null accepted")
 	}
 
 	// Output:
-	// String accepted
-	// Null accepted
+	// string accepted
+	// null accepted
 }
 
 // Example demonstrates complex nested schemas
@@ -222,11 +222,11 @@ func Example_complexNestedSchema() {
 	}
 
 	if err := schema.VisitJSON(validData, openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("Complex nested object validated")
+		fmt.Println("complex nested object validated")
 	}
 
 	// Output:
-	// Complex nested object validated
+	// complex nested object validated
 }
 
 // Example demonstrates using both validators for comparison
@@ -241,16 +241,16 @@ func Example_comparingValidators() {
 	// Test with built-in validator (no option)
 	err1 := schema.VisitJSON(testValue)
 	if err1 != nil {
-		fmt.Println("Built-in validator: rejected")
+		fmt.Println("built-in validator: rejected")
 	}
 
 	// Test with JSON Schema 2020-12 validator
 	err2 := schema.VisitJSON(testValue, openapi3.EnableJSONSchema2020())
 	if err2 != nil {
-		fmt.Println("JSON Schema 2020-12 validator: rejected")
+		fmt.Println("visit JSON Schema 2020-12 validator: rejected")
 	}
 
 	// Output:
-	// Built-in validator: rejected
-	// JSON Schema 2020-12 validator: rejected
+	// built-in validator: rejected
+	// visit JSON Schema 2020-12 validator: rejected
 }

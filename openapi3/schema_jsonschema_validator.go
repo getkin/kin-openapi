@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -68,14 +69,14 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 	// In OpenAPI 3.0, these are booleans alongside minimum/maximum
 	// In JSON Schema 2020-12, they are numeric values
 	if exclusiveMin, ok := schema["exclusiveMinimum"].(bool); ok && exclusiveMin {
-		if min, ok := schema["minimum"].(float64); ok {
-			schema["exclusiveMinimum"] = min
+		if schemaMin, ok := schema["minimum"].(float64); ok {
+			schema["exclusiveMinimum"] = schemaMin
 			delete(schema, "minimum")
 		}
 	}
 	if exclusiveMax, ok := schema["exclusiveMaximum"].(bool); ok && exclusiveMax {
-		if max, ok := schema["maximum"].(float64); ok {
-			schema["exclusiveMaximum"] = max
+		if schemaMax, ok := schema["maximum"].(float64); ok {
+			schema["exclusiveMaximum"] = schemaMax
 			delete(schema, "maximum")
 		}
 	}
@@ -127,7 +128,8 @@ func (v *jsonSchemaValidator) validate(value any) error {
 
 // convertJSONSchemaError converts a jsonschema validation error to OpenAPI SchemaError format
 func convertJSONSchemaError(err error) error {
-	if validationErr, ok := err.(*jsonschema.ValidationError); ok {
+	var validationErr *jsonschema.ValidationError
+	if errors.As(err, &validationErr) {
 		return formatValidationError(validationErr, "")
 	}
 	return err
@@ -146,7 +148,7 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 	// Build error message using the Error() method
 	var msg strings.Builder
 	if path != "" {
-		msg.WriteString(fmt.Sprintf(`Error at "%s": `, path))
+		msg.WriteString(fmt.Sprintf(`error at "%s": `, path))
 	}
 	msg.WriteString(verr.Error())
 
