@@ -13,7 +13,7 @@ type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	Title          string   `json:"title" yaml:"title"` // Required
+	Title          string   `json:"title" yaml:"title"`                         // Required
 	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"` // OpenAPI 3.1
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
