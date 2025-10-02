@@ -185,8 +185,8 @@ func TestWebhooksField(t *testing.T) {
 
 		err := doc.Validate(ctx)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "webhook")
-		require.Contains(t, err.Error(), "invalidWebhook")
+		require.ErrorContains(t, err, "webhook")
+		require.ErrorContains(t, err, "invalidWebhook")
 	})
 }
 
