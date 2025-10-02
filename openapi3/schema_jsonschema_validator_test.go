@@ -7,20 +7,15 @@ import (
 )
 
 func TestJSONSchema2020Validator_Basic(t *testing.T) {
-	// Enable the new validator for this test
-	oldValue := UseJSONSchema2020Validator
-	UseJSONSchema2020Validator = true
-	defer func() { UseJSONSchema2020Validator = oldValue }()
-
 	t.Run("string validation", func(t *testing.T) {
 		schema := &Schema{
 			Type: &Types{"string"},
 		}
 
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(123)
+		err = schema.VisitJSON(123, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -33,13 +28,13 @@ func TestJSONSchema2020Validator_Basic(t *testing.T) {
 			Max:  &max,
 		}
 
-		err := schema.VisitJSON(50.0)
+		err := schema.VisitJSON(50.0, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(150.0)
+		err = schema.VisitJSON(150.0, EnableJSONSchema2020())
 		require.Error(t, err)
 
-		err = schema.VisitJSON(-10.0)
+		err = schema.VisitJSON(-10.0, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -73,33 +68,28 @@ func TestJSONSchema2020Validator_Basic(t *testing.T) {
 			}},
 		}
 
-		err := schema.VisitJSON([]any{"a", "b", "c"})
+		err := schema.VisitJSON([]any{"a", "b", "c"}, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON([]any{"a", 1, "c"})
+		err = schema.VisitJSON([]any{"a", 1, "c"}, EnableJSONSchema2020())
 		require.Error(t, err) // item 1 is not a string
 	})
 }
 
 func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
-	// Enable the new validator for this test
-	oldValue := UseJSONSchema2020Validator
-	UseJSONSchema2020Validator = true
-	defer func() { UseJSONSchema2020Validator = oldValue }()
-
 	t.Run("type array with null", func(t *testing.T) {
 		schema := &Schema{
 			Type: &Types{"string", "null"},
 		}
 
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err2 := schema.VisitJSON(nil)
-		require.NoError(t, err2)
+		err = schema.VisitJSON(nil, EnableJSONSchema2020())
+		require.NoError(t, err)
 
-		err3 := schema.VisitJSON(123)
-		require.Error(t, err3)
+		err = schema.VisitJSON(123, EnableJSONSchema2020())
+		require.Error(t, err)
 	})
 
 	t.Run("nullable conversion", func(t *testing.T) {
@@ -108,11 +98,11 @@ func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
 			Nullable: true,
 		}
 
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err2 := schema.VisitJSON(nil)
-		require.NoError(t, err2)
+		err = schema.VisitJSON(nil, EnableJSONSchema2020())
+		require.NoError(t, err)
 	})
 
 	t.Run("const validation", func(t *testing.T) {
@@ -120,10 +110,10 @@ func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
 			Const: "fixed-value",
 		}
 
-		err := schema.VisitJSON("fixed-value")
+		err := schema.VisitJSON("fixed-value", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON("other-value")
+		err = schema.VisitJSON("other-value", EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -137,17 +127,12 @@ func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
 		}
 
 		// Examples don't affect validation, just ensure schema is valid
-		err := schema.VisitJSON("any-value")
+		err := schema.VisitJSON("any-value", EnableJSONSchema2020())
 		require.NoError(t, err)
 	})
 }
 
 func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
-	// Enable the new validator for this test
-	oldValue := UseJSONSchema2020Validator
-	UseJSONSchema2020Validator = true
-	defer func() { UseJSONSchema2020Validator = oldValue }()
-
 	t.Run("exclusive minimum as boolean (OpenAPI 3.0 style)", func(t *testing.T) {
 		min := 0.0
 		schema := &Schema{
@@ -156,10 +141,10 @@ func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
 			ExclusiveMin: true,
 		}
 
-		err := schema.VisitJSON(0.1)
+		err := schema.VisitJSON(0.1, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(0.0)
+		err = schema.VisitJSON(0.0, EnableJSONSchema2020())
 		require.Error(t, err) // should be exclusive
 	})
 
@@ -171,20 +156,15 @@ func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
 			ExclusiveMax: true,
 		}
 
-		err := schema.VisitJSON(99.9)
+		err := schema.VisitJSON(99.9, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(100.0)
+		err = schema.VisitJSON(100.0, EnableJSONSchema2020())
 		require.Error(t, err) // should be exclusive
 	})
 }
 
 func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
-	// Enable the new validator for this test
-	oldValue := UseJSONSchema2020Validator
-	UseJSONSchema2020Validator = true
-	defer func() { UseJSONSchema2020Validator = oldValue }()
-
 	t.Run("oneOf", func(t *testing.T) {
 		schema := &Schema{
 			OneOf: SchemaRefs{
@@ -193,13 +173,13 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 			},
 		}
 
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(42)
+		err = schema.VisitJSON(42, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(true)
+		err = schema.VisitJSON(true, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -211,13 +191,13 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 			},
 		}
 
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(42)
+		err = schema.VisitJSON(42, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(true)
+		err = schema.VisitJSON(true, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -232,10 +212,10 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 			},
 		}
 
-		err := schema.VisitJSON(50.0)
+		err := schema.VisitJSON(50.0, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(150.0)
+		err = schema.VisitJSON(150.0, EnableJSONSchema2020())
 		require.Error(t, err) // exceeds max
 	})
 
@@ -244,20 +224,15 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 			Not: &SchemaRef{Value: &Schema{Type: &Types{"string"}}},
 		}
 
-		err := schema.VisitJSON(42)
+		err := schema.VisitJSON(42, EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON("hello")
+		err = schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 }
 
 func TestJSONSchema2020Validator_Fallback(t *testing.T) {
-	// Test that invalid schemas fall back to built-in validator
-	oldValue := UseJSONSchema2020Validator
-	UseJSONSchema2020Validator = true
-	defer func() { UseJSONSchema2020Validator = oldValue }()
-
 	t.Run("fallback on compilation error", func(t *testing.T) {
 		// Create a schema that might cause compilation issues
 		schema := &Schema{
@@ -265,26 +240,21 @@ func TestJSONSchema2020Validator_Fallback(t *testing.T) {
 		}
 
 		// Should not panic, even if there's an issue
-		err := schema.VisitJSON("test")
+		err := schema.VisitJSON("test", EnableJSONSchema2020())
 		require.NoError(t, err)
 	})
 }
 
 func TestBuiltInValidatorStillWorks(t *testing.T) {
-	// Ensure built-in validator is not affected
-	oldValue := UseJSONSchema2020Validator
-	UseJSONSchema2020Validator = false
-	defer func() { UseJSONSchema2020Validator = oldValue }()
-
 	t.Run("string validation with built-in", func(t *testing.T) {
 		schema := &Schema{
 			Type: &Types{"string"},
 		}
 
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(123)
+		err = schema.VisitJSON(123, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -302,7 +272,7 @@ func TestBuiltInValidatorStillWorks(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(map[string]any{})
+		err = schema.VisitJSON(map[string]any{}, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 }

@@ -66,9 +66,15 @@ The JSON Schema 2020-12 validator is **opt-in** to maintain backward compatibili
 ```go
 import "github.com/getkin/kin-openapi/openapi3"
 
-// Enable JSON Schema 2020-12 validator
-openapi3.UseJSONSchema2020Validator = true
+// Use JSON Schema 2020-12 validator for this validation
+err := schema.VisitJSON(value, openapi3.EnableJSONSchema2020())
 ```
+
+This approach:
+- Avoids global state issues
+- Allows using both validators simultaneously in the same application
+- Provides better control and testability
+- Is thread-safe
 
 ### Version Detection
 

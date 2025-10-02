@@ -73,15 +73,15 @@ paths:
 		}
 
 		// Should accept string
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Should accept null
-		err = schema.VisitJSON(nil)
+		err = schema.VisitJSON(nil, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Should reject number
-		err = schema.VisitJSON(123)
+		err = schema.VisitJSON(123, openapi3.EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -100,10 +100,10 @@ paths:
 		require.False(t, schema.Type.IsMultiple())
 
 		// Validation still works
-		err := schema.VisitJSON(50)
+		err := schema.VisitJSON(50, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON(150)
+		err = schema.VisitJSON(150, openapi3.EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -195,33 +195,29 @@ webhooks:
 		require.True(t, schema.Type.Includes("string"))
 
 		// Should accept string
-		err := schema.VisitJSON("hello")
+		err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Should accept null (with new validator)
-		openapi3.UseJSONSchema2020Validator = true
-		defer func() { openapi3.UseJSONSchema2020Validator = false }()
 
-		err = schema.VisitJSON(nil)
+		err = schema.VisitJSON(nil, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Should reject number
-		err = schema.VisitJSON(123)
+		err = schema.VisitJSON(123, openapi3.EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
 	t.Run("const keyword validation", func(t *testing.T) {
-		openapi3.UseJSONSchema2020Validator = true
-		defer func() { openapi3.UseJSONSchema2020Validator = false }()
 
 		schema := &openapi3.Schema{
 			Const: "production",
 		}
 
-		err := schema.VisitJSON("production")
+		err := schema.VisitJSON("production", openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
-		err = schema.VisitJSON("development")
+		err = schema.VisitJSON("development", openapi3.EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -324,8 +320,6 @@ webhooks:
 
 // TestJSONSchema2020Validator_RealWorld tests the validator with realistic schemas
 func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
-	openapi3.UseJSONSchema2020Validator = true
-	defer func() { openapi3.UseJSONSchema2020Validator = false }()
 
 	t.Run("complex nested object with nullable", func(t *testing.T) {
 		min := 0.0
@@ -376,7 +370,7 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 			},
 			"tags": []any{"tag1", "tag2"},
 		}
-		err := schema.VisitJSON(validData)
+		err := schema.VisitJSON(validData, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Valid with null name
@@ -388,7 +382,7 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 			},
 			"tags": nil,
 		}
-		err = schema.VisitJSON(validDataNullName)
+		err = schema.VisitJSON(validDataNullName, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Invalid - missing required field
@@ -397,7 +391,7 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 				"name": "Jane",
 			},
 		}
-		err = schema.VisitJSON(invalidData)
+		err = schema.VisitJSON(invalidData, openapi3.EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 
@@ -444,7 +438,7 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 			"type":  "email",
 			"email": "test@example.com",
 		}
-		err := schema.VisitJSON(emailData)
+		err := schema.VisitJSON(emailData, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Valid phone
@@ -452,7 +446,7 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 			"type":  "phone",
 			"phone": "+1234567890",
 		}
-		err = schema.VisitJSON(phoneData)
+		err = schema.VisitJSON(phoneData, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
 		// Invalid - doesn't match any oneOf
@@ -460,7 +454,7 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 			"type": "email",
 			// missing email field
 		}
-		err = schema.VisitJSON(invalidData)
+		err = schema.VisitJSON(invalidData, openapi3.EnableJSONSchema2020())
 		require.Error(t, err)
 	})
 }
@@ -480,8 +474,6 @@ func TestMigrationScenarios(t *testing.T) {
 		}
 
 		// Both should accept null with new validator
-		openapi3.UseJSONSchema2020Validator = true
-		defer func() { openapi3.UseJSONSchema2020Validator = false }()
 
 		err := schema30.VisitJSON(nil)
 		require.NoError(t, err)
@@ -505,9 +497,7 @@ func TestMigrationScenarios(t *testing.T) {
 		require.NoError(t, err)
 
 		if doc30.IsOpenAPI3_1() {
-			openapi3.UseJSONSchema2020Validator = true
 		}
-		require.False(t, openapi3.UseJSONSchema2020Validator) // Should not be enabled for 3.0
 
 		// Simulate loading 3.1 document
 		spec31 := []byte(`{"openapi":"3.1.0","info":{"title":"Test","version":"1.0.0"},"paths":{}}`)
@@ -516,12 +506,9 @@ func TestMigrationScenarios(t *testing.T) {
 		require.NoError(t, err)
 
 		if doc31.IsOpenAPI3_1() {
-			openapi3.UseJSONSchema2020Validator = true
 		}
-		require.True(t, openapi3.UseJSONSchema2020Validator) // Should be enabled for 3.1
 
 		// Cleanup
-		openapi3.UseJSONSchema2020Validator = false
 	})
 }
 
@@ -601,8 +588,6 @@ func TestEdgeCases(t *testing.T) {
 // TestPerformance checks for obvious performance issues
 func TestPerformance(t *testing.T) {
 	t.Run("large schema compilation", func(t *testing.T) {
-		openapi3.UseJSONSchema2020Validator = true
-		defer func() { openapi3.UseJSONSchema2020Validator = false }()
 
 		// Create a large schema
 		properties := make(openapi3.Schemas)
@@ -621,7 +606,7 @@ func TestPerformance(t *testing.T) {
 
 		// Should compile and validate without hanging
 		data := map[string]any{"a0": "test"}
-		err := schema.VisitJSON(data)
+		err := schema.VisitJSON(data, openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 	})
 

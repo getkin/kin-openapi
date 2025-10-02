@@ -1311,7 +1311,7 @@ func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
 	settings := newSchemaValidationSettings(opts...)
 
 	// Use JSON Schema 2020-12 validator if enabled
-	if UseJSONSchema2020Validator {
+	if settings.useJSONSchema2020 {
 		return schema.visitJSONWithJSONSchema(settings, value)
 	}
 
