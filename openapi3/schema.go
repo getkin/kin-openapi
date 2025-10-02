@@ -134,17 +134,17 @@ type Schema struct {
 	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 
 	// OpenAPI 3.1 / JSON Schema 2020-12 fields
-	Const             any          `json:"const,omitempty" yaml:"const,omitempty"`
-	Examples          []any        `json:"examples,omitempty" yaml:"examples,omitempty"`
-	PrefixItems       []*SchemaRef `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
-	Contains          *SchemaRef   `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains       *uint64      `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains       *uint64      `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
-	PatternProperties Schemas      `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	DependentSchemas  Schemas      `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	PropertyNames     *SchemaRef   `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems  *SchemaRef   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
-	UnevaluatedProperties *SchemaRef `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	Const                 any          `json:"const,omitempty" yaml:"const,omitempty"`
+	Examples              []any        `json:"examples,omitempty" yaml:"examples,omitempty"`
+	PrefixItems           []*SchemaRef `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
+	Contains              *SchemaRef   `json:"contains,omitempty" yaml:"contains,omitempty"`
+	MinContains           *uint64      `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains           *uint64      `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	PatternProperties     Schemas      `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	DependentSchemas      Schemas      `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	PropertyNames         *SchemaRef   `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	UnevaluatedItems      *SchemaRef   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	UnevaluatedProperties *SchemaRef   `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 }
 
 // Types represents the type(s) of a schema.
