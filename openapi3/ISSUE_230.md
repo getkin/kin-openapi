@@ -89,7 +89,7 @@ if err != nil {
 
 if doc.IsOpenAPI3_1() {
     openapi3.UseJSONSchema2020Validator = true
-    fmt.Println("OpenAPI 3.1 document detected")
+    fmt.Println("openAPI 3.1 document detected")
 }
 ```
 
