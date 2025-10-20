@@ -568,6 +568,14 @@ func convertRefsInV3SchemaRef(from *openapi3.SchemaRef) *openapi3.SchemaRef {
 			to.Value.Items.Ref = ToV3Ref(to.Value.Items.Ref)
 		}
 		to.Value.AdditionalProperties = toV3AdditionalProperties(to.Value.AdditionalProperties)
+
+		if len(to.Value.AllOf) > 0 {
+			allOf := make(openapi3.SchemaRefs, len(to.Value.AllOf))
+			for i, schemaRef := range to.Value.AllOf {
+				allOf[i] = convertRefsInV3SchemaRef(schemaRef)
+			}
+			to.Value.AllOf = allOf
+		}
 	}
 	return &to
 }
