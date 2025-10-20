@@ -90,8 +90,23 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 
 	// RequestBody
 	requestBody := operation.RequestBody
-	if requestBody != nil && !options.ExcludeRequestBody {
-		if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+	if !options.ExcludeRequestBody {
+		// Validate specification request body if present
+		if requestBody != nil {
+			if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+				if !options.MultiError {
+					return err
+				}
+				me = append(me, err)
+			}
+		}
+
+		// Reject if specification request body if not present (not wanted) but is present in the HTTP request
+		if options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
+			err := &RequestError{
+				Input: input,
+				Err:   fmt.Errorf("request body not allowed for this request"),
+			}
 			if !options.MultiError {
 				return err
 			}
