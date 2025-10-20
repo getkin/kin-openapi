@@ -132,14 +132,64 @@ type Schema struct {
 	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	Const                 any          `json:"const,omitempty" yaml:"const,omitempty"`
+	Examples              []any        `json:"examples,omitempty" yaml:"examples,omitempty"`
+	PrefixItems           []*SchemaRef `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
+	Contains              *SchemaRef   `json:"contains,omitempty" yaml:"contains,omitempty"`
+	MinContains           *uint64      `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains           *uint64      `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	PatternProperties     Schemas      `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	DependentSchemas      Schemas      `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	PropertyNames         *SchemaRef   `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	UnevaluatedItems      *SchemaRef   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	UnevaluatedProperties *SchemaRef   `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 }
 
+// Types represents the type(s) of a schema.
+//
+// In OpenAPI 3.0, this is typically a single type (e.g., "string").
+// In OpenAPI 3.1, it can be an array of types (e.g., ["string", "null"]).
+//
+// Serialization behavior:
+//   - Single type: serializes as a string (e.g., "string")
+//   - Multiple types: serializes as an array (e.g., ["string", "null"])
+//   - Accepts both string and array formats when unmarshaling
+//
+// Example OpenAPI 3.0 (single type):
+//
+//	schema := &Schema{Type: &Types{"string"}}
+//	// JSON: {"type": "string"}
+//
+// Example OpenAPI 3.1 (type array):
+//
+//	schema := &Schema{Type: &Types{"string", "null"}}
+//	// JSON: {"type": ["string", "null"]}
 type Types []string
 
+// Is returns true if the schema has exactly one type and it matches the given type.
+// This is useful for OpenAPI 3.0 style single-type checks.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.Is("string")  // true
+//	types.Is("number")  // false
+//
+//	types = &Types{"string", "null"}
+//	types.Is("string")  // false (multiple types)
 func (types *Types) Is(typ string) bool {
 	return types != nil && len(*types) == 1 && (*types)[0] == typ
 }
 
+// Slice returns the types as a string slice.
+// Returns nil if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	slice := types.Slice()  // []string{"string", "null"}
 func (types *Types) Slice() []string {
 	if types == nil {
 		return nil
@@ -147,6 +197,15 @@ func (types *Types) Slice() []string {
 	return *types
 }
 
+// Includes returns true if the given type is included in the type array.
+// Returns false if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	types.Includes("string")  // true
+//	types.Includes("null")    // true
+//	types.Includes("number")  // false
 func (pTypes *Types) Includes(typ string) bool {
 	if pTypes == nil {
 		return false
@@ -160,11 +219,80 @@ func (pTypes *Types) Includes(typ string) bool {
 	return false
 }
 
+// Permits returns true if the given type is permitted.
+// Returns true if types is nil (any type allowed), otherwise checks if the type is included.
+//
+// Example:
+//
+//	var nilTypes *Types
+//	nilTypes.Permits("anything")  // true (nil permits everything)
+//
+//	types := &Types{"string"}
+//	types.Permits("string")  // true
+//	types.Permits("number")  // false
 func (types *Types) Permits(typ string) bool {
 	if types == nil {
 		return true
 	}
 	return types.Includes(typ)
+}
+
+// IncludesNull returns true if the type array includes "null".
+// This is useful for OpenAPI 3.1 where null is a first-class type.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	types.IncludesNull()  // true
+//
+//	types = &Types{"string"}
+//	types.IncludesNull()  // false
+func (types *Types) IncludesNull() bool {
+	return types.Includes(TypeNull)
+}
+
+// IsMultiple returns true if multiple types are specified.
+// This is an OpenAPI 3.1 feature that enables type arrays.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.IsMultiple()  // false
+//
+//	types = &Types{"string", "null"}
+//	types.IsMultiple()  // true
+func (types *Types) IsMultiple() bool {
+	return types != nil && len(*types) > 1
+}
+
+// IsSingle returns true if exactly one type is specified.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.IsSingle()  // true
+//
+//	types = &Types{"string", "null"}
+//	types.IsSingle()  // false
+func (types *Types) IsSingle() bool {
+	return types != nil && len(*types) == 1
+}
+
+// IsEmpty returns true if no types are specified (nil or empty array).
+// When a schema has no type specified, it permits any type.
+//
+// Example:
+//
+//	var nilTypes *Types
+//	nilTypes.IsEmpty()  // true
+//
+//	types := &Types{}
+//	types.IsEmpty()  // true
+//
+//	types = &Types{"string"}
+//	types.IsEmpty()  // false
+func (types *Types) IsEmpty() bool {
+	return types == nil || len(*types) == 0
 }
 
 func (pTypes *Types) MarshalJSON() ([]byte, error) {
@@ -401,6 +529,41 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m["discriminator"] = x
 	}
 
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	if x := schema.Const; x != nil {
+		m["const"] = x
+	}
+	if x := schema.Examples; len(x) != 0 {
+		m["examples"] = x
+	}
+	if x := schema.PrefixItems; len(x) != 0 {
+		m["prefixItems"] = x
+	}
+	if x := schema.Contains; x != nil {
+		m["contains"] = x
+	}
+	if x := schema.MinContains; x != nil {
+		m["minContains"] = x
+	}
+	if x := schema.MaxContains; x != nil {
+		m["maxContains"] = x
+	}
+	if x := schema.PatternProperties; len(x) != 0 {
+		m["patternProperties"] = x
+	}
+	if x := schema.DependentSchemas; len(x) != 0 {
+		m["dependentSchemas"] = x
+	}
+	if x := schema.PropertyNames; x != nil {
+		m["propertyNames"] = x
+	}
+	if x := schema.UnevaluatedItems; x != nil {
+		m["unevaluatedItems"] = x
+	}
+	if x := schema.UnevaluatedProperties; x != nil {
+		m["unevaluatedProperties"] = x
+	}
+
 	return m, nil
 }
 
@@ -462,6 +625,19 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "maxProperties")
 	delete(x.Extensions, "additionalProperties")
 	delete(x.Extensions, "discriminator")
+
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	delete(x.Extensions, "const")
+	delete(x.Extensions, "examples")
+	delete(x.Extensions, "prefixItems")
+	delete(x.Extensions, "contains")
+	delete(x.Extensions, "minContains")
+	delete(x.Extensions, "maxContains")
+	delete(x.Extensions, "patternProperties")
+	delete(x.Extensions, "dependentSchemas")
+	delete(x.Extensions, "propertyNames")
+	delete(x.Extensions, "unevaluatedItems")
+	delete(x.Extensions, "unevaluatedProperties")
 
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
@@ -856,7 +1032,7 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 }
 
 func (schema *Schema) PermitsNull() bool {
-	return schema.Nullable || schema.Type.Includes("null")
+	return schema.Nullable || schema.Type.IncludesNull()
 }
 
 // IsEmpty tells whether schema is equivalent to the empty schema `{}`.
@@ -1133,6 +1309,12 @@ func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool {
 
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error {
 	settings := newSchemaValidationSettings(opts...)
+
+	// Use JSON Schema 2020-12 validator if enabled
+	if settings.useJSONSchema2020 {
+		return schema.visitJSONWithJSONSchema(settings, value)
+	}
+
 	return schema.visitJSON(settings, value)
 }
 
