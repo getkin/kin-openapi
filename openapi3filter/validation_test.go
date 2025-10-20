@@ -248,14 +248,14 @@ func TestFilter(t *testing.T) {
 	// Test query parameter openapi3filter
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=ae&queryArgOneOf=ac&queryArgAllOf=2017-12-31T11:59:59",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=ae&queryArgOneOf=ac&queryArgAllOf=2017-12-31T11:59:59Z",
 	}
 	err = expect(req, resp)
 	require.NoError(t, err)
 
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=2017-12-31T11:59:59",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=2017-12-31T11:59:59Z",
 	}
 	err = expect(req, resp)
 	require.NoError(t, err)
@@ -269,7 +269,7 @@ func TestFilter(t *testing.T) {
 
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=2017-12-31T11:59:59",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=2017-12-31T11:59:59Z",
 	}
 	err = expect(req, resp)
 	require.IsType(t, &RequestError{}, err)
