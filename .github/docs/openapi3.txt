@@ -1301,11 +1301,22 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
     documents.
 
 type Ref struct {
-	Ref    string  `json:"$ref" yaml:"$ref"`
-	Origin *Origin `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Ref        string         `json:"$ref" yaml:"$ref"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 }
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
+
+func (x Ref) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Ref.
+
+func (x Ref) MarshalYAML() (any, error)
+    MarshalYAML returns the YAML encoding of Ref.
+
+func (e *Ref) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Extensions does not comply with the OpenAPI
+    spec.
 
 type RefNameResolver func(*T, ComponentRef) string
     RefNameResolver maps a component to an name that is used as it's
