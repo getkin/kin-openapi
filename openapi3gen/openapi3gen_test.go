@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/TykTechnologies/kin-openapi/openapi3gen"
 )
 
 func ExampleGenerator_SchemaRefs() {

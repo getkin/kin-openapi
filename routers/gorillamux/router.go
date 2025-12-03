@@ -15,8 +15,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/routers"
+	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/TykTechnologies/kin-openapi/routers"
 )
 
 var _ routers.Router = &Router{}

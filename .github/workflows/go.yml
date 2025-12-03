@@ -24,7 +24,7 @@ jobs:
     name: ${{ matrix.go }} on ${{ matrix.os }}
     steps:
 
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go }}
 
@@ -50,7 +50,7 @@ jobs:
     - if: runner.os == 'Linux'
       run: sudo apt install silversearcher-ag
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - run: go generate openapi3/refsgenerator.go
     - run: git --no-pager diff --exit-code

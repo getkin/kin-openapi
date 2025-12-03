@@ -1,4 +1,4 @@
-module github.com/getkin/kin-openapi
+module github.com/TykTechnologies/kin-openapi
 
 go 1.22.5
 
