@@ -17,7 +17,7 @@ count_missing_mentions() {
 		| grep -Eo '^-[^ ]+ ([^ (]+)[ (]' \
 		| sed 's%(% %' \
 		| cut -d' ' -f2); do
-		if ! grep -A999999 '## Sub-v1 breaking API changes' README.md | grep -F "$thing"; then
+		 if ! grep -A999999 -E '## .*Sub-v[0-9]+ breaking API changes' README.md | grep -F "$thing"; then
 			((errors++)) || true
 		fi
 	done
