@@ -8,7 +8,7 @@ import (
 
 	"github.com/oasdiff/yaml"
 
-	"github.com/TykTechnologies/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi2"
 )
 
 func Example() {

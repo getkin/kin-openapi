@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 )
 
 // ValidationErrorEncoder wraps a base ErrorEncoder to handle ValidationErrors
