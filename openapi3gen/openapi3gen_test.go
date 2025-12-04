@@ -10,10 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3gen"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3gen"
 )
 
 func ExampleGenerator_SchemaRefs() {
@@ -23,6 +24,12 @@ func ExampleGenerator_SchemaRefs() {
 	}
 	type Embedded2 struct {
 		A string `json:"a"`
+	}
+	type EmbeddedNonStruct string
+	type EmbeddedNonStructPtr string
+	type Embedded3 struct {
+		EmbeddedNonStruct
+		*EmbeddedNonStructPtr
 	}
 	type SomeStruct struct {
 		Bool    bool                      `json:"bool"`
@@ -48,6 +55,8 @@ func ExampleGenerator_SchemaRefs() {
 
 		Embedded2
 
+		Embedded3 `json:"embedded3"`
+
 		Ptr *SomeOtherType `json:"ptr"`
 	}
 
@@ -64,7 +73,7 @@ func ExampleGenerator_SchemaRefs() {
 	}
 	fmt.Printf("schemaRef: %s\n", data)
 	// Output:
-	// g.SchemaRefs: 16
+	// g.SchemaRefs: 17
 	// schemaRef: {
 	//   "properties": {
 	//     "a": {
@@ -85,6 +94,7 @@ func ExampleGenerator_SchemaRefs() {
 	//       },
 	//       "type": "object"
 	//     },
+	//     "embedded3": {},
 	//     "float64": {
 	//       "format": "double",
 	//       "type": "number"
@@ -99,11 +109,13 @@ func ExampleGenerator_SchemaRefs() {
 	//     "json": {},
 	//     "map": {
 	//       "additionalProperties": {
+	//         "nullable": true,
 	//         "type": "string"
 	//       },
 	//       "type": "object"
 	//     },
 	//     "ptr": {
+	//       "nullable": true,
 	//       "type": "string"
 	//     },
 	//     "slice": {
@@ -169,6 +181,7 @@ func ExampleThrowErrorOnCycle() {
 	// schemaRef: {
 	//   "properties": {
 	//     "a": {
+	//       "nullable": true,
 	//       "properties": {
 	//         "b": {
 	//           "$ref": "#/components/schemas/CyclicType0"
@@ -183,6 +196,7 @@ func ExampleThrowErrorOnCycle() {
 	//   "CyclicType0": {
 	//     "properties": {
 	//       "a": {
+	//         "nullable": true,
 	//         "properties": {
 	//           "b": {
 	//             "$ref": "#/components/schemas/CyclicType0"
@@ -207,11 +221,11 @@ func TestExportedNonTagged(t *testing.T) {
 	schemaRef, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields())
 	require.NoError(t, err)
 	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
-		Type: "object",
+		Type: &openapi3.Types{"object"},
 		Properties: map[string]*openapi3.SchemaRef{
-			"A":           {Value: &openapi3.Schema{Type: "string"}},
-			"another":     {Value: &openapi3.Schema{Type: "string"}},
-			"even_a_yaml": {Value: &openapi3.Schema{Type: "string"}},
+			"A":           {Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+			"another":     {Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+			"even_a_yaml": {Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
 		}}}, schemaRef)
 }
 
@@ -374,11 +388,11 @@ func TestCyclicReferences(t *testing.T) {
 	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["FieldCycle"].Ref)
 
 	require.NotNil(t, schemaRef.Value.Properties["SliceCycle"])
-	require.Equal(t, "array", schemaRef.Value.Properties["SliceCycle"].Value.Type)
+	require.Equal(t, &openapi3.Types{"array"}, schemaRef.Value.Properties["SliceCycle"].Value.Type)
 	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["SliceCycle"].Value.Items.Ref)
 
 	require.NotNil(t, schemaRef.Value.Properties["MapCycle"])
-	require.Equal(t, "object", schemaRef.Value.Properties["MapCycle"].Value.Type)
+	require.Equal(t, &openapi3.Types{"object"}, schemaRef.Value.Properties["MapCycle"].Value.Type)
 	require.Equal(t, "#/components/schemas/ObjectDiff", schemaRef.Value.Properties["MapCycle"].Value.AdditionalProperties.Schema.Ref)
 }
 
@@ -394,7 +408,8 @@ func ExampleSchemaCustomizer() {
 			InnerFieldWithTag    int `mymintag:"-1" mymaxtag:"50"`
 			NestedInnerBla
 		}
-		Enum2Field string `json:"enum2" myenumtag:"c,d"`
+		Enum2Field string          `json:"enum2" myenumtag:"c,d"`
+		JsonField  json.RawMessage `json:"rawmsg" myjsontag:"raw"`
 	}
 
 	type Bla struct {
@@ -421,6 +436,9 @@ func ExampleSchemaCustomizer() {
 			for _, s := range strings.Split(tag.Get("myenumtag"), ",") {
 				schema.Enum = append(schema.Enum, s)
 			}
+		}
+		if tag.Get("myjsontag") != "" {
+			schema.Description = "description"
 		}
 		return nil
 	})
@@ -474,6 +492,9 @@ func ExampleSchemaCustomizer() {
 	//         "f"
 	//       ],
 	//       "type": "string"
+	//     },
+	//     "rawmsg": {
+	//       "description": "description"
 	//     }
 	//   },
 	//   "type": "object"
@@ -501,9 +522,9 @@ func TestSchemaCustomizerExcludeSchema(t *testing.T) {
 	schema, err := openapi3gen.NewSchemaRefForValue(&Bla{}, nil, openapi3gen.UseAllExportedFields(), customizer)
 	require.NoError(t, err)
 	require.Equal(t, &openapi3.SchemaRef{Value: &openapi3.Schema{
-		Type: "object",
+		Type: &openapi3.Types{"object"},
 		Properties: map[string]*openapi3.SchemaRef{
-			"Str": {Value: &openapi3.Schema{Type: "string"}},
+			"Str": {Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
 		}}}, schema)
 
 	customizer = openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
@@ -580,4 +601,69 @@ func ExampleNewSchemaRefForValue_recursive() {
 	//   },
 	//   "type": "object"
 	// }
+}
+
+type ID [16]byte
+
+// T implements SetSchemar, allowing it to set an OpenAPI schema.
+type T struct {
+	ID ID `json:"id"`
+}
+
+func (_ *ID) SetSchema(schema *openapi3.Schema) {
+	schema.Type = &openapi3.Types{"string"} // Assuming this matches your custom implementation
+	schema.Format = "uuid"
+}
+
+func ExampleSetSchemar() {
+	schemas := make(openapi3.Schemas)
+	instance := &T{
+		ID: ID{},
+	}
+
+	// Generate the schema for the instance
+	schemaRef, err := openapi3gen.NewSchemaRefForValue(instance, schemas)
+	if err != nil {
+		panic(err)
+	}
+	data, err := json.MarshalIndent(schemaRef, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("schemaRef: %s\n", data)
+	// Output:
+	// schemaRef: {
+	//   "properties": {
+	//     "id": {
+	//       "format": "uuid",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "type": "object"
+	// }
+}
+
+func TestExportComponentSchemasForTimeProp(t *testing.T) {
+	type Some struct {
+		Name      string
+		CreatedAt time.Time
+	}
+
+	schemas := make(openapi3.Schemas)
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true,
+		}),
+	)
+
+	ref, err := g.NewSchemaRefForValue(&Some{}, schemas)
+	require.NoError(t, err)
+
+	schema, err := json.MarshalIndent(ref, "", "  ")
+	require.NoError(t, err)
+
+	assert.Condition(t, func() bool {
+		return !strings.Contains(string(schema), "#/components/schemas/Time")
+	}, "Expected no schema for time.Time property but got one: %s", schema)
 }

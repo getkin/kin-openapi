@@ -21,9 +21,26 @@ func TestIssue341(t *testing.T) {
 
 	bs, err := doc.MarshalJSON()
 	require.NoError(t, err)
-	require.JSONEq(t, `{"info":{"title":"test file","version":"n/a"},"openapi":"3.0.0","paths":{"/testpath":{"$ref":"testpath.yaml#/paths/~1testpath"}}}`, string(bs))
+	require.JSONEq(t, `{
+	"info": {
+		"title": "test file",
+		"version": "n/a"
+	},
+	"openapi": "3.0.0",
+	"paths": {
+		"/testpath": {
+			"$ref": "testpath.yaml#/paths/~1testpath"
+		}
+	}
+}`, string(bs))
 
-	require.Equal(t, "string", doc.Paths["/testpath"].Get.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
+	require.Equal(t, &Types{"string"}, doc.
+		Paths.Value("/testpath").
+		Get.
+		Responses.Value("200").Value.
+		Content["application/json"].
+		Schema.Value.
+		Type)
 
 	doc.InternalizeRefs(context.Background(), nil)
 	bs, err = doc.MarshalJSON()
@@ -31,7 +48,7 @@ func TestIssue341(t *testing.T) {
 	require.JSONEq(t, `{
 		"components": {
 		  "responses": {
-			"testpath_200_response": {
+			"testpath_testpath_200_response": {
 			  "content": {
 				"application/json": {
 				  "schema": {
@@ -53,7 +70,7 @@ func TestIssue341(t *testing.T) {
 			"get": {
 			  "responses": {
 				"200": {
-				  "$ref": "#/components/responses/testpath_200_response"
+				  "$ref": "#/components/responses/testpath_testpath_200_response"
 				}
 			  }
 			}

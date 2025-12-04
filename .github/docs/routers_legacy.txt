@@ -1,3 +1,37 @@
+package legacy // import "github.com/getkin/kin-openapi/routers/legacy"
+
+Package legacy implements a router.
+
+It differs from the gorilla/mux router: * it provides granular errors: "path
+not found", "method not allowed", "variable missing from path" * it does not
+handle matching routes with extensions (e.g. /books/{id}.json) * it handles path
+patterns with a different syntax (e.g. /params/{x}/{y}/{z.*})
+
+FUNCTIONS
+
 func NewRouter(doc *openapi3.T, opts ...openapi3.ValidationOption) (routers.Router, error)
-type Router struct{ ... }
+    NewRouter creates a new router.
+
+    If the given OpenAPIv3 document has servers, router will use them. All
+    operations of the document will be added to the router.
+
+
+TYPES
+
+type Router struct {
+	// Has unexported fields.
+}
+    Router maps a HTTP request to an OpenAPI operation.
+
+func (router *Router) AddRoute(route *routers.Route) error
+    AddRoute adds a route in the router.
+
+func (router *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string, error)
+    FindRoute extracts the route and parameters of an http.Request
+
 type Routers []*Router
+    Routers maps a HTTP request to a Router.
+
+func (rs Routers) FindRoute(req *http.Request) (routers.Router, *routers.Route, map[string]string, error)
+    FindRoute extracts the route and parameters of an http.Request
+

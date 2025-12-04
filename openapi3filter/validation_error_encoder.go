@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 )
 
 // ValidationErrorEncoder wraps a base ErrorEncoder to handle ValidationErrors
@@ -17,16 +17,18 @@ type ValidationErrorEncoder struct {
 
 // Encode implements the ErrorEncoder interface for encoding ValidationErrors
 func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http.ResponseWriter) {
+	enc.Encoder(ctx, ConvertErrors(err), w)
+}
+
+// ConvertErrors converts all errors to the appropriate error format.
+func ConvertErrors(err error) error {
 	if e, ok := err.(*routers.RouteError); ok {
-		cErr := convertRouteError(e)
-		enc.Encoder(ctx, cErr, w)
-		return
+		return convertRouteError(e)
 	}
 
 	e, ok := err.(*RequestError)
 	if !ok {
-		enc.Encoder(ctx, err, w)
-		return
+		return err
 	}
 
 	var cErr *ValidationError
@@ -43,10 +45,9 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 	}
 
 	if cErr != nil {
-		enc.Encoder(ctx, cErr, w)
-		return
+		return cErr
 	}
-	enc.Encoder(ctx, err, w)
+	return err
 }
 
 func convertRouteError(e *routers.RouteError) *ValidationError {
@@ -159,13 +160,13 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 	if innerErr.SchemaField == "enum" {
 		enums := make([]string, 0, len(innerErr.Schema.Enum))
 		for _, enum := range innerErr.Schema.Enum {
-			enums = append(enums, fmt.Sprintf("%v", enum))
+			enums = append(enums, fmt.Sprint(enum))
 		}
 		cErr.Detail = fmt.Sprintf("value %v at %s must be one of: %s",
 			innerErr.Value,
 			toJSONPointer(innerErr.JSONPointer()),
 			strings.Join(enums, ", "))
-		value := fmt.Sprintf("%v", innerErr.Value)
+		value := fmt.Sprint(innerErr.Value)
 		if e.Parameter != nil &&
 			(e.Parameter.Explode == nil || *e.Parameter.Explode) &&
 			(e.Parameter.Style == "" || e.Parameter.Style == "form") &&

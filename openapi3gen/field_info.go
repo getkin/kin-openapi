@@ -9,20 +9,24 @@ import (
 
 // theFieldInfo contains information about JSON serialization of a field.
 type theFieldInfo struct {
-	HasJSONTag         bool
-	TypeIsMarshaller   bool
-	TypeIsUnmarshaller bool
-	JSONOmitEmpty      bool
-	JSONString         bool
-	Index              []int
-	Type               reflect.Type
-	JSONName           string
+	HasJSONTag        bool
+	TypeIsMarshaler   bool
+	TypeIsUnmarshaler bool
+	JSONOmitEmpty     bool
+	JSONString        bool
+	Index             []int
+	Type              reflect.Type
+	JSONName          string
 }
 
 func appendFields(fields []theFieldInfo, parentIndex []int, t reflect.Type) []theFieldInfo {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
+	if t.Kind() != reflect.Struct {
+		return fields
+	}
+
 	// For each field
 	numField := t.NumField()
 iteration:
@@ -90,8 +94,8 @@ iteration:
 			}
 		}
 
-		_, field.TypeIsMarshaller = field.Type.MethodByName("MarshalJSON")
-		_, field.TypeIsUnmarshaller = field.Type.MethodByName("UnmarshalJSON")
+		_, field.TypeIsMarshaler = field.Type.MethodByName("MarshalJSON")
+		_, field.TypeIsUnmarshaler = field.Type.MethodByName("UnmarshalJSON")
 
 		// Field is done
 		fields = append(fields, field)

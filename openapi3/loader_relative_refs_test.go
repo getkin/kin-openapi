@@ -27,7 +27,7 @@ var refTestDataEntries = []refTestDataEntry{
 		contentTemplate: externalSchemaRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Schemas["TestSchema"].Value.Type)
-			require.Equal(t, "string", doc.Components.Schemas["TestSchema"].Value.Type)
+			require.Equal(t, &Types{"string"}, doc.Components.Schemas["TestSchema"].Value.Type)
 		},
 	},
 	{
@@ -81,42 +81,42 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "PathParameterRef",
 		contentTemplate: externalPathParameterRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test/{id}"].Parameters[0].Value.Name)
-			require.Equal(t, "id", doc.Paths["/test/{id}"].Parameters[0].Value.Name)
+			require.NotNil(t, doc.Paths.Value("/test/{id}").Parameters[0].Value.Name)
+			require.Equal(t, "id", doc.Paths.Value("/test/{id}").Parameters[0].Value.Name)
 		},
 	},
 	{
 		name:            "PathOperationParameterRef",
 		contentTemplate: externalPathOperationParameterRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test/{id}"].Get.Parameters[0].Value)
-			require.Equal(t, "id", doc.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
+			require.NotNil(t, doc.Paths.Value("/test/{id}").Get.Parameters[0].Value)
+			require.Equal(t, "id", doc.Paths.Value("/test/{id}").Get.Parameters[0].Value.Name)
 		},
 	},
 	{
 		name:            "PathOperationRequestBodyRef",
 		contentTemplate: externalPathOperationRequestBodyRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value)
-			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content)
+			require.NotNil(t, doc.Paths.Value("/test").Post.RequestBody.Value)
+			require.NotNil(t, doc.Paths.Value("/test").Post.RequestBody.Value.Content)
 		},
 	},
 	{
 		name:            "PathOperationResponseRef",
 		contentTemplate: externalPathOperationResponseRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value)
+			require.NotNil(t, doc.Paths.Value("/test").Post.Responses.Default().Value)
 			desc := "description"
-			require.Equal(t, &desc, doc.Paths["/test"].Post.Responses["default"].Value.Description)
+			require.Equal(t, &desc, doc.Paths.Value("/test").Post.Responses.Default().Value.Description)
 		},
 	},
 	{
 		name:            "PathOperationParameterSchemaRef",
 		contentTemplate: externalPathOperationParameterSchemaRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value)
-			require.Equal(t, "string", doc.Paths["/test/{id}"].Get.Parameters[0].Value.Schema.Value.Type)
-			require.Equal(t, "id", doc.Paths["/test/{id}"].Get.Parameters[0].Value.Name)
+			require.NotNil(t, doc.Paths.Value("/test/{id}").Get.Parameters[0].Value.Schema.Value)
+			require.Equal(t, &Types{"string"}, doc.Paths.Value("/test/{id}").Get.Parameters[0].Value.Schema.Value.Type)
+			require.Equal(t, "id", doc.Paths.Value("/test/{id}").Get.Parameters[0].Value.Name)
 		},
 	},
 
@@ -124,9 +124,9 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "PathOperationParameterRefWithContentInQuery",
 		contentTemplate: externalPathOperationParameterWithContentInQueryTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			schemaRef := doc.Paths["/test/{id}"].Get.Parameters[0].Value.Content["application/json"].Schema
+			schemaRef := doc.Paths.Value("/test/{id}").Get.Parameters[0].Value.Content["application/json"].Schema
 			require.NotNil(t, schemaRef.Value)
-			require.Equal(t, "string", schemaRef.Value.Type)
+			require.Equal(t, &Types{"string"}, schemaRef.Value.Type)
 		},
 	},
 
@@ -134,36 +134,36 @@ var refTestDataEntries = []refTestDataEntry{
 		name:            "PathOperationRequestBodyExampleRef",
 		contentTemplate: externalPathOperationRequestBodyExampleRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value)
-			require.Equal(t, "description", doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
+			require.NotNil(t, doc.Paths.Value("/test").Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value)
+			require.Equal(t, "description", doc.Paths.Value("/test").Post.RequestBody.Value.Content["application/json"].Examples["application/json"].Value.Description)
 		},
 	},
 	{
-		name:            "PathOperationReqestBodyContentSchemaRef",
-		contentTemplate: externalPathOperationReqestBodyContentSchemaRefTemplate,
+		name:            "PathOperationRequestBodyContentSchemaRef",
+		contentTemplate: externalPathOperationRequestBodyContentSchemaRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value)
-			require.Equal(t, "string", doc.Paths["/test"].Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+			require.NotNil(t, doc.Paths.Value("/test").Post.RequestBody.Value.Content["application/json"].Schema.Value)
+			require.Equal(t, &Types{"string"}, doc.Paths.Value("/test").Post.RequestBody.Value.Content["application/json"].Schema.Value.Type)
 		},
 	},
 	{
 		name:            "PathOperationResponseExampleRef",
 		contentTemplate: externalPathOperationResponseExampleRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value)
+			require.NotNil(t, doc.Paths.Value("/test").Post.Responses.Default().Value)
 			desc := "testdescription"
-			require.Equal(t, &desc, doc.Paths["/test"].Post.Responses["default"].Value.Description)
-			require.Equal(t, "description", doc.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Examples["application/json"].Value.Description)
+			require.Equal(t, &desc, doc.Paths.Value("/test").Post.Responses.Default().Value.Description)
+			require.Equal(t, "description", doc.Paths.Value("/test").Post.Responses.Default().Value.Content["application/json"].Examples["application/json"].Value.Description)
 		},
 	},
 	{
 		name:            "PathOperationResponseSchemaRef",
 		contentTemplate: externalPathOperationResponseSchemaRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value)
+			require.NotNil(t, doc.Paths.Value("/test").Post.Responses.Default().Value)
 			desc := "testdescription"
-			require.Equal(t, &desc, doc.Paths["/test"].Post.Responses["default"].Value.Description)
-			require.Equal(t, "string", doc.Paths["/test"].Post.Responses["default"].Value.Content["application/json"].Schema.Value.Type)
+			require.Equal(t, &desc, doc.Paths.Value("/test").Post.Responses.Default().Value.Description)
+			require.Equal(t, &Types{"string"}, doc.Paths.Value("/test").Post.Responses.Default().Value.Content["application/json"].Schema.Value.Type)
 		},
 	},
 	{
@@ -171,15 +171,15 @@ var refTestDataEntries = []refTestDataEntry{
 		contentTemplate: externalComponentHeaderSchemaRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Headers["TestHeader"].Value)
-			require.Equal(t, "string", doc.Components.Headers["TestHeader"].Value.Schema.Value.Type)
+			require.Equal(t, &Types{"string"}, doc.Components.Headers["TestHeader"].Value.Schema.Value.Type)
 		},
 	},
 	{
 		name:            "RequestResponseHeaderRef",
 		contentTemplate: externalRequestResponseHeaderRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
-			require.Equal(t, "description", doc.Paths["/test"].Post.Responses["default"].Value.Headers["X-TEST-HEADER"].Value.Description)
+			require.NotNil(t, doc.Paths.Value("/test").Post.Responses.Default().Value.Headers["X-TEST-HEADER"].Value.Description)
+			require.Equal(t, "description", doc.Paths.Value("/test").Post.Responses.Default().Value.Headers["X-TEST-HEADER"].Value.Description)
 		},
 	},
 }
@@ -567,7 +567,7 @@ const externalPathOperationRequestBodyExampleRefTemplate = `
     }
 }`
 
-const externalPathOperationReqestBodyContentSchemaRefTemplate = `
+const externalPathOperationRequestBodyContentSchemaRefTemplate = `
 {
     "openapi": "3.0.0",
     "info": {
@@ -725,7 +725,7 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 		contentTemplate: relativeSchemaDocsRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
 			require.NotNil(t, doc.Components.Schemas["TestSchema"].Value.Type)
-			require.Equal(t, "string", doc.Components.Schemas["TestSchema"].Value.Type)
+			require.Equal(t, &Types{"string"}, doc.Components.Schemas["TestSchema"].Value.Type)
 		},
 	},
 	{
@@ -792,23 +792,23 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 		name:            "PathRef",
 		contentTemplate: relativePathDocsRefTemplate,
 		testFunc: func(t *testing.T, doc *T) {
-			require.NotNil(t, doc.Paths["/pets"])
-			require.NotNil(t, doc.Paths["/pets"].Get.Responses["200"])
-			require.NotNil(t, doc.Paths["/pets"].Get.Responses["200"].Value.Content["application/json"])
+			require.NotNil(t, doc.Paths.Value("/pets"))
+			require.NotNil(t, doc.Paths.Value("/pets").Get.Responses.Value("200"))
+			require.NotNil(t, doc.Paths.Value("/pets").Get.Responses.Value("200").Value.Content["application/json"])
 		},
 	},
 }
 
 func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
 	for _, td := range relativeDocRefsTestDataEntries {
-		t.Logf("testcase %q", td.name)
-
-		spec := []byte(td.contentTemplate)
-		loader := NewLoader()
-		loader.IsExternalRefsAllowed = true
-		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/"})
-		require.NoError(t, err)
-		td.testFunc(t, doc)
+		t.Run(td.name, func(t *testing.T) {
+			spec := []byte(td.contentTemplate)
+			loader := NewLoader()
+			loader.IsExternalRefsAllowed = true
+			doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/"})
+			require.NoError(t, err)
+			td.testFunc(t, doc)
+		})
 	}
 }
 
@@ -909,45 +909,44 @@ func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")
-
 	require.NoError(t, err)
 
 	// path in nested directory
 	// check parameter
-	nestedDirPath := doc.Paths["/pets/{id}"]
+	nestedDirPath := doc.Paths.Value("/pets/{id}")
 	require.Equal(t, "param", nestedDirPath.Patch.Parameters[0].Value.Name)
 	require.Equal(t, "path", nestedDirPath.Patch.Parameters[0].Value.In)
 	require.Equal(t, true, nestedDirPath.Patch.Parameters[0].Value.Required)
 
 	// check header
-	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
-	require.Equal(t, "header1", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Another"].Value.Description)
-	require.Equal(t, "header2", nestedDirPath.Patch.Responses["200"].Value.Headers["X-And-Another"].Value.Description)
+	require.Equal(t, "header", nestedDirPath.Patch.Responses.Value("200").Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+	require.Equal(t, "header1", nestedDirPath.Patch.Responses.Value("200").Value.Headers["X-Another"].Value.Description)
+	require.Equal(t, "header2", nestedDirPath.Patch.Responses.Value("200").Value.Headers["X-And-Another"].Value.Description)
 
 	// check request body
 	require.Equal(t, "example request", nestedDirPath.Patch.RequestBody.Value.Description)
 
 	// check response schema and example
-	require.Equal(t, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Schema.Value.Type, "string")
+	require.Equal(t, &Types{"string"}, nestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Schema.Value.Type)
 	expectedExample := "hello"
-	require.Equal(t, expectedExample, nestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
+	require.Equal(t, expectedExample, nestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
 
 	// path in more nested directory
 	// check parameter
-	moreNestedDirPath := doc.Paths["/pets/{id}/{city}"]
+	moreNestedDirPath := doc.Paths.Value("/pets/{id}/{city}")
 	require.Equal(t, "param", moreNestedDirPath.Patch.Parameters[0].Value.Name)
 	require.Equal(t, "path", moreNestedDirPath.Patch.Parameters[0].Value.In)
 	require.Equal(t, true, moreNestedDirPath.Patch.Parameters[0].Value.Required)
 
 	// check header
-	require.Equal(t, "header", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Rate-Limit-Reset"].Value.Description)
-	require.Equal(t, "header1", nestedDirPath.Patch.Responses["200"].Value.Headers["X-Another"].Value.Description)
-	require.Equal(t, "header2", nestedDirPath.Patch.Responses["200"].Value.Headers["X-And-Another"].Value.Description)
+	require.Equal(t, "header", nestedDirPath.Patch.Responses.Value("200").Value.Headers["X-Rate-Limit-Reset"].Value.Description)
+	require.Equal(t, "header1", nestedDirPath.Patch.Responses.Value("200").Value.Headers["X-Another"].Value.Description)
+	require.Equal(t, "header2", nestedDirPath.Patch.Responses.Value("200").Value.Headers["X-And-Another"].Value.Description)
 
 	// check request body
 	require.Equal(t, "example request", moreNestedDirPath.Patch.RequestBody.Value.Description)
 
 	// check response schema and example
-	require.Equal(t, "string", moreNestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Schema.Value.Type)
-	require.Equal(t, moreNestedDirPath.Patch.Responses["200"].Value.Content["application/json"].Examples["CustomTestExample"].Value.Value, expectedExample)
+	require.Equal(t, &Types{"string"}, moreNestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Schema.Value.Type)
+	require.Equal(t, expectedExample, moreNestedDirPath.Patch.Responses.Value("200").Value.Content["application/json"].Examples["CustomTestExample"].Value.Value)
 }

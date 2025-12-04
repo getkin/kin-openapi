@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue652(t *testing.T) {
@@ -23,7 +23,7 @@ func TestIssue652(t *testing.T) {
 		require.Contains(t, spec.Components.Schemas, schemaName)
 
 		schema := spec.Components.Schemas[schemaName]
-		assert.Equal(t, schema.Ref, "../definitions.yml#/components/schemas/TestSchema")
-		assert.Equal(t, schema.Value.Type, "string")
+		assert.Equal(t, "../definitions.yml#/components/schemas/TestSchema", schema.Ref)
+		assert.Equal(t, &openapi3.Types{"string"}, schema.Value.Type)
 	})
 }

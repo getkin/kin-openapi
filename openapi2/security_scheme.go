@@ -3,13 +3,13 @@ package openapi2
 import (
 	"encoding/json"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 type SecurityRequirements []map[string][]string
 
 type SecurityScheme struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
@@ -30,7 +30,7 @@ func (securityScheme SecurityScheme) MarshalJSON() ([]byte, error) {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
 
-	m := make(map[string]interface{}, 10+len(securityScheme.Extensions))
+	m := make(map[string]any, 10+len(securityScheme.Extensions))
 	for k, v := range securityScheme.Extensions {
 		m[k] = v
 	}
@@ -69,7 +69,7 @@ func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	type SecuritySchemeBis SecurityScheme
 	var x SecuritySchemeBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
@@ -82,6 +82,9 @@ func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "tokenUrl")
 	delete(x.Extensions, "scopes")
 	delete(x.Extensions, "tags")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*securityScheme = SecurityScheme(x)
 	return nil
 }

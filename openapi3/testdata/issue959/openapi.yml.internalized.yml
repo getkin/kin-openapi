@@ -1,0 +1,35 @@
+{
+  "components": {
+    "schemas": {
+      "components_External1": {
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "foo",
+    "version": "0.0.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/{external1}": {
+      "get": {
+        "responses": {
+          "204": {
+            "description": "No content"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "external1",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/components_External1"
+          }
+        }
+      ]
+    }
+  }
+}

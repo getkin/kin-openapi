@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"net/url"
 	"sort"
 	"strings"
@@ -51,7 +50,8 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 // Server is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
 type Server struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	URL         string                     `json:"url" yaml:"url"` // Required
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -84,7 +84,16 @@ func (server *Server) BasePath() (string, error) {
 
 // MarshalJSON returns the JSON encoding of Server.
 func (server Server) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 3+len(server.Extensions))
+	x, err := server.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Server.
+func (server Server) MarshalYAML() (any, error) {
+	m := make(map[string]any, 3+len(server.Extensions))
 	for k, v := range server.Extensions {
 		m[k] = v
 	}
@@ -95,7 +104,7 @@ func (server Server) MarshalJSON() ([]byte, error) {
 	if x := server.Variables; len(x) != 0 {
 		m["variables"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Server to a copy of data.
@@ -103,12 +112,16 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 	type ServerBis Server
 	var x ServerBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "variables")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*server = Server(x)
 	return nil
 }
@@ -160,7 +173,7 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 			} else if ns < 0 {
 				i = np
 			} else {
-				i = int(math.Min(float64(np), float64(ns)))
+				i = min(np, ns)
 			}
 			if i < 0 {
 				i = len(input)
@@ -222,7 +235,8 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 type ServerVariable struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
@@ -231,7 +245,16 @@ type ServerVariable struct {
 
 // MarshalJSON returns the JSON encoding of ServerVariable.
 func (serverVariable ServerVariable) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 4+len(serverVariable.Extensions))
+	x, err := serverVariable.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of ServerVariable.
+func (serverVariable ServerVariable) MarshalYAML() (any, error) {
+	m := make(map[string]any, 4+len(serverVariable.Extensions))
 	for k, v := range serverVariable.Extensions {
 		m[k] = v
 	}
@@ -244,7 +267,7 @@ func (serverVariable ServerVariable) MarshalJSON() ([]byte, error) {
 	if x := serverVariable.Description; x != "" {
 		m["description"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets ServerVariable to a copy of data.
@@ -252,12 +275,16 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	type ServerVariableBis ServerVariable
 	var x ServerVariableBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "enum")
 	delete(x.Extensions, "default")
 	delete(x.Extensions, "description")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*serverVariable = ServerVariable(x)
 	return nil
 }

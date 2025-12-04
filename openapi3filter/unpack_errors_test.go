@@ -7,14 +7,19 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3filter"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func Example() {
-	doc, err := openapi3.NewLoader().LoadFromFile("./testdata/petstore.yaml")
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromFile("./testdata/petstore.yaml")
 	if err != nil {
+		panic(err)
+	}
+
+	if err = doc.Validate(loader.Context); err != nil {
 		panic(err)
 	}
 

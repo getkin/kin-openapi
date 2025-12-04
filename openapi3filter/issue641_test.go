@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3filter"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func TestIssue641(t *testing.T) {
@@ -69,7 +69,7 @@ paths:
 			name:   "failed allof pattern",
 			spec:   allOfSpec,
 			req:    `/items?test=999999`,
-			errStr: `parameter "test" in query has an error: string doesn't match the regular expression "^[0-9]{1,4}$"`,
+			errStr: `parameter "test" in query has an error: doesn't match schema due to: string doesn't match the regular expression "^[0-9]{1,4}$"`,
 		},
 	}
 
@@ -101,7 +101,7 @@ paths:
 			if testcase.errStr == "" {
 				require.NoError(t, err)
 			} else {
-				require.Contains(t, err.Error(), testcase.errStr)
+				require.ErrorContains(t, err, testcase.errStr)
 			}
 		},
 		)

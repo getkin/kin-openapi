@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 type PathItem struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
 	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
@@ -29,7 +29,7 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 		return json.Marshal(openapi3.Ref{Ref: ref})
 	}
 
-	m := make(map[string]interface{}, 8+len(pathItem.Extensions))
+	m := make(map[string]any, 8+len(pathItem.Extensions))
 	for k, v := range pathItem.Extensions {
 		m[k] = v
 	}
@@ -65,7 +65,7 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	type PathItemBis PathItem
 	var x PathItemBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
@@ -77,6 +77,9 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "post")
 	delete(x.Extensions, "put")
 	delete(x.Extensions, "parameters")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*pathItem = PathItem(x)
 	return nil
 }

@@ -35,8 +35,7 @@ var _ error = &ValidationError{}
 
 // Error implements the error interface.
 func (e *ValidationError) Error() string {
-	b := new(bytes.Buffer)
-	b.WriteString("[")
+	b := bytes.NewBufferString("[")
 	if e.Status != 0 {
 		b.WriteString(strconv.Itoa(e.Status))
 	}

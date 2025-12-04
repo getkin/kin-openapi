@@ -3,17 +3,17 @@ package openapi3filter
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 )
 
 func newPetstoreRequest(t *testing.T, method, path string, body io.Reader) *http.Request {
@@ -44,14 +44,17 @@ type validationTest struct {
 	wantErrReason             string
 	wantErrSchemaReason       string
 	wantErrSchemaPath         string
-	wantErrSchemaValue        interface{}
+	wantErrSchemaValue        any
 	wantErrSchemaOriginReason string
 	wantErrSchemaOriginPath   string
-	wantErrSchemaOriginValue  interface{}
+	wantErrSchemaOriginValue  any
+	wantMultiErrSchemaReasons []string
+	wantMultiErrSchemaPaths   []string
+	wantMultiErrSchemaValues  []any
 	wantErrParam              string
 	wantErrParamIn            string
 	wantErrParseKind          ParseErrorKind
-	wantErrParseValue         interface{}
+	wantErrParseValue         any
 	wantErrParseReason        string
 	wantErrResponse           *ValidationError
 }
@@ -109,8 +112,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrReason: routers.ErrMethodNotAllowed.Error(),
 			// TODO: By HTTP spec, this should have an Allow header with what is allowed
 			// but kin-openapi doesn't provide us the requested method or path, so impossible to provide details
-			wantErrResponse: &ValidationError{Status: http.StatusMethodNotAllowed,
-				Title: routers.ErrMethodNotAllowed.Error()},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusMethodNotAllowed,
+				Title:  routers.ErrMethodNotAllowed.Error(),
+			},
 		},
 		{
 			name: "error - missing body on POST",
@@ -118,8 +123,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 				r: missingBody1,
 			},
 			wantErrBody: "request body has an error: " + ErrInvalidRequired.Error(),
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "request body has an error: " + ErrInvalidRequired.Error()},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  "request body has an error: " + ErrInvalidRequired.Error(),
+			},
 		},
 		{
 			name: "error - empty body on POST",
@@ -127,8 +134,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 				r: missingBody2,
 			},
 			wantErrBody: "request body has an error: " + ErrInvalidRequired.Error(),
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "request body has an error: " + ErrInvalidRequired.Error()},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  "request body has an error: " + ErrInvalidRequired.Error(),
+			},
 		},
 
 		//
@@ -141,8 +150,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 				r: noContentType,
 			},
 			wantErrReason: prefixInvalidCT + ` ""`,
-			wantErrResponse: &ValidationError{Status: http.StatusUnsupportedMediaType,
-				Title: "header Content-Type is required"},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnsupportedMediaType,
+				Title:  "header Content-Type is required",
+			},
 		},
 		{
 			name: "error - unknown content-type on POST",
@@ -152,8 +163,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrReason:      "failed to decode request body",
 			wantErrParseKind:   KindUnsupportedFormat,
 			wantErrParseReason: prefixUnsupportedCT + ` "application/xml"`,
-			wantErrResponse: &ValidationError{Status: http.StatusUnsupportedMediaType,
-				Title: prefixUnsupportedCT + ` "application/xml"`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnsupportedMediaType,
+				Title:  prefixUnsupportedCT + ` "application/xml"`,
+			},
 		},
 		{
 			name: "error - unsupported content-type on POST",
@@ -161,8 +174,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 				r: unsupportedContentType,
 			},
 			wantErrReason: prefixInvalidCT + ` "text/plain"`,
-			wantErrResponse: &ValidationError{Status: http.StatusUnsupportedMediaType,
-				Title: prefixUnsupportedCT + ` "text/plain"`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnsupportedMediaType,
+				Title:  prefixUnsupportedCT + ` "text/plain"`,
+			},
 		},
 		{
 			name: "success - no content-type header required on GET",
@@ -174,7 +189,57 @@ func getValidationTests(t *testing.T) []*validationTest {
 		//
 		// Query strings
 		//
-
+		{
+			name: "empty deepobject query parameter",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter", nil),
+			},
+		},
+		{
+			name: "deepobject query parameter type",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans][0]=true&deepFilter[integers][0]=1&deepFilter[strings][0]=foo%26o&deepFilter[numbers][0]=1", nil),
+			},
+		},
+		{
+			name: "error - incorrect deepobject query parameter type bool",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[booleans][0]=notbool", nil),
+			},
+			wantErrParam:   "deepFilter",
+			wantErrBody:    "parameter \"deepFilter\" in query has an error: path booleans.0: value notbool: an invalid boolean: invalid syntax",
+			wantErrParamIn: "query",
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  "parameter \"deepFilter\" in query is invalid: notbool is an invalid boolean",
+			},
+		},
+		{
+			name: "error - incorrect deepobject query parameter type integer",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[integers][0]=1.234", nil),
+			},
+			wantErrParam:   "deepFilter",
+			wantErrBody:    "parameter \"deepFilter\" in query has an error: path integers.0: value 1.234: an invalid integer: invalid syntax",
+			wantErrParamIn: "query",
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  "parameter \"deepFilter\" in query is invalid: 1.234 is an invalid integer",
+			},
+		},
+		{
+			name: "error - incorrect deepobject query parameter type number",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodGet, "/pet/filter?deepFilter[numbers][0]=aaa", nil),
+			},
+			wantErrParam:   "deepFilter",
+			wantErrBody:    "parameter \"deepFilter\" in query has an error: path numbers.0: value aaa: an invalid number: invalid syntax",
+			wantErrParamIn: "query",
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  "parameter \"deepFilter\" in query is invalid: aaa is an invalid number",
+			},
+		},
 		{
 			name: "error - missing required query string parameter",
 			args: validationArgs{
@@ -184,8 +249,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParamIn: "query",
 			wantErrBody:    `parameter "status" in query has an error: value is required but missing`,
 			wantErrReason:  "value is required but missing",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: `parameter "status" in query is required`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  `parameter "status" in query is required`,
+			},
 		},
 		{
 			name: "error - wrong query string parameter type as integer",
@@ -198,8 +265,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			// So we'd need to look at the inner one which is a KindInvalidFormat. So just check the error body.
 			wantErrBody: `parameter "ids" in query has an error: path 1: value notAnInt: an invalid integer: invalid syntax`,
 			// TODO: Should we treat query params of the wrong type like a 404 instead of a 400?
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: `parameter "ids" in query is invalid: notAnInt is an invalid integer`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  `parameter "ids" in query is invalid: notAnInt is an invalid integer`,
+			},
 		},
 		{
 			name: "success - ignores unknown query string parameter",
@@ -216,8 +285,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParamIn: "query",
 			wantErrBody:    `parameter "tags" in query has an error: empty value is not allowed`,
 			wantErrReason:  "empty value is not allowed",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: `parameter "tags" in query is not allowed to be empty`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  `parameter "tags" in query is not allowed to be empty`,
+			},
 		},
 		{
 			name: "success - non required query string has empty value, but has AllowEmptyValue",
@@ -247,13 +318,15 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 			wantErrSchemaPath:   "/0",
 			wantErrSchemaValue:  "available,sold",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 				Detail: "value available,sold at /0 must be one of: available, pending, sold; " +
 					// TODO: do we really want to use this heuristic to guess
 					//  that they're using the wrong serialization?
 					"perhaps you intended '?status=available&status=sold'",
-				Source: &ValidationErrorSource{Parameter: "status"}},
+				Source: &ValidationErrorSource{Parameter: "status"},
+			},
 		},
 		{
 			name: "error - invalid enum value for query string parameter",
@@ -265,10 +338,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "watdis",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
 				Title:  "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 				Detail: "value watdis at /1 must be one of: available, pending, sold",
-				Source: &ValidationErrorSource{Parameter: "status"}},
+				Source: &ValidationErrorSource{Parameter: "status"},
+			},
 		},
 		{
 			name: "error - invalid enum value, allowing commas (without 'perhaps you intended' recommendation)",
@@ -281,11 +356,13 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: "value is not one of the allowed values [\"dog\",\"cat\",\"turtle\",\"bird,with,commas\"]",
 			wantErrSchemaPath:   "/1",
 			wantErrSchemaValue:  "fish,with,commas",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
 				Title:  "value is not one of the allowed values [\"dog\",\"cat\",\"turtle\",\"bird,with,commas\"]",
 				Detail: "value fish,with,commas at /1 must be one of: dog, cat, turtle, bird,with,commas",
 				// No 'perhaps you intended' because its the right serialization format
-				Source: &ValidationErrorSource{Parameter: "kind"}},
+				Source: &ValidationErrorSource{Parameter: "kind"},
+			},
 		},
 		{
 			name: "success - valid enum value, allowing commas",
@@ -307,10 +384,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: "value is not one of the allowed values [\"demo\",\"prod\"]",
 			wantErrSchemaPath:   "/",
 			wantErrSchemaValue:  "watdis",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
 				Title:  "value is not one of the allowed values [\"demo\",\"prod\"]",
 				Detail: "value watdis at / must be one of: demo, prod",
-				Source: &ValidationErrorSource{Parameter: "x-environment"}},
+				Source: &ValidationErrorSource{Parameter: "x-environment"},
+			},
 		},
 
 		//
@@ -326,10 +405,12 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 			wantErrSchemaValue:  "watdis",
 			wantErrSchemaPath:   "/status",
-			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
 				Title:  "value is not one of the allowed values [\"available\",\"pending\",\"sold\"]",
 				Detail: "value watdis at /status must be one of: available, pending, sold",
-				Source: &ValidationErrorSource{Pointer: "/status"}},
+				Source: &ValidationErrorSource{Pointer: "/status"},
+			},
 		},
 		{
 			name: "error - missing required object attribute",
@@ -340,9 +421,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: `property "photoUrls" is missing`,
 			wantErrSchemaValue:  map[string]string{"name": "Bahama"},
 			wantErrSchemaPath:   "/photoUrls",
-			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
 				Title:  `property "photoUrls" is missing`,
-				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
+				Source: &ValidationErrorSource{Pointer: "/photoUrls"},
+			},
 		},
 		{
 			name: "error - missing required nested object attribute",
@@ -354,9 +437,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: `property "name" is missing`,
 			wantErrSchemaValue:  map[string]string{},
 			wantErrSchemaPath:   "/category/name",
-			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
 				Title:  `property "name" is missing`,
-				Source: &ValidationErrorSource{Pointer: "/category/name"}},
+				Source: &ValidationErrorSource{Pointer: "/category/name"},
+			},
 		},
 		{
 			name: "error - missing required deeply nested object attribute",
@@ -368,9 +453,11 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaReason: `property "name" is missing`,
 			wantErrSchemaValue:  map[string]string{},
 			wantErrSchemaPath:   "/category/tags/0/name",
-			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
 				Title:  `property "name" is missing`,
-				Source: &ValidationErrorSource{Pointer: "/category/tags/0/name"}},
+				Source: &ValidationErrorSource{Pointer: "/category/tags/0/name"},
+			},
 		},
 		{
 			name: "error - wrong attribute type",
@@ -384,25 +471,50 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrSchemaValue:  "http://cat",
 			// TODO: this shouldn't say "or not be present", but this requires recursively resolving
 			//  innerErr.JSONPointer() against e.RequestBody.Content["application/json"].Schema.Value (.Required, .Properties)
-			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
 				Title:  "value must be an array",
-				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
+				Source: &ValidationErrorSource{Pointer: "/photoUrls"},
+			},
 		},
 		{
 			name: "error - missing required object attribute from allOf required overlay",
 			args: validationArgs{
 				r: newPetstoreRequest(t, http.MethodPost, "/pet2", bytes.NewBufferString(`{"name":"Bahama"}`)),
 			},
-			wantErrReason:             "doesn't match schema",
-			wantErrSchemaPath:         "/",
-			wantErrSchemaValue:        map[string]string{"name": "Bahama"},
-			wantErrSchemaReason:       `doesn't match all schemas from "allOf"`,
-			wantErrSchemaOriginReason: `property "photoUrls" is missing`,
-			wantErrSchemaOriginValue:  map[string]string{"name": "Bahama"},
-			wantErrSchemaOriginPath:   "/photoUrls",
-			wantErrResponse: &ValidationError{Status: http.StatusUnprocessableEntity,
-				Title:  `property "photoUrls" is missing`,
-				Source: &ValidationErrorSource{Pointer: "/photoUrls"}},
+			wantErrReason:            "doesn't match schema",
+			wantErrSchemaPath:        "/",
+			wantErrSchemaValue:       map[string]string{"name": "Bahama"},
+			wantErrSchemaReason:      `doesn't match all schemas from "allOf"`,
+			wantMultiErrSchemaPaths:  []string{"/photoUrls"},
+			wantMultiErrSchemaValues: []any{map[string]string{"name": "Bahama"}},
+			wantMultiErrSchemaReasons: []string{
+				`property "photoUrls" is missing`,
+			},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
+				Title:  `doesn't match all schemas from "allOf"`,
+			},
+		},
+		{
+			name: "error - missing required object attribute and bad type from allOf required overlay",
+			args: validationArgs{
+				r: newPetstoreRequest(t, http.MethodPost, "/pet2", bytes.NewBufferString(`{"name":1}`)),
+			},
+			wantErrReason:            "doesn't match schema",
+			wantErrSchemaPath:        "/",
+			wantErrSchemaValue:       map[string]float64{"name": 1},
+			wantErrSchemaReason:      `doesn't match all schemas from "allOf"`,
+			wantMultiErrSchemaPaths:  []string{"/name", "/photoUrls"},
+			wantMultiErrSchemaValues: []any{1, map[string]float64{"name": 1}},
+			wantMultiErrSchemaReasons: []string{
+				"value must be a string",
+				"property \"photoUrls\" is missing",
+			},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusUnprocessableEntity,
+				Title:  `doesn't match all schemas from "allOf"`,
+			},
 		},
 		{
 			name: "success - ignores unknown object attribute",
@@ -438,8 +550,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParamIn: "path",
 			wantErrBody:    `parameter "petId" in path has an error: value is required but missing`,
 			wantErrReason:  "value is required but missing",
-			wantErrResponse: &ValidationError{Status: http.StatusBadRequest,
-				Title: `parameter "petId" in path is required`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusBadRequest,
+				Title:  `parameter "petId" in path is required`,
+			},
 		},
 		{
 			name: "error - wrong path param type",
@@ -451,8 +565,10 @@ func getValidationTests(t *testing.T) []*validationTest {
 			wantErrParseKind:   KindInvalidFormat,
 			wantErrParseValue:  "NotAnInt",
 			wantErrParseReason: "an invalid integer",
-			wantErrResponse: &ValidationError{Status: http.StatusNotFound,
-				Title: `resource not found with "petId" value: NotAnInt`},
+			wantErrResponse: &ValidationError{
+				Status: http.StatusNotFound,
+				Title:  `resource not found with "petId" value: NotAnInt`,
+			},
 		},
 		{
 			name: "success - normal case, with path params",
@@ -471,7 +587,6 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 
 			h, err := buildValidationHandler(tt)
 			req.NoError(err)
-
 			err = h.validateRequest(tt.args.r)
 			req.Equal(tt.wantErr, err != nil)
 
@@ -502,13 +617,30 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 					req.Equal(tt.wantErrSchemaReason, innerErr.Reason)
 					pointer := toJSONPointer(innerErr.JSONPointer())
 					req.Equal(tt.wantErrSchemaPath, pointer)
-					req.Equal(fmt.Sprintf("%v", tt.wantErrSchemaValue), fmt.Sprintf("%v", innerErr.Value))
+					req.Equal(fmt.Sprint(tt.wantErrSchemaValue), fmt.Sprint(innerErr.Value))
 
 					if originErr, ok := innerErr.Origin.(*openapi3.SchemaError); ok {
 						req.Equal(tt.wantErrSchemaOriginReason, originErr.Reason)
 						pointer := toJSONPointer(originErr.JSONPointer())
 						req.Equal(tt.wantErrSchemaOriginPath, pointer)
-						req.Equal(fmt.Sprintf("%v", tt.wantErrSchemaOriginValue), fmt.Sprintf("%v", originErr.Value))
+						req.Equal(fmt.Sprint(tt.wantErrSchemaOriginValue), fmt.Sprint(originErr.Value))
+					} else if wrapErr := errors.Unwrap(innerErr.Origin); wrapErr != nil {
+						if multiErr, ok := errors.Unwrap(wrapErr).(openapi3.MultiError); ok {
+							req.Len(multiErr, len(tt.wantMultiErrSchemaReasons))
+							req.Len(multiErr, len(tt.wantMultiErrSchemaPaths))
+							req.Len(multiErr, len(tt.wantMultiErrSchemaValues))
+							for i, merr := range multiErr {
+								schemaErr, ok := merr.(*openapi3.SchemaError)
+								if !ok {
+									continue
+								}
+								req.Equal(tt.wantMultiErrSchemaReasons[i], schemaErr.Reason)
+								pointer := toJSONPointer(schemaErr.JSONPointer())
+								req.Equal(tt.wantMultiErrSchemaPaths[i], pointer)
+								req.Equal(fmt.Sprint(tt.wantMultiErrSchemaValues[i]), fmt.Sprint(schemaErr.Value))
+
+							}
+						}
 					}
 				} else {
 					req.False(tt.wantErrSchemaReason != "" || tt.wantErrSchemaPath != "",
@@ -543,7 +675,7 @@ func TestValidationErrorEncoder(t *testing.T) {
 			req.NoError(err)
 
 			err = h.validateRequest(tt.args.r)
-			req.Equal(tt.wantErr, err != nil)
+			req.Equal(tt.wantErr, err != nil, "wantError: %v", tt.wantErr)
 
 			if err != nil {
 				encoder.Encode(tt.args.r.Context(), err, httptest.NewRecorder())
@@ -657,7 +789,7 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 		encoder := &ValidationErrorEncoder{Encoder: (ErrorEncoder)(DefaultErrorEncoder)}
 		resp := runTest_ServeHTTP(t, handler, encoder.Encode, r)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 		require.Equal(t, "[422][][] value must be an array [source pointer=/photoUrls]", string(body))
@@ -699,7 +831,7 @@ func TestValidationHandler_Middleware(t *testing.T) {
 		encoder := &ValidationErrorEncoder{Encoder: (ErrorEncoder)(DefaultErrorEncoder)}
 		resp := runTest_Middleware(t, handler, encoder.Encode, r)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 		require.Equal(t, "[422][][] value must be an array [source pointer=/photoUrls]", string(body))

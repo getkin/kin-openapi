@@ -13,10 +13,11 @@ import (
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
 type MediaType struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
+	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
@@ -41,7 +42,7 @@ func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType {
 	return mediaType
 }
 
-func (mediaType *MediaType) WithExample(name string, value interface{}) *MediaType {
+func (mediaType *MediaType) WithExample(name string, value any) *MediaType {
 	example := mediaType.Examples
 	if example == nil {
 		example = make(map[string]*ExampleRef)
@@ -65,7 +66,16 @@ func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType 
 
 // MarshalJSON returns the JSON encoding of MediaType.
 func (mediaType MediaType) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 4+len(mediaType.Extensions))
+	x, err := mediaType.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of MediaType.
+func (mediaType MediaType) MarshalYAML() (any, error) {
+	m := make(map[string]any, 4+len(mediaType.Extensions))
 	for k, v := range mediaType.Extensions {
 		m[k] = v
 	}
@@ -81,7 +91,7 @@ func (mediaType MediaType) MarshalJSON() ([]byte, error) {
 	if x := mediaType.Encoding; len(x) != 0 {
 		m["encoding"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets MediaType to a copy of data.
@@ -89,13 +99,17 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	type MediaTypeBis MediaType
 	var x MediaTypeBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "schema")
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "examples")
 	delete(x.Extensions, "encoding")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*mediaType = MediaType(x)
 	return nil
 }
@@ -145,8 +159,8 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 	return validateExtensions(ctx, mediaType.Extensions)
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (mediaType MediaType) JSONLookup(token string) (any, error) {
 	switch token {
 	case "schema":
 		if mediaType.Schema != nil {

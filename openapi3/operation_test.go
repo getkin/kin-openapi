@@ -8,17 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var operation *Operation
-
-func initOperation() {
-	operation = NewOperation()
+func initOperation() *Operation {
+	operation := NewOperation()
 	operation.Description = "Some description"
 	operation.Summary = "Some summary"
 	operation.Tags = []string{"tag1", "tag2"}
+	return operation
 }
 
 func TestAddParameter(t *testing.T) {
-	initOperation()
+	operation := initOperation()
 	operation.AddParameter(NewQueryParameter("param1"))
 	operation.AddParameter(NewCookieParameter("param2"))
 	require.Equal(t, "param1", operation.Parameters.GetByInAndName("query", "param1").Name)
@@ -26,20 +25,20 @@ func TestAddParameter(t *testing.T) {
 }
 
 func TestAddResponse(t *testing.T) {
-	initOperation()
+	operation := initOperation()
 	operation.AddResponse(200, NewResponse())
 	operation.AddResponse(400, NewResponse())
-	require.NotNil(t, "status 200", operation.Responses.Get(200).Value)
-	require.NotNil(t, "status 400", operation.Responses.Get(400).Value)
+	require.NotNil(t, "status 200", operation.Responses.Status(200).Value)
+	require.NotNil(t, "status 400", operation.Responses.Status(400).Value)
 }
 
 func operationWithoutResponses() *Operation {
-	initOperation()
+	operation := initOperation()
 	return operation
 }
 
 func operationWithResponses() *Operation {
-	initOperation()
+	operation := initOperation()
 	operation.AddResponse(200, NewResponse().WithDescription("some response"))
 	return operation
 }

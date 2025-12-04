@@ -4,46 +4,36 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-
-	"github.com/go-openapi/jsonpointer"
 )
-
-type Examples map[string]*ExampleRef
-
-var _ jsonpointer.JSONPointable = (*Examples)(nil)
-
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (e Examples) JSONLookup(token string) (interface{}, error) {
-	ref, ok := e[token]
-	if ref == nil || !ok {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
 
 // Example is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#example-object
 type Example struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	Summary       string      `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description   string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Value         interface{} `json:"value,omitempty" yaml:"value,omitempty"`
-	ExternalValue string      `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
+	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
+	Value         any    `json:"value,omitempty" yaml:"value,omitempty"`
+	ExternalValue string `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
 }
 
-func NewExample(value interface{}) *Example {
+func NewExample(value any) *Example {
 	return &Example{Value: value}
 }
 
 // MarshalJSON returns the JSON encoding of Example.
 func (example Example) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 4+len(example.Extensions))
+	x, err := example.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Example.
+func (example Example) MarshalYAML() (any, error) {
+	m := make(map[string]any, 4+len(example.Extensions))
 	for k, v := range example.Extensions {
 		m[k] = v
 	}
@@ -59,7 +49,7 @@ func (example Example) MarshalJSON() ([]byte, error) {
 	if x := example.ExternalValue; x != "" {
 		m["externalValue"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Example to a copy of data.
@@ -67,13 +57,17 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	type ExampleBis Example
 	var x ExampleBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "value")
 	delete(x.Extensions, "externalValue")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*example = Example(x)
 	return nil
 }
@@ -90,4 +84,10 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 	}
 
 	return validateExtensions(ctx, example.Extensions)
+}
+
+// UnmarshalJSON sets Examples to a copy of data.
+func (examples *Examples) UnmarshalJSON(data []byte) (err error) {
+	*examples, _, err = unmarshalStringMapP[ExampleRef](data)
+	return
 }

@@ -11,7 +11,8 @@ import (
 // PathItem is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
 type PathItem struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
@@ -31,11 +32,20 @@ type PathItem struct {
 
 // MarshalJSON returns the JSON encoding of PathItem.
 func (pathItem PathItem) MarshalJSON() ([]byte, error) {
+	x, err := pathItem.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of PathItem.
+func (pathItem PathItem) MarshalYAML() (any, error) {
 	if ref := pathItem.Ref; ref != "" {
-		return json.Marshal(Ref{Ref: ref})
+		return Ref{Ref: ref}, nil
 	}
 
-	m := make(map[string]interface{}, 13+len(pathItem.Extensions))
+	m := make(map[string]any, 13+len(pathItem.Extensions))
 	for k, v := range pathItem.Extensions {
 		m[k] = v
 	}
@@ -78,7 +88,7 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 	if x := pathItem.Parameters; len(x) != 0 {
 		m["parameters"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets PathItem to a copy of data.
@@ -86,9 +96,10 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	type PathItemBis PathItem
 	var x PathItemBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
@@ -103,6 +114,9 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "trace")
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "parameters")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*pathItem = PathItem(x)
 	return nil
 }
@@ -207,5 +221,30 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
+	if v := pathItem.Parameters; v != nil {
+		if err := v.Validate(ctx); err != nil {
+			return err
+		}
+	}
+
 	return validateExtensions(ctx, pathItem.Extensions)
+}
+
+// isEmpty's introduced in 546590b1
+func (pathItem *PathItem) isEmpty() bool {
+	// NOTE: ignores pathItem.Extensions
+	// NOTE: ignores pathItem.Ref
+	return pathItem.Summary == "" &&
+		pathItem.Description == "" &&
+		pathItem.Connect == nil &&
+		pathItem.Delete == nil &&
+		pathItem.Get == nil &&
+		pathItem.Head == nil &&
+		pathItem.Options == nil &&
+		pathItem.Patch == nil &&
+		pathItem.Post == nil &&
+		pathItem.Put == nil &&
+		pathItem.Trace == nil &&
+		len(pathItem.Servers) == 0 &&
+		len(pathItem.Parameters) == 0
 }

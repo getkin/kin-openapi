@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi2"
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue440(t *testing.T) {
@@ -45,5 +45,5 @@ func TestIssue440(t *testing.T) {
 	doc2.BasePath = ""
 	doc3, err = ToV3(&doc2)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), `invalid host`)
+	require.ErrorContains(t, err, `invalid host`)
 }

@@ -3,7 +3,6 @@ package openapi3filter
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -16,7 +15,7 @@ type ResponseValidationInput struct {
 }
 
 func (input *ResponseValidationInput) SetBodyBytes(value []byte) *ResponseValidationInput {
-	input.Body = ioutil.NopCloser(bytes.NewReader(value))
+	input.Body = io.NopCloser(bytes.NewReader(value))
 	return input
 }
 

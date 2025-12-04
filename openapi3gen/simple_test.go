@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3gen"
+	"github.com/getkin/kin-openapi/openapi3gen"
 )
 
 type (
@@ -70,11 +70,13 @@ func Example() {
 	//     "json": {},
 	//     "map": {
 	//       "additionalProperties": {
+	//         "nullable": true,
 	//         "type": "string"
 	//       },
 	//       "type": "object"
 	//     },
 	//     "ptr": {
+	//       "nullable": true,
 	//       "type": "string"
 	//     },
 	//     "slice": {

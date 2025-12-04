@@ -10,14 +10,14 @@ import (
 type testCase struct {
 	name             string
 	schema           *Schema
-	value            interface{}
-	extraNotContains []interface{}
+	value            any
+	extraNotContains []any
 	options          []SchemaValidationOption
 }
 
 func TestIssue735(t *testing.T) {
-	DefineStringFormat("uuid", FormatOfStringForUUIDOfRFC4122)
-	DefineStringFormat("email", FormatOfStringForEmail)
+	DefineStringFormatValidator("uuid", NewRegexpFormatValidator(FormatOfStringForUUIDOfRFC4122))
+	DefineStringFormatValidator("email", NewRegexpFormatValidator(FormatOfStringForEmail))
 	DefineIPv4Format()
 	DefineIPv6Format()
 
@@ -74,7 +74,7 @@ func TestIssue735(t *testing.T) {
 		},
 		{
 			name:   "multiple of",
-			schema: &Schema{MultipleOf: Float64Ptr(5.0)},
+			schema: &Schema{MultipleOf: Ptr(5.0)},
 			value:  42,
 		},
 		{
@@ -100,60 +100,60 @@ func TestIssue735(t *testing.T) {
 		{
 			name:             "items",
 			schema:           NewSchema().WithItems(NewStringSchema()),
-			value:            []interface{}{42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "min items",
 			schema:           NewSchema().WithMinItems(100),
-			value:            []interface{}{42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "max items",
 			schema:           NewSchema().WithMaxItems(0),
-			value:            []interface{}{42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "unique items",
 			schema:           NewSchema().WithUniqueItems(true),
-			value:            []interface{}{42, 42},
-			extraNotContains: []interface{}{42},
+			value:            []any{42, 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "min properties",
 			schema:           NewSchema().WithMinProperties(100),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "max properties",
 			schema:           NewSchema().WithMaxProperties(0),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name:             "additional properties other schema type",
 			schema:           NewSchema().WithAdditionalProperties(NewStringSchema()),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name: "additional properties false",
 			schema: &Schema{AdditionalProperties: AdditionalProperties{
-				Has: BoolPtr(false),
+				Has: Ptr(false),
 			}},
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name: "invalid properties schema",
 			schema: NewSchema().WithProperties(map[string]*Schema{
 				"foo": NewStringSchema(),
 			}),
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		// TODO: uncomment when https://github.com/getkin/kin-openapi/issues/502 is fixed
 		//{
@@ -161,8 +161,8 @@ func TestIssue735(t *testing.T) {
 		//	schema: NewSchema().WithProperties(map[string]*Schema{
 		//		"foo": {ReadOnly: true},
 		//	}).WithoutAdditionalProperties(),
-		//	value:            map[string]interface{}{"foo": 42},
-		//	extraNotContains: []interface{}{42},
+		//	value:            map[string]any{"foo": 42},
+		//	extraNotContains: []any{42},
 		//	options:          []SchemaValidationOption{VisitAsRequest()},
 		//},
 		//{
@@ -170,8 +170,8 @@ func TestIssue735(t *testing.T) {
 		//	schema: NewSchema().WithProperties(map[string]*Schema{
 		//		"foo": {WriteOnly: true},
 		//	}).WithoutAdditionalProperties(),
-		//	value:            map[string]interface{}{"foo": 42},
-		//	extraNotContains: []interface{}{42},
+		//	value:            map[string]any{"foo": 42},
+		//	extraNotContains: []any{42},
 		//	options:          []SchemaValidationOption{VisitAsResponse()},
 		//},
 		{
@@ -182,46 +182,46 @@ func TestIssue735(t *testing.T) {
 				},
 				Required: []string{"bar"},
 			},
-			value:            map[string]interface{}{"foo": 42},
-			extraNotContains: []interface{}{42},
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
 		},
 		{
 			name: "one of (matches more then one)",
 			schema: NewOneOfSchema(
-				&Schema{MultipleOf: Float64Ptr(6)},
-				&Schema{MultipleOf: Float64Ptr(7)},
+				&Schema{MultipleOf: Ptr(6.0)},
+				&Schema{MultipleOf: Ptr(7.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "one of (no matches)",
 			schema: NewOneOfSchema(
-				&Schema{MultipleOf: Float64Ptr(5)},
-				&Schema{MultipleOf: Float64Ptr(10)},
+				&Schema{MultipleOf: Ptr(5.0)},
+				&Schema{MultipleOf: Ptr(10.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "any of",
 			schema: NewAnyOfSchema(
-				&Schema{MultipleOf: Float64Ptr(5)},
-				&Schema{MultipleOf: Float64Ptr(10)},
+				&Schema{MultipleOf: Ptr(5.0)},
+				&Schema{MultipleOf: Ptr(10.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "all of (match some)",
 			schema: NewAllOfSchema(
-				&Schema{MultipleOf: Float64Ptr(6)},
-				&Schema{MultipleOf: Float64Ptr(5)},
+				&Schema{MultipleOf: Ptr(6.0)},
+				&Schema{MultipleOf: Ptr(5.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "all of (no match)",
 			schema: NewAllOfSchema(
-				&Schema{MultipleOf: Float64Ptr(10)},
-				&Schema{MultipleOf: Float64Ptr(5)},
+				&Schema{MultipleOf: Ptr(10.0)},
+				&Schema{MultipleOf: Ptr(5.0)},
 			),
 			value: 42,
 		},

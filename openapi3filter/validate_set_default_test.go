@@ -3,15 +3,15 @@ package openapi3filter
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	legacyrouter "github.com/TykTechnologies/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func TestValidatingRequestParameterAndSetDefault(t *testing.T) {
@@ -795,7 +795,7 @@ func TestValidateRequestBodyAndSetDefault(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			validatedReqBody, err := ioutil.ReadAll(httpReq.Body)
+			validatedReqBody, err := io.ReadAll(httpReq.Body)
 			require.NoError(t, err)
 			tc.bodyAssertion(t, string(validatedReqBody))
 		})

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestOneOf_Warning_Errors(t *testing.T) {
@@ -52,8 +52,8 @@ components:
 		{
 			name:  "no valid value",
 			value: "ABCDE",
-			checkErr: func(t require.TestingT, err error, i ...interface{}) {
-				require.Equal(t, "doesn't match schema due to: minimum string length is 10\nSchema:\n  {\n    \"maxLength\": 10,\n    \"minLength\": 10,\n    \"title\": \"First rule\",\n    \"type\": \"string\"\n  }\n\nValue:\n  \"ABCDE\"\n Or minimum string length is 15\nSchema:\n  {\n    \"maxLength\": 15,\n    \"minLength\": 15,\n    \"title\": \"Second rule\",\n    \"type\": \"string\"\n  }\n\nValue:\n  \"ABCDE\"\n", err.Error())
+			checkErr: func(t require.TestingT, err error, i ...any) {
+				require.ErrorContains(t, err, "doesn't match schema due to: minimum string length is 10")
 
 				wErr := &openapi3.MultiError{}
 				require.ErrorAs(t, err, wErr)

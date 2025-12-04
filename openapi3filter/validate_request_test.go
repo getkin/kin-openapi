@@ -13,9 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/routers"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func setupTestRouter(t *testing.T, spec string) routers.Router {
@@ -211,7 +212,7 @@ components:
 			assert.NoError(t, err, "unable to read request body: %v", err)
 			assert.Equal(t, contentLen, bodySize, "expect ContentLength %d to equal body size %d", contentLen, bodySize)
 			bodyModified := originalBodySize != bodySize
-			assert.Equal(t, bodyModified, tc.expectedModification, "expect request body modification happened: %t, expected %t", bodyModified, tc.expectedModification)
+			assert.Equal(t, tc.expectedModification, bodyModified, "expect request body modification happened: %t, expected %t", bodyModified, tc.expectedModification)
 
 			validationInput.Request.Body, err = validationInput.Request.GetBody()
 			assert.NoError(t, err, "unable to re-generate body by GetBody(): %v", err)
@@ -220,4 +221,349 @@ components:
 			assert.Equal(t, body, body2, "body by GetBody() is not matched")
 		})
 	}
+}
+
+func TestValidateQueryParams(t *testing.T) {
+	type testCase struct {
+		name  string
+		param *openapi3.Parameter
+		query string
+		want  map[string]any
+		err   *openapi3.SchemaError // test ParseError in decoder tests
+	}
+
+	testCases := []testCase{
+		{
+			name: "deepObject explode additionalProperties with object properties - missing required property",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(func() *openapi3.SchemaRef {
+						s := objectOf(
+							"item1", integerSchema,
+							"requiredProp", stringSchema,
+						)
+						s.Value.Required = []string{"requiredProp"}
+
+						return s
+					}()),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][item1]=1",
+			err:   &openapi3.SchemaError{SchemaField: "required", Reason: "property \"requiredProp\" is missing"},
+		},
+		{
+			// XXX should this error out?
+			name: "deepObject explode additionalProperties with object properties - extraneous nested param property ignored",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf(
+						"item1", integerSchema,
+						"requiredProp", stringSchema,
+					)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][inexistent]=1",
+			want: map[string]any{
+				"obj": map[string]any{
+					"prop1": map[string]any{},
+				},
+			},
+		},
+		{
+			name: "deepObject explode additionalProperties with object properties",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf(
+						"item1", numberSchema,
+						"requiredProp", stringSchema,
+					)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][item1]=1.123",
+			want: map[string]any{
+				"obj": map[string]any{
+					"prop1": map[string]any{
+						"item1": float64(1.123),
+					},
+				},
+			},
+		},
+		{
+			name: "deepObject explode nested objects - misplaced parameter",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", objectOf("nestedObjOne", objectOf("items", stringArraySchema)),
+				),
+			},
+			query: "param[obj][nestedObjOne]=baz",
+			err: &openapi3.SchemaError{
+				SchemaField: "type", Reason: "value must be an object", Value: "baz", Schema: objectOf("items", stringArraySchema).Value,
+			},
+		},
+		{
+			name: "deepObject explode nested object - extraneous param ignored",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", objectOf("nestedObjOne", stringSchema, "nestedObjTwo", stringSchema),
+				),
+			},
+			query: "anotherparam=bar",
+			want:  map[string]any(nil),
+		},
+		{
+			name: "deepObject explode additionalProperties with object properties - multiple properties",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", additionalPropertiesObjectOf(objectOf("item1", integerSchema, "item2", stringArraySchema)),
+					"objIgnored", objectOf("items", stringArraySchema),
+				),
+			},
+			query: "param[obj][prop1][item1]=1&param[obj][prop1][item2][0]=abc&param[obj][prop2][item1]=2&param[obj][prop2][item2][0]=def",
+			want: map[string]any{
+				"obj": map[string]any{
+					"prop1": map[string]any{
+						"item1": int64(1),
+						"item2": []any{"abc"},
+					},
+					"prop2": map[string]any{
+						"item1": int64(2),
+						"item2": []any{"def"},
+					},
+				},
+			},
+		},
+
+		//
+		//
+		{
+			name: "deepObject explode nested object anyOf",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", anyofSchema,
+				),
+			},
+			query: "param[obj]=1",
+			want: map[string]any{
+				"obj": int64(1),
+			},
+		},
+		{
+			name: "deepObject explode nested object allOf",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", allofSchema,
+				),
+			},
+			query: "param[obj]=1",
+			want: map[string]any{
+				"obj": int64(1),
+			},
+		},
+		{
+			name: "deepObject explode nested object oneOf",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchema,
+				),
+			},
+			query: "param[obj]=true",
+			want: map[string]any{
+				"obj": true,
+			},
+		},
+		{
+			name: "deepObject explode nested object oneOf - object",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchemaObject,
+				),
+			},
+			query: "param[obj][id2]=1&param[obj][name2]=abc",
+			want: map[string]any{
+				"obj": map[string]any{
+					"id2":   "1",
+					"name2": "abc",
+				},
+			},
+		},
+		{
+			name: "deepObject explode nested object oneOf - object - more than one match",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchemaObject,
+				),
+			},
+			query: "param[obj][id]=1&param[obj][id2]=2",
+			err: &openapi3.SchemaError{
+				SchemaField: "oneOf",
+				Value:       map[string]any{"id": "1", "id2": "2"},
+				Reason:      "value matches more than one schema from \"oneOf\" (matches schemas at indices [0 1])",
+				Schema:      oneofSchemaObject.Value,
+			},
+		},
+		{
+			name: "deepObject explode nested object oneOf - array",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query", Style: "deepObject", Explode: explode,
+				Schema: objectOf(
+					"obj", oneofSchemaArrayObject,
+				),
+			},
+			query: "param[obj][0]=a&param[obj][1]=b",
+			want: map[string]any{
+				"obj": []any{
+					"a",
+					"b",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &openapi3.Info{
+				Title:   "MyAPI",
+				Version: "0.1",
+			}
+			doc := &openapi3.T{OpenAPI: "3.0.0", Info: info, Paths: openapi3.NewPaths()}
+			op := &openapi3.Operation{
+				OperationID: "test",
+				Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
+				Responses:   openapi3.NewResponses(),
+			}
+			doc.AddOperation("/test", http.MethodGet, op)
+			err := doc.Validate(context.Background())
+			require.NoError(t, err)
+			router, err := legacyrouter.NewRouter(doc)
+			require.NoError(t, err)
+
+			req, err := http.NewRequest(http.MethodGet, "http://test.org/test?"+tc.query, nil)
+			route, pathParams, err := router.FindRoute(req)
+			require.NoError(t, err)
+
+			input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
+			err = ValidateParameter(context.Background(), input, tc.param)
+
+			if tc.err != nil {
+				require.Error(t, err)
+				re, ok := err.(*RequestError)
+				if !ok {
+					t.Errorf("error is not a RequestError")
+
+					return
+				}
+
+				gErr, ok := re.Unwrap().(*openapi3.SchemaError)
+				if !ok {
+					t.Errorf("unknown RequestError wrapped error type")
+				}
+				matchSchemaError(t, gErr, tc.err)
+
+				return
+			}
+
+			require.NoError(t, err)
+
+			got, _, err := decodeStyledParameter(tc.param, input)
+			require.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func matchSchemaError(t *testing.T, got, want error) {
+	t.Helper()
+
+	wErr, ok := want.(*openapi3.SchemaError)
+	if !ok {
+		t.Errorf("want error is not a SchemaError")
+		return
+	}
+	gErr, ok := got.(*openapi3.SchemaError)
+	if !ok {
+		t.Errorf("got error is not a SchemaError")
+		return
+	}
+	assert.Equalf(t, wErr.SchemaField, gErr.SchemaField, "SchemaError SchemaField differs")
+	assert.Equalf(t, wErr.Reason, gErr.Reason, "SchemaError Reason differs")
+
+	if wErr.Schema != nil {
+		assert.EqualValuesf(t, wErr.Schema, gErr.Schema, "SchemaError Schema differs")
+	}
+	if wErr.Value != nil {
+		assert.EqualValuesf(t, wErr.Value, gErr.Value, "SchemaError Value differs")
+	}
+
+	if gErr.Origin == nil && wErr.Origin != nil {
+		t.Errorf("expected error origin but got nothing")
+	}
+	if gErr.Origin != nil && wErr.Origin != nil {
+		switch gErrOrigin := gErr.Origin.(type) {
+		case *openapi3.SchemaError:
+			matchSchemaError(t, gErrOrigin, wErr.Origin)
+		case *ParseError:
+			matchParseError(t, gErrOrigin, wErr.Origin)
+		default:
+			t.Errorf("unknown origin error")
+		}
+	}
+}
+
+func TestValidateRequestExcludeQueryParams(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    post:
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Ok
+`
+	req, err := http.NewRequest(http.MethodPost, "/category?category=foo", nil)
+	require.NoError(t, err)
+	router := setupTestRouter(t, spec)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	err = ValidateRequest(context.Background(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: true,
+		},
+	})
+	require.NoError(t, err)
+
+	err = ValidateRequest(context.Background(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: false,
+		},
+	})
+	require.Error(t, err)
 }

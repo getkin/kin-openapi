@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 var _ error = &RequestError{}
@@ -79,8 +79,7 @@ type SecurityRequirementsError struct {
 }
 
 func (err *SecurityRequirementsError) Error() string {
-	buff := &bytes.Buffer{}
-	buff.WriteString("security requirements failed: ")
+	buff := bytes.NewBufferString("security requirements failed: ")
 	for i, e := range err.Errors {
 		buff.WriteString(e.Error())
 		if i != len(err.Errors)-1 {
@@ -89,4 +88,10 @@ func (err *SecurityRequirementsError) Error() string {
 	}
 
 	return buff.String()
+}
+
+var _ interface{ Unwrap() []error } = SecurityRequirementsError{}
+
+func (err SecurityRequirementsError) Unwrap() []error {
+	return err.Errors
 }

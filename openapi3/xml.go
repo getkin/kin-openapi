@@ -8,7 +8,8 @@ import (
 // XML is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object
 type XML struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
@@ -19,7 +20,16 @@ type XML struct {
 
 // MarshalJSON returns the JSON encoding of XML.
 func (xml XML) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 5+len(xml.Extensions))
+	x, err := xml.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of XML.
+func (xml XML) MarshalYAML() (any, error) {
+	m := make(map[string]any, 5+len(xml.Extensions))
 	for k, v := range xml.Extensions {
 		m[k] = v
 	}
@@ -38,7 +48,7 @@ func (xml XML) MarshalJSON() ([]byte, error) {
 	if x := xml.Wrapped; x {
 		m["wrapped"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets XML to a copy of data.
@@ -46,14 +56,18 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 	type XMLBis XML
 	var x XMLBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "namespace")
 	delete(x.Extensions, "prefix")
 	delete(x.Extensions, "attribute")
 	delete(x.Extensions, "wrapped")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*xml = XML(x)
 	return nil
 }

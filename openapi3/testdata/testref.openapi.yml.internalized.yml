@@ -4,7 +4,7 @@
       "AnotherTestSchema": {
         "type": "string"
       },
-      "CustomTestSchema": {
+      "components_Name": {
         "type": "string"
       }
     }

@@ -12,6 +12,8 @@ type ValidationOptions struct {
 	schemaDefaultsValidationDisabled                 bool
 	schemaFormatValidationEnabled                    bool
 	schemaPatternValidationDisabled                  bool
+	schemaExtensionsInRefProhibited                  bool
+	regexCompilerFunc                                RegexCompilerFunc
 	extraSiblingFieldsAllowed                        map[string]struct{}
 }
 
@@ -20,10 +22,10 @@ type validationOptionsKey struct{}
 // AllowExtraSiblingFields called as AllowExtraSiblingFields("description") makes Validate not return an error when said field appears next to a $ref.
 func AllowExtraSiblingFields(fields ...string) ValidationOption {
 	return func(options *ValidationOptions) {
+		if options.extraSiblingFieldsAllowed == nil && len(fields) != 0 {
+			options.extraSiblingFieldsAllowed = make(map[string]struct{}, len(fields))
+		}
 		for _, field := range fields {
-			if options.extraSiblingFieldsAllowed == nil {
-				options.extraSiblingFieldsAllowed = make(map[string]struct{}, len(fields))
-			}
 			options.extraSiblingFieldsAllowed[field] = struct{}{}
 		}
 	}
@@ -92,7 +94,35 @@ func DisableExamplesValidation() ValidationOption {
 	}
 }
 
-// WithValidationOptions allows adding validation options to a context object that can be used when validationg any OpenAPI type.
+// AllowExtensionsWithRef allows extensions (fields starting with 'x-')
+// as siblings for $ref fields. This is the default.
+// Non-extension fields are prohibited unless allowed explicitly with the
+// AllowExtraSiblingFields option.
+func AllowExtensionsWithRef() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.schemaExtensionsInRefProhibited = false
+	}
+}
+
+// ProhibitExtensionsWithRef causes the validation to return an
+// error if extensions (fields starting with 'x-') are found as
+// siblings for $ref fields. Non-extension fields are prohibited
+// unless allowed explicitly with the AllowExtraSiblingFields option.
+func ProhibitExtensionsWithRef() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.schemaExtensionsInRefProhibited = true
+	}
+}
+
+// SetRegexCompiler allows to override the regex implementation used to validate
+// field "pattern".
+func SetRegexCompiler(c RegexCompilerFunc) ValidationOption {
+	return func(options *ValidationOptions) {
+		options.regexCompilerFunc = c
+	}
+}
+
+// WithValidationOptions allows adding validation options to a context object that can be used when validating any OpenAPI type.
 func WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context {
 	if len(opts) == 0 {
 		return ctx

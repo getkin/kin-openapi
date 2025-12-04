@@ -3,33 +3,33 @@ package openapi2
 import (
 	"encoding/json"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // T is the root of an OpenAPI v2 document
 type T struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Swagger             string                         `json:"swagger" yaml:"swagger"` // required
-	Info                openapi3.Info                  `json:"info" yaml:"info"`       // required
-	ExternalDocs        *openapi3.ExternalDocs         `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Schemes             []string                       `json:"schemes,omitempty" yaml:"schemes,omitempty"`
-	Consumes            []string                       `json:"consumes,omitempty" yaml:"consumes,omitempty"`
-	Produces            []string                       `json:"produces,omitempty" yaml:"produces,omitempty"`
-	Host                string                         `json:"host,omitempty" yaml:"host,omitempty"`
-	BasePath            string                         `json:"basePath,omitempty" yaml:"basePath,omitempty"`
-	Paths               map[string]*PathItem           `json:"paths,omitempty" yaml:"paths,omitempty"`
-	Definitions         map[string]*openapi3.SchemaRef `json:"definitions,omitempty" yaml:"definitions,omitempty"`
-	Parameters          map[string]*Parameter          `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses           map[string]*Response           `json:"responses,omitempty" yaml:"responses,omitempty"`
-	SecurityDefinitions map[string]*SecurityScheme     `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
-	Security            SecurityRequirements           `json:"security,omitempty" yaml:"security,omitempty"`
-	Tags                openapi3.Tags                  `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Swagger             string                     `json:"swagger" yaml:"swagger"` // required
+	Info                openapi3.Info              `json:"info" yaml:"info"`       // required
+	ExternalDocs        *openapi3.ExternalDocs     `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Schemes             []string                   `json:"schemes,omitempty" yaml:"schemes,omitempty"`
+	Consumes            []string                   `json:"consumes,omitempty" yaml:"consumes,omitempty"`
+	Produces            []string                   `json:"produces,omitempty" yaml:"produces,omitempty"`
+	Host                string                     `json:"host,omitempty" yaml:"host,omitempty"`
+	BasePath            string                     `json:"basePath,omitempty" yaml:"basePath,omitempty"`
+	Paths               map[string]*PathItem       `json:"paths,omitempty" yaml:"paths,omitempty"`
+	Definitions         map[string]*SchemaRef      `json:"definitions,omitempty" yaml:"definitions,omitempty"`
+	Parameters          map[string]*Parameter      `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Responses           map[string]*Response       `json:"responses,omitempty" yaml:"responses,omitempty"`
+	SecurityDefinitions map[string]*SecurityScheme `json:"securityDefinitions,omitempty" yaml:"securityDefinitions,omitempty"`
+	Security            SecurityRequirements       `json:"security,omitempty" yaml:"security,omitempty"`
+	Tags                openapi3.Tags              `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of T.
 func (doc T) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 15+len(doc.Extensions))
+	m := make(map[string]any, 15+len(doc.Extensions))
 	for k, v := range doc.Extensions {
 		m[k] = v
 	}
@@ -82,7 +82,7 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	type TBis T
 	var x TBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "swagger")
@@ -100,6 +100,9 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "securityDefinitions")
 	delete(x.Extensions, "security")
 	delete(x.Extensions, "tags")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*doc = T(x)
 	return nil
 }

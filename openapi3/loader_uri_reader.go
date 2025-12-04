@@ -3,9 +3,11 @@ package openapi3
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
 	"path/filepath"
 	"sync"
 )
@@ -63,19 +65,22 @@ func ReadFromHTTP(cl *http.Client) ReadFromURIFunc {
 		if resp.StatusCode > 399 {
 			return nil, fmt.Errorf("error loading %q: request returned status code %d", location.String(), resp.StatusCode)
 		}
-		return ioutil.ReadAll(resp.Body)
+		return io.ReadAll(resp.Body)
 	}
+}
+
+func is_file(location *url.URL) bool {
+	return location.Path != "" &&
+		location.Host == "" &&
+		(location.Scheme == "" || location.Scheme == "file")
 }
 
 // ReadFromFile is a ReadFromURIFunc which reads local file URIs.
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error) {
-	if location.Host != "" {
+	if !is_file(location) {
 		return nil, ErrURINotSupported
 	}
-	if location.Scheme != "" && location.Scheme != "file" {
-		return nil, ErrURINotSupported
-	}
-	return ioutil.ReadFile(location.Path)
+	return os.ReadFile(path.Clean(filepath.FromSlash(location.Path)))
 }
 
 // URIMapCache returns a ReadFromURIFunc that caches the contents read from URI

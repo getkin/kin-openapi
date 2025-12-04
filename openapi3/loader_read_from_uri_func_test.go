@@ -2,8 +2,8 @@ package openapi3
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,13 +14,22 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *Loader, url *url.URL) ([]byte, error) {
-		return ioutil.ReadFile(filepath.Join("testdata", url.Path))
+		return os.ReadFile(filepath.Join("testdata", filepath.FromSlash(url.Path)))
 	}
 	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	require.NoError(t, err)
 	require.NotNil(t, doc)
 	require.NoError(t, doc.Validate(loader.Context))
-	require.Equal(t, "bar", doc.Paths["/foo"].Get.Responses.Get(200).Value.Content.Get("application/json").Schema.Value.Properties["foo2"].Value.Properties["foo"].Value.Properties["bar"].Value.Example)
+	require.Equal(t, "bar", doc.
+		Paths.Value("/foo").
+		Get.
+		Responses.Status(200).Value.
+		Content.Get("application/json").
+		Schema.Value.
+		Properties["foo2"].Value.
+		Properties["foo"].Value.
+		Properties["bar"].Value.
+		Example)
 }
 
 type multipleSourceLoaderExample struct {

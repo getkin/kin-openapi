@@ -1,0 +1,4 @@
+components:
+  schemas:
+    configParam:
+      $ref: './config_param.yml'

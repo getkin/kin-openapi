@@ -1,0 +1,20 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: v1
+paths:
+  /partner-api/test/some-method:
+    get:
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: object
+                  properties:
+                    code:
+                      type: integer
+                    text:
+                      type: string

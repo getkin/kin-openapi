@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3filter"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func TestIssue625(t *testing.T) {
@@ -80,7 +80,7 @@ paths:
 			req:  `/items?test=true,3`,
 		},
 		{
-			name:   "faled oneof object array",
+			name:   "failed oneof object array",
 			spec:   oneOfArraySpec,
 			req:    `/items?test="val1","val2"`,
 			errStr: `parameter "test" in query has an error: item 0: decoding oneOf failed: 0 schemas matched`,
@@ -115,7 +115,7 @@ paths:
 			if testcase.errStr == "" {
 				require.NoError(t, err)
 			} else {
-				require.Contains(t, err.Error(), testcase.errStr)
+				require.ErrorContains(t, err, testcase.errStr)
 			}
 		},
 		)

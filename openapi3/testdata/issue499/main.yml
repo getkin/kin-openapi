@@ -1,0 +1,24 @@
+openapi: 3.0.0
+info:
+  title: 'spec'
+  version: 1.2.3
+
+paths:
+  /foo:
+    get:
+      summary: get foo
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Foo"
+
+components:
+  schemas:
+    Foo:
+      type: object
+      properties:
+        id:
+          $ref: "./foo.yml"

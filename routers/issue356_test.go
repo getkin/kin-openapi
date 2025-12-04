@@ -2,7 +2,7 @@ package routers_test
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,11 +10,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3filter"
-	"github.com/TykTechnologies/kin-openapi/routers"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
-	"github.com/TykTechnologies/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func TestIssue356(t *testing.T) {
@@ -129,7 +129,7 @@ paths:
 				rep, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
 				defer rep.Body.Close()
-				body, err := ioutil.ReadAll(rep.Body)
+				body, err := io.ReadAll(rep.Body)
 				require.NoError(t, err)
 
 				if expectError {

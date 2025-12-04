@@ -3,7 +3,7 @@ package openapi3_test
 import (
 	"fmt"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func ExampleSetSchemaErrorMessageCustomizer() {

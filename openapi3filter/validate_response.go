@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // ValidateResponse is used to validate the given input according to previous
@@ -39,15 +39,15 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	route := input.RequestValidationInput.Route
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	// Find input for the current status
 	responses := route.Operation.Responses
-	if len(responses) == 0 {
+	if responses.Len() == 0 {
 		return nil
 	}
-	responseRef := responses.Get(status) // Response
+	responseRef := responses.Status(status) // Response
 	if responseRef == nil {
 		responseRef = responses.Default() // Default input
 	}
@@ -94,7 +94,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	}
 
 	content := response.Content
-	if len(content) == 0 || options.ExcludeResponseBody {
+	if len(content) == 0 {
 		// An operation does not contains a validation schema for responses with this status code.
 		return nil
 	}
@@ -104,7 +104,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if contentType == nil {
 		return &ResponseError{
 			Input:  input,
-			Reason: fmt.Sprintf("response header Content-Type has unexpected value: %q", inputMIME),
+			Reason: fmt.Sprintf("response %s: %q", prefixInvalidCT, inputMIME),
 		}
 	}
 
@@ -125,7 +125,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	defer body.Close()
 
 	// Read all
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
@@ -162,7 +162,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 
 func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, input *ResponseValidationInput, opts []openapi3.SchemaValidationOption) error {
 	var err error
-	var decodedValue interface{}
+	var decodedValue any
 	var found bool
 	var sm *openapi3.SerializationMethod
 	dec := &headerParamDecoder{header: input.Header}

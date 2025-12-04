@@ -4,20 +4,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"sort"
+
+	"github.com/go-openapi/jsonpointer"
+)
+
+type (
+	Callbacks       map[string]*CallbackRef
+	Examples        map[string]*ExampleRef
+	Headers         map[string]*HeaderRef
+	Links           map[string]*LinkRef
+	ParametersMap   map[string]*ParameterRef
+	RequestBodies   map[string]*RequestBodyRef
+	ResponseBodies  map[string]*ResponseRef
+	Schemas         map[string]*SchemaRef
+	SecuritySchemes map[string]*SecuritySchemeRef
 )
 
 // Components is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#components-object
 type Components struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`
 	RequestBodies   RequestBodies   `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
-	Responses       Responses       `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Responses       ResponseBodies  `json:"responses,omitempty" yaml:"responses,omitempty"`
 	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
 	Examples        Examples        `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Links           Links           `json:"links,omitempty" yaml:"links,omitempty"`
@@ -30,7 +44,16 @@ func NewComponents() Components {
 
 // MarshalJSON returns the JSON encoding of Components.
 func (components Components) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 9+len(components.Extensions))
+	x, err := components.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Components.
+func (components Components) MarshalYAML() (any, error) {
+	m := make(map[string]any, 9+len(components.Extensions))
 	for k, v := range components.Extensions {
 		m[k] = v
 	}
@@ -61,7 +84,7 @@ func (components Components) MarshalJSON() ([]byte, error) {
 	if x := components.Callbacks; len(x) != 0 {
 		m["callbacks"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Components to a copy of data.
@@ -69,9 +92,10 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	type ComponentsBis Components
 	var x ComponentsBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "schemas")
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "headers")
@@ -81,6 +105,9 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "examples")
 	delete(x.Extensions, "links")
 	delete(x.Extensions, "callbacks")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*components = Components(x)
 	return nil
 }
@@ -140,10 +167,10 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 	}
 	sort.Strings(responses)
 	for _, k := range responses {
-		v := components.Responses[k]
 		if err = ValidateIdentifier(k); err != nil {
 			return fmt.Errorf("response %q: %w", k, err)
 		}
+		v := components.Responses[k]
 		if err = v.Validate(ctx); err != nil {
 			return fmt.Errorf("response %q: %w", k, err)
 		}
@@ -227,16 +254,119 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 	return validateExtensions(ctx, components.Extensions)
 }
 
-const identifierPattern = `^[a-zA-Z0-9._-]+$`
+var _ jsonpointer.JSONPointable = (*Schemas)(nil)
 
-// IdentifierRegExp verifies whether Component object key matches 'identifierPattern' pattern, according to OapiAPI v3.x.0.
-// Hovever, to be able supporting legacy OpenAPI v2.x, there is a need to customize above pattern in orde not to fail
-// converted v2-v3 validation
-var IdentifierRegExp = regexp.MustCompile(identifierPattern)
-
-func ValidateIdentifier(value string) error {
-	if IdentifierRegExp.MatchString(value) {
-		return nil
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Schemas) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no schema %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
 	}
-	return fmt.Errorf("identifier %q is not supported by OpenAPIv3 standard (regexp: %q)", value, identifierPattern)
+}
+
+var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m ParametersMap) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no parameter %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Headers)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Headers) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no header %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m RequestBodies) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no request body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*ResponseRef)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m ResponseBodies) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no response body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*SecuritySchemes)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m SecuritySchemes) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no security scheme body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Examples)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Examples) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no example body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Links)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Links) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no link body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
+}
+
+var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (m Callbacks) JSONLookup(token string) (any, error) {
+	if v, ok := m[token]; !ok || v == nil {
+		return nil, fmt.Errorf("no callback body %q", token)
+	} else if ref := v.Ref; ref != "" {
+		return &Ref{Ref: ref}, nil
+	} else {
+		return v.Value, nil
+	}
 }

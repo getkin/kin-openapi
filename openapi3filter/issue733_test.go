@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3filter"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func TestIntMax(t *testing.T) {
@@ -76,7 +76,7 @@ paths:
 
 			dec := json.NewDecoder(req.Body)
 			dec.UseNumber()
-			var jsonAfter map[string]interface{}
+			var jsonAfter map[string]any
 			err = dec.Decode(&jsonAfter)
 			require.NoError(t, err)
 

@@ -11,41 +11,22 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
-type ParametersMap map[string]*ParameterRef
-
-var _ jsonpointer.JSONPointable = (*ParametersMap)(nil)
-
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (p ParametersMap) JSONLookup(token string) (interface{}, error) {
-	ref, ok := p[token]
-	if ref == nil || ok == false {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
-
 // Parameters is specified by OpenAPI/Swagger 3.0 standard.
 type Parameters []*ParameterRef
 
 var _ jsonpointer.JSONPointable = (*Parameters)(nil)
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (p Parameters) JSONLookup(token string) (interface{}, error) {
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (p Parameters) JSONLookup(token string) (any, error) {
 	index, err := strconv.Atoi(token)
 	if err != nil {
 		return nil, err
 	}
-
 	if index < 0 || index >= len(p) {
 		return nil, fmt.Errorf("index %d out of bounds of array of length %d", index, len(p))
 	}
 
 	ref := p[index]
-
 	if ref != nil && ref.Ref != "" {
 		return &Ref{Ref: ref.Ref}, nil
 	}
@@ -91,21 +72,22 @@ func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOpt
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameter-object
 type Parameter struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Style           string      `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode         *bool       `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowEmptyValue bool        `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	AllowReserved   bool        `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
-	Deprecated      bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required        bool        `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema          *SchemaRef  `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         interface{} `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples        Examples    `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content         Content     `json:"content,omitempty" yaml:"content,omitempty"`
+	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
+	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
+	Description     string     `json:"description,omitempty" yaml:"description,omitempty"`
+	Style           string     `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode         *bool      `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowEmptyValue bool       `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool       `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	Deprecated      bool       `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Required        bool       `json:"required,omitempty" yaml:"required,omitempty"`
+	Schema          *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example         any        `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples        Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Content         Content    `json:"content,omitempty" yaml:"content,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Parameter)(nil)
@@ -169,7 +151,16 @@ func (parameter *Parameter) WithSchema(value *Schema) *Parameter {
 
 // MarshalJSON returns the JSON encoding of Parameter.
 func (parameter Parameter) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 13+len(parameter.Extensions))
+	x, err := parameter.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Parameter.
+func (parameter Parameter) MarshalYAML() (any, error) {
+	m := make(map[string]any, 13+len(parameter.Extensions))
 	for k, v := range parameter.Extensions {
 		m[k] = v
 	}
@@ -214,7 +205,7 @@ func (parameter Parameter) MarshalJSON() ([]byte, error) {
 		m["content"] = x
 	}
 
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Parameter to a copy of data.
@@ -222,10 +213,11 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	type ParameterBis Parameter
 	var x ParameterBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "in")
 	delete(x.Extensions, "description")
@@ -239,13 +231,16 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "examples")
 	delete(x.Extensions, "content")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 
 	*parameter = Parameter(x)
 	return nil
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (parameter Parameter) JSONLookup(token string) (interface{}, error) {
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (parameter Parameter) JSONLookup(token string) (any, error) {
 	switch token {
 	case "schema":
 		if parameter.Schema != nil {
@@ -370,12 +365,17 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
-	if (parameter.Schema == nil) == (parameter.Content == nil) {
+	if (parameter.Schema == nil) == (len(parameter.Content) == 0) {
 		e := errors.New("parameter must contain exactly one of content and schema")
 		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
 	if content := parameter.Content; content != nil {
+		e := errors.New("parameter content must only contain one entry")
+		if len(content) > 1 {
+			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name, e)
+		}
+
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name, err)
 		}
@@ -415,4 +415,10 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 	}
 
 	return validateExtensions(ctx, parameter.Extensions)
+}
+
+// UnmarshalJSON sets ParametersMap to a copy of data.
+func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error) {
+	*parametersMap, _, err = unmarshalStringMapP[ParameterRef](data)
+	return
 }

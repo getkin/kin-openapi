@@ -1,0 +1,16 @@
+openapi: 3.0.0
+info:
+    title: Circular Reference Example
+    version: 1.0.0
+paths:
+    /sample:
+        put:
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: './AwsEnvironmentSettings.yaml'
+            responses:
+                '200':
+                    description: Ok

@@ -8,7 +8,7 @@ import (
 )
 
 func TestPathParametersMatchPath(t *testing.T) {
-	spec := `
+	spec := []byte(`
 openapi: "3.0.0"
 info:
   version: 1.0.0
@@ -107,9 +107,10 @@ components:
           format: int32
         message:
           type: string
-`
+`[1:])
 
-	doc, err := NewLoader().LoadFromData([]byte(spec))
+	loader := NewLoader()
+	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(context.Background())
 	require.EqualError(t, err, `invalid paths: operation GET /pets/{petId} must define exactly all path parameters (missing: [petId])`)

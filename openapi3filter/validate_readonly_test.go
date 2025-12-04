@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	legacyrouter "github.com/TykTechnologies/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/openapi3"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
@@ -141,8 +141,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			spec := bytes.Buffer{}
-			spec.WriteString(`{
+			spec := bytes.NewBufferString(`{
 				"openapi": "3.0.3",
 				"info": {
 					"version": "1.0.0",
@@ -204,7 +203,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 
 				if tc.requestErrContains != "" {
 					require.Error(t, err)
-					require.Contains(t, err.Error(), tc.requestErrContains)
+					require.ErrorContains(t, err, tc.requestErrContains)
 				} else {
 					require.NoError(t, err)
 				}
@@ -220,7 +219,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 
 				if tc.responseErrContains != "" {
 					require.Error(t, err)
-					require.Contains(t, err.Error(), tc.responseErrContains)
+					require.ErrorContains(t, err, tc.responseErrContains)
 				} else {
 					require.NoError(t, err)
 				}

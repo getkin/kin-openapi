@@ -13,7 +13,8 @@ import (
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -34,7 +35,7 @@ type Operation struct {
 	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 
 	// Responses.
-	Responses Responses `json:"responses" yaml:"responses"` // Required
+	Responses *Responses `json:"responses" yaml:"responses"` // Required
 
 	// Optional callbacks
 	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
@@ -58,7 +59,16 @@ func NewOperation() *Operation {
 
 // MarshalJSON returns the JSON encoding of Operation.
 func (operation Operation) MarshalJSON() ([]byte, error) {
-	m := make(map[string]interface{}, 12+len(operation.Extensions))
+	x, err := operation.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(x)
+}
+
+// MarshalYAML returns the YAML encoding of Operation.
+func (operation Operation) MarshalYAML() (any, error) {
+	m := make(map[string]any, 12+len(operation.Extensions))
 	for k, v := range operation.Extensions {
 		m[k] = v
 	}
@@ -96,7 +106,7 @@ func (operation Operation) MarshalJSON() ([]byte, error) {
 	if x := operation.ExternalDocs; x != nil {
 		m["externalDocs"] = x
 	}
-	return json.Marshal(m)
+	return m, nil
 }
 
 // UnmarshalJSON sets Operation to a copy of data.
@@ -104,9 +114,10 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 	type OperationBis Operation
 	var x OperationBis
 	if err := json.Unmarshal(data, &x); err != nil {
-		return err
+		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, originKey)
 	delete(x.Extensions, "tags")
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
@@ -119,12 +130,15 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "security")
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "externalDocs")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
 	*operation = Operation(x)
 	return nil
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (operation Operation) JSONLookup(token string) (interface{}, error) {
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (operation Operation) JSONLookup(token string) (any, error) {
 	switch token {
 	case "requestBody":
 		if operation.RequestBody != nil {
@@ -162,24 +176,18 @@ func (operation Operation) JSONLookup(token string) (interface{}, error) {
 }
 
 func (operation *Operation) AddParameter(p *Parameter) {
-	operation.Parameters = append(operation.Parameters, &ParameterRef{
-		Value: p,
-	})
+	operation.Parameters = append(operation.Parameters, &ParameterRef{Value: p})
 }
 
 func (operation *Operation) AddResponse(status int, response *Response) {
-	responses := operation.Responses
-	if responses == nil {
-		responses = NewResponses()
-		operation.Responses = responses
-	}
 	code := "default"
-	if status != 0 {
+	if 0 < status && status < 1000 {
 		code = strconv.FormatInt(int64(status), 10)
 	}
-	responses[code] = &ResponseRef{
-		Value: response,
+	if operation.Responses == nil {
+		operation.Responses = NewResponses()
 	}
+	operation.Responses.Set(code, &ResponseRef{Value: response})
 }
 
 // Validate returns an error if Operation does not comply with the OpenAPI spec.

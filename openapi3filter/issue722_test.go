@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
-	"github.com/TykTechnologies/kin-openapi/openapi3filter"
-	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func TestValidateMultipartFormDataContainingAllOf(t *testing.T) {
@@ -94,7 +94,7 @@ components:
 		}
 	}
 
-	{ // Add a single "discription" item as part data
+	{ // Add a single "description" item as part data
 		h := make(textproto.MIMEHeader)
 		h.Set("Content-Disposition", `form-data; name="description"`)
 		fw, err := writer.CreatePart(h)

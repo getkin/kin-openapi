@@ -1,0 +1,7 @@
+type: object
+properties:
+    children:
+        type: array
+        items:
+            $ref: './AwsEnvironmentSettings.yaml'
+description: test

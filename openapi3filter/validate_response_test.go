@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func Test_validateResponseHeader(t *testing.T) {
@@ -182,7 +182,7 @@ func Test_validateResponseHeader(t *testing.T) {
 			if tt.wantErr {
 				require.NotEmpty(t, tt.wantErrMsg, "wanted error message is not populated")
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.wantErrMsg)
+				require.ErrorContains(t, err, tt.wantErrMsg)
 			} else {
 				require.NoError(t, err)
 			}

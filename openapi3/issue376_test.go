@@ -38,15 +38,15 @@ info:
 
 	require.Equal(t, "An API", doc.Info.Title)
 	require.Equal(t, 2, len(doc.Components.Schemas))
-	require.Equal(t, 0, len(doc.Paths))
+	require.Equal(t, 0, doc.Paths.Len())
 
-	require.Equal(t, "string", doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
+	require.Equal(t, &Types{"string"}, doc.Components.Schemas["schema2"].Value.Properties["prop"].Value.Type)
 }
 
 func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 	schema := &Schema{
 		AdditionalProperties: AdditionalProperties{
-			Has:    BoolPtr(false),
+			Has:    Ptr(false),
 			Schema: NewSchemaRef("", &Schema{}),
 		},
 	}
@@ -55,7 +55,7 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 
 	schema = &Schema{
 		AdditionalProperties: AdditionalProperties{
-			Has: BoolPtr(false),
+			Has: Ptr(false),
 		},
 	}
 	err = schema.Validate(context.Background())
@@ -139,7 +139,7 @@ info:
 					}
 					apaStr := ""
 					if apa != nil {
-						apaStr = fmt.Sprintf("%v", *apa)
+						apaStr = fmt.Sprint(apa)
 					}
 
 					encoded, err := propSchema.MarshalJSON()

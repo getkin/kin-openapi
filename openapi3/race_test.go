@@ -6,17 +6,29 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func TestRaceyPatternSchema(t *testing.T) {
-	schema := openapi3.Schema{
-		Pattern: "^test|for|race|condition$",
-		Type:    "string",
-	}
+func TestRaceyPatternSchemaValidateHindersIt(t *testing.T) {
+	schema := openapi3.NewStringSchema().WithPattern("^test|for|race|condition$")
 
 	err := schema.Validate(context.Background())
 	require.NoError(t, err)
+
+	visit := func() {
+		err := schema.VisitJSONString("test")
+		require.NoError(t, err)
+	}
+
+	go visit()
+	visit()
+}
+
+func TestRaceyPatternSchemaForIssue775(t *testing.T) {
+	schema := openapi3.NewStringSchema().WithPattern("^test|for|race|condition$")
+
+	// err := schema.Validate(context.Background())
+	// require.NoError(t, err)
 
 	visit := func() {
 		err := schema.VisitJSONString("test")

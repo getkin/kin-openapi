@@ -14,13 +14,11 @@ Licensed under the [MIT License](./LICENSE).
 ## Contributors, users and sponsors
 The project has received pull requests [from many people](https://github.com/getkin/kin-openapi/graphs/contributors). Thanks to everyone!
 
-Be sure to [give back to this project](https://github.com/sponsors/fenollp) like our sponsors:
-
-<p align="center">
-	<a href="//www.speakeasyapi.dev"><img src=".github/sponsors/speakeasy.png" alt="Speakeasy" height="100px"/></a>
-</p>
+Please, [give back to this project](https://github.com/sponsors/fenollp) by becoming a sponsor.
 
 Here's some projects that depend on _kin-openapi_:
+  * [github.com/go-fuego/fuego](https://github.com/go-fuego/fuego) - "Framework generating OpenAPI 3 spec from source code"
+  * [github.com/a-h/rest](https://github.com/a-h/rest) - "Generate OpenAPI 3.0 specifications from Go code without annotations or magic comments"
   * [github.com/Tufin/oasdiff](https://github.com/Tufin/oasdiff) - "A diff tool for OpenAPI Specification 3"
   * [github.com/danielgtaylor/apisprout](https://github.com/danielgtaylor/apisprout) - "Lightweight, blazing fast, cross-platform OpenAPI 3 mock server with validation"
   * [github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen) - "Generate Go client and server boilerplate from OpenAPI 3 specifications"
@@ -30,9 +28,11 @@ Here's some projects that depend on _kin-openapi_:
   * [github.com/hashicorp/nomad-openapi](https://github.com/hashicorp/nomad-openapi) - "Nomad is an easy-to-use, flexible, and performant workload orchestrator that can deploy a mix of microservice, batch, containerized, and non-containerized applications. Nomad is easy to operate and scale and has native Consul and Vault integrations."
   * [gitlab.com/jamietanna/httptest-openapi](https://gitlab.com/jamietanna/httptest-openapi) ([*blog post*](https://www.jvt.me/posts/2022/05/22/go-openapi-contract-test/)) - "Go OpenAPI Contract Verification for use with `net/http`"
   * [github.com/SIMITGROUP/openapigenerator](https://github.com/SIMITGROUP/openapigenerator) - "Openapi v3 microservices generator"
+  * [https://github.com/projectsveltos/addon-controller](https://github.com/projectsveltos/addon-controller) - "Kubernetes add-on controller designed to manage tens of clusters."
   * (Feel free to add your project by [creating an issue](https://github.com/getkin/kin-openapi/issues/new) or a pull request)
 
 ## Alternatives
+* [libopenapi](https://github.com/pb33f/libopenapi) a fully featured, high performance OpenAPI 3.1, 3.0 and Swagger parser, library, validator and toolkit
 * [go-swagger](https://github.com/go-swagger/go-swagger) stated [*OpenAPIv3 won't be supported*](https://github.com/go-swagger/go-swagger/issues/1122#issuecomment-575968499)
 * [swaggo](https://github.com/swaggo/swag) has an [open issue on OpenAPIv3](https://github.com/swaggo/swag/issues/386)
 * [go-openapi](https://github.com/go-openapi)'s [spec3](https://github.com/go-openapi/spec3)
@@ -57,20 +57,21 @@ Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling l
 # Some recipes
 ## Validating an OpenAPI document
 ```shell
-go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
+go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>
 ```
 
 ## Loading OpenAPI document
 Use `openapi3.Loader`, which resolves all references:
 ```go
-doc, err := openapi3.NewLoader().LoadFromFile("swagger.json")
+loader := openapi3.NewLoader()
+doc, err := loader.LoadFromFile("my-openapi-spec.json")
 ```
 
 ## Getting OpenAPI operation that matches request
 ```go
 loader := openapi3.NewLoader()
 doc, _ := loader.LoadFromData([]byte(`...`))
-_ := doc.Validate(loader.Context)
+_ = doc.Validate(loader.Context)
 router, _ := gorillamux.NewRouter(doc)
 route, pathParams, _ := router.FindRoute(httpRequest)
 // Do something with route.Operation
@@ -95,7 +96,7 @@ func main() {
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 	doc, _ := loader.LoadFromFile(".../My-OpenAPIv3-API.yml")
 	// Validate document
-	_ := doc.Validate(ctx)
+	_ = doc.Validate(ctx)
 	router, _ := gorillamux.NewRouter(doc)
 	httpReq, _ := http.NewRequest(http.MethodGet, "/items", nil)
 
@@ -108,7 +109,7 @@ func main() {
 		PathParams: pathParams,
 		Route:      route,
 	}
-	_ := openapi3filter.ValidateRequest(ctx, requestValidationInput)
+	_ = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 
 	// Handle that request
 	// --> YOUR CODE GOES HERE <--
@@ -123,14 +124,13 @@ func main() {
 		Header:                 responseHeaders,
 	}
 	responseValidationInput.SetBodyBytes(responseBody)
-	_ := openapi3filter.ValidateResponse(ctx, responseValidationInput)
+	_ = openapi3filter.ValidateResponse(ctx, responseValidationInput)
 }
 ```
 
 ## Custom content type for body of HTTP request/response
 
-By default, the library parses a body of HTTP request and response
-if it has one of the next content types: `"text/plain"` or `"application/json"`.
+By default, the library parses a body of the HTTP request and response of [a few content types](https://github.com/getkin/kin-openapi/blob/6da871e0e170b7637eb568c265c08bc2b5d6e7a3/openapi3filter/req_resp_decoder.go#L1264) e.g. `"text/plain"` or `"application/json"`.
 To support other content types you must register decoders for them:
 
 ```go
@@ -158,17 +158,17 @@ func main() {
 	}
 }
 
-func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded interface{}, err error) {
-	// Decode body to a primitive, []inteface{}, or map[string]interface{}.
+func xmlBodyDecoder(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (decoded any, err error) {
+	// Decode body to a primitive, []any, or map[string]any.
 }
 ```
 
 ## Custom function to check uniqueness of array items
 
-By defaut, the library check unique items by below predefined function
+By default, the library checks unique items using the following predefined function:
 
 ```go
-func isSliceOfUniqueItems(xs []interface{}) bool {
+func isSliceOfUniqueItems(xs []any) bool {
 	s := len(xs)
 	m := make(map[string]struct{}, s)
 	for _, x := range xs {
@@ -179,8 +179,8 @@ func isSliceOfUniqueItems(xs []interface{}) bool {
 }
 ```
 
-In the predefined function using `json.Marshal` to generate a string can
-be used as a map key which is to support check the uniqueness of an array
+In the predefined function `json.Marshal` is used to generate a string that can
+be used as a map key which is to check the uniqueness of an array
 when the array items are objects or arrays. You can register
 you own function according to your input data to get better performance:
 
@@ -194,7 +194,7 @@ func main() {
 	// ... other validate codes
 }
 
-func arrayUniqueItemsChecker(items []interface{}) bool {
+func arrayUniqueItemsChecker(items []any) bool {
 	// Check the uniqueness of the input slice
 }
 ```
@@ -255,7 +255,7 @@ For more fine-grained control over the error message, you can pass a custom `ope
 
 ```go
 func validationOptions() *openapi3filter.Options {
-	options := openapi3filter.DefaultOptions
+	options := &openapi3filter.Options{}
 	options.WithCustomSchemaErrorFunc(safeErrorMessage)
 	return options
 }
@@ -267,13 +267,73 @@ func safeErrorMessage(err *openapi3.SchemaError) string {
 
 This will change the schema validation errors to return only the `Reason` field, which is guaranteed to not include the original value.
 
-## Sub-v0 breaking API changes
+## Reconciling component $ref types
+
+`ReferencesComponentInRootDocument` is a useful helper function to check if a component reference
+coincides with a reference in the root document's component objects fixed fields.
+
+This can be used to determine if two schema definitions are of the same structure, helpful for
+code generation tools when generating go type models.
+
+```go
+doc, err = loader.LoadFromFile("openapi.yml")
+
+for _, path := range doc.Paths.InMatchingOrder() {
+	pathItem := doc.Paths.Find(path)
+
+	if pathItem.Get == nil || pathItem.Get.Responses.Status(200) {
+		continue
+	}
+
+	for _, s := range pathItem.Get.Responses.Status(200).Value.Content {
+		name, match := ReferencesComponentInRootDocument(doc, s.Schema)
+		fmt.Println(path, match, name) // /record true #/components/schemas/BookRecord
+	}
+}
+```
+
+## CHANGELOG: Sub-v1 breaking API changes
+
+### v0.131.0
+* No longer `openapi3filter.RegisterBodyDecoder` the `openapi3filter.ZipFileBodyDecoder` by default.
+
+### v0.129.0
+* `openapi3.Discriminator.Mapping` and `openapi3.OAuthFlow.Scopes` fields went from a `map[string]string` to the new type `StringMap`
+
+### v0.127.0
+* Downgraded `github.com/gorilla/mux` dep from `1.8.1` to `1.8.0`.
+
+### v0.126.0
+* `openapi3.CircularReferenceError` and `openapi3.CircularReferenceCounter` are removed. `openapi3.Loader` now implements reference backtracking, so any kind of circular references should be properly resolved.
+* `InternalizeRefs` now takes a refNameResolver that has access to `openapi3.T` and more properties of the reference needing resolving.
+* The `DefaultRefNameResolver` has been updated, choosing names that will be less likely to collide with each other. Because of this internalized specs will likely change slightly.
+* `openapi3.Format` and `openapi3.FormatCallback` are removed and the type of `openapi3.SchemaStringFormats` has changed.
+
+### v0.125.0
+* The `openapi3filter.ErrFunc` and `openapi3filter.LogFunc` func types now take the validated request's context as first argument.
+
+### v0.124.0
+* `openapi3.Schema.Type` & `openapi2.Parameter.Type` fields went from a `string` to the type `*Type` with methods: `Includes`, `Is`, `Permits` & `Slice`.
+
+### v0.122.0
+* `Paths` field of `openapi3.T` is now a pointer
+* `Responses` field of `openapi3.Operation` is now a pointer
+* `openapi3.Paths` went from `map[string]*PathItem` to a struct with an `Extensions` field and methods: `Set`, `Value`, `Len`, `Map`, and `New*`.
+* `openapi3.Callback` went from `map[string]*PathItem` to a struct with an `Extensions` field and methods: `Set`, `Value`, `Len`, `Map`, and `New*`.
+* `openapi3.Responses` went from `map[string]*ResponseRef` to a struct with an `Extensions` field and methods: `Set`, `Value`, `Len`, `Map`, and `New*`.
+* `(openapi3.Responses).Get(int)` renamed to `(*openapi3.Responses).Status(int)`
+
+### v0.121.0
+* Introduce `openapi3.RequestBodies` (an alias on `map[string]*openapi3.ResponseRef`) and use it in place of `openapi3.Responses` for field `openapi3.Components.Responses`.
+
+### v0.116.0
+* Dropped `openapi3filter.DefaultOptions`. Use `&openapi3filter.Options{}` directly instead.
 
 ### v0.113.0
 * The string format `email` has been removed by default. To use it please call `openapi3.DefineStringFormat("email", openapi3.FormatOfStringForEmail)`.
 * Field `openapi3.T.Components` is now a pointer.
 * Fields `openapi3.Schema.AdditionalProperties` and `openapi3.Schema.AdditionalPropertiesAllowed` are replaced by `openapi3.Schema.AdditionalProperties.Schema` and `openapi3.Schema.AdditionalProperties.Has` respectively.
-* Type `openapi3.ExtensionProps` is now just `map[string]interface{}` and extensions are accessible through the `Extensions` field.
+* Type `openapi3.ExtensionProps` is now just `map[string]any` and extensions are accessible through the `Extensions` field.
 
 ### v0.112.0
 * `(openapi3.ValidationOptions).ExamplesValidationDisabled` has been unexported.
