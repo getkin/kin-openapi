@@ -970,6 +970,22 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
+	// Discriminator mapping refs are a special case since they are not full
+	// ref objects but are plain strings that reference schema objects.
+	// Only resolve refs that look like external references (contain a path).
+	// Plain schema names like "Dog" or internal refs like "#/components/schemas/Dog"
+	// don't need to be resolved by the loader.
+	if value.Discriminator != nil && value.Discriminator.Mapping != nil {
+		for k, v := range value.Discriminator.Mapping {
+			// Only resolve if it looks like an external ref (contains path separator)
+			if strings.Contains(v.Ref, "/") && !strings.HasPrefix(v.Ref, "#") {
+				if err := loader.resolveSchemaRef(doc, (*SchemaRef)(&v), documentPath, visited); err != nil {
+					return err
+				}
+				value.Discriminator.Mapping[k] = v
+			}
+		}
+	}
 	return nil
 }
 
