@@ -1364,8 +1364,8 @@ func decodeSchemaConstructs(dec *urlValuesDecoder, schemas []*openapi3.SchemaRef
 		}
 
 		for name, prop := range schemaRef.Value.Properties {
-			value, _, err := decodeProperty(dec, name, prop, encFn)
-			if err != nil {
+			value, present, err := decodeProperty(dec, name, prop, encFn)
+			if err != nil || !present {
 				continue
 			}
 			if existingValue, exists := obj[name]; exists && !isEqual(existingValue, value) {
