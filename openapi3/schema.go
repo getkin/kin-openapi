@@ -1084,7 +1084,10 @@ func (schema *Schema) IsEmpty() bool {
 
 // Validate returns an error if Schema does not comply with the OpenAPI spec.
 func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// Apply document-level validation options to the context
 	ctx = WithValidationOptions(ctx, opts...)
+
+	// Perform schema validation with the options in context
 	_, err := schema.validate(ctx, []*Schema{})
 	return err
 }
@@ -1206,6 +1209,10 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				return stack, errors.New("when schema type is 'array', schema 'items' must be non-null")
 			}
 		case TypeObject:
+		case TypeNull:
+			if !validationOpts.jsonSchema2020ValidationEnabled {
+				return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
+			}
 		default:
 			return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
 		}
@@ -1263,7 +1270,11 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 
 	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
-		if err := schema.VisitJSON(v); err != nil {
+		opts := []SchemaValidationOption{}
+		if validationOpts.jsonSchema2020ValidationEnabled {
+			opts = append(opts, EnableJSONSchema2020())
+		}
+		if err := schema.VisitJSON(v, opts...); err != nil {
 			return stack, fmt.Errorf("invalid default: %w", err)
 		}
 	}
