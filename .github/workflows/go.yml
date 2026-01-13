@@ -133,7 +133,7 @@ jobs:
 
     - if: runner.os == 'Linux'
       name: Ensure go-run'ing binaries works
-      run: go run -a github.com/getkin/kin-openapi/cmd/validate@latest -- openapi3/testdata/test.openapi.yml
+      run: go run -a github.com/TykTechnologies/kin-openapi/cmd/validate@latest -- openapi3/testdata/test.openapi.yml
 
     - if: runner.os == 'Linux'
       name: Missing specification object link to definition

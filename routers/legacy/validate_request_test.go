@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/TykTechnologies/kin-openapi/openapi3filter"
+	"github.com/TykTechnologies/kin-openapi/routers/legacy"
 )
 
 const spec = `

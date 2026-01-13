@@ -9,12 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TykTechnologies/kin-openapi/openapi3"
+	"github.com/TykTechnologies/kin-openapi/openapi3filter"
+	"github.com/TykTechnologies/kin-openapi/routers/gorillamux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 func TestValidateRequestWithAnAuthenticatorFunc_CanConsumeTheRequestBody(t *testing.T) {
@@ -73,7 +72,7 @@ security:
 				AuthenticationFunc: func(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 					defer req.Body.Close()
 
-					// NOTE that reading from `req.Body` appears to trigger the underlying issue raised in https://github.com/getkin/kin-openapi/issues/743
+					// NOTE that reading from `req.Body` appears to trigger the underlying issue raised in https://github.com/TykTechnologies/kin-openapi/issues/743
 					// this doesn't seem to occur when using `req.GetBody()`, but as that's less common to do, we should support both types
 					body, err := io.ReadAll(ai.RequestValidationInput.Request.Body)
 					assert.NoError(t, err)
@@ -132,7 +131,7 @@ security:
 	authenticatorFunc := func(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 		defer ai.RequestValidationInput.Request.Body.Close()
 
-		// NOTE that reading from `req.Body` appears to trigger the underlying issue raised in https://github.com/getkin/kin-openapi/issues/743
+		// NOTE that reading from `req.Body` appears to trigger the underlying issue raised in https://github.com/TykTechnologies/kin-openapi/issues/743
 		// this doesn't seem to occur when using `req.GetBody()`, but as that's less common to do, we should support both types
 		body, err := io.ReadAll(ai.RequestValidationInput.Request.Body)
 		assert.NoError(t, err)

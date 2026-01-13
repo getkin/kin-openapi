@@ -8,8 +8,8 @@ import (
 
 	"github.com/oasdiff/yaml"
 
-	"github.com/getkin/kin-openapi/openapi2"
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/TykTechnologies/kin-openapi/openapi2"
+	"github.com/TykTechnologies/kin-openapi/openapi3"
 )
 
 var (
@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 	filename := flag.Arg(0)
 	if len(flag.Args()) != 1 || filename == "" {
-		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
+		log.Fatalf("Usage: go run github.com/TykTechnologies/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
 	}
 
 	data, err := os.ReadFile(filename)
