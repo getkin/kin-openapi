@@ -1,0 +1,71 @@
+name: Run tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  TIMEOUT: 20m
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - name: "Checkout PR"
+        uses: TykTechnologies/github-actions/.github/actions/checkout-pr@main
+        with:
+          token: ${{ secrets.ORG_GH_TOKEN }}
+
+      - name: "Get base ref"
+        run: |
+          git fetch origin ${{ env.BRANCH_NAME }}
+          git rev-parse origin/${{ env.BRANCH_NAME }}
+
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        timeout-minutes: 20
+        with:
+          version: v2.5.0
+          only-new-issues: ${{ github.event_name == 'pull_request' }}
+          # Output formats configured in .golangci.yml (v2 approach)
+          # Generates: text to stdout + checkstyle JSON for SonarQube
+          args: --issues-exit-code=0 -v ./...
+          skip-cache: false
+          skip-save-cache: false
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: golangcilint
+          retention-days: 1
+          path: |
+            golangci-lint-report.json
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    outputs:
+      latest-version: ${{ steps.get-latest-version.outputs.version }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+
+      - name: Run unit tests
+        env:
+          GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: go test ./...
