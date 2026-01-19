@@ -19,3 +19,5 @@
  # IntelliJ / GoLand
 .idea
 .vscode
+
+golangci-lint-report.json

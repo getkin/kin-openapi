@@ -35,7 +35,7 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         timeout-minutes: 20
         with:
-          version: v2.5.0
+          version: v2.8.0
           only-new-issues: ${{ github.event_name == 'pull_request' }}
           # Output formats configured in .golangci.yml (v2 approach)
           # Generates: text to stdout + checkstyle JSON for SonarQube
