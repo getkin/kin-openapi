@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -495,18 +496,14 @@ func TestMigrationScenarios(t *testing.T) {
 		var doc30 openapi3.T
 		err := json.Unmarshal(spec30, &doc30)
 		require.NoError(t, err)
-
-		if doc30.IsOpenAPI3_1() {
-		}
+		assert.False(t, doc30.IsOpenAPI3_1())
 
 		// Simulate loading 3.1 document
 		spec31 := []byte(`{"openapi":"3.1.0","info":{"title":"Test","version":"1.0.0"},"paths":{}}`)
 		var doc31 openapi3.T
 		err = json.Unmarshal(spec31, &doc31)
 		require.NoError(t, err)
-
-		if doc31.IsOpenAPI3_1() {
-		}
+		assert.True(t, doc31.IsOpenAPI3_1())
 
 		// Cleanup
 	})
@@ -539,11 +536,13 @@ func TestEdgeCases(t *testing.T) {
 		}
 
 		// Nil webhooks should not serialize
-		data30, _ := json.Marshal(doc30)
+		data30, err := json.Marshal(doc30)
+		require.NoError(t, err)
 		require.NotContains(t, string(data30), "webhooks")
 
 		// Empty webhooks should not serialize
-		data31, _ := json.Marshal(doc31Empty)
+		data31, err := json.Marshal(doc31Empty)
+		require.NoError(t, err)
 		require.NotContains(t, string(data31), "webhooks")
 	})
 

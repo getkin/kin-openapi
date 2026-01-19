@@ -2323,11 +2323,11 @@ func markSchemaErrorKey(err error, key string) error {
 		v.reversePath = append(v.reversePath, key)
 		if v.Origin != nil {
 			if unwrapped := errors.Unwrap(v.Origin); unwrapped != nil {
-				if me, ok := unwrapped.(multiErrorForOneOf); ok {
-					_ = markSchemaErrorKey(MultiError(me), key)
+				if me, ok := unwrapped.(multiErrorForOneOf); ok { //nolint:errorlint
+					_ = markSchemaErrorKey(MultiError(me), key) //nolint:errcheck
 				}
-				if me, ok := unwrapped.(multiErrorForAllOf); ok {
-					_ = markSchemaErrorKey(MultiError(me), key)
+				if me, ok := unwrapped.(multiErrorForAllOf); ok { //nolint:errorlint
+					_ = markSchemaErrorKey(MultiError(me), key) //nolint:errcheck
 				}
 			}
 		}
