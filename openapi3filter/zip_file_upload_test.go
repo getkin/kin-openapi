@@ -42,6 +42,9 @@ paths:
                 file:
                   type: string
                   format: binary
+            encoding:
+              file:
+                contentType: application/zip
       responses:
         '200':
           description: Created
