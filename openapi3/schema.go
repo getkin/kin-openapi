@@ -412,7 +412,7 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m[k] = v
 	}
 
-	err := schema.marshalDynamicValues(&m)
+	err := schema.marshalDynamicValues(m)
 	if err != nil {
 		return nil, err
 	}
@@ -457,13 +457,6 @@ func (schema Schema) MarshalYAML() (any, error) {
 	// Array-related
 	if x := schema.UniqueItems; x {
 		m["uniqueItems"] = x
-	}
-	// Number-related
-	if x := schema.ExclusiveMinBool; x != nil && *x == true {
-		m["exclusiveMinimum"] = x
-	}
-	if x := schema.ExclusiveMaxBool; x != nil && *x == true {
-		m["exclusiveMaximum"] = x
 	}
 	// Properties
 	if x := schema.Nullable; x {
@@ -576,7 +569,25 @@ func (schema Schema) MarshalYAML() (any, error) {
 	return m, nil
 }
 
-func (schema *Schema) marshalDynamicValues(dataMap *map[string]any) error {
+func (schema *Schema) marshalDynamicValues(m map[string]any) error {
+	// Handle exclusiveMinimum - OAS 3.1 numeric takes precedence
+	if schema.ExclusiveMin != nil {
+		// OAS 3.1 style: numeric value
+		m["exclusiveMinimum"] = *schema.ExclusiveMin
+	} else if schema.ExclusiveMinBool != nil && *schema.ExclusiveMinBool {
+		// OAS 3.0 style: boolean (only if true and numeric not set)
+		m["exclusiveMinimum"] = true
+	}
+
+	// Handle exclusiveMaximum - OAS 3.1 numeric takes precedence
+	if schema.ExclusiveMax != nil {
+		// OAS 3.1 style: numeric value
+		m["exclusiveMaximum"] = *schema.ExclusiveMax
+	} else if schema.ExclusiveMaxBool != nil && *schema.ExclusiveMaxBool {
+		// OAS 3.0 style: boolean (only if true and numeric not set)
+		m["exclusiveMaximum"] = true
+	}
+
 	return nil
 }
 
@@ -589,7 +600,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	schema.unmarshalDynamicValues(x.Extensions)
+	(*Schema)(&x).unmarshalDynamicValues(x.Extensions)
 
 	delete(x.Extensions, originKey)
 	delete(x.Extensions, "oneOf")
@@ -669,7 +680,31 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (scheam *Schema) unmarshalDynamicValues(jsonMap map[string]any) error {
+func (schema *Schema) unmarshalDynamicValues(jsonMap map[string]any) error {
+	// Handle exclusiveMinimum
+	if val, ok := jsonMap["exclusiveMinimum"]; ok {
+		switch v := val.(type) {
+		case bool:
+			// OAS 3.0 style: boolean
+			schema.ExclusiveMinBool = &v
+		case float64:
+			// OAS 3.1 style: numeric value
+			schema.ExclusiveMin = &v
+		}
+	}
+
+	// Handle exclusiveMaximum
+	if val, ok := jsonMap["exclusiveMaximum"]; ok {
+		switch v := val.(type) {
+		case bool:
+			// OAS 3.0 style: boolean
+			schema.ExclusiveMaxBool = &v
+		case float64:
+			// OAS 3.1 style: numeric value
+			schema.ExclusiveMax = &v
+		}
+	}
+
 	return nil
 }
 
@@ -725,8 +760,14 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 	case "uniqueItems":
 		return schema.UniqueItems, nil
 	case "exclusiveMin":
+		if schema.ExclusiveMin != nil {
+			return schema.ExclusiveMin, nil
+		}
 		return schema.ExclusiveMinBool, nil
 	case "exclusiveMax":
+		if schema.ExclusiveMax != nil {
+			return schema.ExclusiveMax, nil
+		}
 		return schema.ExclusiveMaxBool, nil
 	case "nullable":
 		return schema.Nullable, nil
@@ -905,6 +946,16 @@ func (schema *Schema) WithExclusiveMax(value bool) *Schema {
 	return schema
 }
 
+func (schema *Schema) WithExclusiveMinNumber(value float64) *Schema {
+	schema.ExclusiveMin = &value
+	return schema
+}
+
+func (schema *Schema) WithExclusiveMaxNumber(value float64) *Schema {
+	schema.ExclusiveMax = &value
+	return schema
+}
+
 func (schema *Schema) WithEnum(values ...any) *Schema {
 	schema.Enum = values
 	return schema
@@ -1059,6 +1110,7 @@ func (schema *Schema) IsEmpty() bool {
 	if schema.Type != nil || schema.Format != "" || len(schema.Enum) != 0 || schema.UniqueItems ||
 		(schema.ExclusiveMinBool != nil && *schema.ExclusiveMinBool == true) ||
 		(schema.ExclusiveMaxBool != nil && *schema.ExclusiveMaxBool == true) ||
+		schema.ExclusiveMin != nil || schema.ExclusiveMax != nil ||
 		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
@@ -1813,6 +1865,42 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			Schema:                schema,
 			SchemaField:           "exclusiveMaximum",
 			Reason:                fmt.Sprintf("number must be less than %g", *schema.Max),
+			customizeMessageError: settings.customizeMessageError,
+		}
+		if !settings.multiError {
+			return err
+		}
+		me = append(me, err)
+	}
+
+	// "exclusiveMinimum" (OAS 3.1 numeric form)
+	if v := schema.ExclusiveMin; v != nil && !(*v < value) {
+		if settings.failfast {
+			return errSchema
+		}
+		err := &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "exclusiveMinimum",
+			Reason:                fmt.Sprintf("number must be more than %g", *v),
+			customizeMessageError: settings.customizeMessageError,
+		}
+		if !settings.multiError {
+			return err
+		}
+		me = append(me, err)
+	}
+
+	// "exclusiveMaximum" (OAS 3.1 numeric form)
+	if v := schema.ExclusiveMax; v != nil && !(*v > value) {
+		if settings.failfast {
+			return errSchema
+		}
+		err := &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "exclusiveMaximum",
+			Reason:                fmt.Sprintf("number must be less than %g", *v),
 			customizeMessageError: settings.customizeMessageError,
 		}
 		if !settings.multiError {

@@ -1,0 +1,127 @@
+openapi: 3.1.0
+info:
+  title: Exclusive Bounds Example (OAS 3.1)
+  version: 1.0.0
+  description: |
+    Example demonstrating OAS 3.1 numeric exclusiveMinimum and exclusiveMaximum.
+    In OAS 3.1, these are numeric values (not booleans like in OAS 3.0).
+
+paths:
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+            exclusiveMinimum: 0
+            exclusiveMaximum: 10000
+            description: Product ID must be greater than 0 and less than 10000
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  /temperature:
+    post:
+      summary: Record temperature reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemperatureReading'
+      responses:
+        '201':
+          description: Temperature recorded
+
+  /percentage:
+    post:
+      summary: Submit percentage value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: number
+                  exclusiveMinimum: 0
+                  exclusiveMaximum: 100
+                  description: Percentage must be in range (0, 100) - exclusive on both ends
+      responses:
+        '200':
+          description: Success
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - rating
+      properties:
+        id:
+          type: integer
+          exclusiveMinimum: 0
+          description: Product ID (greater than 0)
+        name:
+          type: string
+        price:
+          type: number
+          exclusiveMinimum: 0
+          description: Price must be greater than 0
+        rating:
+          type: number
+          exclusiveMinimum: 0
+          exclusiveMaximum: 5
+          description: Rating between 0 and 5 (exclusive)
+        discount:
+          type: number
+          exclusiveMinimum: 0
+          exclusiveMaximum: 1
+          description: Discount as decimal (0, 1) - e.g., 0.25 for 25% off
+
+    TemperatureReading:
+      type: object
+      required:
+        - celsius
+        - timestamp
+      properties:
+        celsius:
+          type: number
+          exclusiveMinimum: -273.15
+          description: Temperature in Celsius (must be above absolute zero)
+        fahrenheit:
+          type: number
+          exclusiveMinimum: -459.67
+          description: Temperature in Fahrenheit (must be above absolute zero)
+        timestamp:
+          type: string
+          format: date-time
+
+    ScientificMeasurement:
+      type: object
+      properties:
+        value:
+          type: number
+          exclusiveMinimum: 0
+          description: Measurement value (must be positive)
+        errorMargin:
+          type: number
+          exclusiveMinimum: 0
+          exclusiveMaximum: 1
+          description: Error margin as proportion (0, 1)
+        confidence:
+          type: number
+          exclusiveMinimum: 0
+          exclusiveMaximum: 100
+          description: Confidence level as percentage
