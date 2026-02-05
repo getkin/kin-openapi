@@ -138,7 +138,7 @@ func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
 		schema := &Schema{
 			Type:             &Types{"number"},
 			Min:              &min,
-			ExclusiveMinBool: boolPtr(true),
+			ExclusiveMinBool: Ptr(true),
 		}
 
 		err := schema.VisitJSON(0.1, EnableJSONSchema2020())
@@ -153,7 +153,7 @@ func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
 		schema := &Schema{
 			Type:             &Types{"number"},
 			Max:              &max,
-			ExclusiveMaxBool: boolPtr(true),
+			ExclusiveMaxBool: Ptr(true),
 		}
 
 		err := schema.VisitJSON(99.9, EnableJSONSchema2020())
@@ -275,8 +275,4 @@ func TestBuiltInValidatorStillWorks(t *testing.T) {
 		err = schema.VisitJSON(map[string]any{}, EnableJSONSchema2020())
 		require.Error(t, err)
 	})
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }
