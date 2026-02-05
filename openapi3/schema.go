@@ -412,6 +412,11 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m[k] = v
 	}
 
+	err := schema.marshalDynamicValues(&m)
+	if err != nil {
+		return nil, err
+	}
+
 	if x := schema.OneOf; len(x) != 0 {
 		m["oneOf"] = x
 	}
@@ -571,6 +576,10 @@ func (schema Schema) MarshalYAML() (any, error) {
 	return m, nil
 }
 
+func (schema *Schema) marshalDynamicValues(dataMap *map[string]any) error {
+	return nil
+}
+
 // UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
 	type SchemaBis Schema
@@ -579,6 +588,8 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
+
+	schema.unmarshalDynamicValues(x.Extensions)
 
 	delete(x.Extensions, originKey)
 	delete(x.Extensions, "oneOf")
@@ -655,6 +666,10 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 			schema.Example = strings.TrimSuffix(eg, "T00:00:00Z")
 		}
 	}
+	return nil
+}
+
+func (scheam *Schema) unmarshalDynamicValues(jsonMap map[string]any) error {
 	return nil
 }
 
