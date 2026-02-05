@@ -600,7 +600,9 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	(*Schema)(&x).unmarshalDynamicValues(x.Extensions)
+	if err := (*Schema)(&x).unmarshalDynamicValues(x.Extensions); err != nil {
+		return err
+	}
 
 	delete(x.Extensions, originKey)
 	delete(x.Extensions, "oneOf")
@@ -1108,8 +1110,8 @@ func (schema *Schema) PermitsNull() bool {
 // IsEmpty tells whether schema is equivalent to the empty schema `{}`.
 func (schema *Schema) IsEmpty() bool {
 	if schema.Type != nil || schema.Format != "" || len(schema.Enum) != 0 || schema.UniqueItems ||
-		(schema.ExclusiveMinBool != nil && *schema.ExclusiveMinBool == true) ||
-		(schema.ExclusiveMaxBool != nil && *schema.ExclusiveMaxBool == true) ||
+		(schema.ExclusiveMinBool != nil && *schema.ExclusiveMinBool) ||
+		(schema.ExclusiveMaxBool != nil && *schema.ExclusiveMaxBool) ||
 		schema.ExclusiveMin != nil || schema.ExclusiveMax != nil ||
 		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
@@ -1838,7 +1840,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	// "exclusiveMinimum"
-	if v := schema.ExclusiveMinBool; (v != nil && *v == true) && !(*schema.Min < value) {
+	if v := schema.ExclusiveMinBool; (v != nil && *v) && !(*schema.Min < value) {
 		if settings.failfast {
 			return errSchema
 		}
@@ -1856,7 +1858,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	// "exclusiveMaximum"
-	if v := schema.ExclusiveMaxBool; (v != nil && *v == true) && !(*schema.Max > value) {
+	if v := schema.ExclusiveMaxBool; (v != nil && *v) && !(*schema.Max > value) {
 		if settings.failfast {
 			return errSchema
 		}
