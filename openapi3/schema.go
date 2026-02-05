@@ -100,8 +100,8 @@ type Schema struct {
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
-	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	ExclusiveMinBool *bool `json:"-" yaml:"-"`
+	ExclusiveMaxBool *bool `json:"-" yaml:"-"`
 	// Properties
 	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
 	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
@@ -109,6 +109,10 @@ type Schema struct {
 	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
 	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
+
+	// OAS 3.1 exclusiveMinimum and exclusiveMaximum
+	ExclusiveMin *float64 `json:"-" yaml:"-"`
+	ExclusiveMax *float64 `json:"-" yaml:"-"`
 
 	// Number
 	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
@@ -450,10 +454,10 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m["uniqueItems"] = x
 	}
 	// Number-related
-	if x := schema.ExclusiveMin; x {
+	if x := schema.ExclusiveMinBool; x != nil && *x == true {
 		m["exclusiveMinimum"] = x
 	}
-	if x := schema.ExclusiveMax; x {
+	if x := schema.ExclusiveMaxBool; x != nil && *x == true {
 		m["exclusiveMaximum"] = x
 	}
 	// Properties
@@ -706,9 +710,9 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 	case "uniqueItems":
 		return schema.UniqueItems, nil
 	case "exclusiveMin":
-		return schema.ExclusiveMin, nil
+		return schema.ExclusiveMinBool, nil
 	case "exclusiveMax":
-		return schema.ExclusiveMax, nil
+		return schema.ExclusiveMaxBool, nil
 	case "nullable":
 		return schema.Nullable, nil
 	case "readOnly":
@@ -877,12 +881,12 @@ func (schema *Schema) WithMax(value float64) *Schema {
 }
 
 func (schema *Schema) WithExclusiveMin(value bool) *Schema {
-	schema.ExclusiveMin = value
+	schema.ExclusiveMinBool = &value
 	return schema
 }
 
 func (schema *Schema) WithExclusiveMax(value bool) *Schema {
-	schema.ExclusiveMax = value
+	schema.ExclusiveMaxBool = &value
 	return schema
 }
 
@@ -1037,8 +1041,9 @@ func (schema *Schema) PermitsNull() bool {
 
 // IsEmpty tells whether schema is equivalent to the empty schema `{}`.
 func (schema *Schema) IsEmpty() bool {
-	if schema.Type != nil || schema.Format != "" || len(schema.Enum) != 0 ||
-		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
+	if schema.Type != nil || schema.Format != "" || len(schema.Enum) != 0 || schema.UniqueItems ||
+		(schema.ExclusiveMinBool != nil && *schema.ExclusiveMinBool == true) ||
+		(schema.ExclusiveMaxBool != nil && *schema.ExclusiveMaxBool == true) ||
 		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
@@ -1766,7 +1771,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	// "exclusiveMinimum"
-	if v := schema.ExclusiveMin; v && !(*schema.Min < value) {
+	if v := schema.ExclusiveMinBool; (v != nil && *v == true) && !(*schema.Min < value) {
 		if settings.failfast {
 			return errSchema
 		}
@@ -1784,7 +1789,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	// "exclusiveMaximum"
-	if v := schema.ExclusiveMax; v && !(*schema.Max > value) {
+	if v := schema.ExclusiveMaxBool; (v != nil && *v == true) && !(*schema.Max > value) {
 		if settings.failfast {
 			return errSchema
 		}
