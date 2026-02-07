@@ -1416,6 +1416,87 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 
+	// OpenAPI 3.1 / JSON Schema 2020-12 sub-schemas
+	for _, ref := range schema.PrefixItems {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.Contains; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	for _, name := range componentNames(schema.PatternProperties) {
+		ref := schema.PatternProperties[name]
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	for _, name := range componentNames(schema.DependentSchemas) {
+		ref := schema.DependentSchemas[name]
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.PropertyNames; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.UnevaluatedItems; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.UnevaluatedProperties; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+
 	if v := schema.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return stack, fmt.Errorf("invalid external docs: %w", err)
