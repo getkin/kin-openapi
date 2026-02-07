@@ -87,8 +87,13 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 	delete(schema, "externalDocs")
 	delete(schema, "example") // Use "examples" in 2020-12
 
-	// Recursively transform nested schemas
-	for _, key := range []string{"properties", "additionalProperties", "items", "not", "if", "then", "else"} {
+	// Recursively transform nested schemas (single schema fields)
+	for _, key := range []string{
+		"additionalProperties", "items", "not",
+		// OpenAPI 3.1 / JSON Schema 2020-12 fields
+		"contains", "propertyNames", "unevaluatedItems", "unevaluatedProperties",
+		"if", "then", "else",
+	} {
 		if val, ok := schema[key]; ok {
 			if nestedSchema, ok := val.(map[string]any); ok {
 				transformOpenAPIToJSONSchema(nestedSchema)
@@ -96,8 +101,8 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 		}
 	}
 
-	// Transform oneOf, anyOf, allOf arrays
-	for _, key := range []string{"oneOf", "anyOf", "allOf"} {
+	// Transform schema arrays (oneOf, anyOf, allOf, prefixItems)
+	for _, key := range []string{"oneOf", "anyOf", "allOf", "prefixItems"} {
 		if val, ok := schema[key].([]any); ok {
 			for _, item := range val {
 				if nestedSchema, ok := item.(map[string]any); ok {
@@ -107,11 +112,13 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 		}
 	}
 
-	// Transform properties object
-	if props, ok := schema["properties"].(map[string]any); ok {
-		for _, propVal := range props {
-			if propSchema, ok := propVal.(map[string]any); ok {
-				transformOpenAPIToJSONSchema(propSchema)
+	// Transform schema maps (properties, patternProperties, dependentSchemas)
+	for _, key := range []string{"properties", "patternProperties", "dependentSchemas"} {
+		if props, ok := schema[key].(map[string]any); ok {
+			for _, propVal := range props {
+				if propSchema, ok := propVal.(map[string]any); ok {
+					transformOpenAPIToJSONSchema(propSchema)
+				}
 			}
 		}
 	}
