@@ -247,6 +247,130 @@ func TestJSONSchema2020Validator_Fallback(t *testing.T) {
 	})
 }
 
+func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
+	// These tests verify that transformOpenAPIToJSONSchema recurses into
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields. Each sub-test uses a nested
+	// schema with nullable:true (an OpenAPI 3.0-ism) that must be converted
+	// to a type array for the JSON Schema 2020-12 validator to handle null.
+
+	t.Run("prefixItems with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"array"},
+			PrefixItems: SchemaRefs{
+				&SchemaRef{Value: &Schema{
+					Type:     &Types{"string"},
+					Nullable: true,
+				}},
+			},
+		}
+
+		err := schema.VisitJSON([]any{"hello"}, EnableJSONSchema2020())
+		require.NoError(t, err)
+
+		err = schema.VisitJSON([]any{nil}, EnableJSONSchema2020())
+		require.NoError(t, err, "null should be accepted after nullable conversion in prefixItems")
+	})
+
+	t.Run("contains with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"array"},
+			Contains: &SchemaRef{Value: &Schema{
+				Type:     &Types{"string"},
+				Nullable: true,
+			}},
+		}
+
+		err := schema.VisitJSON([]any{nil}, EnableJSONSchema2020())
+		require.NoError(t, err, "null should match contains after nullable conversion")
+	})
+
+	t.Run("patternProperties with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"object"},
+			PatternProperties: Schemas{
+				"^x-": &SchemaRef{Value: &Schema{
+					Type:     &Types{"string"},
+					Nullable: true,
+				}},
+			},
+		}
+
+		err := schema.VisitJSON(map[string]any{"x-val": nil}, EnableJSONSchema2020())
+		require.NoError(t, err, "null should be accepted after nullable conversion in patternProperties")
+	})
+
+	t.Run("dependentSchemas with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"object"},
+			Properties: Schemas{
+				"name": &SchemaRef{Value: &Schema{Type: &Types{"string"}}},
+				"tag":  &SchemaRef{Value: &Schema{Type: &Types{"string"}, Nullable: true}},
+			},
+			DependentSchemas: Schemas{
+				"name": &SchemaRef{Value: &Schema{
+					Properties: Schemas{
+						"tag": &SchemaRef{Value: &Schema{
+							Type:     &Types{"string"},
+							Nullable: true,
+						}},
+					},
+				}},
+			},
+		}
+
+		err := schema.VisitJSON(map[string]any{"name": "foo", "tag": nil}, EnableJSONSchema2020())
+		require.NoError(t, err, "null should be accepted after nullable conversion in dependentSchemas")
+	})
+
+	t.Run("propertyNames with nullable not applicable but transform should not crash", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"object"},
+			PropertyNames: &SchemaRef{Value: &Schema{
+				Type:      &Types{"string"},
+				MinLength: 1,
+			}},
+		}
+
+		err := schema.VisitJSON(map[string]any{"abc": 1}, EnableJSONSchema2020())
+		require.NoError(t, err)
+
+		err = schema.VisitJSON(map[string]any{"": 1}, EnableJSONSchema2020())
+		require.Error(t, err, "empty property name should fail minLength")
+	})
+
+	t.Run("unevaluatedItems with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"array"},
+			PrefixItems: SchemaRefs{
+				&SchemaRef{Value: &Schema{Type: &Types{"integer"}}},
+			},
+			UnevaluatedItems: &SchemaRef{Value: &Schema{
+				Type:     &Types{"string"},
+				Nullable: true,
+			}},
+		}
+
+		err := schema.VisitJSON([]any{1, nil}, EnableJSONSchema2020())
+		require.NoError(t, err, "null should be accepted after nullable conversion in unevaluatedItems")
+	})
+
+	t.Run("unevaluatedProperties with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type: &Types{"object"},
+			Properties: Schemas{
+				"name": &SchemaRef{Value: &Schema{Type: &Types{"string"}}},
+			},
+			UnevaluatedProperties: &SchemaRef{Value: &Schema{
+				Type:     &Types{"string"},
+				Nullable: true,
+			}},
+		}
+
+		err := schema.VisitJSON(map[string]any{"name": "foo", "extra": nil}, EnableJSONSchema2020())
+		require.NoError(t, err, "null should be accepted after nullable conversion in unevaluatedProperties")
+	})
+}
+
 func TestBuiltInValidatorStillWorks(t *testing.T) {
 	t.Run("string validation with built-in", func(t *testing.T) {
 		schema := &Schema{
