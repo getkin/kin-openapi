@@ -1013,7 +1013,44 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}
 	}
 
-	// OpenAPI 3.1 / JSON Schema 2020-12: conditional keywords
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	for _, v := range value.PrefixItems {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.Contains; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	for _, name := range componentNames(value.PatternProperties) {
+		v := value.PatternProperties[name]
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	for _, name := range componentNames(value.DependentSchemas) {
+		v := value.DependentSchemas[name]
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.PropertyNames; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.UnevaluatedItems; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.UnevaluatedProperties; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
 	if v := value.If; v != nil {
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err

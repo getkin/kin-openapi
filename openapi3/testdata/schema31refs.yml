@@ -1,0 +1,57 @@
+openapi: "3.1.0"
+info:
+  title: Test OpenAPI 3.1 Schema Refs
+  version: "1.0.0"
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TupleArray"
+components:
+  schemas:
+    StringType:
+      type: string
+    IntegerType:
+      type: integer
+    NamePattern:
+      type: string
+      pattern: "^[a-z]+$"
+    NonNegative:
+      type: number
+      minimum: 0
+    TupleArray:
+      type: array
+      prefixItems:
+        - $ref: "#/components/schemas/StringType"
+        - $ref: "#/components/schemas/IntegerType"
+    ArrayWithContains:
+      type: array
+      contains:
+        $ref: "#/components/schemas/StringType"
+    ObjectWithPatternProperties:
+      type: object
+      patternProperties:
+        "^x-":
+          $ref: "#/components/schemas/StringType"
+    ObjectWithDependentSchemas:
+      type: object
+      dependentSchemas:
+        name:
+          $ref: "#/components/schemas/NonNegative"
+    ObjectWithPropertyNames:
+      type: object
+      propertyNames:
+        $ref: "#/components/schemas/NamePattern"
+    ArrayWithUnevaluatedItems:
+      type: array
+      unevaluatedItems:
+        $ref: "#/components/schemas/StringType"
+    ObjectWithUnevaluatedProperties:
+      type: object
+      unevaluatedProperties:
+        $ref: "#/components/schemas/StringType"
