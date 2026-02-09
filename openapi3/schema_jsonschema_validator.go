@@ -92,7 +92,7 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 		"additionalProperties", "items", "not",
 		// OpenAPI 3.1 / JSON Schema 2020-12 fields
 		"contains", "propertyNames", "unevaluatedItems", "unevaluatedProperties",
-		"if", "then", "else",
+		"if", "then", "else", "contentSchema",
 	} {
 		if val, ok := schema[key]; ok {
 			if nestedSchema, ok := val.(map[string]any); ok {

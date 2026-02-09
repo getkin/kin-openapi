@@ -155,6 +155,17 @@ type Schema struct {
 
 	// JSON Schema 2020-12 dependent requirements
 	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+
+	// JSON Schema 2020-12 identity/referencing keywords
+	SchemaID       string `json:"$id,omitempty" yaml:"$id,omitempty"`
+	Anchor         string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
+	DynamicRef     string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
+	DynamicAnchor  string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
+
+	// JSON Schema 2020-12 content vocabulary
+	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
+	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
+	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
 }
 
 // Types represents the type(s) of a schema.
@@ -649,6 +660,27 @@ func (schema Schema) MarshalYAML() (any, error) {
 	if x := schema.DependentRequired; len(x) != 0 {
 		m["dependentRequired"] = x
 	}
+	if x := schema.SchemaID; x != "" {
+		m["$id"] = x
+	}
+	if x := schema.Anchor; x != "" {
+		m["$anchor"] = x
+	}
+	if x := schema.DynamicRef; x != "" {
+		m["$dynamicRef"] = x
+	}
+	if x := schema.DynamicAnchor; x != "" {
+		m["$dynamicAnchor"] = x
+	}
+	if x := schema.ContentMediaType; x != "" {
+		m["contentMediaType"] = x
+	}
+	if x := schema.ContentEncoding; x != "" {
+		m["contentEncoding"] = x
+	}
+	if x := schema.ContentSchema; x != nil {
+		m["contentSchema"] = x
+	}
 
 	return m, nil
 }
@@ -728,6 +760,13 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "then")
 	delete(x.Extensions, "else")
 	delete(x.Extensions, "dependentRequired")
+	delete(x.Extensions, "$id")
+	delete(x.Extensions, "$anchor")
+	delete(x.Extensions, "$dynamicRef")
+	delete(x.Extensions, "$dynamicAnchor")
+	delete(x.Extensions, "contentMediaType")
+	delete(x.Extensions, "contentEncoding")
+	delete(x.Extensions, "contentSchema")
 
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
@@ -1202,6 +1241,15 @@ func (schema *Schema) IsEmpty() bool {
 	if len(schema.DependentRequired) != 0 {
 		return false
 	}
+	if schema.SchemaID != "" || schema.Anchor != "" || schema.DynamicRef != "" || schema.DynamicAnchor != "" {
+		return false
+	}
+	if schema.ContentMediaType != "" || schema.ContentEncoding != "" {
+		return false
+	}
+	if cs := schema.ContentSchema; cs != nil && cs.Value != nil && !cs.Value.IsEmpty() {
+		return false
+	}
 	return true
 }
 
@@ -1487,6 +1535,17 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 	if ref := schema.UnevaluatedProperties; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.ContentSchema; ref != nil {
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1856,6 +1915,40 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
+		var discriminatorRef string
+		if schema.Discriminator != nil {
+			pn := schema.Discriminator.PropertyName
+			if valuemap, okcheck := value.(map[string]any); okcheck {
+				discriminatorVal, okcheck := valuemap[pn]
+				if !okcheck {
+					return &SchemaError{
+						Schema:      schema,
+						SchemaField: "discriminator",
+						Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
+					}, false
+				}
+
+				discriminatorValString, okcheck := discriminatorVal.(string)
+				if !okcheck {
+					return &SchemaError{
+						Value:       discriminatorVal,
+						Schema:      schema,
+						SchemaField: "discriminator",
+						Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
+					}, false
+				}
+
+				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+					return &SchemaError{
+						Value:       discriminatorVal,
+						Schema:      schema,
+						SchemaField: "discriminator",
+						Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
+					}, false
+				}
+			}
+		}
+
 		var (
 			ok              = false
 			matchedAnyOfIdx = 0
@@ -1866,6 +1959,11 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if v == nil {
 				return foundUnresolvedRef(item.Ref), false
 			}
+
+			if discriminatorRef != "" && discriminatorRef != item.Ref {
+				continue
+			}
+
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
 			if settings.asreq || settings.asrep {
 				tempValue = deepcopy.Copy(value)

@@ -310,6 +310,13 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
+	// OpenAPI 3.1 jsonSchemaDialect validation
+	if doc.JSONSchemaDialect != "" {
+		if _, err := url.Parse(doc.JSONSchemaDialect); err != nil {
+			return fmt.Errorf("invalid jsonSchemaDialect: %w", err)
+		}
+	}
+
 	// OpenAPI 3.1 webhooks validation
 	if doc.Webhooks != nil {
 		wrap = func(e error) error { return fmt.Errorf("invalid webhooks: %w", e) }
