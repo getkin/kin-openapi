@@ -259,6 +259,17 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		}
 	}
 
+	// Visit all webhooks (OpenAPI 3.1)
+	for _, name := range componentNames(doc.Webhooks) {
+		pathItem := doc.Webhooks[name]
+		if pathItem == nil {
+			continue
+		}
+		if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
+			return
+		}
+	}
+
 	return
 }
 
@@ -986,6 +997,24 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 		}
 	}
+
+	// OpenAPI 3.1 / JSON Schema 2020-12: conditional keywords
+	if v := value.If; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.Then; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.Else; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

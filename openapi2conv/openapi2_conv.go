@@ -268,8 +268,8 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			Enum:            parameter.Enum,
 			Min:             parameter.Minimum,
 			Max:             parameter.Maximum,
-			ExclusiveMin:    parameter.ExclusiveMin,
-			ExclusiveMax:    parameter.ExclusiveMax,
+			ExclusiveMin:    openapi3.ExclusiveBound{Bool: boolPtr(parameter.ExclusiveMin)},
+			ExclusiveMax:    openapi3.ExclusiveBound{Bool: boolPtr(parameter.ExclusiveMax)},
 			MinLength:       parameter.MinLength,
 			MaxLength:       parameter.MaxLength,
 			Default:         parameter.Default,
@@ -494,8 +494,8 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 		Example:              schema.Value.Example,
 		ExternalDocs:         schema.Value.ExternalDocs,
 		UniqueItems:          schema.Value.UniqueItems,
-		ExclusiveMin:         schema.Value.ExclusiveMin,
-		ExclusiveMax:         schema.Value.ExclusiveMax,
+		ExclusiveMin:         openapi3.ExclusiveBound{Bool: boolPtr(schema.Value.ExclusiveMin)},
+		ExclusiveMax:         openapi3.ExclusiveBound{Bool: boolPtr(schema.Value.ExclusiveMax)},
 		ReadOnly:             schema.Value.ReadOnly,
 		WriteOnly:            schema.Value.WriteOnly,
 		AllowEmptyValue:      schema.Value.AllowEmptyValue,
@@ -883,8 +883,8 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 				Enum:         schema.Value.Enum,
 				Minimum:      schema.Value.Min,
 				Maximum:      schema.Value.Max,
-				ExclusiveMin: schema.Value.ExclusiveMin,
-				ExclusiveMax: schema.Value.ExclusiveMax,
+				ExclusiveMin: exclusiveBoundToBool(schema.Value.ExclusiveMin),
+				ExclusiveMax: exclusiveBoundToBool(schema.Value.ExclusiveMax),
 				MinLength:    schema.Value.MinLength,
 				MaxLength:    schema.Value.MaxLength,
 				Default:      schema.Value.Default,
@@ -911,8 +911,8 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		Example:              schema.Value.Example,
 		ExternalDocs:         schema.Value.ExternalDocs,
 		UniqueItems:          schema.Value.UniqueItems,
-		ExclusiveMin:         schema.Value.ExclusiveMin,
-		ExclusiveMax:         schema.Value.ExclusiveMax,
+		ExclusiveMin:         exclusiveBoundToBool(schema.Value.ExclusiveMin),
+		ExclusiveMax:         exclusiveBoundToBool(schema.Value.ExclusiveMax),
 		ReadOnly:             schema.Value.ReadOnly,
 		WriteOnly:            schema.Value.WriteOnly,
 		AllowEmptyValue:      schema.Value.AllowEmptyValue,
@@ -1045,8 +1045,8 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			In:           "formData",
 			Extensions:   stripNonExtensions(val.Extensions),
 			Enum:         val.Enum,
-			ExclusiveMin: val.ExclusiveMin,
-			ExclusiveMax: val.ExclusiveMax,
+			ExclusiveMin: exclusiveBoundToBool(val.ExclusiveMin),
+			ExclusiveMax: exclusiveBoundToBool(val.ExclusiveMax),
 			MinLength:    val.MinLength,
 			MaxLength:    val.MaxLength,
 			Default:      val.Default,
@@ -1340,4 +1340,23 @@ func addPathExtensions(doc2 *openapi2.T, path string, extensions map[string]any)
 		doc2.Paths[path] = pathItem
 	}
 	pathItem.Extensions = extensions
+}
+
+// boolPtr returns a pointer to a bool, or nil if the value is false (to avoid storing empty values)
+func boolPtr(b bool) *bool {
+	if !b {
+		return nil
+	}
+	return &b
+}
+
+// exclusiveBoundToBool converts an ExclusiveBound to a bool for OpenAPI 2.0 compatibility
+// In OpenAPI 2.0, exclusiveMinimum/exclusiveMaximum are boolean modifiers
+func exclusiveBoundToBool(eb openapi3.ExclusiveBound) bool {
+	if eb.Bool != nil {
+		return *eb.Bool
+	}
+	// If it's a number (OpenAPI 3.1 style), we return true to indicate exclusivity
+	// The actual bound value would need to be handled separately
+	return eb.Value != nil
 }
