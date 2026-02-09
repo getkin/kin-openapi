@@ -74,5 +74,9 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 		return errors.New("value of license name must be a non-empty string")
 	}
 
+	if license.URL != "" && license.Identifier != "" {
+		return errors.New("license must not specify both 'url' and 'identifier'")
+	}
+
 	return validateExtensions(ctx, license.Extensions)
 }

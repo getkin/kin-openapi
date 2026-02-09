@@ -19,7 +19,7 @@ type T struct {
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
 	Info         *Info                `json:"info" yaml:"info"`   // Required
-	Paths        *Paths               `json:"paths" yaml:"paths"` // Required
+	Paths        *Paths               `json:"paths,omitempty" yaml:"paths,omitempty"` // Required in 3.0, optional in 3.1
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -278,7 +278,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
-	} else {
+	} else if !doc.IsOpenAPI3_1() {
 		return wrap(errors.New("must be an object"))
 	}
 
