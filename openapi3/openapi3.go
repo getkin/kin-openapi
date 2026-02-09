@@ -18,7 +18,7 @@ type T struct {
 
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
-	Info         *Info                `json:"info" yaml:"info"`   // Required
+	Info         *Info                `json:"info" yaml:"info"`                       // Required
 	Paths        *Paths               `json:"paths,omitempty" yaml:"paths,omitempty"` // Required in 3.0, optional in 3.1
 	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`

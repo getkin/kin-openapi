@@ -157,10 +157,10 @@ type Schema struct {
 	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
 
 	// JSON Schema 2020-12 identity/referencing keywords
-	SchemaID       string `json:"$id,omitempty" yaml:"$id,omitempty"`
-	Anchor         string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
-	DynamicRef     string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
-	DynamicAnchor  string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
+	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
+	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
+	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
 
 	// JSON Schema 2020-12 content vocabulary
 	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
