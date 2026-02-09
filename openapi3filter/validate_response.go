@@ -63,7 +63,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		return &ResponseError{Input: input, Reason: "response has not been resolved"}
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential options here
+	opts := make([]openapi3.SchemaValidationOption, 0, 3+len(options.SchemaValidationOptions))
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
@@ -73,6 +73,8 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if options.ExcludeWriteOnlyValidations {
 		opts = append(opts, openapi3.DisableWriteOnlyValidation())
 	}
+	// Append additional schema validation options (e.g., document-scoped format validators)
+	opts = append(opts, options.SchemaValidationOptions...)
 
 	headers := make([]string, 0, len(response.Headers))
 	for k := range response.Headers {
