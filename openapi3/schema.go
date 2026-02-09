@@ -1145,7 +1145,8 @@ func (schema *Schema) IsEmpty() bool {
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
 		schema.MinItems != 0 || schema.MaxItems != nil ||
 		len(schema.Required) != 0 ||
-		schema.MinProps != 0 || schema.MaxProps != nil {
+		schema.MinProps != 0 || schema.MaxProps != nil ||
+		schema.Const != nil {
 		return false
 	}
 	if n := schema.Not; n != nil && n.Value != nil && !n.Value.IsEmpty() {
@@ -1585,6 +1586,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	if err = schema.visitEnumOperation(settings, value); err != nil {
 		return
 	}
+	if err = schema.visitConstOperation(settings, value); err != nil {
+		return
+	}
 
 	switch value := value.(type) {
 	case nil:
@@ -1680,6 +1684,39 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 			Schema:                schema,
 			SchemaField:           "enum",
 			Reason:                fmt.Sprintf("value is not one of the allowed values %s", string(allowedValues)),
+			customizeMessageError: settings.customizeMessageError,
+		}
+	}
+	return
+}
+
+func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, value any) (err error) {
+	if schema.Const == nil {
+		return
+	}
+	var match bool
+	switch c := value.(type) {
+	case json.Number:
+		var f float64
+		if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
+			return err
+		}
+		match = schema.Const == f
+	case int64:
+		match = reflect.DeepEqual(schema.Const, float64(c))
+	default:
+		match = reflect.DeepEqual(schema.Const, value)
+	}
+	if !match {
+		if settings.failfast {
+			return errSchema
+		}
+		constVal, _ := json.Marshal(schema.Const)
+		return &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "const",
+			Reason:                fmt.Sprintf("value must be %s", string(constVal)),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
