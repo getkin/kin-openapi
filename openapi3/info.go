@@ -9,11 +9,13 @@ import (
 
 // Info is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#info-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#info-object
 type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Title          string   `json:"title" yaml:"title"` // Required
+	Title          string   `json:"title" yaml:"title"`                         // Required
+	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"` // OpenAPI 3.1
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
 	Contact        *Contact `json:"contact,omitempty" yaml:"contact,omitempty"`
@@ -35,9 +37,13 @@ func (info *Info) MarshalYAML() (any, error) {
 	if info == nil {
 		return nil, nil
 	}
-	m := make(map[string]any, 6+len(info.Extensions))
+	m := make(map[string]any, 7+len(info.Extensions))
 	maps.Copy(m, info.Extensions)
 	m["title"] = info.Title
+	// OpenAPI 3.1 field
+	if x := info.Summary; x != "" {
+		m["summary"] = x
+	}
 	if x := info.Description; x != "" {
 		m["description"] = x
 	}
@@ -63,6 +69,7 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "title")
+	delete(x.Extensions, "summary") // OpenAPI 3.1
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "termsOfService")
 	delete(x.Extensions, "contact")

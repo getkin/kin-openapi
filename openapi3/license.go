@@ -9,12 +9,17 @@ import (
 
 // License is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#license-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#license-object
 type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
+
+	// Identifier is an SPDX license expression for the API (OpenAPI 3.1)
+	// Either url or identifier can be specified, not both
+	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of License.
@@ -34,6 +39,10 @@ func (license License) MarshalYAML() (any, error) {
 	if x := license.URL; x != "" {
 		m["url"] = x
 	}
+	// OpenAPI 3.1 field
+	if x := license.Identifier; x != "" {
+		m["identifier"] = x
+	}
 	return m, nil
 }
 
@@ -47,6 +56,7 @@ func (license *License) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
+	delete(x.Extensions, "identifier") // OpenAPI 3.1
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
