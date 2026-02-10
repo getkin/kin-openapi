@@ -882,6 +882,92 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 		return schema.MaxProps, nil
 	case "discriminator":
 		return schema.Discriminator, nil
+
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	case "const":
+		return schema.Const, nil
+	case "examples":
+		return schema.Examples, nil
+	case "prefixItems":
+		return schema.PrefixItems, nil
+	case "contains":
+		if schema.Contains != nil {
+			if schema.Contains.Ref != "" {
+				return &Ref{Ref: schema.Contains.Ref}, nil
+			}
+			return schema.Contains.Value, nil
+		}
+	case "minContains":
+		return schema.MinContains, nil
+	case "maxContains":
+		return schema.MaxContains, nil
+	case "patternProperties":
+		return schema.PatternProperties, nil
+	case "dependentSchemas":
+		return schema.DependentSchemas, nil
+	case "propertyNames":
+		if schema.PropertyNames != nil {
+			if schema.PropertyNames.Ref != "" {
+				return &Ref{Ref: schema.PropertyNames.Ref}, nil
+			}
+			return schema.PropertyNames.Value, nil
+		}
+	case "unevaluatedItems":
+		if schema.UnevaluatedItems != nil {
+			if schema.UnevaluatedItems.Ref != "" {
+				return &Ref{Ref: schema.UnevaluatedItems.Ref}, nil
+			}
+			return schema.UnevaluatedItems.Value, nil
+		}
+	case "unevaluatedProperties":
+		if schema.UnevaluatedProperties != nil {
+			if schema.UnevaluatedProperties.Ref != "" {
+				return &Ref{Ref: schema.UnevaluatedProperties.Ref}, nil
+			}
+			return schema.UnevaluatedProperties.Value, nil
+		}
+	case "if":
+		if schema.If != nil {
+			if schema.If.Ref != "" {
+				return &Ref{Ref: schema.If.Ref}, nil
+			}
+			return schema.If.Value, nil
+		}
+	case "then":
+		if schema.Then != nil {
+			if schema.Then.Ref != "" {
+				return &Ref{Ref: schema.Then.Ref}, nil
+			}
+			return schema.Then.Value, nil
+		}
+	case "else":
+		if schema.Else != nil {
+			if schema.Else.Ref != "" {
+				return &Ref{Ref: schema.Else.Ref}, nil
+			}
+			return schema.Else.Value, nil
+		}
+	case "dependentRequired":
+		return schema.DependentRequired, nil
+	case "$id":
+		return schema.SchemaID, nil
+	case "$anchor":
+		return schema.Anchor, nil
+	case "$dynamicRef":
+		return schema.DynamicRef, nil
+	case "$dynamicAnchor":
+		return schema.DynamicAnchor, nil
+	case "contentMediaType":
+		return schema.ContentMediaType, nil
+	case "contentEncoding":
+		return schema.ContentEncoding, nil
+	case "contentSchema":
+		if schema.ContentSchema != nil {
+			if schema.ContentSchema.Ref != "" {
+				return &Ref{Ref: schema.ContentSchema.Ref}, nil
+			}
+			return schema.ContentSchema.Value, nil
+		}
 	}
 
 	v, _, err := jsonpointer.GetForToken(schema.Extensions, token)
@@ -1209,10 +1295,43 @@ func (schema *Schema) IsEmpty() bool {
 	if items := schema.Items; items != nil && items.Value != nil && !items.Value.IsEmpty() {
 		return false
 	}
+	for _, s := range schema.PrefixItems {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+			return false
+		}
+	}
+	if c := schema.Contains; c != nil && c.Value != nil && !c.Value.IsEmpty() {
+		return false
+	}
+	if schema.MinContains != nil || schema.MaxContains != nil {
+		return false
+	}
 	for _, s := range schema.Properties {
 		if ss := s.Value; ss != nil && !ss.IsEmpty() {
 			return false
 		}
+	}
+	for _, s := range schema.PatternProperties {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+			return false
+		}
+	}
+	for _, s := range schema.DependentSchemas {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+			return false
+		}
+	}
+	if pn := schema.PropertyNames; pn != nil && pn.Value != nil && !pn.Value.IsEmpty() {
+		return false
+	}
+	if ui := schema.UnevaluatedItems; ui != nil && ui.Value != nil && !ui.Value.IsEmpty() {
+		return false
+	}
+	if up := schema.UnevaluatedProperties; up != nil && up.Value != nil && !up.Value.IsEmpty() {
+		return false
+	}
+	if len(schema.Examples) != 0 {
+		return false
 	}
 	for _, s := range schema.OneOf {
 		if ss := s.Value; ss != nil && !ss.IsEmpty() {
@@ -1407,7 +1526,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				}
 			}
 		case TypeArray:
-			if schema.Items == nil {
+			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
 				return stack, errors.New("when schema type is 'array', schema 'items' must be non-null")
 			}
 		case TypeObject:
@@ -1774,7 +1893,7 @@ func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, va
 		if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
 			return err
 		}
-		match = schema.Const == f
+		match = reflect.DeepEqual(schema.Const, f)
 	case int64:
 		match = reflect.DeepEqual(schema.Const, float64(c))
 	default:

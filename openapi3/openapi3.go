@@ -119,7 +119,9 @@ func (doc *T) MarshalYAML() (any, error) {
 		m["components"] = x
 	}
 	m["info"] = doc.Info
-	m["paths"] = doc.Paths
+	if doc.Paths != nil {
+		m["paths"] = doc.Paths
+	}
 	if x := doc.Security; len(x) != 0 {
 		m["security"] = x
 	}
@@ -320,7 +322,8 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	// OpenAPI 3.1 webhooks validation
 	if doc.Webhooks != nil {
 		wrap = func(e error) error { return fmt.Errorf("invalid webhooks: %w", e) }
-		for name, pathItem := range doc.Webhooks {
+		for _, name := range componentNames(doc.Webhooks) {
+			pathItem := doc.Webhooks[name]
 			if pathItem == nil {
 				return wrap(fmt.Errorf("webhook %q is nil", name))
 			}
