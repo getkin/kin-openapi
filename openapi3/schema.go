@@ -136,17 +136,17 @@ type Schema struct {
 	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 
 	// OpenAPI 3.1 / JSON Schema 2020-12 fields
-	Const                 any          `json:"const,omitempty" yaml:"const,omitempty"`
-	Examples              []any        `json:"examples,omitempty" yaml:"examples,omitempty"`
-	PrefixItems           []*SchemaRef `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
-	Contains              *SchemaRef   `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains           *uint64      `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains           *uint64      `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
-	PatternProperties     Schemas      `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	DependentSchemas      Schemas      `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	PropertyNames         *SchemaRef   `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems      *SchemaRef   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
-	UnevaluatedProperties *SchemaRef   `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`
+	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`
+	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
+	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`
+	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	UnevaluatedItems      *SchemaRef `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	UnevaluatedProperties *SchemaRef `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
 	// JSON Schema 2020-12 conditional keywords
 	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`
@@ -155,6 +155,9 @@ type Schema struct {
 
 	// JSON Schema 2020-12 dependent requirements
 	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+
+	// JSON Schema 2020-12 core keywords
+	Comment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
 
 	// JSON Schema 2020-12 identity/referencing keywords
 	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
@@ -658,6 +661,9 @@ func (schema Schema) MarshalYAML() (any, error) {
 	if x := schema.DependentRequired; len(x) != 0 {
 		m["dependentRequired"] = x
 	}
+	if x := schema.Comment; x != "" {
+		m["$comment"] = x
+	}
 	if x := schema.SchemaID; x != "" {
 		m["$id"] = x
 	}
@@ -757,6 +763,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "then")
 	delete(x.Extensions, "else")
 	delete(x.Extensions, "dependentRequired")
+	delete(x.Extensions, "$comment")
 	delete(x.Extensions, "$id")
 	delete(x.Extensions, "$anchor")
 	delete(x.Extensions, "$dynamicRef")
@@ -940,6 +947,8 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 		}
 	case "dependentRequired":
 		return schema.DependentRequired, nil
+	case "$comment":
+		return schema.Comment, nil
 	case "$id":
 		return schema.SchemaID, nil
 	case "$anchor":
@@ -1349,6 +1358,9 @@ func (schema *Schema) IsEmpty() bool {
 		return false
 	}
 	if len(schema.DependentRequired) != 0 {
+		return false
+	}
+	if schema.Comment != "" {
 		return false
 	}
 	if schema.SchemaID != "" || schema.Anchor != "" || schema.DynamicRef != "" || schema.DynamicAnchor != "" {

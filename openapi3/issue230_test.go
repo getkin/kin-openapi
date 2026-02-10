@@ -246,7 +246,7 @@ webhooks:
 
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"array"},
-			PrefixItems: []*openapi3.SchemaRef{
+			PrefixItems: openapi3.SchemaRefs{
 				{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
 				{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}}},
 			},
