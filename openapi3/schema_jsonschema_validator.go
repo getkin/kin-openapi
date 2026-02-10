@@ -129,8 +129,8 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 		}
 	}
 
-	// Transform schema maps (properties, patternProperties, dependentSchemas)
-	for _, key := range []string{"properties", "patternProperties", "dependentSchemas"} {
+	// Transform schema maps (properties, patternProperties, dependentSchemas, $defs)
+	for _, key := range []string{"properties", "patternProperties", "dependentSchemas", "$defs"} {
 		if props, ok := schema[key].(map[string]any); ok {
 			for _, propVal := range props {
 				if propSchema, ok := propVal.(map[string]any); ok {

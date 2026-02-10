@@ -318,8 +318,12 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 
 	// OpenAPI 3.1 jsonSchemaDialect validation
 	if doc.JSONSchemaDialect != "" {
-		if _, err := url.Parse(doc.JSONSchemaDialect); err != nil {
+		u, err := url.Parse(doc.JSONSchemaDialect)
+		if err != nil {
 			return fmt.Errorf("invalid jsonSchemaDialect: %w", err)
+		}
+		if u.Scheme == "" {
+			return fmt.Errorf("invalid jsonSchemaDialect: must be an absolute URI with a scheme")
 		}
 	}
 
