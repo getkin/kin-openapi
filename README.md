@@ -321,6 +321,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `openapi3.Location` gained `File` and `Name` fields (`string` type, replacing previous `int`-only struct layout)
 * `openapi3.Origin` gained `Sequences` field (`map[string][]Location`, extending previous `map[string]Location`-only struct)
 
+### v0.132.0
+* `openapi3.Schema.ExclusiveMin` and `openapi3.Schema.ExclusiveMax` fields changed from `bool` to `ExclusiveBound` (a union type holding `*bool` for OpenAPI 3.0 or `*float64` for OpenAPI 3.1).
+* `openapi3.Schema.PrefixItems` field changed from `[]*SchemaRef` to `SchemaRefs`.
 ### v0.131.0
 * No longer `openapi3filter.RegisterBodyDecoder` the `openapi3filter.ZipFileBodyDecoder` by default.
 

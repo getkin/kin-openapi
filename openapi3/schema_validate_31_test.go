@@ -85,6 +85,16 @@ func TestSchemaValidate31SubSchemas(t *testing.T) {
 		require.Error(t, err, "should detect invalid sub-schema in unevaluatedProperties")
 	})
 
+	t.Run("contentSchema with invalid sub-schema", func(t *testing.T) {
+		schema := &Schema{
+			Type:             &Types{"string"},
+			ContentMediaType: "application/json",
+			ContentSchema:    &SchemaRef{Value: invalidSchema},
+		}
+		err := schema.Validate(ctx)
+		require.Error(t, err, "should detect invalid sub-schema in contentSchema")
+	})
+
 	t.Run("valid 3.1 sub-schemas pass validation", func(t *testing.T) {
 		validSubSchema := &Schema{Type: &Types{"string"}}
 		schema := &Schema{

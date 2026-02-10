@@ -369,6 +369,21 @@ func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
 		err := schema.VisitJSON(map[string]any{"name": "foo", "extra": nil}, EnableJSONSchema2020())
 		require.NoError(t, err, "null should be accepted after nullable conversion in unevaluatedProperties")
 	})
+
+	t.Run("contentSchema with nullable nested schema", func(t *testing.T) {
+		schema := &Schema{
+			Type:             &Types{"string"},
+			ContentMediaType: "application/json",
+			ContentSchema: &SchemaRef{Value: &Schema{
+				Type:     &Types{"object"},
+				Nullable: true,
+			}},
+		}
+
+		// contentSchema transform should not crash and should handle nullable
+		err := schema.VisitJSON("null", EnableJSONSchema2020())
+		require.NoError(t, err, "contentSchema transform should handle nullable nested schema")
+	})
 }
 
 func TestBuiltInValidatorStillWorks(t *testing.T) {
