@@ -64,4 +64,22 @@ func TestResolveSchemaRefsIn31Fields(t *testing.T) {
 	require.NotNil(t, unProps)
 	require.Equal(t, "#/components/schemas/StringType", unProps.UnevaluatedProperties.Ref)
 	require.NotNil(t, unProps.UnevaluatedProperties.Value, "unevaluatedProperties $ref should be resolved")
+
+	// if/then/else refs should be resolved
+	ifThenElse := schemas["ObjectWithIfThenElse"].Value
+	require.NotNil(t, ifThenElse)
+	require.Equal(t, "#/components/schemas/StringType", ifThenElse.If.Ref)
+	require.NotNil(t, ifThenElse.If.Value, "if $ref should be resolved")
+	require.Equal(t, "string", ifThenElse.If.Value.Type.Slice()[0])
+	require.Equal(t, "#/components/schemas/IntegerType", ifThenElse.Then.Ref)
+	require.NotNil(t, ifThenElse.Then.Value, "then $ref should be resolved")
+	require.Equal(t, "integer", ifThenElse.Then.Value.Type.Slice()[0])
+	require.Equal(t, "#/components/schemas/NonNegative", ifThenElse.Else.Ref)
+	require.NotNil(t, ifThenElse.Else.Value, "else $ref should be resolved")
+
+	// contentSchema ref should be resolved
+	contentSchema := schemas["StringWithContentSchema"].Value
+	require.NotNil(t, contentSchema)
+	require.Equal(t, "#/components/schemas/NonNegative", contentSchema.ContentSchema.Ref)
+	require.NotNil(t, contentSchema.ContentSchema.Value, "contentSchema $ref should be resolved")
 }

@@ -251,6 +251,10 @@ func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption {
 // Validate returns an error if T does not comply with the OpenAPI spec.
 // Validations Options can be provided to modify the validation behavior.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// Auto-enable JSON Schema 2020-12 validation for OpenAPI 3.1 documents
+	if doc.IsOpenAPI3_1() {
+		opts = append([]ValidationOption{EnableJSONSchema2020Validation()}, opts...)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if doc.OpenAPI == "" {

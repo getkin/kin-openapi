@@ -881,8 +881,8 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 				Description:  schema.Value.Description,
 				Type:         paramType,
 				Enum:         schema.Value.Enum,
-				Minimum:      schema.Value.Min,
-				Maximum:      schema.Value.Max,
+				Minimum:      effectiveMin(schema.Value.Min, schema.Value.ExclusiveMin),
+				Maximum:      effectiveMax(schema.Value.Max, schema.Value.ExclusiveMax),
 				ExclusiveMin: exclusiveBoundToBool(schema.Value.ExclusiveMin),
 				ExclusiveMax: exclusiveBoundToBool(schema.Value.ExclusiveMax),
 				MinLength:    schema.Value.MinLength,
@@ -918,8 +918,8 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		AllowEmptyValue:      schema.Value.AllowEmptyValue,
 		Deprecated:           schema.Value.Deprecated,
 		XML:                  schema.Value.XML,
-		Min:                  schema.Value.Min,
-		Max:                  schema.Value.Max,
+		Min:                  effectiveMin(schema.Value.Min, schema.Value.ExclusiveMin),
+		Max:                  effectiveMax(schema.Value.Max, schema.Value.ExclusiveMax),
 		MultipleOf:           schema.Value.MultipleOf,
 		MinLength:            schema.Value.MinLength,
 		MaxLength:            schema.Value.MaxLength,
@@ -1053,8 +1053,8 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			Items:        v2Items,
 			MinItems:     val.MinItems,
 			MaxItems:     val.MaxItems,
-			Maximum:      val.Max,
-			Minimum:      val.Min,
+			Maximum:      effectiveMax(val.Max, val.ExclusiveMax),
+			Minimum:      effectiveMin(val.Min, val.ExclusiveMin),
 			Pattern:      val.Pattern,
 			// CollectionFormat: val.CollectionFormat,
 			// Format:          val.Format,
@@ -1357,6 +1357,23 @@ func exclusiveBoundToBool(eb openapi3.ExclusiveBound) bool {
 		return *eb.Bool
 	}
 	// If it's a number (OpenAPI 3.1 style), we return true to indicate exclusivity
-	// The actual bound value would need to be handled separately
 	return eb.Value != nil
+}
+
+// effectiveMin returns the minimum value for OAS 2.0 conversion, considering ExclusiveBound.
+// In OAS 3.1, exclusiveMinimum is a number. In OAS 2.0, it must be in the minimum field.
+func effectiveMin(min *float64, eb openapi3.ExclusiveBound) *float64 {
+	if min != nil {
+		return min
+	}
+	// If OAS 3.1 style numeric exclusive bound with no minimum, use the bound value as minimum
+	return eb.Value
+}
+
+// effectiveMax returns the maximum value for OAS 2.0 conversion, considering ExclusiveBound.
+func effectiveMax(max *float64, eb openapi3.ExclusiveBound) *float64 {
+	if max != nil {
+		return max
+	}
+	return eb.Value
 }

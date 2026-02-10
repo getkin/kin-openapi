@@ -55,3 +55,16 @@ components:
       type: object
       unevaluatedProperties:
         $ref: "#/components/schemas/StringType"
+    ObjectWithIfThenElse:
+      type: object
+      if:
+        $ref: "#/components/schemas/StringType"
+      then:
+        $ref: "#/components/schemas/IntegerType"
+      else:
+        $ref: "#/components/schemas/NonNegative"
+    StringWithContentSchema:
+      type: string
+      contentMediaType: application/json
+      contentSchema:
+        $ref: "#/components/schemas/NonNegative"
