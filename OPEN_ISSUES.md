@@ -86,7 +86,7 @@ When a document has `openapi: "3.1.0"`, users must explicitly pass `EnableJSONSc
 Changed from `bool` to `ExclusiveBound` (a union type holding `*bool` or `*float64`). Any code that reads `schema.ExclusiveMin` as a `bool` will fail to compile. This needs to be added to the "Sub-v1 breaking API changes" section in README.md.
 
 ### 24. `Paths` JSON tag changed
-Changed from `json:"paths"` to `json:"paths,omitempty"`. This makes paths optional in serialized output for both 3.0 and 3.1 documents. A 3.0 document with nil `Paths` will now serialize without the `paths` key, which is technically invalid per the 3.0 spec. The `Validate()` function still enforces paths as required for 3.0, but the serialization does not. This needs to be added to the "Sub-v1 breaking API changes" section in README.md.
+The JSON struct tag for `Paths` changed from required to omitempty. This makes paths optional in serialized output for both 3.0 and 3.1 documents. A 3.0 document with nil `Paths` will now serialize without the `paths` key, which is technically invalid per the 3.0 spec. The `Validate()` function still enforces paths as required for 3.0, but the serialization does not. This needs to be added to the "Sub-v1 breaking API changes" section in README.md.
 
 ## Code Quality
 
