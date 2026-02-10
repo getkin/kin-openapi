@@ -61,6 +61,9 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 		if typeVal, ok := schema["type"].(string); ok {
 			// Convert to type array with null
 			schema["type"] = []string{typeVal, "null"}
+		} else if _, hasType := schema["type"]; !hasType {
+			// nullable: true without type - add "null" to allow null values
+			schema["type"] = []string{"null"}
 		}
 		delete(schema, "nullable")
 	}
@@ -68,16 +71,30 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 	// Handle exclusiveMinimum/exclusiveMaximum
 	// In OpenAPI 3.0, these are booleans alongside minimum/maximum
 	// In JSON Schema 2020-12, they are numeric values
-	if exclusiveMin, ok := schema["exclusiveMinimum"].(bool); ok && exclusiveMin {
-		if schemaMin, ok := schema["minimum"].(float64); ok {
-			schema["exclusiveMinimum"] = schemaMin
-			delete(schema, "minimum")
+	if exclusiveMin, ok := schema["exclusiveMinimum"].(bool); ok {
+		if exclusiveMin {
+			if schemaMin, ok := schema["minimum"].(float64); ok {
+				schema["exclusiveMinimum"] = schemaMin
+				delete(schema, "minimum")
+			} else {
+				delete(schema, "exclusiveMinimum")
+			}
+		} else {
+			// exclusiveMinimum: false means inclusive, which is the JSON Schema default
+			delete(schema, "exclusiveMinimum")
 		}
 	}
-	if exclusiveMax, ok := schema["exclusiveMaximum"].(bool); ok && exclusiveMax {
-		if schemaMax, ok := schema["maximum"].(float64); ok {
-			schema["exclusiveMaximum"] = schemaMax
-			delete(schema, "maximum")
+	if exclusiveMax, ok := schema["exclusiveMaximum"].(bool); ok {
+		if exclusiveMax {
+			if schemaMax, ok := schema["maximum"].(float64); ok {
+				schema["exclusiveMaximum"] = schemaMax
+				delete(schema, "maximum")
+			} else {
+				delete(schema, "exclusiveMaximum")
+			}
+		} else {
+			// exclusiveMaximum: false means inclusive, which is the JSON Schema default
+			delete(schema, "exclusiveMaximum")
 		}
 	}
 
