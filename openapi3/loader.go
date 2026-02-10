@@ -1036,6 +1036,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
+	for _, name := range componentNames(value.Defs) {
+		v := value.Defs[name]
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
 	if v := value.PropertyNames; v != nil {
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err

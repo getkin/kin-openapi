@@ -157,7 +157,9 @@ type Schema struct {
 	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
 
 	// JSON Schema 2020-12 core keywords
-	Comment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`
+	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`
+	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"`
 
 	// JSON Schema 2020-12 identity/referencing keywords
 	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
@@ -661,6 +663,12 @@ func (schema Schema) MarshalYAML() (any, error) {
 	if x := schema.DependentRequired; len(x) != 0 {
 		m["dependentRequired"] = x
 	}
+	if x := schema.Defs; len(x) != 0 {
+		m["$defs"] = x
+	}
+	if x := schema.SchemaDialect; x != "" {
+		m["$schema"] = x
+	}
 	if x := schema.Comment; x != "" {
 		m["$comment"] = x
 	}
@@ -763,6 +771,8 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "then")
 	delete(x.Extensions, "else")
 	delete(x.Extensions, "dependentRequired")
+	delete(x.Extensions, "$defs")
+	delete(x.Extensions, "$schema")
 	delete(x.Extensions, "$comment")
 	delete(x.Extensions, "$id")
 	delete(x.Extensions, "$anchor")
@@ -947,6 +957,10 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 		}
 	case "dependentRequired":
 		return schema.DependentRequired, nil
+	case "$defs":
+		return schema.Defs, nil
+	case "$schema":
+		return schema.SchemaDialect, nil
 	case "$comment":
 		return schema.Comment, nil
 	case "$id":
@@ -1360,7 +1374,10 @@ func (schema *Schema) IsEmpty() bool {
 	if len(schema.DependentRequired) != 0 {
 		return false
 	}
-	if schema.Comment != "" {
+	if len(schema.Defs) != 0 {
+		return false
+	}
+	if schema.SchemaDialect != "" || schema.Comment != "" {
 		return false
 	}
 	if schema.SchemaID != "" || schema.Anchor != "" || schema.DynamicRef != "" || schema.DynamicAnchor != "" {
@@ -1619,6 +1636,18 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 	for _, name := range componentNames(schema.DependentSchemas) {
 		ref := schema.DependentSchemas[name]
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	for _, name := range componentNames(schema.Defs) {
+		ref := schema.Defs[name]
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1936,41 +1965,54 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 
 // If the XOF operations pass successfully, abort further run of validation, as they will already be satisfied (unless the schema
 // itself is badly specified
+// resolveDiscriminatorRef resolves the discriminator reference for oneOf/anyOf validation.
+// Returns the discriminator ref string and any error encountered during resolution.
+func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
+	if schema.Discriminator == nil {
+		return "", nil
+	}
+	pn := schema.Discriminator.PropertyName
+	valuemap, okcheck := value.(map[string]any)
+	if !okcheck {
+		return "", nil
+	}
+	discriminatorVal, okcheck := valuemap[pn]
+	if !okcheck {
+		return "", &SchemaError{
+			Schema:      schema,
+			SchemaField: "discriminator",
+			Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
+		}
+	}
+
+	discriminatorValString, okcheck := discriminatorVal.(string)
+	if !okcheck {
+		return "", &SchemaError{
+			Value:       discriminatorVal,
+			Schema:      schema,
+			SchemaField: "discriminator",
+			Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
+		}
+	}
+
+	if discriminatorRef, okcheck := schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+		return "", &SchemaError{
+			Value:       discriminatorVal,
+			Schema:      schema,
+			SchemaField: "discriminator",
+			Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
+		}
+	} else {
+		return discriminatorRef.Ref, nil
+	}
+}
+
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
-		var discriminatorRef MappingRef
-		if schema.Discriminator != nil {
-			pn := schema.Discriminator.PropertyName
-			if valuemap, okcheck := value.(map[string]any); okcheck {
-				discriminatorVal, okcheck := valuemap[pn]
-				if !okcheck {
-					return &SchemaError{
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
-					}, false
-				}
-
-				discriminatorValString, okcheck := discriminatorVal.(string)
-				if !okcheck {
-					return &SchemaError{
-						Value:       discriminatorVal,
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
-					}, false
-				}
-
-				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
-					return &SchemaError{
-						Value:       discriminatorVal,
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
-					}, false
-				}
-			}
+		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
+		if err != nil {
+			return err, false
 		}
 
 		var (
@@ -1985,7 +2027,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				return foundUnresolvedRef(item.Ref), false
 			}
 
-			if discriminatorRef.Ref != "" && discriminatorRef.Ref != item.Ref {
+			if discriminatorRef != "" && discriminatorRef != item.Ref {
 				continue
 			}
 
@@ -2032,38 +2074,9 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
-		var discriminatorRef string
-		if schema.Discriminator != nil {
-			pn := schema.Discriminator.PropertyName
-			if valuemap, okcheck := value.(map[string]any); okcheck {
-				discriminatorVal, okcheck := valuemap[pn]
-				if !okcheck {
-					return &SchemaError{
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
-					}, false
-				}
-
-				discriminatorValString, okcheck := discriminatorVal.(string)
-				if !okcheck {
-					return &SchemaError{
-						Value:       discriminatorVal,
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
-					}, false
-				}
-
-				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
-					return &SchemaError{
-						Value:       discriminatorVal,
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
-					}, false
-				}
-			}
+		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
+		if err != nil {
+			return err, false
 		}
 
 		var (

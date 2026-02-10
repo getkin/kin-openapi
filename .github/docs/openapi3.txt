@@ -1736,7 +1736,9 @@ type Schema struct {
 	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
 
 	// JSON Schema 2020-12 core keywords
-	Comment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`
+	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`
+	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"`
 
 	// JSON Schema 2020-12 identity/referencing keywords
 	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
