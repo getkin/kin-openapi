@@ -261,25 +261,25 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 			required = []string{parameter.Name}
 		}
 		schemaRef := &openapi3.SchemaRef{Value: &openapi3.Schema{
-			Description:     parameter.Description,
-			Type:            typ,
-			Extensions:      stripNonExtensions(parameter.Extensions),
-			Format:          format,
-			Enum:            parameter.Enum,
-			Min:             parameter.Minimum,
-			Max:             parameter.Maximum,
-			ExclusiveMin:    parameter.ExclusiveMin,
-			ExclusiveMax:    parameter.ExclusiveMax,
-			MinLength:       parameter.MinLength,
-			MaxLength:       parameter.MaxLength,
-			Default:         parameter.Default,
-			MinItems:        parameter.MinItems,
-			MaxItems:        parameter.MaxItems,
-			Pattern:         parameter.Pattern,
-			AllowEmptyValue: parameter.AllowEmptyValue,
-			UniqueItems:     parameter.UniqueItems,
-			MultipleOf:      parameter.MultipleOf,
-			Required:        required,
+			Description:      parameter.Description,
+			Type:             typ,
+			Extensions:       stripNonExtensions(parameter.Extensions),
+			Format:           format,
+			Enum:             parameter.Enum,
+			Min:              parameter.Minimum,
+			Max:              parameter.Maximum,
+			ExclusiveMinBool: &parameter.ExclusiveMin,
+			ExclusiveMaxBool: &parameter.ExclusiveMax,
+			MinLength:        parameter.MinLength,
+			MaxLength:        parameter.MaxLength,
+			Default:          parameter.Default,
+			MinItems:         parameter.MinItems,
+			MaxItems:         parameter.MaxItems,
+			Pattern:          parameter.Pattern,
+			AllowEmptyValue:  parameter.AllowEmptyValue,
+			UniqueItems:      parameter.UniqueItems,
+			MultipleOf:       parameter.MultipleOf,
+			Required:         required,
 		}}
 		if parameter.Items != nil {
 			schemaRef.Value.Items = ToV3SchemaRef(parameter.Items)
@@ -494,8 +494,8 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 		Example:              schema.Value.Example,
 		ExternalDocs:         schema.Value.ExternalDocs,
 		UniqueItems:          schema.Value.UniqueItems,
-		ExclusiveMin:         schema.Value.ExclusiveMin,
-		ExclusiveMax:         schema.Value.ExclusiveMax,
+		ExclusiveMinBool:     &schema.Value.ExclusiveMin,
+		ExclusiveMaxBool:     &schema.Value.ExclusiveMax,
 		ReadOnly:             schema.Value.ReadOnly,
 		WriteOnly:            schema.Value.WriteOnly,
 		AllowEmptyValue:      schema.Value.AllowEmptyValue,
@@ -867,19 +867,17 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 					break
 				}
 			}
-			return nil, &openapi2.Parameter{
-				In:           "formData",
-				Name:         originalName,
-				Description:  schema.Value.Description,
-				Type:         paramType,
-				Enum:         schema.Value.Enum,
-				Minimum:      schema.Value.Min,
-				Maximum:      schema.Value.Max,
-				ExclusiveMin: schema.Value.ExclusiveMin,
-				ExclusiveMax: schema.Value.ExclusiveMax,
-				MinLength:    schema.Value.MinLength,
-				MaxLength:    schema.Value.MaxLength,
-				Default:      schema.Value.Default,
+			param := &openapi2.Parameter{
+				In:          "formData",
+				Name:        originalName,
+				Description: schema.Value.Description,
+				Type:        paramType,
+				Enum:        schema.Value.Enum,
+				Minimum:     schema.Value.Min,
+				Maximum:     schema.Value.Max,
+				MinLength:   schema.Value.MinLength,
+				MaxLength:   schema.Value.MaxLength,
+				Default:     schema.Value.Default,
 				// Items:           schema.Value.Items,
 				MinItems:        schema.Value.MinItems,
 				MaxItems:        schema.Value.MaxItems,
@@ -889,6 +887,13 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 				Extensions:      stripNonExtensions(schema.Value.Extensions),
 				Required:        required,
 			}
+			if schema.Value.ExclusiveMinBool != nil {
+				param.ExclusiveMin = *schema.Value.ExclusiveMinBool
+			}
+			if schema.Value.ExclusiveMaxBool != nil {
+				param.ExclusiveMax = *schema.Value.ExclusiveMaxBool
+			}
+			return nil, param
 		}
 	}
 
@@ -903,8 +908,6 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		Example:              schema.Value.Example,
 		ExternalDocs:         schema.Value.ExternalDocs,
 		UniqueItems:          schema.Value.UniqueItems,
-		ExclusiveMin:         schema.Value.ExclusiveMin,
-		ExclusiveMax:         schema.Value.ExclusiveMax,
 		ReadOnly:             schema.Value.ReadOnly,
 		WriteOnly:            schema.Value.WriteOnly,
 		AllowEmptyValue:      schema.Value.AllowEmptyValue,
@@ -924,6 +927,13 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		Properties:           make(openapi2.Schemas),
 		AllOf:                make(openapi2.SchemaRefs, len(schema.Value.AllOf)),
 		AdditionalProperties: schema.Value.AdditionalProperties,
+	}
+
+	if schema.Value.ExclusiveMinBool != nil {
+		v2Schema.ExclusiveMin = *schema.Value.ExclusiveMinBool
+	}
+	if schema.Value.ExclusiveMaxBool != nil {
+		v2Schema.ExclusiveMax = *schema.Value.ExclusiveMaxBool
 	}
 
 	if v := schema.Value.Items; v != nil {
@@ -1031,29 +1041,33 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			v2Items, _ = FromV3SchemaRef(val.Items, nil)
 		}
 		parameter := &openapi2.Parameter{
-			Name:         propName,
-			Description:  val.Description,
-			Type:         typ,
-			In:           "formData",
-			Extensions:   stripNonExtensions(val.Extensions),
-			Enum:         val.Enum,
-			ExclusiveMin: val.ExclusiveMin,
-			ExclusiveMax: val.ExclusiveMax,
-			MinLength:    val.MinLength,
-			MaxLength:    val.MaxLength,
-			Default:      val.Default,
-			Items:        v2Items,
-			MinItems:     val.MinItems,
-			MaxItems:     val.MaxItems,
-			Maximum:      val.Max,
-			Minimum:      val.Min,
-			Pattern:      val.Pattern,
+			Name:        propName,
+			Description: val.Description,
+			Type:        typ,
+			In:          "formData",
+			Extensions:  stripNonExtensions(val.Extensions),
+			Enum:        val.Enum,
+			MinLength:   val.MinLength,
+			MaxLength:   val.MaxLength,
+			Default:     val.Default,
+			Items:       v2Items,
+			MinItems:    val.MinItems,
+			MaxItems:    val.MaxItems,
+			Maximum:     val.Max,
+			Minimum:     val.Min,
+			Pattern:     val.Pattern,
 			// CollectionFormat: val.CollectionFormat,
 			// Format:          val.Format,
 			AllowEmptyValue: val.AllowEmptyValue,
 			Required:        required,
 			UniqueItems:     val.UniqueItems,
 			MultipleOf:      val.MultipleOf,
+		}
+		if val.ExclusiveMinBool != nil {
+			parameter.ExclusiveMin = *val.ExclusiveMinBool
+		}
+		if val.ExclusiveMaxBool != nil {
+			parameter.ExclusiveMax = *val.ExclusiveMaxBool
 		}
 		parameters = append(parameters, parameter)
 	}
