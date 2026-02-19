@@ -24,8 +24,9 @@ func unmarshal(data []byte, v any, includeOrigin bool) error {
 		return nil
 	}
 
-	// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
-	if yamlErr = yaml.UnmarshalWithOrigin(data, v, includeOrigin); yamlErr == nil {
+	// yaml.v3 (used by oasdiff/yaml) natively returns an error for duplicate map keys,
+	// so standard unmarshaling provides the strictness we need here.
+	if yamlErr = yaml.UnmarshalWithOrigin(data, v, includeOrigin, ""); yamlErr == nil {
 		return nil
 	}
 
