@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// RefNameResolver maps a component to an name that is used as it's internalized name.
+// RefNameResolver maps a component to a name that is used as it's internalized name.
 //
 // The function should avoid name collisions (i.e. be a injective mapping).
 // It must only contain characters valid for fixed field names: [IdentifierRegExp].

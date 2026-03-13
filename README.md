@@ -294,6 +294,10 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.134.0
+* `openapi3.Location` gained `File` and `Name` fields (`string` type, replacing previous `int`-only struct layout)
+* `openapi3.Origin` gained `Sequences` field (`map[string][]Location`, extending previous `map[string]Location`-only struct)
+
 ### v0.131.0
 * No longer `openapi3filter.RegisterBodyDecoder` the `openapi3filter.ZipFileBodyDecoder` by default.
 

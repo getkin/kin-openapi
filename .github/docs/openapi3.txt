@@ -842,8 +842,10 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error)
     ResolveRefsIn expands references if for instance spec was just unmarshaled
 
 type Location struct {
-	Line   int `json:"line,omitempty" yaml:"line,omitempty"`
-	Column int `json:"column,omitempty" yaml:"column,omitempty"`
+	File   string `json:"file,omitempty" yaml:"file,omitempty"`
+	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
+	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
+	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
 }
     Location is a struct that contains the location of a field.
 
@@ -1041,12 +1043,14 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
     spec.
 
 type Origin struct {
-	Key    *Location           `json:"key,omitempty" yaml:"key,omitempty"`
-	Fields map[string]Location `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Key       *Location             `json:"key,omitempty" yaml:"key,omitempty"`
+	Fields    map[string]Location   `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Sequences map[string][]Location `json:"sequences,omitempty" yaml:"sequences,omitempty"`
 }
     Origin contains the origin of a collection. Key is the location of the
-    collection itself. Fields is a map of the location of each field in the
-    collection.
+    collection itself. Fields is a map of the location of each scalar field
+    in the collection. Sequences is a map of the location of each item in
+    sequence-valued fields.
 
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1308,8 +1312,8 @@ type Ref struct {
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 
 type RefNameResolver func(*T, ComponentRef) string
-    RefNameResolver maps a component to an name that is used as it's
-    internalized name.
+    RefNameResolver maps a component to a name that is used as it's internalized
+    name.
 
     The function should avoid name collisions (i.e. be a injective mapping). It
     must only contain characters valid for fixed field names: IdentifierRegExp.
