@@ -41,6 +41,10 @@ type Options struct {
 	SkipSettingDefaults bool
 
 	customSchemaErrorFunc CustomSchemaErrorFunc
+
+	// Additional schema validation options to pass through to schema validation.
+	// Use this to pass document-scoped format validators or other per-validation options.
+	SchemaValidationOptions []openapi3.SchemaValidationOption
 }
 
 // CustomSchemaErrorFunc allows for custom the schema error message.

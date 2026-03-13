@@ -1869,6 +1869,39 @@ func VisitAsRequest() SchemaValidationOption
 
 func VisitAsResponse() SchemaValidationOption
 
+func WithIntegerFormatValidator(name string, validator IntegerFormatValidator) SchemaValidationOption
+    WithIntegerFormatValidator adds a single per-validation integer format
+    validator. This validator is checked before global SchemaIntegerFormats
+    and allows different validations for the same format name across different
+    specs.
+
+func WithIntegerFormatValidators(validators map[string]IntegerFormatValidator) SchemaValidationOption
+    WithIntegerFormatValidators adds per-validation integer format validators.
+    These validators are checked before global SchemaIntegerFormats and allow
+    different validations for the same format name across different specs.
+
+func WithNumberFormatValidator(name string, validator NumberFormatValidator) SchemaValidationOption
+    WithNumberFormatValidator adds a single per-validation number format
+    validator. This validator is checked before global SchemaNumberFormats
+    and allows different validations for the same format name across different
+    specs.
+
+func WithNumberFormatValidators(validators map[string]NumberFormatValidator) SchemaValidationOption
+    WithNumberFormatValidators adds per-validation number format validators.
+    These validators are checked before global SchemaNumberFormats and allow
+    different validations for the same format name across different specs.
+
+func WithStringFormatValidator(name string, validator StringFormatValidator) SchemaValidationOption
+    WithStringFormatValidator adds a single per-validation string format
+    validator. This validator is checked before global SchemaStringFormats
+    and allows different validations for the same format name across different
+    specs.
+
+func WithStringFormatValidators(validators map[string]StringFormatValidator) SchemaValidationOption
+    WithStringFormatValidators adds per-validation string format validators.
+    These validators are checked before global SchemaStringFormats and allow
+    different validations for the same format name across different specs.
+
 type Schemas map[string]*SchemaRef
 
 func (m Schemas) JSONLookup(token string) (any, error)
@@ -2117,6 +2150,11 @@ func (doc *T) AddServer(server *Server)
 
 func (doc *T) AddServers(servers ...*Server)
 
+func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption
+    GetSchemaValidationOptions returns SchemaValidationOptions that include this
+    document's format validators. Use this when validating schemas from this
+    document.
+
 func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, ComponentRef) string)
     InternalizeRefs removes all references to external files from the spec and
     moves them to the components section.
@@ -2140,12 +2178,41 @@ func (doc *T) MarshalJSON() ([]byte, error)
 func (doc *T) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of T.
 
+func (doc *T) SetIntegerFormatValidator(name string, validator IntegerFormatValidator)
+    SetIntegerFormatValidator sets a single document-scoped integer format
+    validator.
+
+func (doc *T) SetIntegerFormatValidators(validators map[string]IntegerFormatValidator)
+    SetIntegerFormatValidators sets document-scoped integer format validators.
+    These validators are automatically used by all schemas in this document.
+
+func (doc *T) SetNumberFormatValidator(name string, validator NumberFormatValidator)
+    SetNumberFormatValidator sets a single document-scoped number format
+    validator.
+
+func (doc *T) SetNumberFormatValidators(validators map[string]NumberFormatValidator)
+    SetNumberFormatValidators sets document-scoped number format validators.
+    These validators are automatically used by all schemas in this document.
+
+func (doc *T) SetStringFormatValidator(name string, validator StringFormatValidator)
+    SetStringFormatValidator sets a single document-scoped string format
+    validator.
+
+func (doc *T) SetStringFormatValidators(validators map[string]StringFormatValidator)
+    SetStringFormatValidators sets document-scoped string format validators.
+    These validators are automatically used by all schemas in this document.
+
 func (doc *T) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets T to a copy of data.
 
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if T does not comply with the OpenAPI spec.
     Validations Options can be provided to modify the validation behavior.
+
+func (doc *T) ValidateSchemaJSON(schema *Schema, value any, opts ...SchemaValidationOption) error
+    ValidateSchemaJSON validates data against a schema using this document's
+    format validators. This is a convenience method that automatically applies
+    the document's format validators.
 
 type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

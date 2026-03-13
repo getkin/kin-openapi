@@ -330,7 +330,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	defaultsSet := false
-	opts := make([]openapi3.SchemaValidationOption, 0, 4) // 4 potential opts here
+	opts := make([]openapi3.SchemaValidationOption, 0, 4+len(options.SchemaValidationOptions))
 	opts = append(opts, openapi3.VisitAsRequest())
 	if !options.SkipSettingDefaults {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
@@ -347,6 +347,8 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	if options.RegexCompiler != nil {
 		opts = append(opts, openapi3.SetSchemaRegexCompiler(options.RegexCompiler))
 	}
+	// Append additional schema validation options (e.g., document-scoped format validators)
+	opts = append(opts, options.SchemaValidationOptions...)
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {

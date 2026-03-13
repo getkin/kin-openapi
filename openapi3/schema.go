@@ -1533,7 +1533,12 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	format := schema.Format
 	if format != "" {
 		if requireInteger {
-			if f, ok := SchemaIntegerFormats[format]; ok {
+			// Check per-validation validators first, then fall back to global
+			f, ok := settings.integerFormats[format]
+			if !ok {
+				f, ok = SchemaIntegerFormats[format]
+			}
+			if ok {
 				if err := f.Validate(int64(value)); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
@@ -1547,7 +1552,12 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				}
 			}
 		} else {
-			if f, ok := SchemaNumberFormats[format]; ok {
+			// Check per-validation validators first, then fall back to global
+			f, ok := settings.numberFormats[format]
+			if !ok {
+				f, ok = SchemaNumberFormats[format]
+			}
+			if ok {
 				if err := f.Validate(value); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
@@ -1773,7 +1783,12 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	var formatStrErr string
 	var formatErr error
 	if format := schema.Format; format != "" {
-		if f, ok := SchemaStringFormats[format]; ok {
+		// Check per-validation validators first, then fall back to global
+		f, ok := settings.stringFormats[format]
+		if !ok {
+			f, ok = SchemaStringFormats[format]
+		}
+		if ok {
 			if err := f.Validate(value); err != nil {
 				var reason string
 				schemaErr := &SchemaError{}
