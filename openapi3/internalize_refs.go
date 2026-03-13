@@ -347,7 +347,7 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 
 	// Discriminator mapping values are special cases since they are not full
 	// ref objects but are string references to schema objects.
-	if s.Discriminator != nil && s.Discriminator.Mapping != nil {
+	if s.Discriminator != nil {
 		for k, mapRef := range s.Discriminator.Mapping {
 			s2 := (*SchemaRef)(&mapRef)
 			isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)

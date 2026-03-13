@@ -105,7 +105,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 		if options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
 			err := &RequestError{
 				Input: input,
-				Err:   fmt.Errorf("request body not allowed for this request"),
+				Err:   errors.New("request body not allowed for this request"),
 			}
 			if !options.MultiError {
 				return err
