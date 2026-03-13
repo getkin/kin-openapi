@@ -30,7 +30,7 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error 
 	if location != nil {
 		file = location.Path
 	}
-	if yamlErr = yaml.UnmarshalWithOrigin(data, v, includeOrigin, file); yamlErr == nil {
+	if yamlErr = yaml.UnmarshalWithOrigin(data, v, yaml.OriginOpt{Enabled: includeOrigin, File: file}); yamlErr == nil {
 		return nil
 	}
 

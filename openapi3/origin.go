@@ -19,3 +19,20 @@ type Location struct {
 	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
 	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
 }
+
+// stripOriginFromAny recursively removes the __origin__ key from any
+// map[string]any value. This is needed for interface{}/any-typed fields
+// (e.g. Schema.Enum, Schema.Default, Parameter.Example) that have no
+// dedicated UnmarshalJSON to consume the origin metadata injected by
+// the YAML origin-tracking loader.
+func stripOriginFromAny(v any) any {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return v
+	}
+	delete(m, originKey)
+	for k, val := range m {
+		m[k] = stripOriginFromAny(val)
+	}
+	return m
+}

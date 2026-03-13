@@ -388,13 +388,8 @@ func TestOrigin_Example(t *testing.T) {
 		},
 		base.Origin.Fields["summary"])
 
-	//	Note:
-	//  Example.Value contains an extra field: "origin".
-	//
-	//	Explanation:
-	//  The example value is defined in the original yaml file as a json object: {"bar": "baz"}
-	//  This json object is also valid in YAML, so yaml.3 decodes it as a map and adds an "origin" field.
-	require.Contains(t,
+	// Example.Value is an any-typed field, so __origin__ is stripped from it during unmarshaling.
+	require.NotContains(t,
 		base.Value,
 		originKey)
 }

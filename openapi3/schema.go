@@ -469,6 +469,12 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 
 	*schema = Schema(x)
 
+	for i, v := range schema.Enum {
+		schema.Enum[i] = stripOriginFromAny(v)
+	}
+	schema.Default = stripOriginFromAny(schema.Default)
+	schema.Example = stripOriginFromAny(schema.Example)
+
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
 		if eg, ok := schema.Example.(string); ok {
