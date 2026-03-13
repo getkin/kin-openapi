@@ -15,6 +15,7 @@ type ValidationOptions struct {
 	schemaExtensionsInRefProhibited                  bool
 	regexCompilerFunc                                RegexCompilerFunc
 	extraSiblingFieldsAllowed                        map[string]struct{}
+	jsonSchema2020ValidationEnabled                  bool // Enables JSON Schema 2020-12 compliant validation for OpenAPI 3.1
 }
 
 type validationOptionsKey struct{}
@@ -28,6 +29,14 @@ func AllowExtraSiblingFields(fields ...string) ValidationOption {
 		for _, field := range fields {
 			options.extraSiblingFieldsAllowed[field] = struct{}{}
 		}
+	}
+}
+
+// EnableJSONSchema2020Validation enables JSON Schema 2020-12 compliant validation for OpenAPI 3.1 documents.
+// This option should be used with doc.Validate().
+func EnableJSONSchema2020Validation() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.jsonSchema2020ValidationEnabled = true
 	}
 }
 
