@@ -100,8 +100,10 @@ type Schema struct {
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
-	ExclusiveMin bool `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax bool `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	// In OpenAPI 3.0: boolean modifier for minimum/maximum
+	// In OpenAPI 3.1: number representing the actual exclusive bound
+	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
 	// Properties
 	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
 	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
@@ -132,14 +134,88 @@ type Schema struct {
 	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`
+	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`
+	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
+	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`
+	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	UnevaluatedItems      *SchemaRef `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	UnevaluatedProperties *SchemaRef `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+
+	// JSON Schema 2020-12 conditional keywords
+	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`
+	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"`
+	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"`
+
+	// JSON Schema 2020-12 dependent requirements
+	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+
+	// JSON Schema 2020-12 core keywords
+	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`
+	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`
+	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+
+	// JSON Schema 2020-12 identity/referencing keywords
+	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
+	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
+	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
+
+	// JSON Schema 2020-12 content vocabulary
+	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
+	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
+	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
 }
 
+// Types represents the type(s) of a schema.
+//
+// In OpenAPI 3.0, this is typically a single type (e.g., "string").
+// In OpenAPI 3.1, it can be an array of types (e.g., ["string", "null"]).
+//
+// Serialization behavior:
+//   - Single type: serializes as a string (e.g., "string")
+//   - Multiple types: serializes as an array (e.g., ["string", "null"])
+//   - Accepts both string and array formats when unmarshaling
+//
+// Example OpenAPI 3.0 (single type):
+//
+//	schema := &Schema{Type: &Types{"string"}}
+//	// JSON: {"type": "string"}
+//
+// Example OpenAPI 3.1 (type array):
+//
+//	schema := &Schema{Type: &Types{"string", "null"}}
+//	// JSON: {"type": ["string", "null"]}
 type Types []string
 
+// Is returns true if the schema has exactly one type and it matches the given type.
+// This is useful for OpenAPI 3.0 style single-type checks.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.Is("string")  // true
+//	types.Is("number")  // false
+//
+//	types = &Types{"string", "null"}
+//	types.Is("string")  // false (multiple types)
 func (types *Types) Is(typ string) bool {
 	return types != nil && len(*types) == 1 && (*types)[0] == typ
 }
 
+// Slice returns the types as a string slice.
+// Returns nil if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	slice := types.Slice()  // []string{"string", "null"}
 func (types *Types) Slice() []string {
 	if types == nil {
 		return nil
@@ -147,6 +223,15 @@ func (types *Types) Slice() []string {
 	return *types
 }
 
+// Includes returns true if the given type is included in the type array.
+// Returns false if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	types.Includes("string")  // true
+//	types.Includes("null")    // true
+//	types.Includes("number")  // false
 func (pTypes *Types) Includes(typ string) bool {
 	if pTypes == nil {
 		return false
@@ -160,11 +245,80 @@ func (pTypes *Types) Includes(typ string) bool {
 	return false
 }
 
+// Permits returns true if the given type is permitted.
+// Returns true if types is nil (any type allowed), otherwise checks if the type is included.
+//
+// Example:
+//
+//	var nilTypes *Types
+//	nilTypes.Permits("anything")  // true (nil permits everything)
+//
+//	types := &Types{"string"}
+//	types.Permits("string")  // true
+//	types.Permits("number")  // false
 func (types *Types) Permits(typ string) bool {
 	if types == nil {
 		return true
 	}
 	return types.Includes(typ)
+}
+
+// IncludesNull returns true if the type array includes "null".
+// This is useful for OpenAPI 3.1 where null is a first-class type.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	types.IncludesNull()  // true
+//
+//	types = &Types{"string"}
+//	types.IncludesNull()  // false
+func (types *Types) IncludesNull() bool {
+	return types.Includes(TypeNull)
+}
+
+// IsMultiple returns true if multiple types are specified.
+// This is an OpenAPI 3.1 feature that enables type arrays.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.IsMultiple()  // false
+//
+//	types = &Types{"string", "null"}
+//	types.IsMultiple()  // true
+func (types *Types) IsMultiple() bool {
+	return types != nil && len(*types) > 1
+}
+
+// IsSingle returns true if exactly one type is specified.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.IsSingle()  // true
+//
+//	types = &Types{"string", "null"}
+//	types.IsSingle()  // false
+func (types *Types) IsSingle() bool {
+	return types != nil && len(*types) == 1
+}
+
+// IsEmpty returns true if no types are specified (nil or empty array).
+// When a schema has no type specified, it permits any type.
+//
+// Example:
+//
+//	var nilTypes *Types
+//	nilTypes.IsEmpty()  // true
+//
+//	types := &Types{}
+//	types.IsEmpty()  // true
+//
+//	types = &Types{"string"}
+//	types.IsEmpty()  // false
+func (types *Types) IsEmpty() bool {
+	return types == nil || len(*types) == 0
 }
 
 func (pTypes *Types) MarshalJSON() ([]byte, error) {
@@ -257,6 +411,66 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ExclusiveBound represents exclusiveMinimum/exclusiveMaximum which changed type between OpenAPI versions.
+// In OpenAPI 3.0 (JSON Schema draft-04): boolean that modifies minimum/maximum
+// In OpenAPI 3.1 (JSON Schema 2020-12): number representing the actual exclusive bound
+type ExclusiveBound struct {
+	Bool  *bool    // For OpenAPI 3.0 style (modifier for min/max)
+	Value *float64 // For OpenAPI 3.1 style (actual bound value)
+}
+
+// IsSet returns true if either Bool or Value is set.
+func (eb ExclusiveBound) IsSet() bool {
+	return eb.Bool != nil || eb.Value != nil
+}
+
+// IsTrue returns true if the bound is set as a boolean true (OpenAPI 3.0 style).
+func (eb ExclusiveBound) IsTrue() bool {
+	return eb.Bool != nil && *eb.Bool
+}
+
+// MarshalYAML returns the YAML encoding of ExclusiveBound.
+func (eb ExclusiveBound) MarshalYAML() (any, error) {
+	if eb.Value != nil {
+		return *eb.Value, nil
+	}
+	if eb.Bool != nil {
+		return *eb.Bool, nil
+	}
+	return nil, nil
+}
+
+// MarshalJSON returns the JSON encoding of ExclusiveBound.
+func (eb ExclusiveBound) MarshalJSON() ([]byte, error) {
+	x, err := eb.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	if x == nil {
+		return nil, nil
+	}
+	return json.Marshal(x)
+}
+
+// UnmarshalJSON sets ExclusiveBound to a copy of data.
+func (eb *ExclusiveBound) UnmarshalJSON(data []byte) error {
+	var x any
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	switch y := x.(type) {
+	case nil:
+		// nothing to do
+	case bool:
+		eb.Bool = &y
+	case float64:
+		eb.Value = &y
+	default:
+		return errors.New("cannot unmarshal exclusiveMinimum/exclusiveMaximum: value must be either a number or a boolean")
+	}
+	return nil
+}
+
 var _ jsonpointer.JSONPointable = (*Schema)(nil)
 
 func NewSchema() *Schema {
@@ -322,11 +536,15 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m["uniqueItems"] = x
 	}
 	// Number-related
-	if x := schema.ExclusiveMin; x {
-		m["exclusiveMinimum"] = x
+	if schema.ExclusiveMin.IsSet() {
+		if v, _ := schema.ExclusiveMin.MarshalYAML(); v != nil {
+			m["exclusiveMinimum"] = v
+		}
 	}
-	if x := schema.ExclusiveMax; x {
-		m["exclusiveMaximum"] = x
+	if schema.ExclusiveMax.IsSet() {
+		if v, _ := schema.ExclusiveMax.MarshalYAML(); v != nil {
+			m["exclusiveMaximum"] = v
+		}
 	}
 	// Properties
 	if x := schema.Nullable; x {
@@ -401,6 +619,83 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m["discriminator"] = x
 	}
 
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	if x := schema.Const; x != nil {
+		m["const"] = x
+	}
+	if x := schema.Examples; len(x) != 0 {
+		m["examples"] = x
+	}
+	if x := schema.PrefixItems; len(x) != 0 {
+		m["prefixItems"] = x
+	}
+	if x := schema.Contains; x != nil {
+		m["contains"] = x
+	}
+	if x := schema.MinContains; x != nil {
+		m["minContains"] = x
+	}
+	if x := schema.MaxContains; x != nil {
+		m["maxContains"] = x
+	}
+	if x := schema.PatternProperties; len(x) != 0 {
+		m["patternProperties"] = x
+	}
+	if x := schema.DependentSchemas; len(x) != 0 {
+		m["dependentSchemas"] = x
+	}
+	if x := schema.PropertyNames; x != nil {
+		m["propertyNames"] = x
+	}
+	if x := schema.UnevaluatedItems; x != nil {
+		m["unevaluatedItems"] = x
+	}
+	if x := schema.UnevaluatedProperties; x != nil {
+		m["unevaluatedProperties"] = x
+	}
+	if x := schema.If; x != nil {
+		m["if"] = x
+	}
+	if x := schema.Then; x != nil {
+		m["then"] = x
+	}
+	if x := schema.Else; x != nil {
+		m["else"] = x
+	}
+	if x := schema.DependentRequired; len(x) != 0 {
+		m["dependentRequired"] = x
+	}
+	if x := schema.Defs; len(x) != 0 {
+		m["$defs"] = x
+	}
+	if x := schema.SchemaDialect; x != "" {
+		m["$schema"] = x
+	}
+	if x := schema.Comment; x != "" {
+		m["$comment"] = x
+	}
+	if x := schema.SchemaID; x != "" {
+		m["$id"] = x
+	}
+	if x := schema.Anchor; x != "" {
+		m["$anchor"] = x
+	}
+	if x := schema.DynamicRef; x != "" {
+		m["$dynamicRef"] = x
+	}
+	if x := schema.DynamicAnchor; x != "" {
+		m["$dynamicAnchor"] = x
+	}
+	if x := schema.ContentMediaType; x != "" {
+		m["contentMediaType"] = x
+	}
+	if x := schema.ContentEncoding; x != "" {
+		m["contentEncoding"] = x
+	}
+	if x := schema.ContentSchema; x != nil {
+		m["contentSchema"] = x
+	}
+
 	return m, nil
 }
 
@@ -463,6 +758,33 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "additionalProperties")
 	delete(x.Extensions, "discriminator")
 
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	delete(x.Extensions, "const")
+	delete(x.Extensions, "examples")
+	delete(x.Extensions, "prefixItems")
+	delete(x.Extensions, "contains")
+	delete(x.Extensions, "minContains")
+	delete(x.Extensions, "maxContains")
+	delete(x.Extensions, "patternProperties")
+	delete(x.Extensions, "dependentSchemas")
+	delete(x.Extensions, "propertyNames")
+	delete(x.Extensions, "unevaluatedItems")
+	delete(x.Extensions, "unevaluatedProperties")
+	delete(x.Extensions, "if")
+	delete(x.Extensions, "then")
+	delete(x.Extensions, "else")
+	delete(x.Extensions, "dependentRequired")
+	delete(x.Extensions, "$defs")
+	delete(x.Extensions, "$schema")
+	delete(x.Extensions, "$comment")
+	delete(x.Extensions, "$id")
+	delete(x.Extensions, "$anchor")
+	delete(x.Extensions, "$dynamicRef")
+	delete(x.Extensions, "$dynamicAnchor")
+	delete(x.Extensions, "contentMediaType")
+	delete(x.Extensions, "contentEncoding")
+	delete(x.Extensions, "contentSchema")
+
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
@@ -474,6 +796,10 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 	schema.Default = stripOriginFromAny(schema.Default)
 	schema.Example = stripOriginFromAny(schema.Example)
+	schema.Const = stripOriginFromAny(schema.Const)
+	for i, v := range schema.Examples {
+		schema.Examples[i] = stripOriginFromAny(v)
+	}
 
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
@@ -577,6 +903,98 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 		return schema.MaxProps, nil
 	case "discriminator":
 		return schema.Discriminator, nil
+
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	case "const":
+		return schema.Const, nil
+	case "examples":
+		return schema.Examples, nil
+	case "prefixItems":
+		return schema.PrefixItems, nil
+	case "contains":
+		if schema.Contains != nil {
+			if schema.Contains.Ref != "" {
+				return &Ref{Ref: schema.Contains.Ref}, nil
+			}
+			return schema.Contains.Value, nil
+		}
+	case "minContains":
+		return schema.MinContains, nil
+	case "maxContains":
+		return schema.MaxContains, nil
+	case "patternProperties":
+		return schema.PatternProperties, nil
+	case "dependentSchemas":
+		return schema.DependentSchemas, nil
+	case "propertyNames":
+		if schema.PropertyNames != nil {
+			if schema.PropertyNames.Ref != "" {
+				return &Ref{Ref: schema.PropertyNames.Ref}, nil
+			}
+			return schema.PropertyNames.Value, nil
+		}
+	case "unevaluatedItems":
+		if schema.UnevaluatedItems != nil {
+			if schema.UnevaluatedItems.Ref != "" {
+				return &Ref{Ref: schema.UnevaluatedItems.Ref}, nil
+			}
+			return schema.UnevaluatedItems.Value, nil
+		}
+	case "unevaluatedProperties":
+		if schema.UnevaluatedProperties != nil {
+			if schema.UnevaluatedProperties.Ref != "" {
+				return &Ref{Ref: schema.UnevaluatedProperties.Ref}, nil
+			}
+			return schema.UnevaluatedProperties.Value, nil
+		}
+	case "if":
+		if schema.If != nil {
+			if schema.If.Ref != "" {
+				return &Ref{Ref: schema.If.Ref}, nil
+			}
+			return schema.If.Value, nil
+		}
+	case "then":
+		if schema.Then != nil {
+			if schema.Then.Ref != "" {
+				return &Ref{Ref: schema.Then.Ref}, nil
+			}
+			return schema.Then.Value, nil
+		}
+	case "else":
+		if schema.Else != nil {
+			if schema.Else.Ref != "" {
+				return &Ref{Ref: schema.Else.Ref}, nil
+			}
+			return schema.Else.Value, nil
+		}
+	case "dependentRequired":
+		return schema.DependentRequired, nil
+	case "$defs":
+		return schema.Defs, nil
+	case "$schema":
+		return schema.SchemaDialect, nil
+	case "$comment":
+		return schema.Comment, nil
+	case "$id":
+		return schema.SchemaID, nil
+	case "$anchor":
+		return schema.Anchor, nil
+	case "$dynamicRef":
+		return schema.DynamicRef, nil
+	case "$dynamicAnchor":
+		return schema.DynamicAnchor, nil
+	case "contentMediaType":
+		return schema.ContentMediaType, nil
+	case "contentEncoding":
+		return schema.ContentEncoding, nil
+	case "contentSchema":
+		if schema.ContentSchema != nil {
+			if schema.ContentSchema.Ref != "" {
+				return &Ref{Ref: schema.ContentSchema.Ref}, nil
+			}
+			return schema.ContentSchema.Value, nil
+		}
 	}
 
 	v, _, err := jsonpointer.GetForToken(schema.Extensions, token)
@@ -706,13 +1124,27 @@ func (schema *Schema) WithMax(value float64) *Schema {
 	return schema
 }
 
+// WithExclusiveMin sets exclusiveMinimum as a boolean (OpenAPI 3.0 style).
 func (schema *Schema) WithExclusiveMin(value bool) *Schema {
-	schema.ExclusiveMin = value
+	schema.ExclusiveMin = ExclusiveBound{Bool: &value}
 	return schema
 }
 
+// WithExclusiveMax sets exclusiveMaximum as a boolean (OpenAPI 3.0 style).
 func (schema *Schema) WithExclusiveMax(value bool) *Schema {
-	schema.ExclusiveMax = value
+	schema.ExclusiveMax = ExclusiveBound{Bool: &value}
+	return schema
+}
+
+// WithExclusiveMinValue sets exclusiveMinimum as a number (OpenAPI 3.1 style).
+func (schema *Schema) WithExclusiveMinValue(value float64) *Schema {
+	schema.ExclusiveMin = ExclusiveBound{Value: &value}
+	return schema
+}
+
+// WithExclusiveMaxValue sets exclusiveMaximum as a number (OpenAPI 3.1 style).
+func (schema *Schema) WithExclusiveMaxValue(value float64) *Schema {
+	schema.ExclusiveMax = ExclusiveBound{Value: &value}
 	return schema
 }
 
@@ -862,19 +1294,20 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 }
 
 func (schema *Schema) PermitsNull() bool {
-	return schema.Nullable || schema.Type.Includes("null")
+	return schema.Nullable || schema.Type.IncludesNull()
 }
 
 // IsEmpty tells whether schema is equivalent to the empty schema `{}`.
 func (schema *Schema) IsEmpty() bool {
 	if schema.Type != nil || schema.Format != "" || len(schema.Enum) != 0 ||
-		schema.UniqueItems || schema.ExclusiveMin || schema.ExclusiveMax ||
+		schema.UniqueItems || schema.ExclusiveMin.IsSet() || schema.ExclusiveMax.IsSet() ||
 		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
 		schema.Min != nil || schema.Max != nil || schema.MultipleOf != nil ||
 		schema.MinLength != 0 || schema.MaxLength != nil || schema.Pattern != "" ||
 		schema.MinItems != 0 || schema.MaxItems != nil ||
 		len(schema.Required) != 0 ||
-		schema.MinProps != 0 || schema.MaxProps != nil {
+		schema.MinProps != 0 || schema.MaxProps != nil ||
+		schema.Const != nil {
 		return false
 	}
 	if n := schema.Not; n != nil && n.Value != nil && !n.Value.IsEmpty() {
@@ -889,10 +1322,43 @@ func (schema *Schema) IsEmpty() bool {
 	if items := schema.Items; items != nil && items.Value != nil && !items.Value.IsEmpty() {
 		return false
 	}
+	for _, s := range schema.PrefixItems {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+			return false
+		}
+	}
+	if c := schema.Contains; c != nil && c.Value != nil && !c.Value.IsEmpty() {
+		return false
+	}
+	if schema.MinContains != nil || schema.MaxContains != nil {
+		return false
+	}
 	for _, s := range schema.Properties {
 		if ss := s.Value; ss != nil && !ss.IsEmpty() {
 			return false
 		}
+	}
+	for _, s := range schema.PatternProperties {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+			return false
+		}
+	}
+	for _, s := range schema.DependentSchemas {
+		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+			return false
+		}
+	}
+	if pn := schema.PropertyNames; pn != nil && pn.Value != nil && !pn.Value.IsEmpty() {
+		return false
+	}
+	if ui := schema.UnevaluatedItems; ui != nil && ui.Value != nil && !ui.Value.IsEmpty() {
+		return false
+	}
+	if up := schema.UnevaluatedProperties; up != nil && up.Value != nil && !up.Value.IsEmpty() {
+		return false
+	}
+	if len(schema.Examples) != 0 {
+		return false
 	}
 	for _, s := range schema.OneOf {
 		if ss := s.Value; ss != nil && !ss.IsEmpty() {
@@ -909,12 +1375,42 @@ func (schema *Schema) IsEmpty() bool {
 			return false
 		}
 	}
+	if f := schema.If; f != nil && f.Value != nil && !f.Value.IsEmpty() {
+		return false
+	}
+	if t := schema.Then; t != nil && t.Value != nil && !t.Value.IsEmpty() {
+		return false
+	}
+	if e := schema.Else; e != nil && e.Value != nil && !e.Value.IsEmpty() {
+		return false
+	}
+	if len(schema.DependentRequired) != 0 {
+		return false
+	}
+	if len(schema.Defs) != 0 {
+		return false
+	}
+	if schema.SchemaDialect != "" || schema.Comment != "" {
+		return false
+	}
+	if schema.SchemaID != "" || schema.Anchor != "" || schema.DynamicRef != "" || schema.DynamicAnchor != "" {
+		return false
+	}
+	if schema.ContentMediaType != "" || schema.ContentEncoding != "" {
+		return false
+	}
+	if cs := schema.ContentSchema; cs != nil && cs.Value != nil && !cs.Value.IsEmpty() {
+		return false
+	}
 	return true
 }
 
 // Validate returns an error if Schema does not comply with the OpenAPI spec.
 func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// Apply document-level validation options to the context
 	ctx = WithValidationOptions(ctx, opts...)
+
+	// Perform schema validation with the options in context
 	_, err := schema.validate(ctx, []*Schema{})
 	return err
 }
@@ -982,6 +1478,37 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 
+	if ref := schema.If; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.Then; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.Else; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+
 	for _, schemaType := range schema.Type.Slice() {
 		switch schemaType {
 		case TypeBoolean:
@@ -1032,10 +1559,14 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				}
 			}
 		case TypeArray:
-			if schema.Items == nil {
+			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
 				return stack, errors.New("when schema type is 'array', schema 'items' must be non-null")
 			}
 		case TypeObject:
+		case TypeNull:
+			if !validationOpts.jsonSchema2020ValidationEnabled {
+				return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
+			}
 		default:
 			return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
 		}
@@ -1086,6 +1617,110 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 
+	// OpenAPI 3.1 / JSON Schema 2020-12 sub-schemas
+	for _, ref := range schema.PrefixItems {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.Contains; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	for _, name := range componentNames(schema.PatternProperties) {
+		ref := schema.PatternProperties[name]
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	for _, name := range componentNames(schema.DependentSchemas) {
+		ref := schema.DependentSchemas[name]
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	for _, name := range componentNames(schema.Defs) {
+		ref := schema.Defs[name]
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.PropertyNames; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.UnevaluatedItems; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.UnevaluatedProperties; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+	if ref := schema.ContentSchema; ref != nil {
+		v := ref.Value
+		if v == nil {
+			return stack, foundUnresolvedRef(ref.Ref)
+		}
+
+		var err error
+		if stack, err = v.validate(ctx, stack); err != nil {
+			return stack, err
+		}
+	}
+
 	if v := schema.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return stack, fmt.Errorf("invalid external docs: %w", err)
@@ -1093,7 +1728,11 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 
 	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
-		if err := schema.VisitJSON(v); err != nil {
+		opts := []SchemaValidationOption{}
+		if validationOpts.jsonSchema2020ValidationEnabled {
+			opts = append(opts, EnableJSONSchema2020())
+		}
+		if err := schema.VisitJSON(v, opts...); err != nil {
 			return stack, fmt.Errorf("invalid default: %w", err)
 		}
 	}
@@ -1139,6 +1778,12 @@ func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool {
 
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error {
 	settings := newSchemaValidationSettings(opts...)
+
+	// Use JSON Schema 2020-12 validator if enabled
+	if settings.useJSONSchema2020 {
+		return schema.visitJSONWithJSONSchema(settings, value)
+	}
+
 	return schema.visitJSON(settings, value)
 }
 
@@ -1176,6 +1821,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		return
 	}
 	if err = schema.visitEnumOperation(settings, value); err != nil {
+		return
+	}
+	if err = schema.visitConstOperation(settings, value); err != nil {
 		return
 	}
 
@@ -1279,6 +1927,39 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 	return
 }
 
+func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, value any) (err error) {
+	if schema.Const == nil {
+		return
+	}
+	var match bool
+	switch c := value.(type) {
+	case json.Number:
+		var f float64
+		if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
+			return err
+		}
+		match = reflect.DeepEqual(schema.Const, f)
+	case int64:
+		match = reflect.DeepEqual(schema.Const, float64(c))
+	default:
+		match = reflect.DeepEqual(schema.Const, value)
+	}
+	if !match {
+		if settings.failfast {
+			return errSchema
+		}
+		constVal, _ := json.Marshal(schema.Const)
+		return &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "const",
+			Reason:                fmt.Sprintf("value must be %s", string(constVal)),
+			customizeMessageError: settings.customizeMessageError,
+		}
+	}
+	return
+}
+
 func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value any) (err error) {
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
@@ -1302,41 +1983,54 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 
 // If the XOF operations pass successfully, abort further run of validation, as they will already be satisfied (unless the schema
 // itself is badly specified
+// resolveDiscriminatorRef resolves the discriminator reference for oneOf/anyOf validation.
+// Returns the discriminator ref string and any error encountered during resolution.
+func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
+	if schema.Discriminator == nil {
+		return "", nil
+	}
+	pn := schema.Discriminator.PropertyName
+	valuemap, okcheck := value.(map[string]any)
+	if !okcheck {
+		return "", nil
+	}
+	discriminatorVal, okcheck := valuemap[pn]
+	if !okcheck {
+		return "", &SchemaError{
+			Schema:      schema,
+			SchemaField: "discriminator",
+			Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
+		}
+	}
+
+	discriminatorValString, okcheck := discriminatorVal.(string)
+	if !okcheck {
+		return "", &SchemaError{
+			Value:       discriminatorVal,
+			Schema:      schema,
+			SchemaField: "discriminator",
+			Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
+		}
+	}
+
+	if discriminatorRef, okcheck := schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
+		return "", &SchemaError{
+			Value:       discriminatorVal,
+			Schema:      schema,
+			SchemaField: "discriminator",
+			Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
+		}
+	} else {
+		return discriminatorRef.Ref, nil
+	}
+}
+
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
-		var discriminatorRef MappingRef
-		if schema.Discriminator != nil {
-			pn := schema.Discriminator.PropertyName
-			if valuemap, okcheck := value.(map[string]any); okcheck {
-				discriminatorVal, okcheck := valuemap[pn]
-				if !okcheck {
-					return &SchemaError{
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
-					}, false
-				}
-
-				discriminatorValString, okcheck := discriminatorVal.(string)
-				if !okcheck {
-					return &SchemaError{
-						Value:       discriminatorVal,
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
-					}, false
-				}
-
-				if discriminatorRef, okcheck = schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
-					return &SchemaError{
-						Value:       discriminatorVal,
-						Schema:      schema,
-						SchemaField: "discriminator",
-						Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
-					}, false
-				}
-			}
+		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
+		if err != nil {
+			return err, false
 		}
 
 		var (
@@ -1351,7 +2045,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				return foundUnresolvedRef(item.Ref), false
 			}
 
-			if discriminatorRef.Ref != "" && discriminatorRef.Ref != item.Ref {
+			if discriminatorRef != "" && discriminatorRef != item.Ref {
 				continue
 			}
 
@@ -1398,6 +2092,11 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
+		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
+		if err != nil {
+			return err, false
+		}
+
 		var (
 			ok              = false
 			matchedAnyOfIdx = 0
@@ -1408,6 +2107,11 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if v == nil {
 				return foundUnresolvedRef(item.Ref), false
 			}
+
+			if discriminatorRef != "" && discriminatorRef != item.Ref {
+				continue
+			}
+
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
 			if settings.asreq || settings.asrep {
 				tempValue = deepcopy.Copy(value)
@@ -1589,39 +2293,73 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	// "exclusiveMinimum"
-	if v := schema.ExclusiveMin; v && !(*schema.Min < value) {
-		if settings.failfast {
-			return errSchema
+	// OpenAPI 3.0: boolean modifier for minimum
+	// OpenAPI 3.1: number representing the actual exclusive bound
+	if eb := schema.ExclusiveMin; eb.IsSet() {
+		var exclusiveMinBound float64
+		var valid bool
+		if eb.Value != nil {
+			// OpenAPI 3.1 style: exclusiveMinimum is the bound itself
+			exclusiveMinBound = *eb.Value
+			valid = value > exclusiveMinBound
+		} else if eb.Bool != nil && *eb.Bool && schema.Min != nil {
+			// OpenAPI 3.0 style: exclusiveMinimum modifies minimum
+			exclusiveMinBound = *schema.Min
+			valid = value > exclusiveMinBound
+		} else {
+			valid = true
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "exclusiveMinimum",
-			Reason:                fmt.Sprintf("number must be more than %g", *schema.Min),
-			customizeMessageError: settings.customizeMessageError,
+		if !valid {
+			if settings.failfast {
+				return errSchema
+			}
+			err := &SchemaError{
+				Value:                 value,
+				Schema:                schema,
+				SchemaField:           "exclusiveMinimum",
+				Reason:                fmt.Sprintf("number must be more than %g", exclusiveMinBound),
+				customizeMessageError: settings.customizeMessageError,
+			}
+			if !settings.multiError {
+				return err
+			}
+			me = append(me, err)
 		}
-		if !settings.multiError {
-			return err
-		}
-		me = append(me, err)
 	}
 
 	// "exclusiveMaximum"
-	if v := schema.ExclusiveMax; v && !(*schema.Max > value) {
-		if settings.failfast {
-			return errSchema
+	// OpenAPI 3.0: boolean modifier for maximum
+	// OpenAPI 3.1: number representing the actual exclusive bound
+	if eb := schema.ExclusiveMax; eb.IsSet() {
+		var exclusiveMaxBound float64
+		var valid bool
+		if eb.Value != nil {
+			// OpenAPI 3.1 style: exclusiveMaximum is the bound itself
+			exclusiveMaxBound = *eb.Value
+			valid = value < exclusiveMaxBound
+		} else if eb.Bool != nil && *eb.Bool && schema.Max != nil {
+			// OpenAPI 3.0 style: exclusiveMaximum modifies maximum
+			exclusiveMaxBound = *schema.Max
+			valid = value < exclusiveMaxBound
+		} else {
+			valid = true
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "exclusiveMaximum",
-			Reason:                fmt.Sprintf("number must be less than %g", *schema.Max),
-			customizeMessageError: settings.customizeMessageError,
+		if !valid {
+			if settings.failfast {
+				return errSchema
+			}
+			err := &SchemaError{
+				Value:                 value,
+				Schema:                schema,
+				SchemaField:           "exclusiveMaximum",
+				Reason:                fmt.Sprintf("number must be less than %g", exclusiveMaxBound),
+				customizeMessageError: settings.customizeMessageError,
+			}
+			if !settings.multiError {
+				return err
+			}
+			me = append(me, err)
 		}
-		if !settings.multiError {
-			return err
-		}
-		me = append(me, err)
 	}
 
 	// "minimum"

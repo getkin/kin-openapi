@@ -1,0 +1,32 @@
+openapi: "3.1.0"
+info:
+  title: Test conditional keywords
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    StringType:
+      type: string
+    NumberType:
+      type: number
+    MinLength3:
+      minLength: 3
+    ConditionalField:
+      if:
+        $ref: '#/components/schemas/StringType'
+      then:
+        $ref: '#/components/schemas/MinLength3'
+      else:
+        $ref: '#/components/schemas/NumberType'
+    PaymentInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        creditCard:
+          type: string
+        billingAddress:
+          type: string
+      dependentRequired:
+        creditCard:
+          - billingAddress

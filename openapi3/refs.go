@@ -1093,7 +1093,9 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		if !getValidationOptions(ctx).jsonSchema2020ValidationEnabled {
+			return fmt.Errorf("extra sibling fields: %+v", extras)
+		}
 	}
 
 	if v := x.Value; v != nil {

@@ -75,6 +75,9 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	}
 	// Append additional schema validation options (e.g., document-scoped format validators)
 	opts = append(opts, options.SchemaValidationOptions...)
+	if route.Spec != nil && route.Spec.IsOpenAPI3_1() {
+		opts = append(opts, openapi3.EnableJSONSchema2020())
+	}
 
 	headers := make([]string, 0, len(response.Headers))
 	for k := range response.Headers {

@@ -438,6 +438,42 @@ func TestOrigin_XML(t *testing.T) {
 
 // TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
 // contains a property named "__origin__", highlighting a limitation in the current implementation.
+func TestOrigin_ConstAndExamplesStripped(t *testing.T) {
+	var data = `
+openapi: "3.1.0"
+info:
+  title: Test
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Foo:
+      type: object
+      const: {x: reuven}
+      examples:
+        - {y: value}
+`
+	loader := NewLoader()
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
+	doc, err := loader.LoadFromData([]byte(data))
+	require.NoError(t, err)
+
+	schema := doc.Components.Schemas["Foo"].Value
+	require.NotNil(t, schema)
+
+	constMap, ok := schema.Const.(map[string]any)
+	require.True(t, ok)
+	require.NotContains(t, constMap, originKey)
+
+	require.Len(t, schema.Examples, 1)
+	exampleMap, ok := schema.Examples[0].(map[string]any)
+	require.True(t, ok)
+	require.NotContains(t, exampleMap, originKey)
+}
+
 func TestOrigin_OriginExistsInProperties(t *testing.T) {
 	var data = `
 paths:

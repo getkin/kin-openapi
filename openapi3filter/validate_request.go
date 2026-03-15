@@ -240,6 +240,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
+	if input.Route != nil && input.Route.Spec != nil && input.Route.Spec.IsOpenAPI3_1() {
+		opts = append(opts, openapi3.EnableJSONSchema2020())
+	}
 	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
@@ -349,6 +352,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	// Append additional schema validation options (e.g., document-scoped format validators)
 	opts = append(opts, options.SchemaValidationOptions...)
+	if input.Route != nil && input.Route.Spec != nil && input.Route.Spec.IsOpenAPI3_1() {
+		opts = append(opts, openapi3.EnableJSONSchema2020())
+	}
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
