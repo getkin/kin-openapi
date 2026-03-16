@@ -53,9 +53,9 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	URL         string                     `json:"url" yaml:"url"` // Required
-	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string          `json:"url" yaml:"url"` // Required
+	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
 // BasePath returns the base path extracted from the default values of variables, if any.
@@ -234,6 +234,15 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
+// ServerVariables is a map of ServerVariable objects keyed by variable name.
+type ServerVariables map[string]*ServerVariable
+
+// UnmarshalJSON sets ServerVariables to a copy of data, stripping __origin__ metadata.
+func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error) {
+	*serverVariables, _, err = unmarshalStringMapP[ServerVariable](data)
+	return
+}
+
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
