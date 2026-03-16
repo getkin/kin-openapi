@@ -165,6 +165,7 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
+	delete(x.Webhooks, originKey)
 	*doc = T(x)
 	return nil
 }
