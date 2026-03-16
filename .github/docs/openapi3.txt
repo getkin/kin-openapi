@@ -485,6 +485,13 @@ func (encoding *Encoding) WithHeader(name string, header *Header) *Encoding
 
 func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
 
+type Encodings map[string]*Encoding
+    Encodings is a map of encoding objects keyed by field name.
+
+func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Encodings to a copy of data, stripping __origin__
+    metadata.
+
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
@@ -862,10 +869,10 @@ type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	Schema   *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example  any        `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
     MediaType is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
@@ -2067,9 +2074,9 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	URL         string                     `json:"url" yaml:"url"` // Required
-	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string          `json:"url" yaml:"url"` // Required
+	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
     Server is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
@@ -2102,8 +2109,6 @@ type ServerVariable struct {
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 }
-    ServerVariable is specified by OpenAPI/Swagger standard version 3. See
-    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 
 func (serverVariable ServerVariable) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ServerVariable.
@@ -2117,6 +2122,15 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if ServerVariable does not comply with the OpenAPI
     spec.
+
+type ServerVariables map[string]*ServerVariable
+    ServerVariable is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
+    ServerVariables is a map of ServerVariable objects keyed by variable name.
+
+func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets ServerVariables to a copy of data, stripping __origin__
+    metadata.
 
 type Servers []*Server
     Servers is specified by OpenAPI/Swagger standard version 3.

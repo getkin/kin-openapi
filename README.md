@@ -294,6 +294,10 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.135.0
+* `openapi3.MediaType.Encoding` field type changed from `map[string]*Encoding` to `Encodings`
+* `openapi3.Server.Variables` field type changed from `map[string]*ServerVariable` to `ServerVariables`
+
 ### v0.134.0
 * `openapi3.Location` gained `File` and `Name` fields (`string` type, replacing previous `int`-only struct layout)
 * `openapi3.Origin` gained `Sequences` field (`map[string][]Location`, extending previous `map[string]Location`-only struct)
