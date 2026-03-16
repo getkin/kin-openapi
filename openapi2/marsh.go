@@ -19,7 +19,7 @@ func unmarshalError(jsonUnmarshalErr error) error {
 func unmarshal(data []byte, v any) error {
 	var jsonErr, yamlErr error
 
-	// See https://github.com/getkin/kin-openapi/issues/680
+	// See https://github.com/oasdiff/kin-openapi/issues/680
 	if jsonErr = json.Unmarshal(data, v); jsonErr == nil {
 		return nil
 	}

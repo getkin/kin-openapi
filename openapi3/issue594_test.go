@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi3"
 )
 
 func TestIssue594(t *testing.T) {

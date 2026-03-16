@@ -34,7 +34,7 @@ paths:
 `[1:])
 
 	// When that site fails to respond:
-	// see https://github.com/getkin/kin-openapi/issues/495
+	// see https://github.com/oasdiff/kin-openapi/issues/495
 
 	// http://schemas.sentex.io/store/categories.json
 	// {

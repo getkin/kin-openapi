@@ -155,7 +155,7 @@ func TestIssue735(t *testing.T) {
 			value:            map[string]any{"foo": 42},
 			extraNotContains: []any{42},
 		},
-		// TODO: uncomment when https://github.com/getkin/kin-openapi/issues/502 is fixed
+		// TODO: uncomment when https://github.com/oasdiff/kin-openapi/issues/502 is fixed
 		//{
 		//	name: "read only properties",
 		//	schema: NewSchema().WithProperties(map[string]*Schema{

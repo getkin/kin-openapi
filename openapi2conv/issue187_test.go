@@ -8,8 +8,8 @@ import (
 	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi2"
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi2"
+	"github.com/oasdiff/kin-openapi/openapi3"
 )
 
 func v2v3JSON(spec2 []byte) (doc3 *openapi3.T, err error) {

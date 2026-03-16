@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/oasdiff/kin-openapi/openapi2"
 )
 
 func TestIssue1091_PropertyExtensions(t *testing.T) {

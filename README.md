@@ -294,6 +294,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.136.0
+* Module renamed from `github.com/getkin/kin-openapi` to `github.com/oasdiff/kin-openapi`. Update all imports accordingly: `openapi2`, `openapi2conv`, `openapi3`, `openapi3filter`, `openapi3gen`, `routers`, `routers/gorillamux`, `routers/legacy`, `routers/legacy/pathpattern`
+
 ### v0.135.0
 * `openapi3.MediaType.Encoding` field type changed from `map[string]*Encoding` to `Encodings`
 * `openapi3.Server.Variables` field type changed from `map[string]*ServerVariable` to `ServerVariables`

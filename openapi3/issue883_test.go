@@ -7,7 +7,7 @@ import (
 	yamlv3 "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi3"
 )
 
 func TestIssue883(t *testing.T) {

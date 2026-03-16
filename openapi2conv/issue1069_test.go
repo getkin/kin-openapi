@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi2"
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi2"
+	"github.com/oasdiff/kin-openapi/openapi3"
 	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
