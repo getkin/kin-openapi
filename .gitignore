@@ -19,3 +19,4 @@
  # IntelliJ / GoLand
 .idea
 .vscode
+.claude/

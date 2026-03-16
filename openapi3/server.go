@@ -53,8 +53,8 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	URL         string                     `json:"url" yaml:"url"` // Required
-	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
+	URL         string          `json:"url" yaml:"url"` // Required
+	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
