@@ -3,7 +3,7 @@ package openapi2
 import (
 	"encoding/json"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi3"
 )
 
 type SecurityRequirements []map[string][]string

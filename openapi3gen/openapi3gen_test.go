@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/oasdiff/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi3gen"
 )
 
 func ExampleGenerator_SchemaRefs() {
@@ -330,7 +330,7 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 	require.Equal(t, true, ok)
 }
 
-// See: https://github.com/getkin/kin-openapi/issues/500
+// See: https://github.com/oasdiff/kin-openapi/issues/500
 func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 	type EmbeddedStruct struct {
 		ID string

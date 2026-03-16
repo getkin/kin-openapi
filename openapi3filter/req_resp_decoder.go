@@ -19,7 +19,7 @@ import (
 
 	yaml "github.com/oasdiff/yaml3"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi3"
 )
 
 // ParseErrorKind describes a kind of ParseError.

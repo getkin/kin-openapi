@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/getkin/kin-openapi/routers/gorillamux"
+	"github.com/oasdiff/kin-openapi/openapi3"
+	"github.com/oasdiff/kin-openapi/openapi3filter"
+	"github.com/oasdiff/kin-openapi/routers/gorillamux"
 )
 
 func ExampleOptions_WithCustomSchemaErrorFunc() {

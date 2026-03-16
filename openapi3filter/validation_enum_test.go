@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/oasdiff/kin-openapi/openapi3"
+	legacyrouter "github.com/oasdiff/kin-openapi/routers/legacy"
 )
 
 func TestValidationWithIntegerEnum(t *testing.T) {
