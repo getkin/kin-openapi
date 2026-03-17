@@ -16,10 +16,10 @@ type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	Schema   *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example  any        `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*MediaType)(nil)
@@ -57,7 +57,7 @@ func (mediaType *MediaType) WithExample(name string, value any) *MediaType {
 func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType {
 	encoding := mediaType.Encoding
 	if encoding == nil {
-		encoding = make(map[string]*Encoding)
+		encoding = make(Encodings)
 		mediaType.Encoding = encoding
 	}
 	encoding[name] = enc
