@@ -1,0 +1,10 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: v1
+  x-info-extension:
+    env: staging
+x-object-extension:
+  foo: bar
+  count: 42
+paths: {}
