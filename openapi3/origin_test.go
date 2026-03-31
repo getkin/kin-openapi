@@ -436,6 +436,53 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Fields["prefix"])
 }
 
+func TestStripOriginFromAny_Slice(t *testing.T) {
+	// Simulates what the YAML origin-tracking loader produces for example
+	// values that contain arrays of objects.
+	input := map[string]any{
+		"name": "test",
+		"items": []any{
+			map[string]any{
+				"__origin__": map[string]any{"file": "a.yaml", "line": 1},
+				"id":         1,
+			},
+			map[string]any{
+				"__origin__": map[string]any{"file": "a.yaml", "line": 2},
+				"id":         2,
+			},
+		},
+	}
+
+	result := stripOriginFromAny(input)
+	m := result.(map[string]any)
+	items := m["items"].([]any)
+	for _, item := range items {
+		itemMap := item.(map[string]any)
+		require.NotContains(t, itemMap, "__origin__")
+	}
+}
+
+func TestOrigin_ExampleWithArrayValue(t *testing.T) {
+	loader := NewLoader()
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
+	doc, err := loader.LoadFromFile("testdata/origin/example_with_array.yaml")
+	require.NoError(t, err)
+
+	example := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Examples["bar"]
+	require.NotNil(t, example.Value)
+
+	// The example value contains a list of objects; __origin__ must be stripped from each.
+	value := example.Value.Value.(map[string]any)
+	items := value["items"].([]any)
+	for _, item := range items {
+		itemMap := item.(map[string]any)
+		require.NotContains(t, itemMap, "__origin__")
+	}
+}
+
 // TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
 // contains a property named "__origin__", highlighting a limitation in the current implementation.
 func TestOrigin_OriginExistsInProperties(t *testing.T) {

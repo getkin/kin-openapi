@@ -1,0 +1,25 @@
+openapi: 3.0.0
+info:
+  title: Example with Array Value
+  version: 1.0.0
+paths:
+  /subscribe:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+            examples:
+              bar:
+                summary: A bar example with array
+                value:
+                  name: test
+                  items:
+                    - id: 1
+                      label: first
+                    - id: 2
+                      label: second
+      responses:
+        "200":
+          description: OK
