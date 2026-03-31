@@ -116,6 +116,7 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "variables")
@@ -288,6 +289,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "enum")
 	delete(x.Extensions, "default")
 	delete(x.Extensions, "description")

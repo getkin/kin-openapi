@@ -42,3 +42,13 @@ func stripOriginFromAny(v any) any {
 		return v
 	}
 }
+
+// stripExtensionsOrigin removes __origin__ from every value in an extensions
+// map. Extension values are any-typed objects, so the YAML decoder injects
+// __origin__ into them. Without stripping it, two specs loaded from different
+// file paths would report spurious diffs in their extension values.
+func stripExtensionsOrigin(ext map[string]any) {
+	for k, v := range ext {
+		ext[k] = stripOriginFromAny(v)
+	}
+}

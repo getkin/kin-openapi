@@ -110,6 +110,7 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "required")
 	delete(x.Extensions, "content")
