@@ -90,8 +90,23 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 
 	// RequestBody
 	requestBody := operation.RequestBody
-	if requestBody != nil && !options.ExcludeRequestBody {
-		if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+	if !options.ExcludeRequestBody {
+		// Validate specification request body if present
+		if requestBody != nil {
+			if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+				if !options.MultiError {
+					return err
+				}
+				me = append(me, err)
+			}
+		}
+
+		// Reject if specification request body if not present (not wanted) but is present in the HTTP request
+		if options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
+			err := &RequestError{
+				Input: input,
+				Err:   errors.New("request body not allowed for this request"),
+			}
 			if !options.MultiError {
 				return err
 			}
@@ -315,7 +330,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	defaultsSet := false
-	opts := make([]openapi3.SchemaValidationOption, 0, 4) // 4 potential opts here
+	opts := make([]openapi3.SchemaValidationOption, 0, 4+len(options.SchemaValidationOptions))
 	opts = append(opts, openapi3.VisitAsRequest())
 	if !options.SkipSettingDefaults {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
@@ -332,6 +347,8 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	if options.RegexCompiler != nil {
 		opts = append(opts, openapi3.SetSchemaRegexCompiler(options.RegexCompiler))
 	}
+	// Append additional schema validation options (e.g., document-scoped format validators)
+	opts = append(opts, options.SchemaValidationOptions...)
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {

@@ -1,0 +1,4 @@
+type: string
+xml:
+  namespace: http://example.com/schema/sample
+  prefix: sample

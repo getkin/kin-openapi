@@ -102,6 +102,7 @@ func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "type")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "name")
@@ -274,6 +275,7 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "implicit")
 	delete(x.Extensions, "password")
 	delete(x.Extensions, "clientCredentials")
@@ -322,10 +324,10 @@ type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string    `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           StringMap `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           StringMap[string] `json:"scopes" yaml:"scopes"` // required
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.
@@ -366,6 +368,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "authorizationUrl")
 	delete(x.Extensions, "tokenUrl")
 	delete(x.Extensions, "refreshUrl")

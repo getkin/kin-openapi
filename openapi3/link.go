@@ -69,6 +69,7 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "operationRef")
 	delete(x.Extensions, "operationId")
 	delete(x.Extensions, "description")
@@ -79,6 +80,7 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*link = Link(x)
+	link.RequestBody = stripOriginFromAny(link.RequestBody)
 	return nil
 }
 

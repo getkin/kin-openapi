@@ -414,6 +414,7 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "oneOf")
 	delete(x.Extensions, "anyOf")
 	delete(x.Extensions, "allOf")
@@ -468,6 +469,12 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 
 	*schema = Schema(x)
+
+	for i, v := range schema.Enum {
+		schema.Enum[i] = stripOriginFromAny(v)
+	}
+	schema.Default = stripOriginFromAny(schema.Default)
+	schema.Example = stripOriginFromAny(schema.Example)
 
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/getkin/kin-openapi/issues/697
@@ -1299,7 +1306,7 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
-		var discriminatorRef string
+		var discriminatorRef MappingRef
 		if schema.Discriminator != nil {
 			pn := schema.Discriminator.PropertyName
 			if valuemap, okcheck := value.(map[string]any); okcheck {
@@ -1345,7 +1352,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				return foundUnresolvedRef(item.Ref), false
 			}
 
-			if discriminatorRef != "" && discriminatorRef != item.Ref {
+			if discriminatorRef.Ref != "" && discriminatorRef.Ref != item.Ref {
 				continue
 			}
 
@@ -1527,7 +1534,12 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	format := schema.Format
 	if format != "" {
 		if requireInteger {
-			if f, ok := SchemaIntegerFormats[format]; ok {
+			// Check per-validation validators first, then fall back to global
+			f, ok := settings.integerFormats[format]
+			if !ok {
+				f, ok = SchemaIntegerFormats[format]
+			}
+			if ok {
 				if err := f.Validate(int64(value)); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
@@ -1541,7 +1553,12 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				}
 			}
 		} else {
-			if f, ok := SchemaNumberFormats[format]; ok {
+			// Check per-validation validators first, then fall back to global
+			f, ok := settings.numberFormats[format]
+			if !ok {
+				f, ok = SchemaNumberFormats[format]
+			}
+			if ok {
 				if err := f.Validate(value); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
@@ -1767,7 +1784,12 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	var formatStrErr string
 	var formatErr error
 	if format := schema.Format; format != "" {
-		if f, ok := SchemaStringFormats[format]; ok {
+		// Check per-validation validators first, then fall back to global
+		f, ok := settings.stringFormats[format]
+		if !ok {
+			f, ok = SchemaStringFormats[format]
+		}
+		if ok {
 			if err := f.Validate(value); err != nil {
 				var reason string
 				schemaErr := &SchemaError{}
@@ -2142,6 +2164,9 @@ func markSchemaErrorKey(err error, key string) error {
 		if v.Origin != nil {
 			if unwrapped := errors.Unwrap(v.Origin); unwrapped != nil {
 				if me, ok := unwrapped.(multiErrorForOneOf); ok {
+					_ = markSchemaErrorKey(MultiError(me), key)
+				}
+				if me, ok := unwrapped.(multiErrorForAllOf); ok {
 					_ = markSchemaErrorKey(MultiError(me), key)
 				}
 			}

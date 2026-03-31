@@ -61,6 +61,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "value")
@@ -69,6 +70,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*example = Example(x)
+	example.Value = stripOriginFromAny(example.Value)
 	return nil
 }
 

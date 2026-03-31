@@ -38,7 +38,7 @@ const (
 	FormatOfStringDate = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$`
 
 	// FormatOfStringDateTime is a RFC3339 date-time format regexp, for example "2017-07-21T17:32:28Z".
-	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})?$`
+	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$`
 )
 const (
 	SerializationSimple         = "simple"
@@ -430,8 +430,8 @@ type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
+	Mapping      StringMap[MappingRef] `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
     Discriminator is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
@@ -484,6 +484,13 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 func (encoding *Encoding) WithHeader(name string, header *Header) *Encoding
 
 func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
+
+type Encodings map[string]*Encoding
+    Encodings is a map of encoding objects keyed by field name.
+
+func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets Encodings to a copy of data, stripping __origin__
+    metadata.
 
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -842,19 +849,30 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error)
     ResolveRefsIn expands references if for instance spec was just unmarshaled
 
 type Location struct {
-	Line   int `json:"line,omitempty" yaml:"line,omitempty"`
-	Column int `json:"column,omitempty" yaml:"column,omitempty"`
+	File   string `json:"file,omitempty" yaml:"file,omitempty"`
+	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
+	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
+	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
 }
     Location is a struct that contains the location of a field.
+
+type MappingRef SchemaRef
+    MappingRef is a ref to a Schema objects. Unlike SchemaRefs it is serialised
+    as a plain string instead of an object with a $ref key, as such it also does
+    not support extensions.
+
+func (mr MappingRef) MarshalText() ([]byte, error)
+
+func (mr *MappingRef) UnmarshalText(data []byte) error
 
 type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	Schema   *SchemaRef           `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  any                  `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples Examples             `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding map[string]*Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	Schema   *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example  any        `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
     MediaType is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
@@ -929,10 +947,10 @@ type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	AuthorizationURL string    `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string    `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string    `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           StringMap `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           StringMap[string] `json:"scopes" yaml:"scopes"` // required
 }
     OAuthFlow is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
@@ -1041,12 +1059,14 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
     spec.
 
 type Origin struct {
-	Key    *Location           `json:"key,omitempty" yaml:"key,omitempty"`
-	Fields map[string]Location `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Key       *Location             `json:"key,omitempty" yaml:"key,omitempty"`
+	Fields    map[string]Location   `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Sequences map[string][]Location `json:"sequences,omitempty" yaml:"sequences,omitempty"`
 }
     Origin contains the origin of a collection. Key is the location of the
-    collection itself. Fields is a map of the location of each field in the
-    collection.
+    collection itself. Fields is a map of the location of each scalar field
+    in the collection. Sequences is a map of the location of each item in
+    sequence-valued fields.
 
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1301,15 +1321,26 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
     documents.
 
 type Ref struct {
-	Ref    string  `json:"$ref" yaml:"$ref"`
-	Origin *Origin `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Ref        string         `json:"$ref" yaml:"$ref"`
+	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 }
     Ref is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
 
+func (x Ref) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Ref.
+
+func (x Ref) MarshalYAML() (any, error)
+    MarshalYAML returns the YAML encoding of Ref.
+
+func (e *Ref) Validate(ctx context.Context, opts ...ValidationOption) error
+    Validate returns an error if Extensions does not comply with the OpenAPI
+    spec.
+
 type RefNameResolver func(*T, ComponentRef) string
-    RefNameResolver maps a component to an name that is used as it's
-    internalized name.
+    RefNameResolver maps a component to a name that is used as it's internalized
+    name.
 
     The function should avoid name collisions (i.e. be a injective mapping). It
     must only contain characters valid for fixed field names: IdentifierRegExp.
@@ -1865,6 +1896,39 @@ func VisitAsRequest() SchemaValidationOption
 
 func VisitAsResponse() SchemaValidationOption
 
+func WithIntegerFormatValidator(name string, validator IntegerFormatValidator) SchemaValidationOption
+    WithIntegerFormatValidator adds a single per-validation integer format
+    validator. This validator is checked before global SchemaIntegerFormats
+    and allows different validations for the same format name across different
+    specs.
+
+func WithIntegerFormatValidators(validators map[string]IntegerFormatValidator) SchemaValidationOption
+    WithIntegerFormatValidators adds per-validation integer format validators.
+    These validators are checked before global SchemaIntegerFormats and allow
+    different validations for the same format name across different specs.
+
+func WithNumberFormatValidator(name string, validator NumberFormatValidator) SchemaValidationOption
+    WithNumberFormatValidator adds a single per-validation number format
+    validator. This validator is checked before global SchemaNumberFormats
+    and allows different validations for the same format name across different
+    specs.
+
+func WithNumberFormatValidators(validators map[string]NumberFormatValidator) SchemaValidationOption
+    WithNumberFormatValidators adds per-validation number format validators.
+    These validators are checked before global SchemaNumberFormats and allow
+    different validations for the same format name across different specs.
+
+func WithStringFormatValidator(name string, validator StringFormatValidator) SchemaValidationOption
+    WithStringFormatValidator adds a single per-validation string format
+    validator. This validator is checked before global SchemaStringFormats
+    and allows different validations for the same format name across different
+    specs.
+
+func WithStringFormatValidators(validators map[string]StringFormatValidator) SchemaValidationOption
+    WithStringFormatValidators adds per-validation string format validators.
+    These validators are checked before global SchemaStringFormats and allow
+    different validations for the same format name across different specs.
+
 type Schemas map[string]*SchemaRef
 
 func (m Schemas) JSONLookup(token string) (any, error)
@@ -2010,9 +2074,9 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
 
-	URL         string                     `json:"url" yaml:"url"` // Required
-	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string          `json:"url" yaml:"url"` // Required
+	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
     Server is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
@@ -2045,8 +2109,6 @@ type ServerVariable struct {
 	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 }
-    ServerVariable is specified by OpenAPI/Swagger standard version 3. See
-    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 
 func (serverVariable ServerVariable) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of ServerVariable.
@@ -2060,6 +2122,15 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if ServerVariable does not comply with the OpenAPI
     spec.
+
+type ServerVariables map[string]*ServerVariable
+    ServerVariable is specified by OpenAPI/Swagger standard version 3. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
+    ServerVariables is a map of ServerVariable objects keyed by variable name.
+
+func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error)
+    UnmarshalJSON sets ServerVariables to a copy of data, stripping __origin__
+    metadata.
 
 type Servers []*Server
     Servers is specified by OpenAPI/Swagger standard version 3.
@@ -2083,11 +2154,11 @@ func NewRegexpFormatValidator(pattern string) StringFormatValidator
     NewRegexpFormatValidator creates a new FormatValidator that uses a regular
     expression to validate the value.
 
-type StringMap map[string]string
+type StringMap[V any] map[string]V
     StringMap is a map[string]string that ignores the origin in the underlying
     json representation.
 
-func (stringMap *StringMap) UnmarshalJSON(data []byte) (err error)
+func (stringMap *StringMap[V]) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets StringMap to a copy of data.
 
 type T struct {
@@ -2113,6 +2184,11 @@ func (doc *T) AddServer(server *Server)
 
 func (doc *T) AddServers(servers ...*Server)
 
+func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption
+    GetSchemaValidationOptions returns SchemaValidationOptions that include this
+    document's format validators. Use this when validating schemas from this
+    document.
+
 func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, ComponentRef) string)
     InternalizeRefs removes all references to external files from the spec and
     moves them to the components section.
@@ -2136,12 +2212,41 @@ func (doc *T) MarshalJSON() ([]byte, error)
 func (doc *T) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of T.
 
+func (doc *T) SetIntegerFormatValidator(name string, validator IntegerFormatValidator)
+    SetIntegerFormatValidator sets a single document-scoped integer format
+    validator.
+
+func (doc *T) SetIntegerFormatValidators(validators map[string]IntegerFormatValidator)
+    SetIntegerFormatValidators sets document-scoped integer format validators.
+    These validators are automatically used by all schemas in this document.
+
+func (doc *T) SetNumberFormatValidator(name string, validator NumberFormatValidator)
+    SetNumberFormatValidator sets a single document-scoped number format
+    validator.
+
+func (doc *T) SetNumberFormatValidators(validators map[string]NumberFormatValidator)
+    SetNumberFormatValidators sets document-scoped number format validators.
+    These validators are automatically used by all schemas in this document.
+
+func (doc *T) SetStringFormatValidator(name string, validator StringFormatValidator)
+    SetStringFormatValidator sets a single document-scoped string format
+    validator.
+
+func (doc *T) SetStringFormatValidators(validators map[string]StringFormatValidator)
+    SetStringFormatValidators sets document-scoped string format validators.
+    These validators are automatically used by all schemas in this document.
+
 func (doc *T) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets T to a copy of data.
 
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if T does not comply with the OpenAPI spec.
     Validations Options can be provided to modify the validation behavior.
+
+func (doc *T) ValidateSchemaJSON(schema *Schema, value any, opts ...SchemaValidationOption) error
+    ValidateSchemaJSON validates data against a schema using this document's
+    format validators. This is a convenience method that automatically applies
+    the document's format validators.
 
 type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

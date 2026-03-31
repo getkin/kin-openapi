@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// RefNameResolver maps a component to an name that is used as it's internalized name.
+// RefNameResolver maps a component to a name that is used as it's internalized name.
 //
 // The function should avoid name collisions (i.e. be a injective mapping).
 // It must only contain characters valid for fixed field names: [IdentifierRegExp].
@@ -342,6 +342,17 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 			if s2 != nil {
 				doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
 			}
+		}
+	}
+
+	// Discriminator mapping values are special cases since they are not full
+	// ref objects but are string references to schema objects.
+	if s.Discriminator != nil {
+		for k, mapRef := range s.Discriminator.Mapping {
+			s2 := (*SchemaRef)(&mapRef)
+			isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)
+			doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
+			s.Discriminator.Mapping[k] = MappingRef(*s2)
 		}
 	}
 

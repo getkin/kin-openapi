@@ -672,10 +672,24 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "string empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: stringSchema},
+					query: "param=",
+					want:  "",
+					found: true,
+				},
+				{
 					name:  "integer",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
 					query: "param=1",
 					want:  int64(1),
+					found: true,
+				},
+				{
+					name:  "integer empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=",
+					want:  nil,
 					found: true,
 				},
 				{
@@ -693,6 +707,13 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "number empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=",
+					want:  nil,
+					found: true,
+				},
+				{
 					name:  "number invalid",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
 					query: "param=foo",
@@ -704,6 +725,13 @@ func TestDecodeParameter(t *testing.T) {
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
 					query: "param=true",
 					want:  true,
+					found: true,
+				},
+				{
+					name:  "boolean empty",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: booleanSchema},
+					query: "param=",
+					want:  nil,
 					found: true,
 				},
 				{
@@ -1649,6 +1677,23 @@ func TestDecodeBody(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	multipartBinaryEncodingCT, multipartMimeBinaryEncodingCT, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
+		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+		{name: "f", contentType: "application/json", data: strings.NewReader(`{"foo1": "foo1"}`), filename: "f1"},
+		{name: "f", contentType: "application/pdf", data: strings.NewReader("foo2"), filename: "f2"},
+	})
+
+	multipartBinaryEncodingCTUnsupported, multipartMimeBinaryEncodingCTUnsupported, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
+		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+	})
+
+	multipartBinaryEncodingCTNotMatching, multipartMimeBinaryEncodingCTNotMatching, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
+		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+	})
+
 	testCases := []struct {
 		name     string
 		mime     string
@@ -1786,6 +1831,65 @@ func TestDecodeBody(t *testing.T) {
 			mime: "application/octet-stream",
 			body: strings.NewReader("foo"),
 			want: "foo",
+		},
+		{
+			name: "multipartEncodingCT",
+			mime: multipartMimeBinaryEncodingCT,
+			body: multipartBinaryEncodingCT,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("f", openapi3.NewArraySchema().WithItems(
+					openapi3.NewStringSchema().WithFormat("binary"),
+				)),
+			want: map[string]any{"b": `{"bar1": "bar1"}`, "d": "doo1", "f": []any{`{"foo1": "foo1"}`, "foo2"}},
+		},
+		{
+			name: "multipartEncodingCTUnsupported",
+			mime: multipartMimeBinaryEncodingCTUnsupported,
+			body: multipartBinaryEncodingCTUnsupported,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")),
+			encoding: map[string]*openapi3.Encoding{
+				"b": {ContentType: "application/json"},
+				"d": {ContentType: "application/pdf"},
+			},
+			want: map[string]any{"b": map[string]any{"bar1": "bar1"}},
+			wantErr: &ParseError{
+				Kind: KindOther,
+				Cause: &ParseError{
+					Kind:   KindUnsupportedFormat,
+					Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, "application/pdf"),
+				},
+				path: []any{"d"},
+			},
+		},
+		{
+			name: "multipartEncodingCTNotMatching",
+			mime: multipartMimeBinaryEncodingCTNotMatching,
+			body: multipartBinaryEncodingCTNotMatching,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")),
+			encoding: map[string]*openapi3.Encoding{
+				"b": {ContentType: "application/json"},
+				"d": {ContentType: "application/test"},
+			},
+			want: map[string]any{"b": map[string]any{"bar1": "bar1"}},
+			wantErr: &ParseError{
+				Kind: KindOther,
+				Cause: &ParseError{
+					Kind: KindOther,
+					Reason: fmt.Sprintf(
+						"%s: header %q, encoding %q",
+						prefixNotMatchingCT,
+						"application/pdf",
+						"application/test",
+					),
+				},
+				path: []any{"d"},
+			},
 		},
 	}
 	for _, tc := range testCases {
