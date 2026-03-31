@@ -64,6 +64,7 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "title")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "termsOfService")

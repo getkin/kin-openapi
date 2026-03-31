@@ -436,6 +436,53 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Fields["prefix"])
 }
 
+func TestStripOriginFromAny_Slice(t *testing.T) {
+	// Simulates what the YAML origin-tracking loader produces for example
+	// values that contain arrays of objects.
+	input := map[string]any{
+		"name": "test",
+		"items": []any{
+			map[string]any{
+				"__origin__": map[string]any{"file": "a.yaml", "line": 1},
+				"id":         1,
+			},
+			map[string]any{
+				"__origin__": map[string]any{"file": "a.yaml", "line": 2},
+				"id":         2,
+			},
+		},
+	}
+
+	result := stripOriginFromAny(input)
+	m := result.(map[string]any)
+	items := m["items"].([]any)
+	for _, item := range items {
+		itemMap := item.(map[string]any)
+		require.NotContains(t, itemMap, "__origin__")
+	}
+}
+
+func TestOrigin_ExampleWithArrayValue(t *testing.T) {
+	loader := NewLoader()
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
+	doc, err := loader.LoadFromFile("testdata/origin/example_with_array.yaml")
+	require.NoError(t, err)
+
+	example := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Examples["bar"]
+	require.NotNil(t, example.Value)
+
+	// The example value contains a list of objects; __origin__ must be stripped from each.
+	value := example.Value.Value.(map[string]any)
+	items := value["items"].([]any)
+	for _, item := range items {
+		itemMap := item.(map[string]any)
+		require.NotContains(t, itemMap, "__origin__")
+	}
+}
+
 // TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
 // contains a property named "__origin__", highlighting a limitation in the current implementation.
 func TestOrigin_OriginExistsInProperties(t *testing.T) {
@@ -468,6 +515,39 @@ components:
 	require.Error(t, err)
 	require.Equal(t, `failed to unmarshal data: json error: invalid character 'p' looking for beginning of value, yaml error: error converting YAML to JSON: yaml: unmarshal errors:
   line 0: mapping key "__origin__" already defined at line 17`, err.Error())
+}
+
+// TestOrigin_ExtensionValuesStripped verifies that __origin__ metadata injected
+// by the YAML decoder is not present in any-typed extension values.
+// Regression test: extension values that are YAML objects received __origin__
+// from the yaml3 decoder but it was never stripped, causing spurious diffs
+// between specs loaded from different file paths.
+func TestOrigin_ExtensionValuesStripped(t *testing.T) {
+	loader := NewLoader()
+
+	IncludeOrigin = true
+	defer unsetIncludeOrigin()
+
+	doc, err := loader.LoadFromFile("testdata/origin/extensions.yaml")
+	require.NoError(t, err)
+
+	val, ok := doc.Extensions["x-object-extension"]
+	require.True(t, ok, "x-object-extension must be present")
+
+	m, ok := val.(map[string]any)
+	require.True(t, ok, "x-object-extension value must be a map")
+
+	require.NotContains(t, m, originKey, "__origin__ must be stripped from extension object values")
+
+	// Also verify stripping works for a nested type (Info), covering the 20
+	// per-type UnmarshalJSON call sites with a single representative case.
+	infoVal, ok := doc.Info.Extensions["x-info-extension"]
+	require.True(t, ok, "x-info-extension must be present")
+
+	infoMap, ok := infoVal.(map[string]any)
+	require.True(t, ok, "x-info-extension value must be a map")
+
+	require.NotContains(t, infoMap, originKey, "__origin__ must be stripped from nested extension object values")
 }
 
 func TestOrigin_WithExternalRef(t *testing.T) {

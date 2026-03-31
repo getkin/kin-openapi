@@ -26,13 +26,29 @@ type Location struct {
 // dedicated UnmarshalJSON to consume the origin metadata injected by
 // the YAML origin-tracking loader.
 func stripOriginFromAny(v any) any {
-	m, ok := v.(map[string]any)
-	if !ok {
+	switch x := v.(type) {
+	case map[string]any:
+		delete(x, originKey)
+		for k, val := range x {
+			x[k] = stripOriginFromAny(val)
+		}
+		return x
+	case []any:
+		for i, val := range x {
+			x[i] = stripOriginFromAny(val)
+		}
+		return x
+	default:
 		return v
 	}
-	delete(m, originKey)
-	for k, val := range m {
-		m[k] = stripOriginFromAny(val)
+}
+
+// stripExtensionsOrigin removes __origin__ from every value in an extensions
+// map. Extension values are any-typed objects, so the YAML decoder injects
+// __origin__ into them. Without stripping it, two specs loaded from different
+// file paths would report spurious diffs in their extension values.
+func stripExtensionsOrigin(ext map[string]any) {
+	for k, v := range ext {
+		ext[k] = stripOriginFromAny(v)
 	}
-	return m
 }
