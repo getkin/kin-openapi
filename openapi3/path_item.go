@@ -100,6 +100,7 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
