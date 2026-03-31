@@ -92,6 +92,7 @@ func (encoding *Encoding) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "contentType")
 	delete(x.Extensions, "headers")
 	delete(x.Extensions, "style")

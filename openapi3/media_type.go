@@ -103,6 +103,7 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "schema")
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "examples")

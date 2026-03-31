@@ -174,6 +174,7 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, originKey)
+	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "headers")
 	delete(x.Extensions, "content")
