@@ -1,6 +1,15 @@
 package openapi3
 
+import (
+	"reflect"
+	"strings"
+
+	"github.com/oasdiff/yaml"
+)
+
 const originKey = "__origin__"
+
+var originPtrType = reflect.TypeOf((*Origin)(nil))
 
 // Origin contains the origin of a collection.
 // Key is the location of the collection itself.
@@ -18,6 +27,211 @@ type Location struct {
 	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
 	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
 	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
+}
+
+// originFromMap converts a raw map[string]any (as extracted by yaml.extractOrigins)
+// into an *Origin struct without a JSON round-trip.
+func originFromMap(m map[string]any) *Origin {
+	if m == nil {
+		return nil
+	}
+	o := &Origin{}
+	if key, ok := m["key"].(map[string]any); ok {
+		loc := locationFromMap(key)
+		o.Key = &loc
+	}
+	if fields, ok := m["fields"].(map[string]any); ok {
+		o.Fields = make(map[string]Location, len(fields))
+		for k, v := range fields {
+			if fm, ok := v.(map[string]any); ok {
+				o.Fields[k] = locationFromMap(fm)
+			}
+		}
+	}
+	if sequences, ok := m["sequences"].(map[string]any); ok {
+		o.Sequences = make(map[string][]Location, len(sequences))
+		for k, v := range sequences {
+			if items, ok := v.([]any); ok {
+				locs := make([]Location, len(items))
+				for i, item := range items {
+					if im, ok := item.(map[string]any); ok {
+						locs[i] = locationFromMap(im)
+					}
+				}
+				o.Sequences[k] = locs
+			}
+		}
+	}
+	return o
+}
+
+func locationFromMap(m map[string]any) Location {
+	loc := Location{}
+	if v, ok := m["file"].(string); ok {
+		loc.File = v
+	}
+	if v, ok := m["line"]; ok {
+		switch n := v.(type) {
+		case int:
+			loc.Line = n
+		case uint64:
+			loc.Line = int(n)
+		}
+	}
+	if v, ok := m["column"]; ok {
+		switch n := v.(type) {
+		case int:
+			loc.Column = n
+		case uint64:
+			loc.Column = int(n)
+		}
+	}
+	if v, ok := m["name"].(string); ok {
+		loc.Name = v
+	}
+	return loc
+}
+
+// applyOrigins walks a Go struct tree and a parallel OriginTree, setting
+// Origin fields on each struct from the extracted origin data.
+func applyOrigins(v any, tree *yaml.OriginTree) {
+	if tree == nil {
+		return
+	}
+	applyOriginsToValue(reflect.ValueOf(v), tree)
+}
+
+func applyOriginsToValue(val reflect.Value, tree *yaml.OriginTree) {
+	// Keep track of the last pointer so we can pass it to struct handlers
+	// (needed for calling methods like Map() on maplike types).
+	var ptr reflect.Value
+	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
+		if val.IsNil() {
+			return
+		}
+		if val.Kind() == reflect.Ptr {
+			ptr = val
+		}
+		val = val.Elem()
+	}
+
+	switch val.Kind() {
+	case reflect.Struct:
+		applyOriginsToStruct(val, ptr, tree)
+	case reflect.Map:
+		applyOriginsToMap(val, tree)
+	case reflect.Slice:
+		applyOriginsToSlice(val, tree)
+	}
+}
+
+func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.OriginTree) {
+	typ := val.Type()
+
+	// Set Origin field if tagged with json:"__origin__" or json:"-" (maplike types).
+	// Skip *Ref types which have Origin with no json tag — those pass through to Value.
+	if tree.Origin != nil {
+		if sf, ok := typ.FieldByName("Origin"); ok && sf.Type == originPtrType {
+			tag := sf.Tag.Get("json")
+			if strings.Contains(tag, originKey) || tag == "-" {
+				if m, ok := tree.Origin.(map[string]any); ok {
+					val.FieldByName("Origin").Set(reflect.ValueOf(originFromMap(m)))
+				}
+			}
+		}
+	}
+
+	// Recurse into exported struct fields using json tags
+	for i := 0; i < typ.NumField(); i++ {
+		sf := typ.Field(i)
+		if !sf.IsExported() {
+			continue
+		}
+		tag := jsonTagName(sf)
+		if tag == "" || tag == "-" {
+			continue
+		}
+		childTree := tree.Fields[tag]
+		if childTree != nil {
+			applyOriginsToValue(val.Field(i), childTree)
+		}
+	}
+
+	// Handle wrapper types whose inner struct has no json tag:
+	// - *Ref types (e.g. SchemaRef, ResponseRef) have a "Value" field
+	// - AdditionalProperties has a "Schema" field
+	// The origin tree data applies to the inner struct, not a sub-key.
+	for _, fieldName := range []string{"Value", "Schema"} {
+		vf := val.FieldByName(fieldName)
+		if !vf.IsValid() || vf.Kind() != reflect.Ptr || vf.IsNil() {
+			continue
+		}
+		sf, _ := typ.FieldByName(fieldName)
+		if sf.Tag.Get("json") == "" {
+			applyOriginsToValue(vf, tree)
+		}
+	}
+
+	// Handle "maplike" types (Paths, Responses, Callback) whose items are
+	// stored in an unexported map accessible via a Map() method.
+	// Use the original pointer (if available) since dereferenced values
+	// are not addressable.
+	receiver := val
+	if ptr.IsValid() {
+		receiver = ptr
+	} else if val.CanAddr() {
+		receiver = val.Addr()
+	}
+	if receiver.Kind() == reflect.Ptr {
+		if mapMethod := receiver.MethodByName("Map"); mapMethod.IsValid() {
+			results := mapMethod.Call(nil)
+			if len(results) == 1 {
+				applyOriginsToMap(results[0], tree)
+			}
+		}
+	}
+}
+
+func applyOriginsToMap(val reflect.Value, tree *yaml.OriginTree) {
+	if tree.Fields == nil {
+		return
+	}
+	for _, key := range val.MapKeys() {
+		childTree := tree.Fields[key.String()]
+		if childTree == nil {
+			continue
+		}
+		elem := val.MapIndex(key)
+		// Map values are not addressable. For pointer-typed values we can
+		// recurse directly. For value types we must copy, apply, and set back.
+		if elem.Kind() == reflect.Ptr || elem.Kind() == reflect.Interface {
+			applyOriginsToValue(elem, childTree)
+		} else if elem.Kind() == reflect.Struct {
+			// Copy to a settable value
+			cp := reflect.New(elem.Type()).Elem()
+			cp.Set(elem)
+			applyOriginsToStruct(cp, reflect.Value{}, childTree)
+			val.SetMapIndex(key, cp)
+		}
+	}
+}
+
+func applyOriginsToSlice(val reflect.Value, tree *yaml.OriginTree) {
+	for i := 0; i < val.Len() && i < len(tree.Items); i++ {
+		if tree.Items[i] != nil {
+			applyOriginsToValue(val.Index(i), tree.Items[i])
+		}
+	}
+}
+
+// jsonTagName returns the JSON field name from a struct field's json tag.
+func jsonTagName(f reflect.StructField) string {
+	tag := f.Tag.Get("json")
+	if tag == "" {
+		return ""
+	}
+	name, _, _ := strings.Cut(tag, ",")
+	return name
 }
 
 // stripOriginFromAny recursively removes the __origin__ key from any
