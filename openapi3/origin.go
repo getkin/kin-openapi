@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -31,17 +32,16 @@ type Location struct {
 
 // originFromSeq parses the compact []any sequence produced by yaml3's addOrigin.
 //
-// Format: [key_name, key_line, key_col, nf, f1_name, f1_delta, f1_col, ..., ns, s1_name, s1_count, s1_l0_delta, s1_c0, ...]
-//
-// file is the source file for all locations (stored in the OriginTree, not in the sequence).
-func originFromSeq(s []any, file string) *Origin {
-	// Need at least: key_name, key_line, key_col, nf, ns
-	if len(s) < 5 {
+// Format: [file, key_name, key_line, key_col, nf, f1_name, f1_delta, f1_col, ..., ns, s1_name, s1_count, s1_l0_delta, s1_c0, ...]
+func originFromSeq(s []any) *Origin {
+	// Need at least: file, key_name, key_line, key_col, nf, ns
+	if len(s) < 6 {
 		return nil
 	}
-	keyName, _ := s[0].(string)
-	keyLine := toInt(s[1])
-	keyCol := toInt(s[2])
+	file, _ := s[0].(string)
+	keyName, _ := s[1].(string)
+	keyLine := toInt(s[2])
+	keyCol := toInt(s[3])
 
 	o := &Origin{
 		Key: &Location{
@@ -52,7 +52,7 @@ func originFromSeq(s []any, file string) *Origin {
 		},
 	}
 
-	idx := 3
+	idx := 4
 	nf := toInt(s[idx])
 	idx++
 	if nf > 0 && idx+nf*3 <= len(s) {
@@ -99,12 +99,29 @@ func originFromSeq(s []any, file string) *Origin {
 	return o
 }
 
-// toInt converts yaml integer types (int, uint64) to int.
+// UnmarshalJSON parses the compact []any sequence produced by yaml3's addOrigin.
+// This allows __origin__ to be decoded directly during JSON unmarshaling without
+// a separate applyOrigins pass when the caller does not use UnmarshalWithOriginTree.
+func (o *Origin) UnmarshalJSON(data []byte) error {
+	var seq []any
+	if err := json.Unmarshal(data, &seq); err != nil {
+		return err
+	}
+	if parsed := originFromSeq(seq); parsed != nil {
+		*o = *parsed
+	}
+	return nil
+}
+
+// toInt converts numeric types to int. Handles int/uint64 from YAML decoding
+// and float64 from JSON decoding of []any sequences.
 func toInt(v any) int {
 	switch n := v.(type) {
 	case int:
 		return n
 	case uint64:
+		return int(n)
+	case float64:
 		return int(n)
 	}
 	return 0
@@ -153,7 +170,7 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 			tag := sf.Tag.Get("json")
 			if strings.Contains(tag, originKey) || tag == "-" {
 				if s, ok := tree.Origin.([]any); ok {
-					val.FieldByName("Origin").Set(reflect.ValueOf(originFromSeq(s, tree.File)))
+					val.FieldByName("Origin").Set(reflect.ValueOf(originFromSeq(s)))
 				}
 			}
 		}
