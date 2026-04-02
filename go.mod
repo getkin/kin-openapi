@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/oasdiff/yaml v0.0.7
-	github.com/oasdiff/yaml3 v0.0.5
+	github.com/oasdiff/yaml3 v0.0.6
 	github.com/perimeterx/marshmallow v1.1.5
 	github.com/stretchr/testify v1.9.0
 	github.com/woodsbury/decimal128 v1.3.0
