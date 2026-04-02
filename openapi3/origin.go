@@ -29,67 +29,85 @@ type Location struct {
 	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
-// originFromMap converts a raw map[string]any (as extracted by yaml.extractOrigins)
-// into an *Origin struct without a JSON round-trip.
-func originFromMap(m map[string]any) *Origin {
-	if m == nil {
+// originFromSeq parses the compact []any sequence produced by yaml3's addOrigin.
+//
+// Format: [key_name, key_line, key_col, nf, f1_name, f1_delta, f1_col, ..., ns, s1_name, s1_count, s1_l0_delta, s1_c0, ...]
+//
+// file is the source file for all locations (stored in the OriginTree, not in the sequence).
+func originFromSeq(s []any, file string) *Origin {
+	// Need at least: key_name, key_line, key_col, nf, ns
+	if len(s) < 5 {
 		return nil
 	}
-	o := &Origin{}
-	if key, ok := m["key"].(map[string]any); ok {
-		loc := locationFromMap(key)
-		o.Key = &loc
+	keyName, _ := s[0].(string)
+	keyLine := toInt(s[1])
+	keyCol := toInt(s[2])
+
+	o := &Origin{
+		Key: &Location{
+			File:   file,
+			Line:   keyLine,
+			Column: keyCol,
+			Name:   keyName,
+		},
 	}
-	if fields, ok := m["fields"].(map[string]any); ok {
-		o.Fields = make(map[string]Location, len(fields))
-		for k, v := range fields {
-			if fm, ok := v.(map[string]any); ok {
-				o.Fields[k] = locationFromMap(fm)
+
+	idx := 3
+	nf := toInt(s[idx])
+	idx++
+	if nf > 0 && idx+nf*3 <= len(s) {
+		o.Fields = make(map[string]Location, nf)
+		for i := 0; i < nf; i++ {
+			fname, _ := s[idx].(string)
+			delta := toInt(s[idx+1])
+			col := toInt(s[idx+2])
+			o.Fields[fname] = Location{
+				File:   file,
+				Line:   keyLine + delta,
+				Column: col,
+				Name:   fname,
 			}
+			idx += 3
 		}
 	}
-	if sequences, ok := m["sequences"].(map[string]any); ok {
-		o.Sequences = make(map[string][]Location, len(sequences))
-		for k, v := range sequences {
-			if items, ok := v.([]any); ok {
-				locs := make([]Location, len(items))
-				for i, item := range items {
-					if im, ok := item.(map[string]any); ok {
-						locs[i] = locationFromMap(im)
-					}
-				}
-				o.Sequences[k] = locs
+
+	if idx >= len(s) {
+		return o
+	}
+	ns := toInt(s[idx])
+	idx++
+	if ns > 0 {
+		o.Sequences = make(map[string][]Location, ns)
+		for i := 0; i < ns; i++ {
+			if idx >= len(s) {
+				break
 			}
+			sname, _ := s[idx].(string)
+			idx++
+			count := toInt(s[idx])
+			idx++
+			locs := make([]Location, count)
+			for j := 0; j < count && idx+1 < len(s); j++ {
+				delta := toInt(s[idx])
+				col := toInt(s[idx+1])
+				locs[j] = Location{File: file, Line: keyLine + delta, Column: col}
+				idx += 2
+			}
+			o.Sequences[sname] = locs
 		}
 	}
 	return o
 }
 
-func locationFromMap(m map[string]any) Location {
-	loc := Location{}
-	if v, ok := m["file"].(string); ok {
-		loc.File = v
+// toInt converts yaml integer types (int, uint64) to int.
+func toInt(v any) int {
+	switch n := v.(type) {
+	case int:
+		return n
+	case uint64:
+		return int(n)
 	}
-	if v, ok := m["line"]; ok {
-		switch n := v.(type) {
-		case int:
-			loc.Line = n
-		case uint64:
-			loc.Line = int(n)
-		}
-	}
-	if v, ok := m["column"]; ok {
-		switch n := v.(type) {
-		case int:
-			loc.Column = n
-		case uint64:
-			loc.Column = int(n)
-		}
-	}
-	if v, ok := m["name"].(string); ok {
-		loc.Name = v
-	}
-	return loc
+	return 0
 }
 
 // applyOrigins walks a Go struct tree and a parallel OriginTree, setting
@@ -134,8 +152,8 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 		if sf, ok := typ.FieldByName("Origin"); ok && sf.Type == originPtrType {
 			tag := sf.Tag.Get("json")
 			if strings.Contains(tag, originKey) || tag == "-" {
-				if m, ok := tree.Origin.(map[string]any); ok {
-					val.FieldByName("Origin").Set(reflect.ValueOf(originFromMap(m)))
+				if s, ok := tree.Origin.([]any); ok {
+					val.FieldByName("Origin").Set(reflect.ValueOf(originFromSeq(s, tree.File)))
 				}
 			}
 		}
