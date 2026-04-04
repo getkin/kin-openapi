@@ -1,32 +1,42 @@
-openapi: 3.0.1
+openapi: 3.0.0
 info:
-  title: Test
-  version: v1
+  title: Any Fields Test
+  version: 1.0.0
 paths:
-  /api/test:
+  /items:
     get:
       parameters:
-        - name: foo
+        - name: filter
           in: query
           example:
-            id: 1
-            name: test
+            env: production
+            region: us-east
+          schema:
+            type: string
       responses:
         "200":
           description: OK
           content:
             application/json:
+              example:
+                id: 1
+                name: example
               schema:
                 type: object
                 default:
-                  id: 0
+                  status: active
+                  count: 0
                 example:
-                  id: 1
-              example:
+                  status: active
+                  count: 42
+                enum:
+                  - status: active
+                    count: 1
+                  - status: inactive
+                    count: 0
+          links:
+            self:
+              operationId: getItem
+              requestBody:
                 id: 1
-components:
-  links:
-    TestLink:
-      operationId: getTest
-      requestBody:
-        id: 1
+                name: test

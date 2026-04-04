@@ -87,11 +87,12 @@ func originFromSeq(s []any) *Origin {
 			count := toInt(s[idx])
 			idx++
 			locs := make([]Location, count)
-			for j := 0; j < count && idx+1 < len(s); j++ {
-				delta := toInt(s[idx])
-				col := toInt(s[idx+1])
-				locs[j] = Location{File: file, Line: keyLine + delta, Column: col}
-				idx += 2
+			for j := 0; j < count && idx+2 < len(s); j++ {
+				name, _ := s[idx].(string)
+				delta := toInt(s[idx+1])
+				col := toInt(s[idx+2])
+				locs[j] = Location{File: file, Line: keyLine + delta, Column: col, Name: name}
+				idx += 3
 			}
 			o.Sequences[sname] = locs
 		}

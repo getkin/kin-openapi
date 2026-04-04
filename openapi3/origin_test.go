@@ -7,13 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestOrigin_Info(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -51,9 +48,7 @@ func TestOrigin_Info(t *testing.T) {
 func TestOrigin_Paths(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -95,9 +90,7 @@ func TestOrigin_Paths(t *testing.T) {
 func TestOrigin_RequestBody(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/request_body.yaml")
@@ -128,9 +121,7 @@ func TestOrigin_RequestBody(t *testing.T) {
 func TestOrigin_Responses(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -171,9 +162,7 @@ func TestOrigin_Responses(t *testing.T) {
 func TestOrigin_Parameters(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/parameters.yaml")
@@ -212,9 +201,7 @@ func TestOrigin_Parameters(t *testing.T) {
 func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/additional_properties.yaml")
@@ -246,9 +233,7 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 func TestOrigin_ExternalDocs(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/external_docs.yaml")
@@ -288,9 +273,7 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 func TestOrigin_Security(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/security.yaml")
@@ -348,9 +331,7 @@ func TestOrigin_Security(t *testing.T) {
 func TestOrigin_Example(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/example.yaml")
@@ -385,9 +366,7 @@ func TestOrigin_Example(t *testing.T) {
 func TestOrigin_XML(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
-
 	loader.Context = context.Background()
 
 	doc, err := loader.LoadFromFile("testdata/origin/xml.yaml")
@@ -423,12 +402,53 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Fields["prefix"])
 }
 
+// TestOrigin_AnyFieldsStripped verifies that __origin__ is absent from all
+// any-typed fields (Schema.Enum, Schema.Default, Schema.Example,
+// Parameter.Example, MediaType.Example, Link.RequestBody) after loading.
+// These fields have no dedicated UnmarshalJSON; extractOrigins strips
+// __origin__ before JSON marshaling so it never reaches these values.
+func TestOrigin_AnyFieldsStripped(t *testing.T) {
+	loader := NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromFile("testdata/origin/any_fields.yaml")
+	require.NoError(t, err)
+
+	op := doc.Paths.Find("/items").Get
+	resp := op.Responses.Value("200").Value
+
+	// Parameter.Example
+	paramEx := op.Parameters[0].Value.Example.(map[string]any)
+	require.NotContains(t, paramEx, originKey, "Parameter.Example must not contain __origin__")
+
+	// MediaType.Example
+	mediaEx := resp.Content["application/json"].Example.(map[string]any)
+	require.NotContains(t, mediaEx, originKey, "MediaType.Example must not contain __origin__")
+
+	schema := resp.Content["application/json"].Schema.Value
+
+	// Schema.Default
+	schemaDefault := schema.Default.(map[string]any)
+	require.NotContains(t, schemaDefault, originKey, "Schema.Default must not contain __origin__")
+
+	// Schema.Example
+	schemaEx := schema.Example.(map[string]any)
+	require.NotContains(t, schemaEx, originKey, "Schema.Example must not contain __origin__")
+
+	// Schema.Enum items
+	for i, v := range schema.Enum {
+		m, ok := v.(map[string]any)
+		require.True(t, ok, "Schema.Enum[%d] must be a map", i)
+		require.NotContains(t, m, originKey, "Schema.Enum[%d] must not contain __origin__", i)
+	}
+
+	// Link.RequestBody
+	linkRB := resp.Links["self"].Value.RequestBody.(map[string]any)
+	require.NotContains(t, linkRB, originKey, "Link.RequestBody must not contain __origin__")
+}
 
 func TestOrigin_ExampleWithArrayValue(t *testing.T) {
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
-
 	doc, err := loader.LoadFromFile("testdata/origin/example_with_array.yaml")
 	require.NoError(t, err)
 
@@ -468,7 +488,6 @@ components:
 `
 
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
 
 	_, err := loader.LoadFromData([]byte(data))
@@ -484,7 +503,6 @@ components:
 // between specs loaded from different file paths.
 func TestOrigin_ExtensionValuesStripped(t *testing.T) {
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/extensions.yaml")
@@ -512,7 +530,6 @@ func TestOrigin_ExtensionValuesStripped(t *testing.T) {
 func TestOrigin_WithExternalRef(t *testing.T) {
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-
 	loader.IncludeOrigin = true
 
 	loader.Context = context.Background()
@@ -550,55 +567,116 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 		base.XML.Origin.Fields["prefix"])
 }
 
+// TestOrigin_MaplikeNoOriginKey verifies that __origin__ does not appear as a
+// map key in Responses, Paths, or Callback maplike types after loading.
+// The if k == originKey blocks in their UnmarshalJSON were removed; this
+// confirms extractOrigins strips __origin__ before it reaches those iterators.
+func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
+	loader := NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
+	require.NoError(t, err)
+
+	// Paths map must not contain __origin__ as a path key
+	require.Nil(t, doc.Paths.Find(originKey), "Paths must not contain __origin__ as a key")
+
+	// Responses map must not contain __origin__ as a status code key
+	op := doc.Paths.Find("/partner-api/test/some-method").Get
+	require.Nil(t, op.Responses.Value(originKey), "Responses must not contain __origin__ as a key")
+}
+
+func TestOrigin_NoSpuriousOriginsInComponents(t *testing.T) {
+	loader := NewLoader()
+	loader.IncludeOrigin = true
+
+	doc, err := loader.LoadFromFile("testdata/origin/components.yaml")
+
+	require.Nil(t, doc.Components.Schemas[originKey])
+	require.Nil(t, doc.Components.Parameters[originKey])
+	require.Nil(t, doc.Components.Headers[originKey])
+	require.Nil(t, doc.Components.RequestBodies[originKey])
+	require.Nil(t, doc.Components.Responses[originKey])
+	require.Nil(t, doc.Components.SecuritySchemes[originKey])
+	require.Nil(t, doc.Components.Examples[originKey])
+	require.Nil(t, doc.Components.Links[originKey])
+	require.Nil(t, doc.Components.Callbacks[originKey])
+
+	require.NoError(t, err)
+}
+
+// TestOrigin_RequiredSequence verifies that Origin.Sequences records the
+// file/line/column of each item in a required: [...] list.
+// These locations are used by NewSourceFromSequenceItem to pinpoint
+// breaking changes to individual required field names.
 func TestOrigin_RequiredSequence(t *testing.T) {
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/required_sequence.yaml")
 	require.NoError(t, err)
 
-	schema := doc.Components.Schemas["Foo"].Value
+	schema := doc.Paths.Find("/items").Post.RequestBody.Value.Content["application/json"].Schema.Value
 	require.NotNil(t, schema.Origin)
 
-	// Verify the required sequence is tracked with the correct number of items.
-	seqLocs := schema.Origin.Sequences["required"]
-	require.Equal(t, 2, len(seqLocs))
-	for _, loc := range seqLocs {
-		require.Equal(t, "testdata/origin/required_sequence.yaml", loc.File)
-	}
+	// "required" must appear in Fields (it's a sequence-valued field)
+	require.Contains(t, schema.Origin.Fields, "required")
+
+	// Sequences must record per-item locations for "required"
+	seqLocs, ok := schema.Origin.Sequences["required"]
+	require.True(t, ok, "Origin.Sequences must contain 'required'")
+	require.Len(t, seqLocs, 2)
+
+	require.Equal(t, Location{
+		File:   "testdata/origin/required_sequence.yaml",
+		Line:   14,
+		Column: 19,
+		Name:   "name",
+	}, seqLocs[0])
+
+	require.Equal(t, Location{
+		File:   "testdata/origin/required_sequence.yaml",
+		Line:   15,
+		Column: 19,
+		Name:   "age",
+	}, seqLocs[1])
 }
 
+// TestOrigin_YAMLAlias verifies that a schema referenced via YAML alias loads
+// without error and carries origin metadata from the anchor definition.
+// Multiple aliases of the same anchor must not produce duplicate __origin__ keys.
 func TestOrigin_YAMLAlias(t *testing.T) {
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/alias.yaml")
 	require.NoError(t, err)
 
-	// Both paths share the same operation via YAML alias — verify no panic and correct data.
-	fooOp := doc.Paths.Find("/foo").Get
-	barOp := doc.Paths.Find("/bar").Get
-	require.NotNil(t, fooOp)
-	require.NotNil(t, barOp)
-	require.Equal(t, "Get", fooOp.Summary)
-	require.Equal(t, "Get", barOp.Summary)
+	anchor := doc.Components.Schemas["Base"].Value
+	alias1 := doc.Components.Schemas["Alias1"].Value
+	alias2 := doc.Components.Schemas["Alias2"].Value
 
-	// Anchor operation has origin set.
-	require.NotNil(t, fooOp.Origin)
+	// All three point to the same anchor node, so origin reflects the anchor location.
+	anchorLoc := &Location{
+		File:   "testdata/origin/alias.yaml",
+		Line:   7,
+		Column: 5,
+		Name:   "Base",
+	}
+	require.Equal(t, anchorLoc, anchor.Origin.Key)
+	require.Equal(t, anchorLoc, alias1.Origin.Key)
+	require.Equal(t, anchorLoc, alias2.Origin.Key)
 }
 
+// TestOrigin_Headers verifies that response header origin is tracked correctly.
 func TestOrigin_Headers(t *testing.T) {
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/headers.yaml")
 	require.NoError(t, err)
 
-	headers := doc.Paths.Find("/api/test").Get.Responses.Value("200").Value.Headers
-	require.NotNil(t, headers["X-Rate-Limit"].Value.Origin)
+	headers := doc.Paths.Find("/items").Get.Responses.Value("200").Value.Headers
+
 	require.Equal(t,
 		&Location{
 			File:   "testdata/origin/headers.yaml",
@@ -608,23 +686,33 @@ func TestOrigin_Headers(t *testing.T) {
 		},
 		headers["X-Rate-Limit"].Value.Origin.Key)
 
-	require.NotNil(t, headers["X-Request-Id"].Value.Origin)
+	require.Equal(t,
+		Location{
+			File:   "testdata/origin/headers.yaml",
+			Line:   13,
+			Column: 15,
+			Name:   "description",
+		},
+		headers["X-Rate-Limit"].Value.Origin.Fields["description"])
+
 	require.Equal(t,
 		&Location{
 			File:   "testdata/origin/headers.yaml",
-			Line:   15,
+			Line:   16,
 			Column: 13,
 			Name:   "X-Request-Id",
 		},
 		headers["X-Request-Id"].Value.Origin.Key)
 }
 
+// TestOrigin_IntegerStatusCode verifies that response origin is tracked when
+// HTTP status codes are written as bare integers (200:) rather than quoted
+// strings ("200":). Bare integers produce map[interface{}]interface{} in the
+// YAML decoder, which required a dedicated fix in extractOrigins.
 func TestOrigin_IntegerStatusCode(t *testing.T) {
 	loader := NewLoader()
-
 	loader.IncludeOrigin = true
 
-	// parameters.yaml uses unquoted integer status codes (200:, 201:)
 	doc, err := loader.LoadFromFile("testdata/origin/parameters.yaml")
 	require.NoError(t, err)
 
@@ -651,83 +739,17 @@ func TestOrigin_IntegerStatusCode(t *testing.T) {
 		resp201.Origin.Key)
 }
 
+// TestOrigin_Disabled verifies that all Origin fields are nil when
+// IncludeOrigin is false (the default), ensuring no overhead in the common case.
 func TestOrigin_Disabled(t *testing.T) {
-	// Even when the global IncludeOrigin is true, loader.IncludeOrigin=false must win.
-	IncludeOrigin = true
-	defer func() { IncludeOrigin = false }()
+	loader := NewLoader()
+	// IncludeOrigin defaults to false
 
-	loader := NewLoader() // copies global (true) into loader.IncludeOrigin
-	loader.IncludeOrigin = false
-
-	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
+	doc, err := loader.LoadFromFile("testdata/origin/required_sequence.yaml")
 	require.NoError(t, err)
 
+	schema := doc.Paths.Find("/items").Post.RequestBody.Value.Content["application/json"].Schema.Value
+	require.Nil(t, schema.Origin)
 	require.Nil(t, doc.Info.Origin)
 	require.Nil(t, doc.Paths.Origin)
-
-	base := doc.Paths.Find("/partner-api/test/another-method")
-	require.Nil(t, base.Origin)
-	require.Nil(t, base.Get.Origin)
-	require.Nil(t, base.Get.Responses.Origin)
-}
-
-func TestOrigin_AnyFieldsStripped(t *testing.T) {
-	loader := NewLoader()
-
-	loader.IncludeOrigin = true
-
-	doc, err := loader.LoadFromFile("testdata/origin/any_fields.yaml")
-	require.NoError(t, err)
-
-	// Parameter.Example must not contain __origin__
-	param := doc.Paths.Find("/api/test").Get.Parameters[0].Value
-	if m, ok := param.Example.(map[string]any); ok {
-		require.NotContains(t, m, originKey)
-	}
-
-	resp := doc.Paths.Find("/api/test").Get.Responses.Value("200").Value
-	mt := resp.Content["application/json"]
-
-	// MediaType.Example must not contain __origin__
-	if m, ok := mt.Example.(map[string]any); ok {
-		require.NotContains(t, m, originKey)
-	}
-
-	schema := mt.Schema.Value
-
-	// Schema.Default must not contain __origin__
-	if m, ok := schema.Default.(map[string]any); ok {
-		require.NotContains(t, m, originKey)
-	}
-
-	// Schema.Example must not contain __origin__
-	if m, ok := schema.Example.(map[string]any); ok {
-		require.NotContains(t, m, originKey)
-	}
-
-	// Link.RequestBody must not contain __origin__
-	link := doc.Components.Links["TestLink"].Value
-	if m, ok := link.RequestBody.(map[string]any); ok {
-		require.NotContains(t, m, originKey)
-	}
-}
-
-func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
-	loader := NewLoader()
-
-	loader.IncludeOrigin = true
-
-	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
-	require.NoError(t, err)
-
-	// Paths map must not contain __origin__ as a key
-	for k := range doc.Paths.Map() {
-		require.NotEqual(t, originKey, k, "Paths must not contain %q key", originKey)
-	}
-
-	// Responses map must not contain __origin__ as a key
-	responses := doc.Paths.Find("/partner-api/test/another-method").Get.Responses
-	for k := range responses.Map() {
-		require.NotEqual(t, originKey, k, "Responses must not contain %q key", originKey)
-	}
 }

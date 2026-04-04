@@ -1,13 +1,25 @@
-openapi: 3.0.1
+openapi: 3.0.0
 info:
-  title: Test
-  version: v1
+  title: Alias Test
+  version: 1.0.0
+components:
+  schemas:
+    Base: &base
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    Alias1: *base
+    Alias2: *base
 paths:
-  /foo:
-    get: &get_op
-      summary: Get
+  /items:
+    get:
       responses:
         "200":
           description: OK
-  /bar:
-    get: *get_op
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alias1"
