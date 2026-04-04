@@ -1,0 +1,32 @@
+openapi: 3.0.1
+info:
+  title: Test
+  version: v1
+paths:
+  /api/test:
+    get:
+      parameters:
+        - name: foo
+          in: query
+          example:
+            id: 1
+            name: test
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                default:
+                  id: 0
+                example:
+                  id: 1
+              example:
+                id: 1
+components:
+  links:
+    TestLink:
+      operationId: getTest
+      requestBody:
+        id: 1

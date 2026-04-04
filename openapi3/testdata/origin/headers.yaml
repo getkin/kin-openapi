@@ -1,0 +1,17 @@
+openapi: 3.0.1
+info:
+  title: Test
+  version: v1
+paths:
+  /api/test:
+    get:
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+            X-Request-Id:
+              schema:
+                type: string

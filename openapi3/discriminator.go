@@ -60,8 +60,6 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "propertyName")
 	delete(x.Extensions, "mapping")
 	if len(x.Extensions) == 0 {

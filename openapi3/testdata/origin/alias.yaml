@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: Test
+  version: v1
+paths:
+  /foo:
+    get: &get_op
+      summary: Get
+      responses:
+        "200":
+          description: OK
+  /bar:
+    get: *get_op

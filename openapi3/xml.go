@@ -59,8 +59,6 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "namespace")
 	delete(x.Extensions, "prefix")
