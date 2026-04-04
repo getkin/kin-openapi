@@ -413,8 +413,6 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "oneOf")
 	delete(x.Extensions, "anyOf")
 	delete(x.Extensions, "allOf")
@@ -469,12 +467,6 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 
 	*schema = Schema(x)
-
-	for i, v := range schema.Enum {
-		schema.Enum[i] = stripOriginFromAny(v)
-	}
-	schema.Default = stripOriginFromAny(schema.Default)
-	schema.Example = stripOriginFromAny(schema.Example)
 
 	if schema.Format == "date" {
 		// This is a fix for: https://github.com/oasdiff/kin-openapi/issues/697
@@ -2282,6 +2274,6 @@ func unsupportedFormat(format string) error {
 
 // UnmarshalJSON sets Schemas to a copy of data.
 func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
-	*schemas, _, err = unmarshalStringMapP[SchemaRef](data)
+	*schemas, err = unmarshalStringMapP[SchemaRef](data)
 	return
 }

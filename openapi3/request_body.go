@@ -109,8 +109,6 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "required")
 	delete(x.Extensions, "content")
@@ -142,6 +140,6 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 
 // UnmarshalJSON sets RequestBodies to a copy of data.
 func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error) {
-	*requestBodies, _, err = unmarshalStringMapP[RequestBodyRef](data)
+	*requestBodies, err = unmarshalStringMapP[RequestBodyRef](data)
 	return
 }

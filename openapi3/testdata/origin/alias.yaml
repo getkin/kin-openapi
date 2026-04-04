@@ -1,0 +1,25 @@
+openapi: 3.0.0
+info:
+  title: Alias Test
+  version: 1.0.0
+components:
+  schemas:
+    Base: &base
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    Alias1: *base
+    Alias2: *base
+paths:
+  /items:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alias1"

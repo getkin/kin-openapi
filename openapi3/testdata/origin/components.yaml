@@ -1,0 +1,80 @@
+openapi: 3.0.1
+info:
+  title: Test API
+  version: v1
+components:
+  schemas:
+    SomeObject:
+      type: object
+      properties:
+        code:
+          type: integer
+        text:
+          type: string
+  parameters:
+    SomeParameter:
+      name: some-parameter
+      in: query
+      schema:
+        type: string
+  headers:
+    SomeHeader:
+      description: Some header
+      schema:
+        type: string
+  requestBodies:
+    SomeRequestBody:
+      description: Some request body
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+              text:
+                type: string
+  responses:
+    SomeResponse:
+      description: Some response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+              text:
+                type: string
+  securitySchemes:
+    SomeSecurityScheme:
+      type: http
+      scheme: basic
+  examples:
+    SomeExample:
+      summary: Some example
+      value:
+        code: 123
+        text: Some text
+  links:
+    SomeLink:
+      description: Some link
+      operationId: someOperation
+  callbacks:
+    SomeCallback:
+      '{$request.query.callbackUrl}':
+        post:
+          requestBody:
+            description: Some callback request body
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    code:
+                      type: integer
+                    text:
+                      type: string
+          responses:
+            "200":
+              description: OK

@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: Required Sequence Test
+  version: 1.0.0
+paths:
+  /items:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - age
+              properties:
+                name:
+                  type: string
+                age:
+                  type: integer
+      responses:
+        "200":
+          description: OK

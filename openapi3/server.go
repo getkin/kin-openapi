@@ -115,8 +115,6 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "variables")
@@ -240,7 +238,7 @@ type ServerVariables map[string]*ServerVariable
 
 // UnmarshalJSON sets ServerVariables to a copy of data, stripping __origin__ metadata.
 func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error) {
-	*serverVariables, _, err = unmarshalStringMapP[ServerVariable](data)
+	*serverVariables, err = unmarshalStringMapP[ServerVariable](data)
 	return
 }
 
@@ -288,8 +286,6 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "enum")
 	delete(x.Extensions, "default")
 	delete(x.Extensions, "description")
