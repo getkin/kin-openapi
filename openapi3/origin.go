@@ -164,8 +164,8 @@ func applyOriginsToValue(val reflect.Value, tree *yaml.OriginTree) {
 func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.OriginTree) {
 	typ := val.Type()
 
-	// Set Origin field if tagged with json:"__origin__" (most structs) or json:"-" (Response).
-	// Skip *Ref types which have Origin with no json tag — those pass through to Value.
+	// Set Origin field for structs whose Origin field has an __origin__ json tag (most types)
+	// or a "-" json tag (Response). Skip *Ref types whose Origin has no json tag.
 	if tree.Origin != nil {
 		if sf, ok := typ.FieldByName("Origin"); ok && sf.Type == originPtrType {
 			tag := sf.Tag.Get("json")
