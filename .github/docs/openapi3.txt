@@ -92,8 +92,8 @@ var ErrURINotSupported = errors.New("unsupported URI")
 
 var IncludeOrigin = false
     IncludeOrigin specifies whether to include the origin of the OpenAPI
-    elements Set this to true before loading a spec to include the origin of the
-    OpenAPI elements Note it is global and affects all loaders
+    elements. Deprecated: set Loader.IncludeOrigin instead. This global is read
+    by NewLoader for backward compatibility but is not safe for concurrent use.
 
 
 FUNCTIONS
@@ -813,6 +813,11 @@ type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
 
+	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
+	// Prefer this over the package-level IncludeOrigin global, which is not safe for
+	// concurrent use.
+	IncludeOrigin bool
+
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
 
@@ -1067,6 +1072,12 @@ type Origin struct {
     collection itself. Fields is a map of the location of each scalar field
     in the collection. Sequences is a map of the location of each item in
     sequence-valued fields.
+
+func (o *Origin) UnmarshalJSON(data []byte) error
+    UnmarshalJSON parses the compact []any sequence produced by yaml3's
+    addOrigin. This allows __origin__ to be decoded directly during JSON
+    unmarshaling without a separate applyOrigins pass when the caller does not
+    use UnmarshalWithOriginTree.
 
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
