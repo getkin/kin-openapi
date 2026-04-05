@@ -56,7 +56,7 @@ func originFromSeq(s []any) *Origin {
 	idx++
 	if nf > 0 && idx+nf*3 <= len(s) {
 		o.Fields = make(map[string]Location, nf)
-		for i := 0; i < nf; i++ {
+		for range nf {
 			fname, _ := s[idx].(string)
 			delta := toInt(s[idx+1])
 			col := toInt(s[idx+2])
@@ -77,7 +77,7 @@ func originFromSeq(s []any) *Origin {
 	idx++
 	if ns > 0 {
 		o.Sequences = make(map[string][]Location, ns)
-		for i := 0; i < ns; i++ {
+		for range ns {
 			if idx >= len(s) {
 				break
 			}
@@ -126,7 +126,7 @@ func applyOriginsToValue(val reflect.Value, tree *yaml.OriginTree) {
 	// Keep track of the last pointer so we can pass it to struct handlers
 	// (needed for calling methods like Map() on maplike types).
 	var ptr reflect.Value
-	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
+	for val.Kind() == reflect.Pointer || val.Kind() == reflect.Interface {
 		if val.IsNil() {
 			return
 		}
@@ -184,7 +184,7 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 	// The origin tree data applies to the inner struct, not a sub-key.
 	for _, fieldName := range []string{"Value", "Schema"} {
 		vf := val.FieldByName(fieldName)
-		if !vf.IsValid() || vf.Kind() != reflect.Ptr || vf.IsNil() {
+		if !vf.IsValid() || vf.Kind() != reflect.Pointer || vf.IsNil() {
 			continue
 		}
 		sf, _ := typ.FieldByName(fieldName)
@@ -203,7 +203,7 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 	} else if val.CanAddr() {
 		receiver = val.Addr()
 	}
-	if receiver.Kind() == reflect.Ptr {
+	if receiver.Kind() == reflect.Pointer {
 		if mapMethod := receiver.MethodByName("Map"); mapMethod.IsValid() {
 			results := mapMethod.Call(nil)
 			if len(results) == 1 {
