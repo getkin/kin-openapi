@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -98,18 +97,6 @@ func originFromSeq(s []any) *Origin {
 		}
 	}
 	return o
-}
-
-// UnmarshalJSON parses the compact []any sequence produced by yaml3's addOrigin.
-func (o *Origin) UnmarshalJSON(data []byte) error {
-	var seq []any
-	if err := json.Unmarshal(data, &seq); err != nil {
-		return err
-	}
-	if parsed := originFromSeq(seq); parsed != nil {
-		*o = *parsed
-	}
-	return nil
 }
 
 // toInt converts numeric types to int. Handles int/uint64 from YAML decoding
