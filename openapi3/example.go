@@ -60,8 +60,6 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "value")
@@ -70,7 +68,6 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*example = Example(x)
-	example.Value = stripOriginFromAny(example.Value)
 	return nil
 }
 
@@ -90,6 +87,6 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 
 // UnmarshalJSON sets Examples to a copy of data.
 func (examples *Examples) UnmarshalJSON(data []byte) (err error) {
-	*examples, _, err = unmarshalStringMapP[ExampleRef](data)
+	*examples, err = unmarshalStringMapP[ExampleRef](data)
 	return
 }

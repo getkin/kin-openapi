@@ -92,8 +92,8 @@ var ErrURINotSupported = errors.New("unsupported URI")
 
 var IncludeOrigin = false
     IncludeOrigin specifies whether to include the origin of the OpenAPI
-    elements Set this to true before loading a spec to include the origin of the
-    OpenAPI elements Note it is global and affects all loaders
+    elements. Deprecated: set Loader.IncludeOrigin instead. This global is read
+    by NewLoader for backward compatibility but is not safe for concurrent use.
 
 
 FUNCTIONS
@@ -489,8 +489,7 @@ type Encodings map[string]*Encoding
     Encodings is a map of encoding objects keyed by field name.
 
 func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Encodings to a copy of data, stripping __origin__
-    metadata.
+    UnmarshalJSON sets Encodings to a copy of data.
 
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -812,6 +811,11 @@ func (links *Links) UnmarshalJSON(data []byte) (err error)
 type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files
 	IsExternalRefsAllowed bool
+
+	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
+	// Prefer this over the package-level IncludeOrigin global, which is not safe for
+	// concurrent use.
+	IncludeOrigin bool
 
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
@@ -2129,8 +2133,7 @@ type ServerVariables map[string]*ServerVariable
     ServerVariables is a map of ServerVariable objects keyed by variable name.
 
 func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets ServerVariables to a copy of data, stripping __origin__
-    metadata.
+    UnmarshalJSON sets ServerVariables to a copy of data.
 
 type Servers []*Server
     Servers is specified by OpenAPI/Swagger standard version 3.

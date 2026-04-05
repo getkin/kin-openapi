@@ -1,0 +1,42 @@
+openapi: 3.0.0
+info:
+  title: Any Fields Test
+  version: 1.0.0
+paths:
+  /items:
+    get:
+      parameters:
+        - name: filter
+          in: query
+          example:
+            env: production
+            region: us-east
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                id: 1
+                name: example
+              schema:
+                type: object
+                default:
+                  status: active
+                  count: 0
+                example:
+                  status: active
+                  count: 42
+                enum:
+                  - status: active
+                    count: 1
+                  - status: inactive
+                    count: 0
+          links:
+            self:
+              operationId: getItem
+              requestBody:
+                id: 1
+                name: test

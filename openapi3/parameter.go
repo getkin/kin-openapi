@@ -217,8 +217,6 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "in")
 	delete(x.Extensions, "description")
@@ -237,7 +235,6 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	*parameter = Parameter(x)
-	parameter.Example = stripOriginFromAny(parameter.Example)
 	return nil
 }
 
@@ -421,6 +418,6 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 
 // UnmarshalJSON sets ParametersMap to a copy of data.
 func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error) {
-	*parametersMap, _, err = unmarshalStringMapP[ParameterRef](data)
+	*parametersMap, err = unmarshalStringMapP[ParameterRef](data)
 	return
 }

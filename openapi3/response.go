@@ -173,8 +173,6 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "headers")
 	delete(x.Extensions, "content")
@@ -232,6 +230,6 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 
 // UnmarshalJSON sets ResponseBodies to a copy of data.
 func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error) {
-	*responseBodies, _, err = unmarshalStringMapP[ResponseRef](data)
+	*responseBodies, err = unmarshalStringMapP[ResponseRef](data)
 	return
 }

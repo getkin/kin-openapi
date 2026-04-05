@@ -50,8 +50,6 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "url")
 	if len(x.Extensions) == 0 {

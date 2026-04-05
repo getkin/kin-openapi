@@ -1,0 +1,19 @@
+openapi: 3.0.0
+info:
+  title: Headers Test
+  version: 1.0.0
+paths:
+  /items:
+    get:
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Rate-Limit:
+              description: Rate limit per hour
+              schema:
+                type: integer
+            X-Request-Id:
+              description: Unique request ID
+              schema:
+                type: string

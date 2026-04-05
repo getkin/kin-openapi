@@ -102,8 +102,6 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	delete(x.Extensions, "schema")
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "examples")
@@ -112,7 +110,6 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*mediaType = MediaType(x)
-	mediaType.Example = stripOriginFromAny(mediaType.Example)
 	return nil
 }
 

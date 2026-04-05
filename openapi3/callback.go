@@ -56,6 +56,6 @@ func (callback *Callback) Validate(ctx context.Context, opts ...ValidationOption
 
 // UnmarshalJSON sets Callbacks to a copy of data.
 func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error) {
-	*callbacks, _, err = unmarshalStringMapP[CallbackRef](data)
+	*callbacks, err = unmarshalStringMapP[CallbackRef](data)
 	return
 }

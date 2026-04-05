@@ -116,8 +116,6 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "tags")
 	delete(x.Extensions, "externalDocs")
-	delete(x.Extensions, originKey)
-	stripExtensionsOrigin(x.Extensions)
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}

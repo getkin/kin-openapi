@@ -114,7 +114,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Ensure use of unmarshal
       run: |
-        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | wc -l)" = 1 ]]
+        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | grep -v origin.go | wc -l)" = 1 ]]
 
     - if: runner.os == 'Linux'
       name: Use `loader := NewLoader(); loader.Load ...`
