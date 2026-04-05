@@ -83,6 +83,9 @@ func originFromSeq(s []any) *Origin {
 			}
 			sname, _ := s[idx].(string)
 			idx++
+			if idx >= len(s) {
+				break
+			}
 			count := toInt(s[idx])
 			idx++
 			locs := make([]Location, count)
@@ -99,15 +102,12 @@ func originFromSeq(s []any) *Origin {
 	return o
 }
 
-// toInt converts numeric types to int. Handles int/uint64 from YAML decoding
-// and float64 from JSON decoding of []any sequences.
+// toInt converts numeric types to int. Handles int/uint64 from YAML decoding.
 func toInt(v any) int {
 	switch n := v.(type) {
 	case int:
 		return n
 	case uint64:
-		return int(n)
-	case float64:
 		return int(n)
 	}
 	return 0

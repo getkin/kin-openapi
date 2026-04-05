@@ -489,8 +489,7 @@ type Encodings map[string]*Encoding
     Encodings is a map of encoding objects keyed by field name.
 
 func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Encodings to a copy of data, stripping __origin__
-    metadata.
+    UnmarshalJSON sets Encodings to a copy of data.
 
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1072,12 +1071,6 @@ type Origin struct {
     collection itself. Fields is a map of the location of each scalar field
     in the collection. Sequences is a map of the location of each item in
     sequence-valued fields.
-
-func (o *Origin) UnmarshalJSON(data []byte) error
-    UnmarshalJSON parses the compact []any sequence produced by yaml3's
-    addOrigin. This allows __origin__ to be decoded directly during JSON
-    unmarshaling without a separate applyOrigins pass when the caller does not
-    use UnmarshalWithOriginTree.
 
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2140,8 +2133,7 @@ type ServerVariables map[string]*ServerVariable
     ServerVariables is a map of ServerVariable objects keyed by variable name.
 
 func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets ServerVariables to a copy of data, stripping __origin__
-    metadata.
+    UnmarshalJSON sets ServerVariables to a copy of data.
 
 type Servers []*Server
     Servers is specified by OpenAPI/Swagger standard version 3.
