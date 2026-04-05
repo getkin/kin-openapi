@@ -10,7 +10,7 @@ import (
 
 const originKey = "__origin__"
 
-var originPtrType = reflect.TypeOf((*Origin)(nil))
+var originPtrType = reflect.TypeFor[*Origin]()
 
 // Origin contains the origin of a collection.
 // Key is the location of the collection itself.
