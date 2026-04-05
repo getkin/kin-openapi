@@ -101,8 +101,6 @@ func originFromSeq(s []any) *Origin {
 }
 
 // UnmarshalJSON parses the compact []any sequence produced by yaml3's addOrigin.
-// This allows __origin__ to be decoded directly during JSON unmarshaling without
-// a separate applyOrigins pass when the caller does not use UnmarshalWithOriginTree.
 func (o *Origin) UnmarshalJSON(data []byte) error {
 	var seq []any
 	if err := json.Unmarshal(data, &seq); err != nil {
