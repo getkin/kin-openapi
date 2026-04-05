@@ -707,7 +707,7 @@ func TestOrigin_Headers(t *testing.T) {
 
 // TestOrigin_IntegerStatusCode verifies that response origin is tracked when
 // HTTP status codes are written as bare integers (200:) rather than quoted
-// strings ("200":). Bare integers produce map[interface{}]interface{} in the
+// strings ("200":). Bare integers produce map[any]any in the
 // YAML decoder, which required a dedicated fix in extractOrigins.
 func TestOrigin_IntegerStatusCode(t *testing.T) {
 	loader := NewLoader()

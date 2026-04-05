@@ -92,7 +92,7 @@ func TestIssue1091_SchemaLevelExtensions(t *testing.T) {
 
 	v2SchemaRef := &openapi2.SchemaRef{
 		Value:      &v2Schema,
-		Extensions: map[string]interface{}{"x-ref-level": "ref-value"},
+		Extensions: map[string]any{"x-ref-level": "ref-value"},
 	}
 
 	// Convert to v3
