@@ -30,13 +30,12 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error 
 	if location != nil {
 		file = location.Path
 	}
-	originOpt := yaml.OriginOpt{Enabled: includeOrigin, File: file}
-	tree, err := yaml.UnmarshalWithOriginTree(data, v, originOpt)
-	if err == nil {
+	if tree, err := yaml.UnmarshalWithOriginTree(data, v, yaml.OriginOpt{Enabled: includeOrigin, File: file}); err == nil {
 		applyOrigins(v, tree)
 		return nil
+	} else {
+		yamlErr = err
 	}
-	yamlErr = err
 
 	// If both unmarshaling attempts fail, return a new error that includes both errors
 	return fmt.Errorf("failed to unmarshal data: json error: %v, yaml error: %v", jsonErr, yamlErr)
