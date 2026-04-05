@@ -130,7 +130,7 @@ func applyOriginsToValue(val reflect.Value, tree *yaml.OriginTree) {
 		if val.IsNil() {
 			return
 		}
-		if val.Kind() == reflect.Ptr {
+		if val.Kind() == reflect.Pointer {
 			ptr = val
 		}
 		val = val.Elem()
@@ -225,7 +225,7 @@ func applyOriginsToMap(val reflect.Value, tree *yaml.OriginTree) {
 		elem := val.MapIndex(key)
 		// Map values are not addressable. For pointer-typed values we can
 		// recurse directly. For value types we must copy, apply, and set back.
-		if elem.Kind() == reflect.Ptr || elem.Kind() == reflect.Interface {
+		if elem.Kind() == reflect.Pointer || elem.Kind() == reflect.Interface {
 			applyOriginsToValue(elem, childTree)
 		} else if elem.Kind() == reflect.Struct {
 			// Copy to a settable value
