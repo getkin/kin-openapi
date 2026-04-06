@@ -28,7 +28,7 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error 
 	// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
 	var file string
 	if location != nil {
-		file = location.Path
+		file = location.String()
 	}
 	if tree, err := yaml.UnmarshalWithOriginTree(data, v, yaml.OriginOpt{Enabled: includeOrigin, File: file}); err == nil {
 		applyOrigins(v, tree)
