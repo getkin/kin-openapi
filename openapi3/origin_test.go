@@ -567,6 +567,44 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 		base.XML.Origin.Fields["prefix"])
 }
 
+// TestOrigin_WithExternalRefRootOrigin verifies that the root-level schema of an
+// externally $ref'd YAML file carries Origin metadata. Previously, only nested
+// schemas (values inside a parent mapping) received __origin__ injection; the
+// root mapping of a document was skipped. This test covers the fix in yaml3's
+// document() decoder that injects __origin__ for the root mapping too.
+func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = context.Background()
+
+	doc, err := loader.LoadFromFile("testdata/origin/external.yaml")
+	require.NoError(t, err)
+
+	// base is the root schema of external-schema.yaml ($ref resolved)
+	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["name"].Value
+
+	// Root schema Origin must now be set (fixed in yaml3 document() injection)
+	require.NotNil(t, base.Origin)
+	require.Equal(t,
+		&Location{
+			File:   "testdata/origin/external-schema.yaml",
+			Line:   1,
+			Column: 1,
+			Name:   "",
+		},
+		base.Origin.Key)
+
+	require.Equal(t,
+		Location{
+			File:   "testdata/origin/external-schema.yaml",
+			Line:   1,
+			Column: 1,
+			Name:   "type",
+		},
+		base.Origin.Fields["type"])
+}
+
 // TestOrigin_MaplikeNoOriginKey verifies that __origin__ does not appear as a
 // map key in Responses, Paths, or Callback maplike types after loading.
 // The if k == originKey blocks in their UnmarshalJSON were removed; this
