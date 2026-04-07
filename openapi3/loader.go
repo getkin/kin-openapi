@@ -952,6 +952,18 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+
+		// OAS 3.1 / JSON Schema 2020-12: apply sibling keywords from the original schema
+		// object on top of the resolved $ref value. In 3.1, siblings are not ignored —
+		// they augment the referenced schema (e.g. deprecated:true alongside $ref).
+		// Only apply for OAS 3.1+ — in 3.0 $ref replaces its entire object and siblings
+		// are (validly) ignored.
+		if strings.HasPrefix(doc.OpenAPI, "3.1") && component.sibling != nil && component.Value != nil {
+			// Work on a copy so we don't mutate a schema shared by other references.
+			schemaCopy := *component.Value
+			applySiblingSchemaFields(&schemaCopy, component.sibling, component.extra)
+			component.Value = &schemaCopy
+		}
 	}
 	value := component.Value
 	if value == nil {
@@ -1338,4 +1350,32 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 
 func unescapeRefString(ref string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(ref, "~1", "/"), "~0", "~")
+}
+
+// applySiblingSchemaFields overlays the fields listed in presentFields from sibling onto dst.
+// It is used to honour keyword siblings of $ref in OpenAPI 3.1 / JSON Schema 2020-12, where
+// sibling keywords are applied in addition to (not instead of) the referenced schema.
+// Only fields that were explicitly present in the original YAML/JSON are applied; the presentFields
+// slice (derived from SchemaRef.extra) carries this information.
+func applySiblingSchemaFields(dst, sibling *Schema, presentFields []string) {
+	for _, field := range presentFields {
+		switch field {
+		case "deprecated":
+			dst.Deprecated = sibling.Deprecated
+		case "description":
+			dst.Description = sibling.Description
+		case "title":
+			dst.Title = sibling.Title
+		case "readOnly":
+			dst.ReadOnly = sibling.ReadOnly
+		case "writeOnly":
+			dst.WriteOnly = sibling.WriteOnly
+		case "example":
+			dst.Example = sibling.Example
+		case "externalDocs":
+			dst.ExternalDocs = sibling.ExternalDocs
+		case "default":
+			dst.Default = sibling.Default
+		}
+	}
 }

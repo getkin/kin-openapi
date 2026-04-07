@@ -6,6 +6,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestOAS31_RefSiblingKeyword verifies that sibling keywords alongside $ref are honoured
+// when loading an OpenAPI 3.1 document.
+//
+// In OpenAPI 3.0 / JSON Schema draft-07, $ref replaces its entire object so any sibling
+// keywords (e.g. deprecated, description) are silently ignored.
+// In OpenAPI 3.1 / JSON Schema 2020-12, $ref and sibling keywords are both applied, so
+// a property like:
+//
+//	status:
+//	  deprecated: true
+//	  $ref: "#/components/schemas/PingStatus"
+//
+// should result in a SchemaRef whose Value has Deprecated==true.
+func TestOAS31_RefSiblingKeyword(t *testing.T) {
+	loader := NewLoader()
+	doc, err := loader.LoadFromFile("testdata/schema31-ref-siblings.yml")
+	require.NoError(t, err)
+
+	pingResp := doc.Components.Schemas["PingResponse"].Value
+	require.NotNil(t, pingResp)
+
+	statusRef := pingResp.Properties["status"]
+	require.NotNil(t, statusRef)
+
+	// The $ref should still be resolved.
+	require.NotNil(t, statusRef.Value, "$ref to PingStatus should be resolved")
+	require.Equal(t, "string", statusRef.Value.Type.Slice()[0], "$ref target type should be string")
+
+	// The sibling deprecated:true must survive — not be discarded because $ref is present.
+	require.True(t, statusRef.Value.Deprecated, "deprecated:true sibling to $ref must be honoured in OAS 3.1")
+}
+
 func TestResolveSchemaRefsIn31Fields(t *testing.T) {
 	loader := NewLoader()
 	doc, err := loader.LoadFromFile("testdata/schema31refs.yml")
