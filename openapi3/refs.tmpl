@@ -23,6 +23,11 @@ type {{ $type.Name }}Ref struct {
 	Ref   string
 	Value *{{ $type.Name }}
 	extra []string
+{{- if eq $type.Name "Schema" }}
+	// sibling holds keyword siblings of a $ref (OAS 3.1 / JSON Schema 2020-12).
+	// It is populated during unmarshal and applied to Value after $ref resolution.
+	sibling *Schema
+{{- end }}
 
 	refPath *url.URL
 }
@@ -75,6 +80,24 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
+{{- if eq $type.Name "Schema" }}
+			// OAS 3.1 / JSON Schema 2020-12: sibling keywords alongside $ref are valid
+			// and must be merged with the resolved reference. Parse the full object so
+			// the sibling fields are available after $ref resolution in resolveSchemaRef.
+			hasSiblings := false
+			for k := range extra {
+				if !strings.HasPrefix(k, "x-") {
+					hasSiblings = true
+					break
+				}
+			}
+			if hasSiblings {
+				var sibling Schema
+				if err := json.Unmarshal(data, &sibling); err == nil {
+					x.sibling = &sibling
+				}
+			}
+{{- end }}
 			for k := range extra {
 				if !strings.HasPrefix(k, "x-") {
 					delete(extra, k)
