@@ -98,8 +98,13 @@ func (loader *Loader) allowsExternalRefs(ref string) (err error) {
 }
 
 func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element any) (*url.URL, error) {
-	if err := loader.allowsExternalRefs(ref); err != nil {
-		return nil, err
+	// When a custom ReadFromURIFunc is installed, defer the external-ref decision to it;
+	// the function itself is responsible for enforcing any access policy.
+	// Otherwise enforce IsExternalRefsAllowed here before attempting any I/O.
+	if loader.ReadFromURIFunc == nil {
+		if err := loader.allowsExternalRefs(ref); err != nil {
+			return nil, err
+		}
 	}
 
 	resolvedPath, err := resolvePathWithRef(ref, rootPath)
@@ -312,8 +317,11 @@ func (loader *Loader) resolveRefPath(ref string, path *url.URL) (*url.URL, error
 		return path, nil
 	}
 
-	if err := loader.allowsExternalRefs(ref); err != nil {
-		return nil, err
+	// When a custom ReadFromURIFunc is installed, defer the external-ref decision to it.
+	if loader.ReadFromURIFunc == nil {
+		if err := loader.allowsExternalRefs(ref); err != nil {
+			return nil, err
+		}
 	}
 
 	resolvedPath, err := resolvePathWithRef(ref, path)
