@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -82,7 +82,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 			headers = append(headers, k)
 		}
 	}
-	sort.Strings(headers)
+	slices.Sort(headers)
 	for _, headerName := range headers {
 		headerRef := response.Headers[headerName]
 		if err := validateResponseHeader(headerName, headerRef, input, opts); err != nil {

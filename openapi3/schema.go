@@ -9,7 +9,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1050,7 +1050,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	for name := range schema.Properties {
 		properties = append(properties, name)
 	}
-	sort.Strings(properties)
+	slices.Sort(properties)
 	for _, name := range properties {
 		ref := schema.Properties[name]
 		v := ref.Value
@@ -1934,7 +1934,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		for propName := range schema.Properties {
 			properties = append(properties, propName)
 		}
-		sort.Strings(properties)
+		slices.Sort(properties)
 		for _, propName := range properties {
 			propSchema := schema.Properties[propName]
 			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
@@ -2006,7 +2006,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	for k := range value {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, k := range keys {
 		v := value[k]
 		if properties != nil {

@@ -103,18 +103,3 @@ iteration:
 
 	return fields
 }
-
-type sortableFieldInfos []theFieldInfo
-
-func (list sortableFieldInfos) Len() int {
-	return len(list)
-}
-
-func (list sortableFieldInfos) Less(i, j int) bool {
-	return list[i].JSONName < list[j].JSONName
-}
-
-func (list sortableFieldInfos) Swap(i, j int) {
-	a, b := list[i], list[j]
-	list[i], list[j] = b, a
-}

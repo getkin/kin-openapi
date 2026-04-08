@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -69,7 +69,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 		for method := range operations {
 			methods = append(methods, method)
 		}
-		sort.Strings(methods)
+		slices.Sort(methods)
 
 		for _, s := range servers {
 			muxRoute := muxRouter.Path(s.base + path).Methods(methods...)
@@ -258,6 +258,6 @@ func permutePart(part0 string, srv *openapi3.Server) []string {
 	for part := range partsMap {
 		parts = append(parts, part)
 	}
-	sort.Strings(parts)
+	slices.Sort(parts)
 	return parts
 }

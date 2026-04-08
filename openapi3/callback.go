@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"sort"
+	"slices"
 )
 
 // Callback is specified by OpenAPI/Swagger standard version 3.
@@ -43,7 +43,7 @@ func (callback *Callback) Validate(ctx context.Context, opts ...ValidationOption
 	for key := range callback.Map() {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, key := range keys {
 		v := callback.Value(key)
 		if err := v.Validate(ctx); err != nil {

@@ -1,8 +1,9 @@
 package openapi3gen
 
 import (
+	"cmp"
 	"reflect"
-	"sort"
+	"slices"
 	"sync"
 )
 
@@ -43,7 +44,9 @@ func getTypeInfo(t reflect.Type) *theTypeInfo {
 		typeInfo.Fields = appendFields(nil, nil, t)
 
 		// Sort fields
-		sort.Sort(sortableFieldInfos(typeInfo.Fields))
+		slices.SortFunc(typeInfo.Fields, func(a, b theFieldInfo) int {
+			return cmp.Compare(a.JSONName, b.JSONName)
+		})
 	}
 
 	// Publish

@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -416,7 +416,7 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 	for name := range securityRequirement {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 
 	// Get authentication function
 	options := input.Options
