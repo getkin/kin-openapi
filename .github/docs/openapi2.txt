@@ -80,12 +80,6 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error
 
 type Parameters []*Parameter
 
-func (ps Parameters) Len() int
-
-func (ps Parameters) Less(i, j int) bool
-
-func (ps Parameters) Swap(i, j int)
-
 type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 

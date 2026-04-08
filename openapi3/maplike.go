@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"encoding/json"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
@@ -110,7 +110,7 @@ func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
 	for k := range m {
 		ks = append(ks, k)
 	}
-	sort.Strings(ks)
+	slices.Sort(ks)
 
 	x := Responses{
 		Extensions: make(map[string]any),
@@ -240,7 +240,7 @@ func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
 	for k := range m {
 		ks = append(ks, k)
 	}
-	sort.Strings(ks)
+	slices.Sort(ks)
 
 	x := Callback{
 		Extensions: make(map[string]any),
@@ -370,7 +370,7 @@ func (paths *Paths) UnmarshalJSON(data []byte) (err error) {
 	for k := range m {
 		ks = append(ks, k)
 	}
-	sort.Strings(ks)
+	slices.Sort(ks)
 
 	x := Paths{
 		Extensions: make(map[string]any),

@@ -36,7 +36,7 @@ package openapi3
 
 import (
 	"encoding/json"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
@@ -194,7 +194,7 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 	for k := range m {
 		ks = append(ks, k)
 	}
-	sort.Strings(ks)
+	slices.Sort(ks)
 
 	x := ${type#'*'}{
 		Extensions: make(map[string]any),

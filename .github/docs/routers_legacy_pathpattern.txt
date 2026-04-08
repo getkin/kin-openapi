@@ -85,9 +85,3 @@ type SuffixKind int
 
 type SuffixList []Suffix
 
-func (list SuffixList) Len() int
-
-func (list SuffixList) Less(i, j int) bool
-
-func (list SuffixList) Swap(i, j int)
-

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
@@ -400,7 +400,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 			for name := range examples {
 				names = append(names, name)
 			}
-			sort.Strings(names)
+			slices.Sort(names)
 			for _, k := range names {
 				v := examples[k]
 				if err := v.Validate(ctx); err != nil {

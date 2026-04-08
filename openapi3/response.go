@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"sort"
+	"slices"
 	"strconv"
 )
 
@@ -88,7 +88,7 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 	for key := range responses.Map() {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, key := range keys {
 		v := responses.Value(key)
 		if err := v.Validate(ctx); err != nil {
@@ -205,7 +205,7 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 	for name := range response.Headers {
 		headers = append(headers, name)
 	}
-	sort.Strings(headers)
+	slices.Sort(headers)
 	for _, name := range headers {
 		header := response.Headers[name]
 		if err := header.Validate(ctx); err != nil {
@@ -217,7 +217,7 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 	for name := range response.Links {
 		links = append(links, name)
 	}
-	sort.Strings(links)
+	slices.Sort(links)
 	for _, name := range links {
 		link := response.Links[name]
 		if err := link.Validate(ctx); err != nil {

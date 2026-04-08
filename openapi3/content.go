@@ -2,7 +2,7 @@ package openapi3
 
 import (
 	"context"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -113,7 +113,7 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
 	for key := range content {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, k := range keys {
 		v := content[k]
 		if err := v.Validate(ctx); err != nil {

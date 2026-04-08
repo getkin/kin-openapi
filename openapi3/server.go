@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -217,7 +217,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 	for name := range server.Variables {
 		variables = append(variables, name)
 	}
-	sort.Strings(variables)
+	slices.Sort(variables)
 	for _, name := range variables {
 		v := server.Variables[name]
 		if !strings.Contains(server.URL, "{"+name+"}") {
