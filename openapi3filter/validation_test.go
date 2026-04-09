@@ -134,13 +134,13 @@ func TestFilter(t *testing.T) {
 							},
 						},
 					},
-					Responses: openapi3.NewResponses(),
+					Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 				},
 			}),
 
 			openapi3.WithPath("/issue151", &openapi3.PathItem{
 				Get: &openapi3.Operation{
-					Responses: openapi3.NewResponses(),
+					Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 				},
 				Parameters: openapi3.Parameters{
 					{
@@ -558,7 +558,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 		doc.Paths.Set(tc.name, &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
-				Responses: openapi3.NewResponses(),
+				Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 			},
 		})
 	}
@@ -683,7 +683,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		doc.Paths.Set(tc.name, &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				Security:  securityRequirements,
-				Responses: openapi3.NewResponses(),
+				Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 			},
 		})
 	}
@@ -785,7 +785,7 @@ func TestAllSchemesMet(t *testing.T) {
 				Security: &openapi3.SecurityRequirements{
 					securityRequirement,
 				},
-				Responses: openapi3.NewResponses(),
+				Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 			},
 		})
 	}

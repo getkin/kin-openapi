@@ -1546,8 +1546,7 @@ type Responses struct {
 
 func NewResponses(opts ...NewResponsesOption) *Responses
     NewResponses builds a responses object with response objects in insertion
-    order. Given no arguments, NewResponses returns a valid responses object
-    containing a default match-all reponse.
+    order. Given no arguments, NewResponses returns an empty responses object.
 
 func NewResponsesWithCapacity(cap int) *Responses
     NewResponsesWithCapacity builds a responses object of the given capacity.
