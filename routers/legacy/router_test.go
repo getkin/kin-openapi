@@ -13,18 +13,18 @@ import (
 )
 
 func TestRouter(t *testing.T) {
-	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloHEAD := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloOPTIONS := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloPATCH := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloPOST := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloPUT := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	helloTRACE := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	paramsGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	booksPOST := &openapi3.Operation{Responses: openapi3.NewResponses()}
-	partialGET := &openapi3.Operation{Responses: openapi3.NewResponses()}
+	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloHEAD := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloOPTIONS := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloPATCH := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloPOST := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloPUT := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	helloTRACE := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	paramsGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	booksPOST := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	partialGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
@@ -199,7 +199,10 @@ func TestRouter(t *testing.T) {
 		Example: 3,
 	}
 	content := openapi3.NewContentWithJSONSchema(schema)
-	responses := openapi3.NewResponses()
+	responses := openapi3.NewResponses(
+		openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}),
+		openapi3.WithName("default", openapi3.NewResponse().WithDescription("")),
+	)
 	responses.Value("default").Value.Content = content
 	doc.Paths.Set("/withExamples", &openapi3.PathItem{
 		Get: &openapi3.Operation{Responses: responses},

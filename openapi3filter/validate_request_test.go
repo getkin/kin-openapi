@@ -443,7 +443,7 @@ func TestValidateQueryParams(t *testing.T) {
 			op := &openapi3.Operation{
 				OperationID: "test",
 				Parameters:  []*openapi3.ParameterRef{{Value: tc.param}},
-				Responses:   openapi3.NewResponses(),
+				Responses:   openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 			}
 			doc.AddOperation("/test", http.MethodGet, op)
 			err := doc.Validate(context.Background())

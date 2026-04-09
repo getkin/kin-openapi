@@ -18,11 +18,8 @@ type Responses struct {
 }
 
 // NewResponses builds a responses object with response objects in insertion order.
-// Given no arguments, NewResponses returns a valid responses object containing a default match-all reponse.
+// Given no arguments, NewResponses returns an empty responses object.
 func NewResponses(opts ...NewResponsesOption) *Responses {
-	if len(opts) == 0 {
-		return NewResponses(WithName("default", NewResponse().WithDescription("")))
-	}
 	responses := NewResponsesWithCapacity(len(opts))
 	for _, opt := range opts {
 		opt(responses)
