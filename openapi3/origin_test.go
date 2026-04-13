@@ -139,7 +139,16 @@ func TestOrigin_Responses(t *testing.T) {
 		base.Origin.Key)
 
 	require.NotNil(t, base.Origin)
-	require.Nil(t, base.Value("200").Origin)
+	// ResponseRef.Origin is populated with the same data as Value.Origin
+	require.NotNil(t, base.Value("200").Origin)
+	require.Equal(t,
+		&Location{
+			File:   "testdata/origin/simple.yaml",
+			Line:   18,
+			Column: 9,
+			Name:   "200",
+		},
+		base.Value("200").Origin.Key)
 	require.Equal(t,
 		&Location{
 			File:   "testdata/origin/simple.yaml",

@@ -73,7 +73,7 @@ func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOpt
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameter-object
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
 	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
