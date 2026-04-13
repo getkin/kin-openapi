@@ -84,7 +84,7 @@ The `Origin` struct contains three parts:
 - **`Fields`** — locations of scalar fields within the object (e.g. `origin.Fields["description"]` gives the line of the `description` field).
 - **`Sequences`** — locations of items in sequence-valued fields. For example, `origin.Sequences["enum"]` gives the location of each item in an `enum` array. This is used for fields like `enum`, `required`, and `servers` where the individual items are scalars and don't have their own `Origin` field.
 
-Origin data is populated by an internal post-processing step after YAML decoding — it is not part of the OpenAPI spec itself. For this reason, Origin fields are excluded from JSON and YAML serialization (`json:"-"`). If you marshal a loaded document back to JSON/YAML, origin data will not appear in the output.
+Origin data is populated by an internal post-processing step after YAML decoding — it is not part of the OpenAPI spec itself. For this reason, Origin fields are excluded from serialization. If you marshal a loaded document back to JSON/YAML, origin data will not appear in the output.
 
 ## Getting OpenAPI operation that matches request
 ```go
