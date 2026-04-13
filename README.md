@@ -64,6 +64,28 @@ loader := openapi3.NewLoader()
 doc, err := loader.LoadFromFile("my-openapi-spec.json")
 ```
 
+## Tracking source locations (Origin)
+
+When `IncludeOrigin` is enabled, the loader records the file, line, and column of each element in the OpenAPI document. This is useful for tools that need to report errors or changes with precise source locations (e.g. linters, diff tools, editors).
+
+```go
+loader := openapi3.NewLoader()
+loader.IncludeOrigin = true
+doc, err := loader.LoadFromFile("my-openapi-spec.json")
+
+// Each element has an Origin field with source location info
+fmt.Println(doc.Info.Origin.Key.File)   // "my-openapi-spec.json"
+fmt.Println(doc.Info.Origin.Key.Line)   // 2
+fmt.Println(doc.Info.Origin.Key.Column) // 1
+```
+
+The `Origin` struct contains three parts:
+- **`Key`** — the location of the object itself (file, line, column).
+- **`Fields`** — locations of scalar fields within the object (e.g. `origin.Fields["description"]` gives the line of the `description` field).
+- **`Sequences`** — locations of items in sequence-valued fields. For example, `origin.Sequences["enum"]` gives the location of each item in an `enum` array. This is used for fields like `enum`, `required`, and `servers` where the individual items are scalars and don't have their own `Origin` field.
+
+Origin data is populated by an internal post-processing step after YAML decoding — it is not part of the OpenAPI spec itself. For this reason, Origin fields are excluded from serialization. If you marshal a loaded document back to JSON/YAML, origin data will not appear in the output.
+
 ## Getting OpenAPI operation that matches request
 ```go
 loader := openapi3.NewLoader()

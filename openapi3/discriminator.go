@@ -9,7 +9,7 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
 	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
 	Mapping      StringMap[MappingRef] `json:"mapping,omitempty" yaml:"mapping,omitempty"`

@@ -12,7 +12,7 @@ import (
 type Ref struct {
 	Ref        string         `json:"$ref" yaml:"$ref"`
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 }
 
 // MarshalYAML returns the YAML encoding of Ref.
