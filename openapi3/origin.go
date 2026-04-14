@@ -179,7 +179,7 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 
 	// Handle wrapper types whose inner struct has no json tag:
 	// - *Ref types (e.g. SchemaRef, ResponseRef) have a "Value" field
-	// - AdditionalProperties has a "Schema" field
+	// - BoolSchema (AdditionalProperties, UnevaluatedProperties, UnevaluatedItems) has a "Schema" field
 	// The origin tree data applies to the inner struct, not a sub-key.
 	for _, fieldName := range []string{"Value", "Schema"} {
 		vf := val.FieldByName(fieldName)
