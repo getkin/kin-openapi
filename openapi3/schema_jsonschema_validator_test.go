@@ -344,10 +344,10 @@ func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
 			PrefixItems: SchemaRefs{
 				&SchemaRef{Value: &Schema{Type: &Types{"integer"}}},
 			},
-			UnevaluatedItems: &SchemaRef{Value: &Schema{
+			UnevaluatedItems: BoolSchema{Schema: &SchemaRef{Value: &Schema{
 				Type:     &Types{"string"},
 				Nullable: true,
-			}},
+			}}},
 		}
 
 		err := schema.VisitJSON([]any{1, nil}, EnableJSONSchema2020())
@@ -360,10 +360,10 @@ func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
 			Properties: Schemas{
 				"name": &SchemaRef{Value: &Schema{Type: &Types{"string"}}},
 			},
-			UnevaluatedProperties: &SchemaRef{Value: &Schema{
+			UnevaluatedProperties: BoolSchema{Schema: &SchemaRef{Value: &Schema{
 				Type:     &Types{"string"},
 				Nullable: true,
-			}},
+			}}},
 		}
 
 		err := schema.VisitJSON(map[string]any{"name": "foo", "extra": nil}, EnableJSONSchema2020())

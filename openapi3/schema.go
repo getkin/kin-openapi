@@ -145,8 +145,8 @@ type Schema struct {
 	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
 	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
 	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems      *SchemaRef `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
-	UnevaluatedProperties *SchemaRef `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
 	// JSON Schema 2020-12 conditional keywords
 	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`
@@ -357,36 +357,41 @@ func (types *Types) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type AdditionalProperties struct {
+// BoolSchema represents a JSON Schema keyword that can be either a boolean or a schema object.
+// Used for additionalProperties, unevaluatedProperties, and unevaluatedItems.
+type BoolSchema struct {
 	Has    *bool
 	Schema *SchemaRef
 }
 
-// MarshalYAML returns the YAML encoding of AdditionalProperties.
-func (addProps AdditionalProperties) MarshalYAML() (any, error) {
-	if x := addProps.Has; x != nil {
+// AdditionalProperties is a type alias for BoolSchema, kept for backward compatibility.
+type AdditionalProperties = BoolSchema
+
+// MarshalYAML returns the YAML encoding of BoolSchema.
+func (bs BoolSchema) MarshalYAML() (any, error) {
+	if x := bs.Has; x != nil {
 		if *x {
 			return true, nil
 		}
 		return false, nil
 	}
-	if x := addProps.Schema; x != nil {
+	if x := bs.Schema; x != nil {
 		return x.MarshalYAML()
 	}
 	return nil, nil
 }
 
-// MarshalJSON returns the JSON encoding of AdditionalProperties.
-func (addProps AdditionalProperties) MarshalJSON() ([]byte, error) {
-	x, err := addProps.MarshalYAML()
+// MarshalJSON returns the JSON encoding of BoolSchema.
+func (bs BoolSchema) MarshalJSON() ([]byte, error) {
+	x, err := bs.MarshalYAML()
 	if err != nil {
 		return nil, err
 	}
 	return json.Marshal(x)
 }
 
-// UnmarshalJSON sets AdditionalProperties to a copy of data.
-func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON sets BoolSchema to a copy of data.
+func (bs *BoolSchema) UnmarshalJSON(data []byte) error {
 	var x any
 	if err := json.Unmarshal(data, &x); err != nil {
 		return unmarshalError(err)
@@ -394,19 +399,19 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
 	switch y := x.(type) {
 	case nil:
 	case bool:
-		addProps.Has = &y
+		bs.Has = &y
 	case map[string]any:
 		if len(y) == 0 {
-			addProps.Schema = &SchemaRef{Value: &Schema{}}
+			bs.Schema = &SchemaRef{Value: &Schema{}}
 		} else {
 			buf := new(bytes.Buffer)
 			_ = json.NewEncoder(buf).Encode(y)
-			if err := json.NewDecoder(buf).Decode(&addProps.Schema); err != nil {
+			if err := json.NewDecoder(buf).Decode(&bs.Schema); err != nil {
 				return err
 			}
 		}
 	default:
-		return errors.New("cannot unmarshal additionalProperties: value must be either a schema object or a boolean")
+		return errors.New("cannot unmarshal: value must be either a schema object or a boolean")
 	}
 	return nil
 }
@@ -645,11 +650,11 @@ func (schema Schema) MarshalYAML() (any, error) {
 	if x := schema.PropertyNames; x != nil {
 		m["propertyNames"] = x
 	}
-	if x := schema.UnevaluatedItems; x != nil {
-		m["unevaluatedItems"] = x
+	if x := schema.UnevaluatedItems; x.Has != nil || x.Schema != nil {
+		m["unevaluatedItems"] = &x
 	}
-	if x := schema.UnevaluatedProperties; x != nil {
-		m["unevaluatedProperties"] = x
+	if x := schema.UnevaluatedProperties; x.Has != nil || x.Schema != nil {
+		m["unevaluatedProperties"] = &x
 	}
 	if x := schema.If; x != nil {
 		m["if"] = x
@@ -921,18 +926,24 @@ func (schema Schema) JSONLookup(token string) (any, error) {
 			return schema.PropertyNames.Value, nil
 		}
 	case "unevaluatedItems":
-		if schema.UnevaluatedItems != nil {
-			if schema.UnevaluatedItems.Ref != "" {
-				return &Ref{Ref: schema.UnevaluatedItems.Ref}, nil
+		if ui := schema.UnevaluatedItems.Has; ui != nil {
+			return *ui, nil
+		}
+		if ui := schema.UnevaluatedItems.Schema; ui != nil {
+			if ui.Ref != "" {
+				return &Ref{Ref: ui.Ref}, nil
 			}
-			return schema.UnevaluatedItems.Value, nil
+			return ui.Value, nil
 		}
 	case "unevaluatedProperties":
-		if schema.UnevaluatedProperties != nil {
-			if schema.UnevaluatedProperties.Ref != "" {
-				return &Ref{Ref: schema.UnevaluatedProperties.Ref}, nil
+		if up := schema.UnevaluatedProperties.Has; up != nil {
+			return *up, nil
+		}
+		if up := schema.UnevaluatedProperties.Schema; up != nil {
+			if up.Ref != "" {
+				return &Ref{Ref: up.Ref}, nil
 			}
-			return schema.UnevaluatedProperties.Value, nil
+			return up.Value, nil
 		}
 	case "if":
 		if schema.If != nil {
@@ -1338,10 +1349,16 @@ func (schema *Schema) IsEmpty() bool {
 	if pn := schema.PropertyNames; pn != nil && pn.Value != nil && !pn.Value.IsEmpty() {
 		return false
 	}
-	if ui := schema.UnevaluatedItems; ui != nil && ui.Value != nil && !ui.Value.IsEmpty() {
+	if ui := schema.UnevaluatedItems.Schema; ui != nil && ui.Value != nil && !ui.Value.IsEmpty() {
 		return false
 	}
-	if up := schema.UnevaluatedProperties; up != nil && up.Value != nil && !up.Value.IsEmpty() {
+	if uih := schema.UnevaluatedItems.Has; uih != nil && !*uih {
+		return false
+	}
+	if up := schema.UnevaluatedProperties.Schema; up != nil && up.Value != nil && !up.Value.IsEmpty() {
+		return false
+	}
+	if uph := schema.UnevaluatedProperties.Has; uph != nil && !*uph {
 		return false
 	}
 	if len(schema.Examples) != 0 {
@@ -1669,7 +1686,10 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			return stack, err
 		}
 	}
-	if ref := schema.UnevaluatedItems; ref != nil {
+	if schema.UnevaluatedItems.Has != nil && schema.UnevaluatedItems.Schema != nil {
+		return stack, errors.New("unevaluatedItems is set to both boolean and schema")
+	}
+	if ref := schema.UnevaluatedItems.Schema; ref != nil {
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1680,7 +1700,10 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			return stack, err
 		}
 	}
-	if ref := schema.UnevaluatedProperties; ref != nil {
+	if schema.UnevaluatedProperties.Has != nil && schema.UnevaluatedProperties.Schema != nil {
+		return stack, errors.New("unevaluatedProperties is set to both boolean and schema")
+	}
+	if ref := schema.UnevaluatedProperties.Schema; ref != nil {
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)

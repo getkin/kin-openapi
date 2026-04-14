@@ -1059,12 +1059,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
-	if v := value.UnevaluatedItems; v != nil {
+	if v := value.UnevaluatedItems.Schema; v != nil {
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err
 		}
 	}
-	if v := value.UnevaluatedProperties; v != nil {
+	if v := value.UnevaluatedProperties.Schema; v != nil {
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err
 		}

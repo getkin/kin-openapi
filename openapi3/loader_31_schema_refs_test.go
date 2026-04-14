@@ -88,14 +88,16 @@ func TestResolveSchemaRefsIn31Fields(t *testing.T) {
 	// unevaluatedItems ref should be resolved
 	unItems := schemas["ArrayWithUnevaluatedItems"].Value
 	require.NotNil(t, unItems)
-	require.Equal(t, "#/components/schemas/StringType", unItems.UnevaluatedItems.Ref)
-	require.NotNil(t, unItems.UnevaluatedItems.Value, "unevaluatedItems $ref should be resolved")
+	require.NotNil(t, unItems.UnevaluatedItems.Schema)
+	require.Equal(t, "#/components/schemas/StringType", unItems.UnevaluatedItems.Schema.Ref)
+	require.NotNil(t, unItems.UnevaluatedItems.Schema.Value, "unevaluatedItems $ref should be resolved")
 
 	// unevaluatedProperties ref should be resolved
 	unProps := schemas["ObjectWithUnevaluatedProperties"].Value
 	require.NotNil(t, unProps)
-	require.Equal(t, "#/components/schemas/StringType", unProps.UnevaluatedProperties.Ref)
-	require.NotNil(t, unProps.UnevaluatedProperties.Value, "unevaluatedProperties $ref should be resolved")
+	require.NotNil(t, unProps.UnevaluatedProperties.Schema)
+	require.Equal(t, "#/components/schemas/StringType", unProps.UnevaluatedProperties.Schema.Ref)
+	require.NotNil(t, unProps.UnevaluatedProperties.Schema.Value, "unevaluatedProperties $ref should be resolved")
 
 	// if/then/else refs should be resolved
 	ifThenElse := schemas["ObjectWithIfThenElse"].Value

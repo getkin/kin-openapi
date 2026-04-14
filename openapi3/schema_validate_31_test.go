@@ -70,7 +70,7 @@ func TestSchemaValidate31SubSchemas(t *testing.T) {
 	t.Run("unevaluatedItems with invalid sub-schema", func(t *testing.T) {
 		schema := &Schema{
 			Type:             &Types{"array"},
-			UnevaluatedItems: &SchemaRef{Value: invalidSchema},
+			UnevaluatedItems: BoolSchema{Schema: &SchemaRef{Value: invalidSchema}},
 		}
 		err := schema.Validate(ctx)
 		require.Error(t, err, "should detect invalid sub-schema in unevaluatedItems")
@@ -79,7 +79,7 @@ func TestSchemaValidate31SubSchemas(t *testing.T) {
 	t.Run("unevaluatedProperties with invalid sub-schema", func(t *testing.T) {
 		schema := &Schema{
 			Type:                  &Types{"object"},
-			UnevaluatedProperties: &SchemaRef{Value: invalidSchema},
+			UnevaluatedProperties: BoolSchema{Schema: &SchemaRef{Value: invalidSchema}},
 		}
 		err := schema.Validate(ctx)
 		require.Error(t, err, "should detect invalid sub-schema in unevaluatedProperties")
@@ -104,7 +104,7 @@ func TestSchemaValidate31SubSchemas(t *testing.T) {
 				{Value: validSubSchema},
 			},
 			Contains:         &SchemaRef{Value: validSubSchema},
-			UnevaluatedItems: &SchemaRef{Value: validSubSchema},
+			UnevaluatedItems: BoolSchema{Schema: &SchemaRef{Value: validSubSchema}},
 		}
 		err := schema.Validate(ctx)
 		require.NoError(t, err, "valid sub-schemas should pass validation")
