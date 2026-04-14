@@ -252,19 +252,26 @@ func WithValidationOptions(ctx context.Context, opts ...ValidationOption) contex
 
 TYPES
 
-type AdditionalProperties struct {
+type AdditionalProperties = BoolSchema
+    AdditionalProperties is a type alias for BoolSchema, kept for backward
+    compatibility.
+
+type BoolSchema struct {
 	Has    *bool
 	Schema *SchemaRef
 }
+    BoolSchema represents a JSON Schema keyword that can be either a boolean
+    or a schema object. Used for additionalProperties, unevaluatedProperties,
+    and unevaluatedItems.
 
-func (addProps AdditionalProperties) MarshalJSON() ([]byte, error)
-    MarshalJSON returns the JSON encoding of AdditionalProperties.
+func (bs BoolSchema) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of BoolSchema.
 
-func (addProps AdditionalProperties) MarshalYAML() (any, error)
-    MarshalYAML returns the YAML encoding of AdditionalProperties.
+func (bs BoolSchema) MarshalYAML() (any, error)
+    MarshalYAML returns the YAML encoding of BoolSchema.
 
-func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error
-    UnmarshalJSON sets AdditionalProperties to a copy of data.
+func (bs *BoolSchema) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets BoolSchema to a copy of data.
 
 type Callback struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1724,8 +1731,8 @@ type Schema struct {
 	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
 	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
 	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems      *SchemaRef `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
-	UnevaluatedProperties *SchemaRef `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
 	// JSON Schema 2020-12 conditional keywords
 	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`
