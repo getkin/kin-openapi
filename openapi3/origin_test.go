@@ -834,3 +834,50 @@ func TestOrigin_Disabled(t *testing.T) {
 	require.Nil(t, doc.Info.Origin)
 	require.Nil(t, doc.Paths.Origin)
 }
+
+// TestOrigin_MappingFields verifies that mapping-valued schema fields
+// (dependentRequired, dependentSchemas, patternProperties) have their
+// key locations tracked in Origin.Fields. Before yaml3 v0.0.12,
+// buildOriginSeq only tracked scalar and sequence values, so these
+// mapping-valued fields were missing from the origin and source
+// location lookups returned nil.
+func TestOrigin_MappingFields(t *testing.T) {
+	loader := NewLoader()
+	loader.IncludeOrigin = true
+
+	doc, err := loader.LoadFromFile("testdata/origin/mapping_fields.yaml")
+	require.NoError(t, err)
+
+	schema := doc.Paths.Find("/test").Get.Responses.Value("200").Value.
+		Content["application/json"].Schema.Value.Properties["metadata"].Value
+	require.NotNil(t, schema.Origin)
+
+	file := "testdata/origin/mapping_fields.yaml"
+
+	// dependentRequired is a map[string][]string — mapping-valued
+	require.Contains(t, schema.Origin.Fields, "dependentRequired")
+	require.Equal(t, Location{
+		File:   file,
+		Line:   18,
+		Column: 21,
+		Name:   "dependentRequired",
+	}, schema.Origin.Fields["dependentRequired"])
+
+	// dependentSchemas is a Schemas map — mapping-valued
+	require.Contains(t, schema.Origin.Fields, "dependentSchemas")
+	require.Equal(t, Location{
+		File:   file,
+		Line:   22,
+		Column: 21,
+		Name:   "dependentSchemas",
+	}, schema.Origin.Fields["dependentSchemas"])
+
+	// patternProperties is a Schemas map — mapping-valued
+	require.Contains(t, schema.Origin.Fields, "patternProperties")
+	require.Equal(t, Location{
+		File:   file,
+		Line:   25,
+		Column: 21,
+		Name:   "patternProperties",
+	}, schema.Origin.Fields["patternProperties"])
+}
