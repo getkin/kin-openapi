@@ -33,7 +33,7 @@ func (license License) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML returns the YAML encoding of License.
 func (license License) MarshalYAML() (any, error) {
-	m := make(map[string]any, 2+len(license.Extensions))
+	m := make(map[string]any, 3+len(license.Extensions))
 	maps.Copy(m, license.Extensions)
 	m["name"] = license.Name
 	if x := license.URL; x != "" {
