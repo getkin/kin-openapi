@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"slices"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -44,29 +45,39 @@ type T struct {
 	integerFormats map[string]IntegerFormatValidator
 }
 
-var _ jsonpointer.JSONPointable = (*T)(nil)
-
-// IsOpenAPI3_0 returns true if the document is OpenAPI 3.0.x
-func (doc *T) IsOpenAPI3_0() bool {
-	return doc.Version() == "3.0"
+// IsOpenAPI30 returns whether doc is an OpenAPI document version 3.0.x.
+// Returns true for 3, 3.0, 3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, ...
+// And false for 3.1.0, 3.2, ... and for invalid strings.
+func (doc *T) IsOpenAPI30() bool {
+	return doc.OpenAPIMajorMinor() == "3.0"
 }
 
-// IsOpenAPI3_1 returns true if the document is OpenAPI 3.1.x
-func (doc *T) IsOpenAPI3_1() bool {
-	return doc.Version() == "3.1"
+// IsOpenAPI31OrLater returns whether doc is an OpenAPI document version >=3.1.
+// Returns true for 3.1, 3.1.0, 3.1.1, 3.1.2, 3.2.0, ...
+// And false for cases where IsOpenAPI30 returns true and for invalid strings.
+func (doc *T) IsOpenAPI31OrLater() bool {
+	return slices.Contains([]string{"3.1", "3.2"}, doc.OpenAPIMajorMinor())
 }
 
-// Version returns the major.minor version of the OpenAPI document
-func (doc *T) Version() string {
-	if doc == nil || doc.OpenAPI == "" {
+// OpenAPIMajorMinor returns 3.y of the OpenAPI "3.y" or "3.y.z" version of the document.
+// Returns the empty string for invalid OpenAPI version strings.
+func (doc *T) OpenAPIMajorMinor() string {
+	if doc == nil {
 		return ""
 	}
-	// Extract major.minor (e.g., "3.0" from "3.0.3")
-	if len(doc.OpenAPI) >= 3 {
-		return doc.OpenAPI[0:3]
+	switch doc.OpenAPI {
+	case "3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4":
+		return "3.0"
+	case "3.1", "3.1.0", "3.1.1", "3.1.2":
+		return "3.1"
+	case "3.2", "3.2.0":
+		return "3.2"
+	default:
+		return ""
 	}
-	return doc.OpenAPI
 }
+
+var _ jsonpointer.JSONPointable = (*T)(nil)
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (doc *T) JSONLookup(token string) (any, error) {
@@ -250,10 +261,12 @@ func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption {
 
 // Validate returns an error if T does not comply with the OpenAPI spec.
 // Validations Options can be provided to modify the validation behavior.
+//
+// By default, doc.OpenAPI's field dictates whether "JSON Schema Draft 2020-12" validation
+// is enabled.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// Auto-enable JSON Schema 2020-12 validation for OpenAPI 3.1 documents
-	if doc.IsOpenAPI3_1() {
-		opts = append([]ValidationOption{EnableJSONSchema2020Validation()}, opts...)
+	if doc.IsOpenAPI31OrLater() {
+		opts = append(opts, EnableJSONSchema2020Validation())
 	}
 	ctx = WithValidationOptions(ctx, opts...)
 
@@ -284,7 +297,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
-	} else if !doc.IsOpenAPI3_1() {
+	} else if doc.IsOpenAPI30() {
 		return wrap(errors.New("must be an object"))
 	}
 

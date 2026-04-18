@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -475,4 +476,30 @@ func TestAddRemoveServer(t *testing.T) {
 	assert.Len(t, doc3.Servers, 3)
 
 	doc3.Servers = Servers{}
+}
+
+func TestOpenAPIMajorMinor(t *testing.T) {
+	var doc *T
+	require.Equal(t, "", doc.OpenAPIMajorMinor())
+	require.False(t, doc.IsOpenAPI30())
+	require.False(t, doc.IsOpenAPI31OrLater())
+
+	doc = &T{}
+	require.Equal(t, "", doc.OpenAPIMajorMinor())
+	require.False(t, doc.IsOpenAPI30())
+	require.False(t, doc.IsOpenAPI31OrLater())
+
+	semvers := []string{"3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.1", "3.1.0", "3.1.1", "3.1.2", "3.2", "3.2.0"}
+	mms := []string{"3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.1", "3.1", "3.1", "3.1", "3.2", "3.2"}
+	three0s := []bool{true, true, true, true, true, true, true, false, false, false, false, false, false}
+	three1plusses := []bool{false, false, false, false, false, false, false, true, true, true, true, true, true}
+	for i := range len(semvers) {
+		t.Run(fmt.Sprintf("openapi:%s", semvers[i]), func(t *testing.T) {
+			t.Parallel()
+			doc := &T{OpenAPI: semvers[i]}
+			require.Equal(t, mms[i], doc.OpenAPIMajorMinor())
+			require.Equal(t, three0s[i], doc.IsOpenAPI30())
+			require.Equal(t, three1plusses[i], doc.IsOpenAPI31OrLater())
+		})
+	}
 }

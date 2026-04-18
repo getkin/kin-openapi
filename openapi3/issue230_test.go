@@ -46,9 +46,9 @@ paths:
 		require.NotNil(t, doc)
 
 		// Verify version detection
-		require.True(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-		require.Equal(t, "3.0", doc.Version())
+		require.True(t, doc.IsOpenAPI30())
+		require.False(t, doc.IsOpenAPI31OrLater())
+		require.Equal(t, "3.0", doc.OpenAPIMajorMinor())
 
 		// Verify structure
 		require.Equal(t, "Test API", doc.Info.Title)
@@ -167,9 +167,9 @@ webhooks:
 		require.NotNil(t, doc)
 
 		// Verify version detection
-		require.True(t, doc.IsOpenAPI3_1())
-		require.False(t, doc.IsOpenAPI3_0())
-		require.Equal(t, "3.1", doc.Version())
+		require.True(t, doc.IsOpenAPI31OrLater())
+		require.False(t, doc.IsOpenAPI30())
+		require.Equal(t, "3.1", doc.OpenAPIMajorMinor())
 
 		// Verify 3.1 fields
 		require.NotNil(t, doc.Webhooks)
@@ -496,7 +496,7 @@ func TestMigrationScenarios(t *testing.T) {
 		err := json.Unmarshal(spec30, &doc30)
 		require.NoError(t, err)
 
-		if doc30.IsOpenAPI3_1() {
+		if doc30.IsOpenAPI31OrLater() {
 		}
 
 		// Simulate loading 3.1 document
@@ -505,7 +505,7 @@ func TestMigrationScenarios(t *testing.T) {
 		err = json.Unmarshal(spec31, &doc31)
 		require.NoError(t, err)
 
-		if doc31.IsOpenAPI3_1() {
+		if doc31.IsOpenAPI31OrLater() {
 		}
 
 		// Cleanup
@@ -559,21 +559,6 @@ func TestEdgeCases(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, string(data), `"url"`)
 		require.Contains(t, string(data), `"identifier"`)
-	})
-
-	t.Run("version detection with edge cases", func(t *testing.T) {
-		var doc *openapi3.T
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-		require.Equal(t, "", doc.Version())
-
-		doc = &openapi3.T{}
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-
-		doc = &openapi3.T{OpenAPI: "3.x"}
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
 	})
 
 	t.Run("schema without type permits any type", func(t *testing.T) {

@@ -19,7 +19,7 @@
 //
 // Version detection is available via helper methods:
 //
-//	if doc.IsOpenAPI3_1() {
+//	if doc.IsOpenAPI31OrLater() {
 //	    // Handle OpenAPI 3.1 specific features
 //	}
 package openapi3

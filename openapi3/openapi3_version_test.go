@@ -10,54 +10,6 @@ import (
 
 var ctx = context.Background()
 
-func TestDocumentVersionDetection(t *testing.T) {
-	t.Run("IsOpenAPI3_0", func(t *testing.T) {
-		doc := &T{OpenAPI: "3.0.0"}
-		require.True(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-
-		doc = &T{OpenAPI: "3.0.3"}
-		require.True(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-
-		doc = &T{OpenAPI: "3.0.1"}
-		require.True(t, doc.IsOpenAPI3_0())
-	})
-
-	t.Run("IsOpenAPI3_1", func(t *testing.T) {
-		doc := &T{OpenAPI: "3.1.0"}
-		require.True(t, doc.IsOpenAPI3_1())
-		require.False(t, doc.IsOpenAPI3_0())
-
-		doc = &T{OpenAPI: "3.1.1"}
-		require.True(t, doc.IsOpenAPI3_1())
-		require.False(t, doc.IsOpenAPI3_0())
-	})
-
-	t.Run("Version", func(t *testing.T) {
-		doc := &T{OpenAPI: "3.0.3"}
-		require.Equal(t, "3.0", doc.Version())
-
-		doc = &T{OpenAPI: "3.1.0"}
-		require.Equal(t, "3.1", doc.Version())
-
-		doc = &T{OpenAPI: "3.1"}
-		require.Equal(t, "3.1", doc.Version())
-	})
-
-	t.Run("nil or empty document", func(t *testing.T) {
-		var doc *T
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-		require.Equal(t, "", doc.Version())
-
-		doc = &T{}
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-		require.Equal(t, "", doc.Version())
-	})
-}
-
 func TestWebhooksField(t *testing.T) {
 	t.Run("serialize webhooks in OpenAPI 3.1", func(t *testing.T) {
 		doc := &T{
@@ -117,7 +69,7 @@ func TestWebhooksField(t *testing.T) {
 		err := json.Unmarshal(jsonData, &doc)
 		require.NoError(t, err)
 
-		require.True(t, doc.IsOpenAPI3_1())
+		require.True(t, doc.IsOpenAPI31OrLater())
 		require.NotNil(t, doc.Webhooks)
 		require.Contains(t, doc.Webhooks, "newPet")
 		require.NotNil(t, doc.Webhooks["newPet"].Post)
@@ -138,7 +90,7 @@ func TestWebhooksField(t *testing.T) {
 		err := json.Unmarshal(jsonData, &doc)
 		require.NoError(t, err)
 
-		require.True(t, doc.IsOpenAPI3_0())
+		require.True(t, doc.IsOpenAPI30())
 		require.Nil(t, doc.Webhooks)
 	})
 
@@ -227,7 +179,7 @@ func TestVersionBasedBehavior(t *testing.T) {
 			Paths: NewPaths(),
 		}
 
-		if doc.IsOpenAPI3_0() {
+		if doc.IsOpenAPI30() {
 			// OpenAPI 3.0 specific logic
 			require.Nil(t, doc.Webhooks)
 		}
@@ -257,7 +209,7 @@ func TestVersionBasedBehavior(t *testing.T) {
 			},
 		}
 
-		if doc.IsOpenAPI3_1() {
+		if doc.IsOpenAPI31OrLater() {
 			// OpenAPI 3.1 specific logic
 			require.NotNil(t, doc.Webhooks)
 			require.Contains(t, doc.Webhooks, "test")
@@ -277,7 +229,7 @@ func TestMigrationScenario(t *testing.T) {
 			Paths: NewPaths(),
 		}
 
-		require.True(t, doc.IsOpenAPI3_0())
+		require.True(t, doc.IsOpenAPI30())
 		require.Nil(t, doc.Webhooks)
 
 		// Upgrade to 3.1
@@ -299,7 +251,7 @@ func TestMigrationScenario(t *testing.T) {
 			},
 		}
 
-		require.True(t, doc.IsOpenAPI3_1())
+		require.True(t, doc.IsOpenAPI31OrLater())
 		require.NotNil(t, doc.Webhooks)
 
 		// Validate the upgraded document

@@ -68,7 +68,7 @@ func main() {
 		}
 
 		var opts []openapi3.ValidationOption
-		if doc.IsOpenAPI3_1() {
+		if doc.IsOpenAPI31OrLater() {
 			log.Println("Detected OpenAPI 3.1 document, enabling JSON Schema 2020-12 validation")
 			opts = append(opts, openapi3.EnableJSONSchema2020Validation())
 		}
