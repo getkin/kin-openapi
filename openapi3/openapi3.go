@@ -266,7 +266,7 @@ func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption {
 // is enabled.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	if doc.IsOpenAPI31OrLater() {
-		opts = append(opts, EnableJSONSchema2020Validation())
+		opts = append(opts, IsOpenAPI31OrLater())
 	}
 	ctx = WithValidationOptions(ctx, opts...)
 

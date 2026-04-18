@@ -86,6 +86,10 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
+	if info.Summary != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
+		return errors.New("field summary is for OpenAPI >=3.1")
+	}
+
 	if contact := info.Contact; contact != nil {
 		if err := contact.Validate(ctx); err != nil {
 			return err

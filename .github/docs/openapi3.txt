@@ -2591,11 +2591,6 @@ func EnableExamplesValidation() ValidationOption
     EnableExamplesValidation does the opposite of DisableExamplesValidation.
     By default, all schema examples are validated.
 
-func EnableJSONSchema2020Validation() ValidationOption
-    EnableJSONSchema2020Validation enables JSON Schema 2020-12 compliant
-    validation for OpenAPI 3.1 documents. This option should be used with
-    doc.Validate().
-
 func EnableSchemaDefaultsValidation() ValidationOption
     EnableSchemaDefaultsValidation does the opposite of
     DisableSchemaDefaultsValidation. By default, schema default values are
@@ -2610,6 +2605,10 @@ func EnableSchemaPatternValidation() ValidationOption
     EnableSchemaPatternValidation does the opposite of
     DisableSchemaPatternValidation. By default, schema pattern validation is
     enabled.
+
+func IsOpenAPI31OrLater() ValidationOption
+    IsOpenAPI31OrLater enables "JSON Schema Draft 2020-12"-compliant validation
+    (for OpenAPI 3.1 documents).
 
 func ProhibitExtensionsWithRef() ValidationOption
     ProhibitExtensionsWithRef causes the validation to return an error if
