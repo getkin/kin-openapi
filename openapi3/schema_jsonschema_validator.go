@@ -197,8 +197,8 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 	}
 }
 
-// visitJSONWithJSONSchema validates using the JSON Schema 2020-12 validator
-func (schema *Schema) visitJSONWithJSONSchema(settings *schemaValidationSettings, value any) error {
+// useJSONSchema2020 validates using the JSON Schema 2020-12 validator
+func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, value any) error {
 	validator, err := newJSONSchemaValidator(schema)
 	if err != nil {
 		// Fall back to built-in validator if compilation fails
