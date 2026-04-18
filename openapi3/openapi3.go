@@ -59,6 +59,10 @@ func (doc *T) IsOpenAPI31OrLater() bool {
 	return slices.Contains([]string{"3.1", "3.2"}, doc.OpenAPIMajorMinor())
 }
 
+func errFieldFor31Plus(field string) error {
+	return fmt.Errorf("field %s is for OpenAPI >=3.1", field)
+}
+
 // OpenAPIMajorMinor returns 3.y of the OpenAPI "3.y" or "3.y.z" version of the document.
 // Returns the empty string for invalid OpenAPI version strings.
 func (doc *T) OpenAPIMajorMinor() string {
