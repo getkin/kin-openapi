@@ -113,6 +113,7 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -242,6 +243,7 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -371,6 +373,7 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -500,6 +503,7 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error 
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -629,6 +633,7 @@ func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) e
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -758,6 +763,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -887,6 +893,7 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
@@ -1035,11 +1042,12 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
 	if len(extras) != 0 {
-		if !getValidationOptions(ctx).jsonSchema2020ValidationEnabled {
+		if !validationOpts.jsonSchema2020ValidationEnabled {
 			return fmt.Errorf("extra sibling fields: %+v", extras)
 		}
 	}
@@ -1166,6 +1174,7 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
