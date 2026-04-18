@@ -1,93 +1,94 @@
-package openapi3
+package openapi3_test
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTypes_HelperMethods(t *testing.T) {
 	t.Run("IncludesNull", func(t *testing.T) {
 		// Single type without null
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 		require.False(t, types.IncludesNull())
 
 		// Type array with null
-		types = &Types{"string", "null"}
+		types = &openapi3.Types{"string", "null"}
 		require.True(t, types.IncludesNull())
 
 		// Multiple types without null
-		types = &Types{"string", "number"}
+		types = &openapi3.Types{"string", "number"}
 		require.False(t, types.IncludesNull())
 
 		// Nil types
-		var nilTypes *Types
+		var nilTypes *openapi3.Types
 		require.False(t, nilTypes.IncludesNull())
 	})
 
 	t.Run("IsMultiple", func(t *testing.T) {
 		// Single type
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 		require.False(t, types.IsMultiple())
 
 		// Multiple types
-		types = &Types{"string", "null"}
+		types = &openapi3.Types{"string", "null"}
 		require.True(t, types.IsMultiple())
 
-		types = &Types{"string", "number", "null"}
+		types = &openapi3.Types{"string", "number", "null"}
 		require.True(t, types.IsMultiple())
 
 		// Empty types
-		types = &Types{}
+		types = &openapi3.Types{}
 		require.False(t, types.IsMultiple())
 
 		// Nil types
-		var nilTypes *Types
+		var nilTypes *openapi3.Types
 		require.False(t, nilTypes.IsMultiple())
 	})
 
 	t.Run("IsSingle", func(t *testing.T) {
 		// Single type
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 		require.True(t, types.IsSingle())
 
 		// Multiple types
-		types = &Types{"string", "null"}
+		types = &openapi3.Types{"string", "null"}
 		require.False(t, types.IsSingle())
 
 		// Empty types
-		types = &Types{}
+		types = &openapi3.Types{}
 		require.False(t, types.IsSingle())
 
 		// Nil types
-		var nilTypes *Types
+		var nilTypes *openapi3.Types
 		require.False(t, nilTypes.IsSingle())
 	})
 
 	t.Run("IsEmpty", func(t *testing.T) {
 		// Single type
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 		require.False(t, types.IsEmpty())
 
 		// Multiple types
-		types = &Types{"string", "null"}
+		types = &openapi3.Types{"string", "null"}
 		require.False(t, types.IsEmpty())
 
 		// Empty types
-		types = &Types{}
+		types = &openapi3.Types{}
 		require.True(t, types.IsEmpty())
 
 		// Nil types
-		var nilTypes *Types
+		var nilTypes *openapi3.Types
 		require.True(t, nilTypes.IsEmpty())
 	})
 }
 
 func TestTypes_ArraySerialization(t *testing.T) {
 	t.Run("single type serializes as string", func(t *testing.T) {
-		schema := &Schema{
-			Type: &Types{"string"},
+		schema := &openapi3.Schema{
+			Type: &openapi3.Types{"string"},
 		}
 
 		data, err := json.Marshal(schema)
@@ -99,8 +100,8 @@ func TestTypes_ArraySerialization(t *testing.T) {
 	})
 
 	t.Run("multiple types serialize as array", func(t *testing.T) {
-		schema := &Schema{
-			Type: &Types{"string", "null"},
+		schema := &openapi3.Schema{
+			Type: &openapi3.Types{"string", "null"},
 		}
 
 		data, err := json.Marshal(schema)
@@ -113,7 +114,7 @@ func TestTypes_ArraySerialization(t *testing.T) {
 	t.Run("deserialize string to single type", func(t *testing.T) {
 		jsonData := []byte(`{"type":"string"}`)
 
-		var schema Schema
+		var schema openapi3.Schema
 		err := json.Unmarshal(jsonData, &schema)
 		require.NoError(t, err)
 
@@ -125,7 +126,7 @@ func TestTypes_ArraySerialization(t *testing.T) {
 	t.Run("deserialize array to multiple types", func(t *testing.T) {
 		jsonData := []byte(`{"type":["string","null"]}`)
 
-		var schema Schema
+		var schema openapi3.Schema
 		err := json.Unmarshal(jsonData, &schema)
 		require.NoError(t, err)
 
@@ -138,7 +139,7 @@ func TestTypes_ArraySerialization(t *testing.T) {
 
 func TestTypes_OpenAPI31Features(t *testing.T) {
 	t.Run("type array with null", func(t *testing.T) {
-		types := &Types{"string", "null"}
+		types := &openapi3.Types{"string", "null"}
 
 		require.True(t, types.Includes("string"))
 		require.True(t, types.IncludesNull())
@@ -153,7 +154,7 @@ func TestTypes_OpenAPI31Features(t *testing.T) {
 	})
 
 	t.Run("type array without null", func(t *testing.T) {
-		types := &Types{"string", "number"}
+		types := &openapi3.Types{"string", "number"}
 
 		require.True(t, types.Includes("string"))
 		require.True(t, types.Includes("number"))
@@ -162,7 +163,7 @@ func TestTypes_OpenAPI31Features(t *testing.T) {
 	})
 
 	t.Run("OpenAPI 3.0 style single type", func(t *testing.T) {
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 
 		require.True(t, types.Is("string"))
 		require.True(t, types.Includes("string"))
@@ -174,7 +175,7 @@ func TestTypes_OpenAPI31Features(t *testing.T) {
 
 func TestTypes_EdgeCases(t *testing.T) {
 	t.Run("nil types permits everything", func(t *testing.T) {
-		var types *Types
+		var types *openapi3.Types
 
 		require.True(t, types.Permits("string"))
 		require.True(t, types.Permits("number"))
@@ -183,7 +184,7 @@ func TestTypes_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("empty slice of types", func(t *testing.T) {
-		types := &Types{}
+		types := &openapi3.Types{}
 
 		require.False(t, types.Includes("string"))
 		require.False(t, types.Permits("string"))
@@ -193,13 +194,13 @@ func TestTypes_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Slice method", func(t *testing.T) {
-		types := &Types{"string", "null"}
+		types := &openapi3.Types{"string", "null"}
 		slice := types.Slice()
 
 		require.Equal(t, []string{"string", "null"}, slice)
 
 		// Nil types
-		var nilTypes *Types
+		var nilTypes *openapi3.Types
 		require.Nil(t, nilTypes.Slice())
 	})
 }
@@ -207,22 +208,22 @@ func TestTypes_EdgeCases(t *testing.T) {
 func TestTypes_BackwardCompatibility(t *testing.T) {
 	t.Run("existing Is method still works", func(t *testing.T) {
 		// Single type
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 		require.True(t, types.Is("string"))
 		require.False(t, types.Is("number"))
 
 		// Multiple types - Is should return false
-		types = &Types{"string", "null"}
+		types = &openapi3.Types{"string", "null"}
 		require.False(t, types.Is("string"))
 		require.False(t, types.Is("null"))
 	})
 
 	t.Run("existing Includes method still works", func(t *testing.T) {
-		types := &Types{"string"}
+		types := &openapi3.Types{"string"}
 		require.True(t, types.Includes("string"))
 		require.False(t, types.Includes("number"))
 
-		types = &Types{"string", "null"}
+		types = &openapi3.Types{"string", "null"}
 		require.True(t, types.Includes("string"))
 		require.True(t, types.Includes("null"))
 		require.False(t, types.Includes("number"))
@@ -230,11 +231,11 @@ func TestTypes_BackwardCompatibility(t *testing.T) {
 
 	t.Run("existing Permits method still works", func(t *testing.T) {
 		// Nil types permits everything
-		var types *Types
+		var types *openapi3.Types
 		require.True(t, types.Permits("anything"))
 
 		// Specific types
-		types = &Types{"string"}
+		types = &openapi3.Types{"string"}
 		require.True(t, types.Permits("string"))
 		require.False(t, types.Permits("number"))
 	})

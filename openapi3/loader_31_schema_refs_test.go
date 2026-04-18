@@ -1,8 +1,9 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +21,7 @@ import (
 //
 // should result in a SchemaRef whose Value has Deprecated==true.
 func TestOAS31_RefSiblingKeyword(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/schema31-ref-siblings.yml")
 	require.NoError(t, err)
 
@@ -39,7 +40,7 @@ func TestOAS31_RefSiblingKeyword(t *testing.T) {
 }
 
 func TestResolveSchemaRefsIn31Fields(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/schema31refs.yml")
 	require.NoError(t, err)
 
