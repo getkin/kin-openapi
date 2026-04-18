@@ -539,11 +539,13 @@ func TestEdgeCases(t *testing.T) {
 		}
 
 		// Nil webhooks should not serialize
-		data30, _ := json.Marshal(doc30)
+		data30, err := json.Marshal(doc30)
+		require.NoError(t, err)
 		require.NotContains(t, string(data30), "webhooks")
 
 		// Empty webhooks should not serialize
-		data31, _ := json.Marshal(doc31Empty)
+		data31, err := json.Marshal(doc31Empty)
+		require.NoError(t, err)
 		require.NotContains(t, string(data31), "webhooks")
 	})
 
