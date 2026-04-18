@@ -1722,11 +1722,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 
 	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
-		opts := []SchemaValidationOption{}
-		if validationOpts.jsonSchema2020ValidationEnabled {
-			opts = append(opts, EnableJSONSchema2020())
-		}
-		if err := schema.VisitJSON(v, opts...); err != nil {
+		if err := validateExampleValue(ctx, v, schema); err != nil {
 			return stack, fmt.Errorf("invalid default: %w", err)
 		}
 	}
