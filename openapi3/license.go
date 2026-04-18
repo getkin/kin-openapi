@@ -19,7 +19,7 @@ type License struct {
 
 	// Identifier is an SPDX license expression for the API (OpenAPI 3.1)
 	// Either url or identifier can be specified, not both
-	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"`
+	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // OpenAPI >=3.1
 }
 
 // MarshalJSON returns the JSON encoding of License.
@@ -39,7 +39,6 @@ func (license License) MarshalYAML() (any, error) {
 	if x := license.URL; x != "" {
 		m["url"] = x
 	}
-	// OpenAPI 3.1 field
 	if x := license.Identifier; x != "" {
 		m["identifier"] = x
 	}
@@ -56,7 +55,7 @@ func (license *License) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
-	delete(x.Extensions, "identifier") // OpenAPI 3.1
+	delete(x.Extensions, "identifier")
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}

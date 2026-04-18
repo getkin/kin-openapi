@@ -80,6 +80,7 @@ func (s SchemaRefs) JSONLookup(token string) (any, error) {
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schema-object
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -100,10 +101,8 @@ type Schema struct {
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
-	// In OpenAPI 3.0: boolean modifier for minimum/maximum
-	// In OpenAPI 3.1: number representing the actual exclusive bound
-	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"` // Number for v3.1+ otherwise boolean
+	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"` // Number for v3.1+ otherwise boolean
 	// Properties
 	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
 	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
@@ -135,42 +134,36 @@ type Schema struct {
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 
-	// OpenAPI 3.1 / JSON Schema 2020-12 fields
-	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`
-	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`
-	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
-	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
-	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
-	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`                                 // OpenAPI >=3.1
+	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`                           // OpenAPI >=3.1
+	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`                     // OpenAPI >=3.1
+	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`                           // OpenAPI >=3.1
+	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`                     // OpenAPI >=3.1
+	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`                     // OpenAPI >=3.1
+	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`         // OpenAPI >=3.1
+	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`           // OpenAPI >=3.1
+	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`                 // OpenAPI >=3.1
+	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`           // OpenAPI >=3.1
+	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 conditional keywords
-	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`
-	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"`
-	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"`
+	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`     // OpenAPI >=3.1
+	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"` // OpenAPI >=3.1
+	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 dependent requirements
-	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 core keywords
-	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`
-	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`
-	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
+	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
+	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 identity/referencing keywords
-	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
-	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
-	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
-	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
+	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`                       // OpenAPI >=3.1
+	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`               // OpenAPI >=3.1
+	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`       // OpenAPI >=3.1
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 content vocabulary
-	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
-	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
-	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
+	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"` // OpenAPI >=3.1
+	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`   // OpenAPI >=3.1
+	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`       // OpenAPI >=3.1
 }
 
 // Types represents the type(s) of a schema.
