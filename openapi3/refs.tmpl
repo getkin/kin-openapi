@@ -142,7 +142,7 @@ func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOp
 
 	if len(extras) != 0 {
 {{- if eq $type.Name "Schema" }}
-		if !validationOpts.jsonSchema2020ValidationEnabled {
+		if !validationOpts.isOpenAPI31OrLater {
 			return fmt.Errorf("extra sibling fields: %+v", extras)
 		}
 {{- else }}
