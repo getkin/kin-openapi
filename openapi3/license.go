@@ -67,6 +67,10 @@ func (license *License) UnmarshalJSON(data []byte) error {
 func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
+	if license.Identifier != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
+		return errFieldFor31Plus("identifier")
+	}
+
 	if license.Name == "" {
 		return errors.New("value of license name must be a non-empty string")
 	}
