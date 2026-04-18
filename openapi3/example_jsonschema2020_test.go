@@ -239,14 +239,12 @@ func Example_comparingValidators() {
 	testValue := "test"
 
 	// Test with built-in validator (no option)
-	err1 := schema.VisitJSON(testValue)
-	if err1 != nil {
+	if err := schema.VisitJSON(testValue); err != nil {
 		fmt.Println("built-in validator: rejected")
 	}
 
 	// Test with JSON Schema 2020-12 validator
-	err2 := schema.VisitJSON(testValue, openapi3.EnableJSONSchema2020())
-	if err2 != nil {
+	if err := schema.VisitJSON(testValue, openapi3.EnableJSONSchema2020()); err != nil {
 		fmt.Println("visit JSON Schema 2020-12 validator: rejected")
 	}
 

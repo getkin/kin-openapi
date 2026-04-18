@@ -336,7 +336,8 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return fmt.Errorf("invalid jsonSchemaDialect: %w", err)
 		}
 		if u.Scheme == "" {
-			return fmt.Errorf("invalid jsonSchemaDialect: must be an absolute URI with a scheme")
+			err := errors.New("must be an absolute URI with a scheme")
+			return fmt.Errorf("invalid jsonSchemaDialect: %w", err)
 		}
 	}
 
