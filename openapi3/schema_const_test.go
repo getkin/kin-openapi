@@ -1,14 +1,15 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	t.Run("string const", func(t *testing.T) {
-		schema := &Schema{
+		schema := &openapi3.Schema{
 			Const: "production",
 		}
 
@@ -21,7 +22,7 @@ func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	})
 
 	t.Run("number const", func(t *testing.T) {
-		schema := &Schema{
+		schema := &openapi3.Schema{
 			Const: float64(42),
 		}
 
@@ -33,7 +34,7 @@ func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	})
 
 	t.Run("boolean const", func(t *testing.T) {
-		schema := &Schema{
+		schema := &openapi3.Schema{
 			Const: true,
 		}
 
@@ -45,8 +46,8 @@ func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	})
 
 	t.Run("null const", func(t *testing.T) {
-		schema := &Schema{
-			Type:  &Types{"null"},
+		schema := &openapi3.Schema{
+			Type:  &openapi3.Types{"null"},
 			Const: nil,
 		}
 
@@ -56,7 +57,7 @@ func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	})
 
 	t.Run("object const", func(t *testing.T) {
-		schema := &Schema{
+		schema := &openapi3.Schema{
 			Const: map[string]any{"key": "value"},
 		}
 
@@ -68,8 +69,8 @@ func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	})
 
 	t.Run("const with type constraint", func(t *testing.T) {
-		schema := &Schema{
-			Type:  &Types{"string"},
+		schema := &openapi3.Schema{
+			Type:  &openapi3.Types{"string"},
 			Const: "fixed",
 		}
 
@@ -81,12 +82,12 @@ func TestSchemaConst_BuiltInValidator(t *testing.T) {
 	})
 
 	t.Run("const with multiError", func(t *testing.T) {
-		schema := &Schema{
-			Type:  &Types{"string"},
+		schema := &openapi3.Schema{
+			Type:  &openapi3.Types{"string"},
 			Const: "fixed",
 		}
 
-		err := schema.VisitJSON("other", MultiErrors())
+		err := schema.VisitJSON("other", openapi3.MultiErrors())
 		require.Error(t, err)
 	})
 }
