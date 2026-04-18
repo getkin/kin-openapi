@@ -23,7 +23,7 @@ For OpenAPI 3.1 validation, use the JSON Schema 2020-12 validator option:
 
 Version detection is available via helper methods:
 
-    if doc.IsOpenAPI3_1() {
+    if doc.IsOpenAPI31OrLater() {
         // Handle OpenAPI 3.1 specific features
     }
 
@@ -2340,11 +2340,15 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, Comp
 
         doc.InternalizeRefs(context.Background(), nil)
 
-func (doc *T) IsOpenAPI3_0() bool
-    IsOpenAPI3_0 returns true if the document is OpenAPI 3.0.x
+func (doc *T) IsOpenAPI30() bool
+    IsOpenAPI30 returns whether doc is an OpenAPI document version 3.0.x.
+    Returns true for 3, 3.0, 3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, ... And false
+    for 3.1.0, 3.2, ... and for invalid strings.
 
-func (doc *T) IsOpenAPI3_1() bool
-    IsOpenAPI3_1 returns true if the document is OpenAPI 3.1.x
+func (doc *T) IsOpenAPI31OrLater() bool
+    IsOpenAPI31OrLater returns whether doc is an OpenAPI document version >=3.1.
+    Returns true for 3.1, 3.1.0, 3.1.1, 3.1.2, 3.2.0, ... And false for cases
+    where IsOpenAPI30 returns true and for invalid strings.
 
 func (doc *T) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -2355,6 +2359,10 @@ func (doc *T) MarshalJSON() ([]byte, error)
 
 func (doc *T) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of T.
+
+func (doc *T) OpenAPIMajorMinor() string
+    OpenAPIMajorMinor returns 3.y of the OpenAPI "3.y" or "3.y.z" version of the
+    document. Returns the empty string for invalid OpenAPI version strings.
 
 func (doc *T) SetIntegerFormatValidator(name string, validator IntegerFormatValidator)
     SetIntegerFormatValidator sets a single document-scoped integer format
@@ -2387,13 +2395,13 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if T does not comply with the OpenAPI spec.
     Validations Options can be provided to modify the validation behavior.
 
+    By default, doc.OpenAPI's field dictates whether "JSON Schema Draft 2020-12"
+    validation is enabled.
+
 func (doc *T) ValidateSchemaJSON(schema *Schema, value any, opts ...SchemaValidationOption) error
     ValidateSchemaJSON validates data against a schema using this document's
     format validators. This is a convenience method that automatically applies
     the document's format validators.
-
-func (doc *T) Version() string
-    Version returns the major.minor version of the OpenAPI document
 
 type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
