@@ -2286,22 +2286,16 @@ func (stringMap *StringMap[V]) UnmarshalJSON(data []byte) (err error)
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
-	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
-	Info         *Info                `json:"info" yaml:"info"`                       // Required
-	Paths        *Paths               `json:"paths,omitempty" yaml:"paths,omitempty"` // Required in 3.0, optional in 3.1
-	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
-	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-
-	// OpenAPI 3.1.x specific fields
-	// Webhooks are a new feature in OpenAPI 3.1 that allow APIs to define callback operations
-	Webhooks map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`
-
-	// JSONSchemaDialect allows specifying the default JSON Schema dialect for Schema Objects
-	// See https://spec.openapis.org/oas/v3.1.0#schema-object
-	JSONSchemaDialect string `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
+	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
+	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
+	Info              *Info                `json:"info" yaml:"info"`   // Required
+	Paths             *Paths               `json:"paths" yaml:"paths"` // Required in 3.0, optional in 3.1
+	Security          SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Servers           Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Tags              Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
+	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Webhooks          map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
+	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
 
 	// Has unexported fields.
 }
