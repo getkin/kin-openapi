@@ -270,14 +270,11 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		}
 	}
 
-	// Visit all webhooks (OpenAPI 3.1)
 	for _, name := range componentNames(doc.Webhooks) {
-		pathItem := doc.Webhooks[name]
-		if pathItem == nil {
-			continue
-		}
-		if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
-			return
+		if pathItem := doc.Webhooks[name]; pathItem != nil {
+			if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
+				return
+			}
 		}
 	}
 
