@@ -11,6 +11,7 @@ import (
 
 // SecurityScheme is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-scheme-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#security-scheme-object
 type SecurityScheme struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -171,7 +172,9 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 			return fmt.Errorf("no OIDC URL found for openIdConnect security scheme %q", ss.Name)
 		}
 	case "mutualTLS":
-		// OpenAPI 3.1: mutualTLS has no additional required fields
+		if !getValidationOptions(ctx).isOpenAPI31OrLater {
+			return errValueOfFieldFor31Plus(ss.Type, "type")
+		}
 	default:
 		return fmt.Errorf("security scheme 'type' can't be %q", ss.Type)
 	}

@@ -57,6 +57,10 @@ func errFieldFor31Plus(field string) error {
 	return fmt.Errorf("field %s is for OpenAPI >=3.1", field)
 }
 
+func errValueOfFieldFor31Plus(value any, field string) error {
+	return fmt.Errorf("value %q of field %s is for OpenAPI >=3.1", value, field)
+}
+
 // OpenAPIMajorMinor returns 3.y of the OpenAPI "3.y" or "3.y.z" version of the document.
 // Returns the empty string for invalid OpenAPI version strings.
 func (doc *T) OpenAPIMajorMinor() string {
