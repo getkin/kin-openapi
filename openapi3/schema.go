@@ -1766,6 +1766,8 @@ func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool {
 	return schema.visitJSON(settings, value) == nil
 }
 
+// VisitJSON applies a Schema to the given data, considering opts.
+// To validate data against an OpenAPIv3.1+ schema, be sure to pass the EnableJSONSchema2020() option.
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error {
 	settings := newSchemaValidationSettings(opts...)
 

@@ -1821,6 +1821,9 @@ func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) er
     Validate returns an error if Schema does not comply with the OpenAPI spec.
 
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
+    VisitJSON applies a Schema to the given data, considering opts.
+    To validate data against an OpenAPIv3.1+ schema, be sure to pass the
+    EnableJSONSchema2020() option.
 
 func (schema *Schema) VisitJSONArray(value []any) error
 
