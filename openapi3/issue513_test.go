@@ -2,13 +2,14 @@ package openapi3
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestExtraSiblingsInRemoteRef(t *testing.T) {
-	spec := []byte(`
+	spec := `
 openapi: 3.0.1
 servers:
 - url: http://localhost:5000
@@ -31,7 +32,7 @@ paths:
             application/json:
               schema:
                 $ref: http://schemas.sentex.io/store/categories.json
-`[1:])
+`
 
 	// When that site fails to respond:
 	// see https://github.com/getkin/kin-openapi/issues/495
@@ -62,14 +63,19 @@ paths:
 	//   "maximum": 30
 	// }
 
-	sl := NewLoader()
-	sl.IsExternalRefsAllowed = true
+	for _, majmin := range []string{"'3.0'", "'3.1'"} {
+		t.Run(majmin, func(t *testing.T) {
+			t.Parallel()
+			sl := NewLoader()
+			sl.IsExternalRefsAllowed = true
 
-	doc, err := sl.LoadFromData(spec)
-	require.NoError(t, err)
+			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.1", majmin)))
+			require.NoError(t, err)
 
-	err = doc.Validate(sl.Context, AllowExtraSiblingFields("$id", "$schema"))
-	require.NoError(t, err)
+			err = doc.Validate(sl.Context, AllowExtraSiblingFields("$id", "$schema"))
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestIssue513OKWithExtension(t *testing.T) {
@@ -104,14 +110,20 @@ components:
           description: A detailed message describing the error.
           type: string
 `[1:]
-	sl := NewLoader()
-	doc, err := sl.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	err = doc.Validate(sl.Context)
-	require.NoError(t, err)
-	data, err := json.Marshal(doc)
-	require.NoError(t, err)
-	require.Contains(t, string(data), `x-my-extension`)
+
+	for _, majmin := range []string{"3.0", "3.1"} {
+		t.Run(majmin, func(t *testing.T) {
+			t.Parallel()
+			sl := NewLoader()
+			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
+			require.NoError(t, err)
+			err = doc.Validate(sl.Context)
+			require.NoError(t, err)
+			data, err := json.Marshal(doc)
+			require.NoError(t, err)
+			require.Contains(t, string(data), `x-my-extension`)
+		})
+	}
 }
 
 func TestIssue513KOHasExtraFieldSchema(t *testing.T) {
@@ -149,12 +161,18 @@ components:
           description: A detailed message describing the error.
           type: string
 `[1:]
-	sl := NewLoader()
-	doc, err := sl.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	require.Contains(t, doc.Paths.Value("/v1/operation").Delete.Responses.Default().Value.Extensions, `x-my-extension`)
-	err = doc.Validate(sl.Context)
-	require.ErrorContains(t, err, `extra sibling fields: [schema]`)
+
+	for _, majmin := range []string{"3.0", "3.1"} {
+		t.Run(majmin, func(t *testing.T) {
+			t.Parallel()
+			sl := NewLoader()
+			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
+			require.NoError(t, err)
+			require.Contains(t, doc.Paths.Value("/v1/operation").Delete.Responses.Default().Value.Extensions, `x-my-extension`)
+			err = doc.Validate(sl.Context)
+			require.ErrorContains(t, err, `extra sibling fields: [schema]`)
+		})
+	}
 }
 
 func TestIssue513KOMixesRefAlongWithOtherFieldsDisallowed(t *testing.T) {
@@ -190,11 +208,17 @@ components:
           description: A detailed message describing the error.
           type: string
 `[1:]
-	sl := NewLoader()
-	doc, err := sl.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	err = doc.Validate(sl.Context)
-	require.ErrorContains(t, err, `extra sibling fields: [description]`)
+
+	for _, majmin := range []string{"3.0", "3.1"} {
+		t.Run(majmin, func(t *testing.T) {
+			t.Parallel()
+			sl := NewLoader()
+			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
+			require.NoError(t, err)
+			err = doc.Validate(sl.Context)
+			require.ErrorContains(t, err, `extra sibling fields: [description]`)
+		})
+	}
 }
 
 func TestIssue513KOMixesRefAlongWithOtherFieldsAllowed(t *testing.T) {
@@ -230,9 +254,15 @@ components:
           description: A detailed message describing the error.
           type: string
 `[1:]
-	sl := NewLoader()
-	doc, err := sl.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	err = doc.Validate(sl.Context, AllowExtraSiblingFields("description"))
-	require.NoError(t, err)
+
+	for _, majmin := range []string{"3.0", "3.1"} {
+		t.Run(majmin, func(t *testing.T) {
+			t.Parallel()
+			sl := NewLoader()
+			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
+			require.NoError(t, err)
+			err = doc.Validate(sl.Context, AllowExtraSiblingFields("description"))
+			require.NoError(t, err)
+		})
+	}
 }
