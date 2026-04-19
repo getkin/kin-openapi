@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 	filename := flag.Arg(0)
 	if len(flag.Args()) != 1 || filename == "" {
-		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--circular] [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
+		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
 	}
 
 	data, err := os.ReadFile(filename)
