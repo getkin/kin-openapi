@@ -955,7 +955,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		// they augment the referenced schema (e.g. deprecated:true alongside $ref).
 		// Only apply for OAS 3.1+ — in 3.0 $ref replaces its entire object and siblings
 		// are (validly) ignored.
-		if strings.HasPrefix(doc.OpenAPI, "3.1") && component.sibling != nil && component.Value != nil {
+		if doc.IsOpenAPI31OrLater() && component.sibling != nil && component.Value != nil {
 			// Work on a copy so we don't mutate a schema shared by other references.
 			schemaCopy := *component.Value
 			applySiblingSchemaFields(&schemaCopy, component.sibling, component.extra)
@@ -1355,6 +1355,7 @@ func unescapeRefString(ref string) string {
 // Only fields that were explicitly present in the original YAML/JSON are applied; the presentFields
 // slice (derived from SchemaRef.extra) carries this information.
 func applySiblingSchemaFields(dst, sibling *Schema, presentFields []string) {
+	// FIXME(reuvenharrison): complete with missing Schema fields + Origin?
 	for _, field := range presentFields {
 		switch field {
 		case "deprecated":
