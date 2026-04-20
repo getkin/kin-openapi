@@ -1,0 +1,9 @@
+invalid components: parameter "DetectOrientation": Successful RecognizePrintedText request: value must be a boolean
+Schema:
+  {
+    "default": true,
+    "type": "boolean"
+  }
+
+Value:
+  "true"

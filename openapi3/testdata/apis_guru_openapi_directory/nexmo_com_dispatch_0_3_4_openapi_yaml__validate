@@ -1,0 +1,16 @@
+invalid components: schema "finalReport": invalid example: value is not one of the allowed values ["messenger","viber_sevice_msg","sms","whatsapp","mms"]
+Schema:
+  {
+    "enum": [
+      "messenger",
+      "viber_sevice_msg",
+      "sms",
+      "whatsapp",
+      "mms"
+    ],
+    "example": "viber_service_msg",
+    "type": "string"
+  }
+
+Value:
+  "viber_service_msg"

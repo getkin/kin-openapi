@@ -1,0 +1,8 @@
+invalid paths: invalid path /mostemailed/{section}/{time-period}.json: invalid operation GET: example response: value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  "\u003ch1\u003eDeveloper Over Qps\u003c/h1\u003e"

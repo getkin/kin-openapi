@@ -1,0 +1,54 @@
+invalid components: schema "availableDriversInfo": invalid example: Error at "/externalCloudInfoSchema/0/key": property "key" is missing
+Schema:
+  {
+    "properties": {
+      "hidden": {
+        "description": "Indicates whether cloud info parameter is hidden.",
+        "type": "boolean"
+      },
+      "key": {
+        "description": "Key of external cloud info parameter.",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "label": {
+        "description": "Label of external cloud info parameter.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "key",
+      "label"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {}
+ | Error at "/externalCloudInfoSchema/0/label": property "label" is missing
+Schema:
+  {
+    "properties": {
+      "hidden": {
+        "description": "Indicates whether cloud info parameter is hidden.",
+        "type": "boolean"
+      },
+      "key": {
+        "description": "Key of external cloud info parameter.",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "label": {
+        "description": "Label of external cloud info parameter.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "key",
+      "label"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {}

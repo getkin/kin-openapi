@@ -1,0 +1,8 @@
+invalid paths: invalid path /api/v1/donations/carbon_stats: invalid operation GET: donation: value must be a number
+Schema:
+  {
+    "type": "number"
+  }
+
+Value:
+  "d_NuYL6M2C1kjecXpWzKVODw7W"

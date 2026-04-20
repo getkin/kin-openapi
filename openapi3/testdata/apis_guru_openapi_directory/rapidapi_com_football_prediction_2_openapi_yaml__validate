@@ -1,0 +1,16 @@
+invalid paths: invalid path /api/v2/list-federations: invalid operation GET: example 0: value must be an object
+Schema:
+  {
+    "properties": {
+      "data": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\"data\": [\"UEFA\", \"OFC\", \"CAF\", \"CONCACAF\", \"CONMEBOL\", \"AFC\"]}"

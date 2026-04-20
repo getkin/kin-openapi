@@ -1,0 +1,9 @@
+invalid paths: invalid path /checkCode: invalid operation POST: invalid default: value must be a string
+Schema:
+  {
+    "default": 123456,
+    "type": "string"
+  }
+
+Value:
+  123456

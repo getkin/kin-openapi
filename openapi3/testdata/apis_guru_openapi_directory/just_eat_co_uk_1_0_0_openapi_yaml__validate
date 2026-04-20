@@ -1,0 +1,302 @@
+invalid components: schema "ActiveConsumerOffersByRestaurant": invalid example: Error at "/offers/0": doesn't match schema due to: doesn't match schema due to: property "amount" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "Type": {
+        "description": "Contains the offer data type name",
+        "type": "string"
+      },
+      "offerId": {
+        "description": "Unique Identifier for Offer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "Type",
+      "offerId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 20,
+    "maxQualifyingValue": 45000,
+    "offerId": "12345sd",
+    "qualifyingValue": 15000
+  }
+ | property "maxQualifyingValue" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "Type": {
+        "description": "Contains the offer data type name",
+        "type": "string"
+      },
+      "offerId": {
+        "description": "Unique Identifier for Offer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "Type",
+      "offerId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 20,
+    "maxQualifyingValue": 45000,
+    "offerId": "12345sd",
+    "qualifyingValue": 15000
+  }
+ | property "qualifyingValue" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "Type": {
+        "description": "Contains the offer data type name",
+        "type": "string"
+      },
+      "offerId": {
+        "description": "Unique Identifier for Offer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "Type",
+      "offerId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 20,
+    "maxQualifyingValue": 45000,
+    "offerId": "12345sd",
+    "qualifyingValue": 15000
+  }
+ And property "Type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "amount": {
+        "description": "The percentage value discount",
+        "format": "decimal",
+        "type": "number"
+      },
+      "maxQualifyingValue": {
+        "description": "The maximum order value required to be eligible for the offer",
+        "format": "decimal",
+        "type": "number"
+      },
+      "qualifyingValue": {
+        "description": "The minimum order value required to be eligible for the Offer",
+        "format": "decimal",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 20,
+    "maxQualifyingValue": 45000,
+    "offerId": "12345sd",
+    "qualifyingValue": 15000
+  }
+ | property "offerId" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "amount": {
+        "description": "The percentage value discount",
+        "format": "decimal",
+        "type": "number"
+      },
+      "maxQualifyingValue": {
+        "description": "The maximum order value required to be eligible for the offer",
+        "format": "decimal",
+        "type": "number"
+      },
+      "qualifyingValue": {
+        "description": "The minimum order value required to be eligible for the Offer",
+        "format": "decimal",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 20,
+    "maxQualifyingValue": 45000,
+    "offerId": "12345sd",
+    "qualifyingValue": 15000
+  }
+ | Error at "/offers/1": doesn't match schema due to: doesn't match schema due to: property "amount" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "Type": {
+        "description": "Contains the offer data type name",
+        "type": "string"
+      },
+      "offerId": {
+        "description": "Unique Identifier for Offer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "Type",
+      "offerId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 15,
+    "maxQualifyingValue": 70000,
+    "offerId": "45sd345",
+    "qualifyingValue": 35000
+  }
+ | property "maxQualifyingValue" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "Type": {
+        "description": "Contains the offer data type name",
+        "type": "string"
+      },
+      "offerId": {
+        "description": "Unique Identifier for Offer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "Type",
+      "offerId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 15,
+    "maxQualifyingValue": 70000,
+    "offerId": "45sd345",
+    "qualifyingValue": 35000
+  }
+ | property "qualifyingValue" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "Type": {
+        "description": "Contains the offer data type name",
+        "type": "string"
+      },
+      "offerId": {
+        "description": "Unique Identifier for Offer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "Type",
+      "offerId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 15,
+    "maxQualifyingValue": 70000,
+    "offerId": "45sd345",
+    "qualifyingValue": 35000
+  }
+ And property "Type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "amount": {
+        "description": "The percentage value discount",
+        "format": "decimal",
+        "type": "number"
+      },
+      "maxQualifyingValue": {
+        "description": "The maximum order value required to be eligible for the offer",
+        "format": "decimal",
+        "type": "number"
+      },
+      "qualifyingValue": {
+        "description": "The minimum order value required to be eligible for the Offer",
+        "format": "decimal",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 15,
+    "maxQualifyingValue": 70000,
+    "offerId": "45sd345",
+    "qualifyingValue": 35000
+  }
+ | property "offerId" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "amount": {
+        "description": "The percentage value discount",
+        "format": "decimal",
+        "type": "number"
+      },
+      "maxQualifyingValue": {
+        "description": "The maximum order value required to be eligible for the offer",
+        "format": "decimal",
+        "type": "number"
+      },
+      "qualifyingValue": {
+        "description": "The minimum order value required to be eligible for the Offer",
+        "format": "decimal",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  {
+    "Type": "Percent",
+    "amount": 15,
+    "maxQualifyingValue": 70000,
+    "offerId": "45sd345",
+    "qualifyingValue": 35000
+  }

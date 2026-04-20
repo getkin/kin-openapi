@@ -1,0 +1,225 @@
+invalid paths: invalid path /available/products: invalid operation POST: example 1: doesn't match schema due to: Error at "/errorMessage": value must be an array
+Schema:
+  {
+    "description": "**array** of error message strings",
+    "items": {},
+    "nullable": true,
+    "type": "array"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/errorMessageText": value must be a string
+Schema:
+  {
+    "description": "**array** of error message strings in plain text",
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/errorName": value must be a string
+Schema:
+  {
+    "description": "**name** of *this* type of error",
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/errorReference": value must be a string
+Schema:
+  {
+    "description": "**reference number** of *this* error",
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/errorType": value must be a string
+Schema:
+  {
+    "description": "**code** specifying the type of error",
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ And Error at "/data/0/admission": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/0/essential": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/0/onRequestPeriod": value must be an integer
+Schema:
+  {
+    "description": "**number** of hours before the travel date that *this* product will be 'on-request' for\n- this field will contain a value if the `bookingEngineId` is `'FreesaleOnRequestBE'`\n- an `onRequestPeriod` of 48 hours means that *this* product is freesale up until 48 hours before the travel date, and is on-request for 48 hours or less until the travel date\n- **note**: 'hours in advance' (the number of hours a product is available for booking before the travel date) may also affect this; however, this value is not available in the API\n",
+    "nullable": true,
+    "type": "integer"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/0/primaryGroupId": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/0/savingAmount": value must be a string
+Schema:
+  {
+    "description": "Ignore (Viator only)\n",
+    "type": "string"
+  }
+
+Value:
+  0
+ | Error at "/data/0/specialReservationDetails": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/0/uniqueShortDescription": value must be a string
+Schema:
+  {
+    "description": "**natural-language description** of *this* product",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/0/webURL": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/1/admission": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/1/essential": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/1/primaryGroupId": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/1/savingAmount": value must be a string
+Schema:
+  {
+    "description": "Ignore (Viator only)\n",
+    "type": "string"
+  }
+
+Value:
+  0
+ | Error at "/data/1/specialReservationDetails": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/1/uniqueShortDescription": value must be a string
+Schema:
+  {
+    "description": "**natural-language description** of *this* product",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }
+ | Error at "/data/1/webURL": value must be a string
+Schema:
+  {
+    "description": "ignore (Viator only)",
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/examples/product-example-1/value/data/pas"
+  }

@@ -1,0 +1,19 @@
+invalid components: schema "registerEmailRequest": invalid example: value must be an object
+Schema:
+  {
+    "description": "An optional array of additional ApplicationID's that the value is to be assigned to.",
+    "example": [
+      "6ec9eb7de1d34e77ac2c0ad597c9554a",
+      "5dba5838689f402dba0c77957e2181f3"
+    ],
+    "items": {
+      "type": "string"
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    "6ec9eb7de1d34e77ac2c0ad597c9554a",
+    "5dba5838689f402dba0c77957e2181f3"
+  ]

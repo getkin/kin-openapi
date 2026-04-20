@@ -1,0 +1,39 @@
+invalid paths: invalid path /api/backgrounds/{index}: invalid operation GET: invalid example: doesn't match schema due to: Error at "/bonds/from": input matches more than one oneOf schemas | Error at "/flaws/from": input matches more than one oneOf schemas | Error at "/ideals/from": input matches more than one oneOf schemas | Error at "/language_options/from": input matches more than one oneOf schemas | Error at "/starting_equipment_options": value must be an object
+Schema:
+  {
+    "description": "`Choice`\n",
+    "properties": {
+      "choose": {
+        "description": "Number of items to pick from the list.",
+        "type": "number"
+      },
+      "desc": {
+        "description": "Description of the choice to be made.",
+        "type": "string"
+      },
+      "from": {
+        "$ref": "#/components/schemas/OptionSet"
+      },
+      "type": {
+        "description": "Type of the resources to choose from.",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "choose": 1,
+      "from": {
+        "equipment_category": {
+          "index": "holy-symbols",
+          "name": "Holy Symbols",
+          "url": "/api/equipment-categories/holy-symbols"
+        },
+        "option_set_type": "equipment_category"
+      },
+      "type": "equipment"
+    }
+  ]

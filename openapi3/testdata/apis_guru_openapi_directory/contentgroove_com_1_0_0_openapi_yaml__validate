@@ -1,0 +1,8 @@
+invalid paths: invalid path /clips: invalid operation GET: invalid example: value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  "{\n  \"filter[name_eq]\": \"john h. glenn, kindly air force base hospital\",\n  \"filter[text_start]\": \"He landed in the sea\"\n}"

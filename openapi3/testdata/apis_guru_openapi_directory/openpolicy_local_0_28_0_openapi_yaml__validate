@@ -1,0 +1,13 @@
+invalid components: schema "inputSchema": invalid example: value must be an object
+Schema:
+  {
+    "additionalProperties": {},
+    "example": "{\n  \"input\": {\n   \"example\": {\n     \"flag\": true\n     }\n   }\n }",
+    "type": "object",
+    "x-examples": {
+      "example": "{\n  \"input\": {\n   \"example\": {\n     \"flag\": true\n     }\n   }\n }"
+    }
+  }
+
+Value:
+  "{\n  \"input\": {\n   \"example\": {\n     \"flag\": true\n     }\n   }\n }"

@@ -1,0 +1,1 @@
+invalid components: schema "DescribeUserPoolDomainResponse": error parsing regexp: invalid named capture: `(?<!\.)$`

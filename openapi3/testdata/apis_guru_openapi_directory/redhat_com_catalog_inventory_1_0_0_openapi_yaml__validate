@@ -1,0 +1,11 @@
+invalid components: schema "CheckAvailabilityTask": invalid example: value must be an object
+Schema:
+  {
+    "example": "Task payload input content",
+    "readOnly": true,
+    "title": "Content",
+    "type": "object"
+  }
+
+Value:
+  "Task payload input content"

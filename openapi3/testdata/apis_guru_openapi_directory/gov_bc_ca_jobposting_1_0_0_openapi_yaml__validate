@@ -1,0 +1,22 @@
+invalid paths: invalid path /jobs: invalid operation POST: invalid default: value must be an integer
+Schema:
+  {
+    "default": [
+      1
+    ],
+    "description": "ID values for types of job to filter on. Only job postings matching all specified values will be included in the response. If not specified, the data is not filtered by job type.",
+    "enum": [
+      [
+        1
+      ],
+      [
+        2
+      ]
+    ],
+    "type": "integer"
+  }
+
+Value:
+  [
+    1
+  ]

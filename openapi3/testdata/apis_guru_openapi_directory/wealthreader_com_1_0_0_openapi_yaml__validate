@@ -1,0 +1,10 @@
+invalid components: schema "entities": invalid example: value must be a boolean
+Schema:
+  {
+    "description": "Indica si el campo es requerido",
+    "example": 0,
+    "type": "boolean"
+  }
+
+Value:
+  0

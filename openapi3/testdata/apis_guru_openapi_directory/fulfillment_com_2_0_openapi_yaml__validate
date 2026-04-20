@@ -1,0 +1,14 @@
+invalid paths: invalid path /accounting: invalid operation GET: invalid example: value must be an array
+Schema:
+  {
+    "items": {
+      "enum": [
+        "items"
+      ],
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "items"

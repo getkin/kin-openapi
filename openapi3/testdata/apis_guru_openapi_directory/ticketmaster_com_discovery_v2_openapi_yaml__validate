@@ -1,0 +1,12 @@
+invalid components: schema "AccessDates": invalid example: value must be a boolean
+Schema:
+  {
+    "default": false,
+    "description": "Boolean flag to indicate whether or not the access end date is approximated",
+    "example": "yyyy-MM-ddThh-mm-ssZ",
+    "type": "boolean",
+    "x-position": 3
+  }
+
+Value:
+  "yyyy-MM-ddThh-mm-ssZ"

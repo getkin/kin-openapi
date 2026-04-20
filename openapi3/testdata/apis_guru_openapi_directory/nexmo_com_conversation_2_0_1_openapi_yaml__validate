@@ -1,0 +1,10 @@
+invalid paths: invalid path /conversations: invalid operation GET: invalid example: value must be a number
+Schema:
+  {
+    "description": "The total number of records returned by your request.",
+    "example": "100",
+    "type": "number"
+  }
+
+Value:
+  "100"

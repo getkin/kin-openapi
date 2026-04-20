@@ -1,0 +1,1 @@
+invalid paths: invalid path /2010-04-01/Accounts.json: invalid operation GET: parameter "Status" schema is invalid: extra sibling fields: [type]

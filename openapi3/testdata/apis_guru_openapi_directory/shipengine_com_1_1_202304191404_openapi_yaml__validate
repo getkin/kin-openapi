@@ -1,0 +1,11 @@
+invalid components: schema "address_validating_shipment": invalid example: value must be a string
+Schema:
+  {
+    "description": "The National Motor Freight Traffic Association [freight class](http://www.nmfta.org/pages/nmfc?AspxAutoDetectCookieSupport=1), such as \"77.5\", \"110\", or \"250\".\n",
+    "example": 77.5,
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  77.5

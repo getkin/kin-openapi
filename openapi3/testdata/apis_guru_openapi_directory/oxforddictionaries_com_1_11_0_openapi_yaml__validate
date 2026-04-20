@@ -1,0 +1,13 @@
+invalid paths: invalid path /search/{source_lang}: invalid operation GET: parameter "prefix" schema is invalid: invalid default: value must be a boolean
+Schema:
+  {
+    "default": "false",
+    "enum": [
+      "false",
+      "true"
+    ],
+    "type": "boolean"
+  }
+
+Value:
+  "false"

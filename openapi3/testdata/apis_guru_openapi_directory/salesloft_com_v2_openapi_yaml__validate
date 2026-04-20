@@ -1,0 +1,14 @@
+invalid components: schema "ActivityHistory": invalid example: value must be an object
+Schema:
+  {
+    "description": "A list of remote resource names that failed to load. This is specific to the type of activity and may change over time. Not returned for create requests",
+    "example": [
+      "email"
+    ],
+    "type": "object"
+  }
+
+Value:
+  [
+    "email"
+  ]

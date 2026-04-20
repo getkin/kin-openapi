@@ -1,0 +1,24 @@
+invalid paths: invalid path /api/pdf: invalid operation GET: invalid example: value must be an object
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "description": {
+        "nullable": true,
+        "type": "string"
+      },
+      "errorMessage": {
+        "description": "If any error occurs the message will be displayed in here",
+        "nullable": true,
+        "type": "string"
+      },
+      "statusCode": {
+        "format": "int32",
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\r\n  \"description\": \"Always empty in the public response, used for internal error transport to logs\",\r\n  \"statusCode\": 400,\r\n  \"errorMessage\": \"The error message provided to client\"\r\n}"

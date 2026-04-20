@@ -1,0 +1,10 @@
+invalid components: schema "ArticleComplete": invalid example: value must be a boolean
+Schema:
+  {
+    "description": "True if author has published items",
+    "example": 1,
+    "type": "boolean"
+  }
+
+Value:
+  1

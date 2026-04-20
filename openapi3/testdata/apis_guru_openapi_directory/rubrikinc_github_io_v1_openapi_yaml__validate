@@ -1,0 +1,15 @@
+invalid paths: invalid path /certificate: invalid operation GET: parameter "sort_by" schema is invalid: invalid default: value is not one of the allowed values ["name","description","hasKey","expiration"]
+Schema:
+  {
+    "default": "Name",
+    "enum": [
+      "name",
+      "description",
+      "hasKey",
+      "expiration"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "Name"

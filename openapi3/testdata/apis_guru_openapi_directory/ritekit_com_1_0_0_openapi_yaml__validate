@@ -1,0 +1,8 @@
+invalid paths: invalid path /v1/images/quote: invalid operation GET: invalid example: value must be an integer
+Schema:
+  {
+    "type": "integer"
+  }
+
+Value:
+  "60"

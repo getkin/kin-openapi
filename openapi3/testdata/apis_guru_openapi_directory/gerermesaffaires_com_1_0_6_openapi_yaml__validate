@@ -1,0 +1,15 @@
+invalid components: schema "Accounting": invalid example: value must be a string
+Schema:
+  {
+    "example": [
+      "Contract",
+      "Invoice"
+    ],
+    "type": "string"
+  }
+
+Value:
+  [
+    "Contract",
+    "Invoice"
+  ]

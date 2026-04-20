@@ -1,0 +1,92 @@
+invalid components: schema "AddonMigration": invalid example: value must be an object
+Schema:
+  {
+    "example": "{\n   \"id\": \"\u003cUUID\u003e\",\n   \"addon_id\": \"addon_\u003cuuid\u003e\",\n   \"kind\": \"SHARED_TO_SHARED|SHARED_TO_DEDICATED|DEDICATED_TO_DEDICATED|DEDICATED_TO_SHARED\",\n   \"state\": \"RUNNING|FAILED|RECOVERING|RECOVERED|OK\",\n   \"hostname\": \"db.hostname\",\n   \"database\": \"dbname\",\n   \"port\": 5432,\n   \"database_user\": \"username\",\n   \"callback_url\": \"https://api.clever-cloud.com/v2/…\",\n   \"old_cluster_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"old_cluster_label\": \"par2-01\",\n   \"old_instance_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"old_plan\": \"s\",\n   \"old_zone\": \"par2\",\n   \"old_recipient_hostname\": \"postgresql-sdc-par2-clevercloud.services.clever-cloud.com\", \n   \"new_cluster_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"new_cluster_label\": \"par2-02\",\n   \"new_instance_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"new_plan\": \"m\",\n   \"new_zone\": \"par3\",\n   \"new_recipient_hostname\": \"postgresql-sdc-par3-clevercloud.services.clever-cloud.com\", \n   \"request_date\": \"2018-10-31T10:00:23Z\",\n   \"last_state_update_date\":  \"2018-10-31T10:00:23Z\",\n   \"dump_restore_start_date\":  \"2018-10-31T10:00:23Z\",\n   \"dump_restore_finished_date\":  \"2018-10-31T10:00:23Z\",\n   \"end_date\":  \"2018-10-31T10:00:23Z\",\n   \"exit_message\": \"Success\" \n}",
+    "properties": {
+      "addon_id": {
+        "type": "string"
+      },
+      "callback_url": {
+        "type": "string"
+      },
+      "database": {
+        "type": "string"
+      },
+      "database_user": {
+        "type": "string"
+      },
+      "dump_restore_finished_date": {
+        "type": "string"
+      },
+      "dump_restore_start_date": {
+        "type": "string"
+      },
+      "end_date": {
+        "type": "string"
+      },
+      "exit_message": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "id": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "last_state_update_date": {
+        "type": "string"
+      },
+      "new_cluster_id": {
+        "type": "string"
+      },
+      "new_cluster_label": {
+        "type": "string"
+      },
+      "new_instance_id": {
+        "type": "string"
+      },
+      "new_plan": {
+        "type": "string"
+      },
+      "new_recipient_hostname": {
+        "type": "string"
+      },
+      "new_zone": {
+        "type": "string"
+      },
+      "old_cluster_id": {
+        "type": "string"
+      },
+      "old_cluster_label": {
+        "type": "string"
+      },
+      "old_instance_id": {
+        "type": "string"
+      },
+      "old_plan": {
+        "type": "string"
+      },
+      "old_recipient_hostname": {
+        "type": "string"
+      },
+      "old_zone": {
+        "type": "string"
+      },
+      "port": {
+        "type": "number"
+      },
+      "request_date": {
+        "type": "string"
+      },
+      "state": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\n   \"id\": \"\u003cUUID\u003e\",\n   \"addon_id\": \"addon_\u003cuuid\u003e\",\n   \"kind\": \"SHARED_TO_SHARED|SHARED_TO_DEDICATED|DEDICATED_TO_DEDICATED|DEDICATED_TO_SHARED\",\n   \"state\": \"RUNNING|FAILED|RECOVERING|RECOVERED|OK\",\n   \"hostname\": \"db.hostname\",\n   \"database\": \"dbname\",\n   \"port\": 5432,\n   \"database_user\": \"username\",\n   \"callback_url\": \"https://api.clever-cloud.com/v2/…\",\n   \"old_cluster_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"old_cluster_label\": \"par2-01\",\n   \"old_instance_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"old_plan\": \"s\",\n   \"old_zone\": \"par2\",\n   \"old_recipient_hostname\": \"postgresql-sdc-par2-clevercloud.services.clever-cloud.com\", \n   \"new_cluster_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"new_cluster_label\": \"par2-02\",\n   \"new_instance_id\": \"acddc485-79c2-4c6b-a617-c92a06c0cb0b\",\n   \"new_plan\": \"m\",\n   \"new_zone\": \"par3\",\n   \"new_recipient_hostname\": \"postgresql-sdc-par3-clevercloud.services.clever-cloud.com\", \n   \"request_date\": \"2018-10-31T10:00:23Z\",\n   \"last_state_update_date\":  \"2018-10-31T10:00:23Z\",\n   \"dump_restore_start_date\":  \"2018-10-31T10:00:23Z\",\n   \"dump_restore_finished_date\":  \"2018-10-31T10:00:23Z\",\n   \"end_date\":  \"2018-10-31T10:00:23Z\",\n   \"exit_message\": \"Success\" \n}"

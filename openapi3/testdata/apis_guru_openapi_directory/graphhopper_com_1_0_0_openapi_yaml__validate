@@ -1,0 +1,16 @@
+invalid components: schema "Address": invalid example: value is not one of the allowed values ["right","left","any"]
+Schema:
+  {
+    "default": "any",
+    "description": "Optional parameter. Specifies on which side a point should be relative to the driver when she leaves/arrives at a start/target/via point. Only supported for motor vehicles and OpenStreetMap.",
+    "enum": [
+      "right",
+      "left",
+      "any"
+    ],
+    "example": "If you would like to arrive at this address without having to cross the street use `curbside=right/left` for countries with right/left-hand driving. Using `curbside=any` is the same as not specifying this parameter at all.",
+    "type": "string"
+  }
+
+Value:
+  "If you would like to arrive at this address without having to cross the street use `curbside=right/left` for countries with right/left-hand driving. Using `curbside=any` is the same as not specifying this parameter at all."

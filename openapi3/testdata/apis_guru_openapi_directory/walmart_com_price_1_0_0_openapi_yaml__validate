@@ -1,0 +1,58 @@
+invalid paths: invalid path /v3/feeds: invalid operation POST: example json1: Error at "/file": property "file" is missing
+Schema:
+  {
+    "properties": {
+      "file": {
+        "description": "Feed file to upload",
+        "format": "binary",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Price": [
+      {
+        "pricing": [
+          {
+            "comparisonPrice": {
+              "amount": 4.99,
+              "currency": "USD"
+            },
+            "comparisonPriceType": "BASE",
+            "currentPrice": {
+              "amount": 3,
+              "currency": "USD"
+            },
+            "currentPriceType": "REDUCED"
+          }
+        ],
+        "sku": "30348_KFTest"
+      },
+      {
+        "pricing": [
+          {
+            "comparisonPrice": {
+              "amount": 4.99,
+              "currency": "USD"
+            },
+            "comparisonPriceType": "BASE",
+            "currentPrice": {
+              "amount": 3,
+              "currency": "USD"
+            },
+            "currentPriceType": "REDUCED"
+          }
+        ],
+        "sku": "OT-PP7F-QGUG"
+      }
+    ],
+    "PriceHeader": {
+      "version": "1.7"
+    }
+  }

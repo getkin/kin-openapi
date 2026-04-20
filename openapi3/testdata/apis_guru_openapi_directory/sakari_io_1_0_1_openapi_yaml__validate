@@ -1,0 +1,14 @@
+invalid components: schema "AccountEvent": invalid example: value is not one of the allowed values ["account","messageStatus","messageIncoming"]
+Schema:
+  {
+    "enum": [
+      "account",
+      "messageStatus",
+      "messageIncoming"
+    ],
+    "example": "message",
+    "type": "string"
+  }
+
+Value:
+  "message"

@@ -1,0 +1,8 @@
+invalid components: schema "contributor-activity": invalid example: Error at "/0/w": value must be an integer
+Schema:
+  {
+    "type": "integer"
+  }
+
+Value:
+  "1367712000"

@@ -1,0 +1,11 @@
+invalid paths: invalid path /{format}/RotoBallerArticles: invalid operation GET: example response: value must be an array
+Schema:
+  {
+    "items": {
+      "$ref": "#/components/schemas/Article"
+    },
+    "type": "array"
+  }
+
+Value:
+  "[\r\n  {\r\n    \"ArticleID\": 0,\r\n    \"Title\": \"string\",\r\n    \"Source\": \"string\",\r\n    \"Updated\": \"string\",\r\n    \"Content\": \"string\",\r\n    \"Url\": \"string\",\r\n    \"TermsOfUse\": \"string\",\r\n    \"Author\": \"string\",\r\n    \"Players\": [\r\n      {\r\n        \"PlayerID\": 0,\r\n        \"Name\": \"string\",\r\n        \"TeamID\": 0,\r\n        \"Team\": \"string\",\r\n        \"Position\": \"string\"\r\n      }\r\n    ]\r\n  }\r\n]"

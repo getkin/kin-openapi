@@ -1,0 +1,15 @@
+invalid components: schema "InlineScriptTag": invalid example: value is not one of the allowed values ["all","thanks_page","cart"]
+Schema:
+  {
+    "description": "インラインスクリプトを出力するページ。\n\n- `all`: カートの途中のページと注文完了ページの両方\n- `thanks_page`: 注文完了ページ\n- `cart`: カートの途中のページ\n",
+    "enum": [
+      "all",
+      "thanks_page",
+      "cart"
+    ],
+    "example": "shop",
+    "type": "string"
+  }
+
+Value:
+  "shop"

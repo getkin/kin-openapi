@@ -1,0 +1,510 @@
+invalid components: schema "field": invalid example: Error at "/proxy": property "proxy" is missing
+Schema:
+  {
+    "example": {
+      "fields": [
+        {
+          "attrs": [
+            "text"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Number",
+          "selector": ".badge-primary",
+          "type": 1
+        },
+        {
+          "attrs": [
+            "href",
+            "text"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Name",
+          "selector": "#cards a",
+          "type": 2
+        },
+        {
+          "attrs": [
+            "src",
+            "alt"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Picture",
+          "selector": ".card-img-top",
+          "type": 0
+        }
+      ],
+      "format": "json",
+      "name": "test.dataflowkit.com",
+      "paginator": {
+        "nextPageSelector": ".page-item:nth-child(2) .page-link",
+        "pageNum": 2
+      },
+      "path": false,
+      "request": {
+        "type": "chrome",
+        "url": "https://test.dataflowkit.com/persons/page-0"
+      }
+    },
+    "properties": {
+      "commonParent": {
+        "description": "Specifies common ancestor block for a set of fields used to extract data from a web page. _(CSS Selector)_",
+        "example": ".common-block",
+        "type": "string"
+      },
+      "fields": {
+        "description": "Define a  set of fields used to extract data from a web page. A Field represents a given chunk of extracted data from every block on each page.\n",
+        "items": {
+          "$ref": "#/components/schemas/field"
+        },
+        "type": "array"
+      },
+      "format": {
+        "description": "Extracted data is returned either in CSV, MS Excel, JSON, JSON(Lines) or XML format.",
+        "enum": [
+          "csv",
+          "json",
+          "jsonl",
+          "excel",
+          "xml"
+        ],
+        "title": "Format",
+        "type": "string"
+      },
+      "name": {
+        "description": "Collection name.",
+        "type": "string"
+      },
+      "paginator": {
+        "$ref": "#/components/schemas/Paginator"
+      },
+      "path": {
+        "default": false,
+        "description": "Path is a special parameter specifying navigation pages only. It collects information from detailed pages. No results from the current page return. Defaults to false.",
+        "title": "Path",
+        "type": "boolean"
+      },
+      "request": {
+        "$ref": "#/components/schemas/fetchrequest"
+      }
+    },
+    "required": [
+      "fields",
+      "format",
+      "name",
+      "proxy",
+      "type",
+      "url"
+    ],
+    "title": "Parse request",
+    "type": "object"
+  }
+
+Value:
+  {
+    "fields": [
+      {
+        "attrs": [
+          "text"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Number",
+        "selector": ".badge-primary",
+        "type": 1
+      },
+      {
+        "attrs": [
+          "href",
+          "text"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Name",
+        "selector": "#cards a",
+        "type": 2
+      },
+      {
+        "attrs": [
+          "src",
+          "alt"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Picture",
+        "selector": ".card-img-top",
+        "type": 0
+      }
+    ],
+    "format": "json",
+    "name": "test.dataflowkit.com",
+    "paginator": {
+      "nextPageSelector": ".page-item:nth-child(2) .page-link",
+      "pageNum": 2
+    },
+    "path": false,
+    "request": {
+      "type": "chrome",
+      "url": "https://test.dataflowkit.com/persons/page-0"
+    }
+  }
+ | Error at "/type": property "type" is missing
+Schema:
+  {
+    "example": {
+      "fields": [
+        {
+          "attrs": [
+            "text"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Number",
+          "selector": ".badge-primary",
+          "type": 1
+        },
+        {
+          "attrs": [
+            "href",
+            "text"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Name",
+          "selector": "#cards a",
+          "type": 2
+        },
+        {
+          "attrs": [
+            "src",
+            "alt"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Picture",
+          "selector": ".card-img-top",
+          "type": 0
+        }
+      ],
+      "format": "json",
+      "name": "test.dataflowkit.com",
+      "paginator": {
+        "nextPageSelector": ".page-item:nth-child(2) .page-link",
+        "pageNum": 2
+      },
+      "path": false,
+      "request": {
+        "type": "chrome",
+        "url": "https://test.dataflowkit.com/persons/page-0"
+      }
+    },
+    "properties": {
+      "commonParent": {
+        "description": "Specifies common ancestor block for a set of fields used to extract data from a web page. _(CSS Selector)_",
+        "example": ".common-block",
+        "type": "string"
+      },
+      "fields": {
+        "description": "Define a  set of fields used to extract data from a web page. A Field represents a given chunk of extracted data from every block on each page.\n",
+        "items": {
+          "$ref": "#/components/schemas/field"
+        },
+        "type": "array"
+      },
+      "format": {
+        "description": "Extracted data is returned either in CSV, MS Excel, JSON, JSON(Lines) or XML format.",
+        "enum": [
+          "csv",
+          "json",
+          "jsonl",
+          "excel",
+          "xml"
+        ],
+        "title": "Format",
+        "type": "string"
+      },
+      "name": {
+        "description": "Collection name.",
+        "type": "string"
+      },
+      "paginator": {
+        "$ref": "#/components/schemas/Paginator"
+      },
+      "path": {
+        "default": false,
+        "description": "Path is a special parameter specifying navigation pages only. It collects information from detailed pages. No results from the current page return. Defaults to false.",
+        "title": "Path",
+        "type": "boolean"
+      },
+      "request": {
+        "$ref": "#/components/schemas/fetchrequest"
+      }
+    },
+    "required": [
+      "fields",
+      "format",
+      "name",
+      "proxy",
+      "type",
+      "url"
+    ],
+    "title": "Parse request",
+    "type": "object"
+  }
+
+Value:
+  {
+    "fields": [
+      {
+        "attrs": [
+          "text"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Number",
+        "selector": ".badge-primary",
+        "type": 1
+      },
+      {
+        "attrs": [
+          "href",
+          "text"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Name",
+        "selector": "#cards a",
+        "type": 2
+      },
+      {
+        "attrs": [
+          "src",
+          "alt"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Picture",
+        "selector": ".card-img-top",
+        "type": 0
+      }
+    ],
+    "format": "json",
+    "name": "test.dataflowkit.com",
+    "paginator": {
+      "nextPageSelector": ".page-item:nth-child(2) .page-link",
+      "pageNum": 2
+    },
+    "path": false,
+    "request": {
+      "type": "chrome",
+      "url": "https://test.dataflowkit.com/persons/page-0"
+    }
+  }
+ | Error at "/url": property "url" is missing
+Schema:
+  {
+    "example": {
+      "fields": [
+        {
+          "attrs": [
+            "text"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Number",
+          "selector": ".badge-primary",
+          "type": 1
+        },
+        {
+          "attrs": [
+            "href",
+            "text"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Name",
+          "selector": "#cards a",
+          "type": 2
+        },
+        {
+          "attrs": [
+            "src",
+            "alt"
+          ],
+          "filters": [
+            {
+              "name": "trim"
+            }
+          ],
+          "name": "Picture",
+          "selector": ".card-img-top",
+          "type": 0
+        }
+      ],
+      "format": "json",
+      "name": "test.dataflowkit.com",
+      "paginator": {
+        "nextPageSelector": ".page-item:nth-child(2) .page-link",
+        "pageNum": 2
+      },
+      "path": false,
+      "request": {
+        "type": "chrome",
+        "url": "https://test.dataflowkit.com/persons/page-0"
+      }
+    },
+    "properties": {
+      "commonParent": {
+        "description": "Specifies common ancestor block for a set of fields used to extract data from a web page. _(CSS Selector)_",
+        "example": ".common-block",
+        "type": "string"
+      },
+      "fields": {
+        "description": "Define a  set of fields used to extract data from a web page. A Field represents a given chunk of extracted data from every block on each page.\n",
+        "items": {
+          "$ref": "#/components/schemas/field"
+        },
+        "type": "array"
+      },
+      "format": {
+        "description": "Extracted data is returned either in CSV, MS Excel, JSON, JSON(Lines) or XML format.",
+        "enum": [
+          "csv",
+          "json",
+          "jsonl",
+          "excel",
+          "xml"
+        ],
+        "title": "Format",
+        "type": "string"
+      },
+      "name": {
+        "description": "Collection name.",
+        "type": "string"
+      },
+      "paginator": {
+        "$ref": "#/components/schemas/Paginator"
+      },
+      "path": {
+        "default": false,
+        "description": "Path is a special parameter specifying navigation pages only. It collects information from detailed pages. No results from the current page return. Defaults to false.",
+        "title": "Path",
+        "type": "boolean"
+      },
+      "request": {
+        "$ref": "#/components/schemas/fetchrequest"
+      }
+    },
+    "required": [
+      "fields",
+      "format",
+      "name",
+      "proxy",
+      "type",
+      "url"
+    ],
+    "title": "Parse request",
+    "type": "object"
+  }
+
+Value:
+  {
+    "fields": [
+      {
+        "attrs": [
+          "text"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Number",
+        "selector": ".badge-primary",
+        "type": 1
+      },
+      {
+        "attrs": [
+          "href",
+          "text"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Name",
+        "selector": "#cards a",
+        "type": 2
+      },
+      {
+        "attrs": [
+          "src",
+          "alt"
+        ],
+        "filters": [
+          {
+            "name": "trim"
+          }
+        ],
+        "name": "Picture",
+        "selector": ".card-img-top",
+        "type": 0
+      }
+    ],
+    "format": "json",
+    "name": "test.dataflowkit.com",
+    "paginator": {
+      "nextPageSelector": ".page-item:nth-child(2) .page-link",
+      "pageNum": 2
+    },
+    "path": false,
+    "request": {
+      "type": "chrome",
+      "url": "https://test.dataflowkit.com/persons/page-0"
+    }
+  }

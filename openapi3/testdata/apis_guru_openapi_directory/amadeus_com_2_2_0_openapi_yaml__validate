@@ -1,0 +1,28 @@
+invalid components: schema "Error_400": invalid example: Error at "/errors/0/source": there must be at most 1 properties
+Schema:
+  {
+    "description": "an object containing references to the source of the error",
+    "maxProperties": 1,
+    "properties": {
+      "example": {
+        "description": "a string indicating an example of the right value",
+        "type": "string"
+      },
+      "parameter": {
+        "description": "a string indicating which URI query parameter caused the issue",
+        "type": "string"
+      },
+      "pointer": {
+        "description": "a JSON Pointer [RFC6901] to the associated entity in the request document",
+        "type": "string"
+      }
+    },
+    "title": "Issue_Source",
+    "type": "object"
+  }
+
+Value:
+  {
+    "example": "CDG",
+    "parameter": "airport"
+  }

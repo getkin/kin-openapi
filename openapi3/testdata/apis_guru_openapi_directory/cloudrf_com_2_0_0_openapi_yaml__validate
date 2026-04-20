@@ -1,0 +1,13 @@
+invalid components: schema "Output": invalid default: number must be at least 1
+Schema:
+  {
+    "default": 0,
+    "description": "Modulation. 1=4QAM,2=16QAM,3=64QAM,4=256QAM,5=1024QAM,6=BPSK,7=QPSK,8=8PSK,9=16PSK,10=32PSK,11=LoRa",
+    "format": "int32",
+    "maximum": 11,
+    "minimum": 1,
+    "type": "integer"
+  }
+
+Value:
+  0

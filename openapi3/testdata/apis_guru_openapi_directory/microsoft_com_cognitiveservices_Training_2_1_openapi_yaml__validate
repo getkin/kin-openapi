@@ -1,0 +1,9 @@
+invalid paths: invalid path /projects/{projectId}/images/tagged/count: invalid operation GET: example Successful GetTaggedImageCount request: value must be an integer
+Schema:
+  {
+    "format": "int32",
+    "type": "integer"
+  }
+
+Value:
+  "10"

@@ -1,0 +1,63 @@
+invalid paths: invalid path /catalog/pvt/skusellers/{skuId}: invalid operation GET: invalid example: value must be an object
+Schema:
+  {
+    "description": "Object with information about an SKU Binding.",
+    "example": [
+      {
+        "Id": 48,
+        "IsActive": true,
+        "LastUpdateDate": "2020-10-21T19:13:00.657",
+        "SalesPolicy": 0,
+        "SellerId": "cosmetics1",
+        "SellerSkuId": "42",
+        "StockKeepingUnitId": 1
+      }
+    ],
+    "properties": {
+      "Id": {
+        "description": "SKU Binding ID.",
+        "format": "int32",
+        "type": "integer"
+      },
+      "IsActive": {
+        "description": "Defines if the SKU binding is active.",
+        "type": "boolean"
+      },
+      "LastUpdateDate": {
+        "description": "Date when the SKU binding was updated for the last time, in UTC format.",
+        "type": "string"
+      },
+      "SalesPolicy": {
+        "description": "Sales policy ID.",
+        "format": "int32",
+        "type": "integer"
+      },
+      "SellerId": {
+        "description": "ID that identifies the seller in the marketplace. It can be the same as the seller name or a unique number. Check the **Sellers management** section in the Admin to get the correct ID.",
+        "type": "string"
+      },
+      "SellerSkuId": {
+        "description": "SKU seller ID.",
+        "type": "string"
+      },
+      "StockKeepingUnitId": {
+        "description": "SKU ID in the VTEX marketplace.",
+        "format": "int32",
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "Id": 48,
+      "IsActive": true,
+      "LastUpdateDate": "2020-10-21T19:13:00.657",
+      "SalesPolicy": 0,
+      "SellerId": "cosmetics1",
+      "SellerSkuId": "42",
+      "StockKeepingUnitId": 1
+    }
+  ]

@@ -1,0 +1,18 @@
+invalid paths: invalid path /admin.conversations.archive: invalid operation POST: example response: Error at "/error": value is not one of the allowed values ["feature_not_enabled","channel_not_found","channel_type_not_supported","default_org_wide_channel","already_archived","cant_archive_general","restricted_action","could_not_archive_channel"]
+Schema:
+  {
+    "enum": [
+      "feature_not_enabled",
+      "channel_not_found",
+      "channel_type_not_supported",
+      "default_org_wide_channel",
+      "already_archived",
+      "cant_archive_general",
+      "restricted_action",
+      "could_not_archive_channel"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "invalid_auth"

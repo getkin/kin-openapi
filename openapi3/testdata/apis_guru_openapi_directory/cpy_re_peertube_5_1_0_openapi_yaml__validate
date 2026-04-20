@@ -1,0 +1,13 @@
+invalid components: schema "Abuse": invalid example: string doesn't match the regular expression "/^[a-z0-9._]+$/"
+Schema:
+  {
+    "description": "immutable name of the user, used to find or mention its actor",
+    "example": "chocobozzz",
+    "maxLength": 50,
+    "minLength": 1,
+    "pattern": "/^[a-z0-9._]+$/",
+    "type": "string"
+  }
+
+Value:
+  "chocobozzz"

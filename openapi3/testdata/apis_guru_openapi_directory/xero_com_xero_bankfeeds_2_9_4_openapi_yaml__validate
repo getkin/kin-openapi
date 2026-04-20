@@ -1,0 +1,11 @@
+invalid components: schema "EndBalance": invalid example: value must be a number
+Schema:
+  {
+    "example": "10.1340",
+    "format": "double",
+    "type": "number",
+    "x-is-money": true
+  }
+
+Value:
+  "10.1340"

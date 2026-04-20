@@ -1,0 +1,10 @@
+invalid components: schema "BeezUP.Common.Link3": invalid example: value must be a boolean
+Schema:
+  {
+    "description": "If true, you MUST indicate a value from the list of values otherwise it's a freetext",
+    "example": "true",
+    "type": "boolean"
+  }
+
+Value:
+  "true"

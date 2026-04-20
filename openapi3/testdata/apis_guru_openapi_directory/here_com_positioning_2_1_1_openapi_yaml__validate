@@ -1,0 +1,42 @@
+invalid components: schema "Locate": invalid example: property "rcsp" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "description": "TD-SCDMA Network measurement",
+    "example": {
+      "cellParams": 86,
+      "pathloss": 80,
+      "rcsp": -50,
+      "uarfcn": 10100
+    },
+    "properties": {
+      "cellParams": {
+        "$ref": "#/components/schemas/CellParams"
+      },
+      "cid": {
+        "$ref": "#/components/schemas/UtranCid"
+      },
+      "pathloss": {
+        "$ref": "#/components/schemas/Pathloss"
+      },
+      "rscp": {
+        "$ref": "#/components/schemas/Rscp"
+      },
+      "uarfcn": {
+        "$ref": "#/components/schemas/Uarfcn"
+      }
+    },
+    "required": [
+      "uarfcn",
+      "cellParams"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "cellParams": 86,
+    "pathloss": 80,
+    "rcsp": -50,
+    "uarfcn": 10100
+  }

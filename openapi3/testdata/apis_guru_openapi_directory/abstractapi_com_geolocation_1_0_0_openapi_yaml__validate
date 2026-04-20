@@ -1,0 +1,134 @@
+invalid paths: invalid path /v1/: invalid operation GET: example 0: value must be an object
+Schema:
+  {
+    "properties": {
+      "city": {
+        "type": "string"
+      },
+      "city_geoname_id": {
+        "type": "integer"
+      },
+      "connection": {
+        "properties": {
+          "autonomous_system_number": {
+            "type": "integer"
+          },
+          "autonomous_system_organization": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "isp_name": {
+            "type": "string"
+          },
+          "organization_name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "continent": {
+        "type": "string"
+      },
+      "continent_code": {
+        "type": "string"
+      },
+      "continent_geoname_id": {
+        "type": "integer"
+      },
+      "country": {
+        "type": "string"
+      },
+      "country_code": {
+        "type": "string"
+      },
+      "country_geoname_id": {
+        "type": "integer"
+      },
+      "country_is_eu": {
+        "type": "boolean"
+      },
+      "currency": {
+        "properties": {
+          "currency_code": {
+            "type": "string"
+          },
+          "currency_name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "flag": {
+        "properties": {
+          "emoji": {
+            "type": "string"
+          },
+          "png": {
+            "type": "string"
+          },
+          "svg": {
+            "type": "string"
+          },
+          "unicode": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ip_address": {
+        "type": "string"
+      },
+      "latitude": {
+        "type": "number"
+      },
+      "longitude": {
+        "type": "number"
+      },
+      "postal_code": {
+        "type": "string"
+      },
+      "region": {
+        "type": "string"
+      },
+      "region_geoname_id": {
+        "type": "integer"
+      },
+      "region_iso_code": {
+        "type": "string"
+      },
+      "security": {
+        "properties": {
+          "is_vpn": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "timezone": {
+        "properties": {
+          "abbreviation": {
+            "type": "string"
+          },
+          "current_time": {
+            "type": "string"
+          },
+          "gmt_offset": {
+            "type": "integer"
+          },
+          "is_dst": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\"ip_address\":\"195.154.25.40\",\"city\":\"Paris\",\"city_geoname_id\":2988507,\"region\":\"Île-de-France\",\"region_iso_code\":\"IDF\",\"region_geoname_id\":3012874,\"postal_code\":\"75008\",\"country\":\"France\",\"country_code\":\"FR\",\"country_geoname_id\":3017382,\"country_is_eu\":true,\"continent\":\"Europe\",\"continent_code\":\"EU\",\"continent_geoname_id\":6255148,\"longitude\":2.4075,\"latitude\":48.8323,\"security\":{\"is_vpn\":false},\"timezone\":{\"name\":\"Europe/Paris\",\"abbreviation\":\"CEST\",\"gmt_offset\":2,\"current_time\":\"15:42:18\",\"is_dst\":true},\"flag\":{\"emoji\":\"\u003cë\u003c÷\",\"unicode\":\"U+1F1EB U+1F1F7\",\"png\":\"https://static.abstractapi.com/country-flags/FR_flag.png\",\"svg\":\"https://static.abstractapi.com/country-flags/FR_flag.svg\"},\"currency\":{\"currency_name\":\"Euros\",\"currency_code\":\"EUR\"},\"connection\":{\"autonomous_system_number\":12876,\"autonomous_system_organization\":\"Online S.a.s.\",\"connection_type\":\"Corporate\",\"isp_name\":\"Online S.A.S.\",\"organization_name\":\"ONLINE\"}}"

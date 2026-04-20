@@ -1,0 +1,49 @@
+invalid paths: invalid path /accounts: invalid operation GET: example response: doesn't match schema due to: Error at "/page_count": value must be an integer
+Schema:
+  {
+    "description": "The number of pages returned for the request made.",
+    "type": "integer"
+  }
+
+Value:
+  "integer"
+ | Error at "/page_number": value must be an integer
+Schema:
+  {
+    "default": 1,
+    "description": "**Deprecated**: This field has been deprecated. Please use the \"next_page_token\" field for pagination instead of this field.\n\nThe page number of the current results.",
+    "type": "integer"
+  }
+
+Value:
+  "integer"
+ | Error at "/page_size": value must be an integer
+Schema:
+  {
+    "default": 30,
+    "description": "The number of records returned with a single API call.",
+    "maximum": 300,
+    "type": "integer"
+  }
+
+Value:
+  "integer"
+ | Error at "/total_records": value must be an integer
+Schema:
+  {
+    "description": "The total number of all the records available across pages.",
+    "type": "integer"
+  }
+
+Value:
+  "integer"
+ And Error at "/accounts/0/created_at": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$" | Error at "/accounts/0/seats": value must be an integer
+Schema:
+  {
+    "description": "Account seats.",
+    "type": "integer"
+  }
+
+Value:
+  "integer"
+ | Error at "/accounts/0/subscription_end_time": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$" | Error at "/accounts/0/subscription_start_time": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$"

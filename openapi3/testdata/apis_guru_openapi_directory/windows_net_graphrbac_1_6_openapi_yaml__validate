@@ -1,0 +1,17 @@
+invalid components: schema "OAuth2PermissionGrant": invalid example: Error at "/consentType": value is not one of the allowed values ["AllPrincipals","Principal"]
+Schema:
+  {
+    "description": "Indicates if consent was provided by the administrator (on behalf of the organization) or by an individual.",
+    "enum": [
+      "AllPrincipals",
+      "Principal"
+    ],
+    "type": "string",
+    "x-ms-enum": {
+      "modelAsString": true,
+      "name": "ConsentType"
+    }
+  }
+
+Value:
+  "consentType"

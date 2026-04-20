@@ -1,0 +1,9 @@
+invalid paths: invalid path /api/checkout/pub/orderForms/simulation: invalid operation POST: invalid example: Error at "/logisticsInfo/0/slas/0/deliveryIds/0/warehouseId": value must be a string
+Schema:
+  {
+    "description": "Warehouse ID.",
+    "type": "string"
+  }
+
+Value:
+  11

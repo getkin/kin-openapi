@@ -1,0 +1,15 @@
+invalid paths: invalid path /certificates: invalid operation GET: invalid example: value is not one of the allowed values ["pending","completed","failed"]
+Schema:
+  {
+    "description": "Status of the issuance process of the Certificate",
+    "enum": [
+      "pending",
+      "completed",
+      "failed"
+    ],
+    "example": "valid",
+    "type": "string"
+  }
+
+Value:
+  "valid"

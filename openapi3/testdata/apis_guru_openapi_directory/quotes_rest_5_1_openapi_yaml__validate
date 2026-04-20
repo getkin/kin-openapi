@@ -1,0 +1,10 @@
+invalid paths: invalid path /quote/categories/search: invalid operation GET: parameter "query" schema is invalid: invalid default: value must be a string
+Schema:
+  {
+    "default": 0,
+    "format": "string",
+    "type": "string"
+  }
+
+Value:
+  0

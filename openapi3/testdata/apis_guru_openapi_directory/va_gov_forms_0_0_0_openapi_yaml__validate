@@ -1,0 +1,10 @@
+invalid components: schema "FormShow": invalid example: value must be a boolean
+Schema:
+  {
+    "description": "A flag indicating whether the form url was confirmed as a valid download",
+    "example": "true",
+    "type": "boolean"
+  }
+
+Value:
+  "true"

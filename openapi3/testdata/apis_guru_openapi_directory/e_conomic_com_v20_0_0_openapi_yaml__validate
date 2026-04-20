@@ -1,0 +1,520 @@
+invalid components: schema "Activity": invalid example: property "Description" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "example": {
+      "Description": "An awesome activity",
+      "Id": 1
+    },
+    "properties": {
+      "costPriceMarkupPercentage": {
+        "description": "If cost prices are utilized on employees, this can be used to determine a markup percentage for the given activity.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "cutoffDate": {
+        "description": "Date where price should change from before to after.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "groupNumber": {
+        "description": "The number of the activity group that this activity belongs.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": false
+      },
+      "hideInSearch": {
+        "description": "Hides an activity from employees when registering in e-conomic UI.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "inLieuCode": {
+        "description": "If time in lieu is used, this defines which code the activity should utilize when registered upon.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "isAccessible": {
+        "description": "Defines whether the activity can be registered upon.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "eq, ne, lt, lte, gt, gte",
+        "x-sortable": false
+      },
+      "name": {
+        "description": "Name of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin, like\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "maxLength": 100,
+        "type": "string",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin, like",
+        "x-sortable": false
+      },
+      "number": {
+        "description": "The unique number of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: true\u003c/p\u003e",
+        "format": "int32",
+        "maximum": 999999999,
+        "minimum": 1,
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": true
+      },
+      "objectVersion": {
+        "description": "The object version, required for PUT requests.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceAfter": {
+        "description": "Price to be used after defined cut off date if defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceBefore": {
+        "description": "Price for a given activity. This will be utilized if no special price is defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      }
+    },
+    "required": [
+      "groupNumber",
+      "name",
+      "number"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Description": "An awesome activity",
+    "Id": 1
+  }
+ | property "Id" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "example": {
+      "Description": "An awesome activity",
+      "Id": 1
+    },
+    "properties": {
+      "costPriceMarkupPercentage": {
+        "description": "If cost prices are utilized on employees, this can be used to determine a markup percentage for the given activity.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "cutoffDate": {
+        "description": "Date where price should change from before to after.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "groupNumber": {
+        "description": "The number of the activity group that this activity belongs.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": false
+      },
+      "hideInSearch": {
+        "description": "Hides an activity from employees when registering in e-conomic UI.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "inLieuCode": {
+        "description": "If time in lieu is used, this defines which code the activity should utilize when registered upon.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "isAccessible": {
+        "description": "Defines whether the activity can be registered upon.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "eq, ne, lt, lte, gt, gte",
+        "x-sortable": false
+      },
+      "name": {
+        "description": "Name of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin, like\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "maxLength": 100,
+        "type": "string",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin, like",
+        "x-sortable": false
+      },
+      "number": {
+        "description": "The unique number of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: true\u003c/p\u003e",
+        "format": "int32",
+        "maximum": 999999999,
+        "minimum": 1,
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": true
+      },
+      "objectVersion": {
+        "description": "The object version, required for PUT requests.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceAfter": {
+        "description": "Price to be used after defined cut off date if defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceBefore": {
+        "description": "Price for a given activity. This will be utilized if no special price is defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      }
+    },
+    "required": [
+      "groupNumber",
+      "name",
+      "number"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Description": "An awesome activity",
+    "Id": 1
+  }
+ | Error at "/groupNumber": property "groupNumber" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "example": {
+      "Description": "An awesome activity",
+      "Id": 1
+    },
+    "properties": {
+      "costPriceMarkupPercentage": {
+        "description": "If cost prices are utilized on employees, this can be used to determine a markup percentage for the given activity.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "cutoffDate": {
+        "description": "Date where price should change from before to after.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "groupNumber": {
+        "description": "The number of the activity group that this activity belongs.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": false
+      },
+      "hideInSearch": {
+        "description": "Hides an activity from employees when registering in e-conomic UI.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "inLieuCode": {
+        "description": "If time in lieu is used, this defines which code the activity should utilize when registered upon.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "isAccessible": {
+        "description": "Defines whether the activity can be registered upon.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "eq, ne, lt, lte, gt, gte",
+        "x-sortable": false
+      },
+      "name": {
+        "description": "Name of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin, like\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "maxLength": 100,
+        "type": "string",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin, like",
+        "x-sortable": false
+      },
+      "number": {
+        "description": "The unique number of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: true\u003c/p\u003e",
+        "format": "int32",
+        "maximum": 999999999,
+        "minimum": 1,
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": true
+      },
+      "objectVersion": {
+        "description": "The object version, required for PUT requests.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceAfter": {
+        "description": "Price to be used after defined cut off date if defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceBefore": {
+        "description": "Price for a given activity. This will be utilized if no special price is defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      }
+    },
+    "required": [
+      "groupNumber",
+      "name",
+      "number"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Description": "An awesome activity",
+    "Id": 1
+  }
+ | Error at "/name": property "name" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "example": {
+      "Description": "An awesome activity",
+      "Id": 1
+    },
+    "properties": {
+      "costPriceMarkupPercentage": {
+        "description": "If cost prices are utilized on employees, this can be used to determine a markup percentage for the given activity.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "cutoffDate": {
+        "description": "Date where price should change from before to after.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "groupNumber": {
+        "description": "The number of the activity group that this activity belongs.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": false
+      },
+      "hideInSearch": {
+        "description": "Hides an activity from employees when registering in e-conomic UI.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "inLieuCode": {
+        "description": "If time in lieu is used, this defines which code the activity should utilize when registered upon.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "isAccessible": {
+        "description": "Defines whether the activity can be registered upon.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "eq, ne, lt, lte, gt, gte",
+        "x-sortable": false
+      },
+      "name": {
+        "description": "Name of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin, like\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "maxLength": 100,
+        "type": "string",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin, like",
+        "x-sortable": false
+      },
+      "number": {
+        "description": "The unique number of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: true\u003c/p\u003e",
+        "format": "int32",
+        "maximum": 999999999,
+        "minimum": 1,
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": true
+      },
+      "objectVersion": {
+        "description": "The object version, required for PUT requests.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceAfter": {
+        "description": "Price to be used after defined cut off date if defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceBefore": {
+        "description": "Price for a given activity. This will be utilized if no special price is defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      }
+    },
+    "required": [
+      "groupNumber",
+      "name",
+      "number"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Description": "An awesome activity",
+    "Id": 1
+  }
+ | Error at "/number": property "number" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "example": {
+      "Description": "An awesome activity",
+      "Id": 1
+    },
+    "properties": {
+      "costPriceMarkupPercentage": {
+        "description": "If cost prices are utilized on employees, this can be used to determine a markup percentage for the given activity.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "cutoffDate": {
+        "description": "Date where price should change from before to after.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "groupNumber": {
+        "description": "The number of the activity group that this activity belongs.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": false
+      },
+      "hideInSearch": {
+        "description": "Hides an activity from employees when registering in e-conomic UI.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "inLieuCode": {
+        "description": "If time in lieu is used, this defines which code the activity should utilize when registered upon.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "int32",
+        "type": "integer",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "isAccessible": {
+        "description": "Defines whether the activity can be registered upon.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "type": "boolean",
+        "x-filterable": "eq, ne, lt, lte, gt, gte",
+        "x-sortable": false
+      },
+      "name": {
+        "description": "Name of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin, like\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "maxLength": 100,
+        "type": "string",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin, like",
+        "x-sortable": false
+      },
+      "number": {
+        "description": "The unique number of the activity.\u003cp class='filter'\u003eFilterable: eq, ne, lt, lte, gt, gte, in, nin\u003c/p\u003e\u003cp class='sort'\u003eSortable: true\u003c/p\u003e",
+        "format": "int32",
+        "maximum": 999999999,
+        "minimum": 1,
+        "type": "integer",
+        "x-filterable": "eq, ne, lt, lte, gt, gte, in, nin",
+        "x-sortable": true
+      },
+      "objectVersion": {
+        "description": "The object version, required for PUT requests.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "nullable": true,
+        "type": "string",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceAfter": {
+        "description": "Price to be used after defined cut off date if defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      },
+      "salesPriceBefore": {
+        "description": "Price for a given activity. This will be utilized if no special price is defined.\u003cp class='filter'\u003eFilterable: not filterable\u003c/p\u003e\u003cp class='sort'\u003eSortable: false\u003c/p\u003e",
+        "format": "double",
+        "nullable": true,
+        "type": "number",
+        "x-filterable": "not filterable",
+        "x-sortable": false
+      }
+    },
+    "required": [
+      "groupNumber",
+      "name",
+      "number"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "Description": "An awesome activity",
+    "Id": 1
+  }

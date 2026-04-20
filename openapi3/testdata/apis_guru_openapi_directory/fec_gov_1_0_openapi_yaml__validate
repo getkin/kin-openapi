@@ -1,0 +1,44 @@
+invalid paths: invalid path /legal/search/: invalid operation GET: invalid example: Error at "/advisory_opinions/0/documents/0/date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/advisory_opinions/0/issue_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/advisory_opinions/0/request_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/murs/0/close_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/murs/0/commission_votes/0/vote_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/murs/0/commission_votes/1/vote_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/murs/0/dispositions/0/penalty": Value is not nullable
+Schema:
+  {
+    "type": "number"
+  }
+
+Value:
+  null
+ | Error at "/murs/0/dispositions/1/penalty": Value is not nullable
+Schema:
+  {
+    "type": "number"
+  }
+
+Value:
+  null
+ | Error at "/murs/0/documents/0/document_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/murs/0/documents/1/document_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/murs/0/election_cycles": value must be an integer
+Schema:
+  {
+    "type": "integer"
+  }
+
+Value:
+  [
+    2014
+  ]
+ | Error at "/murs/0/open_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/total_admin_fines": Value is not nullable
+Schema:
+  {
+    "description": "Total number of Admin Fines matching the search criteria",
+    "type": "integer"
+  }
+
+Value:
+  null
+ | Error at "/total_adrs": Value is not nullable
+Schema:
+  {
+    "description": "Total number of ADRs matching the search criteria",
+    "type": "integer"
+  }
+
+Value:
+  null

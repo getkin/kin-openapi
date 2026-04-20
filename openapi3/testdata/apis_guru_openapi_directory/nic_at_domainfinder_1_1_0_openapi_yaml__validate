@@ -1,0 +1,23 @@
+invalid paths: invalid path /api/v1/suggest: invalid operation GET: invalid example: value must be an object
+Schema:
+  {
+    "example": [
+      "mynewdomain.at",
+      "newdomain.at"
+    ],
+    "properties": {
+      "": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    "mynewdomain.at",
+    "newdomain.at"
+  ]

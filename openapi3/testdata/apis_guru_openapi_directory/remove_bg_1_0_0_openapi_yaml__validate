@@ -1,0 +1,10 @@
+invalid components: schema "RemoveBgJson": invalid default: value must be a boolean
+Schema:
+  {
+    "default": "false",
+    "description": "Whether to add an artificial shadow to the result (default: false). NOTE: Adding shadows is currently only supported for car photos. Other subjects are returned without shadow, even if set to true (this might change in the future).\n",
+    "type": "boolean"
+  }
+
+Value:
+  "false"

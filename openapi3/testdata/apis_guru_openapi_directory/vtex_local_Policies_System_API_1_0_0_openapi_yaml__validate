@@ -1,0 +1,124 @@
+invalid paths: invalid path /api/policy-engine/policies/{id}: invalid operation POST: invalid example: Error at "/0/statements/0/effect": property "effect" is missing
+Schema:
+  {
+    "properties": {
+      "actions": {
+        "description": "Actions that the Policy will execute",
+        "items": {},
+        "properties": {
+          "id": {
+            "description": "Action ID. The possible values can be `SendSlackMessage`, `SendEmail`, and `DeactivatePromotions`",
+            "title": "id",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "description": "Data inside of the actions",
+            "title": "metadata",
+            "type": "object"
+          }
+        },
+        "title": "actions",
+        "type": "array"
+      },
+      "condition": {
+        "description": "Condition to activate this policy. This object can have a maximum of ten recursive conditions",
+        "properties": {
+          "conditions": {
+            "description": "List of conditions that will activate the policy",
+            "items": {
+              "properties": {
+                "conditions": {
+                  "description": "These are the conditions the actions can have. The possible values are `[]`, `stringEquals`, and `numericGreaterThan`",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "conditions",
+                  "type": "array"
+                },
+                "key": {
+                  "description": "The element that will define what the policy will influence. This field has the possible values `skuId`, `brandId`, `discountPercentage`",
+                  "title": "key",
+                  "type": "string"
+                },
+                "operation": {
+                  "description": "The action of the condition. This operation possible values are `None`, `stringEquals`, `stringEqualsIgnoreCase`, `numericEquals`, `numericLessThan`, `numericLessThanEquals`,   `numericGreaterThan`, `numericGreaterThanEquals`, `bool`, `not`, `or`, `and`, `dateTimeUtcGreaterThan`, `dateTimeUtcLessThan`, and `between`",
+                  "title": "operation",
+                  "type": "string"
+                },
+                "values": {
+                  "description": "Value of the key",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "values",
+                  "type": "array"
+                }
+              }
+            },
+            "type": "array"
+          }
+        },
+        "title": "condition",
+        "type": "object"
+      },
+      "effect": {
+        "default": "Allow",
+        "description": "This field is not functional at the moment. To create a correct request, fill the field with `Allow`",
+        "title": "effect",
+        "type": "string"
+      },
+      "operation": {
+        "description": "This operation will determine if all the conditions need to be valid or at least one of them, if the conditions array is not empty.  The possible values to these fields are `None`, `stringEquals`, `stringEqualsIgnoreCase`, `numericEquals`, `numericLessThan`, `numericLessThanEquals`,   `numericGreaterThan`, `numericGreaterThanEquals`, `bool`, `not`, `or`, `and`, `dateTimeUtcGreaterThan`, `dateTimeUtcLessThan`, and `between`",
+        "title": "operation",
+        "type": "string"
+      },
+      "resource": {
+        "description": "Scope on which this policy must be evaluated",
+        "title": "resource",
+        "type": "string"
+      }
+    },
+    "required": [
+      "effect"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "actions": [
+      {
+        "id": "SendSlackMessage",
+        "metadata": {
+          "alertDescription": "Avoid selling products from Berenice with a discount greater than 70%.",
+          "channel": "C01NJFF35R6",
+          "relatedUsers": [
+            "URUNDC2NB"
+          ]
+        }
+      }
+    ],
+    "condition": {
+      "conditions": [
+        {
+          "conditions": [],
+          "key": "brandId",
+          "operation": "stringEquals",
+          "values": [
+            "2000001"
+          ]
+        },
+        {
+          "conditions": [],
+          "key": "discountPercentage",
+          "operation": "numericGreaterThan",
+          "values": [
+            "70.00"
+          ]
+        }
+      ],
+      "operation": "and"
+    },
+    "resource": "vrn:vtex.promotions-alert:aws-us-east-1:kamila:master:/_v/promotions_alert"
+  }

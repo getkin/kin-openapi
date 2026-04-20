@@ -1,0 +1,21 @@
+invalid components: schema "ChartRestApi.post": invalid example: value must be a string
+Schema:
+  {
+    "description": "The type of chart visualization used.",
+    "example": [
+      "bar",
+      "line_multi",
+      "area",
+      "table"
+    ],
+    "maxLength": 250,
+    "type": "string"
+  }
+
+Value:
+  [
+    "bar",
+    "line_multi",
+    "area",
+    "table"
+  ]

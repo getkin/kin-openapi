@@ -1,0 +1,22 @@
+invalid paths: invalid path /account-exports: invalid operation POST: invalid example: value must be an array
+Schema:
+  {
+    "description": "The stages of an account export to include.",
+    "example": "[\"audiences\", \"gallery_files\"]",
+    "items": {
+      "enum": [
+        "audiences",
+        "campaigns",
+        "events",
+        "gallery_files",
+        "reports",
+        "templates"
+      ],
+      "type": "string"
+    },
+    "title": "Include Stages",
+    "type": "array"
+  }
+
+Value:
+  "[\"audiences\", \"gallery_files\"]"

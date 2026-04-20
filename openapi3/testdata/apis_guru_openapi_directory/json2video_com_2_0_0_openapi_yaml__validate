@@ -1,0 +1,2916 @@
+invalid components: schema "movie": invalid example: Error at "/scenes/0/elements/0": doesn't match schema due to: doesn't match schema due to: property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "loop": {
+        "description": "Sets the number of loops the video to play. Use -1 for an infinite loop. The default value of 1 plays the video just once.",
+        "example": -1,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "loop": {
+        "description": "Sets the number of loops the video to play. Use -1 for an infinite loop. The default value of 1 plays the video just once.",
+        "example": -1,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "muted": {
+        "default": false,
+        "description": "Mutes the audio",
+        "type": "boolean"
+      },
+      "volume": {
+        "default": 5,
+        "maximum": 10,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "AudioElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "muted": {
+        "default": false,
+        "description": "Mutes the audio",
+        "type": "boolean"
+      },
+      "volume": {
+        "default": 5,
+        "maximum": 10,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "AudioElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ Or doesn't match schema due to: Error at "/type": value is not one of the allowed values ["image"]
+Schema:
+  {
+    "enum": [
+      "image"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "video"
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ Or doesn't match schema due to: property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "height": {
+        "default": -1,
+        "description": "Desired text element height, but can be overriden by the style defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie height",
+        "maximum": 1080,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "settings": {
+        "default": {},
+        "description": "Text formatting settings. In general, these are CSS properties such as \u003ccode\u003efont-size\u003c/code\u003e, \u003ccode\u003ecolour\u003c/code\u003e or \u003ccode\u003efont-weight\u003c/code\u003e. See the styles to confirm which properties are available.",
+        "example": {
+          "color": "#FF0000",
+          "font-size": "60px"
+        },
+        "type": "object"
+      },
+      "style": {
+        "default": "001",
+        "description": "Style of the text element. Check all available text style at \u003ca href='https://json2video.com/docs/resources/text/'\u003ehttps://json2video.com/resources/text/\u003c/a\u003e",
+        "example": "003",
+        "type": "string"
+      },
+      "text": {
+        "description": "Text to be printed. The text string does not accept HTML formatting.",
+        "example": "Lorem ipsum dolor sit amet",
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "text"
+        ],
+        "type": "string"
+      },
+      "width": {
+        "default": -1,
+        "description": "Desired text element width, but can be overriden by the style defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie width",
+        "maximum": 1920,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "text"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | Error at "/type": value is not one of the allowed values ["text"]
+Schema:
+  {
+    "enum": [
+      "text"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "video"
+ | Error at "/text": property "text" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "height": {
+        "default": -1,
+        "description": "Desired text element height, but can be overriden by the style defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie height",
+        "maximum": 1080,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "settings": {
+        "default": {},
+        "description": "Text formatting settings. In general, these are CSS properties such as \u003ccode\u003efont-size\u003c/code\u003e, \u003ccode\u003ecolour\u003c/code\u003e or \u003ccode\u003efont-weight\u003c/code\u003e. See the styles to confirm which properties are available.",
+        "example": {
+          "color": "#FF0000",
+          "font-size": "60px"
+        },
+        "type": "object"
+      },
+      "style": {
+        "default": "001",
+        "description": "Style of the text element. Check all available text style at \u003ca href='https://json2video.com/docs/resources/text/'\u003ehttps://json2video.com/resources/text/\u003c/a\u003e",
+        "example": "003",
+        "type": "string"
+      },
+      "text": {
+        "description": "Text to be printed. The text string does not accept HTML formatting.",
+        "example": "Lorem ipsum dolor sit amet",
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "text"
+        ],
+        "type": "string"
+      },
+      "width": {
+        "default": -1,
+        "description": "Desired text element width, but can be overriden by the style defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie width",
+        "maximum": 1920,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "text"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ Or doesn't match schema due to: property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "height": {
+        "default": -1,
+        "description": "Desired text element height. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie height",
+        "maximum": 1080,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "html": {
+        "description": "HTML snippet to render. Compatible with HTML5, CSS3 and Javascript",
+        "example": "\u0026lt;h1\u0026gt;Hello world\u0026lt;/h1\u0026gt;",
+        "type": "string"
+      },
+      "tailwindcss": {
+        "default": false,
+        "description": "Enables usage of TailwindCSS for the HTML snippet",
+        "example": true,
+        "type": "boolean"
+      },
+      "type": {
+        "enum": [
+          "html"
+        ],
+        "type": "string"
+      },
+      "width": {
+        "default": -1,
+        "description": "Desired text element width. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie width",
+        "maximum": 1920,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "html"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | Error at "/type": value is not one of the allowed values ["html"]
+Schema:
+  {
+    "enum": [
+      "html"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "video"
+ | Error at "/html": property "html" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "height": {
+        "default": -1,
+        "description": "Desired text element height. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie height",
+        "maximum": 1080,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "html": {
+        "description": "HTML snippet to render. Compatible with HTML5, CSS3 and Javascript",
+        "example": "\u0026lt;h1\u0026gt;Hello world\u0026lt;/h1\u0026gt;",
+        "type": "string"
+      },
+      "tailwindcss": {
+        "default": false,
+        "description": "Enables usage of TailwindCSS for the HTML snippet",
+        "example": true,
+        "type": "boolean"
+      },
+      "type": {
+        "enum": [
+          "html"
+        ],
+        "type": "string"
+      },
+      "width": {
+        "default": -1,
+        "description": "Desired text element width. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie width",
+        "maximum": 1920,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "html"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ Or doesn't match schema due to: property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "component": {
+        "description": "ID of the Component element. Check all available components in the \u003ca href='https://json2video.com/docs/resources/basic/'\u003elibrary\u003c/a\u003e",
+        "example": "basic/001",
+        "type": "string"
+      },
+      "height": {
+        "default": -1,
+        "description": "Desired text element height, but can be overriden by the component defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie height",
+        "maximum": 1080,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "settings": {
+        "description": "Settings to be passed to the component",
+        "type": "object"
+      },
+      "type": {
+        "enum": [
+          "component"
+        ],
+        "type": "string"
+      },
+      "width": {
+        "default": -1,
+        "description": "Desired text element width, but can be overriden by the component defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie width",
+        "maximum": 1920,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "component"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | Error at "/type": value is not one of the allowed values ["component"]
+Schema:
+  {
+    "enum": [
+      "component"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "video"
+ | Error at "/component": property "component" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "component": {
+        "description": "ID of the Component element. Check all available components in the \u003ca href='https://json2video.com/docs/resources/basic/'\u003elibrary\u003c/a\u003e",
+        "example": "basic/001",
+        "type": "string"
+      },
+      "height": {
+        "default": -1,
+        "description": "Desired text element height, but can be overriden by the component defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie height",
+        "maximum": 1080,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "settings": {
+        "description": "Settings to be passed to the component",
+        "type": "object"
+      },
+      "type": {
+        "enum": [
+          "component"
+        ],
+        "type": "string"
+      },
+      "width": {
+        "default": -1,
+        "description": "Desired text element width, but can be overriden by the component defaults. A value of \u003ccode\u003e-1\u003c/code\u003e means inherits scenes or movie width",
+        "maximum": 1920,
+        "minimum": -1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "component"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "chroma-key": {
+        "description": "Allows to define a color (or a range of colors) that will be converted to transparent",
+        "properties": {
+          "color": {
+            "description": "Set the color for which alpha will be set to 0 (full transparency)",
+            "example": "#00b140",
+            "type": "string"
+          },
+          "tolerance": {
+            "default": 25,
+            "description": "Makes the selection more or less sensitive to changes in color. A value of 1 will select only the provided color. A value of 100 will select all colors, so the full canvas",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "type": "object"
+      },
+      "crop": {
+        "additionalProperties": false,
+        "description": "Crops the element",
+        "properties": {
+          "height": {
+            "description": "Sets the height of the croping",
+            "type": "integer"
+          },
+          "width": {
+            "description": "Sets the width of the croping",
+            "type": "integer"
+          },
+          "x": {
+            "default": 0,
+            "description": "Sets the left point of croping",
+            "type": "integer"
+          },
+          "y": {
+            "default": 0,
+            "description": "Sets the top point of croping",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "pan": {
+        "description": "Pans the element to the specified direction. If \u003ccode\u003ezoom\u003c/code\u003e property is not specified, the effect is a non-zooming pan",
+        "enum": [
+          "left",
+          "top",
+          "right",
+          "bottom",
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right"
+        ],
+        "type": "string"
+      },
+      "position": {
+        "default": "custom",
+        "description": "Sets the element position in the scene. A value of 'custom' sets a custom position based on the provided 'x' and 'y' properties",
+        "enum": [
+          "top-left",
+          "top-right",
+          "bottom-right",
+          "bottom-left",
+          "center-center",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "rotate": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "default": 0,
+            "description": "Sets the angle of rotation",
+            "maximum": 360,
+            "minimum": -360,
+            "type": "number"
+          },
+          "speed": {
+            "default": 0,
+            "description": "Sets the time it takes to rotate the provided angle. A zero value means no movement",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "type": "object"
+      },
+      "scale": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": -1,
+            "description": "Sets the height for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          },
+          "width": {
+            "default": -1,
+            "description": "Sets the width for scaling the element",
+            "minimum": -1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "x": {
+        "default": 0,
+        "description": "Sets the horizontal position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the left side",
+        "format": "integer",
+        "type": "number"
+      },
+      "y": {
+        "default": 0,
+        "description": "Sets the vertical position of the element in the scene. The value \u003ccode\u003e0\u003c/code\u003e is on the top side",
+        "format": "integer",
+        "type": "number"
+      },
+      "zoom": {
+        "description": "Zooms the element with the specified level percentage. Positive values zoom in, negative values zoom out, zero does not zoom. Zoom can be combined with the \u003ccode\u003epan\u003c/code\u003e property to set the focus point of the zooming",
+        "maximum": 100,
+        "minimum": -100,
+        "type": "integer"
+      }
+    },
+    "title": "VisualElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ Or doesn't match schema due to: Error at "/type": value is not one of the allowed values ["audio"]
+Schema:
+  {
+    "enum": [
+      "audio"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "video"
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "muted": {
+        "default": false,
+        "description": "Mutes the audio",
+        "type": "boolean"
+      },
+      "volume": {
+        "default": 5,
+        "maximum": 10,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "AudioElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "muted": {
+        "default": false,
+        "description": "Mutes the audio",
+        "type": "boolean"
+      },
+      "volume": {
+        "default": 5,
+        "maximum": 10,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "AudioElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ Or doesn't match schema due to: property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "text": {
+        "description": "The sentence or sentences to be converted to voice audio",
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "voice"
+        ],
+        "type": "string"
+      },
+      "voice": {
+        "default": "en-GB-LibbyNeural",
+        "description": "The voice name to be used. Check \u003ca href=\"/docs/tutorial/voice-elements/\"\u003eavailable voices\u003c/a\u003e.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "text"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | Error at "/type": value is not one of the allowed values ["voice"]
+Schema:
+  {
+    "enum": [
+      "voice"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "video"
+ | Error at "/text": property "text" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "text": {
+        "description": "The sentence or sentences to be converted to voice audio",
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "voice"
+        ],
+        "type": "string"
+      },
+      "voice": {
+        "default": "en-GB-LibbyNeural",
+        "description": "The voice name to be used. Check \u003ca href=\"/docs/tutorial/voice-elements/\"\u003eavailable voices\u003c/a\u003e.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "text"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "cache": {
+        "default": true,
+        "description": "Element's cache policy. When true, the cached version (if exists) is used. When false, the assets is downloaded.",
+        "example": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "comment": {
+        "description": "Used for adding your comments",
+        "type": "string"
+      },
+      "duration": {
+        "default": -1,
+        "description": "Element's duration in seconds. A value of -1 auto calculates the duration based on the asset intrinsic length or the scene duration.",
+        "example": 7.3,
+        "format": "float",
+        "type": "number"
+      },
+      "extra-time": {
+        "default": 0,
+        "description": "Element's time span added after the playback.",
+        "example": 0.5,
+        "format": "float",
+        "type": "number"
+      },
+      "fade-in": {
+        "description": "Adds a fade in effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "fade-out": {
+        "description": "Adds a fade out effect to the element. Value in seconds.",
+        "format": "float",
+        "minimum": 0,
+        "type": "number"
+      },
+      "start": {
+        "default": 0,
+        "description": "Element's starting time in seconds relative to the container scene or the movie if the element is in the Movie's elements array.",
+        "format": "float",
+        "type": "number"
+      },
+      "z-index": {
+        "default": 0,
+        "description": "Element's z-index. Use this property to reorganize the layering of the elements like in HTML",
+        "example": 3,
+        "format": "integer",
+        "type": "number"
+      }
+    },
+    "title": "BaseElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ And property "src" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "muted": {
+        "default": false,
+        "description": "Mutes the audio",
+        "type": "boolean"
+      },
+      "volume": {
+        "default": 5,
+        "maximum": 10,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "AudioElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }
+ | property "type" is unsupported
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "muted": {
+        "default": false,
+        "description": "Mutes the audio",
+        "type": "boolean"
+      },
+      "volume": {
+        "default": 5,
+        "maximum": 10,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "AudioElement",
+    "type": "object"
+  }
+
+Value:
+  {
+    "src": "https://example.com/path/to/my/video.mp4",
+    "type": "video"
+  }

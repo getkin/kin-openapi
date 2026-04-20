@@ -1,0 +1,80 @@
+invalid components: request body "Remove_items_from_collectionBody": invalid example: Error at "/shows/0/seasons": property "seasons" is missing
+Schema:
+  {
+    "properties": {
+      "ids": {
+        "properties": {
+          "imdb": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tmdb": {
+            "type": "number"
+          },
+          "trakt": {
+            "type": "number"
+          },
+          "tvdb": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "seasons": {
+        "items": {
+          "properties": {
+            "episodes": {
+              "items": {
+                "properties": {
+                  "number": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "number"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "number": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "number"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "title": {
+        "type": "string"
+      },
+      "year": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "title",
+      "year",
+      "ids",
+      "seasons"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "ids": {
+      "imdb": "tt0903747",
+      "slug": "breaking-bad",
+      "tmdb": 1396,
+      "trakt": 1,
+      "tvdb": 81189
+    },
+    "title": "Breaking Bad",
+    "year": 2008
+  }

@@ -1,0 +1,162 @@
+invalid components: schema "APIs": invalid example: Error at "/googleapis.com:drive/versions/v2/openapiVer": property "openapiVer" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "added": {
+        "description": "Timestamp when the version was added",
+        "format": "date-time",
+        "type": "string"
+      },
+      "externalDocs": {
+        "description": "Copy of `externalDocs` section from OpenAPI definition",
+        "minProperties": 1,
+        "type": "object"
+      },
+      "info": {
+        "description": "Copy of `info` section from OpenAPI definition",
+        "minProperties": 1,
+        "type": "object"
+      },
+      "link": {
+        "description": "Link to the individual API entry for this API",
+        "format": "url",
+        "type": "string"
+      },
+      "openapiVer": {
+        "description": "The value of the `openapi` or `swagger` property of the source definition",
+        "type": "string"
+      },
+      "swaggerUrl": {
+        "description": "URL to OpenAPI definition in JSON format",
+        "format": "url",
+        "type": "string"
+      },
+      "swaggerYamlUrl": {
+        "description": "URL to OpenAPI definition in YAML format",
+        "format": "url",
+        "type": "string"
+      },
+      "updated": {
+        "description": "Timestamp when the version was updated",
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "required": [
+      "added",
+      "updated",
+      "swaggerUrl",
+      "swaggerYamlUrl",
+      "info",
+      "openapiVer"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "added": "2015-02-22T20:00:45Z",
+    "info": {
+      "title": "Drive",
+      "version": "v2",
+      "x-apiClientRegistration": {
+        "url": "https://console.developers.google.com"
+      },
+      "x-logo": {
+        "url": "https://api.apis.guru/v2/cache/logo/https_www.gstatic.com_images_icons_material_product_2x_drive_32dp.png"
+      },
+      "x-origin": {
+        "format": "google",
+        "url": "https://www.googleapis.com/discovery/v1/apis/drive/v2/rest",
+        "version": "v1"
+      },
+      "x-preferred": false,
+      "x-providerName": "googleapis.com",
+      "x-serviceName": "drive"
+    },
+    "swaggerUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v2/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v2/swagger.yaml",
+    "updated": "2016-06-17T00:21:44Z"
+  }
+ | Error at "/googleapis.com:drive/versions/v3/openapiVer": property "openapiVer" is missing
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "added": {
+        "description": "Timestamp when the version was added",
+        "format": "date-time",
+        "type": "string"
+      },
+      "externalDocs": {
+        "description": "Copy of `externalDocs` section from OpenAPI definition",
+        "minProperties": 1,
+        "type": "object"
+      },
+      "info": {
+        "description": "Copy of `info` section from OpenAPI definition",
+        "minProperties": 1,
+        "type": "object"
+      },
+      "link": {
+        "description": "Link to the individual API entry for this API",
+        "format": "url",
+        "type": "string"
+      },
+      "openapiVer": {
+        "description": "The value of the `openapi` or `swagger` property of the source definition",
+        "type": "string"
+      },
+      "swaggerUrl": {
+        "description": "URL to OpenAPI definition in JSON format",
+        "format": "url",
+        "type": "string"
+      },
+      "swaggerYamlUrl": {
+        "description": "URL to OpenAPI definition in YAML format",
+        "format": "url",
+        "type": "string"
+      },
+      "updated": {
+        "description": "Timestamp when the version was updated",
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "required": [
+      "added",
+      "updated",
+      "swaggerUrl",
+      "swaggerYamlUrl",
+      "info",
+      "openapiVer"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "added": "2015-12-12T00:25:13Z",
+    "info": {
+      "title": "Drive",
+      "version": "v3",
+      "x-apiClientRegistration": {
+        "url": "https://console.developers.google.com"
+      },
+      "x-logo": {
+        "url": "https://api.apis.guru/v2/cache/logo/https_www.gstatic.com_images_icons_material_product_2x_drive_32dp.png"
+      },
+      "x-origin": {
+        "format": "google",
+        "url": "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+        "version": "v1"
+      },
+      "x-preferred": true,
+      "x-providerName": "googleapis.com",
+      "x-serviceName": "drive"
+    },
+    "swaggerUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v3/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v3/swagger.yaml",
+    "updated": "2016-06-17T00:21:44Z"
+  }

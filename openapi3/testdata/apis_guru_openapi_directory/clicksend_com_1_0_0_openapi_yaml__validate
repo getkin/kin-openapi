@@ -1,0 +1,97 @@
+invalid components: request body "Send_FaxBody": invalid example: Error at "/to": property "to" is missing
+Schema:
+  {
+    "example": {
+      "file_url": "https://s3-ap-southeast-2.amazonaws.com/clicksend-api-downloads/_public/_examples/document.pdf",
+      "messages": [
+        {
+          "country": "AF",
+          "custom_string": "custom_string",
+          "from_email": "will@smith.com",
+          "schedule": "1436874701",
+          "source": "php",
+          "to": "+61261111111"
+        },
+        {
+          "country": "AF",
+          "custom_string": "custom_string",
+          "from_email": "john@doe.com",
+          "schedule": "1436874701",
+          "source": "php",
+          "to": "+61261111122"
+        }
+      ]
+    },
+    "properties": {
+      "country": {
+        "description": "Recipient country.",
+        "type": "string"
+      },
+      "custom_string": {
+        "description": "Your reference. Will be passed back with all replies and delivery reports.",
+        "type": "string"
+      },
+      "file_url": {
+        "description": "Your URL to your PDF file.",
+        "type": "string"
+      },
+      "from": {
+        "description": "Your sender id. Must be a valid fax number.",
+        "type": "string"
+      },
+      "from_email": {
+        "description": "An email address where the reply should be emailed to.",
+        "type": "string"
+      },
+      "list_id": {
+        "description": "Your list ID if sending to a whole list. Can be used instead of 'to'.",
+        "type": "number"
+      },
+      "messages": {
+        "description": "Your messages.",
+        "items": {},
+        "type": "array"
+      },
+      "schedule": {
+        "description": "Leave blank for immediate delivery. Your schedule time as a [unix timestamp](http://help.clicksend.com/what-is-a-unix-timestamp).",
+        "type": "number"
+      },
+      "source": {
+        "description": "Your method of sending e.g. 'wordpress', 'php', 'c#'.",
+        "type": "string"
+      },
+      "to": {
+        "description": "Recipient number in E.164 format or local format ([more info](https://help.clicksend.com/SMS/what-format-does-the-recipient-phone-number-need-to-be-in)).",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_url",
+      "messages",
+      "to"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "file_url": "https://s3-ap-southeast-2.amazonaws.com/clicksend-api-downloads/_public/_examples/document.pdf",
+    "messages": [
+      {
+        "country": "AF",
+        "custom_string": "custom_string",
+        "from_email": "will@smith.com",
+        "schedule": "1436874701",
+        "source": "php",
+        "to": "+61261111111"
+      },
+      {
+        "country": "AF",
+        "custom_string": "custom_string",
+        "from_email": "john@doe.com",
+        "schedule": "1436874701",
+        "source": "php",
+        "to": "+61261111122"
+      }
+    ]
+  }

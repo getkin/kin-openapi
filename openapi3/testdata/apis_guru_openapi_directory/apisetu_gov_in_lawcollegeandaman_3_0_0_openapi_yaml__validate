@@ -1,0 +1,13 @@
+invalid components: schema "AcademicCertificateSchema": invalid example: value must be a string
+Schema:
+  {
+    "example": 2019,
+    "minLength": 1,
+    "type": "string",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  2019

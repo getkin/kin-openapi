@@ -1,0 +1,11 @@
+invalid components: schema "GetOrderResponse": invalid example: value must be an integer
+Schema:
+  {
+    "example": 27.5,
+    "nullable": true,
+    "title": "Total amount (in cents)",
+    "type": "integer"
+  }
+
+Value:
+  27.5

@@ -1,0 +1,8 @@
+invalid paths: invalid path /names/changes: invalid operation GET: invalid example: value must be an integer
+Schema:
+  {
+    "type": "integer"
+  }
+
+Value:
+  "2017-01-01T00:00:00Z"

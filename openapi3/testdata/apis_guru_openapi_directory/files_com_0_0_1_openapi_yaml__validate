@@ -1,0 +1,74 @@
+invalid components: schema "AccountLineItemEntity": invalid example: Error at "/0": Value is not nullable
+Schema:
+  {
+    "properties": {
+      "amount": {
+        "description": "Invoice line item amount",
+        "example": 1,
+        "format": "double",
+        "type": "number"
+      },
+      "created_at": {
+        "description": "Invoice line item created at date/time",
+        "example": "2000-01-01T01:00:00Z",
+        "format": "date-time",
+        "type": "string"
+      },
+      "description": {
+        "description": "Invoice line item description",
+        "example": "Service from 2019-01-01 through 2019-12-31",
+        "type": "string"
+      },
+      "plan": {
+        "description": "Plan name",
+        "example": "Premier",
+        "type": "string"
+      },
+      "service_end_at": {
+        "description": "Invoice line item service end date/time",
+        "example": "2000-01-01T01:00:00Z",
+        "format": "date-time",
+        "type": "string"
+      },
+      "service_start_at": {
+        "description": "Invoice line item service start date/time",
+        "example": "2000-01-01T01:00:00Z",
+        "format": "date-time",
+        "type": "string"
+      },
+      "site": {
+        "description": "Site name",
+        "example": "My site",
+        "type": "string"
+      },
+      "type": {
+        "description": "Invoice line item type",
+        "enum": [
+          "invoice",
+          "invoice_adjustment",
+          "usage_overage",
+          "user_overage",
+          "addon_subscription",
+          "misc_fee",
+          "usage_overage_adjustment",
+          "user_overage_adjustment",
+          "addon_subscription_adjustment",
+          "misc_fee_adjustment",
+          "credit_expiration"
+        ],
+        "example": "invoice",
+        "type": "string"
+      },
+      "updated_at": {
+        "description": "Invoice line item updated date/time",
+        "example": "2000-01-01T01:00:00Z",
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "x-docs": null
+  }
+
+Value:
+  null

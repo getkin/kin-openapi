@@ -1,0 +1,103 @@
+invalid components: schema "ConnectModules": invalid example: Error at "/modules": property "modules" is missing
+Schema:
+  {
+    "example": {
+      "jiraEntityProperties": [
+        {
+          "entityType": "issue",
+          "key": "dynamic-attachment-entity-property",
+          "keyConfigurations": [
+            {
+              "extractions": [
+                {
+                  "alias": "attachmentExtension",
+                  "objectName": "extension",
+                  "type": "text"
+                }
+              ],
+              "propertyKey": "attachment"
+            }
+          ],
+          "name": {
+            "value": "Attachment Index Document"
+          }
+        }
+      ],
+      "jiraIssueFields": [
+        {
+          "description": {
+            "value": "A dynamically added single-select field"
+          },
+          "extractions": [
+            {
+              "name": "categoryName",
+              "path": "category",
+              "type": "text"
+            }
+          ],
+          "key": "dynamic-select-field",
+          "name": {
+            "value": "Dynamic single select"
+          },
+          "type": "single_select"
+        }
+      ]
+    },
+    "properties": {
+      "modules": {
+        "description": "A list of app modules in the same format as the `modules` property in the\n[app descriptor](https://developer.atlassian.com/cloud/jira/platform/app-descriptor/).",
+        "items": {
+          "$ref": "#/components/schemas/ConnectModule"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "modules"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "jiraEntityProperties": [
+      {
+        "entityType": "issue",
+        "key": "dynamic-attachment-entity-property",
+        "keyConfigurations": [
+          {
+            "extractions": [
+              {
+                "alias": "attachmentExtension",
+                "objectName": "extension",
+                "type": "text"
+              }
+            ],
+            "propertyKey": "attachment"
+          }
+        ],
+        "name": {
+          "value": "Attachment Index Document"
+        }
+      }
+    ],
+    "jiraIssueFields": [
+      {
+        "description": {
+          "value": "A dynamically added single-select field"
+        },
+        "extractions": [
+          {
+            "name": "categoryName",
+            "path": "category",
+            "type": "text"
+          }
+        ],
+        "key": "dynamic-select-field",
+        "name": {
+          "value": "Dynamic single select"
+        },
+        "type": "single_select"
+      }
+    ]
+  }

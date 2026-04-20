@@ -1,0 +1,8 @@
+invalid components: parameter "AccountID": invalid example: value must be a string
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  451496

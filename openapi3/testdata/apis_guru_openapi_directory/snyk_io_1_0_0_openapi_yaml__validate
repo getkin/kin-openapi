@@ -1,0 +1,8 @@
+invalid paths: invalid path /group/{groupId}/audit: invalid operation POST: invalid example: value must be a number
+Schema:
+  {
+    "type": "number"
+  }
+
+Value:
+  "1"

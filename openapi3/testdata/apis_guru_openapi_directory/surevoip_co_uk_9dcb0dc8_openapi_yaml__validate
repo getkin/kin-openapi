@@ -1,0 +1,10 @@
+invalid paths: invalid path /calls: invalid operation POST: invalid example: value must be a string
+Schema:
+  {
+    "description": "is in seconds. Just take 120 secs away from the hangup_at time for a announcement to be played 2 mins before the end of the call. If provided announcement_id is required\n",
+    "example": 180,
+    "type": "string"
+  }
+
+Value:
+  180

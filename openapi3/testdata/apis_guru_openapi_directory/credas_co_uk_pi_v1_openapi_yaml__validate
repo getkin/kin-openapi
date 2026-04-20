@@ -1,0 +1,26 @@
+invalid components: schema "Credas.Api.Models.BankAccounts.AccountVerificationRequest": invalid example: Error at "/address/addressLine3": Value is not nullable
+Schema:
+  {
+    "pattern": "^([A-Za-z0-9 '\\.,\u0026\\(\\)\\/-]*)$",
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/address/county": Value is not nullable
+Schema:
+  {
+    "pattern": "^([A-Za-z0-9 '\\.,\u0026\\(\\)\\/-]*)$",
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/person/middleName": Value is not nullable
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  null

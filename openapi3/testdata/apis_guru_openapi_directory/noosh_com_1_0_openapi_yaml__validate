@@ -1,0 +1,10 @@
+invalid components: schema "AutomaticInvitationVO": invalid example: value must be an integer
+Schema:
+  {
+    "example": "1",
+    "format": "int64",
+    "type": "integer"
+  }
+
+Value:
+  "1"

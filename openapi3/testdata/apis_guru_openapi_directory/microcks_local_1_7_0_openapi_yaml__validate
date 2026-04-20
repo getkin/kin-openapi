@@ -1,0 +1,17 @@
+invalid components: schema "Counter": invalid example: value must be an object
+Schema:
+  {
+    "description": "A simple Counter type.",
+    "example": "{\n    \"counter\": 12\n}",
+    "properties": {
+      "counter": {
+        "description": "Number of items in a resource collection",
+        "format": "int32",
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\n    \"counter\": 12\n}"

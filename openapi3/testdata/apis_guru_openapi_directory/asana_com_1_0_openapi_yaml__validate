@@ -1,0 +1,10 @@
+invalid components: schema "BatchRequest": invalid example: value must be an integer
+Schema:
+  {
+    "description": "Pagination offset for the request.",
+    "example": "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9",
+    "type": "integer"
+  }
+
+Value:
+  "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9"

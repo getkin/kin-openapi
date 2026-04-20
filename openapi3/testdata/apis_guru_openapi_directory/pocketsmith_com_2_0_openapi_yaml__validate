@@ -1,0 +1,8 @@
+invalid paths: invalid path /users/{id}/trend_analysis: invalid operation GET: invalid example: value must be an integer
+Schema:
+  {
+    "type": "integer"
+  }
+
+Value:
+  true

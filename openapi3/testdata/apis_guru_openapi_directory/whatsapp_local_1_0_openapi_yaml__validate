@@ -1,0 +1,15 @@
+invalid components: schema "Application-Settings": invalid example: Error at "/auto_download/0": value is not one of the allowed values ["audio","document","voice","video","image."]
+Schema:
+  {
+    "enum": [
+      "audio",
+      "document",
+      "voice",
+      "video",
+      "image."
+    ],
+    "type": "string"
+  }
+
+Value:
+  "image"

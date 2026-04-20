@@ -1,0 +1,9 @@
+invalid components: schema "GetLexiconOutput": invalid example: Error at "/LexiconAttributes": doesn't match schema due to: Error at "/LastModified": doesn't match schema due to: value must be a string
+Schema:
+  {
+    "format": "date-time",
+    "type": "string"
+  }
+
+Value:
+  1478542980.117

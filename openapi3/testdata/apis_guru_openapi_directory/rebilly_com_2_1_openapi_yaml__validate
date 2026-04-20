@@ -1,0 +1,17 @@
+invalid components: schema "AlternativePaymentInstrument-2": invalid example: value must be a string
+Schema:
+  {
+    "description": "The contact organization.",
+    "example": {
+      "$ref": "#/components/schemas/ReadyToPayMethods/example/2/feature"
+    },
+    "maxLength": 255,
+    "nullable": true,
+    "pattern": "^[\\w\\s\\-\\pL,.']+$",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/schemas/ReadyToPayMethods/example/2/feature"
+  }

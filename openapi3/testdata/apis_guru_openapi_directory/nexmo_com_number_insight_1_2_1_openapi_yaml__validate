@@ -1,0 +1,13 @@
+invalid components: schema "niResponseXmlAdvanced": invalid example: value must be a string
+Schema:
+  {
+    "description": "The status code",
+    "example": 0,
+    "type": "string",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  0

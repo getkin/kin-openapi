@@ -1,0 +1,12 @@
+invalid components: schema "Account": invalid default: value must be an object
+Schema:
+  {
+    "default": "4 10:55:34.12",
+    "description": "Time after non-accepted task assignees will be rotated. Leave empty in case the orders should not be rotated",
+    "nullable": true,
+    "title": "Rotate assignee",
+    "type": "object"
+  }
+
+Value:
+  "4 10:55:34.12"

@@ -1,0 +1,17 @@
+invalid components: schema "settings": invalid example: value must be an array
+Schema:
+  {
+    "default": [],
+    "description": "Array containing delivery channels.",
+    "example": "delivery",
+    "items": {
+      "description": "Type of delivery channel. The values that are possible are: `pickupInPoint` for pickup point and `delivery` for regular delivery.",
+      "example": "delivery",
+      "type": "string"
+    },
+    "title": "deliveryChannels",
+    "type": "array"
+  }
+
+Value:
+  "delivery"

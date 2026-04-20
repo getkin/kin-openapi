@@ -1,0 +1,1 @@
+invalid components: schema "BatchPutMessageRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

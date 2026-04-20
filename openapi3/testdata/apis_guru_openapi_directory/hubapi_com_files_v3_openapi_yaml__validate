@@ -1,0 +1,21 @@
+invalid components: schema "FolderUpdateTaskLocator": invalid example: value must be an object
+Schema:
+  {
+    "additionalProperties": {
+      "type": "string"
+    },
+    "description": "Links for where to check information related to the task. The `status` link gives the URL for where to check the status of the task.",
+    "example": [
+      {
+        "status": "https://api.hubspot.com/files/v3/folders/update/async/tasks/57122e26-59f8-4cfc-ba53-96e30c816762/status"
+      }
+    ],
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "status": "https://api.hubspot.com/files/v3/folders/update/async/tasks/57122e26-59f8-4cfc-ba53-96e30c816762/status"
+    }
+  ]

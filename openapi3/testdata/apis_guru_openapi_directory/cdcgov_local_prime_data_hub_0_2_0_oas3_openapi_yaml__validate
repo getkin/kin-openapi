@@ -1,0 +1,11 @@
+invalid paths: invalid path /reports: invalid operation POST: invalid example: value must be an array
+Schema:
+  {
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "processing_mode_code%3AD"

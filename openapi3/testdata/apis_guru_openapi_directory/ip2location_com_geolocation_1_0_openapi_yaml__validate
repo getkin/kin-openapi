@@ -1,0 +1,21 @@
+invalid paths: invalid path /: invalid operation GET: parameter "addon" schema is invalid: invalid example: value must be an array
+Schema:
+  {
+    "example": "continent,country",
+    "items": {
+      "enum": [
+        "continent",
+        "country",
+        "region",
+        "city",
+        "geotargeting",
+        "country_groupings",
+        "time_zone_info"
+      ],
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "continent,country"

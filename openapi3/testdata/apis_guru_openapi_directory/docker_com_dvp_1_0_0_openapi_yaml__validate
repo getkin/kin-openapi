@@ -1,0 +1,10 @@
+invalid components: schema "Users2FALoginRequest": invalid example: value must be a string
+Schema:
+  {
+    "description": "The Time-based One-Time Password of the Docker Hub account to authenticate with.",
+    "example": 123456,
+    "type": "string"
+  }
+
+Value:
+  123456

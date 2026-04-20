@@ -1,0 +1,10 @@
+invalid components: schema "Account": invalid example: value must be a string
+Schema:
+  {
+    "description": "Customer defined account code",
+    "example": 420,
+    "type": "string"
+  }
+
+Value:
+  420

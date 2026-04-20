@@ -1,0 +1,8 @@
+invalid paths: invalid path /VisualCrossingWebServices/rest/services/weatherdata/forecast: invalid operation GET: invalid example: value must be a boolean
+Schema:
+  {
+    "type": "boolean"
+  }
+
+Value:
+  "false"

@@ -1,0 +1,15 @@
+invalid components: schema "CreateNetworkInterfaceResult": invalid example: Error at "/NetworkInterface": doesn't match schema due to: Error at "/Status": doesn't match schema due to: value is not one of the allowed values ["available","associated","attaching","in-use","detaching"]
+Schema:
+  {
+    "enum": [
+      "available",
+      "associated",
+      "attaching",
+      "in-use",
+      "detaching"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "pending"

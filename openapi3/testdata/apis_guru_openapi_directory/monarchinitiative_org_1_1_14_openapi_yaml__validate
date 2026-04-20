@@ -1,0 +1,9 @@
+invalid paths: invalid path /nlp/annotate/: invalid operation GET: parameter "min_length" schema is invalid: invalid default: value must be a string
+Schema:
+  {
+    "default": 4,
+    "type": "string"
+  }
+
+Value:
+  4

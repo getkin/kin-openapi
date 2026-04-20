@@ -1,0 +1,9 @@
+invalid components: schema "BankAccount": invalid default: value must be a boolean
+Schema:
+  {
+    "default": "false",
+    "type": "boolean"
+  }
+
+Value:
+  "false"

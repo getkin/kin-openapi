@@ -1,0 +1,18 @@
+invalid components: schema "Zebra": invalid example: value must be a number
+Schema:
+  {
+    "example": [
+      2.73,
+      2.7,
+      null
+    ],
+    "format": "double",
+    "type": "number"
+  }
+
+Value:
+  [
+    2.73,
+    2.7,
+    null
+  ]

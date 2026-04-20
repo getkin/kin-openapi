@@ -1,0 +1,8 @@
+invalid components: schema "ListMultipartUploadsOutput": invalid example: Error at "/MaxUploads": doesn't match schema due to: value must be an integer
+Schema:
+  {
+    "type": "integer"
+  }
+
+Value:
+  "2"

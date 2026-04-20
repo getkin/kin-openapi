@@ -1,0 +1,1 @@
+invalid paths: invalid path /v3/Services/{ServiceSid}/Channels/{Sid}: invalid operation POST: parameter "X-Twilio-Webhook-Enabled" schema is invalid: extra sibling fields: [type]

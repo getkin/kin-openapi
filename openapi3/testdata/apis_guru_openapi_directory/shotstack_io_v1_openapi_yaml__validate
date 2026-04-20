@@ -1,0 +1,1 @@
+invalid paths: invalid path /render: invalid operation POST: invalid example: Error at "/timeline/tracks/0/clips/1/asset": input matches more than one oneOf schemas | Error at "/timeline/tracks/1/clips/0/asset": input matches more than one oneOf schemas | Error at "/timeline/tracks/1/clips/1/asset": input matches more than one oneOf schemas

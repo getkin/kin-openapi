@@ -1,0 +1,13 @@
+invalid components: response "error403": invalid example: value is not one of the allowed values ["Your account has exceeded the monthly document generation limit."]
+Schema:
+  {
+    "description": "Error description",
+    "enum": [
+      "Your account has exceeded the monthly document generation limit."
+    ],
+    "example": "Access not granted",
+    "type": "string"
+  }
+
+Value:
+  "Access not granted"

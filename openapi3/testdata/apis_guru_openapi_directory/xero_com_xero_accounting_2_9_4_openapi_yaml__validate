@@ -1,0 +1,10 @@
+invalid components: schema "Account": invalid example: value must be a string
+Schema:
+  {
+    "description": "Customer defined alpha numeric account code e.g 200 or SALES (max length = 10)",
+    "example": 4400,
+    "type": "string"
+  }
+
+Value:
+  4400

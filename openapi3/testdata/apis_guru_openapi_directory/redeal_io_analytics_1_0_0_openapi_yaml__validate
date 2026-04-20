@@ -1,0 +1,9 @@
+invalid components: schema "EventRecord": invalid example: value must be a string
+Schema:
+  {
+    "example": 51.4353,
+    "type": "string"
+  }
+
+Value:
+  51.4353

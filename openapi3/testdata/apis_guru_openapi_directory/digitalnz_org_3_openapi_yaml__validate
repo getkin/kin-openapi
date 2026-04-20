@@ -1,0 +1,13 @@
+invalid components: schema "record": invalid example: value must be an array
+Schema:
+  {
+    "description": "Date information associated with this record (e.g. 1996-01-01T00:00:00.000Z). This field may be empty.",
+    "example": "1996-01-01T00:00:00Z",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "1996-01-01T00:00:00Z"

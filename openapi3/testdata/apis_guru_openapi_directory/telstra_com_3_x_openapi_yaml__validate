@@ -1,0 +1,12 @@
+invalid components: schema "Virtual-number": invalid example: value must be a string
+Schema:
+  {
+    "description": "The Virtual Number assigned to your account.\n",
+    "example": 401234567,
+    "maxLength": 10,
+    "minLength": 10,
+    "type": "string"
+  }
+
+Value:
+  401234567

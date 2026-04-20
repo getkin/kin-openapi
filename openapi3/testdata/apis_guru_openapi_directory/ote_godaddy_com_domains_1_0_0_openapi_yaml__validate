@@ -1,0 +1,10 @@
+invalid components: schema "DomainNotification": invalid default: value must be an object
+Schema:
+  {
+    "default": "",
+    "description": "The notification data for the given type as specifed by GET /v2/customers/{customerId}/domains/notifications/schema",
+    "type": "object"
+  }
+
+Value:
+  ""

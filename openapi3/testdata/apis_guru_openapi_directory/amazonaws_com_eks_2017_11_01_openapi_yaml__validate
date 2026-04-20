@@ -1,0 +1,9 @@
+invalid components: schema "DescribeClusterResponse": invalid example: Error at "/cluster": doesn't match schema due to: Error at "/createdAt": doesn't match schema due to: value must be a string
+Schema:
+  {
+    "format": "date-time",
+    "type": "string"
+  }
+
+Value:
+  1527807879.988
