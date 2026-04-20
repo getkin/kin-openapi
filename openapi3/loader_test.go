@@ -672,3 +672,57 @@ func TestReadFromIoReader_Nil(t *testing.T) {
 	_, err := loader.LoadFromIoReader(nil)
 	require.EqualError(t, err, "invalid reader: <nil>")
 }
+
+func TestJoinGitRefPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		base     string
+		rel      string
+		expected string
+	}{
+		{
+			name:     "git ref with relative path",
+			base:     "origin/main:openapi.yaml",
+			rel:      "schemas/pet.yaml",
+			expected: "origin/main:schemas/pet.yaml",
+		},
+		{
+			name:     "git ref with dot-slash relative path",
+			base:     "origin/main:openapi.yaml",
+			rel:      "./schemas/pet.yaml",
+			expected: "origin/main:schemas/pet.yaml",
+		},
+		{
+			name:     "git ref with nested base path",
+			base:     "origin/main:api/v1/openapi.yaml",
+			rel:      "../common/types.yaml",
+			expected: "origin/main:api/common/types.yaml",
+		},
+		{
+			name:     "regular path without colon",
+			base:     "/home/user/openapi.yaml",
+			rel:      "schemas/pet.yaml",
+			expected: "/home/user/schemas/pet.yaml",
+		},
+		{
+			name:     "nil base returns relative",
+			base:     "",
+			rel:      "schemas/pet.yaml",
+			expected: "schemas/pet.yaml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rel := &url.URL{Path: tt.rel}
+			if tt.base == "" {
+				result := join(nil, rel)
+				require.Equal(t, tt.expected, result.Path)
+				return
+			}
+			base := &url.URL{Path: tt.base}
+			result := join(base, rel)
+			require.Equal(t, tt.expected, result.Path)
+		})
+	}
+}
