@@ -278,7 +278,16 @@ func join(basePath *url.URL, relativePath *url.URL) *url.URL {
 		return relativePath
 	}
 	newPath := *basePath
-	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
+	// Handle git ref paths like "origin/main:openapi.yaml" where ":"
+	// separates the ref from the file path. path.Dir does not understand
+	// this syntax and would treat the colon as a regular character.
+	if i := strings.IndexByte(newPath.Path, ':'); i >= 0 {
+		prefix := newPath.Path[:i+1] // e.g. "origin/main:"
+		filePath := newPath.Path[i+1:]
+		newPath.Path = prefix + path.Join(path.Dir(filePath), relativePath.Path)
+	} else {
+		newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
+	}
 	return &newPath
 }
 
