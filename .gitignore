@@ -20,3 +20,6 @@
 .idea
 .vscode
 .claude/
+
+# Test fixtures
+/openapi3/testdata/APIs-guru-openapi-directory-*/
