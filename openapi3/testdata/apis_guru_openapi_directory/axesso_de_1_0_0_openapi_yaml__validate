@@ -1,0 +1,9 @@
+invalid paths: invalid path /amz/amazon-search-by-keyword: invalid operation GET: parameter "numberOfProducts" schema is invalid: invalid default: value must be an integer
+Schema:
+  {
+    "default": "20",
+    "type": "integer"
+  }
+
+Value:
+  "20"

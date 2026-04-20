@@ -1,0 +1,18 @@
+invalid components: schema "Feedback": invalid example: Error at "/date": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$" | Error at "/reviewer_user_id": value must be a string
+Schema:
+  {
+    "description": "The user ID of the user that submitted the feedback.",
+    "type": "string"
+  }
+
+Value:
+  9191
+ | Error at "/user_id": value must be a string
+Schema:
+  {
+    "description": "The user ID of the user that the feedback is about.",
+    "type": "string"
+  }
+
+Value:
+  2946512

@@ -1,0 +1,14 @@
+invalid components: schema "AiPlanningLevelRequest": invalid example: value is not one of the allowed values ["icueMLP","icueMLO","icueMLN"]
+Schema:
+  {
+    "enum": [
+      "icueMLP",
+      "icueMLO",
+      "icueMLN"
+    ],
+    "example": "icueMLP | icueMLO",
+    "type": "string"
+  }
+
+Value:
+  "icueMLP | icueMLO"

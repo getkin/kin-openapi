@@ -1,0 +1,11 @@
+invalid components: schema "DecryptResponse": invalid example: Error at "/Plaintext": doesn't match schema due to: minimum string length is 1
+Schema:
+  {
+    "format": "password",
+    "maxLength": 4096,
+    "minLength": 1,
+    "type": "string"
+  }
+
+Value:
+  ""

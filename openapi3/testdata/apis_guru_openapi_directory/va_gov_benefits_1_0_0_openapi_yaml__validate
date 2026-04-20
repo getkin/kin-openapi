@@ -1,0 +1,10 @@
+invalid components: schema "DocumentUploadStatus": invalid example: value must be an integer
+Schema:
+  {
+    "description": "The document height",
+    "example": "11.0",
+    "type": "integer"
+  }
+
+Value:
+  "11.0"

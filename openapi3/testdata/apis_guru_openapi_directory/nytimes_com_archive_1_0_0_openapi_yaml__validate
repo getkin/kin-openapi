@@ -1,0 +1,12 @@
+invalid paths: invalid path /{year}/{month}.json: invalid operation GET: parameter "year" schema is invalid: invalid default: value must be an integer
+Schema:
+  {
+    "default": "2016",
+    "format": "int32",
+    "maximum": 2030,
+    "minimum": 1851,
+    "type": "integer"
+  }
+
+Value:
+  "2016"

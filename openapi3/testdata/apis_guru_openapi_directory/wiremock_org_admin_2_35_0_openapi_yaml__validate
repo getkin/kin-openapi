@@ -1,0 +1,34 @@
+invalid components: request body "snapshotRecording": invalid example: value must be an object
+Schema:
+  {
+    "description": "Criteria for extracting response bodies to a separate file instead of including it in the stub mapping",
+    "example": [
+      {
+        "binarySizeThreshold": "1 Mb",
+        "textSizeThreshold": "2 kb"
+      }
+    ],
+    "properties": {
+      "binarySizeThreshold": {
+        "default": "0",
+        "description": "Size threshold for extracting binary response bodies. Supports humanized size strings, e.g. \"56 Mb\". Default unit is bytes.",
+        "example": "18.2 GB",
+        "type": "string"
+      },
+      "textSizeThreshold": {
+        "default": "0",
+        "description": "Size threshold for extracting binary response bodies. Supports humanized size strings, e.g. \"56 Mb\". Default unit is bytes.",
+        "example": "18.2 GB",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "binarySizeThreshold": "1 Mb",
+      "textSizeThreshold": "2 kb"
+    }
+  ]

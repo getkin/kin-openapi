@@ -1,0 +1,1 @@
+invalid components: schema "AuditDescription": error parsing regexp: invalid character class range: `\p{Graph}`

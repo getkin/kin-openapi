@@ -1,0 +1,32 @@
+invalid components: schema "NHInterior": invalid example: value is not one of the allowed values ["Aqua","Beige","Black","Blue","Brown","Colorful","Gray","Green","Orange","Pink","Purple","Red","White","Yellow"]
+Schema:
+  {
+    "description": "(WIP)",
+    "enum": [
+      "Aqua",
+      "Beige",
+      "Black",
+      "Blue",
+      "Brown",
+      "Colorful",
+      "Gray",
+      "Green",
+      "Orange",
+      "Pink",
+      "Purple",
+      "Red",
+      "White",
+      "Yellow"
+    ],
+    "example": [
+      "White",
+      "Colorful"
+    ],
+    "type": "string"
+  }
+
+Value:
+  [
+    "White",
+    "Colorful"
+  ]

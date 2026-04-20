@@ -1,0 +1,67 @@
+invalid paths: invalid path /v3/feeds: invalid operation POST: example MultiNode_Bulk_Inventory_Update_Request: Error at "/file": property "file" is missing
+Schema:
+  {
+    "properties": {
+      "file": {
+        "description": "Feed file to upload",
+        "format": "binary",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "inventory": [
+      {
+        "shipNodes": [
+          {
+            "quantity": {
+              "amount": 100,
+              "unit": "EACH"
+            },
+            "shipNode": "10000003527"
+          }
+        ],
+        "sku": "190086893939"
+      },
+      {
+        "shipNodes": [
+          {
+            "quantity": {
+              "amount": 21,
+              "unit": "EACH"
+            },
+            "shipNode": "10000003527"
+          }
+        ],
+        "sku": "685387364107_SS4_01"
+      },
+      {
+        "shipNodes": [
+          {
+            "quantity": {
+              "amount": 13,
+              "unit": "EACH"
+            },
+            "shipNode": "10000003527"
+          },
+          {
+            "quantity": {
+              "amount": 12,
+              "unit": "EACH"
+            },
+            "shipNode": "1000000352"
+          }
+        ],
+        "sku": "5700521553133_toolsnonwfs_2"
+      }
+    ],
+    "inventoryHeader": {
+      "version": "1.5"
+    }
+  }

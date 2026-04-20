@@ -1,0 +1,10 @@
+invalid components: schema "LearningCurve": invalid example: value must be an object
+Schema:
+  {
+    "description": "Epoch to which the metrics correspond.",
+    "example": 1,
+    "type": "object"
+  }
+
+Value:
+  1

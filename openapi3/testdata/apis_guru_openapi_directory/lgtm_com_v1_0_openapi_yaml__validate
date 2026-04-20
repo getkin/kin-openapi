@@ -1,0 +1,172 @@
+invalid components: schema "operation": invalid example: Error at "/task-result": doesn't match schema due to: value must be an object
+Schema:
+  {
+    "example": {
+      "commit-id": "04d7a2300feec9bbcc48185e370e3b5d3ae4da9d",
+      "id": "2e65208b2f1872634132566a1a0ce6392407297c",
+      "languages": [
+        {
+          "alerts": 628,
+          "analysis-date": "2000-01-23T04:56:07Z",
+          "commit-date": "2000-01-23T04:56:07Z",
+          "commit-id": "04d7a2300feec9bbcc48185e370e3b5d3ae4da9d",
+          "language": "javascript",
+          "lines": 133298,
+          "status": "success"
+        },
+        {
+          "alerts": 628,
+          "analysis-date": "2000-01-23T04:56:07Z",
+          "commit-date": "2000-01-23T04:56:07Z",
+          "commit-id": "04d7a2300feec9bbcc48185e370e3b5d3ae4da9d",
+          "language": "javascript",
+          "lines": 133298,
+          "status": "success"
+        }
+      ],
+      "log-url": "https://lgtm.example.com/projects/g/yarnpkg/yarn/logs/analysis/2e65208b2f1872634132566a1a0ce6392407297c",
+      "project": {
+        "id": 1234567,
+        "name": "Apache Commons IO",
+        "url": "https://lgtm.example.com/projects/g/apache/commons-io",
+        "url-identifier": "g/apache/commons-io"
+      },
+      "results-url": "https://lgtm.example.com/projects/g/yarnpkg/yarn/analysis/2e65208b2f1872634132566a1a0ce6392407297c/files"
+    },
+    "properties": {
+      "commit-id": {
+        "description": "The commit identifier.\nThe commit identifier is included only if the same commit was successfully analyzed for all languages. A detailed breakdown of which commit was analyzed for each language is provided in the `languages` property.\n",
+        "example": "04d7a2300feec9bbcc48185e370e3b5d3ae4da9d",
+        "type": "string"
+      },
+      "id": {
+        "description": "The analysis identifier.",
+        "example": "2e65208b2f1872634132566a1a0ce6392407297c",
+        "type": "string"
+      },
+      "languages": {
+        "description": "Per-language information.",
+        "items": {
+          "$ref": "#/components/schemas/language-stats"
+        },
+        "type": "array"
+      },
+      "log-url": {
+        "description": "A page on LGTM to view the logs for this analysis.",
+        "example": "https://lgtm.example.com/projects/g/yarnpkg/yarn/logs/analysis/2e65208b2f1872634132566a1a0ce6392407297c",
+        "type": "string"
+      },
+      "project": {
+        "$ref": "#/components/schemas/project"
+      },
+      "results-url": {
+        "description": "A page on LGTM to view the results of this analysis.",
+        "example": "https://lgtm.example.com/projects/g/yarnpkg/yarn/analysis/2e65208b2f1872634132566a1a0ce6392407297c/files",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  ""
+ Or value must be an object
+Schema:
+  {
+    "example": {
+      "id": "b45e291e7033460949ec986153c5416d22157d3e",
+      "languages": [
+        {
+          "alerts": [
+            {
+              "fixed": 1,
+              "new": 0,
+              "query": {
+                "name": "Incomplete string escaping or encoding"
+              }
+            }
+          ],
+          "fixed": 1,
+          "language": "javascript",
+          "new": 0,
+          "status": "success",
+          "status-message": "1 fixed alert"
+        }
+      ],
+      "results-url": "https://lgtm.example.com/projects/g/yarnpkg/yarn/rev/pr-b45e291e7033460949ec986153c5416d22157d3e",
+      "status": "success",
+      "status-message": "Analysis succeeded"
+    },
+    "properties": {
+      "id": {
+        "description": "The identifier for the review.",
+        "example": "b45e291e7033460949ec986153c5416d22157d3e",
+        "type": "string"
+      },
+      "languages": {
+        "description": "Detailed information for each language analyzed.",
+        "items": {
+          "$ref": "#/components/schemas/codereview_languages"
+        },
+        "type": "array"
+      },
+      "results-url": {
+        "description": "A page on LGTM to view the status and results of this code review.",
+        "example": "https://lgtm.example.com/projects/g/yarnpkg/yarn/rev/pr-b45e291e7033460949ec986153c5416d22157d3e",
+        "type": "string"
+      },
+      "status": {
+        "description": "The status of the code review.",
+        "enum": [
+          "pending",
+          "failure",
+          "success"
+        ],
+        "example": "success",
+        "type": "string"
+      },
+      "status-message": {
+        "description": "A summary of the current status of the code review.",
+        "example": "Analysis succeeded",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  ""
+ Or value must be an object
+Schema:
+  {
+    "example": {
+      "id": "b45e291e7033460949ec986153c5416d22157d3e",
+      "result-url": "https://lgtm.com/api/v1.0/query/b45e291e7033460949ec986153c5416d22157d3e",
+      "stats": {
+        "failed": 1,
+        "pending": 1,
+        "success-with-result": 3,
+        "success-without-result": 5,
+        "successful": 8
+      }
+    },
+    "properties": {
+      "id": {
+        "description": "The identifier for the QueryJob.",
+        "example": "b45e291e7033460949ec986153c5416d22157d3e",
+        "type": "string"
+      },
+      "result-url": {
+        "description": "URL to view the result of the query job.",
+        "example": "https://lgtm.com/api/v1.0/query/b45e291e7033460949ec986153c5416d22157d3e",
+        "type": "string"
+      },
+      "stats": {
+        "$ref": "#/components/schemas/queryjob_stats"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  ""

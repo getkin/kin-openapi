@@ -1,0 +1,1 @@
+invalid paths: operation GET /search/articles?query={query} must define exactly all path parameters (missing: [query])

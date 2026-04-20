@@ -1,0 +1,16 @@
+invalid paths: invalid path /magnetic_field: invalid operation GET: invalid example: Error at "/grid_variation/units": value must be a string
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  -65.8558578491211
+ | Error at "/grid_variation/value": value must be a number
+Schema:
+  {
+    "type": "number"
+  }
+
+Value:
+  "Deg"

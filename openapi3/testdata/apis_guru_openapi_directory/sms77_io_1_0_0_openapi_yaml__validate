@@ -1,0 +1,9 @@
+invalid paths: invalid path /contacts: invalid operation POST: invalid example: value must be a string
+Schema:
+  {
+    "example": 152,
+    "type": "string"
+  }
+
+Value:
+  152

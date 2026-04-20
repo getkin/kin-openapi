@@ -1,0 +1,10 @@
+invalid components: schema "CallNotificationParameters": invalid example: value must be an integer
+Schema:
+  {
+    "description": "Actual answering machine detection assessment duration (in milliseconds)",
+    "example": "19",
+    "type": "integer"
+  }
+
+Value:
+  "19"

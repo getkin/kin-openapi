@@ -1,0 +1,9 @@
+invalid components: schema "400": invalid example: value must be an object
+Schema:
+  {
+    "example": "{}",
+    "type": "object"
+  }
+
+Value:
+  "{}"

@@ -1,0 +1,16 @@
+invalid components: schema "Boundaries": invalid example: Error at "/coordinates/0": value must be a string
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  0
+ | Error at "/coordinates/1": value must be a string
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  0

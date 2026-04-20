@@ -1,0 +1,10 @@
+invalid components: schema "AccessTokenValidity": invalid example: value must be an integer
+Schema:
+  {
+    "description": "number of times, the token can be used",
+    "example": "1",
+    "type": "integer"
+  }
+
+Value:
+  "1"

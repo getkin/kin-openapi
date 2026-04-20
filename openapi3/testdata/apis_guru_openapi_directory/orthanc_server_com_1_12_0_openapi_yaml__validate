@@ -1,0 +1,128 @@
+invalid paths: invalid path /series/{id}/ordered-slices: invalid operation GET: invalid example: Error at "/SlicesShort/0": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "fa1fc64f-e7a051a7-c1233b31-e19bca08-54629531",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/1": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "f5701efb-98170697-404d15f6-59baf69e-4e8ddfae",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/2": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "3b2a215c-2560d4b0-e3730c07-87d3fa7d-3fef44ed",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/3": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "6059d07c-02ae8c74-9436dc7c-007b4d5d-4c770a30",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/4": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "99264275-213c3190-73251bdc-97ccfdb4-1f9656d9",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/5": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "40df6ac1-5ec86316-035ff3c1-07e5c8a8-f6cbd37c",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/6": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "08ff3a1a-c8fb57d9-4e24d9cb-2ed22b80-0ff7461e",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/7": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "6fe353dd-544ce7af-58ce22dd-ab67370c-873330fc",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/8": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "3ad70bbe-bc51faff-860461d2-44745ccf-0ebbbbc8",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/9": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  [
+    "9058e01a-31a7d982-1691e575-a8607d94-29a9aaca",
+    0,
+    1
+  ]
+ | Error at "/SlicesShort/10": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  "..."

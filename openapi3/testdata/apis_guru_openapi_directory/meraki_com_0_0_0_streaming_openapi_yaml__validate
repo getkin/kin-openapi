@@ -1,0 +1,30 @@
+invalid paths: invalid path /networks/{networkId}/clients/{clientId}/policy: invalid operation PUT: invalid example: Error at "/devicePolicy": property "devicePolicy" is missing
+Schema:
+  {
+    "example": {
+      "groupPolicyId": "101",
+      "mac": "00:11:22:33:44:55",
+      "type": "Group policy"
+    },
+    "properties": {
+      "devicePolicy": {
+        "description": "The policy to assign. Can be 'Whitelisted', 'Blocked', 'Normal' or 'Group policy'. Required.",
+        "type": "string"
+      },
+      "groupPolicyId": {
+        "description": "[optional] If 'devicePolicy' is set to 'Group policy' this param is used to specify the group policy ID.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "devicePolicy"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "groupPolicyId": "101",
+    "mac": "00:11:22:33:44:55",
+    "type": "Group policy"
+  }

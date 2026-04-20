@@ -1,0 +1,36 @@
+invalid paths: invalid path /food/products/upc/{upc}: invalid operation GET: example example-1: Error at "/ingredients/0/description": Value is not nullable
+Schema:
+  {}
+
+Value:
+  null
+ | Error at "/ingredients/0/safety_level": Value is not nullable
+Schema:
+  {}
+
+Value:
+  null
+ | Error at "/ingredients/1/description": Value is not nullable
+Schema:
+  {}
+
+Value:
+  null
+ | Error at "/ingredients/1/safety_level": Value is not nullable
+Schema:
+  {}
+
+Value:
+  null
+ | Error at "/ingredients/2/description": Value is not nullable
+Schema:
+  {}
+
+Value:
+  null
+ | Error at "/ingredients/2/safety_level": Value is not nullable
+Schema:
+  {}
+
+Value:
+  null

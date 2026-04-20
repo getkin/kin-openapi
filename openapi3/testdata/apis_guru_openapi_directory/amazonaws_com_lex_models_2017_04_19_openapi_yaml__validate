@@ -1,0 +1,18 @@
+invalid components: schema "GetBotResponse": invalid example: Error at "/createdDate": doesn't match schema due to: value must be a string
+Schema:
+  {
+    "format": "date-time",
+    "type": "string"
+  }
+
+Value:
+  1494360160.133
+ | Error at "/lastUpdatedDate": doesn't match schema due to: value must be a string
+Schema:
+  {
+    "format": "date-time",
+    "type": "string"
+  }
+
+Value:
+  1494360160.133

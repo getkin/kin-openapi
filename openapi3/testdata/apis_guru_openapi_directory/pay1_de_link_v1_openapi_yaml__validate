@@ -1,0 +1,1 @@
+invalid components: security scheme "createAuth": security scheme of type 'http' has invalid 'scheme' value "payone-hmac-sha256"

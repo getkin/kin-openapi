@@ -1,0 +1,10 @@
+invalid components: schema "CsvExportStatus": invalid default: value must be an integer
+Schema:
+  {
+    "default": "current",
+    "format": "int64",
+    "type": "integer"
+  }
+
+Value:
+  "current"

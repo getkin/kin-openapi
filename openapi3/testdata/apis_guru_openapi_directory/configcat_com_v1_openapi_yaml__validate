@@ -1,0 +1,35 @@
+invalid paths: invalid path /v1/environments/{environmentId}/settings/{settingId}/value: invalid operation PATCH: example add percentage rules: value must be an object
+Schema:
+  {
+    "additionalProperties": false,
+    "properties": {
+      "operations": {
+        "items": {
+          "$ref": "#/components/schemas/PatchOperation"
+        },
+        "nullable": true,
+        "type": "array"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "op": "add",
+      "path": "/rolloutPercentageItems/-",
+      "value": {
+        "percentage": 30,
+        "value": true
+      }
+    },
+    {
+      "op": "add",
+      "path": "/rolloutPercentageItems/-",
+      "value": {
+        "percentage": 70,
+        "value": false
+      }
+    }
+  ]

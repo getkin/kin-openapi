@@ -1,0 +1,11 @@
+invalid components: schema "AccessResponse": invalid example: value must be an integer
+Schema:
+  {
+    "description": "This is date of birth of the user as registered with DigiLocker in DDMMYYYY format.",
+    "example": "31121970",
+    "format": "dd-mm-yyy",
+    "type": "integer"
+  }
+
+Value:
+  "31121970"

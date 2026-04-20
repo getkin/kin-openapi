@@ -1,0 +1,11 @@
+invalid components: schema "EcadAddress": invalid example: value must be a string
+Schema:
+  {
+    "description": "A number associated with the whole building. The building number may have a numeric and an alphanumeric component, which are concatenated e.g. 2A, or alternatively will have a simple building number or a complex building number. The building number always relates to the whole building and not a sub-unit within it.\nA complex building number may be one of the following:\n  - Dual. Two number separated by '/' e.g. 63/64 = 63, 64\n  - Sequence. An odd or even sequence of numbers with lower and upper bound separated by an underscore '_' e.g. `1_5` = 1,3,5 and `2_6` = 2,4,6 \n  - Range. A range of consecutive numbers with lower and upper bound separated by a dash '-' e.g. `63-66` = 63, 64, 56, 66\nThe building number never appears on a line by itself and can prepend Building Group, Primary Thoroughfare or Primary Locality.",
+    "example": 22,
+    "maxLength": 40,
+    "type": "string"
+  }
+
+Value:
+  22

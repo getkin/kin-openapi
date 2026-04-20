@@ -1,0 +1,10 @@
+invalid components: schema "Tariffh0": invalid example: value must be an integer
+Schema:
+  {
+    "description": "Energy price in cent per kwh. (Arbeitspreis) including all taxes and fees.",
+    "example": 22.12,
+    "type": "integer"
+  }
+
+Value:
+  22.12

@@ -1,0 +1,10 @@
+invalid components: schema "Account": invalid default: value must be an integer
+Schema:
+  {
+    "default": false,
+    "description": "This account has been bookmarked by user",
+    "type": "integer"
+  }
+
+Value:
+  false

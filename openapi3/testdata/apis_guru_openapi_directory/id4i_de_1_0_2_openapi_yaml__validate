@@ -1,0 +1,8 @@
+invalid components: schema "ChangeLogEntry": invalid example: Error at "/object": value must be an object
+Schema:
+  {
+    "type": "object"
+  }
+
+Value:
+  "nearly every object"

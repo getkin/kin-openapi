@@ -1,0 +1,10 @@
+invalid components: schema "BillingGroup": invalid example: Error at "/deleted_at": Value is not nullable
+Schema:
+  {
+    "description": "ISO 8601 formatted date indicating when the resource was removed.",
+    "format": "date-time",
+    "type": "string"
+  }
+
+Value:
+  null

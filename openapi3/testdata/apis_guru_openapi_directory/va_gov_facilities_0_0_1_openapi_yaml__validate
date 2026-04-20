@@ -1,0 +1,26 @@
+invalid components: schema "Distance": invalid example: value must be an object
+Schema:
+  {
+    "description": "Distance to facility in miles using decimal format. Used when querying for facilities proximal to a location. ",
+    "example": 54.13,
+    "properties": {
+      "distance": {
+        "description": "Distance to facility in decimal format.",
+        "example": 54.13,
+        "type": "number"
+      },
+      "id": {
+        "description": "Identifier of facility.",
+        "example": "vc_0101V",
+        "type": "string"
+      }
+    },
+    "required": [
+      "distance",
+      "id"
+    ],
+    "type": "object"
+  }
+
+Value:
+  54.13

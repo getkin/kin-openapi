@@ -1,0 +1,9 @@
+invalid components: parameter "Hour": parameter "hour" schema is invalid: invalid example: value must be an integer
+Schema:
+  {
+    "example": "0",
+    "type": "integer"
+  }
+
+Value:
+  "0"

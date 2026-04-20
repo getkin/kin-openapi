@@ -1,0 +1,1 @@
+invalid components: security scheme "conjurKubernetesMutualTls": security scheme of type 'http' has invalid 'scheme' value "mutual"

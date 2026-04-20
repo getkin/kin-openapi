@@ -1,0 +1,10 @@
+invalid paths: invalid path /achmeainsurancecontracts: invalid operation GET: parameter "Authorization" schema is invalid: invalid example: string doesn't match the regular expression "^Bearer\s[\w-]+$"
+Schema:
+  {
+    "example": "Bearer \u003cTOKEN\u003e",
+    "pattern": "^Bearer\\s[\\w-]+$",
+    "type": "string"
+  }
+
+Value:
+  "Bearer \u003cTOKEN\u003e"

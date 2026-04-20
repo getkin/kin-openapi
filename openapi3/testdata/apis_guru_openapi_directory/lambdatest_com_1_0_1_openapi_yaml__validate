@@ -1,0 +1,15 @@
+invalid paths: invalid path /: invalid operation POST: example objectExample4: Error at "/configs/macos mojave/opera": Value is not nullable
+Schema:
+  {
+    "example": [
+      "55",
+      "54"
+    ],
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null

@@ -1,0 +1,10 @@
+invalid components: schema "ProductAdd": invalid default: value must be a string
+Schema:
+  {
+    "default": false,
+    "description": "String containing the JSON representation of the supplied data",
+    "type": "string"
+  }
+
+Value:
+  false

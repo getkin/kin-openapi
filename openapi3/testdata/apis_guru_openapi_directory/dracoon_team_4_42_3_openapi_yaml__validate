@@ -1,0 +1,10 @@
+invalid paths: invalid path /v4/auth/login: invalid operation POST: example null: Error at "/errorCode": Value is not nullable
+Schema:
+  {
+    "description": "Internal error code",
+    "format": "int32",
+    "type": "integer"
+  }
+
+Value:
+  null

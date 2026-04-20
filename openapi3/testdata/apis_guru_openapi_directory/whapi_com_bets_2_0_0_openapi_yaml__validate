@@ -1,0 +1,12 @@
+invalid paths: invalid path /bet/complex: invalid operation POST: example response: value must be an array
+Schema:
+  {
+    "items": {
+      "$ref": "#/components/schemas/betPlaced"
+    },
+    "title": "placedBets",
+    "type": "array"
+  }
+
+Value:
+  "{\n \"placedBets\" : [\n {\n \"id\" : 51097,\n \"number\": 1,\n \"receipt\" : \"O/0013333/0000109/F\", \n \"numLines\" : 1, \n \"totalStake\" : 2.50, \n \"placedDateTime\" : \"2015-12-12T00:11:00\"\n }, \n {\n \"id\" : 51098, \n \"number\": 2,\n \"receipt\" : \"O/0013333/0000109/F\", \n \"numLines\" : 1, \n \"totalStake\" : 2.50, \n \"placedDateTime\" : \"2015-12-12T00:11:00\"\n }\n ]\n}\n"

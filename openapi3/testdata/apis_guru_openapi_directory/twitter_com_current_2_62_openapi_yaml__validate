@@ -1,0 +1,267 @@
+invalid components: schema "Expansions": invalid example: Error at "/created_at": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$" | Error at "/edit_history_tweet_ids": property "edit_history_tweet_ids" is missing
+Schema:
+  {
+    "example": {
+      "author_id": "2244994945",
+      "created_at": "Wed Jan 06 18:40:40 +0000 2021",
+      "id": "1346889436626259968",
+      "text": "Learn how to use the user Tweet timeline and user mention timeline endpoints in the Twitter API v2 to explore Tweet\\u2026 https:\\/\\/t.co\\/56a0vZUx7i"
+    },
+    "properties": {
+      "attachments": {
+        "description": "Specifies the type of attachments (if any) present in this Tweet.",
+        "properties": {
+          "media_keys": {
+            "description": "A list of Media Keys for each one of the media attachments (if media are attached).",
+            "items": {
+              "$ref": "#/components/schemas/MediaKey"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "poll_ids": {
+            "description": "A list of poll IDs (if polls are attached).",
+            "items": {
+              "$ref": "#/components/schemas/PollId"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "author_id": {
+        "$ref": "#/components/schemas/UserId"
+      },
+      "context_annotations": {
+        "items": {
+          "$ref": "#/components/schemas/ContextAnnotation"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "conversation_id": {
+        "$ref": "#/components/schemas/TweetId"
+      },
+      "created_at": {
+        "description": "Creation time of the Tweet.",
+        "example": "2021-01-06T18:40:40Z",
+        "format": "date-time",
+        "type": "string"
+      },
+      "edit_controls": {
+        "properties": {
+          "editable_until": {
+            "description": "Time when Tweet is no longer editable.",
+            "example": "2021-01-06T18:40:40Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "edits_remaining": {
+            "description": "Number of times this Tweet can be edited.",
+            "type": "integer"
+          },
+          "is_edit_eligible": {
+            "description": "Indicates if this Tweet is eligible to be edited.",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_edit_eligible",
+          "editable_until",
+          "edits_remaining"
+        ],
+        "type": "object"
+      },
+      "edit_history_tweet_ids": {
+        "description": "A list of Tweet Ids in this Tweet chain.",
+        "items": {
+          "$ref": "#/components/schemas/TweetId"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "entities": {
+        "$ref": "#/components/schemas/FullTextEntities"
+      },
+      "geo": {
+        "description": "The location tagged on the Tweet, if the user provided one.",
+        "properties": {
+          "coordinates": {
+            "$ref": "#/components/schemas/Point"
+          },
+          "place_id": {
+            "$ref": "#/components/schemas/PlaceId"
+          }
+        },
+        "type": "object"
+      },
+      "id": {
+        "$ref": "#/components/schemas/TweetId"
+      },
+      "in_reply_to_user_id": {
+        "$ref": "#/components/schemas/UserId"
+      },
+      "lang": {
+        "description": "Language of the Tweet, if detected by Twitter. Returned as a BCP47 language tag.",
+        "example": "en",
+        "type": "string"
+      },
+      "non_public_metrics": {
+        "description": "Nonpublic engagement metrics for the Tweet at the time of the request.",
+        "properties": {
+          "impression_count": {
+            "description": "Number of times this Tweet has been viewed.",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "organic_metrics": {
+        "description": "Organic nonpublic engagement metrics for the Tweet at the time of the request.",
+        "properties": {
+          "impression_count": {
+            "description": "Number of times this Tweet has been viewed.",
+            "type": "integer"
+          },
+          "like_count": {
+            "description": "Number of times this Tweet has been liked.",
+            "type": "integer"
+          },
+          "reply_count": {
+            "description": "Number of times this Tweet has been replied to.",
+            "type": "integer"
+          },
+          "retweet_count": {
+            "description": "Number of times this Tweet has been Retweeted.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "impression_count",
+          "retweet_count",
+          "reply_count",
+          "like_count"
+        ],
+        "type": "object"
+      },
+      "possibly_sensitive": {
+        "description": "Indicates if this Tweet contains URLs marked as sensitive, for example content suitable for mature audiences.",
+        "example": false,
+        "type": "boolean"
+      },
+      "promoted_metrics": {
+        "description": "Promoted nonpublic engagement metrics for the Tweet at the time of the request.",
+        "properties": {
+          "impression_count": {
+            "description": "Number of times this Tweet has been viewed.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "like_count": {
+            "description": "Number of times this Tweet has been liked.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "reply_count": {
+            "description": "Number of times this Tweet has been replied to.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "retweet_count": {
+            "description": "Number of times this Tweet has been Retweeted.",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "public_metrics": {
+        "description": "Engagement metrics for the Tweet at the time of the request.",
+        "properties": {
+          "impression_count": {
+            "description": "Number of times this Tweet has been viewed.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "like_count": {
+            "description": "Number of times this Tweet has been liked.",
+            "type": "integer"
+          },
+          "quote_count": {
+            "description": "Number of times this Tweet has been quoted.",
+            "type": "integer"
+          },
+          "reply_count": {
+            "description": "Number of times this Tweet has been replied to.",
+            "type": "integer"
+          },
+          "retweet_count": {
+            "description": "Number of times this Tweet has been Retweeted.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "retweet_count",
+          "reply_count",
+          "like_count",
+          "impression_count"
+        ],
+        "type": "object"
+      },
+      "referenced_tweets": {
+        "description": "A list of Tweets this Tweet refers to. For example, if the parent Tweet is a Retweet, a Quoted Tweet or a Reply, it will include the related Tweet referenced to by its parent.",
+        "items": {
+          "properties": {
+            "id": {
+              "$ref": "#/components/schemas/TweetId"
+            },
+            "type": {
+              "enum": [
+                "retweeted",
+                "quoted",
+                "replied_to"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ],
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "reply_settings": {
+        "$ref": "#/components/schemas/ReplySettings"
+      },
+      "source": {
+        "description": "This is deprecated.",
+        "type": "string"
+      },
+      "text": {
+        "$ref": "#/components/schemas/TweetText"
+      },
+      "withheld": {
+        "$ref": "#/components/schemas/TweetWithheld"
+      }
+    },
+    "required": [
+      "id",
+      "text",
+      "edit_history_tweet_ids"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "author_id": "2244994945",
+    "created_at": "Wed Jan 06 18:40:40 +0000 2021",
+    "id": "1346889436626259968",
+    "text": "Learn how to use the user Tweet timeline and user mention timeline endpoints in the Twitter API v2 to explore Tweet\\u2026 https:\\/\\/t.co\\/56a0vZUx7i"
+  }

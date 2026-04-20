@@ -1,0 +1,11 @@
+invalid components: schema "PullDocRequest": invalid example: value must be a string
+Schema:
+  {
+    "description": "Aadhaar number of the DigiLocker user accessing the document/certificate. This is an optional parameter and will be sent only if the issuer opts for it while configuring the API on Digital Locker Issuer Portal.",
+    "example": 123456789012,
+    "minLength": 1,
+    "type": "string"
+  }
+
+Value:
+  123456789012

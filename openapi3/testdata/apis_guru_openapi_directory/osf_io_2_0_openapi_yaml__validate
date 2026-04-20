@@ -1,0 +1,230 @@
+invalid components: request body "nodes_contributors_createBody": invalid example: Error at "/type": property "type" is missing
+Schema:
+  {
+    "example": {
+      "data": {
+        "attributes": {},
+        "relationships": {
+          "user": {
+            "data": {
+              "id": "guid0",
+              "type": "users"
+            }
+          }
+        },
+        "type": "contributors"
+      }
+    },
+    "properties": {
+      "attributes": {
+        "description": "The properties of the contributor entity.",
+        "properties": {
+          "bibliographic": {
+            "description": "Whether or not the contributor will be included in citations for the node. The default value is true.",
+            "type": "boolean"
+          },
+          "index": {
+            "description": "The position of this contributor in the list of project contributors and in project citations.",
+            "type": "integer"
+          },
+          "permission": {
+            "description": "The permission level of the contributor. The default value is 'write'.",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "type": "string"
+          },
+          "unregistered_contributor": {
+            "description": "The assigned name of the contributor if the contributor has not yet claimed their account.",
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "title": "Attributes",
+        "type": "object"
+      },
+      "id": {
+        "description": "The identifier of the contributor entity. Contributor identifiers have the form {node_id}-{user_id}.",
+        "readOnly": true,
+        "type": "string"
+      },
+      "links": {
+        "description": "URLs to alternative representations of the contributor entity.",
+        "properties": {
+          "self": {
+            "description": "A link to the the canonical API endpoint for the contributor.",
+            "format": "URL",
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "readOnly": true,
+        "title": "Links",
+        "type": "object"
+      },
+      "relationships": {
+        "description": "URLs to other entities or entity collections that have a relationship to the contributor entity.",
+        "properties": {
+          "node": {
+            "description": "A relationship to the node that was created for the preprint, or from which the preprint was created.",
+            "readOnly": true,
+            "type": "string"
+          },
+          "user": {
+            "description": "A relationship to the file that is designated as the preprint's primary file, or the manuscript of the preprint.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "user"
+        ],
+        "title": "Relationships",
+        "type": "object"
+      },
+      "type": {
+        "description": "The type identifier of the contributor entity (`contributors`).",
+        "readOnly": true,
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "relationships"
+    ],
+    "title": "Contributor",
+    "type": "object"
+  }
+
+Value:
+  {
+    "data": {
+      "attributes": {},
+      "relationships": {
+        "user": {
+          "data": {
+            "id": "guid0",
+            "type": "users"
+          }
+        }
+      },
+      "type": "contributors"
+    }
+  }
+ | Error at "/relationships": property "relationships" is missing
+Schema:
+  {
+    "example": {
+      "data": {
+        "attributes": {},
+        "relationships": {
+          "user": {
+            "data": {
+              "id": "guid0",
+              "type": "users"
+            }
+          }
+        },
+        "type": "contributors"
+      }
+    },
+    "properties": {
+      "attributes": {
+        "description": "The properties of the contributor entity.",
+        "properties": {
+          "bibliographic": {
+            "description": "Whether or not the contributor will be included in citations for the node. The default value is true.",
+            "type": "boolean"
+          },
+          "index": {
+            "description": "The position of this contributor in the list of project contributors and in project citations.",
+            "type": "integer"
+          },
+          "permission": {
+            "description": "The permission level of the contributor. The default value is 'write'.",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "type": "string"
+          },
+          "unregistered_contributor": {
+            "description": "The assigned name of the contributor if the contributor has not yet claimed their account.",
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "title": "Attributes",
+        "type": "object"
+      },
+      "id": {
+        "description": "The identifier of the contributor entity. Contributor identifiers have the form {node_id}-{user_id}.",
+        "readOnly": true,
+        "type": "string"
+      },
+      "links": {
+        "description": "URLs to alternative representations of the contributor entity.",
+        "properties": {
+          "self": {
+            "description": "A link to the the canonical API endpoint for the contributor.",
+            "format": "URL",
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "readOnly": true,
+        "title": "Links",
+        "type": "object"
+      },
+      "relationships": {
+        "description": "URLs to other entities or entity collections that have a relationship to the contributor entity.",
+        "properties": {
+          "node": {
+            "description": "A relationship to the node that was created for the preprint, or from which the preprint was created.",
+            "readOnly": true,
+            "type": "string"
+          },
+          "user": {
+            "description": "A relationship to the file that is designated as the preprint's primary file, or the manuscript of the preprint.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "user"
+        ],
+        "title": "Relationships",
+        "type": "object"
+      },
+      "type": {
+        "description": "The type identifier of the contributor entity (`contributors`).",
+        "readOnly": true,
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "relationships"
+    ],
+    "title": "Contributor",
+    "type": "object"
+  }
+
+Value:
+  {
+    "data": {
+      "attributes": {},
+      "relationships": {
+        "user": {
+          "data": {
+            "id": "guid0",
+            "type": "users"
+          }
+        }
+      },
+      "type": "contributors"
+    }
+  }

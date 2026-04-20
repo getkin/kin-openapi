@@ -1,0 +1,16 @@
+invalid components: schema "Category": invalid example: Error at "/description": Value is not nullable
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/parent_id": Value is not nullable
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  null

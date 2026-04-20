@@ -1,0 +1,10 @@
+invalid components: schema "User": invalid example: value must be a string
+Schema:
+  {
+    "description": "Contact number of the user",
+    "example": 14155550100,
+    "type": "string"
+  }
+
+Value:
+  14155550100

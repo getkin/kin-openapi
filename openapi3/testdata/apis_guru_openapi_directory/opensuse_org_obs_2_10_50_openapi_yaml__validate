@@ -1,0 +1,11 @@
+invalid paths: invalid path /architectures: invalid operation GET: invalid example: Error at "/count": value must be an integer
+Schema:
+  {
+    "type": "integer",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  "4"

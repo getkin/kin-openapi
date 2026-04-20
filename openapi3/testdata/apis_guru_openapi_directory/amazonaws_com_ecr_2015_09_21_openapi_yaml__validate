@@ -1,0 +1,9 @@
+invalid components: schema "CreateRepositoryResponse": invalid example: Error at "/repository": doesn't match schema due to: Error at "/registryId": doesn't match schema due to: value must be a string
+Schema:
+  {
+    "pattern": "[0-9]{12}",
+    "type": "string"
+  }
+
+Value:
+  12345678901

@@ -1,0 +1,1 @@
+invalid components: schema "AntennaDownlinkDemodDecodeConfig": error parsing regexp: invalid repeat count: `{2,8192}`

@@ -1,0 +1,11 @@
+invalid paths: invalid path /accounting/customers/invoices: invalid operation GET: example ref: value must be an array
+Schema:
+  {
+    "items": {
+      "$ref": "#/components/schemas/CustomerInvoiceDTO"
+    },
+    "type": "array"
+  }
+
+Value:
+  "/home-api/assets/examples/accounting/customers/invoices/getAll.json#responseBody"

@@ -1,0 +1,1 @@
+invalid paths: invalid path /ocr/photo/recognize/form: invalid operation POST: parameter "formTemplateDefinition" schema is invalid: extra sibling fields: [type]

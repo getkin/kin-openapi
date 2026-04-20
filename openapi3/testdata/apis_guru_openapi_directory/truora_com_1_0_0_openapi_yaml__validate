@@ -1,0 +1,25 @@
+invalid components: schema "Check": invalid example: Error at "/data_set": value is not one of the allowed values ["affiliations_and_insurances","alert_in_media","behavior","business_background","criminal_record","driving_licenses","international_background","legal_background","personal_identity","professional_background","traffic_fines","vehicle_information","vehicle_permits","taxes_and_finances"]
+Schema:
+  {
+    "description": "Background check dataset",
+    "enum": [
+      "affiliations_and_insurances",
+      "alert_in_media",
+      "behavior",
+      "business_background",
+      "criminal_record",
+      "driving_licenses",
+      "international_background",
+      "legal_background",
+      "personal_identity",
+      "professional_background",
+      "traffic_fines",
+      "vehicle_information",
+      "vehicle_permits",
+      "taxes_and_finances"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "criminal record"

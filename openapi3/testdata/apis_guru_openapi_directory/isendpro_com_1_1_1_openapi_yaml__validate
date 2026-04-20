@@ -1,0 +1,12 @@
+invalid components: schema "SMSRequest": invalid example: Error at "/sms": value must be an array
+Schema:
+  {
+    "items": {
+      "description": "Message à envoyer aux destinataires. Il peut y avoir un seul message ou 1 message par destintaire différent.",
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "Bonjour! Bienvenue sur iSendPro!"

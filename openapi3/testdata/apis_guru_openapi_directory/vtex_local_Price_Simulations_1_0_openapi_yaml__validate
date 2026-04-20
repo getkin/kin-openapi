@@ -1,0 +1,37 @@
+invalid paths: invalid path /_v/custom-prices/rules: invalid operation POST: invalid default: Error at "/pricetable": property "pricetable" is missing
+Schema:
+  {
+    "default": {},
+    "properties": {
+      "email": {
+        "default": "",
+        "description": "User's email",
+        "title": "email"
+      },
+      "orderType": {
+        "default": "",
+        "description": "Order type",
+        "title": "orderType",
+        "type": "string"
+      },
+      "pricetable": {
+        "default": "",
+        "description": "Name of the Price Table associated with the scenario",
+        "title": "pricetable",
+        "type": "string"
+      },
+      "state": {
+        "default": "",
+        "description": "Delivery location",
+        "title": "state",
+        "type": "string"
+      }
+    },
+    "required": [
+      "pricetable"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {}

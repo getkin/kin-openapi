@@ -1,0 +1,17 @@
+invalid paths: invalid path /classification_inclusions: invalid operation GET: parameter "sort" schema is invalid: invalid default: value must be an array
+Schema:
+  {
+    "default": "created_at",
+    "items": {
+      "enum": [
+        "classification_value",
+        "created_at",
+        "position"
+      ],
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "created_at"

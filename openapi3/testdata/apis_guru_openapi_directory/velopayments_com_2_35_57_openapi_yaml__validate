@@ -1,0 +1,11 @@
+invalid components: schema "CreateFundingAccountRequestV2": invalid example: Error at "/routingNumber": maximum string length is 9
+Schema:
+  {
+    "description": "Required if type is either FBO or PRIVATE",
+    "maxLength": 9,
+    "minLength": 6,
+    "type": "string"
+  }
+
+Value:
+  "routingNumber"

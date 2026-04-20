@@ -1,0 +1,10 @@
+invalid components: schema "hat": invalid example: value must be a string
+Schema:
+  {
+    "description": "Product ID",
+    "example": 1,
+    "type": "string"
+  }
+
+Value:
+  1

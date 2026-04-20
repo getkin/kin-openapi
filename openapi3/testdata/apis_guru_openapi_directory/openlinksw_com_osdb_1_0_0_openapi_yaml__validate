@@ -1,0 +1,136 @@
+invalid paths: invalid path /api/v1/actions/{serviceId}: invalid operation GET: invalid example: Error at "/response/0/entry_point/encoding_types": Value is not nullable
+Schema:
+  {
+    "description": "The supported MIME type(s) for an EntryPoint request. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/0/entry_point/parameters/0/permitted_values": Value is not nullable
+Schema:
+  {
+    "description": "If the parameter accepts only a limited set of values, the allowed set of values. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/0/entry_point/url": Value is not nullable
+Schema:
+  {
+    "description": "The EntryPoint URL. It will be non-null if url_template is null.",
+    "format": "uri",
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/response/1/entry_point/parameters/0/permitted_values": Value is not nullable
+Schema:
+  {
+    "description": "If the parameter accepts only a limited set of values, the allowed set of values. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/1/entry_point/url": Value is not nullable
+Schema:
+  {
+    "description": "The EntryPoint URL. It will be non-null if url_template is null.",
+    "format": "uri",
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/response/2/entry_point/content_types": value must be an array
+Schema:
+  {
+    "description": "The supported MIME type(s) for an EntryPoint response.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  ""
+ | Error at "/response/2/entry_point/encoding_types": Value is not nullable
+Schema:
+  {
+    "description": "The supported MIME type(s) for an EntryPoint request. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/2/entry_point/parameters/0/permitted_values": Value is not nullable
+Schema:
+  {
+    "description": "If the parameter accepts only a limited set of values, the allowed set of values. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/2/entry_point/url": Value is not nullable
+Schema:
+  {
+    "description": "The EntryPoint URL. It will be non-null if url_template is null.",
+    "format": "uri",
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/response/3/entry_point/parameters/0/permitted_values": Value is not nullable
+Schema:
+  {
+    "description": "If the parameter accepts only a limited set of values, the allowed set of values. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/3/entry_point/parameters/1/permitted_values": Value is not nullable
+Schema:
+  {
+    "description": "If the parameter accepts only a limited set of values, the allowed set of values. Null if not applicable.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  null
+ | Error at "/response/3/entry_point/url": Value is not nullable
+Schema:
+  {
+    "description": "The EntryPoint URL. It will be non-null if url_template is null.",
+    "format": "uri",
+    "type": "string"
+  }
+
+Value:
+  null

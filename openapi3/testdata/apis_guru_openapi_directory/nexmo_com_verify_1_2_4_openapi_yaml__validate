@@ -1,0 +1,10 @@
+invalid components: schema "networkUnblock": invalid example: value must be a string
+Schema:
+  {
+    "description": "The Network code",
+    "example": 32526,
+    "type": "string"
+  }
+
+Value:
+  32526

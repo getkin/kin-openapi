@@ -1,0 +1,12 @@
+invalid paths: invalid path /api/Posts: invalid operation GET: parameter "postKeys" schema is invalid: invalid default: value must be an array
+Schema:
+  {
+    "default": "",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  ""

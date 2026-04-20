@@ -1,0 +1,10 @@
+invalid paths: invalid path /v1/iec/{iec}: invalid operation GET: invalid example: value must be a string
+Schema:
+  {
+    "example": 1,
+    "minLength": 1,
+    "type": "string"
+  }
+
+Value:
+  1

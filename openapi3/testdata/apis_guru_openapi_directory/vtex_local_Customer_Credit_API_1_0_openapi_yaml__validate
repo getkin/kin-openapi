@@ -1,0 +1,10 @@
+invalid paths: invalid path /api/creditcontrol/accounts/{accountId}: invalid operation PUT: invalid default: value must be an integer
+Schema:
+  {
+    "default": "100.0",
+    "description": "If the user don't set a credit limit, the system will define 100 for default",
+    "type": "integer"
+  }
+
+Value:
+  "100.0"

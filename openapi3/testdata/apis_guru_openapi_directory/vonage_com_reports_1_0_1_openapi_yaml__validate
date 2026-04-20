@@ -1,0 +1,10 @@
+invalid components: schema "CallLog": invalid example: value must be a string
+Schema:
+  {
+    "description": "Source number of the call",
+    "example": 17325550100,
+    "type": "string"
+  }
+
+Value:
+  17325550100

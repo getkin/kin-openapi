@@ -1,0 +1,10 @@
+invalid components: schema "AvailableVendorsFilter": invalid default: value must be a boolean
+Schema:
+  {
+    "default": 0,
+    "description": "Filter vendors for manual work permission",
+    "type": "boolean"
+  }
+
+Value:
+  0

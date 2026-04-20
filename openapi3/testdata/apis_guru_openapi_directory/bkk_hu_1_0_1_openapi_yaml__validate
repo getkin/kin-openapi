@@ -1,0 +1,10 @@
+invalid components: schema "AlertSearchMethodResponse": invalid example: value must be a string
+Schema:
+  {
+    "description": "A megálló iránya.",
+    "example": -47,
+    "type": "string"
+  }
+
+Value:
+  -47

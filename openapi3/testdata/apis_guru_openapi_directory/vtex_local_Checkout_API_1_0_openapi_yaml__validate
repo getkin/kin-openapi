@@ -1,0 +1,9 @@
+invalid paths: invalid path /api/checkout/pub/orderForm/{orderFormId}/coupons: invalid operation POST: example response: Error at "/shippingData/logisticsInfo/0/slas/0/deliveryIds/0/warehouseId": value must be a string
+Schema:
+  {
+    "description": "Warehouse ID.",
+    "type": "string"
+  }
+
+Value:
+  11

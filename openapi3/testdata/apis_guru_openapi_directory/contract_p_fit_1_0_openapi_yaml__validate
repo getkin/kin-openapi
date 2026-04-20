@@ -1,0 +1,13 @@
+invalid paths: invalid path /documents/{document_id}: invalid operation DELETE: parameter "how" schema is invalid: invalid default: value is not one of the allowed values ["FULL","SOURCE_FILES"]
+Schema:
+  {
+    "default": "predicted",
+    "enum": [
+      "FULL",
+      "SOURCE_FILES"
+    ],
+    "type": "string"
+  }
+
+Value:
+  "predicted"

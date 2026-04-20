@@ -1,0 +1,12 @@
+invalid components: schema "BalanceSheet": invalid example: string doesn't match the regular expression "^\d{4}-\d{2}-\d{2}$"
+Schema:
+  {
+    "description": "The start date of the report",
+    "example": "2017-01-01T00:00:00Z",
+    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+    "title": "Start Date",
+    "type": "string"
+  }
+
+Value:
+  "2017-01-01T00:00:00Z"

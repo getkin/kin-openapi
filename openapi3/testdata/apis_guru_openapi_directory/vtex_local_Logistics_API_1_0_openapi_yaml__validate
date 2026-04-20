@@ -1,0 +1,8 @@
+invalid components: schema "CreateReservation": invalid example: Error at "/dockId": value must be a string
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  111

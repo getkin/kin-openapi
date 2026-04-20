@@ -1,0 +1,10 @@
+invalid components: schema "Error": invalid example: value must be an object
+Schema:
+  {
+    "description": "Meta object containing non-standard meta-information about the error.",
+    "example": "\u003c_META_OBJECT\u003e",
+    "type": "object"
+  }
+
+Value:
+  "\u003c_META_OBJECT\u003e"

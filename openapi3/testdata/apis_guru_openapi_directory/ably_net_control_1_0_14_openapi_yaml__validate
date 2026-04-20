@@ -1,0 +1,11 @@
+invalid components: schema "app_patch": invalid example: value must be a string
+Schema:
+  {
+    "description": "The Firebase Cloud Messaging key.",
+    "example": false,
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  false

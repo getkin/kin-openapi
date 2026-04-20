@@ -1,0 +1,44 @@
+invalid components: schema "calculateReachableRangePostDataParameters": invalid example: Error at "/avoidAreas/rectangles/0/northEastCorner/latitude": value must be a string
+Schema:
+  {
+    "type": "string",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  48.90309
+ | Error at "/avoidAreas/rectangles/0/northEastCorner/longitude": value must be a string
+Schema:
+  {
+    "type": "string",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  2.41115
+ | Error at "/avoidAreas/rectangles/0/southWestCorner/latitude": value must be a string
+Schema:
+  {
+    "type": "string",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  48.81851
+ | Error at "/avoidAreas/rectangles/0/southWestCorner/longitude": value must be a string
+Schema:
+  {
+    "type": "string",
+    "xml": {
+      "attribute": true
+    }
+  }
+
+Value:
+  2.26593

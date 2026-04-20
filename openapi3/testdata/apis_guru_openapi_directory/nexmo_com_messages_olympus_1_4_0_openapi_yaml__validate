@@ -1,0 +1,10 @@
+invalid components: schema "messageStatusBase": invalid example: value must be a string
+Schema:
+  {
+    "description": "The error code encountered when sending the message. See [our errors list](https://developer.nexmo.com/api-errors/messages-olympus) for a list of possible errors",
+    "example": 1000,
+    "type": "string"
+  }
+
+Value:
+  1000

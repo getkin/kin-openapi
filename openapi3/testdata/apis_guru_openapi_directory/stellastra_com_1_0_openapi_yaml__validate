@@ -1,0 +1,11 @@
+invalid paths: invalid path /post-review: invalid operation POST: invalid example: value must be a string
+Schema:
+  {
+    "description": "User's email must exist and must not use a professional domain (I.E., not from a free service).",
+    "type": "string"
+  }
+
+Value:
+  {
+    "user_email": "johnsmith@companyxyz.com"
+  }

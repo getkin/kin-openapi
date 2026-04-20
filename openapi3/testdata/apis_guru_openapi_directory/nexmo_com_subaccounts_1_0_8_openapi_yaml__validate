@@ -1,0 +1,9 @@
+invalid components: schema "TransferBalanceOrCreditRequest": invalid example: value must be a number
+Schema:
+  {
+    "example": "123.45",
+    "type": "number"
+  }
+
+Value:
+  "123.45"

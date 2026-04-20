@@ -1,0 +1,16 @@
+invalid paths: invalid path /v1/crawl/{query}: invalid operation GET: example crawlQueryGoogleSearchApi: Error at "/answer": Value is not nullable
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  null
+ | Error at "/total": Value is not nullable
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  null

@@ -1,0 +1,19 @@
+invalid components: schema "api-endpoints": invalid example: value must be an object
+Schema:
+  {
+    "description": "objects with two fields, the first one has the endpoint name as key and its description as value, the second one has HTTP verb to use (GET, POST PUT, DELETE) as key and the supported version an API path for value.",
+    "example": "{ 'listAcceptedNodes': 'List all accepted nodes with configurable details level', 'GET': '[8,9,10,11,12,13] /nodes' }",
+    "properties": {
+      "endpointName": {
+        "description": "The endpoint name for key and its description for value",
+        "type": "string"
+      },
+      "httpVerb": {
+        "format": "The HTTP verb for the endpoint for key and the supported version and API path for value"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{ 'listAcceptedNodes': 'List all accepted nodes with configurable details level', 'GET': '[8,9,10,11,12,13] /nodes' }"

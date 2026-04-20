@@ -1,0 +1,17 @@
+invalid components: schema "Network": invalid example: Error at "/IPAM/Options": value must be an array
+Schema:
+  {
+    "description": "Driver-specific options, specified as a map.",
+    "items": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "type": "array"
+  }
+
+Value:
+  {
+    "foo": "bar"
+  }

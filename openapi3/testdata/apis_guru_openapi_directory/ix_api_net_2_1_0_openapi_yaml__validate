@@ -1,0 +1,12 @@
+invalid paths: invalid path /accounts: invalid operation GET: parameter "id" schema is invalid: invalid example: value must be an array
+Schema:
+  {
+    "example": "id1,id2,id3",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+
+Value:
+  "id1,id2,id3"

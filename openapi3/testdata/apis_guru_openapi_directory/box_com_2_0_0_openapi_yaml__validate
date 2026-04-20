@@ -1,0 +1,300 @@
+invalid paths: invalid path /files/{file_id}#add_shared_link: invalid operation PUT: example default: doesn't match schema due to: doesn't match schema due to: Error at "/sequence_id": property "sequence_id" is missing
+Schema:
+  {
+    "allOf": [
+      {
+        "$ref": "#/components/schemas/File--Base"
+      },
+      {
+        "properties": {
+          "file_version": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileVersion--Mini"
+              },
+              {
+                "description": "The information about the current version of the file."
+              }
+            ]
+          },
+          "name": {
+            "description": "The name of the file",
+            "example": "Contract.pdf",
+            "type": "string"
+          },
+          "sequence_id": {
+            "allOf": [
+              {
+                "description": "A numeric identifier that represents the most recent user event\nthat has been applied to this item.\n\nThis can be used in combination with the `GET /events`-endpoint\nto filter out user events that would have occurred before this\nidentifier was read.\n\nAn example would be where a Box Drive-like application\nwould fetch an item via the API, and then listen to incoming\nuser events for changes to the item. The application would\nignore any user events where the `sequence_id` in the event\nis smaller than or equal to the `sequence_id` in the originally\nfetched resource.",
+                "example": "3",
+                "type": "string"
+              },
+              {}
+            ]
+          },
+          "sha1": {
+            "description": "The SHA1 hash of the file. This can be used to compare the contents\nof a file on Box with a local file.",
+            "example": "85136C79CBF9FE36BB9D05D0639C70C265C18D37",
+            "format": "digest",
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "description": "A mini representation of a file, used when\nnested under another resource.",
+    "required": [
+      "sequence_id",
+      "sha1"
+    ],
+    "title": "File (Mini)",
+    "type": "object",
+    "x-box-resource-id": "file--mini",
+    "x-box-variant": "mini"
+  }
+
+Value:
+  {
+    "etag": "1",
+    "id": "12345",
+    "shared_link": {
+      "access": "open",
+      "download_count": 0,
+      "download_url": "https://app.box.com/shared/static/kwio6b4ovt1264rnfbyqo1.pdf",
+      "effective_access": "open",
+      "effective_permission": "can_download",
+      "is_password_enabled": false,
+      "permissions": {
+        "can_download": true,
+        "can_edit": true,
+        "can_preview": true
+      },
+      "preview_count": 0,
+      "unshared_at": "2020-09-21T10:34:41-07:00",
+      "url": "https://app.box.com/s/kwio6b4ovt1264rnfbyqo1",
+      "vanity_name": null,
+      "vanity_url": null
+    },
+    "type": "file"
+  }
+ | Error at "/sha1": property "sha1" is missing
+Schema:
+  {
+    "allOf": [
+      {
+        "$ref": "#/components/schemas/File--Base"
+      },
+      {
+        "properties": {
+          "file_version": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileVersion--Mini"
+              },
+              {
+                "description": "The information about the current version of the file."
+              }
+            ]
+          },
+          "name": {
+            "description": "The name of the file",
+            "example": "Contract.pdf",
+            "type": "string"
+          },
+          "sequence_id": {
+            "allOf": [
+              {
+                "description": "A numeric identifier that represents the most recent user event\nthat has been applied to this item.\n\nThis can be used in combination with the `GET /events`-endpoint\nto filter out user events that would have occurred before this\nidentifier was read.\n\nAn example would be where a Box Drive-like application\nwould fetch an item via the API, and then listen to incoming\nuser events for changes to the item. The application would\nignore any user events where the `sequence_id` in the event\nis smaller than or equal to the `sequence_id` in the originally\nfetched resource.",
+                "example": "3",
+                "type": "string"
+              },
+              {}
+            ]
+          },
+          "sha1": {
+            "description": "The SHA1 hash of the file. This can be used to compare the contents\nof a file on Box with a local file.",
+            "example": "85136C79CBF9FE36BB9D05D0639C70C265C18D37",
+            "format": "digest",
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "description": "A mini representation of a file, used when\nnested under another resource.",
+    "required": [
+      "sequence_id",
+      "sha1"
+    ],
+    "title": "File (Mini)",
+    "type": "object",
+    "x-box-resource-id": "file--mini",
+    "x-box-variant": "mini"
+  }
+
+Value:
+  {
+    "etag": "1",
+    "id": "12345",
+    "shared_link": {
+      "access": "open",
+      "download_count": 0,
+      "download_url": "https://app.box.com/shared/static/kwio6b4ovt1264rnfbyqo1.pdf",
+      "effective_access": "open",
+      "effective_permission": "can_download",
+      "is_password_enabled": false,
+      "permissions": {
+        "can_download": true,
+        "can_edit": true,
+        "can_preview": true
+      },
+      "preview_count": 0,
+      "unshared_at": "2020-09-21T10:34:41-07:00",
+      "url": "https://app.box.com/s/kwio6b4ovt1264rnfbyqo1",
+      "vanity_name": null,
+      "vanity_url": null
+    },
+    "type": "file"
+  }
+ And Error at "/shared_link": doesn't match schema due to: Error at "/accessed": property "accessed" is missing
+Schema:
+  {
+    "description": "Shared links provide direct, read-only access to files or folder on Box.\n\nShared links with open access level allow anyone with the URL\nto access the item, while shared links with company or collaborators access\nlevels can only be accessed by appropriately authenticated Box users.",
+    "properties": {
+      "access": {
+        "description": "The access level for this shared link.\n\n* `open` - provides access to this item to anyone with this link\n* `company` - only provides access to this item to people the same company\n* `collaborators` - only provides access to this item to people who are\n   collaborators on this item\n\nIf this field is omitted when creating the shared link, the access level\nwill be set to the default access level specified by the enterprise admin.",
+        "enum": [
+          "open",
+          "company",
+          "collaborators"
+        ],
+        "example": "open",
+        "type": "string"
+      },
+      "download_count": {
+        "description": "The number of times this item has been downloaded.",
+        "example": 3,
+        "type": "integer"
+      },
+      "download_url": {
+        "description": "A URL that can be used to download the file. This URL can be used in\na browser to download the file. This URL includes the file\nextension so that the file will be saved with the right file type.\n\nThis property will be `null` for folders.",
+        "example": "https://www.box.com/shared/static/rh935iit6ewrmw0unyul.jpeg",
+        "format": "url",
+        "nullable": true,
+        "type": "string",
+        "x-box-premium-feature": true
+      },
+      "effective_access": {
+        "description": "The effective access level for the shared link. This can be a more\nrestrictive access level than the value in the `access` field when the\nenterprise settings restrict the allowed access levels.",
+        "enum": [
+          "open",
+          "company",
+          "collaborators"
+        ],
+        "example": "company",
+        "type": "string"
+      },
+      "effective_permission": {
+        "description": "The effective permissions for this shared link.\nThese result in the more restrictive combination of\nthe share link permissions and the item permissions set\nby the administrator, the owner, and any ancestor item\nsuch as a folder.",
+        "enum": [
+          "can_edit",
+          "can_download",
+          "can_preview",
+          "no_access"
+        ],
+        "example": "can_download",
+        "type": "string"
+      },
+      "is_password_enabled": {
+        "description": "Defines if the shared link requires a password to access the item.",
+        "example": true,
+        "type": "boolean"
+      },
+      "permissions": {
+        "description": "Defines if this link allows a user to preview, edit, and download an item.\nThese permissions refer to the shared link only and\ndo not supersede permissions applied to the item itself.",
+        "properties": {
+          "can_download": {
+            "description": "Defines if the shared link allows for the item to be downloaded. For\nshared links on folders, this also applies to any items in the folder.\n\nThis value can be set to `true` when the effective access level is\nset to `open` or `company`, not `collaborators`.",
+            "example": true,
+            "type": "boolean"
+          },
+          "can_edit": {
+            "description": "Defines if the shared link allows for the item to be edited.\n\nThis value can only be `true` if `can_download` is also `true` and if\nthe item has a type of `file`.",
+            "example": false,
+            "type": "boolean"
+          },
+          "can_preview": {
+            "description": "Defines if the shared link allows for the item to be previewed.\n\nThis value is always `true`. For shared links on folders this also\napplies to any items in the folder.",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "can_download",
+          "can_preview",
+          "can_edit"
+        ],
+        "type": "object"
+      },
+      "preview_count": {
+        "description": "The number of times this item has been previewed.",
+        "example": 3,
+        "type": "integer"
+      },
+      "unshared_at": {
+        "description": "The date and time when this link will be unshared. This field can only be\nset by users with paid accounts.",
+        "example": "2018-04-13T13:53:23-07:00",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string"
+      },
+      "url": {
+        "description": "The URL that can be used to access the item on Box.\n\nThis URL will display the item in Box's preview UI where the file\ncan be downloaded if allowed.\n\nThis URL will continue to work even when a custom `vanity_url`\nhas been set for this shared link.",
+        "example": "https://www.box.com/s/vspke7y05sb214wjokpk",
+        "format": "url",
+        "type": "string"
+      },
+      "vanity_name": {
+        "description": "The custom name of a shared link, as used in the `vanity_url` field.",
+        "example": "my_url",
+        "nullable": true,
+        "type": "string"
+      },
+      "vanity_url": {
+        "description": "The \"Custom URL\" that can also be used to preview the item on Box.  Custom\nURLs can only be created or modified in the Box Web application.",
+        "example": "https://acme.app.box.com/v/my_url/",
+        "format": "url",
+        "nullable": true,
+        "type": "string"
+      }
+    },
+    "required": [
+      "url",
+      "accessed",
+      "effective_access",
+      "effective_permission",
+      "is_password_enabled",
+      "download_count",
+      "preview_count"
+    ],
+    "title": "Shared link",
+    "type": "object"
+  }
+
+Value:
+  {
+    "access": "open",
+    "download_count": 0,
+    "download_url": "https://app.box.com/shared/static/kwio6b4ovt1264rnfbyqo1.pdf",
+    "effective_access": "open",
+    "effective_permission": "can_download",
+    "is_password_enabled": false,
+    "permissions": {
+      "can_download": true,
+      "can_edit": true,
+      "can_preview": true
+    },
+    "preview_count": 0,
+    "unshared_at": "2020-09-21T10:34:41-07:00",
+    "url": "https://app.box.com/s/kwio6b4ovt1264rnfbyqo1",
+    "vanity_name": null,
+    "vanity_url": null
+  }

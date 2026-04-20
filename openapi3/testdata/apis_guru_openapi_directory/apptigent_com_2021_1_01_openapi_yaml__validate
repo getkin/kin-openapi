@@ -1,0 +1,13 @@
+invalid components: schema "inputCollectionModify": invalid example: Error at "/items": value must be an array
+Schema:
+  {
+    "description": "Items (Collection, for a single item leave blank and use Item)",
+    "items": {
+      "type": "string"
+    },
+    "type": "array",
+    "x-ms-summary": "Items"
+  }
+
+Value:
+  ""

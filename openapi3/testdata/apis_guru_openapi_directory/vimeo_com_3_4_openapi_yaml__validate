@@ -1,0 +1,10 @@
+invalid components: schema "activity-3-1": invalid example: value must be a boolean
+Schema:
+  {
+    "description": "Whether this picture is the active picture for its parent resource.",
+    "example": "true",
+    "type": "boolean"
+  }
+
+Value:
+  "true"

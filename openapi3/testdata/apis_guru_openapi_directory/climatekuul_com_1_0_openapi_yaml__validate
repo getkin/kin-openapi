@@ -1,0 +1,309 @@
+invalid paths: invalid path /airtravelMultileg: invalid operation POST: invalid example: Error at "/contactFirstName": property "contactFirstName" is missing
+Schema:
+  {
+    "example": {
+      "apiKey_l1": "qNahlSrEaduQ",
+      "apiKey_l2": "eCqMeAfaDBWG",
+      "contactEmail": "example@example.com",
+      "contactFirstName": "abc",
+      "contactLastName": "xyz",
+      "leg1": {
+        "destination_airport_code": "DXB",
+        "origin_airport_code": "KHI",
+        "travel_class": "Economy"
+      },
+      "leg2": {
+        "destination_airport_code": "LHR",
+        "origin_airport_code": "DXB",
+        "travel_class": "Business"
+      },
+      "leg3": {
+        "destination_airport_code": "KHI",
+        "origin_airport_code": "FRA",
+        "travel_class": "Premium Economy"
+      },
+      "legs_count": "2",
+      "number_of_passengers": "2",
+      "travel_mode": "multileg"
+    },
+    "properties": {
+      "apiKey_l1": {
+        "type": "string"
+      },
+      "apiKey_l2": {
+        "type": "string"
+      },
+      "contactEmail": {
+        "type": "string"
+      },
+      "contactFirstName": {
+        "type": "string"
+      },
+      "contactLastName": {
+        "type": "string"
+      },
+      "leg1": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "leg2": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "leg3": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "legs_count": {
+        "type": "string"
+      },
+      "number_of_passengers": {
+        "type": "string"
+      },
+      "travel_mode": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "travel_mode",
+      "legs_count",
+      "leg1",
+      "leg2",
+      "leg3",
+      "number_of_passengers",
+      "apiKey_l1",
+      "apiKey_l2",
+      "contactFirstName",
+      "contactLastName",
+      "contactEmail"
+    ],
+    "title": "airtravelMultilegRequest",
+    "type": "object"
+  }
+
+Value:
+  {
+    "apiKey_l1": "d95fead6-e8a6-4547-9fb9-7835101a3960",
+    "apiKey_l2": "c60f8db5-7204-4427-960d-27400c38b166",
+    "leg1": {
+      "destination_airport_code": "DXB",
+      "origin_airport_code": "KHI",
+      "travel_class": "Economy"
+    },
+    "leg2": {
+      "destination_airport_code": "LHR",
+      "origin_airport_code": "DXB",
+      "travel_class": "Business"
+    },
+    "leg3": {
+      "destination_airport_code": "KHI",
+      "origin_airport_code": "FRA",
+      "travel_class": "Premium Economy"
+    },
+    "legs_count": "2",
+    "number_of_passengers": "2",
+    "travel_mode": "multileg"
+  }
+ | Error at "/contactLastName": property "contactLastName" is missing
+Schema:
+  {
+    "example": {
+      "apiKey_l1": "qNahlSrEaduQ",
+      "apiKey_l2": "eCqMeAfaDBWG",
+      "contactEmail": "example@example.com",
+      "contactFirstName": "abc",
+      "contactLastName": "xyz",
+      "leg1": {
+        "destination_airport_code": "DXB",
+        "origin_airport_code": "KHI",
+        "travel_class": "Economy"
+      },
+      "leg2": {
+        "destination_airport_code": "LHR",
+        "origin_airport_code": "DXB",
+        "travel_class": "Business"
+      },
+      "leg3": {
+        "destination_airport_code": "KHI",
+        "origin_airport_code": "FRA",
+        "travel_class": "Premium Economy"
+      },
+      "legs_count": "2",
+      "number_of_passengers": "2",
+      "travel_mode": "multileg"
+    },
+    "properties": {
+      "apiKey_l1": {
+        "type": "string"
+      },
+      "apiKey_l2": {
+        "type": "string"
+      },
+      "contactEmail": {
+        "type": "string"
+      },
+      "contactFirstName": {
+        "type": "string"
+      },
+      "contactLastName": {
+        "type": "string"
+      },
+      "leg1": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "leg2": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "leg3": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "legs_count": {
+        "type": "string"
+      },
+      "number_of_passengers": {
+        "type": "string"
+      },
+      "travel_mode": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "travel_mode",
+      "legs_count",
+      "leg1",
+      "leg2",
+      "leg3",
+      "number_of_passengers",
+      "apiKey_l1",
+      "apiKey_l2",
+      "contactFirstName",
+      "contactLastName",
+      "contactEmail"
+    ],
+    "title": "airtravelMultilegRequest",
+    "type": "object"
+  }
+
+Value:
+  {
+    "apiKey_l1": "d95fead6-e8a6-4547-9fb9-7835101a3960",
+    "apiKey_l2": "c60f8db5-7204-4427-960d-27400c38b166",
+    "leg1": {
+      "destination_airport_code": "DXB",
+      "origin_airport_code": "KHI",
+      "travel_class": "Economy"
+    },
+    "leg2": {
+      "destination_airport_code": "LHR",
+      "origin_airport_code": "DXB",
+      "travel_class": "Business"
+    },
+    "leg3": {
+      "destination_airport_code": "KHI",
+      "origin_airport_code": "FRA",
+      "travel_class": "Premium Economy"
+    },
+    "legs_count": "2",
+    "number_of_passengers": "2",
+    "travel_mode": "multileg"
+  }
+ | Error at "/contactEmail": property "contactEmail" is missing
+Schema:
+  {
+    "example": {
+      "apiKey_l1": "qNahlSrEaduQ",
+      "apiKey_l2": "eCqMeAfaDBWG",
+      "contactEmail": "example@example.com",
+      "contactFirstName": "abc",
+      "contactLastName": "xyz",
+      "leg1": {
+        "destination_airport_code": "DXB",
+        "origin_airport_code": "KHI",
+        "travel_class": "Economy"
+      },
+      "leg2": {
+        "destination_airport_code": "LHR",
+        "origin_airport_code": "DXB",
+        "travel_class": "Business"
+      },
+      "leg3": {
+        "destination_airport_code": "KHI",
+        "origin_airport_code": "FRA",
+        "travel_class": "Premium Economy"
+      },
+      "legs_count": "2",
+      "number_of_passengers": "2",
+      "travel_mode": "multileg"
+    },
+    "properties": {
+      "apiKey_l1": {
+        "type": "string"
+      },
+      "apiKey_l2": {
+        "type": "string"
+      },
+      "contactEmail": {
+        "type": "string"
+      },
+      "contactFirstName": {
+        "type": "string"
+      },
+      "contactLastName": {
+        "type": "string"
+      },
+      "leg1": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "leg2": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "leg3": {
+        "$ref": "#/components/schemas/Leg1"
+      },
+      "legs_count": {
+        "type": "string"
+      },
+      "number_of_passengers": {
+        "type": "string"
+      },
+      "travel_mode": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "travel_mode",
+      "legs_count",
+      "leg1",
+      "leg2",
+      "leg3",
+      "number_of_passengers",
+      "apiKey_l1",
+      "apiKey_l2",
+      "contactFirstName",
+      "contactLastName",
+      "contactEmail"
+    ],
+    "title": "airtravelMultilegRequest",
+    "type": "object"
+  }
+
+Value:
+  {
+    "apiKey_l1": "d95fead6-e8a6-4547-9fb9-7835101a3960",
+    "apiKey_l2": "c60f8db5-7204-4427-960d-27400c38b166",
+    "leg1": {
+      "destination_airport_code": "DXB",
+      "origin_airport_code": "KHI",
+      "travel_class": "Economy"
+    },
+    "leg2": {
+      "destination_airport_code": "LHR",
+      "origin_airport_code": "DXB",
+      "travel_class": "Business"
+    },
+    "leg3": {
+      "destination_airport_code": "KHI",
+      "origin_airport_code": "FRA",
+      "travel_class": "Premium Economy"
+    },
+    "legs_count": "2",
+    "number_of_passengers": "2",
+    "travel_mode": "multileg"
+  }

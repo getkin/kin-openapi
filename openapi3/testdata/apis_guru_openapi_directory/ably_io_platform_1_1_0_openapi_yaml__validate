@@ -1,0 +1,9 @@
+invalid components: parameter "filterLimit": parameter "limit" schema is invalid: invalid default: value must be an integer
+Schema:
+  {
+    "default": "100",
+    "type": "integer"
+  }
+
+Value:
+  "100"

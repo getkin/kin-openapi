@@ -1,0 +1,9 @@
+invalid paths: invalid path /almaws/v1/task-lists/printouts: invalid operation GET: parameter "limit" schema is invalid: invalid default: value must be an integer
+Schema:
+  {
+    "default": "10",
+    "type": "integer"
+  }
+
+Value:
+  "10"

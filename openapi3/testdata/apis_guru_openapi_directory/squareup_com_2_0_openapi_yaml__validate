@@ -1,0 +1,147 @@
+invalid components: schema "AccumulateLoyaltyPointsRequest": invalid example: Error at "/accumulate_points": property "accumulate_points" is missing
+Schema:
+  {
+    "description": "A request to accumulate points for a purchase.",
+    "example": {
+      "request_body": {
+        "accumulate_points": {
+          "order_id": "RFZfrdtm3mhO1oGzf5Cx7fEMsmGZY"
+        },
+        "idempotency_key": "58b90739-c3e8-4b11-85f7-e636d48d72cb",
+        "location_id": "P034NEENMD09F"
+      },
+      "request_params": "?account_id=5adcb100-07f1-4ee7-b8c6-6bb9ebc474bd"
+    },
+    "properties": {
+      "accumulate_points": {
+        "$ref": "#/components/schemas/LoyaltyEventAccumulatePoints"
+      },
+      "idempotency_key": {
+        "description": "A unique string that identifies the `AccumulateLoyaltyPoints` request. \nKeys can be any valid string but must be unique for every request.",
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "location_id": {
+        "description": "The [location](https://developer.squareup.com/reference/square_2021-08-18/objects/Location) where the purchase was made.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "accumulate_points",
+      "idempotency_key",
+      "location_id"
+    ],
+    "type": "object",
+    "x-release-status": "PUBLIC"
+  }
+
+Value:
+  {
+    "request_body": {
+      "accumulate_points": {
+        "order_id": "RFZfrdtm3mhO1oGzf5Cx7fEMsmGZY"
+      },
+      "idempotency_key": "58b90739-c3e8-4b11-85f7-e636d48d72cb",
+      "location_id": "P034NEENMD09F"
+    },
+    "request_params": "?account_id=5adcb100-07f1-4ee7-b8c6-6bb9ebc474bd"
+  }
+ | Error at "/idempotency_key": property "idempotency_key" is missing
+Schema:
+  {
+    "description": "A request to accumulate points for a purchase.",
+    "example": {
+      "request_body": {
+        "accumulate_points": {
+          "order_id": "RFZfrdtm3mhO1oGzf5Cx7fEMsmGZY"
+        },
+        "idempotency_key": "58b90739-c3e8-4b11-85f7-e636d48d72cb",
+        "location_id": "P034NEENMD09F"
+      },
+      "request_params": "?account_id=5adcb100-07f1-4ee7-b8c6-6bb9ebc474bd"
+    },
+    "properties": {
+      "accumulate_points": {
+        "$ref": "#/components/schemas/LoyaltyEventAccumulatePoints"
+      },
+      "idempotency_key": {
+        "description": "A unique string that identifies the `AccumulateLoyaltyPoints` request. \nKeys can be any valid string but must be unique for every request.",
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "location_id": {
+        "description": "The [location](https://developer.squareup.com/reference/square_2021-08-18/objects/Location) where the purchase was made.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "accumulate_points",
+      "idempotency_key",
+      "location_id"
+    ],
+    "type": "object",
+    "x-release-status": "PUBLIC"
+  }
+
+Value:
+  {
+    "request_body": {
+      "accumulate_points": {
+        "order_id": "RFZfrdtm3mhO1oGzf5Cx7fEMsmGZY"
+      },
+      "idempotency_key": "58b90739-c3e8-4b11-85f7-e636d48d72cb",
+      "location_id": "P034NEENMD09F"
+    },
+    "request_params": "?account_id=5adcb100-07f1-4ee7-b8c6-6bb9ebc474bd"
+  }
+ | Error at "/location_id": property "location_id" is missing
+Schema:
+  {
+    "description": "A request to accumulate points for a purchase.",
+    "example": {
+      "request_body": {
+        "accumulate_points": {
+          "order_id": "RFZfrdtm3mhO1oGzf5Cx7fEMsmGZY"
+        },
+        "idempotency_key": "58b90739-c3e8-4b11-85f7-e636d48d72cb",
+        "location_id": "P034NEENMD09F"
+      },
+      "request_params": "?account_id=5adcb100-07f1-4ee7-b8c6-6bb9ebc474bd"
+    },
+    "properties": {
+      "accumulate_points": {
+        "$ref": "#/components/schemas/LoyaltyEventAccumulatePoints"
+      },
+      "idempotency_key": {
+        "description": "A unique string that identifies the `AccumulateLoyaltyPoints` request. \nKeys can be any valid string but must be unique for every request.",
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "location_id": {
+        "description": "The [location](https://developer.squareup.com/reference/square_2021-08-18/objects/Location) where the purchase was made.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "accumulate_points",
+      "idempotency_key",
+      "location_id"
+    ],
+    "type": "object",
+    "x-release-status": "PUBLIC"
+  }
+
+Value:
+  {
+    "request_body": {
+      "accumulate_points": {
+        "order_id": "RFZfrdtm3mhO1oGzf5Cx7fEMsmGZY"
+      },
+      "idempotency_key": "58b90739-c3e8-4b11-85f7-e636d48d72cb",
+      "location_id": "P034NEENMD09F"
+    },
+    "request_params": "?account_id=5adcb100-07f1-4ee7-b8c6-6bb9ebc474bd"
+  }

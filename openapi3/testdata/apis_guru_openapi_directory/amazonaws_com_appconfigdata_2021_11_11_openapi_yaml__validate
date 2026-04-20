@@ -1,0 +1,1 @@
+invalid components: schema "StartConfigurationSessionResponse": error parsing regexp: invalid repeat count: `{1,8192}`

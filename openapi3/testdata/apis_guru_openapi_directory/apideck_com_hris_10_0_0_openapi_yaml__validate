@@ -1,0 +1,20 @@
+invalid components: schema "Employee": invalid example: value is not one of the allowed values ["weekly","biweekly","monthly","pro-rata","other"]
+Schema:
+  {
+    "description": "Frequency of employee compensation.",
+    "enum": [
+      "weekly",
+      "biweekly",
+      "monthly",
+      "pro-rata",
+      "other"
+    ],
+    "example": "year",
+    "nullable": true,
+    "title": "Payment Frequency",
+    "type": "string",
+    "x-apideck-enum-id": "payment_frequency"
+  }
+
+Value:
+  "year"

@@ -1,0 +1,9 @@
+invalid paths: invalid path /v1/accounts/{ican}/transactions: invalid operation GET: invalid example: value must be a string
+Schema:
+  {
+    "example": 6011329,
+    "type": "string"
+  }
+
+Value:
+  6011329

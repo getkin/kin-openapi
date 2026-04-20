@@ -1,0 +1,9 @@
+invalid components: schema "DeliveryId": invalid example: Error at "/warehouseId": value must be a string
+Schema:
+  {
+    "description": "ID of the [warehouse](https://help.vtex.com/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb).",
+    "type": "string"
+  }
+
+Value:
+  11

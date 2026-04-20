@@ -1,0 +1,18 @@
+invalid components: schema "addUserResponse": invalid example: Error at "/added": value must be a string
+Schema:
+  {
+    "example": "{}",
+    "type": "string"
+  }
+
+Value:
+  {}
+ | Error at "/pass_dattm": value must be a string
+Schema:
+  {
+    "example": "{}",
+    "type": "string"
+  }
+
+Value:
+  {}

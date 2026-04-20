@@ -1,0 +1,9 @@
+invalid paths: invalid path /document/id/{aspectId}/{civixIndexId}/{civixDocumentId}: invalid operation GET: parameter "civixDocumentId" schema is invalid: invalid default: value must be a string
+Schema:
+  {
+    "default": 100901,
+    "type": "string"
+  }
+
+Value:
+  100901

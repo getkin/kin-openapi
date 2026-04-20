@@ -1,0 +1,40 @@
+invalid paths: invalid path /api/v1/chapters: invalid operation GET: example response: value must be an object
+Schema:
+  {
+    "properties": {
+      "chapter_number": {
+        "format": "int32",
+        "nullable": true,
+        "type": "integer"
+      },
+      "chapter_summary": {
+        "nullable": true,
+        "type": "string"
+      },
+      "name": {
+        "nullable": true,
+        "type": "string"
+      },
+      "name_meaning": {
+        "nullable": true,
+        "type": "string"
+      },
+      "name_translation": {
+        "nullable": true,
+        "type": "string"
+      },
+      "name_transliterated": {
+        "nullable": true,
+        "type": "string"
+      },
+      "verses_count": {
+        "format": "int32",
+        "nullable": true,
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\n  \"chapters\": [\n    {\n      \"chapter_number\": 1, \n      \"name\": \"u'अर्जुनविषादयोग'\", \n      \"name_english\": \"u'Arjuna Dilemma'\", \n      \"name_transliterated\": \"u'Arjun Viṣhād Yog'\", \n      \"name_transliterated_simple\": \"u'Arjuna Visada Yoga'\", \n      \"verses_count\": 47\n    }, \n    {\n      \"chapter_number\": 2, \n      \"name\": \"u'सांख्ययोग'\", \n      \"name_english\": \"u'Transcendental Knowledge'\", \n      \"name_transliterated\": \"u'Sānkhya Yog'\", \n      \"name_transliterated_simple\": \"u'Sankhya Yoga'\", \n      \"verses_count\": 72\n    }\n  ]\n}"

@@ -1,0 +1,33 @@
+invalid components: schema "Error409_NG_AIS": invalid example: value must be an object
+Schema:
+  {
+    "description": "NextGen specific definition of reporting error information in case of a HTTP error code 409.\n",
+    "example": [
+      {
+        "category": "ERROR",
+        "code": "STATUS_INVALID",
+        "text": "additional text information of the ASPSP up to 500 characters"
+      }
+    ],
+    "properties": {
+      "_links": {
+        "$ref": "#/components/schemas/_linksAll"
+      },
+      "tppMessages": {
+        "items": {
+          "$ref": "#/components/schemas/tppMessage409_AIS"
+        },
+        "type": "array"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "category": "ERROR",
+      "code": "STATUS_INVALID",
+      "text": "additional text information of the ASPSP up to 500 characters"
+    }
+  ]

@@ -1,0 +1,12 @@
+invalid components: schema "NewAttendancePeriodRequest": invalid example: Error at "/attendances/0/comment": value must be a string
+Schema:
+  {
+    "description": "Optional comment",
+    "type": "string"
+  }
+
+Value:
+  {
+    "$ref": "#/components/schemas/UpdateAttendancePeriodRequest/example/comment"
+  }
+ | Error at "/attendances/0/date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/attendances/1/date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$"

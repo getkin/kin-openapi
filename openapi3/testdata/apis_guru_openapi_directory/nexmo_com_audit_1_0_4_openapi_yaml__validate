@@ -1,0 +1,1 @@
+invalid components: schema "AuditEvent": invalid example: input matches more than one oneOf schemas

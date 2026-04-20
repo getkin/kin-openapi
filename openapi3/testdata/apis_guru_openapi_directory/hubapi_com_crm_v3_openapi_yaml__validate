@@ -1,0 +1,16 @@
+invalid components: schema "CardCreateRequest": invalid example: Error at "/display/properties": value must be an array
+Schema:
+  {
+    "description": "Card display properties. These will will be rendered as \"label : value\" pairs in the card UI. See the [example card](#) in the overview docs for more details.",
+    "items": {
+      "$ref": "#/components/schemas/CardDisplayProperty"
+    },
+    "type": "array"
+  }
+
+Value:
+  {
+    "dataType": "STRING",
+    "label": "Pets Name",
+    "name": "pet_name"
+  }

@@ -1,0 +1,23 @@
+invalid components: schema "geoConvertRequest": invalid example: value must be an object
+Schema:
+  {
+    "example": "{\"coordinates\":\"39.801769 -86.157769\",\"system\":\"latlon\",\"format\":\"seconds\"}",
+    "properties": {
+      "coordinates": {
+        "description": "Comma-separated list of Geo Coordinates to convert. See accepted Systems below.",
+        "type": "string"
+      },
+      "format": {
+        "description": "Output format:\r\n(decimal, degree, minutes, seconds.)\r\nDefault is decimal.",
+        "type": "string"
+      },
+      "system": {
+        "description": "Output standard coordinate system:\r\n(latlon | utm | mgrs | ecef | epsg3857 | georef | cartesian).  \r\nDefault is latlon.",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+
+Value:
+  "{\"coordinates\":\"39.801769 -86.157769\",\"system\":\"latlon\",\"format\":\"seconds\"}"
