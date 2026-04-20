@@ -1,6 +1,6 @@
 module github.com/getkin/kin-openapi
 
-go 1.22.5
+go 1.26.2
 
 require (
 	github.com/go-openapi/jsonpointer v0.21.0
