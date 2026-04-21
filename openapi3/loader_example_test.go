@@ -84,6 +84,6 @@ properties:
 
 	petSchema := doc.Components.Schemas["Pet"]
 	nameType := petSchema.Value.Properties["name"].Value.Type.Slice()[0]
-	fmt.Println("Pet.name type:", nameType)
-	// Output: Pet.name type: string
+	fmt.Println("pet.name type:", nameType)
+	// Output: pet.name type: string
 }
