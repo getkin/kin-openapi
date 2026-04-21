@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 )
 
 // Link is specified by OpenAPI/Swagger standard version 3.
@@ -33,9 +34,7 @@ func (link Link) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Link.
 func (link Link) MarshalYAML() (any, error) {
 	m := make(map[string]any, 6+len(link.Extensions))
-	for k, v := range link.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, link.Extensions)
 
 	if x := link.OperationRef; x != "" {
 		m["operationRef"] = x

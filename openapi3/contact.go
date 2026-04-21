@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 )
 
 // Contact is specified by OpenAPI/Swagger standard version 3.
@@ -28,9 +29,7 @@ func (contact Contact) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Contact.
 func (contact Contact) MarshalYAML() (any, error) {
 	m := make(map[string]any, 3+len(contact.Extensions))
-	for k, v := range contact.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, contact.Extensions)
 	if x := contact.Name; x != "" {
 		m["name"] = x
 	}

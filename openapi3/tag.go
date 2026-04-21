@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 )
 
 // Tags is specified by OpenAPI/Swagger 3.0 standard.
@@ -53,9 +54,7 @@ func (t Tag) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Tag.
 func (t Tag) MarshalYAML() (any, error) {
 	m := make(map[string]any, 3+len(t.Extensions))
-	for k, v := range t.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, t.Extensions)
 	if x := t.Name; x != "" {
 		m["name"] = x
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 )
 
@@ -45,9 +46,7 @@ func (pathItem PathItem) MarshalYAML() (any, error) {
 	}
 
 	m := make(map[string]any, 13+len(pathItem.Extensions))
-	for k, v := range pathItem.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, pathItem.Extensions)
 	if x := pathItem.Summary; x != "" {
 		m["summary"] = x
 	}

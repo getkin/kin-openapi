@@ -36,6 +36,7 @@ package openapi3
 
 import (
 	"encoding/json"
+	"maps"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
@@ -127,9 +128,7 @@ func (${name} ${type}) Map() (m map[string]${value_type}) {
 		return make(map[string]${value_type})
 	}
 	m = make(map[string]${value_type}, len(${name}.m))
-	for k, v := range ${name}.m {
-		m[k] = v
-	}
+	maps.Copy(m, ${name}.m)
 	return
 }
 
@@ -169,11 +168,9 @@ func (${name} ${type}) MarshalYAML() (any, error) {
 		return nil, nil
 	}
 	m := make(map[string]any, ${name}.Len()+len(${name}.Extensions))
-	for k, v := range ${name}.Extensions {
-		m[k] = v
-	}
-	for k, v := range ${name}.Map() {
-		m[k] = v
+	maps.Copy(m, ${name}.Extensions)
+	for _, k := range ${name}.Keys() {
+		m[k] = ${name}.m[k]
 	}
 	return m, nil
 }

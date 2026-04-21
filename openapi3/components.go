@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -53,9 +54,7 @@ func (components Components) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Components.
 func (components Components) MarshalYAML() (any, error) {
 	m := make(map[string]any, 9+len(components.Extensions))
-	for k, v := range components.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, components.Extensions)
 	if x := components.Schemas; len(x) != 0 {
 		m["schemas"] = x
 	}

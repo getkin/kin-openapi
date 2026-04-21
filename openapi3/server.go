@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"strings"
 )
@@ -93,9 +94,7 @@ func (server Server) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Server.
 func (server Server) MarshalYAML() (any, error) {
 	m := make(map[string]any, 3+len(server.Extensions))
-	for k, v := range server.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, server.Extensions)
 	m["url"] = server.URL
 	if x := server.Description; x != "" {
 		m["description"] = x
@@ -257,9 +256,7 @@ func (serverVariable ServerVariable) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of ServerVariable.
 func (serverVariable ServerVariable) MarshalYAML() (any, error) {
 	m := make(map[string]any, 4+len(serverVariable.Extensions))
-	for k, v := range serverVariable.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, serverVariable.Extensions)
 	if x := serverVariable.Enum; len(x) != 0 {
 		m["enum"] = x
 	}

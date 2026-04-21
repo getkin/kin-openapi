@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 )
 
@@ -30,9 +31,7 @@ func (e ExternalDocs) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of ExternalDocs.
 func (e ExternalDocs) MarshalYAML() (any, error) {
 	m := make(map[string]any, 2+len(e.Extensions))
-	for k, v := range e.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, e.Extensions)
 	if x := e.Description; x != "" {
 		m["description"] = x
 	}

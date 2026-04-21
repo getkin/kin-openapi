@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 )
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
@@ -86,9 +87,7 @@ func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of RequestBody.
 func (requestBody RequestBody) MarshalYAML() (any, error) {
 	m := make(map[string]any, 3+len(requestBody.Extensions))
-	for k, v := range requestBody.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, requestBody.Extensions)
 	if x := requestBody.Description; x != "" {
 		m["description"] = requestBody.Description
 	}

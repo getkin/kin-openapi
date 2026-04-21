@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -75,9 +76,7 @@ func (mediaType MediaType) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of MediaType.
 func (mediaType MediaType) MarshalYAML() (any, error) {
 	m := make(map[string]any, 4+len(mediaType.Extensions))
-	for k, v := range mediaType.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, mediaType.Extensions)
 	if x := mediaType.Schema; x != nil {
 		m["schema"] = x
 	}
