@@ -1423,6 +1423,146 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		return stack, errors.New("a property MUST NOT be marked as both readOnly and writeOnly being true")
 	}
 
+	// Reject fields that only exist in OAS 3.1 / JSON Schema 2020-12 when the
+	// document is OAS 3.0. Fields explicitly allowed via AllowExtraSiblingFields
+	// are skipped (opt-in escape hatch for 3.0 docs that reference external
+	// JSON Schema documents). Once 3.0 moves to its own schema validator this
+	// block becomes a no-op.
+	if !validationOpts.isOpenAPI31OrLater {
+		allowed := validationOpts.extraSiblingFieldsAllowed
+		reject := func(field string) error {
+			if _, ok := allowed[field]; ok {
+				return nil
+			}
+			return errFieldFor31Plus(field)
+		}
+		if schema.Const != nil {
+			if err := reject("const"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.Examples) != 0 {
+			if err := reject("examples"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.PrefixItems) != 0 {
+			if err := reject("prefixItems"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Contains != nil {
+			if err := reject("contains"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.MinContains != nil {
+			if err := reject("minContains"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.MaxContains != nil {
+			if err := reject("maxContains"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.PatternProperties) != 0 {
+			if err := reject("patternProperties"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.DependentSchemas) != 0 {
+			if err := reject("dependentSchemas"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.PropertyNames != nil {
+			if err := reject("propertyNames"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.UnevaluatedItems.Has != nil || schema.UnevaluatedItems.Schema != nil {
+			if err := reject("unevaluatedItems"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.UnevaluatedProperties.Has != nil || schema.UnevaluatedProperties.Schema != nil {
+			if err := reject("unevaluatedProperties"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.If != nil {
+			if err := reject("if"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Then != nil {
+			if err := reject("then"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Else != nil {
+			if err := reject("else"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.DependentRequired) != 0 {
+			if err := reject("dependentRequired"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.Defs) != 0 {
+			if err := reject("$defs"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.SchemaDialect != "" {
+			if err := reject("$schema"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Comment != "" {
+			if err := reject("$comment"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.SchemaID != "" {
+			if err := reject("$id"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Anchor != "" {
+			if err := reject("$anchor"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.DynamicRef != "" {
+			if err := reject("$dynamicRef"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.DynamicAnchor != "" {
+			if err := reject("$dynamicAnchor"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.ContentMediaType != "" {
+			if err := reject("contentMediaType"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.ContentEncoding != "" {
+			if err := reject("contentEncoding"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.ContentSchema != nil {
+			if err := reject("contentSchema"); err != nil {
+				return stack, err
+			}
+		}
+	}
+
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
