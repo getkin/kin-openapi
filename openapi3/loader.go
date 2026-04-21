@@ -41,6 +41,13 @@ type Loader struct {
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
 
+	// JoinFunc allows overriding how relative $ref paths are resolved against
+	// a base path. When set, it is called instead of the default join logic
+	// that uses path.Dir and path.Join. This is useful when loading specs from
+	// non-filesystem sources (e.g. git objects, remote archives) where the base
+	// path follows a different convention than filesystem paths.
+	JoinFunc func(basePath *url.URL, relativePath *url.URL) *url.URL
+
 	Context context.Context
 
 	rootDir      string
@@ -107,7 +114,7 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 		}
 	}
 
-	resolvedPath, err := resolvePathWithRef(ref, rootPath)
+	resolvedPath, err := loader.resolvePathWithRef(ref, rootPath)
 	if err != nil {
 		return nil, err
 	}
@@ -281,42 +288,36 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	return
 }
 
-func join(basePath *url.URL, relativePath *url.URL) *url.URL {
+func defaultJoin(basePath *url.URL, relativePath *url.URL) *url.URL {
 	if basePath == nil {
 		return relativePath
 	}
 	newPath := *basePath
-	// Handle git ref paths like "origin/main:openapi.yaml" where ":"
-	// separates the ref from the file path. path.Dir does not understand
-	// this syntax and would treat the colon as a regular character.
-	if i := strings.IndexByte(newPath.Path, ':'); i >= 0 {
-		prefix := newPath.Path[:i+1] // e.g. "origin/main:"
-		filePath := newPath.Path[i+1:]
-		newPath.Path = prefix + path.Join(path.Dir(filePath), relativePath.Path)
-	} else {
-		newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
-	}
+	newPath.Path = path.Join(path.Dir(newPath.Path), relativePath.Path)
 	return &newPath
 }
 
-func resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
+func (loader *Loader) resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
 	if is_file(componentPath) {
 		// support absolute paths
 		if filepath.IsAbs(componentPath.Path) {
 			return componentPath
 		}
-		return join(basePath, componentPath)
+		if loader.JoinFunc != nil {
+			return loader.JoinFunc(basePath, componentPath)
+		}
+		return defaultJoin(basePath, componentPath)
 	}
 	return componentPath
 }
 
-func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
+func (loader *Loader) resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
 	parsedURL, err := url.Parse(ref)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse reference: %q: %w", ref, err)
 	}
 
-	resolvedPath := resolvePath(rootPath, parsedURL)
+	resolvedPath := loader.resolvePath(rootPath, parsedURL)
 	resolvedPath.Fragment = parsedURL.Fragment
 	return resolvedPath, nil
 }
@@ -341,7 +342,7 @@ func (loader *Loader) resolveRefPath(ref string, path *url.URL) (*url.URL, error
 		}
 	}
 
-	resolvedPath, err := resolvePathWithRef(ref, path)
+	resolvedPath, err := loader.resolvePathWithRef(ref, path)
 	if err != nil {
 		return nil, err
 	}
