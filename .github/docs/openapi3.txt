@@ -820,6 +820,13 @@ type Loader struct {
 	// ReadFromURIFunc allows overriding the any file/URL reading func
 	ReadFromURIFunc ReadFromURIFunc
 
+	// JoinFunc allows overriding how relative $ref paths are resolved against
+	// a base path. When set, it is called instead of the default join logic
+	// that uses path.Dir and path.Join. This is useful when loading specs from
+	// non-filesystem sources (e.g. git objects, remote archives) where the base
+	// path follows a different convention than filesystem paths.
+	JoinFunc func(basePath *url.URL, relativePath *url.URL) *url.URL
+
 	Context context.Context
 
 	// Has unexported fields.
