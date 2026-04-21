@@ -7,10 +7,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type (
-	Schemas    map[string]*SchemaRef
-	SchemaRefs []*SchemaRef
-)
+type Schemas map[string]*SchemaRef
+type SchemaRefs []*SchemaRef
 
 // Schema is specified by OpenAPI/Swagger 2.0 standard.
 // See https://swagger.io/specification/v2/#schema-object
