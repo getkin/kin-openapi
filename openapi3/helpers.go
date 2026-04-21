@@ -230,7 +230,8 @@ func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool) 
 
 	// Case 2:
 	// Something like: ../openapi.yaml#/components/schemas/myElement
-	for name, s := range components {
+	for _, name := range componentNames(components) {
+		s := components[name]
 		// Must be a reference to a YAML file.
 		if !isWholeDocumentReference(s.RefString()) {
 			continue

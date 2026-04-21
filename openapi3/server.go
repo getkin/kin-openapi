@@ -66,8 +66,8 @@ func (server *Server) BasePath() (string, error) {
 	}
 
 	uri := server.URL
-	for name, svar := range server.Variables {
-		uri = strings.ReplaceAll(uri, "{"+name+"}", svar.Default)
+	for _, name := range componentNames(server.Variables) {
+		uri = strings.ReplaceAll(uri, "{"+name+"}", server.Variables[name].Default)
 	}
 
 	u, err := url.ParseRequestURI(uri)
