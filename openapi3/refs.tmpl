@@ -97,32 +97,27 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 // Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
 func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
-	exProhibited := getValidationOptions(ctx).schemaExtensionsInRefProhibited
+	validationOpts := getValidationOptions(ctx)
 	var extras []string
-	if extra := x.extra; len(extra) != 0 {
-		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
-		for _, ex := range extra {
-			if allowed != nil {
-				if _, ok := allowed[ex]; ok {
-					continue
-				}
-			}
-			// extras in the Extensions checked below
+
+	allowed := validationOpts.extraSiblingFieldsAllowed
+	if allowed == nil {
+		allowed = make(map[string]struct{})
+	}
+	for _, ex := range x.extra {
+		if _, ok := allowed[ex]; !ok {
 			if _, ok := x.Extensions[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
-	if extra := x.Extensions; exProhibited && len(extra) != 0 {
-		allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
-		for ex := range extra {
-			if allowed != nil {
-				if _, ok := allowed[ex]; ok {
-					continue
-				}
+	if validationOpts.schemaExtensionsInRefProhibited {
+		for ex := range x.Extensions {
+			if _, ok := allowed[ex]; !ok {
+				extras = append(extras, ex)
 			}
-			extras = append(extras, ex)
 		}
 	}
 
