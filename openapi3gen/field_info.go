@@ -78,8 +78,9 @@ iteration:
 		// Parse the tag
 		if jsonTag != "" {
 			field.HasJSONTag = true
-			for i, part := range strings.Split(jsonTag, ",") {
-				if i == 0 {
+			first := true
+			for part := range strings.SplitSeq(jsonTag, ",") {
+				if first {
 					if part != "" {
 						field.JSONName = part
 					}
@@ -91,6 +92,7 @@ iteration:
 						field.JSONString = true
 					}
 				}
+				first = false
 			}
 		}
 
