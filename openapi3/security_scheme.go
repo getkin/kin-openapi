@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 )
 
@@ -63,9 +64,7 @@ func (ss SecurityScheme) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of SecurityScheme.
 func (ss SecurityScheme) MarshalYAML() (any, error) {
 	m := make(map[string]any, 8+len(ss.Extensions))
-	for k, v := range ss.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, ss.Extensions)
 	if x := ss.Type; x != "" {
 		m["type"] = x
 	}
@@ -246,9 +245,7 @@ func (flows OAuthFlows) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of OAuthFlows.
 func (flows OAuthFlows) MarshalYAML() (any, error) {
 	m := make(map[string]any, 4+len(flows.Extensions))
-	for k, v := range flows.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, flows.Extensions)
 	if x := flows.Implicit; x != nil {
 		m["implicit"] = x
 	}
@@ -338,9 +335,7 @@ func (flow OAuthFlow) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of OAuthFlow.
 func (flow OAuthFlow) MarshalYAML() (any, error) {
 	m := make(map[string]any, 4+len(flow.Extensions))
-	for k, v := range flow.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, flow.Extensions)
 	if x := flow.AuthorizationURL; x != "" {
 		m["authorizationUrl"] = x
 	}

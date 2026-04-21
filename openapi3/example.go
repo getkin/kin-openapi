@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 )
 
 // Example is specified by OpenAPI/Swagger 3.0 standard.
@@ -34,9 +35,7 @@ func (example Example) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Example.
 func (example Example) MarshalYAML() (any, error) {
 	m := make(map[string]any, 4+len(example.Extensions))
-	for k, v := range example.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, example.Extensions)
 	if x := example.Summary; x != "" {
 		m["summary"] = x
 	}

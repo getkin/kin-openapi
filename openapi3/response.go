@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"strconv"
 )
 
@@ -138,9 +139,7 @@ func (response Response) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Response.
 func (response Response) MarshalYAML() (any, error) {
 	m := make(map[string]any, 4+len(response.Extensions))
-	for k, v := range response.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, response.Extensions)
 	if x := response.Description; x != nil {
 		m["description"] = x
 	}

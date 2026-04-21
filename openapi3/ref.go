@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 )
 
 //go:generate go run refsgenerator.go
@@ -18,9 +19,7 @@ type Ref struct {
 // MarshalYAML returns the YAML encoding of Ref.
 func (x Ref) MarshalYAML() (any, error) {
 	m := make(map[string]any, 1+len(x.Extensions))
-	for k, v := range x.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, x.Extensions)
 	if x := x.Ref; x != "" {
 		m["$ref"] = x
 	}

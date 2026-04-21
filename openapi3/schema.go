@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/big"
 	"reflect"
@@ -275,9 +276,7 @@ func (schema Schema) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Schema.
 func (schema Schema) MarshalYAML() (any, error) {
 	m := make(map[string]any, 36+len(schema.Extensions))
-	for k, v := range schema.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, schema.Extensions)
 
 	if x := schema.OneOf; len(x) != 0 {
 		m["oneOf"] = x

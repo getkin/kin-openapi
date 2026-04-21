@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 )
 
 // Info is specified by OpenAPI/Swagger standard version 3.
@@ -35,9 +36,7 @@ func (info *Info) MarshalYAML() (any, error) {
 		return nil, nil
 	}
 	m := make(map[string]any, 6+len(info.Extensions))
-	for k, v := range info.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, info.Extensions)
 	m["title"] = info.Title
 	if x := info.Description; x != "" {
 		m["description"] = x

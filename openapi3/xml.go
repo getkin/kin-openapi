@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 )
 
 // XML is specified by OpenAPI/Swagger standard version 3.
@@ -30,9 +31,7 @@ func (xml XML) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of XML.
 func (xml XML) MarshalYAML() (any, error) {
 	m := make(map[string]any, 5+len(xml.Extensions))
-	for k, v := range xml.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, xml.Extensions)
 	if x := xml.Name; x != "" {
 		m["name"] = x
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 )
 
 // Encoding is specified by OpenAPI/Swagger 3.0 standard.
@@ -60,9 +61,7 @@ func (encoding Encoding) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Encoding.
 func (encoding Encoding) MarshalYAML() (any, error) {
 	m := make(map[string]any, 5+len(encoding.Extensions))
-	for k, v := range encoding.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, encoding.Extensions)
 	if x := encoding.ContentType; x != "" {
 		m["contentType"] = x
 	}

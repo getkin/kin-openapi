@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
@@ -160,9 +161,7 @@ func (parameter Parameter) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Parameter.
 func (parameter Parameter) MarshalYAML() (any, error) {
 	m := make(map[string]any, 13+len(parameter.Extensions))
-	for k, v := range parameter.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, parameter.Extensions)
 
 	if x := parameter.Name; x != "" {
 		m["name"] = x
