@@ -671,8 +671,8 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			return err
 		}
 	}
-	for _, example := range value.Examples {
-		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+	for _, k := range componentNames(value.Examples) {
+		if err := loader.resolveExampleRef(doc, value.Examples[k], documentPath); err != nil {
 			return err
 		}
 	}
@@ -735,8 +735,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				return err
 			}
 		}
-		for _, example := range contentType.Examples {
-			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+		for _, k := range componentNames(contentType.Examples) {
+			if err := loader.resolveExampleRef(doc, contentType.Examples[k], documentPath); err != nil {
 				return err
 			}
 		}
@@ -746,8 +746,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			return err
 		}
 	}
-	for _, example := range value.Examples {
-		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+	for _, k := range componentNames(value.Examples) {
+		if err := loader.resolveExampleRef(doc, value.Examples[k], documentPath); err != nil {
 			return err
 		}
 	}
