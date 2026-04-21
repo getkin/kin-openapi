@@ -386,7 +386,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	}
 
 	drill := func(cursor any) (any, error) {
-		for _, pathPart := range strings.Split(fragment[1:], "/") {
+		for pathPart := range strings.SplitSeq(fragment[1:], "/") {
 			pathPart = unescapeRefString(pathPart)
 			attempted := false
 

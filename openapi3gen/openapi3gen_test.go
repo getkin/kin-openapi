@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -433,7 +433,7 @@ func ExampleSchemaCustomizer() {
 			schema.Max = &maxVal
 		}
 		if tag.Get("myenumtag") != "" {
-			for _, s := range strings.Split(tag.Get("myenumtag"), ",") {
+			for s := range strings.SplitSeq(tag.Get("myenumtag"), ",") {
 				schema.Enum = append(schema.Enum, s)
 			}
 		}

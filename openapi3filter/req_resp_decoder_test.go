@@ -1560,7 +1560,7 @@ func TestDecodeParameter(t *testing.T) {
 
 					if tc.query != "" {
 						query := req.URL.Query()
-						for _, param := range strings.Split(tc.query, "&") {
+						for param := range strings.SplitSeq(tc.query, "&") {
 							v := strings.Split(param, "=")
 							query.Add(v[0], v[1])
 						}

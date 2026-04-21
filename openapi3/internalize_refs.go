@@ -112,7 +112,7 @@ func cutDirectories(p, dirs string) (string, bool) {
 
 	var sb strings.Builder
 	sb.Grow(len(ParameterInHeader))
-	for _, segments := range strings.Split(p, "/") {
+	for segments := range strings.SplitSeq(p, "/") {
 		sb.WriteString(segments)
 
 		if sb.String() == p {
