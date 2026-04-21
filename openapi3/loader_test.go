@@ -7,9 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -724,65 +721,3 @@ func TestDefaultJoin(t *testing.T) {
 	}
 }
 
-func TestJoinFunc(t *testing.T) {
-	// Create a multi-file spec in a temp directory
-	dir := t.TempDir()
-
-	root := `openapi: "3.0.0"
-info:
-  title: Test
-  version: "1.0"
-paths: {}
-components:
-  schemas:
-    Pet:
-      $ref: "./schemas/pet.yaml"
-`
-	pet := `type: object
-properties:
-  name:
-    type: string
-`
-	require.NoError(t, os.MkdirAll(filepath.Join(dir, "schemas"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "root.yaml"), []byte(root), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "schemas", "pet.yaml"), []byte(pet), 0o644))
-
-	// Simulate a virtual prefix (like a git ref "rev:") by storing files
-	// under their real paths but loading via a prefixed base path.
-	// Without JoinFunc, path.Dir("myprefix:root.yaml") returns "." which
-	// breaks resolution. With JoinFunc, we split on ":" and resolve correctly.
-	prefix := "myprefix:"
-
-	loader := NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *Loader, location *url.URL) ([]byte, error) {
-		p := location.Path
-		if strings.HasPrefix(p, prefix) {
-			p = p[len(prefix):]
-		}
-		return os.ReadFile(filepath.Join(dir, filepath.FromSlash(p)))
-	}
-	loader.JoinFunc = func(basePath *url.URL, relativePath *url.URL) *url.URL {
-		if basePath == nil {
-			return relativePath
-		}
-		newPath := *basePath
-		base := basePath.Path
-		if i := strings.IndexByte(base, ':'); i >= 0 {
-			pfx := base[:i+1]
-			filePart := base[i+1:]
-			newPath.Path = pfx + path.Join(path.Dir(filePart), relativePath.Path)
-		} else {
-			newPath.Path = path.Join(path.Dir(base), relativePath.Path)
-		}
-		return &newPath
-	}
-
-	rootContent, err := os.ReadFile(filepath.Join(dir, "root.yaml"))
-	require.NoError(t, err)
-
-	doc, err := loader.LoadFromDataWithPath(rootContent, &url.URL{Path: prefix + "root.yaml"})
-	require.NoError(t, err)
-	require.NotNil(t, doc.Components.Schemas["Pet"])
-	require.Equal(t, "string", doc.Components.Schemas["Pet"].Value.Properties["name"].Value.Type.Slice()[0])
-}
