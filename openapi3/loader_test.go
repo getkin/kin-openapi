@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -673,7 +676,7 @@ func TestReadFromIoReader_Nil(t *testing.T) {
 	require.EqualError(t, err, "invalid reader: <nil>")
 }
 
-func TestJoinGitRefPath(t *testing.T) {
+func TestDefaultJoin(t *testing.T) {
 	tests := []struct {
 		name     string
 		base     string
@@ -681,28 +684,22 @@ func TestJoinGitRefPath(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "git ref with relative path",
-			base:     "origin/main:openapi.yaml",
-			rel:      "schemas/pet.yaml",
-			expected: "origin/main:schemas/pet.yaml",
-		},
-		{
-			name:     "git ref with dot-slash relative path",
-			base:     "origin/main:openapi.yaml",
-			rel:      "./schemas/pet.yaml",
-			expected: "origin/main:schemas/pet.yaml",
-		},
-		{
-			name:     "git ref with nested base path",
-			base:     "origin/main:api/v1/openapi.yaml",
-			rel:      "../common/types.yaml",
-			expected: "origin/main:api/common/types.yaml",
-		},
-		{
-			name:     "regular path without colon",
+			name:     "relative path",
 			base:     "/home/user/openapi.yaml",
 			rel:      "schemas/pet.yaml",
 			expected: "/home/user/schemas/pet.yaml",
+		},
+		{
+			name:     "dot-slash relative path",
+			base:     "/home/user/openapi.yaml",
+			rel:      "./schemas/pet.yaml",
+			expected: "/home/user/schemas/pet.yaml",
+		},
+		{
+			name:     "parent directory",
+			base:     "/home/user/api/v1/openapi.yaml",
+			rel:      "../common/types.yaml",
+			expected: "/home/user/api/common/types.yaml",
 		},
 		{
 			name:     "nil base returns relative",
@@ -716,13 +713,76 @@ func TestJoinGitRefPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rel := &url.URL{Path: tt.rel}
 			if tt.base == "" {
-				result := join(nil, rel)
+				result := defaultJoin(nil, rel)
 				require.Equal(t, tt.expected, result.Path)
 				return
 			}
 			base := &url.URL{Path: tt.base}
-			result := join(base, rel)
+			result := defaultJoin(base, rel)
 			require.Equal(t, tt.expected, result.Path)
 		})
 	}
+}
+
+func TestJoinFunc(t *testing.T) {
+	// Create a multi-file spec in a temp directory
+	dir := t.TempDir()
+
+	root := `openapi: "3.0.0"
+info:
+  title: Test
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Pet:
+      $ref: "./schemas/pet.yaml"
+`
+	pet := `type: object
+properties:
+  name:
+    type: string
+`
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "schemas"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "root.yaml"), []byte(root), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "schemas", "pet.yaml"), []byte(pet), 0o644))
+
+	// Simulate a virtual prefix (like a git ref "rev:") by storing files
+	// under their real paths but loading via a prefixed base path.
+	// Without JoinFunc, path.Dir("myprefix:root.yaml") returns "." which
+	// breaks resolution. With JoinFunc, we split on ":" and resolve correctly.
+	prefix := "myprefix:"
+
+	loader := NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(loader *Loader, location *url.URL) ([]byte, error) {
+		p := location.Path
+		if strings.HasPrefix(p, prefix) {
+			p = p[len(prefix):]
+		}
+		return os.ReadFile(filepath.Join(dir, filepath.FromSlash(p)))
+	}
+	loader.JoinFunc = func(basePath *url.URL, relativePath *url.URL) *url.URL {
+		if basePath == nil {
+			return relativePath
+		}
+		newPath := *basePath
+		base := basePath.Path
+		if i := strings.IndexByte(base, ':'); i >= 0 {
+			pfx := base[:i+1]
+			filePart := base[i+1:]
+			newPath.Path = pfx + path.Join(path.Dir(filePart), relativePath.Path)
+		} else {
+			newPath.Path = path.Join(path.Dir(base), relativePath.Path)
+		}
+		return &newPath
+	}
+
+	rootContent, err := os.ReadFile(filepath.Join(dir, "root.yaml"))
+	require.NoError(t, err)
+
+	doc, err := loader.LoadFromDataWithPath(rootContent, &url.URL{Path: prefix + "root.yaml"})
+	require.NoError(t, err)
+	require.NotNil(t, doc.Components.Schemas["Pet"])
+	require.Equal(t, "string", doc.Components.Schemas["Pet"].Value.Properties["name"].Value.Type.Slice()[0])
 }
