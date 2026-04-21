@@ -265,6 +265,9 @@ func (callback Callback) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
 
+func (callback *Callback) Keys() []string
+    Keys returns the callback keys in a fixed order
+
 func (callback *Callback) Len() int
     Len returns the amount of keys in callback excluding callback.Extensions.
 
@@ -1278,6 +1281,9 @@ func (paths Paths) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
 
+func (paths *Paths) Keys() []string
+    Keys returns the paths keys in a fixed order
+
 func (paths *Paths) Len() int
     Len returns the amount of keys in paths excluding paths.Extensions.
 
@@ -1560,6 +1566,9 @@ func (responses *Responses) Delete(key string)
 func (responses Responses) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://github.com/go-openapi/jsonpointer#JSONPointable
+
+func (responses *Responses) Keys() []string
+    Keys returns the responses keys in a fixed order
 
 func (responses *Responses) Len() int
     Len returns the amount of keys in responses excluding responses.Extensions.

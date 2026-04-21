@@ -36,7 +36,6 @@ package openapi3
 
 import (
 	"encoding/json"
-	"slices"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
@@ -82,8 +81,13 @@ EOF
 }
 
 
-maplike_ValueSetLenDelete() {
+maplike_KeysValueSetLenDelete() {
 	cat <<EOF >>"$maplike"
+// Keys returns the ${name} keys in a fixed order
+func (${name} ${type}) Keys() []string {
+	return componentNames(${name}.Map())
+}
+
 // Value returns the ${name} for key or nil
 func (${name} ${type}) Value(key string) ${value_type} {
 	if ${name}.Len() == 0 {
@@ -190,18 +194,12 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 		return
 	}
 
-	ks := make([]string, 0, len(m))
-	for k := range m {
-		ks = append(ks, k)
-	}
-	slices.Sort(ks)
-
 	x := ${type#'*'}{
 		Extensions: make(map[string]any),
 		m:          make(map[string]${value_type}, len(m)),
 	}
 
-	for _, k := range ks {
+	for _, k := range componentNames(m) {
 		v := m[k]
 		if strings.HasPrefix(k, "x-") {
 			x.Extensions[k] = v
@@ -269,7 +267,7 @@ for i in "${!types[@]}"; do
 	name=${names[$i]}
 
 	type="$type" name="$name" value_type="$value_type" maplike_NewWithCapa
-	type="$type" name="$name" value_type="$value_type" maplike_ValueSetLenDelete
+	type="$type" name="$name" value_type="$value_type" maplike_KeysValueSetLenDelete
 	type="$type" name="$name"    deref_v="$deref_v"    maplike_Pointable
 	type="$type" name="$name" value_type="$value_type" maplike_UnMarsh
 	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike"

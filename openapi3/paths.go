@@ -44,12 +44,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 	normalizedPaths := make(map[string]string, paths.Len())
 
-	keys := make([]string, 0, paths.Len())
-	for key := range paths.Map() {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	for _, path := range keys {
+	for _, path := range paths.Keys() {
 		pathItem := paths.Value(path)
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
@@ -75,12 +70,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 			}
 		}
 		operations := pathItem.Operations()
-		methods := make([]string, 0, len(operations))
-		for method := range operations {
-			methods = append(methods, method)
-		}
-		slices.Sort(methods)
-		for _, method := range methods {
+		for _, method := range componentNames(operations) {
 			operation := operations[method]
 			var setParams []string
 			for _, parameterRef := range operation.Parameters {

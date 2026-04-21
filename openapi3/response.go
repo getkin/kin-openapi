@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"slices"
 	"strconv"
 )
 
@@ -81,12 +80,7 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 		return errors.New("the responses object MUST contain at least one response code")
 	}
 
-	keys := make([]string, 0, responses.Len())
-	for key := range responses.Map() {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	for _, key := range keys {
+	for _, key := range responses.Keys() {
 		v := responses.Value(key)
 		if err := v.Validate(ctx); err != nil {
 			return err
@@ -198,24 +192,14 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
-	headers := make([]string, 0, len(response.Headers))
-	for name := range response.Headers {
-		headers = append(headers, name)
-	}
-	slices.Sort(headers)
-	for _, name := range headers {
+	for _, name := range componentNames(response.Headers) {
 		header := response.Headers[name]
 		if err := header.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
-	links := make([]string, 0, len(response.Links))
-	for name := range response.Links {
-		links = append(links, name)
-	}
-	slices.Sort(links)
-	for _, name := range links {
+	for _, name := range componentNames(response.Links) {
 		link := response.Links[name]
 		if err := link.Validate(ctx); err != nil {
 			return err

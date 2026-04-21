@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"slices"
 )
 
 // Callback is specified by OpenAPI/Swagger standard version 3.
@@ -39,12 +38,7 @@ func WithCallback(cb string, pathItem *PathItem) NewCallbackOption {
 func (callback *Callback) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
-	keys := make([]string, 0, callback.Len())
-	for key := range callback.Map() {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	for _, key := range keys {
+	for _, key := range callback.Keys() {
 		v := callback.Value(key)
 		if err := v.Validate(ctx); err != nil {
 			return err
