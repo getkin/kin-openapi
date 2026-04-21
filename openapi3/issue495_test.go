@@ -121,7 +121,10 @@ paths:
 	doc, err := sl.LoadFromData(spec)
 	require.NoError(t, err)
 
-	err = doc.Validate(sl.Context)
+	// draft-04 meta-schema contains $id and $schema; in OAS 3.0 these require
+	// opt-in via AllowExtraSiblingFields so the test can assert its real target
+	// (the unresolved inner "#" ref).
+	err = doc.Validate(sl.Context, AllowExtraSiblingFields("$id", "$schema"))
 	require.ErrorContains(t, err, `found unresolved ref: "#"`)
 }
 
@@ -157,6 +160,9 @@ paths:
 	doc, err := sl.LoadFromData(spec)
 	require.NoError(t, err)
 
-	err = doc.Validate(sl.Context)
+	// draft-04 meta-schema contains $id and $schema; in OAS 3.0 these require
+	// opt-in via AllowExtraSiblingFields so the test can assert its real target
+	// (the unresolved inner "#" ref).
+	err = doc.Validate(sl.Context, AllowExtraSiblingFields("$id", "$schema"))
 	require.ErrorContains(t, err, `found unresolved ref: "#"`)
 }

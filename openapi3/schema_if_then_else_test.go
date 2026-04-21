@@ -176,7 +176,7 @@ func TestSchemaIfThenElse_Validate(t *testing.T) {
 		schema := &openapi3.Schema{
 			If: &openapi3.SchemaRef{Ref: "#/components/schemas/Missing"},
 		}
-		err := schema.Validate(context.Background())
+		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unresolved ref")
 	})
@@ -185,7 +185,7 @@ func TestSchemaIfThenElse_Validate(t *testing.T) {
 		schema := &openapi3.Schema{
 			Then: &openapi3.SchemaRef{Ref: "#/components/schemas/Missing"},
 		}
-		err := schema.Validate(context.Background())
+		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unresolved ref")
 	})
@@ -194,7 +194,7 @@ func TestSchemaIfThenElse_Validate(t *testing.T) {
 		schema := &openapi3.Schema{
 			Else: &openapi3.SchemaRef{Ref: "#/components/schemas/Missing"},
 		}
-		err := schema.Validate(context.Background())
+		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unresolved ref")
 	})
@@ -205,7 +205,7 @@ func TestSchemaIfThenElse_Validate(t *testing.T) {
 			Then: &openapi3.SchemaRef{Value: &openapi3.Schema{MinLength: 1}},
 			Else: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"number"}}},
 		}
-		err := schema.Validate(context.Background())
+		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
 		require.NoError(t, err)
 	})
 }
