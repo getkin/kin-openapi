@@ -80,11 +80,6 @@ components:
 
 			require.Equal(t, tc.siblings, statusRef.Value.Deprecated, "deprecated:true sibling to $ref must be honoured in OAS 3.1")
 
-			x := testcase{oas: "3.0"}
-			if tc == x {
-				t.Skip("FIXME(reuvenharrison): make the skipped test pass")
-			}
-
 			var valopts []openapi3.ValidationOption
 			if tc.valid && !tc.siblings { // For this test case let's try the option that allows siblings for 3.0
 				valopts = append(valopts, openapi3.AllowExtraSiblingFields("deprecated"))
