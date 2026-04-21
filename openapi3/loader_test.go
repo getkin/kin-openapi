@@ -720,4 +720,3 @@ func TestDefaultJoin(t *testing.T) {
 		})
 	}
 }
-
