@@ -452,6 +452,7 @@ func TestValidateQueryParams(t *testing.T) {
 			require.NoError(t, err)
 
 			req, err := http.NewRequest(http.MethodGet, "http://test.org/test?"+tc.query, nil)
+			require.NoError(t, err)
 			route, pathParams, err := router.FindRoute(req)
 			require.NoError(t, err)
 
@@ -475,10 +476,10 @@ func TestValidateQueryParams(t *testing.T) {
 
 				return
 			}
-
 			require.NoError(t, err)
 
 			got, _, err := decodeStyledParameter(tc.param, input)
+			require.NoError(t, err)
 			require.EqualValues(t, tc.want, got)
 		})
 	}

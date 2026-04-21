@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"slices"
 )
 
 // SecurityScheme is specified by OpenAPI/Swagger standard version 3.
@@ -395,12 +396,7 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 	ctx = WithValidationOptions(ctx, opts...)
 
 	typeIn := func(types ...oAuthFlowType) bool {
-		for _, ty := range types {
-			if ty == typ {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(types, typ)
 	}
 
 	if in := typeIn(oAuthFlowTypeImplicit, oAuthFlowAuthorizationCode); true {

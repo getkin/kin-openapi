@@ -1130,11 +1130,11 @@ type schemaTypeExample struct {
 
 func TestTypes(t *testing.T) {
 	for _, example := range typeExamples {
-		t.Run(example.Title, testType(t, example))
+		t.Run(example.Title, testType(example))
 	}
 }
 
-func testType(t *testing.T, example schemaTypeExample) func(*testing.T) {
+func testType(example schemaTypeExample) func(*testing.T) {
 	return func(t *testing.T) {
 		baseSchema := example.Schema
 		for _, typ := range example.AllValid {
@@ -1199,11 +1199,11 @@ var typeExamples = []schemaTypeExample{
 
 func TestSchemaErrors(t *testing.T) {
 	for _, example := range schemaErrorExamples {
-		t.Run(example.Title, testSchemaError(t, example))
+		t.Run(example.Title, testSchemaError(example))
 	}
 }
 
-func testSchemaError(t *testing.T, example schemaErrorExample) func(*testing.T) {
+func testSchemaError(example schemaErrorExample) func(*testing.T) {
 	return func(t *testing.T) {
 		msg := example.Error.Error()
 		require.True(t, strings.Contains(msg, example.Want))
@@ -1251,11 +1251,11 @@ type schemaMultiErrorExample struct {
 
 func TestSchemasMultiError(t *testing.T) {
 	for _, example := range schemaMultiErrorExamples {
-		t.Run(example.Title, testSchemaMultiError(t, example))
+		t.Run(example.Title, testSchemaMultiError(example))
 	}
 }
 
-func testSchemaMultiError(t *testing.T, example schemaMultiErrorExample) func(*testing.T) {
+func testSchemaMultiError(example schemaMultiErrorExample) func(*testing.T) {
 	return func(t *testing.T) {
 		schema := example.Schema
 		for validateFuncIndex, validateFunc := range validateSchemaFuncs {

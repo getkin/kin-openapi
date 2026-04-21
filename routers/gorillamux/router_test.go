@@ -298,6 +298,7 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "https://another.com/hello", nil)
 	require.NoError(t, err)
 	route, _, err := router.FindRoute(req)
+	require.NoError(t, err)
 	require.Equal(t, "/hello", route.Path)
 
 	req, err = http.NewRequest(http.MethodGet, "https://example.com/hello", nil)

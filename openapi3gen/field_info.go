@@ -30,7 +30,7 @@ func appendFields(fields []theFieldInfo, parentIndex []int, t reflect.Type) []th
 	// For each field
 	numField := t.NumField()
 iteration:
-	for i := 0; i < numField; i++ {
+	for i := range numField {
 		f := t.Field(i)
 		index := make([]int, 0, len(parentIndex)+1)
 		index = append(index, parentIndex...)

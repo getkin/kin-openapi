@@ -9,8 +9,7 @@ import (
 )
 
 func TestRegisterAndUnregisterBodyEncoder(t *testing.T) {
-	var encoder BodyEncoder
-	encoder = func(body any) (data []byte, err error) {
+	var encoder BodyEncoder = func(body any) (data []byte, err error) {
 		return []byte(strings.Join(body.([]string), ",")), nil
 	}
 	const contentType = "text/csv"

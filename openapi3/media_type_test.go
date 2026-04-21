@@ -15,17 +15,17 @@ func TestMediaTypeJSON(t *testing.T) {
 	require.NotEmpty(t, data)
 
 	t.Log("Unmarshal *openapi3.MediaType from JSON")
-	docA := &MediaType{}
-	err = json.Unmarshal(mediaTypeJSON, &docA)
+	mt := &MediaType{}
+	err = json.Unmarshal(mediaTypeJSON, &mt)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
 	t.Log("Validate *openapi3.MediaType")
-	err = docA.Validate(context.Background())
+	err = mt.Validate(context.Background())
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")
-	dataA, err := json.Marshal(docA)
+	dataA, err := json.Marshal(mt)
 	require.NoError(t, err)
 	require.JSONEq(t, string(data), string(mediaTypeJSON))
 	require.JSONEq(t, string(data), string(dataA))

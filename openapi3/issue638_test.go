@@ -7,7 +7,7 @@ import (
 )
 
 func TestIssue638(t *testing.T) {
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		// This path affects the occurrence of the issue #638.

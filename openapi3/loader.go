@@ -566,7 +566,7 @@ func drillIntoField(cursor any, fieldName string) (any, error) {
 
 	case reflect.Struct:
 		hasFields := false
-		for i := 0; i < val.NumField(); i++ {
+		for i := range val.NumField() {
 			hasFields = true
 			if yamlTag := val.Type().Field(i).Tag.Get("yaml"); yamlTag != "-" {
 				if tagName := strings.Split(yamlTag, ",")[0]; tagName != "" {

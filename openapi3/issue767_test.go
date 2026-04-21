@@ -11,7 +11,7 @@ import (
 func TestIssue767(t *testing.T) {
 	t.Parallel()
 
-	tests := [...]struct {
+	tests := []struct {
 		name     string
 		schema   *openapi3.Schema
 		value    map[string]any

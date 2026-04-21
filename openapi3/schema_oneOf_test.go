@@ -212,11 +212,8 @@ components:
 			},
 		},
 	})
-
 	require.ErrorContains(t, err, `Error at "/first/second/third"`)
-
 	var sErr *SchemaError
-
 	require.ErrorAs(t, err, &sErr)
 	require.Equal(t, []string{"first", "second", "third"}, sErr.JSONPointer())
 }

@@ -9,15 +9,15 @@ import (
 	"github.com/go-openapi/jsonpointer"
 )
 
-type Callbacks map[string]*CallbackRef
-type Examples map[string]*ExampleRef
-type Headers map[string]*HeaderRef
-type Links map[string]*LinkRef
-type ParametersMap map[string]*ParameterRef
-type RequestBodies map[string]*RequestBodyRef
-type ResponseBodies map[string]*ResponseRef
-type Schemas map[string]*SchemaRef
-type SecuritySchemes map[string]*SecuritySchemeRef
+type Callbacks map[string]*CallbackRef             // Callbacks represents components' named callbacks
+type Examples map[string]*ExampleRef               // Examples represents components' named examples
+type Headers map[string]*HeaderRef                 // Headers represents components' named headers
+type Links map[string]*LinkRef                     // Links represents components' named links
+type ParametersMap map[string]*ParameterRef        // ParametersMap represents components' named parameters
+type RequestBodies map[string]*RequestBodyRef      // RequestBodies represents components' named request bodies
+type ResponseBodies map[string]*ResponseRef        // ResponseBodies represents components' named response bodies
+type Schemas map[string]*SchemaRef                 // Schemas represents components' named schemas
+type SecuritySchemes map[string]*SecuritySchemeRef // SecuritySchemes represents components' named security schemes
 
 // Components is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#components-object

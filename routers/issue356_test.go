@@ -105,7 +105,8 @@ paths:
 					route, pathParams, err := router.FindRoute(r)
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte(err.Error()))
+						_, err := w.Write([]byte(err.Error()))
+						require.NoError(t, err)
 						return
 					}
 
@@ -118,7 +119,8 @@ paths:
 					require.NoError(t, err)
 
 					w.Header().Set("Content-Type", "application/json")
-					w.Write([]byte("{}"))
+					_, err = w.Write([]byte("{}"))
+					require.NoError(t, err)
 				}))
 				defer ts.Close()
 

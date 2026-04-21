@@ -138,7 +138,7 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string
       - Cutting the "#/components/<type>" part.
       - Cutting the file extensions (.yaml/.json) from documents.
       - Trimming the common directory with the root spec.
-      - Replace invalid characters with with underscores.
+      - Replace invalid characters with underscores.
 
     This is an injective mapping over a "reasonable" amount of the possible
     openapi spec domain space but is not perfect. There might be edge cases.
@@ -364,7 +364,7 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
     Validate returns an error if CallbackRef does not comply with the OpenAPI
     spec.
 
-type Callbacks map[string]*CallbackRef
+type Callbacks map[string]*CallbackRef // Callbacks represents components' named callbacks
 
 func (m Callbacks) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -591,7 +591,7 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
     Validate returns an error if ExampleRef does not comply with the OpenAPI
     spec.
 
-type Examples map[string]*ExampleRef
+type Examples map[string]*ExampleRef // Examples represents components' named examples
 
 func (m Examples) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -731,7 +731,7 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
     Validate returns an error if HeaderRef does not comply with the OpenAPI
     spec.
 
-type Headers map[string]*HeaderRef
+type Headers map[string]*HeaderRef // Headers represents components' named headers
 
 func (m Headers) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -866,7 +866,7 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error
 func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if LinkRef does not comply with the OpenAPI spec.
 
-type Links map[string]*LinkRef
+type Links map[string]*LinkRef // Links represents components' named links
 
 func (m Links) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -1259,7 +1259,7 @@ func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOpt
     Validate returns an error if Parameters does not comply with the OpenAPI
     spec.
 
-type ParametersMap map[string]*ParameterRef
+type ParametersMap map[string]*ParameterRef // ParametersMap represents components' named parameters
 
 func (m ParametersMap) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -1432,7 +1432,7 @@ type RegexMatcher interface {
 	MatchString(s string) bool
 }
 
-type RequestBodies map[string]*RequestBodyRef
+type RequestBodies map[string]*RequestBodyRef // RequestBodies represents components' named request bodies
 
 func (m RequestBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -1562,7 +1562,7 @@ func (response *Response) WithJSONSchema(schema *Schema) *Response
 
 func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response
 
-type ResponseBodies map[string]*ResponseRef
+type ResponseBodies map[string]*ResponseRef // ResponseBodies represents components' named response bodies
 
 func (m ResponseBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -2062,7 +2062,7 @@ func WithStringFormatValidators(validators map[string]StringFormatValidator) Sch
     These validators are checked before global SchemaStringFormats and allow
     different validations for the same format name across different specs.
 
-type Schemas map[string]*SchemaRef
+type Schemas map[string]*SchemaRef // Schemas represents components' named schemas
 
 func (m Schemas) JSONLookup(token string) (any, error)
     JSONLookup implements
@@ -2189,7 +2189,7 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
     Validate returns an error if SecuritySchemeRef does not comply with the
     OpenAPI spec.
 
-type SecuritySchemes map[string]*SecuritySchemeRef
+type SecuritySchemes map[string]*SecuritySchemeRef // SecuritySchemes represents components' named security schemes
 
 func (m SecuritySchemes) JSONLookup(token string) (any, error)
     JSONLookup implements

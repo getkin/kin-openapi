@@ -152,9 +152,8 @@ func (v *jsonSchemaValidator) validate(value any) error {
 
 // convertJSONSchemaError converts a jsonschema validation error to OpenAPI SchemaError format
 func convertJSONSchemaError(err error) error {
-	var validationErr *jsonschema.ValidationError
-	if errors.As(err, &validationErr) {
-		return formatValidationError(validationErr, "")
+	if err, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
+		return formatValidationError(err, "")
 	}
 	return err
 }
@@ -172,7 +171,7 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 	// Build error message using the Error() method
 	var msg strings.Builder
 	if path != "" {
-		msg.WriteString(fmt.Sprintf(`error at "%s": `, path))
+		fmt.Fprintf(&msg, `error at "%s": `, path)
 	}
 	msg.WriteString(verr.Error())
 

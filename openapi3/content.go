@@ -9,7 +9,7 @@ import (
 type Content map[string]*MediaType
 
 func NewContent() Content {
-	return make(map[string]*MediaType)
+	return make(Content)
 }
 
 func NewContentWithSchema(schema *Schema, consumes []string) Content {
@@ -109,8 +109,7 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
 	ctx = WithValidationOptions(ctx, opts...)
 
 	for _, k := range componentNames(content) {
-		v := content[k]
-		if err := v.Validate(ctx); err != nil {
+		if err := content[k].Validate(ctx); err != nil {
 			return err
 		}
 	}
