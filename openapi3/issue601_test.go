@@ -17,11 +17,13 @@ func TestIssue601(t *testing.T) {
 	doc, err := sl.LoadFromFile("testdata/lxkns.yaml")
 	require.NoError(t, err)
 
-	err = doc.Validate(sl.Context)
+	// lxkns.yaml has `description` siblings alongside $ref (invalid in OAS 3.0).
+	// Allow them so we can exercise the example-type validation this test actually targets.
+	err = doc.Validate(sl.Context, AllowExtraSiblingFields("description"))
 	require.ErrorContains(t, err, `invalid components: schema "DiscoveryResult": invalid example: Error at "/type": property "type" is missing`)
 	require.ErrorContains(t, err, `| Error at "/nsid": property "nsid" is missing`)
 
-	err = doc.Validate(sl.Context, DisableExamplesValidation())
+	err = doc.Validate(sl.Context, AllowExtraSiblingFields("description"), DisableExamplesValidation())
 	require.NoError(t, err)
 
 	// Now let's remove all the invalid parts
@@ -29,6 +31,6 @@ func TestIssue601(t *testing.T) {
 		schema.Value.Example = nil
 	}
 
-	err = doc.Validate(sl.Context)
+	err = doc.Validate(sl.Context, AllowExtraSiblingFields("description"))
 	require.NoError(t, err)
 }
