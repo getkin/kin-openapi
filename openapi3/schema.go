@@ -10,6 +10,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -229,13 +230,7 @@ func (pTypes *Types) Includes(typ string) bool {
 	if pTypes == nil {
 		return false
 	}
-	types := *pTypes
-	for _, candidate := range types {
-		if candidate == typ {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(*pTypes, typ)
 }
 
 // Permits returns true if the given type is permitted.
@@ -1225,12 +1220,10 @@ func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema 
 }
 
 func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema {
-	properties := schema.Properties
-	if properties == nil {
-		properties = make(Schemas)
-		schema.Properties = properties
+	if schema.Properties == nil {
+		schema.Properties = make(Schemas)
 	}
-	properties[name] = ref
+	schema.Properties[name] = ref
 	return schema
 }
 
@@ -1410,13 +1403,12 @@ func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) er
 
 // returns the updated stack and an error if Schema does not comply with the OpenAPI spec.
 func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema, error) {
+	if slices.Contains(stack, schema) {
+		return stack, nil
+	}
+
 	validationOpts := getValidationOptions(ctx)
 
-	for _, existing := range stack {
-		if existing == schema {
-			return stack, nil
-		}
-	}
 	stack = append(stack, schema)
 
 	if schema.ReadOnly && schema.WriteOnly {
@@ -2086,7 +2078,7 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "enum",
-			Reason:                fmt.Sprintf("value is not one of the allowed values %s", string(allowedValues)),
+			Reason:                "value is not one of the allowed values " + string(allowedValues),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
@@ -2119,7 +2111,7 @@ func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, va
 			Value:                 value,
 			Schema:                schema,
 			SchemaField:           "const",
-			Reason:                fmt.Sprintf("value must be %s", string(constVal)),
+			Reason:                "value must be " + string(constVal),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}

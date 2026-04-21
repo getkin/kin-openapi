@@ -93,14 +93,10 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 					}
 				}
 				for _, name := range componentNames(varsInPath) {
-					got := false
 					if slices.Contains(definedParams, name) {
-						got = true
 						break
 					}
-					if !got {
-						missing[name] = struct{}{}
-					}
+					missing[name] = struct{}{}
 				}
 				if len(missing) != 0 {
 					missings := componentNames(missing)

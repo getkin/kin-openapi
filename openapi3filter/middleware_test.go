@@ -144,21 +144,21 @@ func (h *validatorTestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", h.contentType)
 	if h.errStatusCode != 0 {
 		w.WriteHeader(h.errStatusCode)
-		w.Write([]byte(h.errBody))
+		_, _ = w.Write([]byte(h.errBody))
 		return
 	}
 	if !testUrlRE.MatchString(r.URL.Path) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(h.errBody))
+		_, _ = w.Write([]byte(h.errBody))
 		return
 	}
 	switch r.Method {
 	case "GET":
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(h.getBody))
+		_, _ = w.Write([]byte(h.getBody))
 	case "POST":
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(h.postBody))
+		_, _ = w.Write([]byte(h.postBody))
 	default:
 		http.Error(w, h.errBody, http.StatusMethodNotAllowed)
 	}
@@ -494,7 +494,7 @@ paths:
 			// Customize validation error responses to use JSON
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(status)
-			json.NewEncoder(w).Encode(map[string]any{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"status":  status,
 				"message": http.StatusText(status),
 			})

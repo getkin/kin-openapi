@@ -46,4 +46,5 @@ func TestIssue440(t *testing.T) {
 	doc3, err = ToV3(&doc2)
 	require.Error(t, err)
 	require.ErrorContains(t, err, `invalid host`)
+	require.Nil(t, doc3)
 }

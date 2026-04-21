@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -178,7 +179,7 @@ func (g *Generator) generateSchemaRefFor(parents []*theTypeInfo, t reflect.Type,
 func getStructField(t reflect.Type, fieldInfo theFieldInfo) reflect.StructField {
 	var ff reflect.StructField
 	// fieldInfo.Index is an array of indexes starting from the root of the type
-	for i := 0; i < len(fieldInfo.Index); i++ {
+	for i := range len(fieldInfo.Index) {
 		ff = t.Field(fieldInfo.Index[i])
 		t = ff.Type
 		for t.Kind() == reflect.Ptr {
@@ -190,10 +191,8 @@ func getStructField(t reflect.Type, fieldInfo theFieldInfo) reflect.StructField 
 
 func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
 	typeInfo := getTypeInfo(t)
-	for _, parent := range parents {
-		if parent == typeInfo {
-			return nil, &CycleError{}
-		}
+	if slices.Contains(parents, typeInfo) {
+		return nil, &CycleError{}
 	}
 	isRoot := cap(parents) == 0
 	if isRoot {
@@ -335,7 +334,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			if _, ok := g.componentSchemaRefs[typeName]; ok && g.opts.exportComponentSchemas.ExportComponentSchemas {
 				// Check if we have already parsed this component schema ref based on the name of the struct
 				// and use that if so
-				return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
+				return openapi3.NewSchemaRef("#/components/schemas/"+typeName, schema), nil
 			}
 
 			for _, fieldInfo := range typeInfo.Fields {
@@ -473,7 +472,7 @@ func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Sche
 	}
 
 	g.componentSchemaRefs[typeName] = struct{}{}
-	return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema)
+	return openapi3.NewSchemaRef("#/components/schemas/"+typeName, schema)
 }
 
 var RefSchemaRef = openapi3.NewSchemaRef("Ref",

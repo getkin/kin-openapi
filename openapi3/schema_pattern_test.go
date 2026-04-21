@@ -8,7 +8,7 @@ import (
 )
 
 func TestPattern(t *testing.T) {
-	_, err := regexp.Compile("^[a-zA-Z\\u0080-\\u024F\\s\\/\\-\\)\\(\\`\\.\\\"\\']+$")
+	_, err := regexp.Compile("^[a-zA-Z\\u0080-\\u024F\\s\\/\\-\\)\\(\\`\\.\\\"\\']+$") //nolint:staticcheck
 	require.EqualError(t, err, "error parsing regexp: invalid escape sequence: `\\u`")
 
 	_, err = regexp.Compile(`^[a-zA-Z\x{0080}-\x{024F}]+$`)

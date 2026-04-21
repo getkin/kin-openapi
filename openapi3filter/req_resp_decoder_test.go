@@ -82,14 +82,6 @@ var (
 			},
 		},
 	}
-	anyofSchemaObject = &openapi3.SchemaRef{
-		Value: &openapi3.Schema{
-			AnyOf: []*openapi3.SchemaRef{
-				objectOneRSchema,
-				objectTwoRSchema,
-			},
-		},
-	}
 	stringArraySchema  = arrayOf(stringSchema)
 	integerArraySchema = arrayOf(integerSchema)
 	objectSchema       = objectOf("id", stringSchema, "name", stringSchema)
@@ -1683,16 +1675,19 @@ func TestDecodeBody(t *testing.T) {
 		{name: "f", contentType: "application/json", data: strings.NewReader(`{"foo1": "foo1"}`), filename: "f1"},
 		{name: "f", contentType: "application/pdf", data: strings.NewReader("foo2"), filename: "f2"},
 	})
+	require.NoError(t, err)
 
 	multipartBinaryEncodingCTUnsupported, multipartMimeBinaryEncodingCTUnsupported, err := newTestMultipartForm([]*testFormPart{
 		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
 		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
 	})
+	require.NoError(t, err)
 
 	multipartBinaryEncodingCTNotMatching, multipartMimeBinaryEncodingCTNotMatching, err := newTestMultipartForm([]*testFormPart{
 		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
 		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
 	})
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name     string
@@ -1955,8 +1950,7 @@ func newTestMultipartForm(parts []*testFormPart) (io.Reader, string, error) {
 }
 
 func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
-	var decoder BodyDecoder
-	decoder = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (decoded any, err error) {
+	var decoder BodyDecoder = func(body io.Reader, h http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (decoded any, err error) {
 		var data []byte
 		if data, err = io.ReadAll(body); err != nil {
 			return

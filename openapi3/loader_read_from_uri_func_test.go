@@ -45,7 +45,8 @@ func TestLoaderReadFromURIFunc(t *testing.T) {
 	doc, err := loader.LoadFromFile("recursiveRef/openapi.yml")
 	require.NoError(t, err)
 	require.NotNil(t, doc)
-	require.NoError(t, doc.Validate(loader.Context))
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
 	require.Equal(t, "bar", doc.
 		Paths.Value("/foo").
 		Get.

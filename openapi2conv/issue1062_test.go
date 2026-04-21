@@ -1,11 +1,13 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi2conv"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // Regression test for #1062.
@@ -57,17 +59,18 @@ components:
 `
 
 	var doc3 openapi3.T
-	require.NoError(t, yaml.Unmarshal([]byte(v3Spec), &doc3), "unmarshal v3 spec")
+	err := yaml.Unmarshal([]byte(v3Spec), &doc3)
+	require.NoError(t, err, "unmarshal v3 spec")
 
 	// Pre-fix: this call panicked with
 	//   "runtime error: invalid memory reference or nil pointer dereference"
 	// inside FromV3SchemaRef when it deref'd nil components.Schemas.
-	v2, err := FromV3(&doc3)
+	doc2, err := openapi2conv.FromV3(&doc3)
 	require.NoError(t, err, "FromV3 must not error on form-data array of $refs")
-	require.NotNil(t, v2)
+	require.NotNil(t, doc2)
 
 	// Sanity: the operation made it through to v2 with a formData parameter.
-	op := v2.Paths["/v1/upload"].Post
+	op := doc2.Paths["/v1/upload"].Post
 	require.NotNil(t, op, "POST /v1/upload should be present after conversion")
 	var sawDocuments bool
 	for _, p := range op.Parameters {

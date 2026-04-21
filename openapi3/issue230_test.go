@@ -578,7 +578,7 @@ func TestPerformance(t *testing.T) {
 
 		// Create a large schema
 		properties := make(openapi3.Schemas)
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			properties[string(rune('a'+i%26))+string(rune('0'+i/26))] = &openapi3.SchemaRef{
 				Value: &openapi3.Schema{
 					Type: &openapi3.Types{"string"},
@@ -602,7 +602,7 @@ func TestPerformance(t *testing.T) {
 		schema := &openapi3.Schema{Type: &openapi3.Types{"object"}}
 		current := schema
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			current.Properties = openapi3.Schemas{
 				"nested": &openapi3.SchemaRef{
 					Value: &openapi3.Schema{

@@ -756,7 +756,8 @@ func runTest_Middleware(t *testing.T, handler http.Handler, encoder ErrorEncoder
 
 func TestValidationHandler_ServeHTTP(t *testing.T) {
 	t.Run("errors on invalid requests", func(t *testing.T) {
-		httpCtx := context.WithValue(context.Background(), "pig", "tails")
+		type pig struct{}
+		httpCtx := context.WithValue(context.Background(), pig{}, "tails")
 		r, err := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
 		require.NoError(t, err)
 		r = r.WithContext(httpCtx)
@@ -798,7 +799,8 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 
 func TestValidationHandler_Middleware(t *testing.T) {
 	t.Run("errors on invalid requests", func(t *testing.T) {
-		httpCtx := context.WithValue(context.Background(), "pig", "tails")
+		type pig struct{}
+		httpCtx := context.WithValue(context.Background(), pig{}, "tails")
 		r, err := http.NewRequest(http.MethodGet, "http://unknown-host.com/v2/pet", nil)
 		require.NoError(t, err)
 		r = r.WithContext(httpCtx)

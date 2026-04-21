@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
@@ -56,14 +57,9 @@ paths:
 		}
 
 		for _, requiredScope := range ai.Scopes {
-			var allowed bool
-			for _, scope := range userScopes[user] {
-				if scope == requiredScope {
-					allowed = true
-					break
-				}
-			}
-			if !allowed {
+			if slices.Contains(userScopes[user], requiredScope) {
+				break
+			} else {
 				return errForbidden
 			}
 		}

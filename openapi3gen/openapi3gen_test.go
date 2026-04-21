@@ -214,7 +214,7 @@ func TestExportedNonTagged(t *testing.T) {
 	type Bla struct {
 		A          string
 		Another    string `json:"another"`
-		yetAnother string // unused because unexported
+		yetAnother string //nolint:unused // unused because unexported
 		EvenAYaml  string `yaml:"even_a_yaml"`
 	}
 

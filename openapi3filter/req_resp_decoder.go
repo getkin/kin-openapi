@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -540,14 +541,14 @@ func (d *urlValuesDecoder) DecodeArray(param string, sm *openapi3.SerializationM
 		}
 		values = strings.Split(values[0], delim)
 	}
-	val, err := d.parseArray(values, sm, schema)
+	val, err := d.parseArray(values, schema)
 	return val, ok, err
 }
 
 // parseArray returns an array that contains items from a raw array.
 // Every item is parsed as a primitive value.
 // The function returns an error when an error happened while parse array's items.
-func (d *urlValuesDecoder) parseArray(raw []string, sm *openapi3.SerializationMethod, schemaRef *openapi3.SchemaRef) ([]any, error) {
+func (d *urlValuesDecoder) parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 	var value []any
 
 	for i, v := range raw {
@@ -1058,9 +1059,7 @@ func buildFromSchemas(schemas openapi3.SchemaRefs, params map[string]any, mapKey
 		if err == nil && val != nil {
 
 			if m, ok := val.(map[string]any); ok {
-				for k, v := range m {
-					resultMap[k] = v
-				}
+				maps.Copy(resultMap, m)
 				continue
 			}
 
@@ -1512,7 +1511,7 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			return nil, fmt.Errorf("part %s: %w", name, err)
 		}
 
-		// Parse primitive types when no content type is explicitely provided, or the content type is set to text/plain
+		// Parse primitive types when no content type is explicitly provided, or the content type is set to text/plain
 		if contentType := partHeader.Get(headerCT); contentType == "" || contentType == "text/plain" {
 			if value, err = parsePrimitive(value.(string), valueSchema); err != nil {
 				if v, ok := err.(*ParseError); ok {
@@ -1528,23 +1527,15 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 	allTheProperties := make(map[string]*openapi3.SchemaRef)
 	if len(schema.Value.AllOf) > 0 {
 		for _, sr := range schema.Value.AllOf {
-			for k, v := range sr.Value.Properties {
-				allTheProperties[k] = v
-			}
+			maps.Copy(allTheProperties, sr.Value.Properties)
 			if addProps := sr.Value.AdditionalProperties.Schema; addProps != nil {
-				for k, v := range addProps.Value.Properties {
-					allTheProperties[k] = v
-				}
+				maps.Copy(allTheProperties, addProps.Value.Properties)
 			}
 		}
 	} else {
-		for k, v := range schema.Value.Properties {
-			allTheProperties[k] = v
-		}
+		maps.Copy(allTheProperties, schema.Value.Properties)
 		if addProps := schema.Value.AdditionalProperties.Schema; addProps != nil {
-			for k, v := range addProps.Value.Properties {
-				allTheProperties[k] = v
-			}
+			maps.Copy(allTheProperties, addProps.Value.Properties)
 		}
 	}
 

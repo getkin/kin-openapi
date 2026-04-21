@@ -162,7 +162,7 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 	}
 
 	// Recurse into exported struct fields using json tags
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		sf := typ.Field(i)
 		if !sf.IsExported() {
 			continue

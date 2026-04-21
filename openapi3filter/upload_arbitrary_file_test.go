@@ -80,8 +80,8 @@ paths:
 
 			fw, err := writer.CreatePart(h)
 			require.NoError(t, err)
-			_, err = io.Copy(fw, bytes.NewReader(tt.zipData))
 
+			_, err = io.Copy(fw, bytes.NewReader(tt.zipData))
 			require.NoError(t, err)
 		}
 

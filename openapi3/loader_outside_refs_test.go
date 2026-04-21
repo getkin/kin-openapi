@@ -56,5 +56,10 @@ components:
 
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.LoadFromData([]byte(spec))
+	doc, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+
+	err = doc.Validate(loader.Context, AllowExtraSiblingFields("description"))
+	require.NoError(t, err)
 }

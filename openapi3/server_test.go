@@ -35,7 +35,7 @@ func TestServerParamValuesWithPath(t *testing.T) {
 		"http://domain0.domain1.example.com/a/b-version/c/d":          newServerMatch("/d", "domain0", "domain1", "b", "", ""),
 		"http://domain0.domain1.example.com/a/1.0.0-version/c/d":      newServerMatch("/d", "domain0", "domain1", "1.0.0", "", ""),
 	} {
-		t.Run(input, testServerParamValues(t, server, input, expected))
+		t.Run(input, testServerParamValues(server, input, expected))
 	}
 }
 
@@ -46,7 +46,7 @@ func TestServerParamValuesNoPath(t *testing.T) {
 	for input, expected := range map[string]*serverMatch{
 		"https://domain0.domain1.example.com/": newServerMatch("/", "domain0", "domain1"),
 	} {
-		t.Run(input, testServerParamValues(t, server, input, expected))
+		t.Run(input, testServerParamValues(server, input, expected))
 	}
 }
 
@@ -88,7 +88,7 @@ func TestServerValidation(t *testing.T) {
 	}
 }
 
-func testServerParamValues(t *testing.T, server *Server, input string, expected *serverMatch) func(*testing.T) {
+func testServerParamValues(server *Server, input string, expected *serverMatch) func(*testing.T) {
 	return func(t *testing.T) {
 		args, remaining, ok := server.MatchRawURL(input)
 		if expected == nil {

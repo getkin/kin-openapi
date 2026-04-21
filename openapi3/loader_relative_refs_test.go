@@ -198,7 +198,7 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 	for _, td := range refTestDataEntries {
 		t.Logf("testcase %q", td.name)
 
-		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
+		spec := fmt.Appendf(nil, td.contentTemplate, "components.openapi.json")
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
@@ -211,7 +211,7 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 	for _, td := range refTestDataEntriesResponseError {
 		t.Logf("testcase %q", td.name)
 
-		spec := []byte(fmt.Sprintf(td.contentTemplate, "components.openapi.json"))
+		spec := fmt.Appendf(nil, td.contentTemplate, "components.openapi.json")
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
@@ -224,7 +224,7 @@ func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
 	for _, td := range refTestDataEntries {
 		t.Logf("testcase %q", td.name)
 
-		spec := []byte(fmt.Sprintf(td.contentTemplate, "nesteddir/nestedcomponents.openapi.json"))
+		spec := fmt.Appendf(nil, td.contentTemplate, "nesteddir/nestedcomponents.openapi.json")
 		loader := NewLoader()
 		loader.IsExternalRefsAllowed = true
 		doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})

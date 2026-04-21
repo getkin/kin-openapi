@@ -104,7 +104,7 @@ func (r *Router) FindRoute(req *http.Request) (*routers.Route, map[string]string
 	for i, m := range r.muxes {
 		var match mux.RouteMatch
 		if m.muxRoute.Match(req, &match) {
-			if err := match.MatchErr; err != nil {
+			if err := match.MatchErr; err != nil { //nolint:staticcheck
 				// What then?
 			}
 			vars := match.Vars

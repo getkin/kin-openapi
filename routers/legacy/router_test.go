@@ -211,6 +211,8 @@ func TestRouter(t *testing.T) {
 	require.Error(t, err)
 	r, err = NewRouter(doc)
 	require.Error(t, err)
+	require.Nil(t, r)
 	r, err = NewRouter(doc, openapi3.DisableExamplesValidation())
 	require.NoError(t, err)
+	require.NotNil(t, r)
 }

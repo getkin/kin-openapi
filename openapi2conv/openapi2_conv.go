@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"slices"
 	"strings"
@@ -123,7 +124,7 @@ func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *o
 		Extensions: stripNonExtensions(pathItem.Extensions),
 	}
 	for method, operation := range pathItem.Operations() {
-		doc3Operation, err := ToV3Operation(doc2, components, pathItem, operation, consumes)
+		doc3Operation, err := ToV3Operation(components, pathItem, operation, consumes)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +146,7 @@ func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *o
 	return doc3, nil
 }
 
-func ToV3Operation(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, operation *openapi2.Operation, consumes []string) (*openapi3.Operation, error) {
+func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem, operation *openapi2.Operation, consumes []string) (*openapi3.Operation, error) {
 	if operation == nil {
 		return nil, nil
 	}
@@ -639,9 +640,7 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 		flows := &openapi3.OAuthFlows{}
 		result.Flows = flows
 		scopesMap := make(map[string]string)
-		for scope, desc := range securityScheme.Scopes {
-			scopesMap[scope] = desc
-		}
+		maps.Copy(scopesMap, securityScheme.Scopes)
 		flow := &openapi3.OAuthFlow{
 			AuthorizationURL: securityScheme.AuthorizationURL,
 			TokenURL:         securityScheme.TokenURL,
@@ -767,7 +766,7 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 	if m := doc3.Components.SecuritySchemes; m != nil {
 		doc2SecuritySchemes := make(map[string]*openapi2.SecurityScheme)
 		for id, securityScheme := range m {
-			v, err := FromV3SecurityScheme(doc3, securityScheme)
+			v, err := FromV3SecurityScheme(securityScheme)
 			if err != nil {
 				return nil, err
 			}
@@ -876,16 +875,10 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	if schema.Value != nil {
 		if schema.Value.Type.Is("string") && schema.Value.Format == "binary" {
 			paramType := &openapi3.Types{"file"}
-			required := false
 
-			value, _ := schema.Value.Extensions["x-formData-name"]
+			value := schema.Value.Extensions["x-formData-name"]
 			originalName, _ := value.(string)
-			for _, prop := range schema.Value.Required {
-				if originalName == prop {
-					required = true
-					break
-				}
-			}
+			required := slices.Contains(schema.Value.Required, originalName)
 			return nil, &openapi2.Parameter{
 				In:           "formData",
 				Name:         originalName,
@@ -1037,13 +1030,7 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 		if val.Format == "binary" {
 			typ = &openapi3.Types{"file"}
 		}
-		required := false
-		for _, name := range val.Required {
-			if name == propName {
-				required = true
-				break
-			}
-		}
+		required := slices.Contains(val.Required, propName)
 
 		var v2Items *openapi2.SchemaRef
 		if val.Items != nil {
@@ -1259,7 +1246,7 @@ func FromV3Headers(defs openapi3.Headers, components *openapi3.Components) (map[
 	return headers, nil
 }
 
-func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {
+func FromV3SecurityScheme(ref *openapi3.SecuritySchemeRef) (*openapi2.SecurityScheme, error) {
 	securityScheme := ref.Value
 	if securityScheme == nil {
 		return nil, nil
@@ -1316,9 +1303,7 @@ func FromV3SecurityScheme(doc3 *openapi3.T, ref *openapi3.SecuritySchemeRef) (*o
 			}
 
 			result.Scopes = make(map[string]string, len(flow.Scopes))
-			for scope, desc := range flow.Scopes {
-				result.Scopes[scope] = desc
-			}
+			maps.Copy(result.Scopes, flow.Scopes)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported security scheme type %q", securityScheme.Type)
