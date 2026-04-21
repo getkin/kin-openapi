@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"slices"
 	"strings"
 )
 
@@ -213,12 +212,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 		return errors.New("server has undeclared variables")
 	}
 
-	variables := make([]string, 0, len(server.Variables))
-	for name := range server.Variables {
-		variables = append(variables, name)
-	}
-	slices.Sort(variables)
-	for _, name := range variables {
+	for _, name := range componentNames(server.Variables) {
 		v := server.Variables[name]
 		if !strings.Contains(server.URL, "{"+name+"}") {
 			return errors.New("server has undeclared variables")

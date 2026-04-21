@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"slices"
 )
 
 // PathItem is specified by OpenAPI/Swagger standard version 3.
@@ -208,12 +207,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 
 	operations := pathItem.Operations()
 
-	methods := make([]string, 0, len(operations))
-	for method := range operations {
-		methods = append(methods, method)
-	}
-	slices.Sort(methods)
-	for _, method := range methods {
+	for _, method := range componentNames(operations) {
 		operation := operations[method]
 		if err := operation.Validate(ctx); err != nil {
 			return fmt.Errorf("invalid operation %s: %v", method, err)

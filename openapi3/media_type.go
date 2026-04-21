@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -137,12 +136,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 			}
 
 			if examples := mediaType.Examples; examples != nil {
-				names := make([]string, 0, len(examples))
-				for name := range examples {
-					names = append(names, name)
-				}
-				slices.Sort(names)
-				for _, k := range names {
+				for _, k := range componentNames(examples) {
 					v := examples[k]
 					if err := v.Validate(ctx); err != nil {
 						return fmt.Errorf("example %s: %w", k, err)

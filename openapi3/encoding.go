@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
 )
 
 // Encoding is specified by OpenAPI/Swagger 3.0 standard.
@@ -126,12 +125,7 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 		return nil
 	}
 
-	headers := make([]string, 0, len(encoding.Headers))
-	for k := range encoding.Headers {
-		headers = append(headers, k)
-	}
-	slices.Sort(headers)
-	for _, k := range headers {
+	for _, k := range componentNames(encoding.Headers) {
 		v := encoding.Headers[k]
 		if err := ValidateIdentifier(k); err != nil {
 			return nil

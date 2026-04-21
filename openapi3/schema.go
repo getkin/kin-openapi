@@ -9,7 +9,6 @@ import (
 	"math"
 	"math/big"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1046,12 +1045,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 
-	properties := make([]string, 0, len(schema.Properties))
-	for name := range schema.Properties {
-		properties = append(properties, name)
-	}
-	slices.Sort(properties)
-	for _, name := range properties {
+	for _, name := range componentNames(schema.Properties) {
 		ref := schema.Properties[name]
 		v := ref.Value
 		if v == nil {
@@ -1930,12 +1924,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	var me MultiError
 
 	if settings.asreq || settings.asrep {
-		properties := make([]string, 0, len(schema.Properties))
-		for propName := range schema.Properties {
-			properties = append(properties, propName)
-		}
-		slices.Sort(properties)
-		for _, propName := range properties {
+		for _, propName := range componentNames(schema.Properties) {
 			propSchema := schema.Properties[propName]
 			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
 			repWO := settings.asrep && propSchema.Value.WriteOnly && !settings.writeOnlyValidationDisabled
@@ -2002,12 +1991,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		additionalProperties = ref.Value
 	}
-	keys := make([]string, 0, len(value))
-	for k := range value {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-	for _, k := range keys {
+	for _, k := range componentNames(value) {
 		v := value[k]
 		if properties != nil {
 			propertyRef := properties[k]
