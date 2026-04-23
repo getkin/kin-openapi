@@ -1348,12 +1348,11 @@ func compareParameters(a, b *openapi2.Parameter) int {
 	return cmp.Compare(a.Ref, b.Ref)
 }
 
-// boolPtr returns a pointer to a bool, or nil if the value is false (to avoid storing empty values)
 func boolPtr(b bool) *bool {
-	if !b {
-		return nil
+	if b {
+		return new(b)
 	}
-	return &b
+	return nil
 }
 
 // exclusiveBoundToBool converts an ExclusiveBound to a bool for OpenAPI 2.0 compatibility

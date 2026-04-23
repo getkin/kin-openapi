@@ -291,7 +291,7 @@ webhooks:
 						Responses: openapi3.NewResponses(
 							openapi3.WithStatus(200, &openapi3.ResponseRef{
 								Value: &openapi3.Response{
-									Description: openapi3.Ptr("OK"),
+									Description: new("OK"),
 								},
 							}),
 						),
