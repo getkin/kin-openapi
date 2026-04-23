@@ -74,7 +74,7 @@ func TestIssue735(t *testing.T) {
 		},
 		{
 			name:   "multiple of",
-			schema: &Schema{MultipleOf: Ptr(5.0)},
+			schema: &Schema{MultipleOf: new(5.0)},
 			value:  42,
 		},
 		{
@@ -142,7 +142,7 @@ func TestIssue735(t *testing.T) {
 		{
 			name: "additional properties false",
 			schema: &Schema{AdditionalProperties: AdditionalProperties{
-				Has: Ptr(false),
+				Has: new(false),
 			}},
 			value:            map[string]any{"foo": 42},
 			extraNotContains: []any{42},
@@ -188,40 +188,40 @@ func TestIssue735(t *testing.T) {
 		{
 			name: "one of (matches more then one)",
 			schema: NewOneOfSchema(
-				&Schema{MultipleOf: Ptr(6.0)},
-				&Schema{MultipleOf: Ptr(7.0)},
+				&Schema{MultipleOf: new(6.0)},
+				&Schema{MultipleOf: new(7.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "one of (no matches)",
 			schema: NewOneOfSchema(
-				&Schema{MultipleOf: Ptr(5.0)},
-				&Schema{MultipleOf: Ptr(10.0)},
+				&Schema{MultipleOf: new(5.0)},
+				&Schema{MultipleOf: new(10.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "any of",
 			schema: NewAnyOfSchema(
-				&Schema{MultipleOf: Ptr(5.0)},
-				&Schema{MultipleOf: Ptr(10.0)},
+				&Schema{MultipleOf: new(5.0)},
+				&Schema{MultipleOf: new(10.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "all of (match some)",
 			schema: NewAllOfSchema(
-				&Schema{MultipleOf: Ptr(6.0)},
-				&Schema{MultipleOf: Ptr(5.0)},
+				&Schema{MultipleOf: new(6.0)},
+				&Schema{MultipleOf: new(5.0)},
 			),
 			value: 42,
 		},
 		{
 			name: "all of (no match)",
 			schema: NewAllOfSchema(
-				&Schema{MultipleOf: Ptr(10.0)},
-				&Schema{MultipleOf: Ptr(5.0)},
+				&Schema{MultipleOf: new(10.0)},
+				&Schema{MultipleOf: new(5.0)},
 			),
 			value: 42,
 		},

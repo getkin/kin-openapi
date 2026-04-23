@@ -52,7 +52,7 @@ func encoding() *Encoding {
 			},
 		},
 		Style:         "form",
-		Explode:       Ptr(true),
+		Explode:       new(true),
 		AllowReserved: true,
 	}
 }
@@ -74,17 +74,17 @@ func TestEncodingSerializationMethod(t *testing.T) {
 		},
 		{
 			name: "encoding with explode",
-			enc:  &Encoding{Explode: Ptr(true)},
+			enc:  &Encoding{Explode: new(true)},
 			want: &SerializationMethod{Style: SerializationForm, Explode: true},
 		},
 		{
 			name: "encoding with no explode",
-			enc:  &Encoding{Explode: Ptr(false)},
+			enc:  &Encoding{Explode: new(false)},
 			want: &SerializationMethod{Style: SerializationForm, Explode: false},
 		},
 		{
 			name: "encoding with style and explode ",
-			enc:  &Encoding{Style: SerializationSpaceDelimited, Explode: Ptr(false)},
+			enc:  &Encoding{Style: SerializationSpaceDelimited, Explode: new(false)},
 			want: &SerializationMethod{Style: SerializationSpaceDelimited, Explode: false},
 		},
 	}

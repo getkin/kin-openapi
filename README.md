@@ -317,6 +317,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `openapi3.Schema.ExclusiveMin` and `openapi3.Schema.ExclusiveMax` fields changed from `bool` to `ExclusiveBound` (a union type holding `*bool` for OpenAPI 3.0 or `*float64` for OpenAPI 3.1).
 * `openapi3.Schema.PrefixItems` field changed from `[]*SchemaRef` to `SchemaRefs`.
 * `openapi3.Schema.UnevaluatedItems` and `openapi3.Schema.UnevaluatedProperties` fields changed from `*SchemaRef` to `BoolSchema` (a union type accepting either a boolean or a schema object).
+* Removed `openapi3.*Ptr(..)` funcs: they all can be replaced with `new(..)` since Go 1.26
 
 ### v0.135.0
 * `openapi3.MediaType.Encoding` field type changed from `map[string]*Encoding` to `Encodings`
