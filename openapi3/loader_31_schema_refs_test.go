@@ -1,8 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,27 +22,80 @@ import (
 //	  $ref: "#/components/schemas/PingStatus"
 //
 // should result in a SchemaRef whose Value has Deprecated==true.
-func TestOAS31_RefSiblingKeyword(t *testing.T) {
-	loader := NewLoader()
-	doc, err := loader.LoadFromFile("testdata/schema31-ref-siblings.yml")
-	require.NoError(t, err)
+func TestSchemaRefSiblingKeyword(t *testing.T) {
+	spec := `
+openapi: "3.1.0"
+info:
+  title: Ref Sibling Test
+  version: "1.0"
+paths:
+  /ping:
+    get:
+      operationId: getPing
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingResponse"
+components:
+  schemas:
+    PingStatus:
+      type: string
+      enum: [ok, error]
+    PingResponse:
+      type: object
+      required: [message, status]
+      properties:
+        message:
+          type: string
+        status:
+          deprecated: true  # sibling keyword alongside $ref — valid in OAS 3.1, ignored in 3.0
+          $ref: "#/components/schemas/PingStatus"
+`
 
-	pingResp := doc.Components.Schemas["PingResponse"].Value
-	require.NotNil(t, pingResp)
+	type testcase struct {
+		oas             string
+		siblings, valid bool
+	}
 
-	statusRef := pingResp.Properties["status"]
-	require.NotNil(t, statusRef)
+	for _, tc := range []testcase{
+		{oas: "3.1", siblings: true, valid: true}, {oas: "3.0"}, {oas: "3.0", valid: true},
+	} {
+		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
+			t.Parallel()
+			loader := openapi3.NewLoader()
 
-	// The $ref should still be resolved.
-	require.NotNil(t, statusRef.Value, "$ref to PingStatus should be resolved")
-	require.Equal(t, "string", statusRef.Value.Type.Slice()[0], "$ref target type should be string")
+			doc, err := loader.LoadFromData([]byte(strings.ReplaceAll(spec, "3.1.0", tc.oas)))
+			require.NoError(t, err)
 
-	// The sibling deprecated:true must survive — not be discarded because $ref is present.
-	require.True(t, statusRef.Value.Deprecated, "deprecated:true sibling to $ref must be honoured in OAS 3.1")
+			statusRef := doc.Components.Schemas["PingResponse"].Value.Properties["status"]
+			require.NotNil(t, statusRef)
+
+			// The $ref should still be resolved.
+			require.Equal(t, statusRef.Ref, "#/components/schemas/PingStatus")
+			require.NotNil(t, statusRef.Value, "$ref to PingStatus should be resolved")
+			require.Equal(t, "string", statusRef.Value.Type.Slice()[0], "$ref target type should be string")
+
+			require.Equal(t, tc.siblings, statusRef.Value.Deprecated, "deprecated:true sibling to $ref must be honoured in OAS 3.1")
+
+			var valopts []openapi3.ValidationOption
+			if tc.valid && !tc.siblings { // For this test case let's try the option that allows siblings for 3.0
+				valopts = append(valopts, openapi3.AllowExtraSiblingFields("deprecated"))
+			}
+			err = doc.Validate(loader.Context, valopts...)
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err, "Siblings to $ref is not valid OpenAPIv3.0 (by default)")
+			}
+		})
+	}
 }
 
 func TestResolveSchemaRefsIn31Fields(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/schema31refs.yml")
 	require.NoError(t, err)
 

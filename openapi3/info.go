@@ -15,7 +15,7 @@ type Info struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Title          string   `json:"title" yaml:"title"`                         // Required
-	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"` // OpenAPI 3.1
+	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"` // OpenAPI >=3.1
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
 	Contact        *Contact `json:"contact,omitempty" yaml:"contact,omitempty"`
@@ -40,7 +40,6 @@ func (info *Info) MarshalYAML() (any, error) {
 	m := make(map[string]any, 7+len(info.Extensions))
 	maps.Copy(m, info.Extensions)
 	m["title"] = info.Title
-	// OpenAPI 3.1 field
 	if x := info.Summary; x != "" {
 		m["summary"] = x
 	}
@@ -69,7 +68,7 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "title")
-	delete(x.Extensions, "summary") // OpenAPI 3.1
+	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "termsOfService")
 	delete(x.Extensions, "contact")
@@ -85,6 +84,10 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 // Validate returns an error if Info does not comply with the OpenAPI spec.
 func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+
+	if info.Summary != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
+		return errFieldFor31Plus("summary")
+	}
 
 	if contact := info.Contact; contact != nil {
 		if err := contact.Validate(ctx); err != nil {

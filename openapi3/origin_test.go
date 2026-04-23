@@ -1,14 +1,17 @@
-package openapi3
+package openapi3_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
+const originKey = "__origin__"
+
 func TestOrigin_Info(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -18,7 +21,7 @@ func TestOrigin_Info(t *testing.T) {
 
 	require.NotNil(t, doc.Info.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   2,
 			Column: 1,
@@ -27,7 +30,7 @@ func TestOrigin_Info(t *testing.T) {
 		doc.Info.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   3,
 			Column: 3,
@@ -36,7 +39,7 @@ func TestOrigin_Info(t *testing.T) {
 		doc.Info.Origin.Fields["title"])
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   4,
 			Column: 3,
@@ -46,7 +49,7 @@ func TestOrigin_Info(t *testing.T) {
 }
 
 func TestOrigin_Paths(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -56,7 +59,7 @@ func TestOrigin_Paths(t *testing.T) {
 
 	require.NotNil(t, doc.Paths.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   5,
 			Column: 1,
@@ -68,7 +71,7 @@ func TestOrigin_Paths(t *testing.T) {
 
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   13,
 			Column: 3,
@@ -78,7 +81,7 @@ func TestOrigin_Paths(t *testing.T) {
 
 	require.NotNil(t, base.Get.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   14,
 			Column: 5,
@@ -88,7 +91,7 @@ func TestOrigin_Paths(t *testing.T) {
 }
 
 func TestOrigin_RequestBody(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -99,7 +102,7 @@ func TestOrigin_RequestBody(t *testing.T) {
 	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/request_body.yaml",
 			Line:   8,
 			Column: 7,
@@ -109,7 +112,7 @@ func TestOrigin_RequestBody(t *testing.T) {
 
 	require.NotNil(t, base.Content["application/json"].Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/request_body.yaml",
 			Line:   10,
 			Column: 11,
@@ -119,7 +122,7 @@ func TestOrigin_RequestBody(t *testing.T) {
 }
 
 func TestOrigin_Responses(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -130,7 +133,7 @@ func TestOrigin_Responses(t *testing.T) {
 	base := doc.Paths.Find("/partner-api/test/another-method").Get.Responses
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   17,
 			Column: 7,
@@ -142,7 +145,7 @@ func TestOrigin_Responses(t *testing.T) {
 	// ResponseRef.Origin is populated with the same data as Value.Origin
 	require.NotNil(t, base.Value("200").Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   18,
 			Column: 9,
@@ -150,7 +153,7 @@ func TestOrigin_Responses(t *testing.T) {
 		},
 		base.Value("200").Origin.Key)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   18,
 			Column: 9,
@@ -159,7 +162,7 @@ func TestOrigin_Responses(t *testing.T) {
 		base.Value("200").Value.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/simple.yaml",
 			Line:   19,
 			Column: 11,
@@ -169,7 +172,7 @@ func TestOrigin_Responses(t *testing.T) {
 }
 
 func TestOrigin_Parameters(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -180,7 +183,7 @@ func TestOrigin_Parameters(t *testing.T) {
 	base := doc.Paths.Find("/api/test").Get.Parameters[0].Value
 	require.NotNil(t, base)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/parameters.yaml",
 			Line:   9,
 			Column: 11,
@@ -189,7 +192,7 @@ func TestOrigin_Parameters(t *testing.T) {
 		base.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/parameters.yaml",
 			Line:   10,
 			Column: 11,
@@ -198,7 +201,7 @@ func TestOrigin_Parameters(t *testing.T) {
 		base.Origin.Fields["in"])
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/parameters.yaml",
 			Line:   9,
 			Column: 11,
@@ -208,7 +211,7 @@ func TestOrigin_Parameters(t *testing.T) {
 }
 
 func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -221,7 +224,7 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 
 	require.NotNil(t, base.Schema.Value.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/additional_properties.yaml",
 			Line:   14,
 			Column: 17,
@@ -230,7 +233,7 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 		base.Schema.Value.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/additional_properties.yaml",
 			Line:   15,
 			Column: 19,
@@ -240,7 +243,7 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 }
 
 func TestOrigin_ExternalDocs(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -252,7 +255,7 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 	require.NotNil(t, base.Origin)
 
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/external_docs.yaml",
 			Line:   13,
 			Column: 1,
@@ -261,7 +264,7 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 		base.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/external_docs.yaml",
 			Line:   14,
 			Column: 3,
@@ -270,7 +273,7 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 		base.Origin.Fields["description"])
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/external_docs.yaml",
 			Line:   15,
 			Column: 3,
@@ -280,7 +283,7 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 }
 
 func TestOrigin_Security(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -292,7 +295,7 @@ func TestOrigin_Security(t *testing.T) {
 	require.NotNil(t, base)
 
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/security.yaml",
 			Line:   29,
 			Column: 5,
@@ -301,7 +304,7 @@ func TestOrigin_Security(t *testing.T) {
 		base.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/security.yaml",
 			Line:   30,
 			Column: 7,
@@ -310,7 +313,7 @@ func TestOrigin_Security(t *testing.T) {
 		base.Origin.Fields["type"])
 
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/security.yaml",
 			Line:   31,
 			Column: 7,
@@ -319,7 +322,7 @@ func TestOrigin_Security(t *testing.T) {
 		base.Flows.Origin.Key)
 
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/security.yaml",
 			Line:   32,
 			Column: 9,
@@ -328,7 +331,7 @@ func TestOrigin_Security(t *testing.T) {
 		base.Flows.Implicit.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/security.yaml",
 			Line:   33,
 			Column: 11,
@@ -338,7 +341,7 @@ func TestOrigin_Security(t *testing.T) {
 }
 
 func TestOrigin_Example(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -349,7 +352,7 @@ func TestOrigin_Example(t *testing.T) {
 	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Examples["bar"].Value
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/example.yaml",
 			Line:   14,
 			Column: 15,
@@ -358,7 +361,7 @@ func TestOrigin_Example(t *testing.T) {
 		base.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/example.yaml",
 			Line:   15,
 			Column: 17,
@@ -373,7 +376,7 @@ func TestOrigin_Example(t *testing.T) {
 }
 
 func TestOrigin_XML(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -384,7 +387,7 @@ func TestOrigin_XML(t *testing.T) {
 	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["name"].Value.XML
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/xml.yaml",
 			Line:   21,
 			Column: 19,
@@ -393,7 +396,7 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/xml.yaml",
 			Line:   22,
 			Column: 21,
@@ -402,7 +405,7 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Fields["namespace"])
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/xml.yaml",
 			Line:   23,
 			Column: 21,
@@ -417,7 +420,7 @@ func TestOrigin_XML(t *testing.T) {
 // These fields have no dedicated UnmarshalJSON; extractOrigins strips
 // __origin__ before JSON marshaling so it never reaches these values.
 func TestOrigin_AnyFieldsStripped(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromFile("testdata/origin/any_fields.yaml")
 	require.NoError(t, err)
@@ -456,7 +459,7 @@ func TestOrigin_AnyFieldsStripped(t *testing.T) {
 }
 
 func TestOrigin_ExampleWithArrayValue(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromFile("testdata/origin/example_with_array.yaml")
 	require.NoError(t, err)
@@ -490,7 +493,7 @@ components:
       examples:
         - {y: value}
 `
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromData([]byte(data))
@@ -530,7 +533,7 @@ components:
           type: string
 `
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	_, err := loader.LoadFromData([]byte(data))
@@ -545,7 +548,7 @@ components:
 // from the yaml3 decoder but it was never stripped, causing spurious diffs
 // between specs loaded from different file paths.
 func TestOrigin_ExtensionValuesStripped(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/extensions.yaml")
@@ -571,7 +574,7 @@ func TestOrigin_ExtensionValuesStripped(t *testing.T) {
 }
 
 func TestOrigin_WithExternalRef(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 
@@ -583,7 +586,7 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 	base := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Schema.Value.Properties["name"].Value
 	require.NotNil(t, base.XML.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/external-schema.yaml",
 			Line:   2,
 			Column: 1,
@@ -592,7 +595,7 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 		base.XML.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/external-schema.yaml",
 			Line:   3,
 			Column: 3,
@@ -601,7 +604,7 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 		base.XML.Origin.Fields["namespace"])
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/external-schema.yaml",
 			Line:   4,
 			Column: 3,
@@ -616,7 +619,7 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 // root mapping of a document was skipped. This test covers the fix in yaml3's
 // document() decoder that injects __origin__ for the root mapping too.
 func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 	loader.Context = context.Background()
@@ -630,7 +633,7 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 	// Root schema Origin must now be set (fixed in yaml3 document() injection)
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/external-schema.yaml",
 			Line:   1,
 			Column: 1,
@@ -639,7 +642,7 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 		base.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/external-schema.yaml",
 			Line:   1,
 			Column: 1,
@@ -653,7 +656,7 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 // The if k == originKey blocks in their UnmarshalJSON were removed; this
 // confirms extractOrigins strips __origin__ before it reaches those iterators.
 func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
 	require.NoError(t, err)
@@ -667,7 +670,7 @@ func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
 }
 
 func TestOrigin_NoSpuriousOriginsInComponents(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/components.yaml")
@@ -690,7 +693,7 @@ func TestOrigin_NoSpuriousOriginsInComponents(t *testing.T) {
 // These locations are used by NewSourceFromSequenceItem to pinpoint
 // breaking changes to individual required field names.
 func TestOrigin_RequiredSequence(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/required_sequence.yaml")
@@ -707,14 +710,14 @@ func TestOrigin_RequiredSequence(t *testing.T) {
 	require.True(t, ok, "Origin.Sequences must contain 'required'")
 	require.Len(t, seqLocs, 2)
 
-	require.Equal(t, Location{
+	require.Equal(t, openapi3.Location{
 		File:   "testdata/origin/required_sequence.yaml",
 		Line:   14,
 		Column: 19,
 		Name:   "name",
 	}, seqLocs[0])
 
-	require.Equal(t, Location{
+	require.Equal(t, openapi3.Location{
 		File:   "testdata/origin/required_sequence.yaml",
 		Line:   15,
 		Column: 19,
@@ -726,7 +729,7 @@ func TestOrigin_RequiredSequence(t *testing.T) {
 // without error and carries origin metadata from the anchor definition.
 // Multiple aliases of the same anchor must not produce duplicate __origin__ keys.
 func TestOrigin_YAMLAlias(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/alias.yaml")
@@ -737,7 +740,7 @@ func TestOrigin_YAMLAlias(t *testing.T) {
 	alias2 := doc.Components.Schemas["Alias2"].Value
 
 	// All three point to the same anchor node, so origin reflects the anchor location.
-	anchorLoc := &Location{
+	anchorLoc := &openapi3.Location{
 		File:   "testdata/origin/alias.yaml",
 		Line:   7,
 		Column: 5,
@@ -750,7 +753,7 @@ func TestOrigin_YAMLAlias(t *testing.T) {
 
 // TestOrigin_Headers verifies that response header origin is tracked correctly.
 func TestOrigin_Headers(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/headers.yaml")
@@ -759,7 +762,7 @@ func TestOrigin_Headers(t *testing.T) {
 	headers := doc.Paths.Find("/items").Get.Responses.Value("200").Value.Headers
 
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/headers.yaml",
 			Line:   12,
 			Column: 13,
@@ -768,7 +771,7 @@ func TestOrigin_Headers(t *testing.T) {
 		headers["X-Rate-Limit"].Value.Origin.Key)
 
 	require.Equal(t,
-		Location{
+		openapi3.Location{
 			File:   "testdata/origin/headers.yaml",
 			Line:   13,
 			Column: 15,
@@ -777,7 +780,7 @@ func TestOrigin_Headers(t *testing.T) {
 		headers["X-Rate-Limit"].Value.Origin.Fields["description"])
 
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/headers.yaml",
 			Line:   16,
 			Column: 13,
@@ -791,7 +794,7 @@ func TestOrigin_Headers(t *testing.T) {
 // strings ("200":). Bare integers produce map[any]any in the
 // YAML decoder, which required a dedicated fix in extractOrigins.
 func TestOrigin_IntegerStatusCode(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/parameters.yaml")
@@ -800,7 +803,7 @@ func TestOrigin_IntegerStatusCode(t *testing.T) {
 	resp200 := doc.Paths.Find("/api/test").Get.Responses.Value("200").Value
 	require.NotNil(t, resp200.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/parameters.yaml",
 			Line:   14,
 			Column: 9,
@@ -811,7 +814,7 @@ func TestOrigin_IntegerStatusCode(t *testing.T) {
 	resp201 := doc.Paths.Find("/api/test").Post.Responses.Value("201").Value
 	require.NotNil(t, resp201.Origin)
 	require.Equal(t,
-		&Location{
+		&openapi3.Location{
 			File:   "testdata/origin/parameters.yaml",
 			Line:   18,
 			Column: 9,
@@ -823,7 +826,7 @@ func TestOrigin_IntegerStatusCode(t *testing.T) {
 // TestOrigin_Disabled verifies that all Origin fields are nil when
 // IncludeOrigin is false (the default), ensuring no overhead in the common case.
 func TestOrigin_Disabled(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	// IncludeOrigin defaults to false
 
 	doc, err := loader.LoadFromFile("testdata/origin/required_sequence.yaml")
@@ -842,7 +845,7 @@ func TestOrigin_Disabled(t *testing.T) {
 // mapping-valued fields were missing from the origin and source
 // location lookups returned nil.
 func TestOrigin_MappingFields(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
 	doc, err := loader.LoadFromFile("testdata/origin/mapping_fields.yaml")
@@ -856,7 +859,7 @@ func TestOrigin_MappingFields(t *testing.T) {
 
 	// dependentRequired is a map[string][]string — mapping-valued
 	require.Contains(t, schema.Origin.Fields, "dependentRequired")
-	require.Equal(t, Location{
+	require.Equal(t, openapi3.Location{
 		File:   file,
 		Line:   18,
 		Column: 21,
@@ -865,7 +868,7 @@ func TestOrigin_MappingFields(t *testing.T) {
 
 	// dependentSchemas is a Schemas map — mapping-valued
 	require.Contains(t, schema.Origin.Fields, "dependentSchemas")
-	require.Equal(t, Location{
+	require.Equal(t, openapi3.Location{
 		File:   file,
 		Line:   22,
 		Column: 21,
@@ -874,7 +877,7 @@ func TestOrigin_MappingFields(t *testing.T) {
 
 	// patternProperties is a Schemas map — mapping-valued
 	require.Contains(t, schema.Origin.Fields, "patternProperties")
-	require.Equal(t, Location{
+	require.Equal(t, openapi3.Location{
 		File:   file,
 		Line:   25,
 		Column: 21,

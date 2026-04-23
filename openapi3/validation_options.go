@@ -13,9 +13,10 @@ type ValidationOptions struct {
 	schemaFormatValidationEnabled                    bool
 	schemaPatternValidationDisabled                  bool
 	schemaExtensionsInRefProhibited                  bool
+	jsonSchema2020ValidationEnabled                  bool
+	isOpenAPI31OrLater                               bool
 	regexCompilerFunc                                RegexCompilerFunc
 	extraSiblingFieldsAllowed                        map[string]struct{}
-	jsonSchema2020ValidationEnabled                  bool // Enables JSON Schema 2020-12 compliant validation for OpenAPI 3.1
 }
 
 type validationOptionsKey struct{}
@@ -32,11 +33,11 @@ func AllowExtraSiblingFields(fields ...string) ValidationOption {
 	}
 }
 
-// EnableJSONSchema2020Validation enables JSON Schema 2020-12 compliant validation for OpenAPI 3.1 documents.
-// This option should be used with doc.Validate().
-func EnableJSONSchema2020Validation() ValidationOption {
+// IsOpenAPI31OrLater enables "JSON Schema Draft 2020-12"-compliant validation (for OpenAPI 3.1 documents).
+func IsOpenAPI31OrLater() ValidationOption {
 	return func(options *ValidationOptions) {
-		options.jsonSchema2020ValidationEnabled = true
+		options.isOpenAPI31OrLater = true              // To distinguish from v3.0
+		options.jsonSchema2020ValidationEnabled = true // TODO: use even for v3.0
 	}
 }
 

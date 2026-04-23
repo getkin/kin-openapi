@@ -80,6 +80,7 @@ func (s SchemaRefs) JSONLookup(token string) (any, error) {
 
 // Schema is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schema-object
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -100,10 +101,8 @@ type Schema struct {
 	// Array-related, here for struct compactness
 	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
-	// In OpenAPI 3.0: boolean modifier for minimum/maximum
-	// In OpenAPI 3.1: number representing the actual exclusive bound
-	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"` // Number for v3.1+ otherwise boolean
+	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"` // Number for v3.1+ otherwise boolean
 	// Properties
 	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
 	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
@@ -135,42 +134,36 @@ type Schema struct {
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 
-	// OpenAPI 3.1 / JSON Schema 2020-12 fields
-	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`
-	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`
-	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
-	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
-	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
-	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`                                 // OpenAPI >=3.1
+	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`                           // OpenAPI >=3.1
+	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`                     // OpenAPI >=3.1
+	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`                           // OpenAPI >=3.1
+	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`                     // OpenAPI >=3.1
+	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`                     // OpenAPI >=3.1
+	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`         // OpenAPI >=3.1
+	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`           // OpenAPI >=3.1
+	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`                 // OpenAPI >=3.1
+	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`           // OpenAPI >=3.1
+	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 conditional keywords
-	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`
-	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"`
-	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"`
+	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`     // OpenAPI >=3.1
+	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"` // OpenAPI >=3.1
+	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 dependent requirements
-	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 core keywords
-	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`
-	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`
-	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
+	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
+	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 identity/referencing keywords
-	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`
-	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
-	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
-	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
+	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`                       // OpenAPI >=3.1
+	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`               // OpenAPI >=3.1
+	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`       // OpenAPI >=3.1
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"` // OpenAPI >=3.1
 
-	// JSON Schema 2020-12 content vocabulary
-	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
-	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
-	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
+	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"` // OpenAPI >=3.1
+	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`   // OpenAPI >=3.1
+	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`       // OpenAPI >=3.1
 }
 
 // Types represents the type(s) of a schema.
@@ -494,7 +487,7 @@ func (schema Schema) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML returns the YAML encoding of Schema.
 func (schema Schema) MarshalYAML() (any, error) {
-	m := make(map[string]any, 36+len(schema.Extensions))
+	m := make(map[string]any, 61+len(schema.Extensions))
 	maps.Copy(m, schema.Extensions)
 
 	if x := schema.OneOf; len(x) != 0 {
@@ -539,15 +532,11 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m["uniqueItems"] = x
 	}
 	// Number-related
-	if schema.ExclusiveMin.IsSet() {
-		if v, _ := schema.ExclusiveMin.MarshalYAML(); v != nil {
-			m["exclusiveMinimum"] = v
-		}
+	if x := schema.ExclusiveMin; x.IsSet() {
+		m["exclusiveMinimum"] = x
 	}
-	if schema.ExclusiveMax.IsSet() {
-		if v, _ := schema.ExclusiveMax.MarshalYAML(); v != nil {
-			m["exclusiveMaximum"] = v
-		}
+	if x := schema.ExclusiveMax; x.IsSet() {
+		m["exclusiveMaximum"] = x
 	}
 	// Properties
 	if x := schema.Nullable; x {
@@ -1434,6 +1423,146 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		return stack, errors.New("a property MUST NOT be marked as both readOnly and writeOnly being true")
 	}
 
+	// Reject fields that only exist in OAS 3.1 / JSON Schema 2020-12 when the
+	// document is OAS 3.0. Fields explicitly allowed via AllowExtraSiblingFields
+	// are skipped (opt-in escape hatch for 3.0 docs that reference external
+	// JSON Schema documents). Once 3.0 moves to its own schema validator this
+	// block becomes a no-op.
+	if !validationOpts.isOpenAPI31OrLater {
+		allowed := validationOpts.extraSiblingFieldsAllowed
+		reject := func(field string) error {
+			if _, ok := allowed[field]; ok {
+				return nil
+			}
+			return errFieldFor31Plus(field)
+		}
+		if schema.Const != nil {
+			if err := reject("const"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.Examples) != 0 {
+			if err := reject("examples"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.PrefixItems) != 0 {
+			if err := reject("prefixItems"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Contains != nil {
+			if err := reject("contains"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.MinContains != nil {
+			if err := reject("minContains"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.MaxContains != nil {
+			if err := reject("maxContains"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.PatternProperties) != 0 {
+			if err := reject("patternProperties"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.DependentSchemas) != 0 {
+			if err := reject("dependentSchemas"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.PropertyNames != nil {
+			if err := reject("propertyNames"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.UnevaluatedItems.Has != nil || schema.UnevaluatedItems.Schema != nil {
+			if err := reject("unevaluatedItems"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.UnevaluatedProperties.Has != nil || schema.UnevaluatedProperties.Schema != nil {
+			if err := reject("unevaluatedProperties"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.If != nil {
+			if err := reject("if"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Then != nil {
+			if err := reject("then"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Else != nil {
+			if err := reject("else"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.DependentRequired) != 0 {
+			if err := reject("dependentRequired"); err != nil {
+				return stack, err
+			}
+		}
+		if len(schema.Defs) != 0 {
+			if err := reject("$defs"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.SchemaDialect != "" {
+			if err := reject("$schema"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Comment != "" {
+			if err := reject("$comment"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.SchemaID != "" {
+			if err := reject("$id"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.Anchor != "" {
+			if err := reject("$anchor"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.DynamicRef != "" {
+			if err := reject("$dynamicRef"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.DynamicAnchor != "" {
+			if err := reject("$dynamicAnchor"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.ContentMediaType != "" {
+			if err := reject("contentMediaType"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.ContentEncoding != "" {
+			if err := reject("contentEncoding"); err != nil {
+				return stack, err
+			}
+		}
+		if schema.ContentSchema != nil {
+			if err := reject("contentSchema"); err != nil {
+				return stack, err
+			}
+		}
+	}
+
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
@@ -1577,6 +1706,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 
 	if ref := schema.Items; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1590,6 +1722,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 
 	for _, name := range componentNames(schema.Properties) {
 		ref := schema.Properties[name]
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1605,6 +1740,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		return stack, errors.New("additionalProperties are set to both boolean and schema")
 	}
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1618,6 +1756,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 
 	// OpenAPI 3.1 / JSON Schema 2020-12 sub-schemas
 	for _, ref := range schema.PrefixItems {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1629,6 +1770,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 	if ref := schema.Contains; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1641,6 +1785,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 	for _, name := range componentNames(schema.PatternProperties) {
 		ref := schema.PatternProperties[name]
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1653,6 +1800,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 	for _, name := range componentNames(schema.DependentSchemas) {
 		ref := schema.DependentSchemas[name]
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1665,6 +1815,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 	for _, name := range componentNames(schema.Defs) {
 		ref := schema.Defs[name]
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1676,6 +1829,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 	if ref := schema.PropertyNames; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1690,6 +1846,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		return stack, errors.New("unevaluatedItems is set to both boolean and schema")
 	}
 	if ref := schema.UnevaluatedItems.Schema; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1704,6 +1863,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		return stack, errors.New("unevaluatedProperties is set to both boolean and schema")
 	}
 	if ref := schema.UnevaluatedProperties.Schema; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1715,6 +1877,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 	if ref := schema.ContentSchema; ref != nil {
+		if err := ref.validateExtras(ctx); err != nil {
+			return stack, err
+		}
 		v := ref.Value
 		if v == nil {
 			return stack, foundUnresolvedRef(ref.Ref)
@@ -1733,11 +1898,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 
 	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
-		opts := []SchemaValidationOption{}
-		if validationOpts.jsonSchema2020ValidationEnabled {
-			opts = append(opts, EnableJSONSchema2020())
-		}
-		if err := schema.VisitJSON(v, opts...); err != nil {
+		if err := validateExampleValue(ctx, v, schema); err != nil {
 			return stack, fmt.Errorf("invalid default: %w", err)
 		}
 	}
@@ -1781,14 +1942,14 @@ func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool {
 	return schema.visitJSON(settings, value) == nil
 }
 
+// VisitJSON applies a Schema to the given data, considering opts.
+// To validate data against an OpenAPIv3.1+ schema, be sure to pass the EnableJSONSchema2020() option.
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error {
 	settings := newSchemaValidationSettings(opts...)
 
-	// Use JSON Schema 2020-12 validator if enabled
 	if settings.useJSONSchema2020 {
-		return schema.visitJSONWithJSONSchema(settings, value)
+		return schema.useJSONSchema2020(settings, value)
 	}
-
 	return schema.visitJSON(settings, value)
 }
 

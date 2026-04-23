@@ -112,9 +112,9 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &x.Value)
 }
 
-// Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
-func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
-	ctx = WithValidationOptions(ctx, opts...)
+// validateExtras returns an error if {{ $type.Name }}Ref has sibling fields
+// alongside $ref that are not allowed by the validation options.
+func (x *{{ $type.Name }}Ref) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
 	var extras []string
 
@@ -136,17 +136,27 @@ func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOp
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
+			// extras in the Extensions checked below
 		}
 	}
 
 	if len(extras) != 0 {
 {{- if eq $type.Name "Schema" }}
-		if !getValidationOptions(ctx).jsonSchema2020ValidationEnabled {
+		if !validationOpts.isOpenAPI31OrLater {
 			return fmt.Errorf("extra sibling fields: %+v", extras)
 		}
 {{- else }}
 		return fmt.Errorf("extra sibling fields: %+v", extras)
 {{- end }}
+	}
+	return nil
+}
+
+// Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
+func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+	if err := x.validateExtras(ctx); err != nil {
+		return err
 	}
 
 	if v := x.Value; v != nil {

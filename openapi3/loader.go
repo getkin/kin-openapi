@@ -270,14 +270,11 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		}
 	}
 
-	// Visit all webhooks (OpenAPI 3.1)
 	for _, name := range componentNames(doc.Webhooks) {
-		pathItem := doc.Webhooks[name]
-		if pathItem == nil {
-			continue
-		}
-		if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
-			return
+		if pathItem := doc.Webhooks[name]; pathItem != nil {
+			if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
+				return
+			}
 		}
 	}
 
@@ -958,7 +955,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		// they augment the referenced schema (e.g. deprecated:true alongside $ref).
 		// Only apply for OAS 3.1+ — in 3.0 $ref replaces its entire object and siblings
 		// are (validly) ignored.
-		if strings.HasPrefix(doc.OpenAPI, "3.1") && component.sibling != nil && component.Value != nil {
+		if doc.IsOpenAPI31OrLater() && component.sibling != nil && component.Value != nil {
 			// Work on a copy so we don't mutate a schema shared by other references.
 			schemaCopy := *component.Value
 			applySiblingSchemaFields(&schemaCopy, component.sibling, component.extra)
@@ -1360,22 +1357,128 @@ func unescapeRefString(ref string) string {
 func applySiblingSchemaFields(dst, sibling *Schema, presentFields []string) {
 	for _, field := range presentFields {
 		switch field {
-		case "deprecated":
-			dst.Deprecated = sibling.Deprecated
-		case "description":
-			dst.Description = sibling.Description
+		case "oneOf":
+			dst.OneOf = sibling.OneOf
+		case "anyOf":
+			dst.AnyOf = sibling.AnyOf
+		case "allOf":
+			dst.AllOf = sibling.AllOf
+		case "not":
+			dst.Not = sibling.Not
+		case "type":
+			dst.Type = sibling.Type
 		case "title":
 			dst.Title = sibling.Title
-		case "readOnly":
-			dst.ReadOnly = sibling.ReadOnly
-		case "writeOnly":
-			dst.WriteOnly = sibling.WriteOnly
+		case "format":
+			dst.Format = sibling.Format
+		case "description":
+			dst.Description = sibling.Description
+		case "enum":
+			dst.Enum = sibling.Enum
+		case "default":
+			dst.Default = sibling.Default
 		case "example":
 			dst.Example = sibling.Example
 		case "externalDocs":
 			dst.ExternalDocs = sibling.ExternalDocs
-		case "default":
-			dst.Default = sibling.Default
+		case "uniqueItems":
+			dst.UniqueItems = sibling.UniqueItems
+		case "exclusiveMinimum":
+			dst.ExclusiveMin = sibling.ExclusiveMin
+		case "exclusiveMaximum":
+			dst.ExclusiveMax = sibling.ExclusiveMax
+		case "nullable":
+			dst.Nullable = sibling.Nullable
+		case "readOnly":
+			dst.ReadOnly = sibling.ReadOnly
+		case "writeOnly":
+			dst.WriteOnly = sibling.WriteOnly
+		case "allowEmptyValue":
+			dst.AllowEmptyValue = sibling.AllowEmptyValue
+		case "deprecated":
+			dst.Deprecated = sibling.Deprecated
+		case "xml":
+			dst.XML = sibling.XML
+		case "minimum":
+			dst.Min = sibling.Min
+		case "maximum":
+			dst.Max = sibling.Max
+		case "multipleOf":
+			dst.MultipleOf = sibling.MultipleOf
+		case "minLength":
+			dst.MinLength = sibling.MinLength
+		case "maxLength":
+			dst.MaxLength = sibling.MaxLength
+		case "pattern":
+			dst.Pattern = sibling.Pattern
+		case "minItems":
+			dst.MinItems = sibling.MinItems
+		case "maxItems":
+			dst.MaxItems = sibling.MaxItems
+		case "items":
+			dst.Items = sibling.Items
+		case "required":
+			dst.Required = sibling.Required
+		case "properties":
+			dst.Properties = sibling.Properties
+		case "minProperties":
+			dst.MinProps = sibling.MinProps
+		case "maxProperties":
+			dst.MaxProps = sibling.MaxProps
+		case "additionalProperties":
+			dst.AdditionalProperties = sibling.AdditionalProperties
+		case "discriminator":
+			dst.Discriminator = sibling.Discriminator
+		case "const":
+			dst.Const = sibling.Const
+		case "examples":
+			dst.Examples = sibling.Examples
+		case "prefixItems":
+			dst.PrefixItems = sibling.PrefixItems
+		case "contains":
+			dst.Contains = sibling.Contains
+		case "minContains":
+			dst.MinContains = sibling.MinContains
+		case "maxContains":
+			dst.MaxContains = sibling.MaxContains
+		case "patternProperties":
+			dst.PatternProperties = sibling.PatternProperties
+		case "dependentSchemas":
+			dst.DependentSchemas = sibling.DependentSchemas
+		case "propertyNames":
+			dst.PropertyNames = sibling.PropertyNames
+		case "unevaluatedItems":
+			dst.UnevaluatedItems = sibling.UnevaluatedItems
+		case "unevaluatedProperties":
+			dst.UnevaluatedProperties = sibling.UnevaluatedProperties
+		case "if":
+			dst.If = sibling.If
+		case "then":
+			dst.Then = sibling.Then
+		case "else":
+			dst.Else = sibling.Else
+		case "dependentRequired":
+			dst.DependentRequired = sibling.DependentRequired
+		case "$defs":
+			dst.Defs = sibling.Defs
+		case "$schema":
+			dst.SchemaDialect = sibling.SchemaDialect
+		case "$comment":
+			dst.Comment = sibling.Comment
+		case "$id":
+			dst.SchemaID = sibling.SchemaID
+		case "$anchor":
+			dst.Anchor = sibling.Anchor
+		case "$dynamicRef":
+			dst.DynamicRef = sibling.DynamicRef
+		case "$dynamicAnchor":
+			dst.DynamicAnchor = sibling.DynamicAnchor
+		case "contentMediaType":
+			dst.ContentMediaType = sibling.ContentMediaType
+		case "contentEncoding":
+			dst.ContentEncoding = sibling.ContentEncoding
+		case "contentSchema":
+			dst.ContentSchema = sibling.ContentSchema
 		}
 	}
 }

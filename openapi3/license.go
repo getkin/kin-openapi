@@ -19,7 +19,7 @@ type License struct {
 
 	// Identifier is an SPDX license expression for the API (OpenAPI 3.1)
 	// Either url or identifier can be specified, not both
-	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"`
+	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // OpenAPI >=3.1
 }
 
 // MarshalJSON returns the JSON encoding of License.
@@ -33,13 +33,12 @@ func (license License) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML returns the YAML encoding of License.
 func (license License) MarshalYAML() (any, error) {
-	m := make(map[string]any, 2+len(license.Extensions))
+	m := make(map[string]any, 3+len(license.Extensions))
 	maps.Copy(m, license.Extensions)
 	m["name"] = license.Name
 	if x := license.URL; x != "" {
 		m["url"] = x
 	}
-	// OpenAPI 3.1 field
 	if x := license.Identifier; x != "" {
 		m["identifier"] = x
 	}
@@ -56,7 +55,7 @@ func (license *License) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
-	delete(x.Extensions, "identifier") // OpenAPI 3.1
+	delete(x.Extensions, "identifier")
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
@@ -67,6 +66,10 @@ func (license *License) UnmarshalJSON(data []byte) error {
 // Validate returns an error if License does not comply with the OpenAPI spec.
 func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+
+	if license.Identifier != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
+		return errFieldFor31Plus("identifier")
+	}
 
 	if license.Name == "" {
 		return errors.New("value of license name must be a non-empty string")

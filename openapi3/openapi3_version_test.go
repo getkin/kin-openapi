@@ -1,80 +1,31 @@
-package openapi3
+package openapi3_test
 
 import (
 	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
-var ctx = context.Background()
-
-func TestDocumentVersionDetection(t *testing.T) {
-	t.Run("IsOpenAPI3_0", func(t *testing.T) {
-		doc := &T{OpenAPI: "3.0.0"}
-		require.True(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-
-		doc = &T{OpenAPI: "3.0.3"}
-		require.True(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-
-		doc = &T{OpenAPI: "3.0.1"}
-		require.True(t, doc.IsOpenAPI3_0())
-	})
-
-	t.Run("IsOpenAPI3_1", func(t *testing.T) {
-		doc := &T{OpenAPI: "3.1.0"}
-		require.True(t, doc.IsOpenAPI3_1())
-		require.False(t, doc.IsOpenAPI3_0())
-
-		doc = &T{OpenAPI: "3.1.1"}
-		require.True(t, doc.IsOpenAPI3_1())
-		require.False(t, doc.IsOpenAPI3_0())
-	})
-
-	t.Run("Version", func(t *testing.T) {
-		doc := &T{OpenAPI: "3.0.3"}
-		require.Equal(t, "3.0", doc.Version())
-
-		doc = &T{OpenAPI: "3.1.0"}
-		require.Equal(t, "3.1", doc.Version())
-
-		doc = &T{OpenAPI: "3.1"}
-		require.Equal(t, "3.1", doc.Version())
-	})
-
-	t.Run("nil or empty document", func(t *testing.T) {
-		var doc *T
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-		require.Equal(t, "", doc.Version())
-
-		doc = &T{}
-		require.False(t, doc.IsOpenAPI3_0())
-		require.False(t, doc.IsOpenAPI3_1())
-		require.Equal(t, "", doc.Version())
-	})
-}
-
 func TestWebhooksField(t *testing.T) {
 	t.Run("serialize webhooks in OpenAPI 3.1", func(t *testing.T) {
-		doc := &T{
+		doc := &openapi3.T{
 			OpenAPI: "3.1.0",
-			Info: &Info{
+			Info: &openapi3.Info{
 				Title:   "Test API",
 				Version: "1.0.0",
 			},
-			Paths: NewPaths(),
-			Webhooks: map[string]*PathItem{
+			Paths: openapi3.NewPaths(),
+			Webhooks: map[string]*openapi3.PathItem{
 				"newPet": {
-					Post: &Operation{
+					Post: &openapi3.Operation{
 						Summary: "New pet webhook",
-						Responses: NewResponses(
-							WithStatus(200, &ResponseRef{
-								Value: &Response{
-									Description: Ptr("Success"),
+						Responses: openapi3.NewResponses(
+							openapi3.WithStatus(200, &openapi3.ResponseRef{
+								Value: &openapi3.Response{
+									Description: openapi3.Ptr("Success"),
 								},
 							}),
 						),
@@ -113,11 +64,11 @@ func TestWebhooksField(t *testing.T) {
 			}
 		}`)
 
-		var doc T
+		var doc openapi3.T
 		err := json.Unmarshal(jsonData, &doc)
 		require.NoError(t, err)
 
-		require.True(t, doc.IsOpenAPI3_1())
+		require.True(t, doc.IsOpenAPI31OrLater())
 		require.NotNil(t, doc.Webhooks)
 		require.Contains(t, doc.Webhooks, "newPet")
 		require.NotNil(t, doc.Webhooks["newPet"].Post)
@@ -134,29 +85,29 @@ func TestWebhooksField(t *testing.T) {
 			"paths": {}
 		}`)
 
-		var doc T
+		var doc openapi3.T
 		err := json.Unmarshal(jsonData, &doc)
 		require.NoError(t, err)
 
-		require.True(t, doc.IsOpenAPI3_0())
+		require.True(t, doc.IsOpenAPI30())
 		require.Nil(t, doc.Webhooks)
 	})
 
 	t.Run("validate webhooks", func(t *testing.T) {
-		doc := &T{
+		doc := &openapi3.T{
 			OpenAPI: "3.1.0",
-			Info: &Info{
+			Info: &openapi3.Info{
 				Title:   "Test API",
 				Version: "1.0.0",
 			},
-			Paths: NewPaths(),
-			Webhooks: map[string]*PathItem{
+			Paths: openapi3.NewPaths(),
+			Webhooks: map[string]*openapi3.PathItem{
 				"validWebhook": {
-					Post: &Operation{
-						Responses: NewResponses(
-							WithStatus(200, &ResponseRef{
-								Value: &Response{
-									Description: Ptr("Success"),
+					Post: &openapi3.Operation{
+						Responses: openapi3.NewResponses(
+							openapi3.WithStatus(200, &openapi3.ResponseRef{
+								Value: &openapi3.Response{
+									Description: openapi3.Ptr("Success"),
 								},
 							}),
 						),
@@ -166,24 +117,24 @@ func TestWebhooksField(t *testing.T) {
 		}
 
 		// Should validate successfully
-		err := doc.Validate(ctx)
+		err := doc.Validate(context.Background())
 		require.NoError(t, err)
 	})
 
 	t.Run("validate fails with nil webhook", func(t *testing.T) {
-		doc := &T{
+		doc := &openapi3.T{
 			OpenAPI: "3.1.0",
-			Info: &Info{
+			Info: &openapi3.Info{
 				Title:   "Test API",
 				Version: "1.0.0",
 			},
-			Paths: NewPaths(),
-			Webhooks: map[string]*PathItem{
+			Paths: openapi3.NewPaths(),
+			Webhooks: map[string]*openapi3.PathItem{
 				"invalidWebhook": nil,
 			},
 		}
 
-		err := doc.Validate(ctx)
+		err := doc.Validate(context.Background())
 		require.Error(t, err)
 		require.ErrorContains(t, err, "webhook")
 		require.ErrorContains(t, err, "invalidWebhook")
@@ -191,16 +142,16 @@ func TestWebhooksField(t *testing.T) {
 }
 
 func TestJSONLookupWithWebhooks(t *testing.T) {
-	doc := &T{
+	doc := &openapi3.T{
 		OpenAPI: "3.1.0",
-		Info: &Info{
+		Info: &openapi3.Info{
 			Title:   "Test API",
 			Version: "1.0.0",
 		},
-		Paths: NewPaths(),
-		Webhooks: map[string]*PathItem{
+		Paths: openapi3.NewPaths(),
+		Webhooks: map[string]*openapi3.PathItem{
 			"test": {
-				Post: &Operation{
+				Post: &openapi3.Operation{
 					Summary: "Test webhook",
 				},
 			},
@@ -211,44 +162,44 @@ func TestJSONLookupWithWebhooks(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	webhooks, ok := result.(map[string]*PathItem)
+	webhooks, ok := result.(map[string]*openapi3.PathItem)
 	require.True(t, ok)
 	require.Contains(t, webhooks, "test")
 }
 
 func TestVersionBasedBehavior(t *testing.T) {
 	t.Run("detect and handle OpenAPI 3.0", func(t *testing.T) {
-		doc := &T{
+		doc := &openapi3.T{
 			OpenAPI: "3.0.3",
-			Info: &Info{
+			Info: &openapi3.Info{
 				Title:   "Test API",
 				Version: "1.0.0",
 			},
-			Paths: NewPaths(),
+			Paths: openapi3.NewPaths(),
 		}
 
-		if doc.IsOpenAPI3_0() {
+		if doc.IsOpenAPI30() {
 			// OpenAPI 3.0 specific logic
 			require.Nil(t, doc.Webhooks)
 		}
 	})
 
 	t.Run("detect and handle OpenAPI 3.1", func(t *testing.T) {
-		doc := &T{
+		doc := &openapi3.T{
 			OpenAPI: "3.1.0",
-			Info: &Info{
+			Info: &openapi3.Info{
 				Title:   "Test API",
 				Version: "1.0.0",
 			},
-			Paths: NewPaths(),
-			Webhooks: map[string]*PathItem{
+			Paths: openapi3.NewPaths(),
+			Webhooks: map[string]*openapi3.PathItem{
 				"test": {
-					Post: &Operation{
+					Post: &openapi3.Operation{
 						Summary: "Test",
-						Responses: NewResponses(
-							WithStatus(200, &ResponseRef{
-								Value: &Response{
-									Description: Ptr("OK"),
+						Responses: openapi3.NewResponses(
+							openapi3.WithStatus(200, &openapi3.ResponseRef{
+								Value: &openapi3.Response{
+									Description: openapi3.Ptr("OK"),
 								},
 							}),
 						),
@@ -257,7 +208,7 @@ func TestVersionBasedBehavior(t *testing.T) {
 			},
 		}
 
-		if doc.IsOpenAPI3_1() {
+		if doc.IsOpenAPI31OrLater() {
 			// OpenAPI 3.1 specific logic
 			require.NotNil(t, doc.Webhooks)
 			require.Contains(t, doc.Webhooks, "test")
@@ -268,30 +219,30 @@ func TestVersionBasedBehavior(t *testing.T) {
 func TestMigrationScenario(t *testing.T) {
 	t.Run("upgrade document from 3.0 to 3.1", func(t *testing.T) {
 		// Start with 3.0 document
-		doc := &T{
+		doc := &openapi3.T{
 			OpenAPI: "3.0.3",
-			Info: &Info{
+			Info: &openapi3.Info{
 				Title:   "Test API",
 				Version: "1.0.0",
 			},
-			Paths: NewPaths(),
+			Paths: openapi3.NewPaths(),
 		}
 
-		require.True(t, doc.IsOpenAPI3_0())
+		require.True(t, doc.IsOpenAPI30())
 		require.Nil(t, doc.Webhooks)
 
 		// Upgrade to 3.1
 		doc.OpenAPI = "3.1.0"
 
 		// Add 3.1 features
-		doc.Webhooks = map[string]*PathItem{
+		doc.Webhooks = map[string]*openapi3.PathItem{
 			"newEvent": {
-				Post: &Operation{
+				Post: &openapi3.Operation{
 					Summary: "New event notification",
-					Responses: NewResponses(
-						WithStatus(200, &ResponseRef{
-							Value: &Response{
-								Description: Ptr("Processed"),
+					Responses: openapi3.NewResponses(
+						openapi3.WithStatus(200, &openapi3.ResponseRef{
+							Value: &openapi3.Response{
+								Description: openapi3.Ptr("Processed"),
 							},
 						}),
 					),
@@ -299,11 +250,11 @@ func TestMigrationScenario(t *testing.T) {
 			},
 		}
 
-		require.True(t, doc.IsOpenAPI3_1())
+		require.True(t, doc.IsOpenAPI31OrLater())
 		require.NotNil(t, doc.Webhooks)
 
 		// Validate the upgraded document
-		err := doc.Validate(ctx)
+		err := doc.Validate(context.Background())
 		require.NoError(t, err)
 	})
 }

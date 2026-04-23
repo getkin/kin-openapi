@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"slices"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -17,22 +18,16 @@ import (
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
-	Components   *Components          `json:"components,omitempty" yaml:"components,omitempty"`
-	Info         *Info                `json:"info" yaml:"info"`                       // Required
-	Paths        *Paths               `json:"paths,omitempty" yaml:"paths,omitempty"` // Required in 3.0, optional in 3.1
-	Security     SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Servers      Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Tags         Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
-	ExternalDocs *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-
-	// OpenAPI 3.1.x specific fields
-	// Webhooks are a new feature in OpenAPI 3.1 that allow APIs to define callback operations
-	Webhooks map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`
-
-	// JSONSchemaDialect allows specifying the default JSON Schema dialect for Schema Objects
-	// See https://spec.openapis.org/oas/v3.1.0#schema-object
-	JSONSchemaDialect string `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
+	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
+	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
+	Info              *Info                `json:"info" yaml:"info"`   // Required
+	Paths             *Paths               `json:"paths" yaml:"paths"` // Required in 3.0, optional in 3.1
+	Security          SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Servers           Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Tags              Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
+	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Webhooks          map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
+	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
 
 	visited visitedComponent
 	url     *url.URL
@@ -44,29 +39,47 @@ type T struct {
 	integerFormats map[string]IntegerFormatValidator
 }
 
-var _ jsonpointer.JSONPointable = (*T)(nil)
-
-// IsOpenAPI3_0 returns true if the document is OpenAPI 3.0.x
-func (doc *T) IsOpenAPI3_0() bool {
-	return doc.Version() == "3.0"
+// IsOpenAPI30 returns whether doc is an OpenAPI document version 3.0.x.
+// Returns true for 3, 3.0, 3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, ...
+// And false for 3.1.0, 3.2, ... and for invalid strings.
+func (doc *T) IsOpenAPI30() bool {
+	return doc.OpenAPIMajorMinor() == "3.0"
 }
 
-// IsOpenAPI3_1 returns true if the document is OpenAPI 3.1.x
-func (doc *T) IsOpenAPI3_1() bool {
-	return doc.Version() == "3.1"
+// IsOpenAPI31OrLater returns whether doc is an OpenAPI document version >=3.1.
+// Returns true for 3.1, 3.1.0, 3.1.1, 3.1.2, 3.2.0, ...
+// And false for cases where IsOpenAPI30 returns true and for invalid strings.
+func (doc *T) IsOpenAPI31OrLater() bool {
+	return slices.Contains([]string{"3.1", "3.2"}, doc.OpenAPIMajorMinor())
 }
 
-// Version returns the major.minor version of the OpenAPI document
-func (doc *T) Version() string {
-	if doc == nil || doc.OpenAPI == "" {
+func errFieldFor31Plus(field string) error {
+	return fmt.Errorf("field %s is for OpenAPI >=3.1", field)
+}
+
+func errValueOfFieldFor31Plus(value any, field string) error {
+	return fmt.Errorf("value %q of field %s is for OpenAPI >=3.1", value, field)
+}
+
+// OpenAPIMajorMinor returns 3.y of the OpenAPI "3.y" or "3.y.z" version of the document.
+// Returns the empty string for invalid OpenAPI version strings.
+func (doc *T) OpenAPIMajorMinor() string {
+	if doc == nil {
 		return ""
 	}
-	// Extract major.minor (e.g., "3.0" from "3.0.3")
-	if len(doc.OpenAPI) >= 3 {
-		return doc.OpenAPI[0:3]
+	switch doc.OpenAPI {
+	case "3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4":
+		return "3.0"
+	case "3.1", "3.1.0", "3.1.1", "3.1.2":
+		return "3.1"
+	case "3.2", "3.2.0":
+		return "3.2"
+	default:
+		return ""
 	}
-	return doc.OpenAPI
 }
+
+var _ jsonpointer.JSONPointable = (*T)(nil)
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 func (doc *T) JSONLookup(token string) (any, error) {
@@ -111,16 +124,14 @@ func (doc *T) MarshalYAML() (any, error) {
 	if doc == nil {
 		return nil, nil
 	}
-	m := make(map[string]any, 4+len(doc.Extensions))
+	m := make(map[string]any, 10+len(doc.Extensions))
 	maps.Copy(m, doc.Extensions)
 	m["openapi"] = doc.OpenAPI
 	if x := doc.Components; x != nil {
 		m["components"] = x
 	}
 	m["info"] = doc.Info
-	if doc.Paths != nil {
-		m["paths"] = doc.Paths
-	}
+	m["paths"] = doc.Paths
 	if x := doc.Security; len(x) != 0 {
 		m["security"] = x
 	}
@@ -133,7 +144,6 @@ func (doc *T) MarshalYAML() (any, error) {
 	if x := doc.ExternalDocs; x != nil {
 		m["externalDocs"] = x
 	}
-	// OpenAPI 3.1 fields
 	if x := doc.Webhooks; len(x) != 0 {
 		m["webhooks"] = x
 	}
@@ -159,7 +169,6 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	delete(x.Extensions, "servers")
 	delete(x.Extensions, "tags")
 	delete(x.Extensions, "externalDocs")
-	// OpenAPI 3.1 fields
 	delete(x.Extensions, "webhooks")
 	delete(x.Extensions, "jsonSchemaDialect")
 	if len(x.Extensions) == 0 {
@@ -250,15 +259,24 @@ func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption {
 
 // Validate returns an error if T does not comply with the OpenAPI spec.
 // Validations Options can be provided to modify the validation behavior.
+//
+// By default, doc.OpenAPI's field dictates whether "JSON Schema Draft 2020-12" validation
+// is enabled.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
-	// Auto-enable JSON Schema 2020-12 validation for OpenAPI 3.1 documents
-	if doc.IsOpenAPI3_1() {
-		opts = append([]ValidationOption{EnableJSONSchema2020Validation()}, opts...)
+	if doc.IsOpenAPI31OrLater() {
+		opts = append(opts, IsOpenAPI31OrLater())
 	}
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")
+	}
+
+	if doc.Webhooks != nil && !doc.IsOpenAPI31OrLater() {
+		return errFieldFor31Plus("webhooks")
+	}
+	if doc.JSONSchemaDialect != "" && !doc.IsOpenAPI31OrLater() {
+		return errFieldFor31Plus("jsonschemadialect")
 	}
 
 	var wrap func(error) error
@@ -284,7 +302,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
-	} else if !doc.IsOpenAPI3_1() {
+	} else if doc.IsOpenAPI30() {
 		return wrap(errors.New("must be an object"))
 	}
 
@@ -316,28 +334,25 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	// OpenAPI 3.1 jsonSchemaDialect validation
-	if doc.JSONSchemaDialect != "" {
-		u, err := url.Parse(doc.JSONSchemaDialect)
-		if err != nil {
-			return fmt.Errorf("invalid jsonSchemaDialect: %w", err)
+	wrap = func(e error) error { return fmt.Errorf("invalid webhooks: %w", e) }
+	for _, name := range componentNames(doc.Webhooks) {
+		pathItem := doc.Webhooks[name]
+		if pathItem == nil {
+			return wrap(fmt.Errorf("webhook %q is nil", name))
 		}
-		if u.Scheme == "" {
-			return fmt.Errorf("invalid jsonSchemaDialect: must be an absolute URI with a scheme")
+		if err := pathItem.Validate(ctx); err != nil {
+			return wrap(fmt.Errorf("webhook %q: %w", name, err))
 		}
 	}
 
-	// OpenAPI 3.1 webhooks validation
-	if doc.Webhooks != nil {
-		wrap = func(e error) error { return fmt.Errorf("invalid webhooks: %w", e) }
-		for _, name := range componentNames(doc.Webhooks) {
-			pathItem := doc.Webhooks[name]
-			if pathItem == nil {
-				return wrap(fmt.Errorf("webhook %q is nil", name))
-			}
-			if err := pathItem.Validate(ctx); err != nil {
-				return wrap(fmt.Errorf("webhook %q: %w", name, err))
-			}
+	wrap = func(e error) error { return fmt.Errorf("invalid jsonSchemaDialect: %w", e) }
+	if doc.JSONSchemaDialect != "" {
+		u, err := url.Parse(doc.JSONSchemaDialect)
+		if err != nil {
+			return wrap(err)
+		}
+		if u.Scheme == "" {
+			return wrap(errors.New("must be an absolute URI with a scheme"))
 		}
 	}
 
