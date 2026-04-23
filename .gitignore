@@ -22,4 +22,5 @@
 .claude/
 
 # Test fixtures
+/openapi2/testdata/APIs-guru-openapi-directory-*/
 /openapi3/testdata/APIs-guru-openapi-directory-*/
