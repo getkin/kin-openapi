@@ -1,0 +1,1 @@
+error unmarshaling JSON: while decoding JSON: json: cannot unmarshal array into field Schema.items of type openapi2.Schema
