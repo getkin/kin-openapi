@@ -1,1 +1,1 @@
-invalid paths: invalid path /v2/Attempts: invalid operation GET: parameter "Channel" schema is invalid: extra sibling fields: [type]
+invalid components: schema "verify.v2.form": extra sibling fields: [description nullable type]

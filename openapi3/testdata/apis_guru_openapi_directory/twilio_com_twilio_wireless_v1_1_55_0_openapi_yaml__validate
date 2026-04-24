@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/Commands: invalid operation GET: parameter "Status" schema is invalid: extra sibling fields: [type]
+invalid components: schema "wireless.v1.command": extra sibling fields: [description nullable type]

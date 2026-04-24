@@ -1,0 +1,1 @@
+invalid components: schema "serverless.v1.service.asset.asset_version": extra sibling fields: [description nullable type]

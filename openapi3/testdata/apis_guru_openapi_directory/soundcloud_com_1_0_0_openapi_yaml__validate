@@ -1,17 +1,1 @@
-invalid components: parameter "access": parameter "access" schema is invalid: invalid default: value must be an array
-Schema:
-  {
-    "default": "playable,preview",
-    "items": {
-      "enum": [
-        "playable",
-        "preview",
-        "blocked"
-      ],
-      "type": "string"
-    },
-    "type": "array"
-  }
-
-Value:
-  "playable,preview"
+invalid components: schema "Activities": extra sibling fields: [description]

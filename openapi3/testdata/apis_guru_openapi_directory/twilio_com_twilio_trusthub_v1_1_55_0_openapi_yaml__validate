@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/CustomerProfiles: invalid operation GET: parameter "Status" schema is invalid: extra sibling fields: [type]
+invalid components: schema "trusthub.v1.customer_profile": extra sibling fields: [description nullable type]

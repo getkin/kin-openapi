@@ -1,0 +1,1 @@
+invalid components: schema "notify.v1.credential": extra sibling fields: [description nullable type]

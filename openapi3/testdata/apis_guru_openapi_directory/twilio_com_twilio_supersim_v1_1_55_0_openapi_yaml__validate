@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/ESimProfiles: invalid operation GET: parameter "Status" schema is invalid: extra sibling fields: [type]
+invalid components: schema "supersim.v1.esim_profile": extra sibling fields: [description nullable type]

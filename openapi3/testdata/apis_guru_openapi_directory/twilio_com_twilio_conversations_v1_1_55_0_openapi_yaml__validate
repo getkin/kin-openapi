@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/Conversations: invalid operation GET: parameter "State" schema is invalid: extra sibling fields: [type]
+invalid components: schema "conversations.v1.configuration.configuration_webhook": extra sibling fields: [description nullable type]

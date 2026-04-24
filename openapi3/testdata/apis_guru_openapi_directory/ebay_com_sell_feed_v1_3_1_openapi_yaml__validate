@@ -1,1 +1,1 @@
-invalid paths: invalid path /customer_service_metric_task: invalid operation POST: extra sibling fields: [description]
+invalid components: schema "CreateInventoryTaskRequest": extra sibling fields: [description]
