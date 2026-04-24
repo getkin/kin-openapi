@@ -141,7 +141,7 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 	for _, path := range paths {
 		shortName := underscorer.Replace(strings.TrimPrefix(path, root)[1:])
 
-		if isOpenAPIVersion(t, path, "openapi: 3.0") {
+		if isOpenAPIVersion(t, path, "openapi: 3") {
 			t.Run(shortName, func(t *testing.T) {
 				if disabled(shortName) {
 					return
