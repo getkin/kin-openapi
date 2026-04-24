@@ -132,7 +132,7 @@ func (x *{{ $type.Name }}Ref) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}

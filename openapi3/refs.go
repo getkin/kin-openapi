@@ -109,7 +109,7 @@ func (x *CallbackRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -248,7 +248,7 @@ func (x *ExampleRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -387,7 +387,7 @@ func (x *HeaderRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -526,7 +526,7 @@ func (x *LinkRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -665,7 +665,7 @@ func (x *ParameterRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -804,7 +804,7 @@ func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -943,7 +943,7 @@ func (x *ResponseRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -1101,7 +1101,7 @@ func (x *SchemaRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}
@@ -1242,7 +1242,7 @@ func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 	}
 
 	if validationOpts.schemaExtensionsInRefProhibited {
-		for ex := range x.Extensions {
+		for _, ex := range componentNames(x.Extensions) {
 			if _, ok := allowed[ex]; !ok {
 				extras = append(extras, ex)
 			}

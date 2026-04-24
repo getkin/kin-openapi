@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -1343,7 +1344,13 @@ func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	if !schema.Value.Type.Is("object") {
 		return nil, errors.New("unsupported schema of request body")
 	}
-	for propName, propSchema := range schema.Value.Properties {
+	propNames := make([]string, 0, len(schema.Value.Properties))
+	for name := range schema.Value.Properties {
+		propNames = append(propNames, name)
+	}
+	slices.Sort(propNames)
+	for _, propName := range propNames {
+		propSchema := schema.Value.Properties[propName]
 		propType := propSchema.Value.Type
 		switch {
 		case propType.Is("object"):
@@ -1393,7 +1400,13 @@ func decodeSchemaConstructs(dec *urlValuesDecoder, schemas []*openapi3.SchemaRef
 			return err
 		}
 
-		for name, prop := range schemaRef.Value.Properties {
+		propNames := make([]string, 0, len(schemaRef.Value.Properties))
+		for name := range schemaRef.Value.Properties {
+			propNames = append(propNames, name)
+		}
+		slices.Sort(propNames)
+		for _, name := range propNames {
+			prop := schemaRef.Value.Properties[name]
 			value, present, err := decodeProperty(dec, name, prop, encFn)
 			if err != nil || !present {
 				continue
