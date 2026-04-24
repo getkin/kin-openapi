@@ -197,15 +197,6 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 func disabled(shortName string) bool {
 	switch shortName {
 	case "vvv keep these",
-		"flat_io_2_13_0_openapi_yaml",                                 // TODO: flaky
-		"microsoft_com_cognitiveservices_Prediction_3_0_openapi_yaml", // TODO: flaky
-		"microsoft_com_cognitiveservices_Training_3_0_openapi_yaml",   // TODO: flaky
-		"microsoft_com_cognitiveservices_Training_3_1_openapi_yaml",   // TODO: flaky
-		"microsoft_com_cognitiveservices_Training_3_2_openapi_yaml",   // TODO: flaky
-		"mist_com_0_37_7_openapi_yaml",                                // TODO: flaky
-		"ndhm_gov_in_ndhm_cm_0_5_openapi_yaml",                        // TODO: flaky
-		"nexmo_com_voice_1_3_10_openapi_yaml",                         // TODO: flaky
-		"optimade_local_1_1_0_develop_openapi_yaml",                   // TODO: flaky
 		"^^^ lines sorted":
 		return true
 	}
