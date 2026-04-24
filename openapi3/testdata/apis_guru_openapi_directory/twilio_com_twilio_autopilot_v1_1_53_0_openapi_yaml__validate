@@ -1,0 +1,1 @@
+invalid components: schema "autopilot.v1.assistant.model_build": extra sibling fields: [description nullable type]

@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/Workspaces/{WorkspaceSid}/Tasks/{TaskSid}/Reservations: invalid operation GET: parameter "ReservationStatus" schema is invalid: extra sibling fields: [type]
+invalid components: schema "taskrouter.v1.workspace": extra sibling fields: [description nullable type]

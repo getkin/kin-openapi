@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/activities: invalid operation POST: extra sibling fields: [nullable]
+invalid components: schema "ActivityActivityType": extra sibling fields: [readOnly]

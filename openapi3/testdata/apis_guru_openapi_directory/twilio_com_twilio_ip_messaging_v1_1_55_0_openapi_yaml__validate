@@ -1,1 +1,1 @@
-invalid paths: invalid path /v1/Services/{ServiceSid}/Channels/{ChannelSid}/Messages: invalid operation GET: parameter "Order" schema is invalid: extra sibling fields: [type]
+invalid components: schema "ip_messaging.v1.credential": extra sibling fields: [nullable type]

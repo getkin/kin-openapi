@@ -1,0 +1,1 @@
+invalid components: schema "events.v1.sink": extra sibling fields: [description nullable type]

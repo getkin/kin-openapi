@@ -1,1 +1,1 @@
-invalid paths: invalid path /order/{orderId}/shipping_fulfillment: invalid operation POST: extra sibling fields: [description]
+invalid components: schema "AcceptPaymentDisputeRequest": extra sibling fields: [description]

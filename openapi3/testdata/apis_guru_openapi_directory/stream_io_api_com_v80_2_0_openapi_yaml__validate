@@ -1,1 +1,1 @@
-invalid paths: invalid path /search: invalid operation GET: parameter "payload" content is invalid: extra sibling fields: [description title]
+invalid components: schema "App": extra sibling fields: [description title]
