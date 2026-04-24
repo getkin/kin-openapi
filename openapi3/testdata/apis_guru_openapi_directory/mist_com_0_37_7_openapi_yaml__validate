@@ -1,0 +1,1 @@
+invalid paths: invalid path /api/v1/sites/{site_id}/devices/{device_id}: invalid operation PUT: invalid example: input matches more than one oneOf schemas
