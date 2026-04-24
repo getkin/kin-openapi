@@ -1,0 +1,1 @@
+invalid paths: invalid path /c/{id}/show.json: invalid operation GET: extra sibling fields: [auto_bump_cooldown_days num_auto_bump_daily require_reply_approval require_topic_approval]

@@ -1,0 +1,6 @@
+invalid paths: invalid path /html-renderer: invalid operation POST: invalid default: validation failed due to: at '': got number, want string
+Schema:
+  null
+
+Value:
+  null

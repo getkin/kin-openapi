@@ -1,0 +1,9 @@
+invalid paths: invalid path /terminals/scheduleActions: invalid operation POST: example verification-error: Error at "/errorCode": value must be a string
+Schema:
+  {
+    "description": "A code that identifies the problem type.",
+    "type": "string"
+  }
+
+Value:
+  1029

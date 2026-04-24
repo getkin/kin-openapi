@@ -1,0 +1,126 @@
+invalid webhooks: webhook "balancePlatform.accountHolder.created": invalid operation POST: example balancePlatform-accountHolder-created-lem-v3: Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/0/verificationErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  2902
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/0/verificationErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  2902
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/1/verificationErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  28037
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/1/verificationErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1703
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/2/verificationErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  28037
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/2/verificationErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1703
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  28189
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  2151
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/1/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  150
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/1/subErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  15016
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/1/subErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1500
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/1/subErrors/0/remediatingActions/1/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1501
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/2/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  28067
+ | Error at "/data/accountHolder/capabilities/sendToTransferInstrument/problems/3/verificationErrors/2/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  2124
