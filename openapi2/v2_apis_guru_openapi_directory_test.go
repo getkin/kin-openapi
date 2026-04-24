@@ -146,6 +146,7 @@ func TestV2ApisGuruOpenapiDirectory(t *testing.T) {
 		if isOpenAPIVersion(t, path, "swagger: ") {
 			t.Run(shortName, func(t *testing.T) {
 				if disabled(shortName) {
+					t.SkipNow()
 					return
 				}
 				checked[shortName] = struct{}{}
