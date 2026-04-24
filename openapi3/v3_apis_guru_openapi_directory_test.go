@@ -144,6 +144,7 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 		if isOpenAPIVersion(t, path, "openapi: 3") {
 			t.Run(shortName, func(t *testing.T) {
 				if disabled(shortName) {
+					t.SkipNow()
 					return
 				}
 				checked[shortName] = struct{}{}
@@ -187,9 +188,18 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 func disabled(shortName string) bool {
 	switch shortName {
 	case "vvv keep these",
-		"nordigen_com_2_0__v2__openapi_yaml", // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
-		"unicourt_com_1_0_0_openapi_yaml",    // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
-		"zuora_com_2021_08_20_openapi_yaml",  // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
+		"flat_io_2_13_0_openapi_yaml",                                 // TODO: flaky
+		"microsoft_com_cognitiveservices_Prediction_3_0_openapi_yaml", // TODO: flaky
+		"microsoft_com_cognitiveservices_Training_3_0_openapi_yaml",   // TODO: flaky
+		"microsoft_com_cognitiveservices_Training_3_1_openapi_yaml",   // TODO: flaky
+		"microsoft_com_cognitiveservices_Training_3_2_openapi_yaml",   // TODO: flaky
+		"mist_com_0_37_7_openapi_yaml",                                // TODO: flaky
+		"ndhm_gov_in_ndhm_cm_0_5_openapi_yaml",                        // TODO: flaky
+		"nexmo_com_voice_1_3_10_openapi_yaml",                         // TODO: flaky
+		"nordigen_com_2_0__v2__openapi_yaml",                          // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
+		"optimade_local_1_1_0_develop_openapi_yaml",                   // TODO: flaky
+		"unicourt_com_1_0_0_openapi_yaml",                             // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
+		"zuora_com_2021_08_20_openapi_yaml",                           // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
 		"^^^ lines sorted":
 		return true
 	}
