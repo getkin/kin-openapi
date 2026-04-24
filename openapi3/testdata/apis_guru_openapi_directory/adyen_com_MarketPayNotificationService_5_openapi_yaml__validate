@@ -1,0 +1,6 @@
+invalid webhooks: webhook "/ACCOUNT_CLOSED": invalid operation POST: example accountClosed: validation failed due to: at '': got string, want object
+Schema:
+  null
+
+Value:
+  null

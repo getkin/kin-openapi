@@ -1,0 +1,43 @@
+invalid paths: invalid path /grants: invalid operation POST: example requestGrant: Error at "/balances": value must be an object
+Schema:
+  {
+    "description": "An object containing the details of the existing grant.",
+    "properties": {
+      "currency": {
+        "description": "The three-character [ISO currency code](https://docs.adyen.com/development-resources/currency-codes).",
+        "type": "string"
+      },
+      "fee": {
+        "description": "Fee amount.",
+        "format": "int64",
+        "type": "integer"
+      },
+      "principal": {
+        "description": "Principal amount.",
+        "format": "int64",
+        "type": "integer"
+      },
+      "total": {
+        "description": "Total amount. A sum of principal amount and fee amount.",
+        "format": "int64",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "principal",
+      "fee",
+      "total",
+      "currency"
+    ],
+    "type": "object"
+  }
+
+Value:
+  [
+    {
+      "currency": "EUR",
+      "fee": 120000,
+      "principal": 1000000,
+      "total": 1120000
+    }
+  ]

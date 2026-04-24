@@ -1,0 +1,6 @@
+invalid paths: invalid path /checkAccountHolder: invalid operation POST: example basic: validation failed due to: error at "/tier": at '/tier': got string, want integer
+Schema:
+  null
+
+Value:
+  null

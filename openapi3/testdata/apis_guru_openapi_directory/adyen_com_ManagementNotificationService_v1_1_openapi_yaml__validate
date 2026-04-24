@@ -1,0 +1,63 @@
+invalid webhooks: webhook "merchant.updated": invalid operation POST: example merchant-updated-with-errors: Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  28064
+ | Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  2123
+ | Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/1/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  130
+ | Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/1/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1300
+ | Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/1/subErrors/0/code": value must be a string
+Schema:
+  {
+    "description": "The verification error code.",
+    "type": "string"
+  }
+
+Value:
+  13000
+ | Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/1/subErrors/0/remediatingActions/0/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1300
+ | Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/1/subErrors/0/remediatingActions/1/code": value must be a string
+Schema:
+  {
+    "description": "The remediating action code.",
+    "type": "string"
+  }
+
+Value:
+  1301

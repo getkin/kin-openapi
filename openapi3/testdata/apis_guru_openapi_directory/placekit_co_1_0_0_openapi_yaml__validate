@@ -1,0 +1,8 @@
+invalid components: response "422": invalid example: Error at "/0/value": value must be a string
+Schema:
+  {
+    "type": "string"
+  }
+
+Value:
+  42

@@ -1,0 +1,28 @@
+invalid paths: invalid path /createNotificationConfiguration: invalid operation POST: example basic: Error at "/configurationDetails/active": value must be a boolean
+Schema:
+  {
+    "description": "Indicates whether the notification subscription is active.",
+    "type": "boolean"
+  }
+
+Value:
+  "true"
+ | Error at "/configurationDetails/sendActionHeader": value must be a boolean
+Schema:
+  {
+    "deprecated": true,
+    "description": "Indicates whether an action header should be included.\n\u003eOnly applies to SOAP messages (as specified in messageFormat).",
+    "type": "boolean"
+  }
+
+Value:
+  "true"
+ | Error at "/submittedAsync": value must be a boolean
+Schema:
+  {
+    "description": "Indicates whether the request is processed asynchronously. Depending on the request's platform settings, the following scenarios may be applied:\n* **true**: The request is queued and will be executed when the providing service is available in the order in which the requests are received.\n* **false**: The processing of the request is immediately attempted; it may result in an error if the providing service is unavailable.",
+    "type": "boolean"
+  }
+
+Value:
+  "false"
