@@ -240,6 +240,7 @@ func permutePart(part0 string, srv *openapi3.Server) []string {
 		for value := range m {
 			s = append(s, value)
 		}
+		slices.Sort(s)
 		var2val[name] = mapAndSlice{m: m, s: s}
 	}
 	if len(var2val) == 0 {
