@@ -63,7 +63,7 @@ security:
 	require.NoError(t, err)
 
 	err = openapi3filter.ValidateRequest(
-		context.Background(),
+		t.Context(),
 		&openapi3filter.RequestValidationInput{
 			Request:    req,
 			PathParams: pathParams,

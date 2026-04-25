@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -48,7 +47,7 @@ func TestOrigin_LoadAllTestdata(t *testing.T) {
 			loader := NewLoader()
 			loader.IncludeOrigin = true
 			loader.IsExternalRefsAllowed = tc.externalRefs
-			loader.Context = context.Background()
+			loader.Context = t.Context()
 
 			_, err := loader.LoadFromFile(tc.file)
 			require.NoError(t, err)

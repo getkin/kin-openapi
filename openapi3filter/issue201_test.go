@@ -1,7 +1,6 @@
 package openapi3filter
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -122,7 +121,7 @@ paths:
 			route, pathParams, err := router.FindRoute(r)
 			require.NoError(t, err)
 
-			err = ValidateResponse(context.Background(), &ResponseValidationInput{
+			err = ValidateResponse(t.Context(), &ResponseValidationInput{
 				RequestValidationInput: &RequestValidationInput{
 					Request:    r,
 					PathParams: pathParams,

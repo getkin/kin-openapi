@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -14,7 +13,7 @@ func TestOrigin_Info(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
 	require.NoError(t, err)
@@ -52,7 +51,7 @@ func TestOrigin_Paths(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
 	require.NoError(t, err)
@@ -94,7 +93,7 @@ func TestOrigin_RequestBody(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/request_body.yaml")
 	require.NoError(t, err)
@@ -125,7 +124,7 @@ func TestOrigin_Responses(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
 	require.NoError(t, err)
@@ -175,7 +174,7 @@ func TestOrigin_Parameters(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/parameters.yaml")
 	require.NoError(t, err)
@@ -214,7 +213,7 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/additional_properties.yaml")
 	require.NoError(t, err)
@@ -246,7 +245,7 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/external_docs.yaml")
 	require.NoError(t, err)
@@ -286,7 +285,7 @@ func TestOrigin_Security(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/security.yaml")
 	require.NoError(t, err)
@@ -344,7 +343,7 @@ func TestOrigin_Example(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/example.yaml")
 	require.NoError(t, err)
@@ -379,7 +378,7 @@ func TestOrigin_XML(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/xml.yaml")
 	require.NoError(t, err)
@@ -578,7 +577,7 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
 
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/external.yaml")
 	require.NoError(t, err)
@@ -622,7 +621,7 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
-	loader.Context = context.Background()
+	loader.Context = t.Context()
 
 	doc, err := loader.LoadFromFile("testdata/origin/external.yaml")
 	require.NoError(t, err)

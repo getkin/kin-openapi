@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +11,7 @@ import (
 func TestRaceyPatternSchemaValidateHindersIt(t *testing.T) {
 	schema := openapi3.NewStringSchema().WithPattern("^test|for|race|condition$")
 
-	err := schema.Validate(context.Background())
+	err := schema.Validate(t.Context())
 	require.NoError(t, err)
 
 	visit := func() {
@@ -27,7 +26,7 @@ func TestRaceyPatternSchemaValidateHindersIt(t *testing.T) {
 func TestRaceyPatternSchemaForIssue775(t *testing.T) {
 	schema := openapi3.NewStringSchema().WithPattern("^test|for|race|condition$")
 
-	// err := schema.Validate(context.Background())
+	// err := schema.Validate(t.Context())
 	// require.NoError(t, err)
 
 	visit := func() {

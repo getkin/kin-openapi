@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -435,7 +434,7 @@ components:
 			err := yaml.Unmarshal([]byte(tt.spec), &doc)
 			require.NoError(t, err)
 
-			err = doc.Validate(context.Background())
+			err = doc.Validate(t.Context())
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
 			} else {

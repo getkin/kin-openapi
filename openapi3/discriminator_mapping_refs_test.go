@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 // This test demonstrates the issue that discriminator mapping values, which are
 // JSON schema references serialized as plain strings, are not handled by InternalizeRefs.
 func TestDiscriminatorMappingRefsInternalize(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Load the spec with external discriminator mapping refs
 	sl := NewLoader()

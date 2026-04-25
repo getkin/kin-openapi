@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestEncodingJSON(t *testing.T) {
 	require.NotEmpty(t, enc)
 
 	t.Log("Validate *openapi3.Encoding")
-	err = enc.Validate(context.Background())
+	err = enc.Validate(t.Context())
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")

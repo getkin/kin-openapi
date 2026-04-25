@@ -1,7 +1,6 @@
 package openapi3filter_test
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -74,7 +73,7 @@ paths:
 		Route:      route,
 		Options:    opts,
 	}
-	err = openapi3filter.ValidateRequest(context.Background(), validationInput)
+	err = openapi3filter.ValidateRequest(req.Context(), validationInput)
 
 	fmt.Println(err.Error())
 

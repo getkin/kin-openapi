@@ -2,7 +2,6 @@ package openapi3filter
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1586,7 +1585,7 @@ func TestDecodeParameter(t *testing.T) {
 						Responses:   openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 					}
 					doc.AddOperation(path, http.MethodGet, op)
-					err = doc.Validate(context.Background())
+					err = doc.Validate(t.Context())
 					require.NoError(t, err)
 					router, err := legacyrouter.NewRouter(doc)
 					require.NoError(t, err)

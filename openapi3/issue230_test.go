@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -62,7 +61,7 @@ paths:
 		require.Empty(t, doc.JSONSchemaDialect)
 
 		// Validate
-		err = doc.Validate(context.Background())
+		err = doc.Validate(t.Context())
 		require.NoError(t, err)
 	})
 
@@ -180,7 +179,7 @@ webhooks:
 		require.Equal(t, "MIT", doc.Info.License.Identifier)
 
 		// Validate
-		err = doc.Validate(context.Background())
+		err = doc.Validate(t.Context())
 		require.NoError(t, err)
 	})
 

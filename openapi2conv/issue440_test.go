@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"testing"
@@ -22,7 +21,7 @@ func TestIssue440(t *testing.T) {
 
 	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, openapi3.Servers{
 		{URL: "https://petstore.swagger.io/v2"},
@@ -34,7 +33,7 @@ func TestIssue440(t *testing.T) {
 	doc2.BasePath = ""
 	doc3, err = ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, openapi3.Servers{
 		{URL: "https://your-bot-domain.de/"},

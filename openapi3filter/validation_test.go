@@ -156,7 +156,7 @@ func TestFilter(t *testing.T) {
 		),
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
@@ -178,7 +178,7 @@ func TestFilter(t *testing.T) {
 			Route:        route,
 			ParamDecoder: decoder,
 		}
-		if err := ValidateRequest(context.Background(), requestValidationInput); err != nil {
+		if err := ValidateRequest(t.Context(), requestValidationInput); err != nil {
 			return err
 		}
 		t.Logf("Response: %d", resp.Status)
@@ -196,7 +196,7 @@ func TestFilter(t *testing.T) {
 			require.NoError(t, err)
 			responseValidationInput.SetBodyBytes(data)
 		}
-		err = ValidateResponse(context.Background(), responseValidationInput)
+		err = ValidateResponse(t.Context(), responseValidationInput)
 		require.NoError(t, err)
 		return nil
 	}
@@ -433,7 +433,7 @@ func TestValidateRequestBody(t *testing.T) {
 				req.Header.Set(headerCT, tc.mime)
 			}
 			inp := &RequestValidationInput{Request: req}
-			err := ValidateRequestBody(context.Background(), inp, tc.body)
+			err := ValidateRequestBody(t.Context(), inp, tc.body)
 
 			if tc.wantErr == nil {
 				require.NoError(t, err)
@@ -565,7 +565,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 		})
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(doc)
 	require.NoError(t, err)
@@ -606,7 +606,7 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 		}
 
 		// Validate the request
-		err = ValidateRequest(context.Background(), &req)
+		err = ValidateRequest(t.Context(), &req)
 		require.NoError(t, err)
 
 		for securityRequirement, validated := range schemesValidated {
@@ -690,7 +690,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		})
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(&doc)
 	require.NoError(t, err)
@@ -713,7 +713,7 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = ValidateSecurityRequirements(context.Background(), &req, *route.Operation.Security)
+		err = ValidateSecurityRequirements(t.Context(), &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {
@@ -792,7 +792,7 @@ func TestAllSchemesMet(t *testing.T) {
 		})
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := legacyrouter.NewRouter(&doc)
 	require.NoError(t, err)
@@ -815,7 +815,7 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = ValidateSecurityRequirements(context.Background(), &req, *route.Operation.Security)
+		err = ValidateSecurityRequirements(t.Context(), &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {

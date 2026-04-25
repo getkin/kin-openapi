@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -20,7 +19,7 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 		sl := openapi3.NewLoader()
 		err = sl.ResolveRefsIn(&doc3, nil)
 		require.NoError(t, err)
-		err = doc3.Validate(context.Background())
+		err = doc3.Validate(t.Context())
 		require.NoError(t, err)
 	}
 
@@ -40,7 +39,7 @@ func TestConvOpenAPIV3ToV2WithReqBody(t *testing.T) {
 		sl := openapi3.NewLoader()
 		err = sl.ResolveRefsIn(&doc3, nil)
 		require.NoError(t, err)
-		err = doc3.Validate(context.Background())
+		err = doc3.Validate(t.Context())
 		require.NoError(t, err)
 	}
 
@@ -58,7 +57,7 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 
 	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 	data, err := json.Marshal(doc3)
 	require.NoError(t, err)
@@ -119,7 +118,7 @@ func TestConvOpenAPIV2ToV3WithAdditionalPropertiesSchemaRef(t *testing.T) {
 
 	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 
 	responseSchema := doc3.Paths.Value("/foo").Get.Responses.Value("200").Value.Content.Get("application/json").Schema.Value
@@ -184,7 +183,7 @@ func TestConvOpenAPIV2ToV3WithNestedAdditionalPropertiesSchemaRef(t *testing.T) 
 
 	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 
 	responseSchema := doc3.Paths.Value("/foo").Get.Responses.Value("200").Value.Content.Get("application/json").Schema.Value
@@ -263,7 +262,7 @@ func TestConvOpenAPIV2ToV3WithAllOfInsideAdditionalProperties(t *testing.T) {
 
 	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 
 	responseSchema := doc3.Paths.Value("/v1/objStatus").Get.Responses.Value("200").Value.Content.Get("application/json").Schema.Value

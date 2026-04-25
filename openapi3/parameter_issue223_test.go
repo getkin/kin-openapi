@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -112,6 +111,6 @@ components:
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.EqualError(t, err, `invalid paths: operation GET /pets/{petId} must define exactly all path parameters (missing: [petId])`)
 }

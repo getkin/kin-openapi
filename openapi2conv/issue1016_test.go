@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -75,7 +74,7 @@ func TestIssue1016(t *testing.T) {
 	doc3, err := v2v3YAML(v2)
 	require.NoError(t, err)
 
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, "#/components/schemas/Pet", doc3.Components.Schemas["PetDirectory"].Value.AdditionalProperties.Schema.Ref)
 }

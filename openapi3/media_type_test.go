@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestMediaTypeJSON(t *testing.T) {
 	require.NotEmpty(t, data)
 
 	t.Log("Validate *openapi3.MediaType")
-	err = mt.Validate(context.Background())
+	err = mt.Validate(t.Context())
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")

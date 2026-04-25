@@ -1,7 +1,6 @@
 package openapi3filter
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -128,7 +127,7 @@ func TestValidateRequestDefault(t *testing.T) {
 				PathParams: pathParams,
 				Route:      route,
 			}
-			err = ValidateRequest(context.Background(), validationInput)
+			err = ValidateRequest(t.Context(), validationInput)
 			assert.IsType(t, tc.expectedErr, err, "ValidateRequest(): error = %v, expectedError %v", err, tc.expectedErr)
 			if tc.expectedErr != nil {
 				return

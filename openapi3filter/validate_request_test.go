@@ -201,7 +201,7 @@ components:
 					AuthenticationFunc: verifyAPIKeyPresence,
 				},
 			}
-			err = ValidateRequest(context.Background(), validationInput)
+			err = ValidateRequest(t.Context(), validationInput)
 			assert.IsType(t, tc.expectedErr, err, "ValidateRequest(): error = %v, expectedError %v", err, tc.expectedErr)
 			if tc.expectedErr != nil {
 				return
@@ -446,7 +446,7 @@ func TestValidateQueryParams(t *testing.T) {
 				Responses:   openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")})),
 			}
 			doc.AddOperation("/test", http.MethodGet, op)
-			err := doc.Validate(context.Background())
+			err := doc.Validate(t.Context())
 			require.NoError(t, err)
 			router, err := legacyrouter.NewRouter(doc)
 			require.NoError(t, err)
@@ -457,7 +457,7 @@ func TestValidateQueryParams(t *testing.T) {
 			require.NoError(t, err)
 
 			input := &RequestValidationInput{Request: req, PathParams: pathParams, Route: route}
-			err = ValidateParameter(context.Background(), input, tc.param)
+			err = ValidateParameter(t.Context(), input, tc.param)
 
 			if tc.err != nil {
 				require.Error(t, err)
@@ -548,7 +548,7 @@ paths:
 	route, pathParams, err := router.FindRoute(req)
 	require.NoError(t, err)
 
-	err = ValidateRequest(context.Background(), &RequestValidationInput{
+	err = ValidateRequest(t.Context(), &RequestValidationInput{
 		Request:    req,
 		PathParams: pathParams,
 		Route:      route,
@@ -558,7 +558,7 @@ paths:
 	})
 	require.NoError(t, err)
 
-	err = ValidateRequest(context.Background(), &RequestValidationInput{
+	err = ValidateRequest(t.Context(), &RequestValidationInput{
 		Request:    req,
 		PathParams: pathParams,
 		Route:      route,

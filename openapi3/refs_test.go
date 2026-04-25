@@ -2,7 +2,6 @@
 package openapi3
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -26,13 +25,13 @@ func TestCallbackRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -72,13 +71,13 @@ func TestExampleRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -118,13 +117,13 @@ func TestHeaderRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -156,13 +155,13 @@ func TestLinkRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -202,13 +201,13 @@ func TestParameterRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -248,13 +247,13 @@ func TestRequestBodyRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -294,13 +293,13 @@ func TestResponseRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -340,13 +339,13 @@ func TestSchemaRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON
@@ -386,13 +385,13 @@ func TestSecuritySchemeRef_Extensions(t *testing.T) {
 	assert.Nil(t, ref.Extensions["something"])
 
 	// validation
-	err = ref.Validate(context.Background())
+	err = ref.Validate(t.Context())
 	require.EqualError(t, err, "extra sibling fields: [something]")
 
-	err = ref.Validate(context.Background(), ProhibitExtensionsWithRef())
+	err = ref.Validate(t.Context(), ProhibitExtensionsWithRef())
 	require.EqualError(t, err, "extra sibling fields: [something x-order]")
 
-	err = ref.Validate(context.Background(), AllowExtraSiblingFields("something"))
+	err = ref.Validate(t.Context(), AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
 
 	// Verify round trip JSON

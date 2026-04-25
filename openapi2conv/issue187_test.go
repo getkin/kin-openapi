@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -106,7 +105,7 @@ func TestIssue187(t *testing.T) {
 	const expected = `{"components":{"schemas":{"model.ProductSearchAttributeRequest":{"properties":{"filterField":{"type":"string"},"filterKey":{"type":"string"},"type":{"type":"string"},"values":{"$ref":"#/components/schemas/model.ProductSearchAttributeValueRequest"}},"title":"model.ProductSearchAttributeRequest","type":"object"},"model.ProductSearchAttributeValueRequest":{"properties":{"imageUrl":{"type":"string"},"text":{"type":"string"}},"title":"model.ProductSearchAttributeValueRequest","type":"object"}}},"info":{"contact":{"email":"test@test.com","name":"Test"},"description":"Test Golang Application","title":"Test","version":"1.0"},"openapi":"3.0.3","paths":{"/me":{"get":{"operationId":"someTest","responses":{"200":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/model.ProductSearchAttributeRequest"}}},"description":"successful operation"}},"summary":"Some test","tags":["probe"]}}}}`
 	require.JSONEq(t, expected, string(spec3))
 
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 }
 
@@ -165,7 +164,7 @@ paths:
 `
 	require.YAMLEq(t, expected, string(spec3))
 
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 }
 
