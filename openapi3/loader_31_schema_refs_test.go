@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // TestOAS31_RefSiblingKeyword verifies that sibling keywords alongside $ref are honoured
