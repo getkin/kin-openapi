@@ -847,11 +847,21 @@ func FromV3Schemas(schemas map[string]*openapi3.SchemaRef, components *openapi3.
 
 func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components) (*openapi2.SchemaRef, *openapi2.Parameter) {
 	if ref := schema.Ref; ref != "" {
+		// FromV3RequestBodyFormData (and other recursive call sites in
+		// this file) pass components=nil when recursing into array
+		// items and nested refs. Without guarding, components.Schemas
+		// nil-derefs before we even have a chance to look up the
+		// component, so a ref like '#/components/schemas/CreateEmbeddingRequest'
+		// inside an array schema crashes the converter (#1062).
+		// Treat a missing components table the same as 'the target
+		// schema is not known locally': emit a plain $ref and move on.
 		name := getParameterNameFromNewRef(ref)
-		if val, ok := components.Schemas[name]; ok {
-			if val.Value.Format == "binary" {
-				v2Ref := strings.Replace(ref, "#/components/schemas/", "#/parameters/", 1)
-				return nil, &openapi2.Parameter{Ref: v2Ref}
+		if components != nil {
+			if val, ok := components.Schemas[name]; ok {
+				if val.Value.Format == "binary" {
+					v2Ref := strings.Replace(ref, "#/components/schemas/", "#/parameters/", 1)
+					return nil, &openapi2.Parameter{Ref: v2Ref}
+				}
 			}
 		}
 
