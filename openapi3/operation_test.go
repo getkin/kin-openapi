@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -63,7 +62,7 @@ func TestOperationValidation(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := context.Background()
+			c := t.Context()
 			validationErr := test.input.Validate(c)
 
 			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")

@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -1139,12 +1138,12 @@ func testType(example schemaTypeExample) func(*testing.T) {
 		baseSchema := example.Schema
 		for _, typ := range example.AllValid {
 			schema := baseSchema.WithFormat(typ)
-			err := schema.Validate(context.Background())
+			err := schema.Validate(t.Context())
 			require.NoError(t, err)
 		}
 		for _, typ := range example.AllInvalid {
 			schema := baseSchema.WithFormat(typ)
-			ctx := WithValidationOptions(context.Background(), EnableSchemaFormatValidation())
+			ctx := WithValidationOptions(t.Context(), EnableSchemaFormatValidation())
 			err := schema.Validate(ctx)
 			require.Error(t, err)
 		}
@@ -1434,7 +1433,7 @@ func TestValidationFailsOnInvalidPattern(t *testing.T) {
 		Type:    &Types{"string"},
 	}
 
-	err := schema.Validate(context.Background())
+	err := schema.Validate(t.Context())
 	require.Error(t, err)
 }
 
@@ -1452,7 +1451,7 @@ enum:
 	err := yaml.Unmarshal(data, &schema)
 	require.NoError(t, err)
 
-	err = schema.Validate(context.Background())
+	err = schema.Validate(t.Context())
 	require.NoError(t, err)
 
 	err = schema.VisitJSON(42)

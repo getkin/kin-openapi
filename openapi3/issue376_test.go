@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -50,7 +49,7 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 			Schema: NewSchemaRef("", &Schema{}),
 		},
 	}
-	err := schema.Validate(context.Background())
+	err := schema.Validate(t.Context())
 	require.ErrorContains(t, err, ` to both `)
 
 	schema = &Schema{
@@ -58,7 +57,7 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 			Has: new(false),
 		},
 	}
-	err = schema.Validate(context.Background())
+	err = schema.Validate(t.Context())
 	require.NoError(t, err)
 
 	schema = &Schema{
@@ -66,7 +65,7 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 			Schema: NewSchemaRef("", &Schema{}),
 		},
 	}
-	err = schema.Validate(context.Background())
+	err = schema.Validate(t.Context())
 	require.NoError(t, err)
 }
 

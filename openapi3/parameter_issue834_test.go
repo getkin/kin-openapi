@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +36,7 @@ paths:
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.EqualError(t, err, `invalid paths: invalid path /pets: parameter can't have 'in' value "invalid"`)
 }
 
@@ -76,7 +75,7 @@ paths:
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.EqualError(t, err, `invalid paths: invalid path /pets: parameter "test" content is invalid: parameter content must only contain one entry`)
 }
 
@@ -109,6 +108,6 @@ paths:
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.EqualError(t, err, `invalid paths: invalid path /pets: parameter "test" schema is invalid: parameter must contain exactly one of content and schema`)
 }

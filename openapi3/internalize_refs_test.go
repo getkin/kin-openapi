@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"os"
 	"regexp"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestInternalizeRefs(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	regexpRef := regexp.MustCompile(`"\$ref":`)
 	regexpRefInternal := regexp.MustCompile(`"\$ref":"#`)

@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,7 +42,7 @@ paths:
 	v3, err := v2v3YAML(v2)
 	require.NoError(t, err)
 
-	err = v3.Validate(context.Background())
+	err = v3.Validate(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, []string{"alpaca", "bee", "zebra"}, v3.Paths.Value("/ping").Post.RequestBody.Value.Content.Get("multipart/form-data").Schema.Value.Required)
 }

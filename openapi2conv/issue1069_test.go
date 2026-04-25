@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi2"
@@ -99,7 +98,7 @@ paths:
 		t.Run(tt.name, func(t *testing.T) {
 			v3, err := v2v3YAML([]byte(tt.v2Spec))
 			require.NoError(t, err)
-			err = v3.Validate(context.Background())
+			err = v3.Validate(t.Context())
 			require.NoError(t, err)
 			tt.validate(t, v3)
 		})

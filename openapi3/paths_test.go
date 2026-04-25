@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -85,7 +84,7 @@ paths:
 			doc, err := loader.LoadFromData([]byte(tt.spec[1:]))
 			require.NoError(t, err)
 
-			err = doc.Paths.Validate(context.Background())
+			err = doc.Paths.Validate(t.Context())
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 				return

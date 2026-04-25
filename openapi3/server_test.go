@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -80,7 +79,7 @@ func TestServerValidation(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := context.Background()
+			c := t.Context()
 			validationErr := test.input.Validate(c)
 
 			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
@@ -192,7 +191,7 @@ func TestServersBasePath(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.title, func(t *testing.T) {
-			err := testcase.servers.Validate(context.Background())
+			err := testcase.servers.Validate(t.Context())
 			require.NoError(t, err)
 
 			got, err := testcase.servers.BasePath()

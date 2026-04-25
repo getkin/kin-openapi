@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -117,7 +116,7 @@ func TestWebhooksField(t *testing.T) {
 		}
 
 		// Should validate successfully
-		err := doc.Validate(context.Background())
+		err := doc.Validate(t.Context())
 		require.NoError(t, err)
 	})
 
@@ -134,7 +133,7 @@ func TestWebhooksField(t *testing.T) {
 			},
 		}
 
-		err := doc.Validate(context.Background())
+		err := doc.Validate(t.Context())
 		require.Error(t, err)
 		require.ErrorContains(t, err, "webhook")
 		require.ErrorContains(t, err, "invalidWebhook")
@@ -254,7 +253,7 @@ func TestMigrationScenario(t *testing.T) {
 		require.NotNil(t, doc.Webhooks)
 
 		// Validate the upgraded document
-		err := doc.Validate(context.Background())
+		err := doc.Validate(t.Context())
 		require.NoError(t, err)
 	})
 }

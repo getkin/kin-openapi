@@ -2,7 +2,6 @@ package openapi3_test
 
 import (
 	"bytes"
-	"context"
 	"os"
 	"testing"
 
@@ -13,7 +12,6 @@ import (
 )
 
 func TestMarshalAdditionalProperties(t *testing.T) {
-	ctx := context.Background()
 	data, err := os.ReadFile("testdata/test.openapi.additionalproperties.yml")
 	require.NoError(t, err)
 
@@ -22,7 +20,7 @@ func TestMarshalAdditionalProperties(t *testing.T) {
 	spec, err := loader.LoadFromData(data)
 	require.NoError(t, err)
 
-	err = spec.Validate(ctx)
+	err = spec.Validate(t.Context())
 	require.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -35,6 +33,6 @@ func TestMarshalAdditionalProperties(t *testing.T) {
 	spec2, err := loader.LoadFromData(buf.Bytes())
 	require.NoError(t, err)
 
-	err = spec2.Validate(ctx)
+	err = spec2.Validate(t.Context())
 	require.NoError(t, err)
 }

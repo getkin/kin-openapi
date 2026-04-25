@@ -60,7 +60,7 @@ func TestIssue949(t *testing.T) {
 	doc, err := loader.LoadFromData([]byte(testSchema))
 	require.NoError(t, err)
 
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 
 	router, err := gorillamux.NewRouter(doc)

@@ -2,7 +2,6 @@ package openapi3filter_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -107,7 +106,7 @@ baz,qux,quux`,
 		require.NoError(t, err)
 
 		if err = openapi3filter.ValidateRequestBody(
-			context.Background(),
+			req.Context(),
 			&openapi3filter.RequestValidationInput{
 				Request:    req,
 				PathParams: pathParams,

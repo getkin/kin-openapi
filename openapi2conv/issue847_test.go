@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,7 +31,7 @@ paths:
 	v3, err := v2v3YAML(v2)
 	require.NoError(t, err)
 
-	err = v3.Validate(context.Background())
+	err = v3.Validate(t.Context())
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"file"}, v3.Paths.Value("/ping").Post.RequestBody.Value.Content["multipart/form-data"].Schema.Value.Required)

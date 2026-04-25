@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -57,7 +56,7 @@ func TestIssue979(t *testing.T) {
 
 	doc3, err := ToV3(&doc2)
 	require.NoError(t, err)
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 
 	require.Equal(t, &openapi3.Types{"string"}, doc3.Paths.Value("/foo").Get.Responses.Value("200").Value.Content.Get("application/json").Schema.Value.Type)

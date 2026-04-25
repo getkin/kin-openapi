@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -43,7 +42,7 @@ func TestOneOfErrorPreserved(t *testing.T) {
 	s := NewSchema()
 	err := s.UnmarshalJSON([]byte(schema))
 	require.NoError(t, err)
-	err = s.Validate(context.Background())
+	err = s.Validate(t.Context())
 	require.NoError(t, err)
 
 	obj := make(map[string]any)

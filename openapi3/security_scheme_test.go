@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,7 +19,7 @@ func TestSecuritySchemaExample(t *testing.T) {
 			err := ss.UnmarshalJSON(example.raw)
 			require.NoError(t, err)
 
-			err = ss.Validate(context.Background())
+			err = ss.Validate(t.Context())
 			if example.valid {
 				require.NoError(t, err)
 			} else {

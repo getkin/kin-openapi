@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -9,7 +8,7 @@ import (
 )
 
 func TestSchemaValidate31SubSchemas(t *testing.T) {
-	ctx := openapi3.WithValidationOptions(context.Background(), openapi3.IsOpenAPI31OrLater())
+	ctx := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
 
 	// Helper: a schema with an invalid nested schema (pattern with bad regex)
 	invalidSchema := &openapi3.Schema{

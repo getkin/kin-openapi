@@ -1,7 +1,6 @@
 package openapi2conv
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -81,6 +80,6 @@ func TestIssue1049(t *testing.T) {
 	const expected = `{"components":{"schemas":{"BaseDictResp":{"description":"BaseDictResp description","properties":{"key":{"description":"key of map","type":"string"},"value":{"description":"value of map","type":"string"}},"title":"BaseDictResp","type":"object"},"ResponseOfMap":{"properties":{"data":{"additionalProperties":{"items":{"$ref":"#/components/schemas/BaseDictResp"},"type":"array"},"description":"response data","type":"object"}},"title":"ResponseOfMap","type":"object"}}},"info":{"description":"Test for additionalProperties","title":"API Test","version":"v1"},"openapi":"3.0.3","paths":{"/map":{"post":{"description":"api test description","operationId":"apiTestUsingPOST","responses":{"200":{"content":{"*/*":{"schema":{"$ref":"#/components/schemas/ResponseOfMap"}}},"description":"OK"}},"summary":"api test summary"}}},"servers":[{"url":"https://Test/"}]}`
 	require.JSONEq(t, expected, string(spec3))
 
-	err = doc3.Validate(context.Background())
+	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
 }

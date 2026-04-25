@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -19,7 +18,7 @@ func TestIssue430(t *testing.T) {
 	delete(SchemaStringFormats, "ipv4")
 	delete(SchemaStringFormats, "ipv6")
 
-	err := schema.Validate(context.Background())
+	err := schema.Validate(t.Context())
 	require.NoError(t, err)
 
 	data := map[string]bool{
