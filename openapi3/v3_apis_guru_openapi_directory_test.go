@@ -12,8 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 var goldens = filepath.Join("testdata", "apis_guru_openapi_directory")
