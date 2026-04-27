@@ -1,1 +1,17 @@
-invalid paths: invalid path /projects/{projectId}/images/regions: invalid operation DELETE: Successful DeleteImageRegions request: Error at "/0": string doesn't match the format "uuid": string doesn't match pattern "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"
+invalid paths: invalid path /projects/{projectId}/images/suggested: invalid operation POST: example Successful QuerySuggestedImages request: Error at "/token/sortBy": value is not one of the allowed values ["UncertaintyAscending","UncertaintyDescending"]
+Schema:
+  {
+    "description": "OrderBy. Ordering mechanism for your results.",
+    "enum": [
+      "UncertaintyAscending",
+      "UncertaintyDescending"
+    ],
+    "type": "string",
+    "x-ms-enum": {
+      "modelAsString": true,
+      "name": "SortBy"
+    }
+  }
+
+Value:
+  "Newest"

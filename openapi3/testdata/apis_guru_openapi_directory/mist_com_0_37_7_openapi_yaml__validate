@@ -1,1 +1,1 @@
-invalid components: schema "asset_filter": invalid example: string doesn't match the format "uuid": string doesn't match pattern "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"
+invalid paths: invalid path /api/v1/sites/{site_id}/devices/{device_id}: invalid operation PUT: invalid example: input matches more than one oneOf schemas
