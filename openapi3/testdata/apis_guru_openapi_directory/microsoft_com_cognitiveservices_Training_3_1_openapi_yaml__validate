@@ -1,0 +1,17 @@
+invalid paths: invalid path /projects/{projectId}/images/suggested: invalid operation POST: example Successful QuerySuggestedImages request: Error at "/token/sortBy": value is not one of the allowed values ["UncertaintyAscending","UncertaintyDescending"]
+Schema:
+  {
+    "description": "OrderBy. Ordering mechanism for your results.",
+    "enum": [
+      "UncertaintyAscending",
+      "UncertaintyDescending"
+    ],
+    "type": "string",
+    "x-ms-enum": {
+      "modelAsString": true,
+      "name": "SortBy"
+    }
+  }
+
+Value:
+  "Newest"
