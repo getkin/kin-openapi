@@ -313,6 +313,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.137.0
+* Reinstated `openapi3.*Ptr(..)` funcs for Go 1.25
+
 ### v0.136.0
 * `openapi3.Schema.ExclusiveMin` and `openapi3.Schema.ExclusiveMax` fields changed from `bool` to `ExclusiveBound` (a union type holding `*bool` for OpenAPI 3.0 or `*float64` for OpenAPI 3.1).
 * `openapi3.Schema.PrefixItems` field changed from `[]*SchemaRef` to `SchemaRefs`.

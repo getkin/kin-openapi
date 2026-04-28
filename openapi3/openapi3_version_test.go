@@ -25,7 +25,7 @@ func TestWebhooksField(t *testing.T) {
 						Responses: openapi3.NewResponses(
 							openapi3.WithStatus(200, &openapi3.ResponseRef{
 								Value: &openapi3.Response{
-									Description: new("Success"),
+									Description: openapi3.Ptr("Success"),
 								},
 							}),
 						),
@@ -107,7 +107,7 @@ func TestWebhooksField(t *testing.T) {
 						Responses: openapi3.NewResponses(
 							openapi3.WithStatus(200, &openapi3.ResponseRef{
 								Value: &openapi3.Response{
-									Description: new("Success"),
+									Description: openapi3.Ptr("Success"),
 								},
 							}),
 						),
@@ -199,7 +199,7 @@ func TestVersionBasedBehavior(t *testing.T) {
 						Responses: openapi3.NewResponses(
 							openapi3.WithStatus(200, &openapi3.ResponseRef{
 								Value: &openapi3.Response{
-									Description: new("OK"),
+									Description: openapi3.Ptr("OK"),
 								},
 							}),
 						),
@@ -242,7 +242,7 @@ func TestMigrationScenario(t *testing.T) {
 					Responses: openapi3.NewResponses(
 						openapi3.WithStatus(200, &openapi3.ResponseRef{
 							Value: &openapi3.Response{
-								Description: new("Processed"),
+								Description: openapi3.Ptr("Processed"),
 							},
 						}),
 					),

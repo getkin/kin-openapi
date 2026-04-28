@@ -45,7 +45,7 @@ info:
 func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 	schema := &Schema{
 		AdditionalProperties: AdditionalProperties{
-			Has:    new(false),
+			Has:    Ptr(false),
 			Schema: NewSchemaRef("", &Schema{}),
 		},
 	}
@@ -54,7 +54,7 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 
 	schema = &Schema{
 		AdditionalProperties: AdditionalProperties{
-			Has: new(false),
+			Has: Ptr(false),
 		},
 	}
 	err = schema.Validate(t.Context())
