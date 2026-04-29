@@ -48,28 +48,84 @@ paths: {}
 	assert.Equal(t, "3.1.1", doc.OpenAPI)
 }
 
-func TestUpgradeTo31_CustomTargetVersion(t *testing.T) {
+func TestUpgrade_CustomTarget(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
 paths: {}
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31WithOptions(doc, openapi3conv.UpgradeOptions{
-		TargetVersion: "3.1.0",
+	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
+		Target: "3.1.0",
 	}))
 	assert.Equal(t, "3.1.0", doc.OpenAPI)
 }
 
-func TestUpgradeTo31_SkipVersionBump(t *testing.T) {
+func TestUpgrade_TargetIs32(t *testing.T) {
+	// 3.2 is purely additive over 3.1 — no schema-level rewrites between
+	// them. Upgrade applies the 3.0 → 3.1 rewrites and writes the 3.2
+	// version string. The resulting doc is canonical and version-correct.
+	doc := loadV30(t, `
+openapi: 3.0.3
+info: {title: t, version: '1'}
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: string
+      nullable: true
+`)
+	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
+		Target: "3.2.0",
+	}))
+	assert.Equal(t, "3.2.0", doc.OpenAPI)
+	assert.Equal(t, openapi3.Types{"string", "null"}, *doc.Components.Schemas["Pet"].Value.Type)
+}
+
+func TestUpgrade_SkipVersionBump(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
 paths: {}
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31WithOptions(doc, openapi3conv.UpgradeOptions{
+	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
 		SkipVersionBump: true,
 	}))
 	assert.Equal(t, "3.0.3", doc.OpenAPI)
+}
+
+func TestUpgrade_RejectsCrossMajor(t *testing.T) {
+	// Cross-major upgrades belong in a dedicated package (mirror of
+	// openapi2conv). Pre-pin that boundary with an explicit error so any
+	// future 3 → 4 transition lands somewhere predictable.
+	doc := loadV30(t, `
+openapi: 3.0.3
+info: {title: t, version: '1'}
+paths: {}
+`)
+	err := openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{Target: "4.0.0"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cross-major")
+}
+
+func TestUpgrade_RejectsDowngrade(t *testing.T) {
+	doc := loadV30(t, `
+openapi: 3.1.1
+info: {title: t, version: '1'}
+paths: {}
+`)
+	err := openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{Target: "3.0.3"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "downgrade")
+}
+
+func TestUpgrade_RejectsInvalidVersion(t *testing.T) {
+	doc := loadV30(t, `
+openapi: 3.0.3
+info: {title: t, version: '1'}
+paths: {}
+`)
+	err := openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{Target: "not-a-version"})
+	require.Error(t, err)
 }
 
 // ---------------------------------------------------------------------------
@@ -400,7 +456,7 @@ func TestUpgradeTo31_CycleSafe(t *testing.T) {
 // Verbose logging
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_VerboseLogsRewrites(t *testing.T) {
+func TestUpgrade_VerboseLogsRewrites(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -413,7 +469,7 @@ components:
       example: fido
 `)
 	var buf bytes.Buffer
-	require.NoError(t, openapi3conv.UpgradeTo31WithOptions(doc, openapi3conv.UpgradeOptions{
+	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
 		Verbose: &buf,
 	}))
 	out := buf.String()

@@ -3,64 +3,93 @@ package openapi3conv
 import (
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // DefaultTargetVersion is the OpenAPI version string written when bumping the
-// document version. Set to the current 3.1 patch release; the OAI upgrade
-// guide uses the same.
+// document version. The OAI upgrade guide uses the current 3.1 patch release.
 const DefaultTargetVersion = "3.1.1"
 
 // UpgradeOptions controls per-pass behaviour.
 type UpgradeOptions struct {
+	// Target is the version string written when SkipVersionBump is false.
+	// Defaults to DefaultTargetVersion. Currently any 3.x version is accepted;
+	// representational rewrites only exist for 3.0 → 3.1, since 3.1 → 3.2 is
+	// purely additive (no breaking changes). Future minor versions that
+	// introduce representational changes can extend the dispatch in Upgrade.
+	Target string
+
 	// SkipVersionBump leaves doc.OpenAPI unchanged. Useful for consumers
 	// that want representations canonicalized while preserving the stated
 	// version (e.g., a pre-diff normalization step).
 	SkipVersionBump bool
 
-	// TargetVersion is the version string written when SkipVersionBump is
-	// false. Defaults to DefaultTargetVersion.
-	TargetVersion string
-
 	// Verbose, if non-nil, receives one line per rewrite for debugging.
 	Verbose io.Writer
 }
 
-// UpgradeTo31 rewrites every 3.0-form construct in doc into its 3.1 form
-// in place: bumps the version, replaces nullable: true with type arrays,
-// replaces boolean exclusiveMinimum/exclusiveMaximum with numeric form,
-// replaces example with examples. Idempotent on already-3.1 documents.
+// Upgrade canonicalizes doc into the representation of opts.Target in place.
 //
-// Returns an error only if the document is structurally invalid (e.g., nil
-// document).
-func UpgradeTo31(doc *openapi3.T) error {
-	return UpgradeTo31WithOptions(doc, UpgradeOptions{})
-}
-
-// UpgradeTo31WithOptions is the variant with explicit options.
-func UpgradeTo31WithOptions(doc *openapi3.T, opts UpgradeOptions) error {
+// The schema-level rewrites the walker applies (nullable → type array, boolean
+// exclusive bounds → numeric, example → examples) are idempotent and
+// convergent on the 3.1+ form. Calling Upgrade on an already-3.1 (or 3.2)
+// document is a no-op aside from the version bump.
+//
+// Cross-major upgrades are not supported. OpenAPI 4 (or any future major
+// version) will require a separate package mirroring the openapi2conv
+// pattern (which converts Swagger 2.0 documents to OpenAPI 3.0). Returning
+// an error here keeps that boundary explicit.
+func Upgrade(doc *openapi3.T, opts UpgradeOptions) error {
 	if doc == nil {
 		return fmt.Errorf("openapi3conv: doc is nil")
 	}
 
-	target := opts.TargetVersion
+	target := opts.Target
 	if target == "" {
 		target = DefaultTargetVersion
+	}
+
+	srcMajor, srcMinor, err := parseVersion(doc.OpenAPI)
+	if err != nil {
+		return fmt.Errorf("openapi3conv: invalid doc.OpenAPI %q: %w", doc.OpenAPI, err)
+	}
+	tgtMajor, tgtMinor, err := parseVersion(target)
+	if err != nil {
+		return fmt.Errorf("openapi3conv: invalid Target %q: %w", target, err)
+	}
+
+	if srcMajor != tgtMajor {
+		return fmt.Errorf(
+			"openapi3conv: cross-major upgrade not supported (%s -> %s); "+
+				"a separate package is the right home for cross-major conversions "+
+				"(see openapi2conv for the existing 2 -> 3 pattern)",
+			doc.OpenAPI, target,
+		)
+	}
+	if tgtMinor < srcMinor {
+		return fmt.Errorf("openapi3conv: cannot downgrade %s to %s", doc.OpenAPI, target)
 	}
 
 	w := &walker{
 		visited: map[*openapi3.Schema]struct{}{},
 		opts:    opts,
 	}
+	w.walkDoc(doc)
 
 	if !opts.SkipVersionBump && doc.OpenAPI != target {
 		w.logf("openapi: %s -> %s", doc.OpenAPI, target)
 		doc.OpenAPI = target
 	}
-
-	w.walkDoc(doc)
 	return nil
+}
+
+// UpgradeTo31 is a convenience wrapper for Upgrade with Target = "3.1.1".
+// Idempotent on already-3.1 documents.
+func UpgradeTo31(doc *openapi3.T) error {
+	return Upgrade(doc, UpgradeOptions{})
 }
 
 // UpgradeSchema canonicalizes a single schema (and its descendants) in place.
@@ -72,6 +101,24 @@ func UpgradeSchema(s *openapi3.Schema) {
 	}
 	w := &walker{visited: map[*openapi3.Schema]struct{}{}}
 	w.walkSchema(s)
+}
+
+// parseVersion splits an OpenAPI version string ("3.0.3", "3.1.1", "3.2.0")
+// into major and minor integers. Patch and pre-release suffixes are ignored.
+func parseVersion(v string) (major, minor int, err error) {
+	parts := strings.SplitN(v, ".", 3)
+	if len(parts) < 2 {
+		return 0, 0, fmt.Errorf("expected MAJOR.MINOR[.PATCH], got %q", v)
+	}
+	major, err = strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid major %q: %w", parts[0], err)
+	}
+	minor, err = strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid minor %q: %w", parts[1], err)
+	}
+	return major, minor, nil
 }
 
 // walker carries cycle-tracking state and verbose output across the schema
