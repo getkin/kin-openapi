@@ -667,3 +667,34 @@ func TestExportComponentSchemasForTimeProp(t *testing.T) {
 		return !strings.Contains(string(schema), "#/components/schemas/Time")
 	}, "Expected no schema for time.Time property but got one: %s", schema)
 }
+
+// TestExportComponentSchemasNoNullableOnBody verifies that a struct reached
+// via *T (e.g. as the Data field of `Response[*Channel]`) does not pollute
+// its exported component definition with `nullable: true`. The component
+// body is shared by every reference site, so a nullable component breaks
+// codegen tools (e.g. Orval emits `interface Channel {...} | null`).
+func TestExportComponentSchemasNoNullableOnBody(t *testing.T) {
+	type Channel struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	}
+	type Wrapper struct {
+		Data *Channel `json:"data"`
+	}
+
+	schemas := make(openapi3.Schemas)
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true,
+		}),
+	)
+
+	_, err := g.NewSchemaRefForValue(&Wrapper{}, schemas)
+	require.NoError(t, err)
+
+	channel, ok := schemas["Channel"]
+	require.True(t, ok, "Channel must be registered as a component")
+	require.NotNil(t, channel.Value)
+	assert.False(t, channel.Value.Nullable, "exported component body must not carry the nullable flag from a *T reference site")
+}
