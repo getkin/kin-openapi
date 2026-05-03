@@ -698,3 +698,36 @@ func TestExportComponentSchemasNoNullableOnBody(t *testing.T) {
 	require.NotNil(t, channel.Value)
 	assert.False(t, channel.Value.Nullable, "exported component body must not carry the nullable flag from a *T reference site")
 }
+
+// TestExportComponentSchemasSkipsAnonymousType verifies that anonymous struct
+// types (whose reflect.Type.Name() is "") are inlined rather than registered
+// as components, so the resulting spec has no "#/components/schemas/" entry
+// or ref (which would violate the OpenAPI component-key pattern).
+func TestExportComponentSchemasSkipsAnonymousType(t *testing.T) {
+	type Outer struct {
+		Inline struct {
+			X int
+		}
+	}
+
+	schemas := make(openapi3.Schemas)
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true,
+			ExportTopLevelSchema:   true,
+		}),
+	)
+
+	_, err := g.NewSchemaRefForValue(&Outer{}, schemas)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, schemas, "outer named struct should still be registered as a component")
+
+	_, hasEmptyKey := schemas[""]
+	assert.False(t, hasEmptyKey, "anonymous nested struct should not be registered as a component")
+
+	for key := range schemas {
+		assert.NotEmpty(t, key, "every component schema must have a non-empty key")
+	}
+}
