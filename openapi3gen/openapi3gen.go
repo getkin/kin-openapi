@@ -435,6 +435,15 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 
 		typeName := g.generateTypeName(t)
 
+		// Anonymous types (e.g. `struct{...}` literals) have an empty name.
+		// Registering them as a component would produce
+		// "#/components/schemas/" which violates the OpenAPI spec
+		// (component keys must match ^[a-zA-Z0-9._-]+$). Inline the
+		// schema instead so downstream codegen tools don't choke.
+		if typeName == "" {
+			return openapi3.NewSchemaRef("", schema), nil
+		}
+
 		g.componentSchemaRefs[typeName] = struct{}{}
 		return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
 	}
