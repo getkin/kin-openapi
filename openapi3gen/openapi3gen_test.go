@@ -667,3 +667,33 @@ func TestExportComponentSchemasForTimeProp(t *testing.T) {
 		return !strings.Contains(string(schema), "#/components/schemas/Time")
 	}, "Expected no schema for time.Time property but got one: %s", schema)
 }
+
+// TestExportComponentSchemasSkipsAnonymousType verifies that anonymous struct
+// types (whose reflect.Type.Name() is "") are inlined rather than registered
+// as components, so the resulting spec has no "#/components/schemas/" entry
+// or ref (which would violate the OpenAPI component-key pattern).
+func TestExportComponentSchemasSkipsAnonymousType(t *testing.T) {
+	type Outer struct {
+		Inline struct {
+			X int
+		}
+	}
+
+	schemas := make(openapi3.Schemas)
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.CreateComponentSchemas(openapi3gen.ExportComponentSchemasOptions{
+			ExportComponentSchemas: true,
+		}),
+	)
+
+	_, err := g.NewSchemaRefForValue(&Outer{}, schemas)
+	require.NoError(t, err)
+
+	_, hasEmptyKey := schemas[""]
+	assert.False(t, hasEmptyKey, "anonymous nested struct should not be registered as a component")
+
+	for key := range schemas {
+		assert.NotEmpty(t, key, "every component schema must have a non-empty key")
+	}
+}
