@@ -435,6 +435,14 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 
 		typeName := g.generateTypeName(t)
 
+		// The body becomes the canonical component definition shared by every
+		// $ref site. The Nullable flag, set above when the type was reached
+		// via *T, applies to one specific field, not to the type itself --
+		// keeping it here would emit a polluted component like
+		// `"Foo": {"nullable": true, "type": "object", ...}` and break codegen
+		// tools (e.g. Orval generates `interface Foo {...} | null`).
+		schema.Nullable = false
+
 		g.componentSchemaRefs[typeName] = struct{}{}
 		return openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", typeName), schema), nil
 	}
