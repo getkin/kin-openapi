@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"maps"
 )
 
@@ -102,11 +101,17 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error 
 	}
 
 	if info.Version == "" {
-		return errors.New("value of version must be a non-empty string")
+		return &ValidationError{
+			Code:    "info-version-required",
+			Message: "value of version must be a non-empty string",
+		}
 	}
 
 	if info.Title == "" {
-		return errors.New("value of title must be a non-empty string")
+		return &ValidationError{
+			Code:    "info-title-required",
+			Message: "value of title must be a non-empty string",
+		}
 	}
 
 	return validateExtensions(ctx, info.Extensions)
