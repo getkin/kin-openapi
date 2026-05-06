@@ -81,18 +81,6 @@ components:
 	assert.Equal(t, openapi3.Types{"string", "null"}, *doc.Components.Schemas["Pet"].Value.Type)
 }
 
-func TestUpgrade_SkipVersionBump(t *testing.T) {
-	doc := loadV30(t, `
-openapi: 3.0.3
-info: {title: t, version: '1'}
-paths: {}
-`)
-	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
-		SkipVersionBump: true,
-	}))
-	assert.Equal(t, "3.0.3", doc.OpenAPI)
-}
-
 func TestUpgrade_RejectsCrossMajor(t *testing.T) {
 	// Cross-major upgrades belong in a dedicated package (mirror of
 	// openapi2conv). Pre-pin that boundary with an explicit error so any

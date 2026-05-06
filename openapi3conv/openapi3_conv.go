@@ -3,6 +3,7 @@ package openapi3conv
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -15,17 +16,13 @@ const DefaultTargetVersion = "3.1.1"
 
 // UpgradeOptions controls per-pass behaviour.
 type UpgradeOptions struct {
-	// Target is the version string written when SkipVersionBump is false.
-	// Defaults to DefaultTargetVersion. Currently any 3.x version is accepted;
-	// representational rewrites only exist for 3.0 → 3.1, since 3.1 → 3.2 is
-	// purely additive (no breaking changes). Future minor versions that
-	// introduce representational changes can extend the dispatch in Upgrade.
+	// Target is the version string written into doc.OpenAPI after the
+	// canonicalization pass. Defaults to DefaultTargetVersion. Currently any
+	// 3.x version is accepted; representational rewrites only exist for
+	// 3.0 → 3.1, since 3.1 → 3.2 is purely additive (no breaking changes).
+	// Future minor versions that introduce representational changes can
+	// extend the dispatch in Upgrade.
 	Target string
-
-	// SkipVersionBump leaves doc.OpenAPI unchanged. Useful for consumers
-	// that want representations canonicalized while preserving the stated
-	// version (e.g., a pre-diff normalization step).
-	SkipVersionBump bool
 
 	// Verbose, if non-nil, receives one line per rewrite for debugging.
 	Verbose io.Writer
@@ -79,7 +76,7 @@ func Upgrade(doc *openapi3.T, opts UpgradeOptions) error {
 	}
 	w.walkDoc(doc)
 
-	if !opts.SkipVersionBump && doc.OpenAPI != target {
+	if doc.OpenAPI != target {
 		w.logf("openapi: %s -> %s", doc.OpenAPI, target)
 		doc.OpenAPI = target
 	}
@@ -132,7 +129,8 @@ func (w *walker) logf(format string, args ...any) {
 	if w.opts.Verbose == nil {
 		return
 	}
-	fmt.Fprintf(w.opts.Verbose, format+"\n", args...)
+	fmt.Fprintf(w.opts.Verbose, format, args...)
+	fmt.Fprintln(w.opts.Verbose)
 }
 
 // walkDoc visits every Schema reachable from the document root.
@@ -178,10 +176,8 @@ func (w *walker) walkDoc(doc *openapi3.T) {
 		}
 	}
 
-	if doc.Paths != nil {
-		for _, pathItem := range doc.Paths.Map() {
-			w.walkPathItem(pathItem)
-		}
+	for _, pathItem := range doc.Paths.Map() {
+		w.walkPathItem(pathItem)
 	}
 
 	for _, pathItem := range doc.Webhooks {
@@ -308,16 +304,8 @@ func (w *walker) rewriteNullable(s *openapi3.Schema) {
 		return
 	}
 	if s.Type != nil && len(*s.Type) > 0 {
-		alreadyHasNull := false
-		for _, t := range *s.Type {
-			if t == openapi3.TypeNull {
-				alreadyHasNull = true
-				break
-			}
-		}
-		if !alreadyHasNull {
-			newTypes := append(openapi3.Types(nil), *s.Type...)
-			newTypes = append(newTypes, openapi3.TypeNull)
+		if !slices.Contains(*s.Type, openapi3.TypeNull) {
+			newTypes := append(*s.Type, openapi3.TypeNull)
 			s.Type = &newTypes
 		}
 	}
