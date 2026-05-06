@@ -72,7 +72,7 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 	}
 
 	if license.Name == "" {
-		return errors.New("value of license name must be a non-empty string")
+		return newLicenseNameRequired()
 	}
 
 	if license.URL != "" && license.Identifier != "" {

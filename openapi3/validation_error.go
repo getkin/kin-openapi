@@ -50,9 +50,9 @@ func asValidationError(target any, ve *ValidationError) bool {
 // ---------------------------------------------------------------------
 
 // RequiredFieldError clusters "X must be a non-empty value" failures
-// across the spec (e.g. info.title, info.version, license.name,
-// the openapi version string). The cluster carries the field path and
-// wraps the per-site leaf so callers can match either:
+// across the spec (info.title, info.version, license.name, the openapi
+// version string, server.url). Carries the field path, wraps the
+// per-site leaf so callers can match either:
 //
 //	var rfe *RequiredFieldError
 //	if errors.As(err, &rfe) { /* knows the field */ }
@@ -61,7 +61,7 @@ func asValidationError(target any, ve *ValidationError) bool {
 //	if errors.As(err, &ivr) { /* knows it's exactly info.version */ }
 type RequiredFieldError struct {
 	// Field is the JSON-pointer-style path of the required field
-	// (e.g. "info.version", "license.name").
+	// (e.g. "info.version", "license.name", "openapi", "server.url").
 	Field string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
@@ -74,7 +74,8 @@ func (e *RequiredFieldError) Unwrap() error { return e.Cause }
 // failures (3.1+ keywords used in 3.0 documents). Carries the field
 // name and minimum version, wraps the per-site leaf.
 type FieldVersionMismatchError struct {
-	// Field is the field name flagged (e.g. "summary", "identifier").
+	// Field is the field name flagged (e.g. "summary", "identifier",
+	// "$defs", "prefixItems", "contains", ...).
 	Field string
 	// MinVersion is the minimum OpenAPI version that allows the field
 	// (e.g. "3.1").
@@ -90,35 +91,221 @@ func (e *FieldVersionMismatchError) Unwrap() error { return e.Cause }
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
 // returned from a validator.
+//
+// Naming convention: <Subject><Action> for required fields,
+// <Subject>FieldFor31Plus for 3.1-only fields used in 3.0 docs.
+// Subjects use Go-identifier-friendly transliterations of OAS field
+// paths ("$defs" -> "Defs", "$dynamicAnchor" -> "DynamicAnchor").
 // ---------------------------------------------------------------------
 
-// InfoVersionRequired flags an empty info.version (RequiredFieldError cluster).
+// RequiredFieldError leaves.
+
 type InfoVersionRequired struct{ ValidationError }
 
 func (e *InfoVersionRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
-// InfoTitleRequired flags an empty info.title (RequiredFieldError cluster).
 type InfoTitleRequired struct{ ValidationError }
 
 func (e *InfoTitleRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
-// LicenseIdentifierFieldFor31Plus flags use of license.identifier in
-// an OAS 3.0 document (FieldVersionMismatchError cluster).
+type LicenseNameRequired struct{ ValidationError }
+
+func (e *LicenseNameRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OpenAPIVersionRequired struct{ ValidationError }
+
+func (e *OpenAPIVersionRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ServerURLRequired struct{ ValidationError }
+
+func (e *ServerURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// FieldVersionMismatchError leaves — non-schema fields.
+
+type InfoSummaryFieldFor31Plus struct{ ValidationError }
+
+func (e *InfoSummaryFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 type LicenseIdentifierFieldFor31Plus struct{ ValidationError }
 
 func (e *LicenseIdentifierFieldFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
-// InfoSummaryFieldFor31Plus flags use of info.summary in an OAS 3.0
-// document (FieldVersionMismatchError cluster).
-type InfoSummaryFieldFor31Plus struct{ ValidationError }
+type WebhooksFieldFor31Plus struct{ ValidationError }
 
-func (e *InfoSummaryFieldFor31Plus) As(target any) bool {
+func (e *WebhooksFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type JSONSchemaDialectFieldFor31Plus struct{ ValidationError }
+
+func (e *JSONSchemaDialectFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// FieldVersionMismatchError leaves — schema fields (rejected by
+// schema.go's reject() helper when a 3.0 doc uses 3.1 keywords).
+
+type ConstFieldFor31Plus struct{ ValidationError }
+
+func (e *ConstFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ExamplesFieldFor31Plus struct{ ValidationError }
+
+func (e *ExamplesFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type PrefixItemsFieldFor31Plus struct{ ValidationError }
+
+func (e *PrefixItemsFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ContainsFieldFor31Plus struct{ ValidationError }
+
+func (e *ContainsFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type MinContainsFieldFor31Plus struct{ ValidationError }
+
+func (e *MinContainsFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type MaxContainsFieldFor31Plus struct{ ValidationError }
+
+func (e *MaxContainsFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type PatternPropertiesFieldFor31Plus struct{ ValidationError }
+
+func (e *PatternPropertiesFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type DependentSchemasFieldFor31Plus struct{ ValidationError }
+
+func (e *DependentSchemasFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type PropertyNamesFieldFor31Plus struct{ ValidationError }
+
+func (e *PropertyNamesFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type UnevaluatedItemsFieldFor31Plus struct{ ValidationError }
+
+func (e *UnevaluatedItemsFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type UnevaluatedPropertiesFieldFor31Plus struct{ ValidationError }
+
+func (e *UnevaluatedPropertiesFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type IfFieldFor31Plus struct{ ValidationError }
+
+func (e *IfFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ThenFieldFor31Plus struct{ ValidationError }
+
+func (e *ThenFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ElseFieldFor31Plus struct{ ValidationError }
+
+func (e *ElseFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type DependentRequiredFieldFor31Plus struct{ ValidationError }
+
+func (e *DependentRequiredFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ContentEncodingFieldFor31Plus struct{ ValidationError }
+
+func (e *ContentEncodingFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ContentMediaTypeFieldFor31Plus struct{ ValidationError }
+
+func (e *ContentMediaTypeFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ContentSchemaFieldFor31Plus struct{ ValidationError }
+
+func (e *ContentSchemaFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type DefsFieldFor31Plus struct{ ValidationError }
+
+func (e *DefsFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SchemaFieldFor31Plus struct{ ValidationError }
+
+func (e *SchemaFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type CommentFieldFor31Plus struct{ ValidationError }
+
+func (e *CommentFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type IDFieldFor31Plus struct{ ValidationError }
+
+func (e *IDFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type AnchorFieldFor31Plus struct{ ValidationError }
+
+func (e *AnchorFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type DynamicAnchorFieldFor31Plus struct{ ValidationError }
+
+func (e *DynamicAnchorFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type DynamicRefFieldFor31Plus struct{ ValidationError }
+
+func (e *DynamicRefFieldFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -128,37 +315,89 @@ func (e *InfoSummaryFieldFor31Plus) As(target any) bool {
 // Unwrap and the base via the leaf's As method).
 // ---------------------------------------------------------------------
 
+func newRequiredField(field, message string, leaf error) error {
+	return &RequiredFieldError{Field: field, Cause: leaf}
+}
+
 func newInfoVersionRequired() error {
 	const msg = "value of version must be a non-empty string"
-	return &RequiredFieldError{
-		Field: "info.version",
-		Cause: &InfoVersionRequired{ValidationError{Message: msg}},
-	}
+	return newRequiredField("info.version", msg,
+		&InfoVersionRequired{ValidationError{Message: msg}})
 }
 
 func newInfoTitleRequired() error {
 	const msg = "value of title must be a non-empty string"
-	return &RequiredFieldError{
-		Field: "info.title",
-		Cause: &InfoTitleRequired{ValidationError{Message: msg}},
-	}
+	return newRequiredField("info.title", msg,
+		&InfoTitleRequired{ValidationError{Message: msg}})
+}
+
+func newLicenseNameRequired() error {
+	const msg = "value of license name must be a non-empty string"
+	return newRequiredField("license.name", msg,
+		&LicenseNameRequired{ValidationError{Message: msg}})
+}
+
+func newOpenAPIVersionRequired() error {
+	const msg = "value of openapi must be a non-empty string"
+	return newRequiredField("openapi", msg,
+		&OpenAPIVersionRequired{ValidationError{Message: msg}})
+}
+
+func newServerURLRequired() error {
+	const msg = "value of url must be a non-empty string"
+	return newRequiredField("server.url", msg,
+		&ServerURLRequired{ValidationError{Message: msg}})
+}
+
+// fieldFor31PlusLeaves maps field names (as passed to errFieldFor31Plus)
+// to their typed leaf constructors. Any field not in the map falls back
+// to a bare *ValidationError, so callers still get the cluster + base
+// layers — only the per-leaf type is missing.
+var fieldFor31PlusLeaves = map[string]func(msg string) error{
+	// non-schema fields
+	"summary":           func(m string) error { return &InfoSummaryFieldFor31Plus{ValidationError{Message: m}} },
+	"identifier":        func(m string) error { return &LicenseIdentifierFieldFor31Plus{ValidationError{Message: m}} },
+	"webhooks":          func(m string) error { return &WebhooksFieldFor31Plus{ValidationError{Message: m}} },
+	"jsonschemadialect": func(m string) error { return &JSONSchemaDialectFieldFor31Plus{ValidationError{Message: m}} },
+	// schema fields rejected by schema.go's reject() helper
+	"const":                 func(m string) error { return &ConstFieldFor31Plus{ValidationError{Message: m}} },
+	"examples":              func(m string) error { return &ExamplesFieldFor31Plus{ValidationError{Message: m}} },
+	"prefixItems":           func(m string) error { return &PrefixItemsFieldFor31Plus{ValidationError{Message: m}} },
+	"contains":              func(m string) error { return &ContainsFieldFor31Plus{ValidationError{Message: m}} },
+	"minContains":           func(m string) error { return &MinContainsFieldFor31Plus{ValidationError{Message: m}} },
+	"maxContains":           func(m string) error { return &MaxContainsFieldFor31Plus{ValidationError{Message: m}} },
+	"patternProperties":     func(m string) error { return &PatternPropertiesFieldFor31Plus{ValidationError{Message: m}} },
+	"dependentSchemas":      func(m string) error { return &DependentSchemasFieldFor31Plus{ValidationError{Message: m}} },
+	"propertyNames":         func(m string) error { return &PropertyNamesFieldFor31Plus{ValidationError{Message: m}} },
+	"unevaluatedItems":      func(m string) error { return &UnevaluatedItemsFieldFor31Plus{ValidationError{Message: m}} },
+	"unevaluatedProperties": func(m string) error { return &UnevaluatedPropertiesFieldFor31Plus{ValidationError{Message: m}} },
+	"if":                    func(m string) error { return &IfFieldFor31Plus{ValidationError{Message: m}} },
+	"then":                  func(m string) error { return &ThenFieldFor31Plus{ValidationError{Message: m}} },
+	"else":                  func(m string) error { return &ElseFieldFor31Plus{ValidationError{Message: m}} },
+	"dependentRequired":     func(m string) error { return &DependentRequiredFieldFor31Plus{ValidationError{Message: m}} },
+	"contentEncoding":       func(m string) error { return &ContentEncodingFieldFor31Plus{ValidationError{Message: m}} },
+	"contentMediaType":      func(m string) error { return &ContentMediaTypeFieldFor31Plus{ValidationError{Message: m}} },
+	"contentSchema":         func(m string) error { return &ContentSchemaFieldFor31Plus{ValidationError{Message: m}} },
+	"$defs":                 func(m string) error { return &DefsFieldFor31Plus{ValidationError{Message: m}} },
+	"$schema":               func(m string) error { return &SchemaFieldFor31Plus{ValidationError{Message: m}} },
+	"$comment":              func(m string) error { return &CommentFieldFor31Plus{ValidationError{Message: m}} },
+	"$id":                   func(m string) error { return &IDFieldFor31Plus{ValidationError{Message: m}} },
+	"$anchor":               func(m string) error { return &AnchorFieldFor31Plus{ValidationError{Message: m}} },
+	"$dynamicAnchor":        func(m string) error { return &DynamicAnchorFieldFor31Plus{ValidationError{Message: m}} },
+	"$dynamicRef":           func(m string) error { return &DynamicRefFieldFor31Plus{ValidationError{Message: m}} },
 }
 
 // newFieldFor31Plus dispatches errFieldFor31Plus's per-field message
 // to the right typed leaf and wraps it in a FieldVersionMismatchError.
-// Fields not yet typed fall back to a generic *ValidationError so the
-// caller still gets a stable Message.
+// Fields not in fieldFor31PlusLeaves fall back to a bare
+// *ValidationError so the caller still gets a stable Message and the
+// cluster + base layers; only the per-leaf type is missing.
 func newFieldFor31Plus(field string) error {
 	msg := "field " + field + " is for OpenAPI >=3.1"
 	var leaf error
-	switch field {
-	case "identifier":
-		leaf = &LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}}
-	case "summary":
-		leaf = &InfoSummaryFieldFor31Plus{ValidationError{Message: msg}}
-	default:
-		// Untyped fallback — preserves the original Message and
-		// still embeds *ValidationError, so errors.As(&ve) works.
+	if ctor, ok := fieldFor31PlusLeaves[field]; ok {
+		leaf = ctor(msg)
+	} else {
 		leaf = &ValidationError{Message: msg}
 	}
 	return &FieldVersionMismatchError{

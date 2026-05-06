@@ -269,7 +269,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if doc.OpenAPI == "" {
-		return errors.New("value of openapi must be a non-empty string")
+		return newOpenAPIVersionRequired()
 	}
 
 	if doc.Webhooks != nil && !doc.IsOpenAPI31OrLater() {

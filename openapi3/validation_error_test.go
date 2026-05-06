@@ -105,8 +105,8 @@ func TestValidationError_FieldVersionMismatch_UntypedFallback(t *testing.T) {
 	// "webhooks" is an existing untyped 3.1+-only field — see
 	// openapi3.go's errFieldFor31Plus("webhooks") site.
 	doc := &openapi3.T{
-		OpenAPI: "3.0.3",
-		Info:    &openapi3.Info{Title: "x", Version: "1.0.0"},
+		OpenAPI:  "3.0.3",
+		Info:     &openapi3.Info{Title: "x", Version: "1.0.0"},
 		Paths:    openapi3.NewPaths(),
 		Webhooks: map[string]*openapi3.PathItem{},
 	}
@@ -119,6 +119,130 @@ func TestValidationError_FieldVersionMismatch_UntypedFallback(t *testing.T) {
 
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(err, &ve))
+}
+
+// Spot-check the rest of the converted call sites: each required field
+// produces its own leaf type plus the shared cluster, and each typed
+// 3.1+-only schema field produces its own leaf type plus the shared
+// cluster.
+func TestValidationError_AllRequiredFieldLeaves(t *testing.T) {
+	type tc struct {
+		name      string
+		doc       *openapi3.T
+		leafCheck func(t *testing.T, err error)
+		field     string
+		message   string
+	}
+	cases := []tc{
+		{
+			name: "openapi version required",
+			doc:  &openapi3.T{},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.OpenAPIVersionRequired
+				require.True(t, errors.As(err, &l))
+			},
+			field:   "openapi",
+			message: "value of openapi must be a non-empty string",
+		},
+		{
+			name: "license name required",
+			doc: &openapi3.T{
+				OpenAPI: "3.0.3",
+				Info: &openapi3.Info{
+					Title: "x", Version: "1.0.0",
+					License: &openapi3.License{},
+				},
+				Paths: openapi3.NewPaths(),
+			},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.LicenseNameRequired
+				require.True(t, errors.As(err, &l))
+			},
+			field:   "license.name",
+			message: "value of license name must be a non-empty string",
+		},
+		{
+			name: "server url required",
+			doc: &openapi3.T{
+				OpenAPI: "3.0.3",
+				Info:    &openapi3.Info{Title: "x", Version: "1.0.0"},
+				Paths:   openapi3.NewPaths(),
+				Servers: openapi3.Servers{&openapi3.Server{}},
+			},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ServerURLRequired
+				require.True(t, errors.As(err, &l))
+			},
+			field:   "server.url",
+			message: "value of url must be a non-empty string",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.doc.Validate(context.Background())
+			require.Error(t, err)
+
+			var rfe *openapi3.RequiredFieldError
+			require.True(t, errors.As(err, &rfe))
+			require.Equal(t, c.field, rfe.Field)
+
+			c.leafCheck(t, err)
+
+			var ve *openapi3.ValidationError
+			require.True(t, errors.As(err, &ve))
+			require.Equal(t, c.message, ve.Message)
+		})
+	}
+}
+
+// Spot-check a couple of the schema-field leaves that flow through
+// errFieldFor31Plus (used by schema.go's reject() helper). Full
+// per-field coverage is left to the package's existing schema_test.go.
+func TestValidationError_SchemaFieldFor31PlusLeaves(t *testing.T) {
+	type tc struct {
+		name      string
+		schema    *openapi3.Schema
+		leafCheck func(t *testing.T, err error)
+		field     string
+	}
+	cases := []tc{
+		{
+			name:   "const",
+			schema: &openapi3.Schema{Const: "x"},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ConstFieldFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "const",
+		},
+		{
+			name: "patternProperties",
+			schema: &openapi3.Schema{
+				PatternProperties: map[string]*openapi3.SchemaRef{"foo": {Value: &openapi3.Schema{}}},
+			},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.PatternPropertiesFieldFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "patternProperties",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.schema.Validate(context.Background())
+			require.Error(t, err)
+
+			var fvm *openapi3.FieldVersionMismatchError
+			require.True(t, errors.As(err, &fvm))
+			require.Equal(t, c.field, fvm.Field)
+			require.Equal(t, "3.1", fvm.MinVersion)
+
+			c.leafCheck(t, err)
+
+			var ve *openapi3.ValidationError
+			require.True(t, errors.As(err, &ve))
+		})
+	}
 }
 
 // MultiError already implements As() that recurses into elements, so a
