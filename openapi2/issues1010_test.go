@@ -1,9 +1,10 @@
-package openapi2
+package openapi2_test
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -91,7 +92,7 @@ func TestIssue1010(t *testing.T) {
 }
 `)
 
-	var doc2 T
+	var doc2 openapi2.T
 	err := json.Unmarshal(v2, &doc2)
 	require.NoError(t, err)
 	require.Equal(t, "petType", doc2.Definitions["Pet"].Value.Discriminator)
