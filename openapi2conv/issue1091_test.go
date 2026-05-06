@@ -1,4 +1,4 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi2conv"
 )
 
 func TestIssue1091_PropertyExtensions(t *testing.T) {
@@ -44,7 +45,7 @@ func TestIssue1091_PropertyExtensions(t *testing.T) {
 	}
 
 	// Convert to v3
-	v3SchemaRef := ToV3SchemaRef(v2SchemaRef)
+	v3SchemaRef := openapi2conv.ToV3SchemaRef(v2SchemaRef)
 
 	// Verify that the conversion was successful
 	require.NotNil(t, v3SchemaRef)
@@ -96,7 +97,7 @@ func TestIssue1091_SchemaLevelExtensions(t *testing.T) {
 	}
 
 	// Convert to v3
-	v3SchemaRef := ToV3SchemaRef(v2SchemaRef)
+	v3SchemaRef := openapi2conv.ToV3SchemaRef(v2SchemaRef)
 
 	// Verify that the conversion was successful
 	require.NotNil(t, v3SchemaRef)
@@ -168,7 +169,7 @@ func TestIssue1091_CompleteV2ToV3Conversion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Convert to v3
-	v3Doc, err := ToV3(&v2Doc)
+	v3Doc, err := openapi2conv.ToV3(&v2Doc)
 	require.NoError(t, err)
 
 	// Verify that User schema has extensions preserved

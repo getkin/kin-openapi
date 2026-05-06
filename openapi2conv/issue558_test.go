@@ -1,8 +1,9 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ paths:
 	_, err = yaml.Marshal(doc3)
 	require.NoError(t, err)
 
-	doc2, err := FromV3(doc3)
+	doc2, err := openapi2conv.FromV3(doc3)
 	require.NoError(t, err)
 	require.NotEmpty(t, doc2.Paths["/test"].Get.Deprecated)
 }

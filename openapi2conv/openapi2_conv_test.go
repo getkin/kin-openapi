@@ -1,4 +1,4 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -23,7 +24,7 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	doc2, err := FromV3(&doc3)
+	doc2, err := openapi2conv.FromV3(&doc3)
 	require.NoError(t, err)
 	data, err := json.Marshal(doc2)
 	require.NoError(t, err)
@@ -43,7 +44,7 @@ func TestConvOpenAPIV3ToV2WithReqBody(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	doc2, err := FromV3(&doc3)
+	doc2, err := openapi2conv.FromV3(&doc3)
 	require.NoError(t, err)
 	data, err := json.Marshal(doc2)
 	require.NoError(t, err)
@@ -55,7 +56,7 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 	err := json.Unmarshal([]byte(exampleV2), &doc2)
 	require.NoError(t, err)
 
-	doc3, err := ToV3(&doc2)
+	doc3, err := openapi2conv.ToV3(&doc2)
 	require.NoError(t, err)
 	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
@@ -116,7 +117,7 @@ func TestConvOpenAPIV2ToV3WithAdditionalPropertiesSchemaRef(t *testing.T) {
 	err := json.Unmarshal(v2, &doc2)
 	require.NoError(t, err)
 
-	doc3, err := ToV3(&doc2)
+	doc3, err := openapi2conv.ToV3(&doc2)
 	require.NoError(t, err)
 	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
@@ -181,7 +182,7 @@ func TestConvOpenAPIV2ToV3WithNestedAdditionalPropertiesSchemaRef(t *testing.T) 
 	err := json.Unmarshal(v2, &doc2)
 	require.NoError(t, err)
 
-	doc3, err := ToV3(&doc2)
+	doc3, err := openapi2conv.ToV3(&doc2)
 	require.NoError(t, err)
 	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
@@ -260,7 +261,7 @@ func TestConvOpenAPIV2ToV3WithAllOfInsideAdditionalProperties(t *testing.T) {
 	err := json.Unmarshal(v2, &doc2)
 	require.NoError(t, err)
 
-	doc3, err := ToV3(&doc2)
+	doc3, err := openapi2conv.ToV3(&doc2)
 	require.NoError(t, err)
 	err = doc3.Validate(t.Context())
 	require.NoError(t, err)
