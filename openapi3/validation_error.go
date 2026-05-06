@@ -315,38 +315,33 @@ func (e *DynamicRefFieldFor31Plus) As(target any) bool {
 // Unwrap and the base via the leaf's As method).
 // ---------------------------------------------------------------------
 
-func newRequiredField(field, message string, leaf error) error {
+func newRequiredField(field string, leaf error) error {
 	return &RequiredFieldError{Field: field, Cause: leaf}
 }
 
 func newInfoVersionRequired() error {
-	const msg = "value of version must be a non-empty string"
-	return newRequiredField("info.version", msg,
-		&InfoVersionRequired{ValidationError{Message: msg}})
+	return newRequiredField("info.version",
+		&InfoVersionRequired{ValidationError{Message: "value of version must be a non-empty string"}})
 }
 
 func newInfoTitleRequired() error {
-	const msg = "value of title must be a non-empty string"
-	return newRequiredField("info.title", msg,
-		&InfoTitleRequired{ValidationError{Message: msg}})
+	return newRequiredField("info.title",
+		&InfoTitleRequired{ValidationError{Message: "value of title must be a non-empty string"}})
 }
 
 func newLicenseNameRequired() error {
-	const msg = "value of license name must be a non-empty string"
-	return newRequiredField("license.name", msg,
-		&LicenseNameRequired{ValidationError{Message: msg}})
+	return newRequiredField("license.name",
+		&LicenseNameRequired{ValidationError{Message: "value of license name must be a non-empty string"}})
 }
 
 func newOpenAPIVersionRequired() error {
-	const msg = "value of openapi must be a non-empty string"
-	return newRequiredField("openapi", msg,
-		&OpenAPIVersionRequired{ValidationError{Message: msg}})
+	return newRequiredField("openapi",
+		&OpenAPIVersionRequired{ValidationError{Message: "value of openapi must be a non-empty string"}})
 }
 
 func newServerURLRequired() error {
-	const msg = "value of url must be a non-empty string"
-	return newRequiredField("server.url", msg,
-		&ServerURLRequired{ValidationError{Message: msg}})
+	return newRequiredField("server.url",
+		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}})
 }
 
 // fieldFor31PlusLeaves maps field names (as passed to errFieldFor31Plus)
