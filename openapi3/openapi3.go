@@ -273,10 +273,10 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	}
 
 	if doc.Webhooks != nil && !doc.IsOpenAPI31OrLater() {
-		return errFieldFor31Plus("webhooks")
+		return newWebhooksFieldFor31Plus()
 	}
 	if doc.JSONSchemaDialect != "" && !doc.IsOpenAPI31OrLater() {
-		return errFieldFor31Plus("jsonschemadialect")
+		return newJSONSchemaDialectFieldFor31Plus()
 	}
 
 	var wrap func(error) error

@@ -68,7 +68,7 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if license.Identifier != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
-		return errFieldFor31Plus("identifier")
+		return newLicenseIdentifierFieldFor31Plus()
 	}
 
 	if license.Name == "" {

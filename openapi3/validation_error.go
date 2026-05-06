@@ -344,17 +344,55 @@ func newServerURLRequired() error {
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}})
 }
 
+// newFieldVersionMismatch wraps leaf in a FieldVersionMismatchError for the
+// given field at minimum version 3.1. Used by per-call-site constructors
+// (newInfoSummaryFieldFor31Plus, etc.) and by the dispatch helper
+// newFieldFor31Plus that schema.go's reject closure goes through.
+func newFieldVersionMismatch(field string, leaf error) error {
+	return &FieldVersionMismatchError{
+		Field:      field,
+		MinVersion: "3.1",
+		Cause:      leaf,
+	}
+}
+
+// Per-call-site constructors for the four non-schema FieldFor31Plus sites
+// (info.summary, license.identifier, doc.webhooks, doc.jsonSchemaDialect).
+// The schema fields go through fieldFor31PlusLeaves below because they're
+// dispatched from a runtime-parameterised closure in schema.go's reject.
+
+func newInfoSummaryFieldFor31Plus() error {
+	const msg = "field summary is for OpenAPI >=3.1"
+	return newFieldVersionMismatch("summary",
+		&InfoSummaryFieldFor31Plus{ValidationError{Message: msg}})
+}
+
+func newLicenseIdentifierFieldFor31Plus() error {
+	const msg = "field identifier is for OpenAPI >=3.1"
+	return newFieldVersionMismatch("identifier",
+		&LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}})
+}
+
+func newWebhooksFieldFor31Plus() error {
+	const msg = "field webhooks is for OpenAPI >=3.1"
+	return newFieldVersionMismatch("webhooks",
+		&WebhooksFieldFor31Plus{ValidationError{Message: msg}})
+}
+
+func newJSONSchemaDialectFieldFor31Plus() error {
+	const msg = "field jsonschemadialect is for OpenAPI >=3.1"
+	return newFieldVersionMismatch("jsonschemadialect",
+		&JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}})
+}
+
 // fieldFor31PlusLeaves maps field names (as passed to errFieldFor31Plus)
-// to their typed leaf constructors. Any field not in the map falls back
-// to a bare *ValidationError, so callers still get the cluster + base
-// layers — only the per-leaf type is missing.
+// to their typed leaf constructors. Only schema-keyword fields are in
+// the table — those are dispatched at runtime from schema.go's reject
+// closure. The four non-schema fields (summary, identifier, webhooks,
+// jsonschemadialect) have direct constructors above. Any field not in
+// the map falls back to a bare *ValidationError, so callers still get
+// the cluster + base layers — only the per-leaf type is missing.
 var fieldFor31PlusLeaves = map[string]func(msg string) error{
-	// non-schema fields
-	"summary":           func(m string) error { return &InfoSummaryFieldFor31Plus{ValidationError{Message: m}} },
-	"identifier":        func(m string) error { return &LicenseIdentifierFieldFor31Plus{ValidationError{Message: m}} },
-	"webhooks":          func(m string) error { return &WebhooksFieldFor31Plus{ValidationError{Message: m}} },
-	"jsonschemadialect": func(m string) error { return &JSONSchemaDialectFieldFor31Plus{ValidationError{Message: m}} },
-	// schema fields rejected by schema.go's reject() helper
 	"const":                 func(m string) error { return &ConstFieldFor31Plus{ValidationError{Message: m}} },
 	"examples":              func(m string) error { return &ExamplesFieldFor31Plus{ValidationError{Message: m}} },
 	"prefixItems":           func(m string) error { return &PrefixItemsFieldFor31Plus{ValidationError{Message: m}} },
@@ -387,6 +425,9 @@ var fieldFor31PlusLeaves = map[string]func(msg string) error{
 // Fields not in fieldFor31PlusLeaves fall back to a bare
 // *ValidationError so the caller still gets a stable Message and the
 // cluster + base layers; only the per-leaf type is missing.
+//
+// Reached only from schema.go's reject closure with a runtime field
+// name; the four non-schema sites use direct constructors instead.
 func newFieldFor31Plus(field string) error {
 	msg := "field " + field + " is for OpenAPI >=3.1"
 	var leaf error
@@ -395,9 +436,5 @@ func newFieldFor31Plus(field string) error {
 	} else {
 		leaf = &ValidationError{Message: msg}
 	}
-	return &FieldVersionMismatchError{
-		Field:      field,
-		MinVersion: "3.1",
-		Cause:      leaf,
-	}
+	return newFieldVersionMismatch(field, leaf)
 }
