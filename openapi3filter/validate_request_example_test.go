@@ -1,4 +1,4 @@
-package openapi3filter
+package openapi3filter_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"slices"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
@@ -50,7 +51,7 @@ paths:
 		"Bob":   {"secrets.read", "secrets.write"},
 	}
 
-	authenticationFunc := func(_ context.Context, ai *AuthenticationInput) error {
+	authenticationFunc := func(_ context.Context, ai *openapi3filter.AuthenticationInput) error {
 		user := ai.RequestValidationInput.Request.Header.Get("X-User")
 		if user == "" {
 			return errUnauthenticated
@@ -74,15 +75,15 @@ paths:
 	validateRequest := func(req *http.Request) {
 		route, pathParams, _ := router.FindRoute(req)
 
-		validationInput := &RequestValidationInput{
+		validationInput := &openapi3filter.RequestValidationInput{
 			Request:    req,
 			PathParams: pathParams,
 			Route:      route,
-			Options: &Options{
+			Options: &openapi3filter.Options{
 				AuthenticationFunc: authenticationFunc,
 			},
 		}
-		err := ValidateRequest(context.TODO(), validationInput)
+		err := openapi3filter.ValidateRequest(context.TODO(), validationInput)
 		switch {
 		case errors.Is(err, errUnauthenticated):
 			fmt.Println("username is required")

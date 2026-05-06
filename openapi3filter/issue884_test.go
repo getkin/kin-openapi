@@ -1,4 +1,4 @@
-package openapi3filter
+package openapi3filter_test
 
 import (
 	"net/http"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
@@ -67,12 +68,12 @@ func TestIssue884(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		options       *Options
+		options       *openapi3filter.Options
 		expectedQuery url.Values
 	}{
 		{
 			name: "no defaults are added to requests",
-			options: &Options{
+			options: &openapi3filter.Options{
 				SkipSettingDefaults: true,
 			},
 			expectedQuery: url.Values{},
@@ -97,13 +98,13 @@ func TestIssue884(t *testing.T) {
 			route, pathParams, err := router.FindRoute(httpReq)
 			require.NoError(t, err)
 
-			requestValidationInput := &RequestValidationInput{
+			requestValidationInput := &openapi3filter.RequestValidationInput{
 				Request:    httpReq,
 				PathParams: pathParams,
 				Route:      route,
 				Options:    testcase.options,
 			}
-			err = ValidateRequest(ctx, requestValidationInput)
+			err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 			require.NoError(t, err)
 
 			q := httpReq.URL.Query()
