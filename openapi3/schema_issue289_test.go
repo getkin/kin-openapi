@@ -1,8 +1,9 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +35,7 @@ info:
 paths: {}
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
@@ -45,5 +46,5 @@ paths: {}
 		"name":    "kin-openapi",
 		"address": "127.0.0.1",
 	})
-	require.ErrorIs(t, err, ErrOneOfConflict)
+	require.ErrorIs(t, err, openapi3.ErrOneOfConflict)
 }

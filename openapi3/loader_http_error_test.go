@@ -1,4 +1,4 @@
-package openapi3
+package openapi3_test
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +43,7 @@ func TestLoadReferenceFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	_, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 	require.EqualError(t, err, fmt.Sprintf(`error resolving reference "%s/components.openapi.json#/components/headers/CustomTestHeader": error loading "%s/components.openapi.json": request returned status code 400`, ts.URL, ts.URL))
@@ -83,7 +84,7 @@ func TestLoadFromRemoteURLFailsWithHttpError(t *testing.T) {
     }
 }`)
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromDataWithPath(spec, &url.URL{Path: "testdata/testfilename.openapi.json"})
 

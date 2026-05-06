@@ -1,8 +1,9 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,7 +46,7 @@ func TestParsingDiscriminator(t *testing.T) {
 }
 `
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 

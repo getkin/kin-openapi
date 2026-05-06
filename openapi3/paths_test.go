@@ -1,8 +1,9 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,7 +80,7 @@ paths:
 	for i := range tests {
 		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
-			loader := NewLoader()
+			loader := openapi3.NewLoader()
 
 			doc, err := loader.LoadFromData([]byte(tt.spec[1:]))
 			require.NoError(t, err)

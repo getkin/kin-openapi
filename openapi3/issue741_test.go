@@ -1,4 +1,4 @@
-package openapi3
+package openapi3_test
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +29,7 @@ func TestIssue741(t *testing.T) {
 	var wg sync.WaitGroup
 	for range 10 {
 		wg.Go(func() {
-			loader := NewLoader()
+			loader := openapi3.NewLoader()
 			loader.IsExternalRefsAllowed = true
 			doc, err := loader.LoadFromData(rootSpec)
 			require.NoError(t, err)

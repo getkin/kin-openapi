@@ -1,14 +1,15 @@
-package openapi3
+package openapi3_test
 
 import (
 	"errors"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
-func initOperation() *Operation {
-	operation := NewOperation()
+func initOperation() *openapi3.Operation {
+	operation := openapi3.NewOperation()
 	operation.Description = "Some description"
 	operation.Summary = "Some summary"
 	operation.Tags = []string{"tag1", "tag2"}
@@ -17,35 +18,35 @@ func initOperation() *Operation {
 
 func TestAddParameter(t *testing.T) {
 	operation := initOperation()
-	operation.AddParameter(NewQueryParameter("param1"))
-	operation.AddParameter(NewCookieParameter("param2"))
+	operation.AddParameter(openapi3.NewQueryParameter("param1"))
+	operation.AddParameter(openapi3.NewCookieParameter("param2"))
 	require.Equal(t, "param1", operation.Parameters.GetByInAndName("query", "param1").Name)
 	require.Equal(t, "param2", operation.Parameters.GetByInAndName("cookie", "param2").Name)
 }
 
 func TestAddResponse(t *testing.T) {
 	operation := initOperation()
-	operation.AddResponse(200, NewResponse())
-	operation.AddResponse(400, NewResponse())
+	operation.AddResponse(200, openapi3.NewResponse())
+	operation.AddResponse(400, openapi3.NewResponse())
 	require.NotNil(t, "status 200", operation.Responses.Status(200).Value)
 	require.NotNil(t, "status 400", operation.Responses.Status(400).Value)
 }
 
-func operationWithoutResponses() *Operation {
+func operationWithoutResponses() *openapi3.Operation {
 	operation := initOperation()
 	return operation
 }
 
-func operationWithResponses() *Operation {
+func operationWithResponses() *openapi3.Operation {
 	operation := initOperation()
-	operation.AddResponse(200, NewResponse().WithDescription("some response"))
+	operation.AddResponse(200, openapi3.NewResponse().WithDescription("some response"))
 	return operation
 }
 
 func TestOperationValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		input         *Operation
+		input         *openapi3.Operation
 		expectedError error
 	}{
 		{

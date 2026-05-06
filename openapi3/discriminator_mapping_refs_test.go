@@ -1,9 +1,10 @@
-package openapi3
+package openapi3_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +16,7 @@ func TestDiscriminatorMappingRefsInternalize(t *testing.T) {
 	ctx := t.Context()
 
 	// Load the spec with external discriminator mapping refs
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 	sl.IsExternalRefsAllowed = true
 	doc, err := sl.LoadFromFile("testdata/discriminator.yml")
 	require.NoError(t, err, "loading test file")

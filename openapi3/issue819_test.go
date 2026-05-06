@@ -1,8 +1,9 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +28,7 @@ paths:
                 type: object
                 description: An error response body.
 `[1:]
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 	doc, err := sl.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(sl.Context)

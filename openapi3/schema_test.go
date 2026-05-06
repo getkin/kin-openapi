@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oasdiff/yaml3"
+	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
 )
 

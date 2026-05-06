@@ -1,8 +1,9 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +38,7 @@ components:
 		t.Run(testcase.dflt, func(t *testing.T) {
 			spec := specf(testcase.dflt)
 
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 
 			doc, err := sl.LoadFromData([]byte(spec))
 			require.NoError(t, err)

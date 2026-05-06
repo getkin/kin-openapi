@@ -1,9 +1,10 @@
-package openapi3
+package openapi3_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +26,7 @@ paths:
 		"foo/bar":  "invalid paths: path \"foo/bar\" does not start with a forward slash (/)",
 		"/foo/bar": "",
 	} {
-		loader := NewLoader()
+		loader := openapi3.NewLoader()
 		doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "PATH", path, 1)))
 		require.NoError(t, err)
 

@@ -1,13 +1,14 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIssue301(t *testing.T) {
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 	sl.IsExternalRefsAllowed = true
 
 	doc, err := sl.LoadFromFile("testdata/callbacks.yml")
@@ -16,7 +17,7 @@ func TestIssue301(t *testing.T) {
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 
-	require.Equal(t, &Types{"object"}, doc.
+	require.Equal(t, &openapi3.Types{"object"}, doc.
 		Paths.Value("/trans").
 		Post.Callbacks["transactionCallback"].Value.
 		Value("http://notificationServer.com?transactionId={$request.body#/id}&email={$request.body#/email}").
@@ -24,7 +25,7 @@ func TestIssue301(t *testing.T) {
 		Content["application/json"].Schema.Value.
 		Type)
 
-	require.Equal(t, &Types{"boolean"}, doc.
+	require.Equal(t, &openapi3.Types{"boolean"}, doc.
 		Paths.Value("/other").
 		Post.Callbacks["myEvent"].Value.
 		Value("{$request.query.queryUrl}").
