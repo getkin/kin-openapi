@@ -2,10 +2,9 @@ package openapi3conv_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,7 @@ func loadV30(t *testing.T, raw string) *openapi3.T {
 
 // Round-trips through JSON so the result reflects what tooling consumers see
 // (omitted zero-value fields, normalized ordering). Easier to compare against
-// expected 3.1 output than walking structs.
+// expected output than walking structs.
 func marshalJSON(t *testing.T, doc *openapi3.T) map[string]any {
 	t.Helper()
 	b, err := json.Marshal(doc)
@@ -38,32 +37,20 @@ func marshalJSON(t *testing.T, doc *openapi3.T) map[string]any {
 // Version bump
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_BumpsVersion(t *testing.T) {
+func TestUpgrade_BumpsVersion(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
 paths: {}
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
-	assert.Equal(t, "3.1.1", doc.OpenAPI)
+	openapi3conv.Upgrade(doc)
+	assert.Equal(t, "3.2.0", doc.OpenAPI)
 }
 
-func TestUpgrade_CustomTarget(t *testing.T) {
-	doc := loadV30(t, `
-openapi: 3.0.3
-info: {title: t, version: '1'}
-paths: {}
-`)
-	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
-		Target: "3.1.0",
-	}))
-	assert.Equal(t, "3.1.0", doc.OpenAPI)
-}
-
-func TestUpgrade_TargetIs32(t *testing.T) {
-	// 3.2 is purely additive over 3.1 — no schema-level rewrites between
-	// them. Upgrade applies the 3.0 → 3.1 rewrites and writes the 3.2
-	// version string. The resulting doc is canonical and version-correct.
+// 3.2 is purely additive over 3.1 — no schema-level rewrites between them.
+// Upgrade applies the 3.0 → 3.1 rewrites (still required) and writes the
+// 3.2 version string. The result is canonical and version-correct.
+func TestUpgrade_RewritesAppliedAlongsideVersionBump(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -74,53 +61,16 @@ components:
       type: string
       nullable: true
 `)
-	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
-		Target: "3.2.0",
-	}))
+	openapi3conv.Upgrade(doc)
 	assert.Equal(t, "3.2.0", doc.OpenAPI)
 	assert.Equal(t, openapi3.Types{"string", "null"}, *doc.Components.Schemas["Pet"].Value.Type)
-}
-
-func TestUpgrade_RejectsCrossMajor(t *testing.T) {
-	// Cross-major upgrades belong in a dedicated package (mirror of
-	// openapi2conv). Pre-pin that boundary with an explicit error so any
-	// future 3 → 4 transition lands somewhere predictable.
-	doc := loadV30(t, `
-openapi: 3.0.3
-info: {title: t, version: '1'}
-paths: {}
-`)
-	err := openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{Target: "4.0.0"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "cross-major")
-}
-
-func TestUpgrade_RejectsDowngrade(t *testing.T) {
-	doc := loadV30(t, `
-openapi: 3.1.1
-info: {title: t, version: '1'}
-paths: {}
-`)
-	err := openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{Target: "3.0.3"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "downgrade")
-}
-
-func TestUpgrade_RejectsInvalidVersion(t *testing.T) {
-	doc := loadV30(t, `
-openapi: 3.0.3
-info: {title: t, version: '1'}
-paths: {}
-`)
-	err := openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{Target: "not-a-version"})
-	require.Error(t, err)
 }
 
 // ---------------------------------------------------------------------------
 // Nullable rewrite
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_NullableWithType(t *testing.T) {
+func TestUpgrade_NullableWithType(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -131,14 +81,14 @@ components:
       type: string
       nullable: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	require.NotNil(t, pet.Type)
 	assert.Equal(t, openapi3.Types{"string", "null"}, *pet.Type)
 	assert.False(t, pet.Nullable, "nullable should be cleared after rewrite")
 }
 
-func TestUpgradeTo31_NullableAlreadyHasNullInTypeArray(t *testing.T) {
+func TestUpgrade_NullableAlreadyHasNullInTypeArray(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -149,13 +99,13 @@ components:
       type: ['string', 'null']
       nullable: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	assert.Equal(t, openapi3.Types{"string", "null"}, *pet.Type, "no duplicate null appended")
 	assert.False(t, pet.Nullable)
 }
 
-func TestUpgradeTo31_NullableNoType(t *testing.T) {
+func TestUpgrade_NullableNoType(t *testing.T) {
 	// nullable without an accompanying type is ambiguous in 3.0 (the spec is
 	// silent on whether nullable applies). Drop nullable; the schema then
 	// accepts any type, which subsumes null.
@@ -168,13 +118,13 @@ components:
     Pet:
       nullable: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	assert.False(t, pet.Nullable)
 	assert.Nil(t, pet.Type)
 }
 
-func TestUpgradeTo31_NullableInsideProperties(t *testing.T) {
+func TestUpgrade_NullableInsideProperties(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -191,7 +141,7 @@ components:
           type: integer
           nullable: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	props := doc.Components.Schemas["Pet"].Value.Properties
 	assert.Equal(t, openapi3.Types{"string", "null"}, *props["name"].Value.Type)
 	assert.Equal(t, openapi3.Types{"integer", "null"}, *props["ageInYears"].Value.Type)
@@ -201,7 +151,7 @@ components:
 // Exclusive-bound rewrite
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_ExclusiveMinTrueWithMinimum(t *testing.T) {
+func TestUpgrade_ExclusiveMinTrueWithMinimum(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -213,7 +163,7 @@ components:
       minimum: 5
       exclusiveMinimum: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	score := doc.Components.Schemas["Score"].Value
 	assert.Nil(t, score.Min, "Min cleared")
 	require.NotNil(t, score.ExclusiveMin.Value)
@@ -221,7 +171,7 @@ components:
 	assert.Nil(t, score.ExclusiveMin.Bool)
 }
 
-func TestUpgradeTo31_ExclusiveMaxTrueWithMaximum(t *testing.T) {
+func TestUpgrade_ExclusiveMaxTrueWithMaximum(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -233,7 +183,7 @@ components:
       maximum: 100
       exclusiveMaximum: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	score := doc.Components.Schemas["Score"].Value
 	assert.Nil(t, score.Max)
 	require.NotNil(t, score.ExclusiveMax.Value)
@@ -241,7 +191,7 @@ components:
 	assert.Nil(t, score.ExclusiveMax.Bool)
 }
 
-func TestUpgradeTo31_ExclusiveMinFalseDropped(t *testing.T) {
+func TestUpgrade_ExclusiveMinFalseDropped(t *testing.T) {
 	// `exclusiveMinimum: false` is the default — it carries no information.
 	// The merged 3.1 form drops it.
 	doc := loadV30(t, `
@@ -255,15 +205,16 @@ components:
       minimum: 5
       exclusiveMinimum: false
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	score := doc.Components.Schemas["Score"].Value
 	require.NotNil(t, score.Min)
 	assert.Equal(t, 5.0, *score.Min)
 	assert.False(t, score.ExclusiveMin.IsSet(), "exclusiveMinimum: false should be dropped")
 }
 
-func TestUpgradeTo31_ExclusiveBoundsLeavesNumericIntact(t *testing.T) {
-	// A document already in 3.1 numeric form should round-trip unchanged.
+func TestUpgrade_ExclusiveBoundsLeavesNumericIntact(t *testing.T) {
+	// A document already in 3.1 numeric form should round-trip unchanged
+	// (apart from the version bump to 3.2.0).
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.1.1
@@ -277,7 +228,7 @@ components:
 `))
 	require.NoError(t, err)
 
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	score := doc.Components.Schemas["Score"].Value
 	require.NotNil(t, score.ExclusiveMin.Value)
 	assert.Equal(t, 5.0, *score.ExclusiveMin.Value)
@@ -288,7 +239,7 @@ components:
 // Example -> Examples rewrite
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_ExampleToExamples(t *testing.T) {
+func TestUpgrade_ExampleToExamples(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -299,14 +250,14 @@ components:
       type: string
       example: fido
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	assert.Nil(t, pet.Example)
 	require.Len(t, pet.Examples, 1)
 	assert.Equal(t, "fido", pet.Examples[0])
 }
 
-func TestUpgradeTo31_ExampleAppendsToExistingExamples(t *testing.T) {
+func TestUpgrade_ExampleAppendsToExistingExamples(t *testing.T) {
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.0.3
@@ -320,7 +271,7 @@ components:
       examples: [rex]
 `))
 	require.NoError(t, err)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	assert.Nil(t, pet.Example)
 	assert.Equal(t, []any{"rex", "fido"}, pet.Examples)
@@ -330,7 +281,7 @@ components:
 // Idempotence
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_Idempotent(t *testing.T) {
+func TestUpgrade_Idempotent(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -349,10 +300,10 @@ components:
           minimum: 0
           exclusiveMinimum: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	first := marshalJSON(t, doc)
 
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 	second := marshalJSON(t, doc)
 
 	assert.Equal(t, first, second, "second pass must be a no-op")
@@ -362,7 +313,7 @@ components:
 // Walks reachable from operations and request/response bodies
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_WalksOperationSchemas(t *testing.T) {
+func TestUpgrade_WalksOperationSchemas(t *testing.T) {
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -388,7 +339,7 @@ paths:
                     minimum: 0
                     exclusiveMinimum: true
 `)
-	require.NoError(t, openapi3conv.UpgradeTo31(doc))
+	openapi3conv.Upgrade(doc)
 
 	getOp := doc.Paths.Value("/pets").Get
 	param := getOp.Parameters[0].Value.Schema.Value
@@ -405,7 +356,7 @@ paths:
 // Cycle safety
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_CycleSafe(t *testing.T) {
+func TestUpgrade_CycleSafe(t *testing.T) {
 	// Hand-build a cycle without going through YAML — the loader resolves
 	// $ref into shared *Schema pointers, so a self-referential schema
 	// becomes a true graph cycle. The walker must terminate.
@@ -426,13 +377,12 @@ func TestUpgradeTo31_CycleSafe(t *testing.T) {
 		},
 	}
 
-	done := make(chan error, 1)
-	go func() { done <- openapi3conv.UpgradeTo31(doc) }()
+	done := make(chan struct{})
+	go func() { openapi3conv.Upgrade(doc); close(done) }()
 	select {
-	case err := <-done:
-		require.NoError(t, err)
-	case <-context.Background().Done():
-		t.Fatal("UpgradeTo31 hung on a cyclic schema")
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Upgrade hung on a cyclic schema")
 	}
 
 	// Sanity: the rewrite still ran on the non-cyclic property.
@@ -457,11 +407,9 @@ components:
       example: fido
 `)
 	var buf bytes.Buffer
-	require.NoError(t, openapi3conv.Upgrade(doc, openapi3conv.UpgradeOptions{
-		Verbose: &buf,
-	}))
+	openapi3conv.Upgrade(doc, openapi3conv.WithWriter(&buf))
 	out := buf.String()
-	assert.Contains(t, out, "openapi: 3.0.3 -> 3.1.1")
+	assert.Contains(t, out, "openapi: 3.0.3 -> 3.2.0")
 	assert.Contains(t, out, "nullable")
 	assert.Contains(t, out, "example")
 }
@@ -470,10 +418,11 @@ components:
 // Nil safety
 // ---------------------------------------------------------------------------
 
-func TestUpgradeTo31_NilDoc(t *testing.T) {
-	err := openapi3conv.UpgradeTo31(nil)
-	require.Error(t, err)
-	assert.True(t, strings.Contains(err.Error(), "nil"))
+func TestUpgrade_NilDocDoesNotPanic(t *testing.T) {
+	// Per Pierre's guidance, Upgrade no longer validates input — doc
+	// must be Validate()'d first. Nil is the one case we still defend
+	// against, returning silently rather than panicking.
+	openapi3conv.Upgrade(nil)
 }
 
 func TestUpgradeSchema_NilSchema(t *testing.T) {

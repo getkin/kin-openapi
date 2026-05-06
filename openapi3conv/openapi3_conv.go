@@ -4,89 +4,64 @@ import (
 	"fmt"
 	"io"
 	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// DefaultTargetVersion is the OpenAPI version string written when bumping the
-// document version. The OAI upgrade guide uses the current 3.1 patch release.
-const DefaultTargetVersion = "3.1.1"
+// latestTargetVersion is the OpenAPI version string written into doc.OpenAPI
+// after canonicalization. Always the latest 3.x patch release the package
+// knows about; bump when a new minor lands. The OAI guarantees strict
+// compatibility for 3.x going forward (3.2.x, 3.3.x, ...), so a tool that
+// handles 3.1 correctly handles later 3.x versions correctly too.
+const latestTargetVersion = "3.2.0"
 
-// UpgradeOptions controls per-pass behaviour.
-type UpgradeOptions struct {
-	// Target is the version string written into doc.OpenAPI after the
-	// canonicalization pass. Defaults to DefaultTargetVersion. Currently any
-	// 3.x version is accepted; representational rewrites only exist for
-	// 3.0 → 3.1, since 3.1 → 3.2 is purely additive (no breaking changes).
-	// Future minor versions that introduce representational changes can
-	// extend the dispatch in Upgrade.
-	Target string
+// Option configures an Upgrade pass. See WithWriter.
+type Option func(*upgradeOptions)
 
-	// Verbose, if non-nil, receives one line per rewrite for debugging.
-	Verbose io.Writer
+// upgradeOptions is the internal carrier for Option functions. Kept private
+// so the surface stays small and additive — new options are added by
+// introducing a new WithX function.
+type upgradeOptions struct {
+	verbose io.Writer
 }
 
-// Upgrade canonicalizes doc into the representation of opts.Target in place.
+// WithWriter routes one debug line per applied rewrite to w.
+func WithWriter(w io.Writer) Option {
+	return func(o *upgradeOptions) { o.verbose = w }
+}
+
+// Upgrade canonicalizes doc into the latest 3.x representation in place.
 //
-// The schema-level rewrites the walker applies (nullable → type array, boolean
-// exclusive bounds → numeric, example → examples) are idempotent and
-// convergent on the 3.1+ form. Calling Upgrade on an already-3.1 (or 3.2)
-// document is a no-op aside from the version bump.
+// The schema-level rewrites the walker applies (nullable → type array,
+// boolean exclusive bounds → numeric, example → examples) are idempotent
+// and convergent on the 3.1+ form. Calling Upgrade on an already-3.1 (or
+// later) document is a no-op aside from the version string bump.
 //
-// Cross-major upgrades are not supported. OpenAPI 4 (or any future major
-// version) will require a separate package mirroring the openapi2conv
-// pattern (which converts Swagger 2.0 documents to OpenAPI 3.0). Returning
-// an error here keeps that boundary explicit.
-func Upgrade(doc *openapi3.T, opts UpgradeOptions) error {
+// Cross-major upgrades (3 → 4 if/when v4 ships) are not handled here; that
+// belongs in a dedicated package mirroring the openapi2conv pattern.
+//
+// doc must be Validate()'d before calling Upgrade; passing an invalid
+// document is undefined behaviour.
+func Upgrade(doc *openapi3.T, opts ...Option) {
 	if doc == nil {
-		return fmt.Errorf("openapi3conv: doc is nil")
+		return
 	}
 
-	target := opts.Target
-	if target == "" {
-		target = DefaultTargetVersion
-	}
-
-	srcMajor, srcMinor, err := parseVersion(doc.OpenAPI)
-	if err != nil {
-		return fmt.Errorf("openapi3conv: invalid doc.OpenAPI %q: %w", doc.OpenAPI, err)
-	}
-	tgtMajor, tgtMinor, err := parseVersion(target)
-	if err != nil {
-		return fmt.Errorf("openapi3conv: invalid Target %q: %w", target, err)
-	}
-
-	if srcMajor != tgtMajor {
-		return fmt.Errorf(
-			"openapi3conv: cross-major upgrade not supported (%s -> %s); "+
-				"a separate package is the right home for cross-major conversions "+
-				"(see openapi2conv for the existing 2 -> 3 pattern)",
-			doc.OpenAPI, target,
-		)
-	}
-	if tgtMinor < srcMinor {
-		return fmt.Errorf("openapi3conv: cannot downgrade %s to %s", doc.OpenAPI, target)
+	o := upgradeOptions{}
+	for _, apply := range opts {
+		apply(&o)
 	}
 
 	w := &walker{
 		visited: map[*openapi3.Schema]struct{}{},
-		opts:    opts,
+		opts:    o,
 	}
 	w.walkDoc(doc)
 
-	if doc.OpenAPI != target {
-		w.logf("openapi: %s -> %s", doc.OpenAPI, target)
-		doc.OpenAPI = target
+	if doc.OpenAPI != latestTargetVersion {
+		w.logf("openapi: %s -> %s", doc.OpenAPI, latestTargetVersion)
+		doc.OpenAPI = latestTargetVersion
 	}
-	return nil
-}
-
-// UpgradeTo31 is a convenience wrapper for Upgrade with Target = "3.1.1".
-// Idempotent on already-3.1 documents.
-func UpgradeTo31(doc *openapi3.T) error {
-	return Upgrade(doc, UpgradeOptions{})
 }
 
 // UpgradeSchema canonicalizes a single schema (and its descendants) in place.
@@ -100,37 +75,19 @@ func UpgradeSchema(s *openapi3.Schema) {
 	w.walkSchema(s)
 }
 
-// parseVersion splits an OpenAPI version string ("3.0.3", "3.1.1", "3.2.0")
-// into major and minor integers. Patch and pre-release suffixes are ignored.
-func parseVersion(v string) (major, minor int, err error) {
-	parts := strings.SplitN(v, ".", 3)
-	if len(parts) < 2 {
-		return 0, 0, fmt.Errorf("expected MAJOR.MINOR[.PATCH], got %q", v)
-	}
-	major, err = strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, 0, fmt.Errorf("invalid major %q: %w", parts[0], err)
-	}
-	minor, err = strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, 0, fmt.Errorf("invalid minor %q: %w", parts[1], err)
-	}
-	return major, minor, nil
-}
-
 // walker carries cycle-tracking state and verbose output across the schema
 // graph. Each *Schema is visited at most once.
 type walker struct {
 	visited map[*openapi3.Schema]struct{}
-	opts    UpgradeOptions
+	opts    upgradeOptions
 }
 
 func (w *walker) logf(format string, args ...any) {
-	if w.opts.Verbose == nil {
+	if w.opts.verbose == nil {
 		return
 	}
-	fmt.Fprintf(w.opts.Verbose, format, args...)
-	fmt.Fprintln(w.opts.Verbose)
+	fmt.Fprintf(w.opts.verbose, format, args...)
+	fmt.Fprintln(w.opts.verbose)
 }
 
 // walkDoc visits every Schema reachable from the document root.
