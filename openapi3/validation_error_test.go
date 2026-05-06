@@ -245,6 +245,57 @@ func TestValidationError_SchemaFieldFor31PlusLeaves(t *testing.T) {
 	}
 }
 
+// Cluster types wrap their leaves through standard Go error wrapping,
+// so errors.Unwrap walks from the cluster to the leaf in a single step.
+// Pinning this directly (rather than only via errors.As) demonstrates
+// that the chain follows the conventional Unwrap contract — useful for
+// any consumer that walks the error tree by hand instead of asking for
+// a specific type.
+func TestValidationError_UnwrapWalksClusterToLeaf(t *testing.T) {
+	// RequiredFieldError cluster wrapping an InfoVersionRequired leaf.
+	verErr := (&openapi3.Info{Title: "x"}).Validate(context.Background())
+
+	// The returned error IS the cluster, not the leaf.
+	rfe, ok := verErr.(*openapi3.RequiredFieldError)
+	require.True(t, ok, "validator returns the cluster type")
+	require.Equal(t, "info.version", rfe.Field)
+
+	// errors.Unwrap takes us to the leaf in one step.
+	leaf := errors.Unwrap(verErr)
+	require.NotNil(t, leaf)
+	_, isLeaf := leaf.(*openapi3.InfoVersionRequired)
+	require.True(t, isLeaf, "Unwrap reaches the leaf type")
+
+	// The leaf is terminal — nothing further to unwrap.
+	require.Nil(t, errors.Unwrap(leaf), "leaf has no inner error")
+
+	// Same shape for the FieldVersionMismatchError cluster wrapping a
+	// LicenseIdentifierFieldFor31Plus leaf.
+	doc := &openapi3.T{
+		OpenAPI: "3.0.3",
+		Info: &openapi3.Info{
+			Title: "x", Version: "1.0.0",
+			License: &openapi3.License{Name: "MIT", Identifier: "MIT"},
+		},
+		Paths: openapi3.NewPaths(),
+	}
+	docErr := doc.Validate(context.Background())
+
+	// doc.Validate wraps the License error in MultiError variants. Walk
+	// to the FieldVersionMismatchError cluster via errors.As (since
+	// MultiError sits between).
+	var fvm *openapi3.FieldVersionMismatchError
+	require.True(t, errors.As(docErr, &fvm))
+	require.Equal(t, "identifier", fvm.Field)
+
+	// From the cluster, Unwrap reaches the leaf directly.
+	licenseLeaf := errors.Unwrap(fvm)
+	require.NotNil(t, licenseLeaf)
+	_, isLicenseLeaf := licenseLeaf.(*openapi3.LicenseIdentifierFieldFor31Plus)
+	require.True(t, isLicenseLeaf, "Unwrap reaches the leaf type")
+	require.Nil(t, errors.Unwrap(licenseLeaf), "leaf has no inner error")
+}
+
 // MultiError already implements As() that recurses into elements, so a
 // typed validation error wrapped inside a MultiError must remain
 // reachable. This pins that no special wiring is needed for the typed
