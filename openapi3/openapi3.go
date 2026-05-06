@@ -54,7 +54,7 @@ func (doc *T) IsOpenAPI31OrLater() bool {
 }
 
 func errFieldFor31Plus(field string) error {
-	return fmt.Errorf("field %s is for OpenAPI >=3.1", field)
+	return newFieldFor31Plus(field)
 }
 
 func errValueOfFieldFor31Plus(value any, field string) error {

@@ -648,6 +648,23 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
     Validate returns an error if ExternalDocs does not comply with the OpenAPI
     spec.
 
+type FieldVersionMismatchError struct {
+	// Field is the field name flagged (e.g. "summary", "identifier").
+	Field string
+	// MinVersion is the minimum OpenAPI version that allows the field
+	// (e.g. "3.1").
+	MinVersion string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+}
+    FieldVersionMismatchError clusters "field X is for OpenAPI >=Y" failures
+    (3.1+ keywords used in 3.0 documents). Carries the field name and minimum
+    version, wraps the per-site leaf.
+
+func (e *FieldVersionMismatchError) Error() string
+
+func (e *FieldVersionMismatchError) Unwrap() error
+
 type FormatValidator[T any] interface {
 	Validate(value T) error
 }
@@ -769,6 +786,23 @@ func (info *Info) UnmarshalJSON(data []byte) error
 func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Info does not comply with the OpenAPI spec.
 
+type InfoSummaryFieldFor31Plus struct{ ValidationError }
+    InfoSummaryFieldFor31Plus flags use of info.summary in an OAS 3.0 document
+    (FieldVersionMismatchError cluster).
+
+func (e *InfoSummaryFieldFor31Plus) As(target any) bool
+
+type InfoTitleRequired struct{ ValidationError }
+    InfoTitleRequired flags an empty info.title (RequiredFieldError cluster).
+
+func (e *InfoTitleRequired) As(target any) bool
+
+type InfoVersionRequired struct{ ValidationError }
+    InfoVersionRequired flags an empty info.version (RequiredFieldError
+    cluster).
+
+func (e *InfoVersionRequired) As(target any) bool
+
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
 
@@ -799,6 +833,12 @@ func (license *License) UnmarshalJSON(data []byte) error
 
 func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if License does not comply with the OpenAPI spec.
+
+type LicenseIdentifierFieldFor31Plus struct{ ValidationError }
+    LicenseIdentifierFieldFor31Plus flags use of license.identifier in an OAS
+    3.0 document (FieldVersionMismatchError cluster).
+
+func (e *LicenseIdentifierFieldFor31Plus) As(target any) bool
 
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1527,6 +1567,28 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error
 func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if RequestBodyRef does not comply with the OpenAPI
     spec.
+
+type RequiredFieldError struct {
+	// Field is the JSON-pointer-style path of the required field
+	// (e.g. "info.version", "license.name").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+}
+    RequiredFieldError clusters "X must be a non-empty value" failures across
+    the spec (e.g. info.title, info.version, license.name, the openapi version
+    string). The cluster carries the field path and wraps the per-site leaf so
+    callers can match either:
+
+        var rfe *RequiredFieldError
+        if errors.As(err, &rfe) { /* knows the field */ }
+
+        var ivr *InfoVersionRequired
+        if errors.As(err, &ivr) { /* knows it's exactly info.version */ }
+
+func (e *RequiredFieldError) Error() string
+
+func (e *RequiredFieldError) Unwrap() error
 
 type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2557,30 +2619,33 @@ func (types *Types) Slice() []string
 func (types *Types) UnmarshalJSON(data []byte) error
 
 type ValidationError struct {
-	Code    string
 	Message string
 }
-    ValidationError is the typed form of an error returned by the document
-    validation walker (T.Validate, Info.Validate, Paths.Validate, etc.).
+    ValidationError is the embedded base for every typed validation error
+    emitted by the document validation walker (T.Validate, Info.Validate,
+    Paths.Validate, etc.). Three layers of granularity are exposed; pick
+    whichever the caller needs:
 
-    Today most of those validators return plain errors.New(...) values, so
-    downstream code that wants to react to a specific validation failure has to
-    compare on the human-readable message string. That's brittle: any upstream
-    rewording silently breaks the consumer. ValidationError gives each failure a
-    stable Code that callers can switch on via errors.As, while keeping the same
-    Error() string so existing string-matching code continues to work unchanged.
+     1. Base — *ValidationError. Catchall for "this is a validation issue,
+        here is the message". Reachable from any leaf via the As method that
+        each leaf implements.
+     2. Cluster — types like *RequiredFieldError or *FieldVersionMismatchError.
+        Group families of related failures and expose the family-level metadata
+        (Field, MinVersion, ...). Wrap the underlying leaf via Unwrap,
+        so errors.As can still walk to the leaf.
+     3. Leaf — one type per call site (e.g. *InfoVersionRequired,
+        *LicenseIdentifierFieldFor31Plus). Lets callers match an exact failure
+        point without string comparison.
 
-    Codes follow a kebab-case subject-action shape (e.g.
-    "info-version-required", "path-leading-slash-missing"), modeled after the
-    rule-ID convention used by oasdiff and similar tools. The Code field is
-    a bare string rather than a typed constant so validators in any package
-    can introduce new codes without a central registry; callers that want
-    compile-time safety can declare their own const block.
+    All three are reachable from the same returned error through standard Go
+    error wrapping (errors.As, errors.Is, errors.Unwrap), so a caller that only
+    needs "is it a validation error?" stops at the base and a caller that wants
+    "is it specifically license.identifier being used in 3.0?" matches the leaf.
 
-    Backward compatibility: this type is purely additive. Every site that today
-    returns errors.New(msg) can be migrated to return &ValidationError{Code:
-    "...", Message: msg} without changing the observed Error() output. Callers
-    that don't use errors.As see no difference.
+    Backward compatibility: every site that today returns errors.New(msg)
+    migrates to a leaf type that embeds ValidationError with Message set to
+    the original string. (*ValidationError).Error() returns Message unchanged,
+    so existing string-matching consumers see identical output.
 
 func (e *ValidationError) Error() string
 

@@ -101,17 +101,11 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error 
 	}
 
 	if info.Version == "" {
-		return &ValidationError{
-			Code:    "info-version-required",
-			Message: "value of version must be a non-empty string",
-		}
+		return newInfoVersionRequired()
 	}
 
 	if info.Title == "" {
-		return &ValidationError{
-			Code:    "info-title-required",
-			Message: "value of title must be a non-empty string",
-		}
+		return newInfoTitleRequired()
 	}
 
 	return validateExtensions(ctx, info.Extensions)
