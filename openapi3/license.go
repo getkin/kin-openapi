@@ -68,11 +68,11 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if license.Identifier != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
-		return newLicenseIdentifierFieldFor31Plus()
+		return newLicenseIdentifierFieldFor31Plus(license.Origin)
 	}
 
 	if license.Name == "" {
-		return newLicenseNameRequired()
+		return newLicenseNameRequired(license.Origin)
 	}
 
 	if license.URL != "" && license.Identifier != "" {

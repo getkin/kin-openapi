@@ -713,6 +713,11 @@ type FieldVersionMismatchError struct {
 	MinVersion string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
 }
     FieldVersionMismatchError clusters "field X is for OpenAPI >=Y" failures
     (3.1+ keywords used in 3.0 documents). Carries the field name and minimum
@@ -1664,6 +1669,11 @@ type RequiredFieldError struct {
 	Field string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
 }
     RequiredFieldError clusters "X must be a non-empty value" failures across
     the spec (info.title, info.version, license.name, the openapi version

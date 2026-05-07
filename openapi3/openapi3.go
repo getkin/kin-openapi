@@ -53,8 +53,8 @@ func (doc *T) IsOpenAPI31OrLater() bool {
 	return slices.Contains([]string{"3.1", "3.2"}, doc.OpenAPIMajorMinor())
 }
 
-func errFieldFor31Plus(field string) error {
-	return newFieldFor31Plus(field)
+func errFieldFor31Plus(field string, origin *Origin) error {
+	return newFieldFor31Plus(field, origin)
 }
 
 func errValueOfFieldFor31Plus(value any, field string) error {

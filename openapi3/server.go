@@ -200,7 +200,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if server.URL == "" {
-		return newServerURLRequired()
+		return newServerURLRequired(server.Origin)
 	}
 
 	opening, closing := strings.Count(server.URL, "{"), strings.Count(server.URL, "}")

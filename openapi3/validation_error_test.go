@@ -296,6 +296,76 @@ func TestValidationError_UnwrapWalksClusterToLeaf(t *testing.T) {
 	require.Nil(t, errors.Unwrap(licenseLeaf), "leaf has no inner error")
 }
 
+// Origin is populated on cluster types when the document was loaded
+// with Loader.IncludeOrigin = true. The cluster carries the offending
+// element's Origin (info, license, server, schema, ...) so consumers
+// can attach file/line/column to a finding without re-walking the doc.
+func TestValidationError_OriginPopulatedOnLoaderTracking(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info:
+  title: x
+  version: ""
+paths: {}
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(verr, &rfe))
+	require.Equal(t, "info.version", rfe.Field)
+	require.NotNil(t, rfe.Origin, "cluster should carry info.Origin when loader tracks origins")
+	require.NotNil(t, rfe.Origin.Key, "Origin.Key set by the loader")
+	// File is empty for LoadFromData (no path associated); LoadFromFile
+	// would populate it. Line/Column are populated either way.
+	require.Greater(t, rfe.Origin.Key.Line, 0)
+}
+
+// Without IncludeOrigin, Origin is nil — we don't fabricate location
+// info that wasn't tracked.
+func TestValidationError_OriginNilWithoutLoaderTracking(t *testing.T) {
+	loader := openapi3.NewLoader()
+	// IncludeOrigin defaults to false
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info:
+  title: x
+  version: ""
+paths: {}
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(verr, &rfe))
+	require.Nil(t, rfe.Origin, "Origin should be nil when loader didn't track origins")
+}
+
+// Document-root fields (openapi, webhooks, jsonSchemaDialect) live on
+// *T which the loader doesn't track, so their Origin is always nil
+// even when IncludeOrigin is enabled. Pinned so callers know to fall
+// back to file-only when the field is at the doc root.
+func TestValidationError_OriginNilForDocumentRootFields(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: ""
+info:
+  title: x
+  version: "1"
+paths: {}
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(verr, &rfe))
+	require.Equal(t, "openapi", rfe.Field)
+	require.Nil(t, rfe.Origin, "doc-root fields have no Origin (loader doesn't track *T)")
+}
+
 // MultiError already implements As() that recurses into elements, so a
 // typed validation error wrapped inside a MultiError must remain
 // reachable. This pins that no special wiring is needed for the typed

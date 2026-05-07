@@ -65,6 +65,11 @@ type RequiredFieldError struct {
 	Field string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
 }
 
 func (e *RequiredFieldError) Error() string { return e.Cause.Error() }
@@ -82,6 +87,11 @@ type FieldVersionMismatchError struct {
 	MinVersion string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
 }
 
 func (e *FieldVersionMismatchError) Error() string { return e.Cause.Error() }
@@ -315,44 +325,47 @@ func (e *DynamicRefFieldFor31Plus) As(target any) bool {
 // Unwrap and the base via the leaf's As method).
 // ---------------------------------------------------------------------
 
-func newRequiredField(field string, leaf error) error {
-	return &RequiredFieldError{Field: field, Cause: leaf}
+func newRequiredField(field string, leaf error, origin *Origin) error {
+	return &RequiredFieldError{Field: field, Cause: leaf, Origin: origin}
 }
 
-func newInfoVersionRequired() error {
+func newInfoVersionRequired(origin *Origin) error {
 	return newRequiredField("info.version",
-		&InfoVersionRequired{ValidationError{Message: "value of version must be a non-empty string"}})
+		&InfoVersionRequired{ValidationError{Message: "value of version must be a non-empty string"}}, origin)
 }
 
-func newInfoTitleRequired() error {
+func newInfoTitleRequired(origin *Origin) error {
 	return newRequiredField("info.title",
-		&InfoTitleRequired{ValidationError{Message: "value of title must be a non-empty string"}})
+		&InfoTitleRequired{ValidationError{Message: "value of title must be a non-empty string"}}, origin)
 }
 
-func newLicenseNameRequired() error {
+func newLicenseNameRequired(origin *Origin) error {
 	return newRequiredField("license.name",
-		&LicenseNameRequired{ValidationError{Message: "value of license name must be a non-empty string"}})
+		&LicenseNameRequired{ValidationError{Message: "value of license name must be a non-empty string"}}, origin)
 }
 
+// newOpenAPIVersionRequired has no Origin parameter: the OpenAPI version
+// string lives on the document root *T, which the loader doesn't track.
 func newOpenAPIVersionRequired() error {
 	return newRequiredField("openapi",
-		&OpenAPIVersionRequired{ValidationError{Message: "value of openapi must be a non-empty string"}})
+		&OpenAPIVersionRequired{ValidationError{Message: "value of openapi must be a non-empty string"}}, nil)
 }
 
-func newServerURLRequired() error {
+func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
-		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}})
+		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
 }
 
 // newFieldVersionMismatch wraps leaf in a FieldVersionMismatchError for the
 // given field at minimum version 3.1. Used by per-call-site constructors
 // (newInfoSummaryFieldFor31Plus, etc.) and by the dispatch helper
 // newFieldFor31Plus that schema.go's reject closure goes through.
-func newFieldVersionMismatch(field string, leaf error) error {
+func newFieldVersionMismatch(field string, leaf error, origin *Origin) error {
 	return &FieldVersionMismatchError{
 		Field:      field,
 		MinVersion: "3.1",
 		Cause:      leaf,
+		Origin:     origin,
 	}
 }
 
@@ -361,28 +374,31 @@ func newFieldVersionMismatch(field string, leaf error) error {
 // The schema fields go through fieldFor31PlusLeaves below because they're
 // dispatched from a runtime-parameterised closure in schema.go's reject.
 
-func newInfoSummaryFieldFor31Plus() error {
+func newInfoSummaryFieldFor31Plus(origin *Origin) error {
 	const msg = "field summary is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("summary",
-		&InfoSummaryFieldFor31Plus{ValidationError{Message: msg}})
+		&InfoSummaryFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
-func newLicenseIdentifierFieldFor31Plus() error {
+func newLicenseIdentifierFieldFor31Plus(origin *Origin) error {
 	const msg = "field identifier is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("identifier",
-		&LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}})
+		&LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
+// newWebhooksFieldFor31Plus and newJSONSchemaDialectFieldFor31Plus have no
+// Origin parameter: both fields live on the document root *T, which the
+// loader doesn't track.
 func newWebhooksFieldFor31Plus() error {
 	const msg = "field webhooks is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("webhooks",
-		&WebhooksFieldFor31Plus{ValidationError{Message: msg}})
+		&WebhooksFieldFor31Plus{ValidationError{Message: msg}}, nil)
 }
 
 func newJSONSchemaDialectFieldFor31Plus() error {
 	const msg = "field jsonschemadialect is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("jsonschemadialect",
-		&JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}})
+		&JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}}, nil)
 }
 
 // fieldFor31PlusLeaves maps field names (as passed to errFieldFor31Plus)
@@ -428,7 +444,7 @@ var fieldFor31PlusLeaves = map[string]func(msg string) error{
 //
 // Reached only from schema.go's reject closure with a runtime field
 // name; the four non-schema sites use direct constructors instead.
-func newFieldFor31Plus(field string) error {
+func newFieldFor31Plus(field string, origin *Origin) error {
 	msg := "field " + field + " is for OpenAPI >=3.1"
 	var leaf error
 	if ctor, ok := fieldFor31PlusLeaves[field]; ok {
@@ -436,5 +452,5 @@ func newFieldFor31Plus(field string) error {
 	} else {
 		leaf = &ValidationError{Message: msg}
 	}
-	return newFieldVersionMismatch(field, leaf)
+	return newFieldVersionMismatch(field, leaf, origin)
 }

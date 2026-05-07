@@ -1426,7 +1426,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			if _, ok := allowed[field]; ok {
 				return nil
 			}
-			return errFieldFor31Plus(field)
+			return errFieldFor31Plus(field, schema.Origin)
 		}
 		if schema.Const != nil {
 			if err := reject("const"); err != nil {

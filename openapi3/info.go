@@ -85,7 +85,7 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if info.Summary != "" && !getValidationOptions(ctx).isOpenAPI31OrLater {
-		return newInfoSummaryFieldFor31Plus()
+		return newInfoSummaryFieldFor31Plus(info.Origin)
 	}
 
 	if contact := info.Contact; contact != nil {
@@ -101,11 +101,11 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error 
 	}
 
 	if info.Version == "" {
-		return newInfoVersionRequired()
+		return newInfoVersionRequired(info.Origin)
 	}
 
 	if info.Title == "" {
-		return newInfoTitleRequired()
+		return newInfoTitleRequired(info.Origin)
 	}
 
 	return validateExtensions(ctx, info.Extensions)
