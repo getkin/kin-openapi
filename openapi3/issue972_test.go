@@ -3,9 +3,10 @@ package openapi3_test
 import (
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue972(t *testing.T) {

@@ -7,8 +7,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestLoadReferenceFromRemoteURLFailsWithHttpError(t *testing.T) {

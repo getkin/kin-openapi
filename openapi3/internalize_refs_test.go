@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestInternalizeRefs(t *testing.T) {

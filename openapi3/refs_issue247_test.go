@@ -4,9 +4,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-openapi/jsonpointer"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue247(t *testing.T) {

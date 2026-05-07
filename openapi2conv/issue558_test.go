@@ -3,9 +3,10 @@ package openapi2conv_test
 import (
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi2conv"
 )
 
 func TestPR558(t *testing.T) {
