@@ -11,7 +11,7 @@ import (
 func TestMaplikeMethods(t *testing.T) {
 	t.Parallel()
 
-	t.Run("*Responses", func(t *testing.T) {
+	t.Run("*openapi3.Responses", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
 			x := (*openapi3.Responses)(nil)
@@ -38,7 +38,7 @@ func TestMaplikeMethods(t *testing.T) {
 		})
 	})
 
-	t.Run("*Callback", func(t *testing.T) {
+	t.Run("*openapi3.Callback", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
 			x := (*openapi3.Callback)(nil)
@@ -65,7 +65,7 @@ func TestMaplikeMethods(t *testing.T) {
 		})
 	})
 
-	t.Run("*Paths", func(t *testing.T) {
+	t.Run("*openapi3.Paths", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
 			x := (*openapi3.Paths)(nil)
