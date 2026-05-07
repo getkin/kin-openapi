@@ -111,6 +111,28 @@ func (e *SchemaValueError) Error() string {
 
 func (e *SchemaValueError) Unwrap() error { return e.Cause }
 
+// PathParametersError clusters "operation declares fewer/more path
+// parameters than appear in the path template" failures. Carries the
+// path template, method, and the list of missing parameter names so
+// callers can render or filter without parsing the message.
+type PathParametersError struct {
+	// Path is the path template (e.g. "/api/{domain}/{project}/...").
+	Path string
+	// Method is the HTTP method (e.g. "POST").
+	Method string
+	// Missing names path-template variables (or operation parameters)
+	// that don't have a corresponding declaration on the other side.
+	Missing []string
+	// Origin is the source location of the path item when the document
+	// was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *PathParametersError) Error() string {
+	return fmt.Sprintf("operation %s %s must define exactly all path parameters (missing: %v)",
+		e.Method, e.Path, e.Missing)
+}
+
 // FieldVersionMismatchError clusters "field X is for OpenAPI >=Y"
 // failures (3.1+ keywords used in 3.0 documents). Carries the field
 // name and minimum version, wraps the per-site leaf.

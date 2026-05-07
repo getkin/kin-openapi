@@ -1431,6 +1431,25 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error
 func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
 
+type PathParametersError struct {
+	// Path is the path template (e.g. "/api/{domain}/{project}/...").
+	Path string
+	// Method is the HTTP method (e.g. "POST").
+	Method string
+	// Missing names path-template variables (or operation parameters)
+	// that don't have a corresponding declaration on the other side.
+	Missing []string
+	// Origin is the source location of the path item when the document
+	// was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    PathParametersError clusters "operation declares fewer/more path parameters
+    than appear in the path template" failures. Carries the path template,
+    method, and the list of missing parameter names so callers can render or
+    filter without parsing the message.
+
+func (e *PathParametersError) Error() string
+
 type Paths struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
