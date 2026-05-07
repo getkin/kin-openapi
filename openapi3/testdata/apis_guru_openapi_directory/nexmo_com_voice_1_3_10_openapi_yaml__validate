@@ -1,0 +1,10 @@
+invalid components: schema "DTMFRequest": invalid example: value must be a string
+Schema:
+  {
+    "description": "The digits to send",
+    "example": 1713,
+    "type": "string"
+  }
+
+Value:
+  1713

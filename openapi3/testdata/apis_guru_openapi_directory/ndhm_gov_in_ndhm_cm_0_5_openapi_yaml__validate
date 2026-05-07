@@ -1,0 +1,9 @@
+invalid components: schema "HealthInformationNotification": invalid example: value must be a string
+Schema:
+  {
+    "example": 100005,
+    "type": "string"
+  }
+
+Value:
+  100005
