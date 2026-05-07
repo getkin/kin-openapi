@@ -1,5 +1,7 @@
 package openapi3
 
+import "fmt"
+
 // ValidationError is the embedded base for every typed validation error
 // emitted by the document validation walker (T.Validate, Info.Validate,
 // Paths.Validate, etc.). Three layers of granularity are exposed; pick
@@ -74,6 +76,40 @@ type RequiredFieldError struct {
 
 func (e *RequiredFieldError) Error() string { return e.Cause.Error() }
 func (e *RequiredFieldError) Unwrap() error { return e.Cause }
+
+// SchemaValueError clusters failures of "this schema's <kind> value
+// doesn't satisfy the schema's own constraints" — example, default,
+// examples[i], etc. checked against the schema during document
+// validation. Wraps the underlying error from VisitJSON (a
+// *SchemaError or a MultiError of them) so callers can match either:
+//
+//	var sve *SchemaValueError
+//	if errors.As(err, &sve) { /* knows ValueKind = "example" */ }
+//
+//	var se *SchemaError
+//	if errors.As(err, &se) { /* full schema-validation detail */ }
+//
+// Cause is typed as error (not *SchemaError) because VisitJSON can
+// return either a single SchemaError or a MultiError aggregating
+// several. errors.As walks both shapes transparently.
+type SchemaValueError struct {
+	// ValueKind identifies the schema sub-field whose value failed
+	// (e.g. "example", "default").
+	ValueKind string
+	// Cause is the underlying error from schema.VisitJSON — either a
+	// *SchemaError or a MultiError of them. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil when
+	// origin tracking is off.
+	Origin *Origin
+}
+
+func (e *SchemaValueError) Error() string {
+	return fmt.Sprintf("invalid %s: %s", e.ValueKind, e.Cause.Error())
+}
+
+func (e *SchemaValueError) Unwrap() error { return e.Cause }
 
 // FieldVersionMismatchError clusters "field X is for OpenAPI >=Y"
 // failures (3.1+ keywords used in 3.0 documents). Carries the field
@@ -354,6 +390,14 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+// newSchemaValueError wraps the result of schema.VisitJSON in a
+// *SchemaValueError cluster, identifying which schema sub-field
+// (example, default, ...) carried the offending value. cause is
+// either a *SchemaError or a MultiError of them.
+func newSchemaValueError(valueKind string, cause error, origin *Origin) error {
+	return &SchemaValueError{ValueKind: valueKind, Cause: cause, Origin: origin}
 }
 
 // newFieldVersionMismatch wraps leaf in a FieldVersionMismatchError for the

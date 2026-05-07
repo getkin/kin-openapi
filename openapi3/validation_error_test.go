@@ -366,6 +366,49 @@ paths: {}
 	require.Nil(t, rfe.Origin, "doc-root fields have no Origin (loader doesn't track *T)")
 }
 
+// SchemaValueError clusters "<schema field>'s example/default value
+// doesn't satisfy the schema's own constraints" failures. Reach the
+// cluster via errors.As, the underlying *SchemaError via Unwrap (or
+// nested errors.As), and the cluster's metadata via cluster.ValueKind.
+func TestValidationError_SchemaValueErrorOnInvalidExample(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: {title: t, version: '1'}
+paths:
+  /thing:
+    get:
+      parameters:
+        - name: token
+          in: query
+          example: too-long
+          schema:
+            type: string
+            maxLength: 4
+      responses:
+        "200": {description: ok}
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	require.Error(t, verr)
+
+	// Cluster is reachable.
+	var sve *openapi3.SchemaValueError
+	require.True(t, errors.As(verr, &sve))
+	require.Equal(t, "example", sve.ValueKind)
+	require.NotNil(t, sve.Origin, "parameter Origin should be carried through")
+
+	// Underlying *SchemaError is reachable via the Unwrap chain.
+	var se *openapi3.SchemaError
+	require.True(t, errors.As(verr, &se))
+
+	// Error() prefixes the cluster's ValueKind to keep the historical
+	// "invalid example: ..." message format byte-identical.
+	require.Contains(t, sve.Error(), "invalid example: ")
+}
+
 // MultiError already implements As() that recurses into elements, so a
 // typed validation error wrapped inside a MultiError must remain
 // reachable. This pins that no special wiring is needed for the typed

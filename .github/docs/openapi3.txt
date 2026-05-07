@@ -2228,6 +2228,38 @@ func WithStringFormatValidators(validators map[string]StringFormatValidator) Sch
     These validators are checked before global SchemaStringFormats and allow
     different validations for the same format name across different specs.
 
+type SchemaValueError struct {
+	// ValueKind identifies the schema sub-field whose value failed
+	// (e.g. "example", "default").
+	ValueKind string
+	// Cause is the underlying error from schema.VisitJSON — either a
+	// *SchemaError or a MultiError of them. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil when
+	// origin tracking is off.
+	Origin *Origin
+}
+    SchemaValueError clusters failures of "this schema's <kind> value doesn't
+    satisfy the schema's own constraints" — example, default, examples[i], etc.
+    checked against the schema during document validation. Wraps the underlying
+    error from VisitJSON (a *SchemaError or a MultiError of them) so callers can
+    match either:
+
+        var sve *SchemaValueError
+        if errors.As(err, &sve) { /* knows ValueKind = "example" */ }
+
+        var se *SchemaError
+        if errors.As(err, &se) { /* full schema-validation detail */ }
+
+    Cause is typed as error (not *SchemaError) because VisitJSON can return
+    either a single SchemaError or a MultiError aggregating several. errors.As
+    walks both shapes transparently.
+
+func (e *SchemaValueError) Error() string
+
+func (e *SchemaValueError) Unwrap() error
+
 type Schemas map[string]*SchemaRef // Schemas represents components' named schemas
 
 func (m Schemas) JSONLookup(token string) (any, error)
