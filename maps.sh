@@ -271,7 +271,7 @@ for i in "${!types[@]}"; do
 	type="$type" name="$name" value_type="$value_type" maplike_UnMarsh
 	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike"
 
-	type="${type/'*'/'*openapi3.'}" value_type="${value_type/'*'/'*openapi3.'}" test_body
+	type="${type/'*'/*openapi3.}" value_type="${value_type/'*'/*openapi3.}" test_body
 
 
 done
