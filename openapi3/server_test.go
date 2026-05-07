@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,19 +60,19 @@ func invalidServer() *Server {
 
 func TestServerValidation(t *testing.T) {
 	tests := []struct {
-		name          string
-		input         *Server
-		expectedError error
+		name             string
+		input            *Server
+		expectedErrorMsg string // empty = expect no error
 	}{
 		{
 			"when no URL is provided",
 			invalidServer(),
-			errors.New("value of url must be a non-empty string"),
+			"value of url must be a non-empty string",
 		},
 		{
 			"when a URL is provided",
 			validServer(),
-			nil,
+			"",
 		},
 	}
 
@@ -82,7 +81,11 @@ func TestServerValidation(t *testing.T) {
 			c := t.Context()
 			validationErr := test.input.Validate(c)
 
-			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
+			if test.expectedErrorMsg == "" {
+				require.NoError(t, validationErr)
+			} else {
+				require.EqualError(t, validationErr, test.expectedErrorMsg)
+			}
 		})
 	}
 }

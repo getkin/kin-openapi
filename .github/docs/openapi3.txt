@@ -256,6 +256,10 @@ type AdditionalProperties = BoolSchema
     AdditionalProperties is a type alias for BoolSchema, kept for backward
     compatibility.
 
+type AnchorFieldFor31Plus struct{ ValidationError }
+
+func (e *AnchorFieldFor31Plus) As(target any) bool
+
 type BoolSchema struct {
 	Has    *bool
 	Schema *SchemaRef
@@ -373,6 +377,10 @@ func (m Callbacks) JSONLookup(token string) (any, error)
 func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Callbacks to a copy of data.
 
+type CommentFieldFor31Plus struct{ ValidationError }
+
+func (e *CommentFieldFor31Plus) As(target any) bool
+
 type ComponentRef interface {
 	RefString() string
 	RefPath() *url.URL
@@ -411,6 +419,10 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
     Validate returns an error if Components does not comply with the OpenAPI
     spec.
 
+type ConstFieldFor31Plus struct{ ValidationError }
+
+func (e *ConstFieldFor31Plus) As(target any) bool
+
 type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -433,6 +445,10 @@ func (contact *Contact) UnmarshalJSON(data []byte) error
 
 func (contact *Contact) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Contact does not comply with the OpenAPI spec.
+
+type ContainsFieldFor31Plus struct{ ValidationError }
+
+func (e *ContainsFieldFor31Plus) As(target any) bool
 
 type Content map[string]*MediaType
     Content is specified by OpenAPI/Swagger 3.0 standard.
@@ -459,6 +475,30 @@ func (content *Content) UnmarshalJSON(data []byte) (err error)
 func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Content does not comply with the OpenAPI spec.
 
+type ContentEncodingFieldFor31Plus struct{ ValidationError }
+
+func (e *ContentEncodingFieldFor31Plus) As(target any) bool
+
+type ContentMediaTypeFieldFor31Plus struct{ ValidationError }
+
+func (e *ContentMediaTypeFieldFor31Plus) As(target any) bool
+
+type ContentSchemaFieldFor31Plus struct{ ValidationError }
+
+func (e *ContentSchemaFieldFor31Plus) As(target any) bool
+
+type DefsFieldFor31Plus struct{ ValidationError }
+
+func (e *DefsFieldFor31Plus) As(target any) bool
+
+type DependentRequiredFieldFor31Plus struct{ ValidationError }
+
+func (e *DependentRequiredFieldFor31Plus) As(target any) bool
+
+type DependentSchemasFieldFor31Plus struct{ ValidationError }
+
+func (e *DependentSchemasFieldFor31Plus) As(target any) bool
+
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -481,6 +521,18 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error
 func (discriminator *Discriminator) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Discriminator does not comply with the OpenAPI
     spec.
+
+type DynamicAnchorFieldFor31Plus struct{ ValidationError }
+
+func (e *DynamicAnchorFieldFor31Plus) As(target any) bool
+
+type DynamicRefFieldFor31Plus struct{ ValidationError }
+
+func (e *DynamicRefFieldFor31Plus) As(target any) bool
+
+type ElseFieldFor31Plus struct{ ValidationError }
+
+func (e *ElseFieldFor31Plus) As(target any) bool
 
 type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -600,6 +652,10 @@ func (m Examples) JSONLookup(token string) (any, error)
 func (examples *Examples) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Examples to a copy of data.
 
+type ExamplesFieldFor31Plus struct{ ValidationError }
+
+func (e *ExamplesFieldFor31Plus) As(target any) bool
+
 type ExclusiveBound struct {
 	Bool  *bool    // For OpenAPI 3.0 style (modifier for min/max)
 	Value *float64 // For OpenAPI 3.1 style (actual bound value)
@@ -647,6 +703,29 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error
 func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if ExternalDocs does not comply with the OpenAPI
     spec.
+
+type FieldVersionMismatchError struct {
+	// Field is the field name flagged (e.g. "summary", "identifier",
+	// "$defs", "prefixItems", "contains", ...).
+	Field string
+	// MinVersion is the minimum OpenAPI version that allows the field
+	// (e.g. "3.1").
+	MinVersion string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
+}
+    FieldVersionMismatchError clusters "field X is for OpenAPI >=Y" failures
+    (3.1+ keywords used in 3.0 documents). Carries the field name and minimum
+    version, wraps the per-site leaf.
+
+func (e *FieldVersionMismatchError) Error() string
+
+func (e *FieldVersionMismatchError) Unwrap() error
 
 type FormatValidator[T any] interface {
 	Validate(value T) error
@@ -740,6 +819,14 @@ func (m Headers) JSONLookup(token string) (any, error)
 func (headers *Headers) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Headers to a copy of data.
 
+type IDFieldFor31Plus struct{ ValidationError }
+
+func (e *IDFieldFor31Plus) As(target any) bool
+
+type IfFieldFor31Plus struct{ ValidationError }
+
+func (e *IfFieldFor31Plus) As(target any) bool
+
 type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -769,8 +856,24 @@ func (info *Info) UnmarshalJSON(data []byte) error
 func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Info does not comply with the OpenAPI spec.
 
+type InfoSummaryFieldFor31Plus struct{ ValidationError }
+
+func (e *InfoSummaryFieldFor31Plus) As(target any) bool
+
+type InfoTitleRequired struct{ ValidationError }
+
+func (e *InfoTitleRequired) As(target any) bool
+
+type InfoVersionRequired struct{ ValidationError }
+
+func (e *InfoVersionRequired) As(target any) bool
+
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
+
+type JSONSchemaDialectFieldFor31Plus struct{ ValidationError }
+
+func (e *JSONSchemaDialectFieldFor31Plus) As(target any) bool
 
 type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -799,6 +902,14 @@ func (license *License) UnmarshalJSON(data []byte) error
 
 func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if License does not comply with the OpenAPI spec.
+
+type LicenseIdentifierFieldFor31Plus struct{ ValidationError }
+
+func (e *LicenseIdentifierFieldFor31Plus) As(target any) bool
+
+type LicenseNameRequired struct{ ValidationError }
+
+func (e *LicenseNameRequired) As(target any) bool
 
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -943,6 +1054,10 @@ func (mr MappingRef) MarshalText() ([]byte, error)
 
 func (mr *MappingRef) UnmarshalText(data []byte) error
 
+type MaxContainsFieldFor31Plus struct{ ValidationError }
+
+func (e *MaxContainsFieldFor31Plus) As(target any) bool
+
 type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -981,6 +1096,10 @@ func (mediaType *MediaType) WithExample(name string, value any) *MediaType
 func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType
 
 func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType
+
+type MinContainsFieldFor31Plus struct{ ValidationError }
+
+func (e *MinContainsFieldFor31Plus) As(target any) bool
 
 type MultiError []error
     MultiError is a collection of errors, intended for when multiple issues need
@@ -1070,6 +1189,10 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error
 func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if OAuthFlows does not comply with the OpenAPI
     spec.
+
+type OpenAPIVersionRequired struct{ ValidationError }
+
+func (e *OpenAPIVersionRequired) As(target any) bool
 
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1308,6 +1431,25 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error
 func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
 
+type PathParametersError struct {
+	// Path is the path template (e.g. "/api/{domain}/{project}/...").
+	Path string
+	// Method is the HTTP method (e.g. "POST").
+	Method string
+	// Missing names path-template variables (or operation parameters)
+	// that don't have a corresponding declaration on the other side.
+	Missing []string
+	// Origin is the source location of the path item when the document
+	// was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    PathParametersError clusters "operation declares fewer/more path parameters
+    than appear in the path template" failures. Carries the path template,
+    method, and the list of missing parameter names so callers can render or
+    filter without parsing the message.
+
+func (e *PathParametersError) Error() string
+
 type Paths struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -1379,6 +1521,18 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 func (paths *Paths) Value(key string) *PathItem
     Value returns the paths for key or nil
+
+type PatternPropertiesFieldFor31Plus struct{ ValidationError }
+
+func (e *PatternPropertiesFieldFor31Plus) As(target any) bool
+
+type PrefixItemsFieldFor31Plus struct{ ValidationError }
+
+func (e *PrefixItemsFieldFor31Plus) As(target any) bool
+
+type PropertyNamesFieldFor31Plus struct{ ValidationError }
+
+func (e *PropertyNamesFieldFor31Plus) As(target any) bool
 
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
     ReadFromURIFunc defines a function which reads the contents of a resource
@@ -1527,6 +1681,33 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error
 func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if RequestBodyRef does not comply with the OpenAPI
     spec.
+
+type RequiredFieldError struct {
+	// Field is the JSON-pointer-style path of the required field
+	// (e.g. "info.version", "license.name", "openapi", "server.url").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
+}
+    RequiredFieldError clusters "X must be a non-empty value" failures across
+    the spec (info.title, info.version, license.name, the openapi version
+    string, server.url). Carries the field path, wraps the per-site leaf so
+    callers can match either:
+
+        var rfe *RequiredFieldError
+        if errors.As(err, &rfe) { /* knows the field */ }
+
+        var ivr *InfoVersionRequired
+        if errors.As(err, &ivr) { /* knows it's exactly info.version */ }
+
+func (e *RequiredFieldError) Error() string
+
+func (e *RequiredFieldError) Unwrap() error
 
 type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1930,6 +2111,10 @@ func (err *SchemaError) JSONPointer() []string
 
 func (err SchemaError) Unwrap() error
 
+type SchemaFieldFor31Plus struct{ ValidationError }
+
+func (e *SchemaFieldFor31Plus) As(target any) bool
+
 type SchemaRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
@@ -2061,6 +2246,38 @@ func WithStringFormatValidators(validators map[string]StringFormatValidator) Sch
     WithStringFormatValidators adds per-validation string format validators.
     These validators are checked before global SchemaStringFormats and allow
     different validations for the same format name across different specs.
+
+type SchemaValueError struct {
+	// ValueKind identifies the schema sub-field whose value failed
+	// (e.g. "example", "default").
+	ValueKind string
+	// Cause is the underlying error from schema.VisitJSON — either a
+	// *SchemaError or a MultiError of them. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil when
+	// origin tracking is off.
+	Origin *Origin
+}
+    SchemaValueError clusters failures of "this schema's <kind> value doesn't
+    satisfy the schema's own constraints" — example, default, examples[i], etc.
+    checked against the schema during document validation. Wraps the underlying
+    error from VisitJSON (a *SchemaError or a MultiError of them) so callers can
+    match either:
+
+        var sve *SchemaValueError
+        if errors.As(err, &sve) { /* knows ValueKind = "example" */ }
+
+        var se *SchemaError
+        if errors.As(err, &se) { /* full schema-validation detail */ }
+
+    Cause is typed as error (not *SchemaError) because VisitJSON can return
+    either a single SchemaError or a MultiError aggregating several. errors.As
+    walks both shapes transparently.
+
+func (e *SchemaValueError) Error() string
+
+func (e *SchemaValueError) Unwrap() error
 
 type Schemas map[string]*SchemaRef // Schemas represents components' named schemas
 
@@ -2235,6 +2452,10 @@ func (server *Server) UnmarshalJSON(data []byte) error
 
 func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (err error)
     Validate returns an error if Server does not comply with the OpenAPI spec.
+
+type ServerURLRequired struct{ ValidationError }
+
+func (e *ServerURLRequired) As(target any) bool
 
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2434,6 +2655,10 @@ func (tags Tags) Get(name string) *Tag
 func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Tags does not comply with the OpenAPI spec.
 
+type ThenFieldFor31Plus struct{ ValidationError }
+
+func (e *ThenFieldFor31Plus) As(target any) bool
+
 type Types []string
     Types represents the type(s) of a schema.
 
@@ -2556,6 +2781,45 @@ func (types *Types) Slice() []string
 
 func (types *Types) UnmarshalJSON(data []byte) error
 
+type UnevaluatedItemsFieldFor31Plus struct{ ValidationError }
+
+func (e *UnevaluatedItemsFieldFor31Plus) As(target any) bool
+
+type UnevaluatedPropertiesFieldFor31Plus struct{ ValidationError }
+
+func (e *UnevaluatedPropertiesFieldFor31Plus) As(target any) bool
+
+type ValidationError struct {
+	Message string
+}
+    ValidationError is the embedded base for every typed validation error
+    emitted by the document validation walker (T.Validate, Info.Validate,
+    Paths.Validate, etc.). Three layers of granularity are exposed; pick
+    whichever the caller needs:
+
+     1. Base — *ValidationError. Catchall for "this is a validation issue,
+        here is the message". Reachable from any leaf via the As method that
+        each leaf implements.
+     2. Cluster — types like *RequiredFieldError or *FieldVersionMismatchError.
+        Group families of related failures and expose the family-level metadata
+        (Field, MinVersion, ...). Wrap the underlying leaf via Unwrap,
+        so errors.As can still walk to the leaf.
+     3. Leaf — one type per call site (e.g. *InfoVersionRequired,
+        *LicenseIdentifierFieldFor31Plus). Lets callers match an exact failure
+        point without string comparison.
+
+    All three are reachable from the same returned error through standard Go
+    error wrapping (errors.As, errors.Is, errors.Unwrap), so a caller that only
+    needs "is it a validation error?" stops at the base and a caller that wants
+    "is it specifically license.identifier being used in 3.0?" matches the leaf.
+
+    Backward compatibility: every site that today returns errors.New(msg)
+    migrates to a leaf type that embeds ValidationError with Message set to
+    the original string. (*ValidationError).Error() returns Message unchanged,
+    so existing string-matching consumers see identical output.
+
+func (e *ValidationError) Error() string
+
 type ValidationOption func(options *ValidationOptions)
     ValidationOption allows the modification of how the OpenAPI document is
     validated.
@@ -2624,6 +2888,10 @@ type ValidationOptions struct {
 	// Has unexported fields.
 }
     ValidationOptions provides configuration for validating OpenAPI documents.
+
+type WebhooksFieldFor31Plus struct{ ValidationError }
+
+func (e *WebhooksFieldFor31Plus) As(target any) bool
 
 type XML struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
