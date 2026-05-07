@@ -2,6 +2,7 @@ package openapi3conv_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -19,6 +20,26 @@ func loadV30(t *testing.T, raw string) *openapi3.T {
 	doc, err := loader.LoadFromData([]byte(raw))
 	require.NoError(t, err)
 	return doc
+}
+
+// requireValidate asserts doc passes openapi3 validation. Used as the
+// before-and-after invariant around Upgrade calls: a document valid as
+// 3.0 must remain valid after canonicalization to the latest 3.x.
+func requireValidate(t *testing.T, doc *openapi3.T, when string) {
+	t.Helper()
+	require.NoError(t, doc.Validate(context.Background()),
+		"document must validate %s Upgrade", when)
+}
+
+// upgradeAndAssertValid runs Upgrade with a Validate invariant on both
+// sides — input must validate, output must validate. Tests that exercise
+// representational rewrites use this helper so a regression that
+// produces an invalid output document fails the test.
+func upgradeAndAssertValid(t *testing.T, doc *openapi3.T, opts ...openapi3conv.Option) {
+	t.Helper()
+	requireValidate(t, doc, "before")
+	openapi3conv.Upgrade(doc, opts...)
+	requireValidate(t, doc, "after")
 }
 
 // Round-trips through JSON so the result reflects what tooling consumers see
@@ -43,7 +64,7 @@ openapi: 3.0.3
 info: {title: t, version: '1'}
 paths: {}
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	assert.Equal(t, "3.2.0", doc.OpenAPI)
 }
 
@@ -61,7 +82,7 @@ components:
       type: string
       nullable: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	assert.Equal(t, "3.2.0", doc.OpenAPI)
 	assert.Equal(t, openapi3.Types{"string", "null"}, *doc.Components.Schemas["Pet"].Value.Type)
 }
@@ -81,7 +102,7 @@ components:
       type: string
       nullable: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	require.NotNil(t, pet.Type)
 	assert.Equal(t, openapi3.Types{"string", "null"}, *pet.Type)
@@ -89,6 +110,9 @@ components:
 }
 
 func TestUpgrade_NullableAlreadyHasNullInTypeArray(t *testing.T) {
+	// Input intentionally mixes a 3.0 version stamp with a 3.1-only
+	// type array containing "null" — it doesn't validate as 3.0, so
+	// skip the before-Upgrade validate invariant here.
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -118,7 +142,7 @@ components:
     Pet:
       nullable: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	assert.False(t, pet.Nullable)
 	assert.Nil(t, pet.Type)
@@ -141,7 +165,7 @@ components:
           type: integer
           nullable: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	props := doc.Components.Schemas["Pet"].Value.Properties
 	assert.Equal(t, openapi3.Types{"string", "null"}, *props["name"].Value.Type)
 	assert.Equal(t, openapi3.Types{"integer", "null"}, *props["ageInYears"].Value.Type)
@@ -163,7 +187,7 @@ components:
       minimum: 5
       exclusiveMinimum: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	score := doc.Components.Schemas["Score"].Value
 	assert.Nil(t, score.Min, "Min cleared")
 	require.NotNil(t, score.ExclusiveMin.Value)
@@ -183,7 +207,7 @@ components:
       maximum: 100
       exclusiveMaximum: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	score := doc.Components.Schemas["Score"].Value
 	assert.Nil(t, score.Max)
 	require.NotNil(t, score.ExclusiveMax.Value)
@@ -205,7 +229,7 @@ components:
       minimum: 5
       exclusiveMinimum: false
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	score := doc.Components.Schemas["Score"].Value
 	require.NotNil(t, score.Min)
 	assert.Equal(t, 5.0, *score.Min)
@@ -228,7 +252,7 @@ components:
 `))
 	require.NoError(t, err)
 
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	score := doc.Components.Schemas["Score"].Value
 	require.NotNil(t, score.ExclusiveMin.Value)
 	assert.Equal(t, 5.0, *score.ExclusiveMin.Value)
@@ -250,7 +274,7 @@ components:
       type: string
       example: fido
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	pet := doc.Components.Schemas["Pet"].Value
 	assert.Nil(t, pet.Example)
 	require.Len(t, pet.Examples, 1)
@@ -258,6 +282,9 @@ components:
 }
 
 func TestUpgrade_ExampleAppendsToExistingExamples(t *testing.T) {
+	// Input intentionally mixes a 3.0 version stamp with the 3.1-only
+	// schema-level examples array — it doesn't validate as 3.0, so
+	// skip the before-Upgrade validate invariant here.
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.0.3
@@ -300,10 +327,10 @@ components:
           minimum: 0
           exclusiveMinimum: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	first := marshalJSON(t, doc)
 
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 	second := marshalJSON(t, doc)
 
 	assert.Equal(t, first, second, "second pass must be a no-op")
@@ -339,7 +366,7 @@ paths:
                     minimum: 0
                     exclusiveMinimum: true
 `)
-	openapi3conv.Upgrade(doc)
+	upgradeAndAssertValid(t, doc)
 
 	getOp := doc.Paths.Value("/pets").Get
 	param := getOp.Parameters[0].Value.Schema.Value
@@ -407,7 +434,7 @@ components:
       example: fido
 `)
 	var buf bytes.Buffer
-	openapi3conv.Upgrade(doc, openapi3conv.WithWriter(&buf))
+	upgradeAndAssertValid(t, doc, openapi3conv.WithWriter(&buf))
 	out := buf.String()
 	assert.Contains(t, out, "openapi: 3.0.3 -> 3.2.0")
 	assert.Contains(t, out, "nullable")
