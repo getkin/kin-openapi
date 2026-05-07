@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue542(t *testing.T) {
@@ -27,7 +29,7 @@ components:
       type: string
 `[1:])
 
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 
 	doc, err := sl.LoadFromData(spec)
 	require.NoError(t, err)

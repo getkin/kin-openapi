@@ -1,4 +1,4 @@
-package openapi3filter
+package openapi3filter_test
 
 import (
 	"io"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
@@ -63,7 +64,7 @@ func TestIssue689(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		options  *Options
+		options  *openapi3filter.Options
 		body     string
 		method   string
 		checkErr require.ErrorAssertionFunc
@@ -79,7 +80,7 @@ func TestIssue689(t *testing.T) {
 			name:   "non read-only property is added to request when validation disabled",
 			body:   `{"testNoReadOnly": true}`,
 			method: http.MethodPut,
-			options: &Options{
+			options: &openapi3filter.Options{
 				ExcludeReadOnlyValidations: true,
 			},
 			checkErr: require.NoError,
@@ -94,7 +95,7 @@ func TestIssue689(t *testing.T) {
 			name:   "read-only property is added to requests when validation disabled",
 			body:   `{"testWithReadOnly": true}`,
 			method: http.MethodPut,
-			options: &Options{
+			options: &openapi3filter.Options{
 				ExcludeReadOnlyValidations: true,
 			},
 			checkErr: require.NoError,
@@ -110,7 +111,7 @@ func TestIssue689(t *testing.T) {
 			name:   "non write-only property is added to request when validation disabled",
 			body:   `{"testNoWriteOnly": true}`,
 			method: http.MethodGet,
-			options: &Options{
+			options: &openapi3filter.Options{
 				ExcludeWriteOnlyValidations: true,
 			},
 			checkErr: require.NoError,
@@ -125,7 +126,7 @@ func TestIssue689(t *testing.T) {
 			name:   "write-only property is added to requests when validation disabled",
 			body:   `{"testWithWriteOnly": true}`,
 			method: http.MethodGet,
-			options: &Options{
+			options: &openapi3filter.Options{
 				ExcludeWriteOnlyValidations: true,
 			},
 			checkErr: require.NoError,
@@ -142,7 +143,7 @@ func TestIssue689(t *testing.T) {
 			route, pathParams, err := router.FindRoute(httpReq)
 			require.NoError(t, err)
 
-			requestValidationInput := &RequestValidationInput{
+			requestValidationInput := &openapi3filter.RequestValidationInput{
 				Request:    httpReq,
 				PathParams: pathParams,
 				Route:      route,
@@ -150,17 +151,17 @@ func TestIssue689(t *testing.T) {
 			}
 
 			if test.method == http.MethodGet {
-				responseValidationInput := &ResponseValidationInput{
+				responseValidationInput := &openapi3filter.ResponseValidationInput{
 					RequestValidationInput: requestValidationInput,
 					Status:                 200,
 					Header:                 httpReq.Header,
 					Body:                   io.NopCloser(strings.NewReader(test.body)),
 					Options:                test.options,
 				}
-				err = ValidateResponse(ctx, responseValidationInput)
+				err = openapi3filter.ValidateResponse(ctx, responseValidationInput)
 
 			} else {
-				err = ValidateRequest(ctx, requestValidationInput)
+				err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 			}
 			test.checkErr(t, err)
 		})

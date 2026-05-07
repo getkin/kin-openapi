@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestPathParametersMatchPath(t *testing.T) {
@@ -108,7 +110,7 @@ components:
           type: string
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(t.Context())

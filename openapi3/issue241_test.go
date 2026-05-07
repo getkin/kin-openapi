@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/oasdiff/yaml3"
+	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"

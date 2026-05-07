@@ -1,4 +1,4 @@
-package openapi3filter
+package openapi3filter_test
 
 import (
 	"net/http"
@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
@@ -126,12 +127,12 @@ components:
 			route, pathParams, err := router.FindRoute(req)
 			require.NoError(t, err)
 
-			validationInput := &RequestValidationInput{
+			validationInput := &openapi3filter.RequestValidationInput{
 				Request:    req,
 				PathParams: pathParams,
 				Route:      route,
 			}
-			err = ValidateRequest(loader.Context, validationInput)
+			err = openapi3filter.ValidateRequest(loader.Context, validationInput)
 			if testcase.shouldFail {
 				require.Error(t, err, "This test case should fail "+testcase.data)
 			} else {

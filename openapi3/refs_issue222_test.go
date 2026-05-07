@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue222(t *testing.T) {
@@ -106,7 +108,7 @@ components:
           type: string
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.EqualError(t, err, `invalid response: value MUST be an object`)
 	require.Nil(t, doc)

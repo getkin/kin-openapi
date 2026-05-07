@@ -1,4 +1,4 @@
-package legacy
+package legacy_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/routers/legacy"
 )
 
 func TestRouter(t *testing.T) {
@@ -129,7 +130,7 @@ func TestRouter(t *testing.T) {
 
 	err := doc.Validate(context.Background())
 	require.NoError(t, err)
-	r, err := NewRouter(doc)
+	r, err := legacy.NewRouter(doc)
 	require.NoError(t, err)
 
 	expect(r, http.MethodGet, "/not_existing", nil, nil)
@@ -169,7 +170,7 @@ func TestRouter(t *testing.T) {
 	}
 	err = doc.Validate(context.Background())
 	require.NoError(t, err)
-	r, err = NewRouter(doc)
+	r, err = legacy.NewRouter(doc)
 	require.NoError(t, err)
 	expect(r, http.MethodGet, "/hello", nil, nil)
 	expect(r, http.MethodGet, "/api/v1/hello", nil, nil)
@@ -209,10 +210,10 @@ func TestRouter(t *testing.T) {
 	})
 	err = doc.Validate(context.Background())
 	require.Error(t, err)
-	r, err = NewRouter(doc)
+	r, err = legacy.NewRouter(doc)
 	require.Error(t, err)
 	require.Nil(t, r)
-	r, err = NewRouter(doc, openapi3.DisableExamplesValidation())
+	r, err = legacy.NewRouter(doc, openapi3.DisableExamplesValidation())
 	require.NoError(t, err)
 	require.NotNil(t, r)
 }

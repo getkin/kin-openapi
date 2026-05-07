@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 var DateSpec = []byte(`
@@ -47,7 +49,7 @@ info:
 `[1:])
 
 func TestDateZeroMonth(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateSpec)
 	require.NoError(t, err)
 
@@ -58,11 +60,11 @@ func TestDateZeroMonth(t *testing.T) {
 		"name": "kin-openapi",
 		"date": "2001-00-03",
 	})
-	require.EqualError(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+FormatOfStringDate+`"`)
+	require.EqualError(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+openapi3.FormatOfStringDate+`"`)
 }
 
 func TestDateZeroDay(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateSpec)
 	require.NoError(t, err)
 
@@ -73,11 +75,11 @@ func TestDateZeroDay(t *testing.T) {
 		"name": "kin-openapi",
 		"date": "2001-02-00",
 	})
-	require.EqualError(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+FormatOfStringDate+`"`)
+	require.EqualError(t, err, `Error at "/date": string doesn't match the format "date": string doesn't match pattern "`+openapi3.FormatOfStringDate+`"`)
 }
 
 func TestDateTimeZeroMonth(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)
 
@@ -88,11 +90,11 @@ func TestDateTimeZeroMonth(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2001-00-03T04:05:06.789Z",
 	})
-	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+openapi3.FormatOfStringDateTime+`"`)
 }
 
 func TestDateTimeZeroDay(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)
 
@@ -103,11 +105,11 @@ func TestDateTimeZeroDay(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2001-02-00T04:05:06.789Z",
 	})
-	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+openapi3.FormatOfStringDateTime+`"`)
 }
 
 func TestDateTimeLeapSecond(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)
 
@@ -122,7 +124,7 @@ func TestDateTimeLeapSecond(t *testing.T) {
 }
 
 func TestDateTimeHourOutOfBounds(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)
 
@@ -133,11 +135,11 @@ func TestDateTimeHourOutOfBounds(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2016-12-31T24:00:00.000Z",
 	})
-	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+openapi3.FormatOfStringDateTime+`"`)
 }
 
 func TestDateTimeMinuteOutOfBounds(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)
 
@@ -148,11 +150,11 @@ func TestDateTimeMinuteOutOfBounds(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2016-12-31T23:60:00.000Z",
 	})
-	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+openapi3.FormatOfStringDateTime+`"`)
 }
 
 func TestDateTimeSecondOutOfBounds(t *testing.T) {
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)
 
@@ -163,5 +165,5 @@ func TestDateTimeSecondOutOfBounds(t *testing.T) {
 		"name":     "kin-openapi",
 		"datetime": "2016-12-31T23:59:61.000Z",
 	})
-	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/datetime": string doesn't match the format "date-time": string doesn't match pattern "`+openapi3.FormatOfStringDateTime+`"`)
 }

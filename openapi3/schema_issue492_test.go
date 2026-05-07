@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue492(t *testing.T) {
@@ -27,7 +29,7 @@ info:
   title: title
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
@@ -46,5 +48,5 @@ info:
 		"name": "kin-openapi",
 		"time": "2001-02-03T04:05:06:789Z",
 	})
-	require.EqualError(t, err, `Error at "/time": string doesn't match the format "date-time": string doesn't match pattern "`+FormatOfStringDateTime+`"`)
+	require.EqualError(t, err, `Error at "/time": string doesn't match the format "date-time": string doesn't match pattern "`+openapi3.FormatOfStringDateTime+`"`)
 }

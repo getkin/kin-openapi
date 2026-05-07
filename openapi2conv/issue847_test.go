@@ -1,4 +1,4 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"testing"

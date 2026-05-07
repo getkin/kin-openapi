@@ -1,4 +1,4 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -54,7 +55,7 @@ func TestIssue979(t *testing.T) {
 	err := json.Unmarshal(v2, &doc2)
 	require.NoError(t, err)
 
-	doc3, err := ToV3(&doc2)
+	doc3, err := openapi2conv.ToV3(&doc2)
 	require.NoError(t, err)
 	err = doc3.Validate(t.Context())
 	require.NoError(t, err)

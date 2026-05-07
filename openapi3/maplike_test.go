@@ -1,91 +1,93 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestMaplikeMethods(t *testing.T) {
 	t.Parallel()
 
-	t.Run("*Responses", func(t *testing.T) {
+	t.Run("*openapi3.Responses", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
-			x := (*Responses)(nil)
+			x := (*openapi3.Responses)(nil)
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*ResponseRef{}, x.Map())
-			require.Equal(t, (*ResponseRef)(nil), x.Value("key"))
-			require.Panics(t, func() { x.Set("key", &ResponseRef{}) })
+			require.Equal(t, map[string]*openapi3.ResponseRef{}, x.Map())
+			require.Equal(t, (*openapi3.ResponseRef)(nil), x.Value("key"))
+			require.Panics(t, func() { x.Set("key", &openapi3.ResponseRef{}) })
 			require.NotPanics(t, func() { x.Delete("key") })
 		})
 		t.Run("nonnil", func(t *testing.T) {
-			x := &Responses{}
+			x := &openapi3.Responses{}
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*ResponseRef{}, x.Map())
-			require.Equal(t, (*ResponseRef)(nil), x.Value("key"))
-			x.Set("key", &ResponseRef{})
+			require.Equal(t, map[string]*openapi3.ResponseRef{}, x.Map())
+			require.Equal(t, (*openapi3.ResponseRef)(nil), x.Value("key"))
+			x.Set("key", &openapi3.ResponseRef{})
 			require.Equal(t, 1, x.Len())
-			require.Equal(t, map[string]*ResponseRef{"key": {}}, x.Map())
-			require.Equal(t, &ResponseRef{}, x.Value("key"))
+			require.Equal(t, map[string]*openapi3.ResponseRef{"key": {}}, x.Map())
+			require.Equal(t, &openapi3.ResponseRef{}, x.Value("key"))
 			x.Delete("key")
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*ResponseRef{}, x.Map())
-			require.Equal(t, (*ResponseRef)(nil), x.Value("key"))
+			require.Equal(t, map[string]*openapi3.ResponseRef{}, x.Map())
+			require.Equal(t, (*openapi3.ResponseRef)(nil), x.Value("key"))
 			require.NotPanics(t, func() { x.Delete("key") })
 		})
 	})
 
-	t.Run("*Callback", func(t *testing.T) {
+	t.Run("*openapi3.Callback", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
-			x := (*Callback)(nil)
+			x := (*openapi3.Callback)(nil)
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*PathItem{}, x.Map())
-			require.Equal(t, (*PathItem)(nil), x.Value("key"))
-			require.Panics(t, func() { x.Set("key", &PathItem{}) })
+			require.Equal(t, map[string]*openapi3.PathItem{}, x.Map())
+			require.Equal(t, (*openapi3.PathItem)(nil), x.Value("key"))
+			require.Panics(t, func() { x.Set("key", &openapi3.PathItem{}) })
 			require.NotPanics(t, func() { x.Delete("key") })
 		})
 		t.Run("nonnil", func(t *testing.T) {
-			x := &Callback{}
+			x := &openapi3.Callback{}
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*PathItem{}, x.Map())
-			require.Equal(t, (*PathItem)(nil), x.Value("key"))
-			x.Set("key", &PathItem{})
+			require.Equal(t, map[string]*openapi3.PathItem{}, x.Map())
+			require.Equal(t, (*openapi3.PathItem)(nil), x.Value("key"))
+			x.Set("key", &openapi3.PathItem{})
 			require.Equal(t, 1, x.Len())
-			require.Equal(t, map[string]*PathItem{"key": {}}, x.Map())
-			require.Equal(t, &PathItem{}, x.Value("key"))
+			require.Equal(t, map[string]*openapi3.PathItem{"key": {}}, x.Map())
+			require.Equal(t, &openapi3.PathItem{}, x.Value("key"))
 			x.Delete("key")
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*PathItem{}, x.Map())
-			require.Equal(t, (*PathItem)(nil), x.Value("key"))
+			require.Equal(t, map[string]*openapi3.PathItem{}, x.Map())
+			require.Equal(t, (*openapi3.PathItem)(nil), x.Value("key"))
 			require.NotPanics(t, func() { x.Delete("key") })
 		})
 	})
 
-	t.Run("*Paths", func(t *testing.T) {
+	t.Run("*openapi3.Paths", func(t *testing.T) {
 		t.Parallel()
 		t.Run("nil", func(t *testing.T) {
-			x := (*Paths)(nil)
+			x := (*openapi3.Paths)(nil)
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*PathItem{}, x.Map())
-			require.Equal(t, (*PathItem)(nil), x.Value("key"))
-			require.Panics(t, func() { x.Set("key", &PathItem{}) })
+			require.Equal(t, map[string]*openapi3.PathItem{}, x.Map())
+			require.Equal(t, (*openapi3.PathItem)(nil), x.Value("key"))
+			require.Panics(t, func() { x.Set("key", &openapi3.PathItem{}) })
 			require.NotPanics(t, func() { x.Delete("key") })
 		})
 		t.Run("nonnil", func(t *testing.T) {
-			x := &Paths{}
+			x := &openapi3.Paths{}
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*PathItem{}, x.Map())
-			require.Equal(t, (*PathItem)(nil), x.Value("key"))
-			x.Set("key", &PathItem{})
+			require.Equal(t, map[string]*openapi3.PathItem{}, x.Map())
+			require.Equal(t, (*openapi3.PathItem)(nil), x.Value("key"))
+			x.Set("key", &openapi3.PathItem{})
 			require.Equal(t, 1, x.Len())
-			require.Equal(t, map[string]*PathItem{"key": {}}, x.Map())
-			require.Equal(t, &PathItem{}, x.Value("key"))
+			require.Equal(t, map[string]*openapi3.PathItem{"key": {}}, x.Map())
+			require.Equal(t, &openapi3.PathItem{}, x.Value("key"))
 			x.Delete("key")
 			require.Equal(t, 0, x.Len())
-			require.Equal(t, map[string]*PathItem{}, x.Map())
-			require.Equal(t, (*PathItem)(nil), x.Value("key"))
+			require.Equal(t, map[string]*openapi3.PathItem{}, x.Map())
+			require.Equal(t, (*openapi3.PathItem)(nil), x.Value("key"))
 			require.NotPanics(t, func() { x.Delete("key") })
 		})
 	})

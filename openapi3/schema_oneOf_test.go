@@ -1,12 +1,14 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func oneofSpec(t *testing.T) *T {
+func oneofSpec(t *testing.T) *openapi3.T {
 	t.Helper()
 
 	spec := []byte(`
@@ -59,7 +61,7 @@ components:
           dog: "#/components/schemas/Dog"
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
@@ -69,7 +71,7 @@ components:
 	return doc
 }
 
-func oneofNoDiscriminatorSpec(t *testing.T) *T {
+func oneofNoDiscriminatorSpec(t *testing.T) *openapi3.T {
 	t.Helper()
 
 	spec := []byte(`
@@ -107,7 +109,7 @@ components:
         - $ref: "#/components/schemas/Dog"
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
@@ -198,7 +200,7 @@ components:
                      maxLength: 10
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
@@ -213,7 +215,7 @@ components:
 		},
 	})
 	require.ErrorContains(t, err, `Error at "/first/second/third"`)
-	var sErr *SchemaError
+	var sErr *openapi3.SchemaError
 	require.ErrorAs(t, err, &sErr)
 	require.Equal(t, []string{"first", "second", "third"}, sErr.JSONPointer())
 }

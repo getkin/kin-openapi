@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestPathItemParametersAreValidated(t *testing.T) {
@@ -33,7 +35,7 @@ paths:
           description: A paged array of pets
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(t.Context())
@@ -72,7 +74,7 @@ paths:
           description: A paged array of pets
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(t.Context())
@@ -105,7 +107,7 @@ paths:
           description: A paged array of pets
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	err = doc.Validate(t.Context())

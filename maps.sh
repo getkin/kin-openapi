@@ -48,12 +48,14 @@ EOF
 
 test_header() {
 	cat <<EOF >"$maplike_test"
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestMaplikeMethods(t *testing.T) {
@@ -269,7 +271,7 @@ for i in "${!types[@]}"; do
 	type="$type" name="$name" value_type="$value_type" maplike_UnMarsh
 	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike"
 
-	type="$type" value_type="$value_type" test_body
+	type="${type/'*'/*openapi3.}" value_type="${value_type/'*'/*openapi3.}" test_body
 
 
 done

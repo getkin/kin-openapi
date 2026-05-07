@@ -1,4 +1,4 @@
-package openapi3
+package openapi3_test
 
 import (
 	"os"
@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestInternalizeRefs(t *testing.T) {
@@ -30,7 +32,7 @@ func TestInternalizeRefs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.filename, func(t *testing.T) {
 			// Load in the reference spec from the testdata
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 			sl.IsExternalRefsAllowed = true
 			doc, err := sl.LoadFromFile(test.filename)
 			require.NoError(t, err, "loading test file")

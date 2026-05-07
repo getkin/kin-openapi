@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue819ResponsesGetPatternedFields(t *testing.T) {
@@ -27,7 +29,7 @@ paths:
                 type: object
                 description: An error response body.
 `[1:]
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 	doc, err := sl.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(sl.Context)

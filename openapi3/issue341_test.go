@@ -1,13 +1,15 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue341(t *testing.T) {
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 	sl.IsExternalRefsAllowed = true
 	doc, err := sl.LoadFromFile("testdata/main.yaml")
 	require.NoError(t, err)
@@ -33,7 +35,7 @@ func TestIssue341(t *testing.T) {
 	}
 }`, string(bs))
 
-	require.Equal(t, &Types{"string"}, doc.
+	require.Equal(t, &openapi3.Types{"string"}, doc.
 		Paths.Value("/testpath").
 		Get.
 		Responses.Value("200").Value.

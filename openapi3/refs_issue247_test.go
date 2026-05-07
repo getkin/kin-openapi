@@ -1,4 +1,4 @@
-package openapi3
+package openapi3_test
 
 import (
 	"reflect"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue247(t *testing.T) {
@@ -111,7 +113,7 @@ components:
           format: int32
 `[1:])
 
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 	require.NotNil(t, doc)
@@ -128,93 +130,93 @@ components:
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Paths{}, v)
-	require.Equal(t, reflect.TypeOf(&Paths{}).Kind(), kind)
+	require.IsType(t, &openapi3.Paths{}, v)
+	require.Equal(t, reflect.TypeOf(&openapi3.Paths{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &PathItem{}, v)
-	require.Equal(t, reflect.TypeOf(&PathItem{}).Kind(), kind)
+	require.IsType(t, &openapi3.PathItem{}, v)
+	require.Equal(t, reflect.TypeOf(&openapi3.PathItem{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Operation{}, v)
-	require.Equal(t, reflect.TypeOf(&Operation{}).Kind(), kind)
+	require.IsType(t, &openapi3.Operation{}, v)
+	require.Equal(t, reflect.TypeOf(&openapi3.Operation{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Responses{}, v)
-	require.Equal(t, reflect.TypeOf(&Responses{}).Kind(), kind)
+	require.IsType(t, &openapi3.Responses{}, v)
+	require.Equal(t, reflect.TypeOf(&openapi3.Responses{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Response{}, v)
-	require.Equal(t, reflect.TypeOf(&Response{}).Kind(), kind)
+	require.IsType(t, &openapi3.Response{}, v)
+	require.Equal(t, reflect.TypeOf(&openapi3.Response{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200/content")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, Content{}, v)
-	require.Equal(t, reflect.TypeOf(Content{}).Kind(), kind)
+	require.IsType(t, openapi3.Content{}, v)
+	require.Equal(t, reflect.TypeOf(openapi3.Content{}).Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200/content/application~1json/schema")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Ref{}, v)
+	require.IsType(t, &openapi3.Ref{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, "#/components/schemas/Pet", v.(*Ref).Ref)
+	require.Equal(t, "#/components/schemas/Pet", v.(*openapi3.Ref).Ref)
 
 	ptr, err = jsonpointer.New("/components/schemas/Pets/items")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Ref{}, v)
+	require.IsType(t, &openapi3.Ref{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, "#/components/schemas/Pet", v.(*Ref).Ref)
+	require.Equal(t, "#/components/schemas/Pet", v.(*openapi3.Ref).Ref)
 
 	ptr, err = jsonpointer.New("/components/schemas/Error/properties/code")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Schema{}, v)
+	require.IsType(t, &openapi3.Schema{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, &Types{"integer"}, v.(*Schema).Type)
+	require.Equal(t, &openapi3.Types{"integer"}, v.(*openapi3.Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/0")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Schema{}, v)
+	require.IsType(t, &openapi3.Schema{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, &Types{"string"}, v.(*Schema).Type)
+	require.Equal(t, &openapi3.Types{"string"}, v.(*openapi3.Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/1")
 	require.NoError(t, err)
 	v, kind, err = ptr.Get(doc)
 	require.NoError(t, err)
 	require.NotNil(t, v)
-	require.IsType(t, &Schema{}, v)
+	require.IsType(t, &openapi3.Schema{}, v)
 	require.Equal(t, reflect.Ptr, kind)
-	require.Equal(t, &Types{"integer"}, v.(*Schema).Type)
+	require.Equal(t, &openapi3.Types{"integer"}, v.(*openapi3.Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/5")
 	require.NoError(t, err)

@@ -1,9 +1,11 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestUnmarshalError(t *testing.T) {
@@ -35,7 +37,7 @@ paths:
                   $ref: '#/components/schemas/schemaArray'  # <- Should have been a list
 `[1:])
 
-		sl := NewLoader()
+		sl := openapi3.NewLoader()
 
 		_, err := sl.LoadFromData(spec)
 		require.ErrorContains(t, err, `json: cannot unmarshal object into field Schema.allOf of type openapi3.SchemaRefs`)
@@ -68,7 +70,7 @@ paths:
                 - $ref: '#/components/schemas/schemaArray'  # <-
 `[1:])
 
-	sl := NewLoader()
+	sl := openapi3.NewLoader()
 
 	doc, err := sl.LoadFromData(spec)
 	require.NoError(t, err)

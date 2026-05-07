@@ -1,10 +1,12 @@
-package openapi3
+package openapi3_test
 
 import (
 	"testing"
 
-	"github.com/oasdiff/yaml3"
+	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIssue972(t *testing.T) {
@@ -47,7 +49,7 @@ info:
 	}} {
 		t.Logf("spec: %s", tc.spec)
 
-		loader := &Loader{}
+		loader := &openapi3.Loader{}
 		doc, err := loader.LoadFromData([]byte(tc.spec))
 		assert.NoError(t, err)
 		assert.NotNil(t, doc)

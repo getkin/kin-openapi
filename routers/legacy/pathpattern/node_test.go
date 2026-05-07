@@ -1,12 +1,14 @@
-package pathpattern
+package pathpattern_test
 
 import (
 	"testing"
+
+	"github.com/getkin/kin-openapi/routers/legacy/pathpattern"
 )
 
 func TestPatterns(t *testing.T) {
-	DefaultOptions.SupportRegExp = true
-	rootNode := &Node{}
+	pathpattern.DefaultOptions.SupportRegExp = true
+	rootNode := &pathpattern.Node{}
 	add := func(path, value string) {
 		rootNode.MustAdd(path, value, nil)
 	}
@@ -22,8 +24,8 @@ func TestPatterns(t *testing.T) {
 	add("/root/{path*}", "DIRECTORY")
 	add("/impossible_route", "IMPOSSIBLE")
 
-	add(PathFromHost("www.nike.com", true), "WWW-HOST")
-	add(PathFromHost("{other}.nike.com", true), "OTHER-HOST")
+	add(pathpattern.PathFromHost("www.nike.com", true), "WWW-HOST")
+	add(pathpattern.PathFromHost("{other}.nike.com", true), "OTHER-HOST")
 
 	expect := func(uri string, expected string, expectedArgs ...string) {
 		actually := "not found"
@@ -63,9 +65,9 @@ func TestPatterns(t *testing.T) {
 	expect("/root/", "DIRECTORY", "")
 	expect("/root/a/b/c", "DIRECTORY", "a/b/c")
 
-	expect(PathFromHost("www.nike.com", true), "WWW-HOST")
-	expect(PathFromHost("example.nike.com", true), "OTHER-HOST", "example")
-	expect(PathFromHost("subdomain.example.nike.com", true), "not found")
+	expect(pathpattern.PathFromHost("www.nike.com", true), "WWW-HOST")
+	expect(pathpattern.PathFromHost("example.nike.com", true), "OTHER-HOST", "example")
+	expect(pathpattern.PathFromHost("subdomain.example.nike.com", true), "not found")
 }
 
 func argsEqual(a, b []string) bool {

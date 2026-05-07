@@ -1,4 +1,4 @@
-package openapi2conv
+package openapi2conv_test
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi2"
+	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -16,7 +17,7 @@ func v2v3JSON(spec2 []byte) (doc3 *openapi3.T, err error) {
 	if err = json.Unmarshal(spec2, &doc2); err != nil {
 		return
 	}
-	doc3, err = ToV3(&doc2)
+	doc3, err = openapi2conv.ToV3(&doc2)
 	return
 }
 
@@ -25,7 +26,7 @@ func v2v3YAML(spec2 []byte) (doc3 *openapi3.T, err error) {
 	if err = yaml.Unmarshal(spec2, &doc2); err != nil {
 		return
 	}
-	doc3, err = ToV3(&doc2)
+	doc3, err = openapi2conv.ToV3(&doc2)
 	return
 }
 
@@ -187,7 +188,7 @@ securityDefinitions:
 	_, err = yaml.Marshal(doc3)
 	require.NoError(t, err)
 
-	doc2, err := FromV3(doc3)
+	doc2, err := openapi2conv.FromV3(doc3)
 	require.NoError(t, err)
 	require.Equal(t, "application", doc2.SecurityDefinitions["OAuth2Application"].Flow)
 }
