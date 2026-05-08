@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"net/url"
@@ -294,7 +293,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return wrap(err)
 		}
 	} else {
-		return wrap(errors.New("must be an object"))
+		return wrap(newInfoRequired())
 	}
 
 	wrap = func(e error) error { return fmt.Errorf("invalid paths: %w", e) }
@@ -303,7 +302,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return wrap(err)
 		}
 	} else if doc.IsOpenAPI30() {
-		return wrap(errors.New("must be an object"))
+		return wrap(newPathsRequired())
 	}
 
 	wrap = func(e error) error { return fmt.Errorf("invalid security: %w", e) }
@@ -352,7 +351,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return wrap(err)
 		}
 		if u.Scheme == "" {
-			return wrap(errors.New("must be an absolute URI with a scheme"))
+			return wrap(newJSONSchemaDialectAbsoluteURIRequired())
 		}
 	}
 

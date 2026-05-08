@@ -856,6 +856,10 @@ func (info *Info) UnmarshalJSON(data []byte) error
 func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Info does not comply with the OpenAPI spec.
 
+type InfoRequired struct{ ValidationError }
+
+func (e *InfoRequired) As(target any) bool
+
 type InfoSummaryFieldFor31Plus struct{ ValidationError }
 
 func (e *InfoSummaryFieldFor31Plus) As(target any) bool
@@ -870,6 +874,10 @@ func (e *InfoVersionRequired) As(target any) bool
 
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
+
+type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
+
+func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool
 
 type JSONSchemaDialectFieldFor31Plus struct{ ValidationError }
 
@@ -1521,6 +1529,10 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 func (paths *Paths) Value(key string) *PathItem
     Value returns the paths for key or nil
+
+type PathsRequired struct{ ValidationError }
+
+func (e *PathsRequired) As(target any) bool
 
 type PatternPropertiesFieldFor31Plus struct{ ValidationError }
 

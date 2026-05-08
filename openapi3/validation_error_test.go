@@ -429,3 +429,56 @@ func TestValidationError_FlowsThroughMultiError(t *testing.T) {
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(me, &ve))
 }
+
+// Pin doc-root RequiredFieldError leaves: info, paths,
+// jsonSchemaDialect-must-be-absolute-URI.
+func TestValidationError_DocRootRequiredLeaves(t *testing.T) {
+	t.Run("info required", func(t *testing.T) {
+		// doc with no Info — fails with the wrap "invalid info: must be an object".
+		doc := &openapi3.T{OpenAPI: "3.0.3", Paths: openapi3.NewPaths()}
+		err := doc.Validate(context.Background())
+		require.EqualError(t, err, "invalid info: must be an object")
+
+		var rfe *openapi3.RequiredFieldError
+		require.True(t, errors.As(err, &rfe))
+		require.Equal(t, "info", rfe.Field)
+
+		var leaf *openapi3.InfoRequired
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("paths required (3.0)", func(t *testing.T) {
+		// 3.0 doc with no Paths — fails with "invalid paths: must be an object".
+		doc := &openapi3.T{
+			OpenAPI: "3.0.3",
+			Info:    &openapi3.Info{Title: "x", Version: "1.0.0"},
+		}
+		err := doc.Validate(context.Background())
+		require.EqualError(t, err, "invalid paths: must be an object")
+
+		var rfe *openapi3.RequiredFieldError
+		require.True(t, errors.As(err, &rfe))
+		require.Equal(t, "paths", rfe.Field)
+
+		var leaf *openapi3.PathsRequired
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("jsonSchemaDialect must be absolute URI", func(t *testing.T) {
+		doc := &openapi3.T{
+			OpenAPI:           "3.1.0",
+			Info:              &openapi3.Info{Title: "x", Version: "1.0.0"},
+			Paths:             openapi3.NewPaths(),
+			JSONSchemaDialect: "no-scheme/relative",
+		}
+		err := doc.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		require.EqualError(t, err, "invalid jsonSchemaDialect: must be an absolute URI with a scheme")
+
+		var rfe *openapi3.RequiredFieldError
+		require.True(t, errors.As(err, &rfe))
+		require.Equal(t, "jsonSchemaDialect", rfe.Field)
+
+		var leaf *openapi3.JSONSchemaDialectAbsoluteURIRequired
+		require.True(t, errors.As(err, &leaf))
+	})
+}
