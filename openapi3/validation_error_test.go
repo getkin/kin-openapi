@@ -409,11 +409,8 @@ paths:
 	require.Contains(t, sve.Error(), "invalid example: ")
 }
 
-// Spot-check the seven follow-up RequiredFieldError leaves added in
-// the long-tail conversion: external docs, operation responses,
-// request body content, response description, three OAuth flow fields.
-// Two representative cases here; the remaining five follow the same
-// shape and are exercised indirectly through round-trip Validate calls.
+// Pin RequiredFieldError cluster + leaf reachability for required-field
+// validation on operations and external docs.
 func TestValidationError_FollowupRequiredFieldLeaves(t *testing.T) {
 	type tc struct {
 		name      string
