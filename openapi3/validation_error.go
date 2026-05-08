@@ -302,6 +302,24 @@ func (e *LinkOperationIDOrRefRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type InfoRequired struct{ ValidationError }
+
+func (e *InfoRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type PathsRequired struct{ ValidationError }
+
+func (e *PathsRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
+
+func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 type ExternalDocsURLRequired struct{ ValidationError }
 
 func (e *ExternalDocsURLRequired) As(target any) bool {
@@ -676,6 +694,23 @@ func newLinkOperationIDOrRefRequired(origin *Origin) error {
 	const msg = "missing operationId or operationRef on link"
 	return newEitherFieldRequired([]string{"operationId", "operationRef"},
 		&LinkOperationIDOrRefRequired{ValidationError{Message: msg}}, origin)
+}
+
+// newInfoRequired and newPathsRequired don't take Origin: both fields
+// live on the document root *T, which the loader doesn't track.
+func newInfoRequired() error {
+	return newRequiredField("info",
+		&InfoRequired{ValidationError{Message: "must be an object"}}, nil)
+}
+
+func newPathsRequired() error {
+	return newRequiredField("paths",
+		&PathsRequired{ValidationError{Message: "must be an object"}}, nil)
+}
+
+func newJSONSchemaDialectAbsoluteURIRequired() error {
+	return newRequiredField("jsonSchemaDialect",
+		&JSONSchemaDialectAbsoluteURIRequired{ValidationError{Message: "must be an absolute URI with a scheme"}}, nil)
 }
 
 func newExternalDocsURLRequired(origin *Origin) error {
