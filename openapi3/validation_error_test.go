@@ -555,3 +555,38 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 		require.True(t, errors.As(err, &leaf))
 	})
 }
+
+// Pin ForbiddenFieldError cluster + leaf reachability for the four
+// sites where a field is set but the spec forbids it in that context.
+func TestValidationError_ForbiddenFieldLeaves(t *testing.T) {
+	t.Run("header.name forbidden", func(t *testing.T) {
+		h := &openapi3.Header{Parameter: openapi3.Parameter{Name: "X-Trace"}}
+		err := h.Validate(context.Background())
+		require.EqualError(t, err,
+			"header 'name' MUST NOT be specified, it is given in the corresponding headers map")
+
+		var ffe *openapi3.ForbiddenFieldError
+		require.True(t, errors.As(err, &ffe))
+		require.Equal(t, "name", ffe.Field)
+
+		var leaf *openapi3.HeaderNameForbidden
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
+	})
+
+	t.Run("header.in forbidden", func(t *testing.T) {
+		h := &openapi3.Header{Parameter: openapi3.Parameter{In: "header"}}
+		err := h.Validate(context.Background())
+		require.EqualError(t, err,
+			"header 'in' MUST NOT be specified, it is implicitly in header")
+
+		var ffe *openapi3.ForbiddenFieldError
+		require.True(t, errors.As(err, &ffe))
+		require.Equal(t, "in", ffe.Field)
+
+		var leaf *openapi3.HeaderInForbidden
+		require.True(t, errors.As(err, &leaf))
+	})
+}
