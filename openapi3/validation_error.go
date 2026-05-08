@@ -277,6 +277,24 @@ func (e *OAuthFlowTokenURLRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type ParameterNameRequired struct{ ValidationError }
+
+func (e *ParameterNameRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ResponsesNonEmptyRequired struct{ ValidationError }
+
+func (e *ResponsesNonEmptyRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type APIKeySecuritySchemeNameRequired struct{ ValidationError }
+
+func (e *APIKeySecuritySchemeNameRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 // MutuallyExclusiveFieldsError leaves.
 
 type ExampleValueExternalValueExclusive struct{ ValidationError }
@@ -655,6 +673,23 @@ func newOAuthFlowTokenURLForbidden(origin *Origin) error {
 	const msg = "field 'tokenUrl' should not be set"
 	return newForbiddenField("tokenUrl",
 		&OAuthFlowTokenURLForbidden{ValidationError{Message: msg}}, origin)
+}
+
+func newParameterNameRequired(origin *Origin) error {
+	return newRequiredField("parameter.name",
+		&ParameterNameRequired{ValidationError{Message: "parameter name can't be blank"}}, origin)
+}
+
+func newResponsesNonEmptyRequired(origin *Origin) error {
+	const msg = "the responses object MUST contain at least one response code"
+	return newRequiredField("responses",
+		&ResponsesNonEmptyRequired{ValidationError{Message: msg}}, origin)
+}
+
+func newAPIKeySecuritySchemeNameRequired(origin *Origin) error {
+	const msg = "security scheme of type 'apiKey' should have 'name'"
+	return newRequiredField("securityScheme.name",
+		&APIKeySecuritySchemeNameRequired{ValidationError{Message: msg}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

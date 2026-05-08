@@ -311,7 +311,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if parameter.Name == "" {
-		return errors.New("parameter name can't be blank")
+		return newParameterNameRequired(parameter.Origin)
 	}
 	in := parameter.In
 	switch in {
