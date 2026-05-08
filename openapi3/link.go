@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 )
@@ -85,7 +84,7 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if link.OperationID == "" && link.OperationRef == "" {
-		return errors.New("missing operationId or operationRef on link")
+		return newLinkOperationIDOrRefRequired(link.Origin)
 	}
 	if link.OperationID != "" && link.OperationRef != "" {
 		return fmt.Errorf("operationId %q and operationRef %q are mutually exclusive", link.OperationID, link.OperationRef)

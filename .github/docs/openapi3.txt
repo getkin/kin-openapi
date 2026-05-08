@@ -530,6 +530,23 @@ type DynamicRefFieldFor31Plus struct{ ValidationError }
 
 func (e *DynamicRefFieldFor31Plus) As(target any) bool
 
+type EitherFieldRequiredError struct {
+	// Fields is the set of field names, at least one of which must be
+	// set (e.g. ["value", "externalValue"]).
+	Fields []string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    EitherFieldRequiredError clusters "at least one of these fields must be set"
+    failures (example.value vs externalValue, link.operationId vs operationRef).
+
+func (e *EitherFieldRequiredError) Error() string
+
+func (e *EitherFieldRequiredError) Unwrap() error
+
 type ElseFieldFor31Plus struct{ ValidationError }
 
 func (e *ElseFieldFor31Plus) As(target any) bool
@@ -642,6 +659,10 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error
 func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if ExampleRef does not comply with the OpenAPI
     spec.
+
+type ExampleValueOrExternalValueRequired struct{ ValidationError }
+
+func (e *ExampleValueOrExternalValueRequired) As(target any) bool
 
 type Examples map[string]*ExampleRef // Examples represents components' named examples
 
@@ -936,6 +957,10 @@ func (link *Link) UnmarshalJSON(data []byte) error
 
 func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Link does not comply with the OpenAPI spec.
+
+type LinkOperationIDOrRefRequired struct{ ValidationError }
+
+func (e *LinkOperationIDOrRefRequired) As(target any) bool
 
 type LinkRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -2114,6 +2139,10 @@ func (err SchemaError) Unwrap() error
 type SchemaFieldFor31Plus struct{ ValidationError }
 
 func (e *SchemaFieldFor31Plus) As(target any) bool
+
+type SchemaItemsRequired struct{ ValidationError }
+
+func (e *SchemaItemsRequired) As(target any) bool
 
 type SchemaRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields

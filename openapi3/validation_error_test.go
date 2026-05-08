@@ -429,3 +429,51 @@ func TestValidationError_FlowsThroughMultiError(t *testing.T) {
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(me, &ve))
 }
+
+// Pin EitherFieldRequiredError cluster + leaf reachability for the
+// two "at least one of these fields must be set" sites.
+func TestValidationError_EitherFieldRequiredLeaves(t *testing.T) {
+	t.Run("example value or externalValue", func(t *testing.T) {
+		ex := &openapi3.Example{}
+		err := ex.Validate(context.Background())
+		require.EqualError(t, err, "no value or externalValue field")
+
+		var efr *openapi3.EitherFieldRequiredError
+		require.True(t, errors.As(err, &efr))
+		require.Equal(t, []string{"value", "externalValue"}, efr.Fields)
+
+		var leaf *openapi3.ExampleValueOrExternalValueRequired
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
+	})
+
+	t.Run("link operationId or operationRef", func(t *testing.T) {
+		link := &openapi3.Link{}
+		err := link.Validate(context.Background())
+		require.EqualError(t, err, "missing operationId or operationRef on link")
+
+		var efr *openapi3.EitherFieldRequiredError
+		require.True(t, errors.As(err, &efr))
+		require.Equal(t, []string{"operationId", "operationRef"}, efr.Fields)
+
+		var leaf *openapi3.LinkOperationIDOrRefRequired
+		require.True(t, errors.As(err, &leaf))
+	})
+}
+
+// Pin SchemaItemsRequired leaf reachability via the existing
+// RequiredFieldError cluster.
+func TestValidationError_SchemaItemsRequiredLeaf(t *testing.T) {
+	schema := &openapi3.Schema{Type: &openapi3.Types{"array"}}
+	err := schema.Validate(context.Background())
+	require.EqualError(t, err, "when schema type is 'array', schema 'items' must be non-null")
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "schema.items", rfe.Field)
+
+	var leaf *openapi3.SchemaItemsRequired
+	require.True(t, errors.As(err, &leaf))
+}
