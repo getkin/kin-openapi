@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 
@@ -125,7 +124,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 
 		if mediaType.Example != nil && mediaType.Examples != nil {
-			return errors.New("example and examples are mutually exclusive")
+			return newMediaTypeExampleExamplesExclusive(mediaType.Origin)
 		}
 
 		if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {

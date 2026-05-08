@@ -643,6 +643,10 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
     Validate returns an error if ExampleRef does not comply with the OpenAPI
     spec.
 
+type ExampleValueExternalValueExclusive struct{ ValidationError }
+
+func (e *ExampleValueExternalValueExclusive) As(target any) bool
+
 type Examples map[string]*ExampleRef // Examples represents components' named examples
 
 func (m Examples) JSONLookup(token string) (any, error)
@@ -915,6 +919,10 @@ type LicenseNameRequired struct{ ValidationError }
 
 func (e *LicenseNameRequired) As(target any) bool
 
+type LicenseURLIdentifierExclusive struct{ ValidationError }
+
+func (e *LicenseURLIdentifierExclusive) As(target any) bool
+
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -940,6 +948,10 @@ func (link *Link) UnmarshalJSON(data []byte) error
 
 func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Link does not comply with the OpenAPI spec.
+
+type LinkOperationIDRefExclusive struct{ ValidationError }
+
+func (e *LinkOperationIDRefExclusive) As(target any) bool
 
 type LinkRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -1101,6 +1113,10 @@ func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType
 
 func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType
 
+type MediaTypeExampleExamplesExclusive struct{ ValidationError }
+
+func (e *MediaTypeExampleExamplesExclusive) As(target any) bool
+
 type MinContainsFieldFor31Plus struct{ ValidationError }
 
 func (e *MinContainsFieldFor31Plus) As(target any) bool
@@ -1119,6 +1135,26 @@ func (me MultiError) Is(target error) bool
     Is allows you to determine if a generic error is in fact a MultiError using
     `errors.Is()` It will also return true if any of the contained errors match
     target
+
+type MutuallyExclusiveFieldsError struct {
+	// Field1 and Field2 name the two fields the spec forbids setting
+	// together (e.g. "value", "externalValue").
+	Field1 string
+	Field2 string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    MutuallyExclusiveFieldsError clusters "fields X and Y are both set, only
+    one is allowed" failures (example.value vs externalValue, mediaType.example
+    vs examples, license.url vs identifier, link.operationId vs operationRef).
+    Carries both field names and wraps the per-site leaf.
+
+func (e *MutuallyExclusiveFieldsError) Error() string
+
+func (e *MutuallyExclusiveFieldsError) Unwrap() error
 
 type NewCallbackOption func(*Callback)
     NewCallbackOption describes options to NewCallback func
