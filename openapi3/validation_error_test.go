@@ -436,7 +436,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	t.Run("parameter content/schema exactly one (neither set)", func(t *testing.T) {
 		p := &openapi3.Parameter{Name: "p", In: "query"}
 		err := p.Validate(context.Background())
-		require.Contains(t, err.Error(), "parameter must contain exactly one of content and schema")
+		require.ErrorContains(t, err, "parameter must contain exactly one of content and schema")
 
 		var efe *openapi3.ExactlyOneFieldError
 		require.True(t, errors.As(err, &efe))
@@ -455,7 +455,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 			},
 		}
 		err := p.Validate(context.Background())
-		require.Contains(t, err.Error(), "parameter content must only contain one entry")
+		require.ErrorContains(t, err, "parameter content must only contain one entry")
 
 		var sec *openapi3.SingleEntryContentError
 		require.True(t, errors.As(err, &sec))
@@ -468,7 +468,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	t.Run("header content/schema exactly one (neither set)", func(t *testing.T) {
 		h := &openapi3.Header{}
 		err := h.Validate(context.Background())
-		require.Contains(t, err.Error(), "parameter must contain exactly one of content and schema")
+		require.ErrorContains(t, err, "parameter must contain exactly one of content and schema")
 
 		var efe *openapi3.ExactlyOneFieldError
 		require.True(t, errors.As(err, &efe))
@@ -488,7 +488,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 			},
 		}
 		err := h.Validate(context.Background())
-		require.Contains(t, err.Error(), "parameter content must only contain one entry")
+		require.ErrorContains(t, err, "parameter content must only contain one entry")
 
 		var sec *openapi3.SingleEntryContentError
 		require.True(t, errors.As(err, &sec))
