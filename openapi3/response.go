@@ -78,7 +78,7 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if responses.Len() == 0 {
-		return errors.New("the responses object MUST contain at least one response code")
+		return newResponsesNonEmptyRequired(responses.Origin)
 	}
 
 	for _, key := range responses.Keys() {

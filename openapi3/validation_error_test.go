@@ -176,6 +176,22 @@ func TestValidationError_AllRequiredFieldLeaves(t *testing.T) {
 			field:   "server.url",
 			message: "value of url must be a non-empty string",
 		},
+		{
+			name: "responses non-empty required",
+			doc: &openapi3.T{
+				OpenAPI: "3.0.3",
+				Info:    &openapi3.Info{Title: "x", Version: "1.0.0"},
+				Paths: openapi3.NewPaths(openapi3.WithPath("/p", &openapi3.PathItem{
+					Get: &openapi3.Operation{Responses: openapi3.NewResponses()},
+				})),
+			},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ResponsesNonEmptyRequired
+				require.True(t, errors.As(err, &l))
+			},
+			field:   "responses",
+			message: "the responses object MUST contain at least one response code",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -428,4 +444,34 @@ func TestValidationError_FlowsThroughMultiError(t *testing.T) {
 
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(me, &ve))
+}
+
+// Pin parameter.name and apiKey securityScheme.name leaves directly:
+// these check Validate on a single component (without wiring a full
+// document around it).
+func TestValidationError_ParameterAndAPIKeyNameLeaves(t *testing.T) {
+	t.Run("parameter name required", func(t *testing.T) {
+		err := (&openapi3.Parameter{}).Validate(context.Background())
+		require.EqualError(t, err, "parameter name can't be blank")
+
+		var rfe *openapi3.RequiredFieldError
+		require.True(t, errors.As(err, &rfe))
+		require.Equal(t, "parameter.name", rfe.Field)
+
+		var leaf *openapi3.ParameterNameRequired
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("apiKey securityScheme name required", func(t *testing.T) {
+		ss := &openapi3.SecurityScheme{Type: "apiKey", In: "header"}
+		err := ss.Validate(context.Background())
+		require.EqualError(t, err, "security scheme of type 'apiKey' should have 'name'")
+
+		var rfe *openapi3.RequiredFieldError
+		require.True(t, errors.As(err, &rfe))
+		require.Equal(t, "securityScheme.name", rfe.Field)
+
+		var leaf *openapi3.APIKeySecuritySchemeNameRequired
+		require.True(t, errors.As(err, &leaf))
+	})
 }

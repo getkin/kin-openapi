@@ -198,6 +198,24 @@ func (e *ServerURLRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type ParameterNameRequired struct{ ValidationError }
+
+func (e *ParameterNameRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ResponsesNonEmptyRequired struct{ ValidationError }
+
+func (e *ResponsesNonEmptyRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type APIKeySecuritySchemeNameRequired struct{ ValidationError }
+
+func (e *APIKeySecuritySchemeNameRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 // FieldVersionMismatchError leaves — non-schema fields.
 
 type InfoSummaryFieldFor31Plus struct{ ValidationError }
@@ -412,6 +430,23 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+func newParameterNameRequired(origin *Origin) error {
+	return newRequiredField("parameter.name",
+		&ParameterNameRequired{ValidationError{Message: "parameter name can't be blank"}}, origin)
+}
+
+func newResponsesNonEmptyRequired(origin *Origin) error {
+	const msg = "the responses object MUST contain at least one response code"
+	return newRequiredField("responses",
+		&ResponsesNonEmptyRequired{ValidationError{Message: msg}}, origin)
+}
+
+func newAPIKeySecuritySchemeNameRequired(origin *Origin) error {
+	const msg = "security scheme of type 'apiKey' should have 'name'"
+	return newRequiredField("securityScheme.name",
+		&APIKeySecuritySchemeNameRequired{ValidationError{Message: msg}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

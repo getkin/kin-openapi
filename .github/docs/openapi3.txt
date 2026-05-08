@@ -252,6 +252,10 @@ func WithValidationOptions(ctx context.Context, opts ...ValidationOption) contex
 
 TYPES
 
+type APIKeySecuritySchemeNameRequired struct{ ValidationError }
+
+func (e *APIKeySecuritySchemeNameRequired) As(target any) bool
+
 type AdditionalProperties = BoolSchema
     AdditionalProperties is a type alias for BoolSchema, kept for backward
     compatibility.
@@ -1326,6 +1330,10 @@ func (parameter *Parameter) WithRequired(value bool) *Parameter
 
 func (parameter *Parameter) WithSchema(value *Schema) *Parameter
 
+type ParameterNameRequired struct{ ValidationError }
+
+func (e *ParameterNameRequired) As(target any) bool
+
 type ParameterRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
@@ -1853,6 +1861,10 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 
 func (responses *Responses) Value(key string) *ResponseRef
     Value returns the responses for key or nil
+
+type ResponsesNonEmptyRequired struct{ ValidationError }
+
+func (e *ResponsesNonEmptyRequired) As(target any) bool
 
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
