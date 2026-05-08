@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"net/url"
@@ -188,7 +187,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 			return fmt.Errorf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", ss.In)
 		}
 		if ss.Name == "" {
-			return errors.New("security scheme of type 'apiKey' should have 'name'")
+			return newAPIKeySecuritySchemeNameRequired(ss.Origin)
 		}
 	} else if len(ss.In) > 0 {
 		return fmt.Errorf("security scheme of type %q can't have 'in'", ss.Type)
