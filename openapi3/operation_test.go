@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -46,19 +45,19 @@ func operationWithResponses() *openapi3.Operation {
 
 func TestOperationValidation(t *testing.T) {
 	tests := []struct {
-		name          string
-		input         *openapi3.Operation
-		expectedError error
+		name             string
+		input            *openapi3.Operation
+		expectedErrorMsg string // empty = expect no error
 	}{
 		{
 			"when no Responses object is provided",
 			operationWithoutResponses(),
-			errors.New("value of responses must be an object"),
+			"value of responses must be an object",
 		},
 		{
 			"when a Responses object is provided",
 			operationWithResponses(),
-			nil,
+			"",
 		},
 	}
 
@@ -67,7 +66,11 @@ func TestOperationValidation(t *testing.T) {
 			c := t.Context()
 			validationErr := test.input.Validate(c)
 
-			require.Equal(t, test.expectedError, validationErr, "expected errors (or lack of) to match")
+			if test.expectedErrorMsg == "" {
+				require.NoError(t, validationErr)
+			} else {
+				require.EqualError(t, validationErr, test.expectedErrorMsg)
+			}
 		})
 	}
 }

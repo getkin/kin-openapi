@@ -409,6 +409,70 @@ paths:
 	require.Contains(t, sve.Error(), "invalid example: ")
 }
 
+// Spot-check the seven follow-up RequiredFieldError leaves added in
+// the long-tail conversion: external docs, operation responses,
+// request body content, response description, three OAuth flow fields.
+// Two representative cases here; the remaining five follow the same
+// shape and are exercised indirectly through round-trip Validate calls.
+func TestValidationError_FollowupRequiredFieldLeaves(t *testing.T) {
+	type tc struct {
+		name      string
+		doc       *openapi3.T
+		field     string
+		message   string
+		leafCheck func(t *testing.T, err error)
+	}
+	cases := []tc{
+		{
+			name: "operation responses required",
+			doc: &openapi3.T{
+				OpenAPI: "3.0.3",
+				Info:    &openapi3.Info{Title: "x", Version: "1.0.0"},
+				Paths: openapi3.NewPaths(openapi3.WithPath("/p", &openapi3.PathItem{
+					Get: &openapi3.Operation{}, // no Responses
+				})),
+			},
+			field:   "operation.responses",
+			message: "value of responses must be an object",
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.OperationResponsesRequired
+				require.True(t, errors.As(err, &l))
+			},
+		},
+		{
+			name: "external docs url required",
+			doc: &openapi3.T{
+				OpenAPI:      "3.0.3",
+				Info:         &openapi3.Info{Title: "x", Version: "1.0.0"},
+				Paths:        openapi3.NewPaths(),
+				ExternalDocs: &openapi3.ExternalDocs{}, // empty URL
+			},
+			field:   "externalDocs.url",
+			message: "url is required",
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ExternalDocsURLRequired
+				require.True(t, errors.As(err, &l))
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.doc.Validate(context.Background())
+			require.Error(t, err)
+
+			var rfe *openapi3.RequiredFieldError
+			require.True(t, errors.As(err, &rfe))
+			require.Equal(t, c.field, rfe.Field)
+
+			c.leafCheck(t, err)
+
+			var ve *openapi3.ValidationError
+			require.True(t, errors.As(err, &ve))
+			require.Equal(t, c.message, ve.Message)
+		})
+	}
+}
+
 // MultiError already implements As() that recurses into elements, so a
 // typed validation error wrapped inside a MultiError must remain
 // reachable. This pins that no special wiring is needed for the typed

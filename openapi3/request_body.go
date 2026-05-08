@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"maps"
 )
 
@@ -123,7 +122,7 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if requestBody.Content == nil {
-		return errors.New("content of the request body is required")
+		return newRequestBodyContentRequired(requestBody.Origin)
 	}
 
 	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
