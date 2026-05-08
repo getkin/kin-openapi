@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
@@ -73,8 +72,8 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 	}
 
 	if (header.Schema == nil) == (len(header.Content) == 0) {
-		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", header)
-		return fmt.Errorf("header schema is invalid: %w", e)
+		return fmt.Errorf("header schema is invalid: %w",
+			newHeaderContentSchemaExactlyOne(header, header.Origin))
 	}
 	if schema := header.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
@@ -83,9 +82,9 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 	}
 
 	if content := header.Content; content != nil {
-		e := errors.New("parameter content must only contain one entry")
 		if len(content) > 1 {
-			return fmt.Errorf("header content is invalid: %w", e)
+			return fmt.Errorf("header content is invalid: %w",
+				newHeaderContentSingleEntry(header.Origin))
 		}
 
 		if err := content.Validate(ctx); err != nil {
