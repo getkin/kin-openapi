@@ -429,3 +429,48 @@ func TestValidationError_FlowsThroughMultiError(t *testing.T) {
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(me, &ve))
 }
+
+// Pin ServerURLTemplateError cluster + leaf reachability for the three
+// server URL template sites (mismatched braces, undeclared variables
+// in two flavours).
+func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
+	t.Run("mismatched braces", func(t *testing.T) {
+		s := &openapi3.Server{URL: "https://example.com/{x"}
+		err := s.Validate(context.Background())
+		require.EqualError(t, err, "server URL has mismatched { and }")
+
+		var sue *openapi3.ServerURLTemplateError
+		require.True(t, errors.As(err, &sue))
+		require.Equal(t, "https://example.com/{x", sue.URL)
+
+		var leaf *openapi3.ServerURLMismatchedBraces
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
+	})
+
+	t.Run("undeclared variables (count mismatch)", func(t *testing.T) {
+		s := &openapi3.Server{URL: "https://example.com/{x}"} // no Variables declared
+		err := s.Validate(context.Background())
+		require.EqualError(t, err, "server has undeclared variables")
+
+		var sue *openapi3.ServerURLTemplateError
+		require.True(t, errors.As(err, &sue))
+
+		var leaf *openapi3.ServerURLUndeclaredVariables
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("undeclared variables (name mismatch)", func(t *testing.T) {
+		s := &openapi3.Server{
+			URL:       "https://example.com/{x}",
+			Variables: map[string]*openapi3.ServerVariable{"y": {Default: "z"}},
+		}
+		err := s.Validate(context.Background())
+		require.EqualError(t, err, "server has undeclared variables")
+
+		var leaf *openapi3.ServerURLUndeclaredVariables
+		require.True(t, errors.As(err, &leaf))
+	})
+}
