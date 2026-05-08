@@ -171,6 +171,23 @@ type ServerURLTemplateError struct {
 func (e *ServerURLTemplateError) Error() string { return e.Cause.Error() }
 func (e *ServerURLTemplateError) Unwrap() error { return e.Cause }
 
+// EitherFieldRequiredError clusters "at least one of these fields must
+// be set" failures (example.value vs externalValue, link.operationId
+// vs operationRef).
+type EitherFieldRequiredError struct {
+	// Fields is the set of field names, at least one of which must be
+	// set (e.g. ["value", "externalValue"]).
+	Fields []string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *EitherFieldRequiredError) Error() string { return e.Cause.Error() }
+func (e *EitherFieldRequiredError) Unwrap() error { return e.Cause }
+
 // MutuallyExclusiveFieldsError clusters "fields X and Y are both set,
 // only one is allowed" failures (example.value vs externalValue,
 // mediaType.example vs examples, license.url vs identifier,
@@ -262,6 +279,26 @@ func (e *ServerURLMismatchedBraces) As(target any) bool {
 type ServerURLUndeclaredVariables struct{ ValidationError }
 
 func (e *ServerURLUndeclaredVariables) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SchemaItemsRequired struct{ ValidationError }
+
+func (e *SchemaItemsRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// EitherFieldRequiredError leaves.
+
+type ExampleValueOrExternalValueRequired struct{ ValidationError }
+
+func (e *ExampleValueOrExternalValueRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type LinkOperationIDOrRefRequired struct{ ValidationError }
+
+func (e *LinkOperationIDOrRefRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -615,6 +652,30 @@ func newServerURLUndeclaredVariables(serverURL string, origin *Origin) error {
 	const msg = "server has undeclared variables"
 	return newServerURLTemplateError(serverURL,
 		&ServerURLUndeclaredVariables{ValidationError{Message: msg}}, origin)
+}
+
+func newSchemaItemsRequired(origin *Origin) error {
+	const msg = "when schema type is 'array', schema 'items' must be non-null"
+	return newRequiredField("schema.items",
+		&SchemaItemsRequired{ValidationError{Message: msg}}, origin)
+}
+
+// newEitherFieldRequired wraps leaf in an *EitherFieldRequiredError
+// carrying the set of field names, at least one of which must be set.
+func newEitherFieldRequired(fields []string, leaf error, origin *Origin) error {
+	return &EitherFieldRequiredError{Fields: fields, Cause: leaf, Origin: origin}
+}
+
+func newExampleValueOrExternalValueRequired(origin *Origin) error {
+	const msg = "no value or externalValue field"
+	return newEitherFieldRequired([]string{"value", "externalValue"},
+		&ExampleValueOrExternalValueRequired{ValidationError{Message: msg}}, origin)
+}
+
+func newLinkOperationIDOrRefRequired(origin *Origin) error {
+	const msg = "missing operationId or operationRef on link"
+	return newEitherFieldRequired([]string{"operationId", "operationRef"},
+		&LinkOperationIDOrRefRequired{ValidationError{Message: msg}}, origin)
 }
 
 func newExternalDocsURLRequired(origin *Origin) error {
