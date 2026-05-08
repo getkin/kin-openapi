@@ -155,6 +155,26 @@ type FieldVersionMismatchError struct {
 func (e *FieldVersionMismatchError) Error() string { return e.Cause.Error() }
 func (e *FieldVersionMismatchError) Unwrap() error { return e.Cause }
 
+// MutuallyExclusiveFieldsError clusters "fields X and Y are both set,
+// only one is allowed" failures (example.value vs externalValue,
+// mediaType.example vs examples, license.url vs identifier,
+// link.operationId vs operationRef). Carries both field names and
+// wraps the per-site leaf.
+type MutuallyExclusiveFieldsError struct {
+	// Field1 and Field2 name the two fields the spec forbids setting
+	// together (e.g. "value", "externalValue").
+	Field1 string
+	Field2 string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *MutuallyExclusiveFieldsError) Error() string { return e.Cause.Error() }
+func (e *MutuallyExclusiveFieldsError) Unwrap() error { return e.Cause }
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -195,6 +215,32 @@ func (e *OpenAPIVersionRequired) As(target any) bool {
 type ServerURLRequired struct{ ValidationError }
 
 func (e *ServerURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// MutuallyExclusiveFieldsError leaves.
+
+type ExampleValueExternalValueExclusive struct{ ValidationError }
+
+func (e *ExampleValueExternalValueExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type MediaTypeExampleExamplesExclusive struct{ ValidationError }
+
+func (e *MediaTypeExampleExamplesExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type LicenseURLIdentifierExclusive struct{ ValidationError }
+
+func (e *LicenseURLIdentifierExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type LinkOperationIDRefExclusive struct{ ValidationError }
+
+func (e *LinkOperationIDRefExclusive) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -412,6 +458,41 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+// newMutuallyExclusiveFields wraps leaf in a *MutuallyExclusiveFieldsError
+// carrying the two field names the spec forbids setting together.
+func newMutuallyExclusiveFields(field1, field2 string, leaf error, origin *Origin) error {
+	return &MutuallyExclusiveFieldsError{
+		Field1: field1,
+		Field2: field2,
+		Cause:  leaf,
+		Origin: origin,
+	}
+}
+
+func newExampleValueExternalValueExclusive(origin *Origin) error {
+	const msg = "value and externalValue are mutually exclusive"
+	return newMutuallyExclusiveFields("value", "externalValue",
+		&ExampleValueExternalValueExclusive{ValidationError{Message: msg}}, origin)
+}
+
+func newMediaTypeExampleExamplesExclusive(origin *Origin) error {
+	const msg = "example and examples are mutually exclusive"
+	return newMutuallyExclusiveFields("example", "examples",
+		&MediaTypeExampleExamplesExclusive{ValidationError{Message: msg}}, origin)
+}
+
+func newLicenseURLIdentifierExclusive(origin *Origin) error {
+	const msg = "license must not specify both 'url' and 'identifier'"
+	return newMutuallyExclusiveFields("url", "identifier",
+		&LicenseURLIdentifierExclusive{ValidationError{Message: msg}}, origin)
+}
+
+func newLinkOperationIDRefExclusive(operationID, operationRef string, origin *Origin) error {
+	msg := fmt.Sprintf("operationId %q and operationRef %q are mutually exclusive", operationID, operationRef)
+	return newMutuallyExclusiveFields("operationId", "operationRef",
+		&LinkOperationIDRefExclusive{ValidationError{Message: msg}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

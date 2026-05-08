@@ -429,3 +429,54 @@ func TestValidationError_FlowsThroughMultiError(t *testing.T) {
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(me, &ve))
 }
+
+// Pin MutuallyExclusiveFieldsError cluster + leaf reachability for the
+// four sites where two fields are forbidden from being set together.
+func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
+	t.Run("example value vs externalValue", func(t *testing.T) {
+		ex := &openapi3.Example{Value: "v", ExternalValue: "https://x"}
+		err := ex.Validate(context.Background())
+		require.EqualError(t, err, "value and externalValue are mutually exclusive")
+
+		var mef *openapi3.MutuallyExclusiveFieldsError
+		require.True(t, errors.As(err, &mef))
+		require.Equal(t, "value", mef.Field1)
+		require.Equal(t, "externalValue", mef.Field2)
+
+		var leaf *openapi3.ExampleValueExternalValueExclusive
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
+	})
+
+	t.Run("license url vs identifier", func(t *testing.T) {
+		// identifier is a 3.1+ field; opt in so the URL/identifier check
+		// is the one that fires.
+		lic := &openapi3.License{Name: "MIT", URL: "https://x", Identifier: "MIT"}
+		err := lic.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		require.EqualError(t, err, "license must not specify both 'url' and 'identifier'")
+
+		var mef *openapi3.MutuallyExclusiveFieldsError
+		require.True(t, errors.As(err, &mef))
+		require.Equal(t, "url", mef.Field1)
+		require.Equal(t, "identifier", mef.Field2)
+
+		var leaf *openapi3.LicenseURLIdentifierExclusive
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("link operationId vs operationRef", func(t *testing.T) {
+		link := &openapi3.Link{OperationID: "getX", OperationRef: "#/x"}
+		err := link.Validate(context.Background())
+		require.EqualError(t, err, `operationId "getX" and operationRef "#/x" are mutually exclusive`)
+
+		var mef *openapi3.MutuallyExclusiveFieldsError
+		require.True(t, errors.As(err, &mef))
+		require.Equal(t, "operationId", mef.Field1)
+		require.Equal(t, "operationRef", mef.Field2)
+
+		var leaf *openapi3.LinkOperationIDRefExclusive
+		require.True(t, errors.As(err, &leaf))
+	})
+}
