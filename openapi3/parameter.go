@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"strconv"
@@ -363,14 +362,14 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 	}
 
 	if (parameter.Schema == nil) == (len(parameter.Content) == 0) {
-		e := errors.New("parameter must contain exactly one of content and schema")
-		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
+		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name,
+			newParameterContentSchemaExactlyOne(parameter.Origin))
 	}
 
 	if content := parameter.Content; content != nil {
-		e := errors.New("parameter content must only contain one entry")
 		if len(content) > 1 {
-			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name, e)
+			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name,
+				newParameterContentSingleEntry(parameter.Origin))
 		}
 
 		if err := content.Validate(ctx); err != nil {

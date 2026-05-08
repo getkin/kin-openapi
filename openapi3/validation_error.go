@@ -205,6 +205,39 @@ type SchemaBothFormsExclusive struct {
 func (e *SchemaBothFormsExclusive) Error() string { return e.Cause.Error() }
 func (e *SchemaBothFormsExclusive) Unwrap() error { return e.Cause }
 
+// ExactlyOneFieldError clusters "exactly one of these fields must be
+// set" failures — e.g. a parameter or header where neither content
+// nor schema is set, or both are.
+type ExactlyOneFieldError struct {
+	// Fields is the set of fields, exactly one of which must be set
+	// (e.g. ["content", "schema"]).
+	Fields []string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ExactlyOneFieldError) Error() string { return e.Cause.Error() }
+func (e *ExactlyOneFieldError) Unwrap() error { return e.Cause }
+
+// SingleEntryContentError clusters "the content map must contain at
+// most one entry" failures (parameter.content, header.content).
+type SingleEntryContentError struct {
+	// Subject is the kind of object whose Content map is too large
+	// ("parameter", "header").
+	Subject string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SingleEntryContentError) Error() string { return e.Cause.Error() }
+func (e *SingleEntryContentError) Unwrap() error { return e.Cause }
+
 // MutuallyExclusiveFieldsError clusters "fields X and Y are both set,
 // only one is allowed" failures (example.value vs externalValue,
 // mediaType.example vs examples, license.url vs identifier,
@@ -354,6 +387,34 @@ func (e *SchemaUnevaluatedItemsBothForms) As(target any) bool {
 type SchemaUnevaluatedPropertiesBothForms struct{ ValidationError }
 
 func (e *SchemaUnevaluatedPropertiesBothForms) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// ExactlyOneFieldError leaves.
+
+type ParameterContentSchemaExactlyOne struct{ ValidationError }
+
+func (e *ParameterContentSchemaExactlyOne) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type HeaderContentSchemaExactlyOne struct{ ValidationError }
+
+func (e *HeaderContentSchemaExactlyOne) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// SingleEntryContentError leaves.
+
+type ParameterContentSingleEntry struct{ ValidationError }
+
+func (e *ParameterContentSingleEntry) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type HeaderContentSingleEntry struct{ ValidationError }
+
+func (e *HeaderContentSingleEntry) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -772,6 +833,46 @@ func newSchemaUnevaluatedPropertiesBothForms(origin *Origin) error {
 	const msg = "unevaluatedProperties is set to both boolean and schema"
 	return newSchemaBothForms("unevaluatedProperties",
 		&SchemaUnevaluatedPropertiesBothForms{ValidationError{Message: msg}}, origin)
+}
+
+// newExactlyOneField wraps leaf in an *ExactlyOneFieldError carrying
+// the set of fields, exactly one of which must be set.
+func newExactlyOneField(fields []string, leaf error, origin *Origin) error {
+	return &ExactlyOneFieldError{Fields: fields, Cause: leaf, Origin: origin}
+}
+
+func newParameterContentSchemaExactlyOne(origin *Origin) error {
+	const msg = "parameter must contain exactly one of content and schema"
+	return newExactlyOneField([]string{"content", "schema"},
+		&ParameterContentSchemaExactlyOne{ValidationError{Message: msg}}, origin)
+}
+
+// newHeaderContentSchemaExactlyOne formats the same way the existing
+// header.go site does, including the historical "%v" dump of the
+// Header struct, so the Error() string remains byte-identical.
+func newHeaderContentSchemaExactlyOne(header any, origin *Origin) error {
+	msg := fmt.Sprintf("parameter must contain exactly one of content and schema: %v", header)
+	return newExactlyOneField([]string{"content", "schema"},
+		&HeaderContentSchemaExactlyOne{ValidationError{Message: msg}}, origin)
+}
+
+// newSingleEntryContent wraps leaf in a *SingleEntryContentError
+// carrying the Subject ("parameter" or "header") whose Content map
+// has more than one entry.
+func newSingleEntryContent(subject string, leaf error, origin *Origin) error {
+	return &SingleEntryContentError{Subject: subject, Cause: leaf, Origin: origin}
+}
+
+func newParameterContentSingleEntry(origin *Origin) error {
+	const msg = "parameter content must only contain one entry"
+	return newSingleEntryContent("parameter",
+		&ParameterContentSingleEntry{ValidationError{Message: msg}}, origin)
+}
+
+func newHeaderContentSingleEntry(origin *Origin) error {
+	const msg = "parameter content must only contain one entry"
+	return newSingleEntryContent("header",
+		&HeaderContentSingleEntry{ValidationError{Message: msg}}, origin)
 }
 
 func newExternalDocsURLRequired(origin *Origin) error {

@@ -849,3 +849,72 @@ func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
 		require.True(t, errors.As(err, &leaf))
 	})
 }
+
+// Pin ExactlyOneFieldError and SingleEntryContentError clusters for
+// the four parameter/header content+schema sites.
+func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
+	t.Run("parameter content/schema exactly one (neither set)", func(t *testing.T) {
+		p := &openapi3.Parameter{Name: "p", In: "query"}
+		err := p.Validate(context.Background())
+		require.Contains(t, err.Error(), "parameter must contain exactly one of content and schema")
+
+		var efe *openapi3.ExactlyOneFieldError
+		require.True(t, errors.As(err, &efe))
+		require.Equal(t, []string{"content", "schema"}, efe.Fields)
+
+		var leaf *openapi3.ParameterContentSchemaExactlyOne
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("parameter content single entry", func(t *testing.T) {
+		p := &openapi3.Parameter{
+			Name: "p", In: "query",
+			Content: openapi3.Content{
+				"application/json": &openapi3.MediaType{},
+				"application/xml":  &openapi3.MediaType{},
+			},
+		}
+		err := p.Validate(context.Background())
+		require.Contains(t, err.Error(), "parameter content must only contain one entry")
+
+		var sec *openapi3.SingleEntryContentError
+		require.True(t, errors.As(err, &sec))
+		require.Equal(t, "parameter", sec.Subject)
+
+		var leaf *openapi3.ParameterContentSingleEntry
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("header content/schema exactly one (neither set)", func(t *testing.T) {
+		h := &openapi3.Header{}
+		err := h.Validate(context.Background())
+		require.Contains(t, err.Error(), "parameter must contain exactly one of content and schema")
+
+		var efe *openapi3.ExactlyOneFieldError
+		require.True(t, errors.As(err, &efe))
+		require.Equal(t, []string{"content", "schema"}, efe.Fields)
+
+		var leaf *openapi3.HeaderContentSchemaExactlyOne
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("header content single entry", func(t *testing.T) {
+		h := &openapi3.Header{
+			Parameter: openapi3.Parameter{
+				Content: openapi3.Content{
+					"application/json": &openapi3.MediaType{},
+					"application/xml":  &openapi3.MediaType{},
+				},
+			},
+		}
+		err := h.Validate(context.Background())
+		require.Contains(t, err.Error(), "parameter content must only contain one entry")
+
+		var sec *openapi3.SingleEntryContentError
+		require.True(t, errors.As(err, &sec))
+		require.Equal(t, "header", sec.Subject)
+
+		var leaf *openapi3.HeaderContentSingleEntry
+		require.True(t, errors.As(err, &leaf))
+	})
+}
