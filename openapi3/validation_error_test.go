@@ -782,3 +782,70 @@ func TestValidationError_DocRootRequiredLeaves(t *testing.T) {
 		require.True(t, errors.As(err, &leaf))
 	})
 }
+
+// Pin SchemaBothFormsExclusive cluster + leaf reachability for the
+// three union-typed schema fields set to both boolean and schema forms.
+func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
+	t.Run("additionalProperties both forms", func(t *testing.T) {
+		yes := true
+		schema := &openapi3.Schema{
+			Type: &openapi3.Types{"object"},
+			AdditionalProperties: openapi3.AdditionalProperties{
+				Has:    &yes,
+				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{}},
+			},
+		}
+		err := schema.Validate(context.Background())
+		require.EqualError(t, err, "additionalProperties are set to both boolean and schema")
+
+		var sbf *openapi3.SchemaBothFormsExclusive
+		require.True(t, errors.As(err, &sbf))
+		require.Equal(t, "additionalProperties", sbf.Field)
+
+		var leaf *openapi3.SchemaAdditionalPropertiesBothForms
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
+	})
+
+	t.Run("unevaluatedItems both forms", func(t *testing.T) {
+		yes := true
+		schema := &openapi3.Schema{
+			Type: &openapi3.Types{"object"},
+			UnevaluatedItems: openapi3.BoolSchema{
+				Has:    &yes,
+				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{}},
+			},
+		}
+		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		require.EqualError(t, err, "unevaluatedItems is set to both boolean and schema")
+
+		var sbf *openapi3.SchemaBothFormsExclusive
+		require.True(t, errors.As(err, &sbf))
+		require.Equal(t, "unevaluatedItems", sbf.Field)
+
+		var leaf *openapi3.SchemaUnevaluatedItemsBothForms
+		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("unevaluatedProperties both forms", func(t *testing.T) {
+		yes := true
+		schema := &openapi3.Schema{
+			Type: &openapi3.Types{"object"},
+			UnevaluatedProperties: openapi3.BoolSchema{
+				Has:    &yes,
+				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{}},
+			},
+		}
+		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		require.EqualError(t, err, "unevaluatedProperties is set to both boolean and schema")
+
+		var sbf *openapi3.SchemaBothFormsExclusive
+		require.True(t, errors.As(err, &sbf))
+		require.Equal(t, "unevaluatedProperties", sbf.Field)
+
+		var leaf *openapi3.SchemaUnevaluatedPropertiesBothForms
+		require.True(t, errors.As(err, &leaf))
+	})
+}

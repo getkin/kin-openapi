@@ -188,6 +188,23 @@ type EitherFieldRequiredError struct {
 func (e *EitherFieldRequiredError) Error() string { return e.Cause.Error() }
 func (e *EitherFieldRequiredError) Unwrap() error { return e.Cause }
 
+// SchemaBothFormsExclusive clusters "this union-typed schema field is
+// set to both its boolean and schema forms simultaneously" failures —
+// additionalProperties, unevaluatedItems, unevaluatedProperties.
+type SchemaBothFormsExclusive struct {
+	// Field is the name of the union-typed schema property
+	// (e.g. "additionalProperties", "unevaluatedItems").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaBothFormsExclusive) Error() string { return e.Cause.Error() }
+func (e *SchemaBothFormsExclusive) Unwrap() error { return e.Cause }
+
 // MutuallyExclusiveFieldsError clusters "fields X and Y are both set,
 // only one is allowed" failures (example.value vs externalValue,
 // mediaType.example vs examples, license.url vs identifier,
@@ -317,6 +334,26 @@ func (e *PathsRequired) As(target any) bool {
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
 func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// SchemaBothFormsExclusive leaves.
+
+type SchemaAdditionalPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaAdditionalPropertiesBothForms) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedItemsBothForms) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SchemaUnevaluatedPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedPropertiesBothForms) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -711,6 +748,30 @@ func newPathsRequired() error {
 func newJSONSchemaDialectAbsoluteURIRequired() error {
 	return newRequiredField("jsonSchemaDialect",
 		&JSONSchemaDialectAbsoluteURIRequired{ValidationError{Message: "must be an absolute URI with a scheme"}}, nil)
+}
+
+// newSchemaBothForms wraps leaf in a *SchemaBothFormsExclusive carrying
+// the name of the union-typed schema property.
+func newSchemaBothForms(field string, leaf error, origin *Origin) error {
+	return &SchemaBothFormsExclusive{Field: field, Cause: leaf, Origin: origin}
+}
+
+func newSchemaAdditionalPropertiesBothForms(origin *Origin) error {
+	const msg = "additionalProperties are set to both boolean and schema"
+	return newSchemaBothForms("additionalProperties",
+		&SchemaAdditionalPropertiesBothForms{ValidationError{Message: msg}}, origin)
+}
+
+func newSchemaUnevaluatedItemsBothForms(origin *Origin) error {
+	const msg = "unevaluatedItems is set to both boolean and schema"
+	return newSchemaBothForms("unevaluatedItems",
+		&SchemaUnevaluatedItemsBothForms{ValidationError{Message: msg}}, origin)
+}
+
+func newSchemaUnevaluatedPropertiesBothForms(origin *Origin) error {
+	const msg = "unevaluatedProperties is set to both boolean and schema"
+	return newSchemaBothForms("unevaluatedProperties",
+		&SchemaUnevaluatedPropertiesBothForms{ValidationError{Message: msg}}, origin)
 }
 
 func newExternalDocsURLRequired(origin *Origin) error {
