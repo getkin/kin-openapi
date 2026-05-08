@@ -155,6 +155,23 @@ type FieldVersionMismatchError struct {
 func (e *FieldVersionMismatchError) Error() string { return e.Cause.Error() }
 func (e *FieldVersionMismatchError) Unwrap() error { return e.Cause }
 
+// SchemaBothFormsExclusive clusters "this union-typed schema field is
+// set to both its boolean and schema forms simultaneously" failures —
+// additionalProperties, unevaluatedItems, unevaluatedProperties.
+type SchemaBothFormsExclusive struct {
+	// Field is the name of the union-typed schema property
+	// (e.g. "additionalProperties", "unevaluatedItems").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaBothFormsExclusive) Error() string { return e.Cause.Error() }
+func (e *SchemaBothFormsExclusive) Unwrap() error { return e.Cause }
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -195,6 +212,26 @@ func (e *OpenAPIVersionRequired) As(target any) bool {
 type ServerURLRequired struct{ ValidationError }
 
 func (e *ServerURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// SchemaBothFormsExclusive leaves.
+
+type SchemaAdditionalPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaAdditionalPropertiesBothForms) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedItemsBothForms) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SchemaUnevaluatedPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedPropertiesBothForms) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -412,6 +449,30 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+// newSchemaBothForms wraps leaf in a *SchemaBothFormsExclusive carrying
+// the name of the union-typed schema property.
+func newSchemaBothForms(field string, leaf error, origin *Origin) error {
+	return &SchemaBothFormsExclusive{Field: field, Cause: leaf, Origin: origin}
+}
+
+func newSchemaAdditionalPropertiesBothForms(origin *Origin) error {
+	const msg = "additionalProperties are set to both boolean and schema"
+	return newSchemaBothForms("additionalProperties",
+		&SchemaAdditionalPropertiesBothForms{ValidationError{Message: msg}}, origin)
+}
+
+func newSchemaUnevaluatedItemsBothForms(origin *Origin) error {
+	const msg = "unevaluatedItems is set to both boolean and schema"
+	return newSchemaBothForms("unevaluatedItems",
+		&SchemaUnevaluatedItemsBothForms{ValidationError{Message: msg}}, origin)
+}
+
+func newSchemaUnevaluatedPropertiesBothForms(origin *Origin) error {
+	const msg = "unevaluatedProperties is set to both boolean and schema"
+	return newSchemaBothForms("unevaluatedProperties",
+		&SchemaUnevaluatedPropertiesBothForms{ValidationError{Message: msg}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

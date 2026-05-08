@@ -1729,7 +1729,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	}
 
 	if schema.AdditionalProperties.Has != nil && schema.AdditionalProperties.Schema != nil {
-		return stack, errors.New("additionalProperties are set to both boolean and schema")
+		return stack, newSchemaAdditionalPropertiesBothForms(schema.Origin)
 	}
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
@@ -1835,7 +1835,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 	if schema.UnevaluatedItems.Has != nil && schema.UnevaluatedItems.Schema != nil {
-		return stack, errors.New("unevaluatedItems is set to both boolean and schema")
+		return stack, newSchemaUnevaluatedItemsBothForms(schema.Origin)
 	}
 	if ref := schema.UnevaluatedItems.Schema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
@@ -1852,7 +1852,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 	if schema.UnevaluatedProperties.Has != nil && schema.UnevaluatedProperties.Schema != nil {
-		return stack, errors.New("unevaluatedProperties is set to both boolean and schema")
+		return stack, newSchemaUnevaluatedPropertiesBothForms(schema.Origin)
 	}
 	if ref := schema.UnevaluatedProperties.Schema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {

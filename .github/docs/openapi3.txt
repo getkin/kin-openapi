@@ -2087,6 +2087,28 @@ func (schema *Schema) WithUniqueItems(unique bool) *Schema
 
 func (schema *Schema) WithoutAdditionalProperties() *Schema
 
+type SchemaAdditionalPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaAdditionalPropertiesBothForms) As(target any) bool
+
+type SchemaBothFormsExclusive struct {
+	// Field is the name of the union-typed schema property
+	// (e.g. "additionalProperties", "unevaluatedItems").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaBothFormsExclusive clusters "this union-typed schema field is
+    set to both its boolean and schema forms simultaneously" failures —
+    additionalProperties, unevaluatedItems, unevaluatedProperties.
+
+func (e *SchemaBothFormsExclusive) Error() string
+
+func (e *SchemaBothFormsExclusive) Unwrap() error
+
 type SchemaError struct {
 	// Value is the value that failed validation.
 	Value any
@@ -2164,6 +2186,14 @@ type SchemaRefs []*SchemaRef
 func (s SchemaRefs) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedItemsBothForms) As(target any) bool
+
+type SchemaUnevaluatedPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedPropertiesBothForms) As(target any) bool
 
 type SchemaValidationOption func(*schemaValidationSettings)
     SchemaValidationOption describes options a user has when validating request
