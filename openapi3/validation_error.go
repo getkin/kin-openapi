@@ -238,6 +238,19 @@ type SingleEntryContentError struct {
 func (e *SingleEntryContentError) Error() string { return e.Cause.Error() }
 func (e *SingleEntryContentError) Unwrap() error { return e.Cause }
 
+// WebhookNilError clusters "the value at webhook key X is nil"
+// failures from T.Validate's webhook walk. Carries the offending
+// key name.
+type WebhookNilError struct {
+	// Name is the webhook key whose value was nil.
+	Name string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+}
+
+func (e *WebhookNilError) Error() string { return e.Cause.Error() }
+func (e *WebhookNilError) Unwrap() error { return e.Cause }
+
 // MutuallyExclusiveFieldsError clusters "fields X and Y are both set,
 // only one is allowed" failures (example.value vs externalValue,
 // mediaType.example vs examples, license.url vs identifier,
@@ -415,6 +428,14 @@ func (e *ParameterContentSingleEntry) As(target any) bool {
 type HeaderContentSingleEntry struct{ ValidationError }
 
 func (e *HeaderContentSingleEntry) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// WebhookNilError leaf.
+
+type WebhookNil struct{ ValidationError }
+
+func (e *WebhookNil) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -873,6 +894,14 @@ func newHeaderContentSingleEntry(origin *Origin) error {
 	const msg = "parameter content must only contain one entry"
 	return newSingleEntryContent("header",
 		&HeaderContentSingleEntry{ValidationError{Message: msg}}, origin)
+}
+
+func newWebhookNil(name string) error {
+	msg := fmt.Sprintf("webhook %q is nil", name)
+	return &WebhookNilError{
+		Name:  name,
+		Cause: &WebhookNil{ValidationError{Message: msg}},
+	}
 }
 
 func newExternalDocsURLRequired(origin *Origin) error {
