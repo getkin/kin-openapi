@@ -918,3 +918,26 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 		require.True(t, errors.As(err, &leaf))
 	})
 }
+
+// Pin WebhookNilError cluster + leaf reachability for the
+// nil-pathitem webhook check in T.Validate.
+func TestValidationError_WebhookNilLeaf(t *testing.T) {
+	doc := &openapi3.T{
+		OpenAPI:  "3.1.0",
+		Info:     &openapi3.Info{Title: "x", Version: "1.0.0"},
+		Paths:    openapi3.NewPaths(),
+		Webhooks: map[string]*openapi3.PathItem{"onEvent": nil},
+	}
+	err := doc.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, `invalid webhooks: webhook "onEvent" is nil`)
+
+	var wne *openapi3.WebhookNilError
+	require.True(t, errors.As(err, &wne))
+	require.Equal(t, "onEvent", wne.Name)
+
+	var leaf *openapi3.WebhookNil
+	require.True(t, errors.As(err, &leaf))
+
+	var ve *openapi3.ValidationError
+	require.True(t, errors.As(err, &ve))
+}
