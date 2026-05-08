@@ -155,6 +155,22 @@ type FieldVersionMismatchError struct {
 func (e *FieldVersionMismatchError) Error() string { return e.Cause.Error() }
 func (e *FieldVersionMismatchError) Unwrap() error { return e.Cause }
 
+// ServerURLTemplateError clusters server URL template failures —
+// mismatched braces and undeclared variables (template variables not
+// matched by Server.Variables, or vice versa).
+type ServerURLTemplateError struct {
+	// URL is the server URL whose template failed validation.
+	URL string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ServerURLTemplateError) Error() string { return e.Cause.Error() }
+func (e *ServerURLTemplateError) Unwrap() error { return e.Cause }
+
 // MutuallyExclusiveFieldsError clusters "fields X and Y are both set,
 // only one is allowed" failures (example.value vs externalValue,
 // mediaType.example vs examples, license.url vs identifier,
@@ -232,6 +248,20 @@ func (e *OpenAPIVersionRequired) As(target any) bool {
 type ServerURLRequired struct{ ValidationError }
 
 func (e *ServerURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// ServerURLTemplateError leaves.
+
+type ServerURLMismatchedBraces struct{ ValidationError }
+
+func (e *ServerURLMismatchedBraces) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ServerURLUndeclaredVariables struct{ ValidationError }
+
+func (e *ServerURLUndeclaredVariables) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -567,6 +597,24 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+// newServerURLTemplateError wraps leaf in a *ServerURLTemplateError
+// carrying the offending Server.URL.
+func newServerURLTemplateError(serverURL string, leaf error, origin *Origin) error {
+	return &ServerURLTemplateError{URL: serverURL, Cause: leaf, Origin: origin}
+}
+
+func newServerURLMismatchedBraces(serverURL string, origin *Origin) error {
+	const msg = "server URL has mismatched { and }"
+	return newServerURLTemplateError(serverURL,
+		&ServerURLMismatchedBraces{ValidationError{Message: msg}}, origin)
+}
+
+func newServerURLUndeclaredVariables(serverURL string, origin *Origin) error {
+	const msg = "server has undeclared variables"
+	return newServerURLTemplateError(serverURL,
+		&ServerURLUndeclaredVariables{ValidationError{Message: msg}}, origin)
 }
 
 func newExternalDocsURLRequired(origin *Origin) error {
