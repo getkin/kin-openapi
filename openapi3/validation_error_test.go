@@ -479,4 +479,18 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 		var leaf *openapi3.LinkOperationIDRefExclusive
 		require.True(t, errors.As(err, &leaf))
 	})
+
+	t.Run("schema readOnly vs writeOnly", func(t *testing.T) {
+		schema := &openapi3.Schema{ReadOnly: true, WriteOnly: true}
+		err := schema.Validate(context.Background())
+		require.EqualError(t, err, "a property MUST NOT be marked as both readOnly and writeOnly being true")
+
+		var mef *openapi3.MutuallyExclusiveFieldsError
+		require.True(t, errors.As(err, &mef))
+		require.Equal(t, "readOnly", mef.Field1)
+		require.Equal(t, "writeOnly", mef.Field2)
+
+		var leaf *openapi3.SchemaReadOnlyWriteOnlyExclusive
+		require.True(t, errors.As(err, &leaf))
+	})
 }

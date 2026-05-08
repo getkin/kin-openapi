@@ -244,6 +244,12 @@ func (e *LinkOperationIDRefExclusive) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
+
+func (e *SchemaReadOnlyWriteOnlyExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 // FieldVersionMismatchError leaves — non-schema fields.
 
 type InfoSummaryFieldFor31Plus struct{ ValidationError }
@@ -493,6 +499,12 @@ func newLinkOperationIDRefExclusive(operationID, operationRef string, origin *Or
 	msg := fmt.Sprintf("operationId %q and operationRef %q are mutually exclusive", operationID, operationRef)
 	return newMutuallyExclusiveFields("operationId", "operationRef",
 		&LinkOperationIDRefExclusive{ValidationError{Message: msg}}, origin)
+}
+
+func newSchemaReadOnlyWriteOnlyExclusive(origin *Origin) error {
+	const msg = "a property MUST NOT be marked as both readOnly and writeOnly being true"
+	return newMutuallyExclusiveFields("readOnly", "writeOnly",
+		&SchemaReadOnlyWriteOnlyExclusive{ValidationError{Message: msg}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a
