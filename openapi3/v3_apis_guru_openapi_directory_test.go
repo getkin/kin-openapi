@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3conv"
 )
 
 var goldens = filepath.Join("testdata", "apis_guru_openapi_directory")
@@ -45,6 +46,7 @@ func shortNameFromPath(path string) string {
 	shortName := filepath.Base(path)
 	shortName = strings.TrimSuffix(shortName, "__load")
 	shortName = strings.TrimSuffix(shortName, "__validate")
+	shortName = strings.TrimSuffix(shortName, "__validatebis")
 	return shortName
 }
 
@@ -160,6 +162,12 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 					var opts []openapi3.ValidationOption
 					err = doc.Validate(loader.Context, opts...)
 					golden(t, err, shortName, "validate")
+
+					if err == nil {
+						openapi3conv.Upgrade(doc, openapi3conv.WithWriter(t.Output()))
+						err = doc.Validate(loader.Context, opts...)
+						golden(t, err, shortName, "validatebis")
+					}
 				}
 			})
 		}
