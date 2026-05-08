@@ -2179,6 +2179,10 @@ type SchemaFieldFor31Plus struct{ ValidationError }
 
 func (e *SchemaFieldFor31Plus) As(target any) bool
 
+type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
+
+func (e *SchemaReadOnlyWriteOnlyExclusive) As(target any) bool
+
 type SchemaRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.

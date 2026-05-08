@@ -1412,7 +1412,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	stack = append(stack, schema)
 
 	if schema.ReadOnly && schema.WriteOnly {
-		return stack, errors.New("a property MUST NOT be marked as both readOnly and writeOnly being true")
+		return stack, newSchemaReadOnlyWriteOnlyExclusive(schema.Origin)
 	}
 
 	// Reject fields that only exist in OAS 3.1 / JSON Schema 2020-12 when the
