@@ -404,7 +404,7 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 		case flow.AuthorizationURL == "" && in:
 			return newOAuthFlowAuthorizationURLRequired(flow.Origin)
 		case flow.AuthorizationURL != "" && !in:
-			return errors.New("field 'authorizationUrl' should not be set")
+			return newOAuthFlowAuthorizationURLForbidden(flow.Origin)
 		case flow.AuthorizationURL != "":
 			if _, err := url.Parse(flow.AuthorizationURL); err != nil {
 				return fmt.Errorf("field 'authorizationUrl' is invalid: %w", err)
@@ -417,7 +417,7 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 		case flow.TokenURL == "" && in:
 			return newOAuthFlowTokenURLRequired(flow.Origin)
 		case flow.TokenURL != "" && !in:
-			return errors.New("field 'tokenUrl' should not be set")
+			return newOAuthFlowTokenURLForbidden(flow.Origin)
 		case flow.TokenURL != "":
 			if _, err := url.Parse(flow.TokenURL); err != nil {
 				return fmt.Errorf("field 'tokenUrl' is invalid: %w", err)

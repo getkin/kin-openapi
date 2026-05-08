@@ -175,6 +175,23 @@ type MutuallyExclusiveFieldsError struct {
 func (e *MutuallyExclusiveFieldsError) Error() string { return e.Cause.Error() }
 func (e *MutuallyExclusiveFieldsError) Unwrap() error { return e.Cause }
 
+// ForbiddenFieldError clusters "field X must not be set in this
+// context" failures (header.name and header.in inside a Headers map,
+// OAuth flow URLs that don't apply to the chosen flow type).
+type ForbiddenFieldError struct {
+	// Field is the name of the forbidden field (e.g. "name", "in",
+	// "authorizationUrl", "tokenUrl").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ForbiddenFieldError) Error() string { return e.Cause.Error() }
+func (e *ForbiddenFieldError) Unwrap() error { return e.Cause }
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -289,6 +306,32 @@ func (e *LinkOperationIDRefExclusive) As(target any) bool {
 type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
 
 func (e *SchemaReadOnlyWriteOnlyExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// ForbiddenFieldError leaves.
+
+type HeaderNameForbidden struct{ ValidationError }
+
+func (e *HeaderNameForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type HeaderInForbidden struct{ ValidationError }
+
+func (e *HeaderInForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OAuthFlowAuthorizationURLForbidden struct{ ValidationError }
+
+func (e *OAuthFlowAuthorizationURLForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OAuthFlowTokenURLForbidden struct{ ValidationError }
+
+func (e *OAuthFlowTokenURLForbidden) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -582,6 +625,36 @@ func newSchemaReadOnlyWriteOnlyExclusive(origin *Origin) error {
 	const msg = "a property MUST NOT be marked as both readOnly and writeOnly being true"
 	return newMutuallyExclusiveFields("readOnly", "writeOnly",
 		&SchemaReadOnlyWriteOnlyExclusive{ValidationError{Message: msg}}, origin)
+}
+
+// newForbiddenField wraps leaf in a *ForbiddenFieldError carrying the
+// name of the field that the spec forbids in the current context.
+func newForbiddenField(field string, leaf error, origin *Origin) error {
+	return &ForbiddenFieldError{Field: field, Cause: leaf, Origin: origin}
+}
+
+func newHeaderNameForbidden(origin *Origin) error {
+	const msg = "header 'name' MUST NOT be specified, it is given in the corresponding headers map"
+	return newForbiddenField("name",
+		&HeaderNameForbidden{ValidationError{Message: msg}}, origin)
+}
+
+func newHeaderInForbidden(origin *Origin) error {
+	const msg = "header 'in' MUST NOT be specified, it is implicitly in header"
+	return newForbiddenField("in",
+		&HeaderInForbidden{ValidationError{Message: msg}}, origin)
+}
+
+func newOAuthFlowAuthorizationURLForbidden(origin *Origin) error {
+	const msg = "field 'authorizationUrl' should not be set"
+	return newForbiddenField("authorizationUrl",
+		&OAuthFlowAuthorizationURLForbidden{ValidationError{Message: msg}}, origin)
+}
+
+func newOAuthFlowTokenURLForbidden(origin *Origin) error {
+	const msg = "field 'tokenUrl' should not be set"
+	return newForbiddenField("tokenUrl",
+		&OAuthFlowTokenURLForbidden{ValidationError{Message: msg}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

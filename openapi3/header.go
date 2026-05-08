@@ -54,10 +54,10 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if header.Name != "" {
-		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")
+		return newHeaderNameForbidden(header.Origin)
 	}
 	if header.In != "" {
-		return errors.New("header 'in' MUST NOT be specified, it is implicitly in header")
+		return newHeaderInForbidden(header.Origin)
 	}
 
 	// Validate a parameter's serialization method.
