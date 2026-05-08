@@ -576,6 +576,24 @@ type Encodings map[string]*Encoding
 func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Encodings to a copy of data.
 
+type ExactlyOneFieldError struct {
+	// Fields is the set of fields, exactly one of which must be set
+	// (e.g. ["content", "schema"]).
+	Fields []string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ExactlyOneFieldError clusters "exactly one of these fields must be set"
+    failures — e.g. a parameter or header where neither content nor schema is
+    set, or both are.
+
+func (e *ExactlyOneFieldError) Error() string
+
+func (e *ExactlyOneFieldError) Unwrap() error
+
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -768,6 +786,14 @@ func (header *Header) UnmarshalJSON(data []byte) error
 
 func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Header does not comply with the OpenAPI spec.
+
+type HeaderContentSchemaExactlyOne struct{ ValidationError }
+
+func (e *HeaderContentSchemaExactlyOne) As(target any) bool
+
+type HeaderContentSingleEntry struct{ ValidationError }
+
+func (e *HeaderContentSingleEntry) As(target any) bool
 
 type HeaderRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -1325,6 +1351,14 @@ func (parameter *Parameter) WithDescription(value string) *Parameter
 func (parameter *Parameter) WithRequired(value bool) *Parameter
 
 func (parameter *Parameter) WithSchema(value *Schema) *Parameter
+
+type ParameterContentSchemaExactlyOne struct{ ValidationError }
+
+func (e *ParameterContentSchemaExactlyOne) As(target any) bool
+
+type ParameterContentSingleEntry struct{ ValidationError }
+
+func (e *ParameterContentSingleEntry) As(target any) bool
 
 type ParameterRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -2497,6 +2531,23 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string)
 
 func (servers Servers) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Servers does not comply with the OpenAPI spec.
+
+type SingleEntryContentError struct {
+	// Subject is the kind of object whose Content map is too large
+	// ("parameter", "header").
+	Subject string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SingleEntryContentError clusters "the content map must contain at most one
+    entry" failures (parameter.content, header.content).
+
+func (e *SingleEntryContentError) Error() string
+
+func (e *SingleEntryContentError) Unwrap() error
 
 type SliceUniqueItemsChecker func(items []any) bool
     SliceUniqueItemsChecker is an function used to check if an given slice have
