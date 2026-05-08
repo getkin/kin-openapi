@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"maps"
 )
 
@@ -88,7 +87,7 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 		return errors.New("missing operationId or operationRef on link")
 	}
 	if link.OperationID != "" && link.OperationRef != "" {
-		return fmt.Errorf("operationId %q and operationRef %q are mutually exclusive", link.OperationID, link.OperationRef)
+		return newLinkOperationIDRefExclusive(link.OperationID, link.OperationRef, link.Origin)
 	}
 
 	return validateExtensions(ctx, link.Extensions)

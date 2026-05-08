@@ -75,7 +75,7 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if example.Value != nil && example.ExternalValue != "" {
-		return errors.New("value and externalValue are mutually exclusive")
+		return newExampleValueExternalValueExclusive(example.Origin)
 	}
 	if example.Value == nil && example.ExternalValue == "" {
 		return errors.New("no value or externalValue field")

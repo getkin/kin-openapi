@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"maps"
 )
 
@@ -76,7 +75,7 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 	}
 
 	if license.URL != "" && license.Identifier != "" {
-		return errors.New("license must not specify both 'url' and 'identifier'")
+		return newLicenseURLIdentifierExclusive(license.Origin)
 	}
 
 	return validateExtensions(ctx, license.Extensions)
