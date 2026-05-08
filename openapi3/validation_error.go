@@ -155,6 +155,19 @@ type FieldVersionMismatchError struct {
 func (e *FieldVersionMismatchError) Error() string { return e.Cause.Error() }
 func (e *FieldVersionMismatchError) Unwrap() error { return e.Cause }
 
+// WebhookNilError clusters "the value at webhook key X is nil"
+// failures from T.Validate's webhook walk. Carries the offending
+// key name.
+type WebhookNilError struct {
+	// Name is the webhook key whose value was nil.
+	Name string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+}
+
+func (e *WebhookNilError) Error() string { return e.Cause.Error() }
+func (e *WebhookNilError) Unwrap() error { return e.Cause }
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -195,6 +208,14 @@ func (e *OpenAPIVersionRequired) As(target any) bool {
 type ServerURLRequired struct{ ValidationError }
 
 func (e *ServerURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// WebhookNilError leaf.
+
+type WebhookNil struct{ ValidationError }
+
+func (e *WebhookNil) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -412,6 +433,14 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+func newWebhookNil(name string) error {
+	msg := fmt.Sprintf("webhook %q is nil", name)
+	return &WebhookNilError{
+		Name:  name,
+		Cause: &WebhookNil{ValidationError{Message: msg}},
+	}
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

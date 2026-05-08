@@ -338,7 +338,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	for _, name := range componentNames(doc.Webhooks) {
 		pathItem := doc.Webhooks[name]
 		if pathItem == nil {
-			return wrap(fmt.Errorf("webhook %q is nil", name))
+			return wrap(newWebhookNil(name))
 		}
 		if err := pathItem.Validate(ctx); err != nil {
 			return wrap(fmt.Errorf("webhook %q: %w", name, err))

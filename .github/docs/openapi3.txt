@@ -2889,6 +2889,23 @@ type ValidationOptions struct {
 }
     ValidationOptions provides configuration for validating OpenAPI documents.
 
+type WebhookNil struct{ ValidationError }
+
+func (e *WebhookNil) As(target any) bool
+
+type WebhookNilError struct {
+	// Name is the webhook key whose value was nil.
+	Name string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+}
+    WebhookNilError clusters "the value at webhook key X is nil" failures from
+    T.Validate's webhook walk. Carries the offending key name.
+
+func (e *WebhookNilError) Error() string
+
+func (e *WebhookNilError) Unwrap() error
+
 type WebhooksFieldFor31Plus struct{ ValidationError }
 
 func (e *WebhooksFieldFor31Plus) As(target any) bool
