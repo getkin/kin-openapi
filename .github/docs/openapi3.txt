@@ -727,6 +727,24 @@ func (e *FieldVersionMismatchError) Error() string
 
 func (e *FieldVersionMismatchError) Unwrap() error
 
+type ForbiddenFieldError struct {
+	// Field is the name of the forbidden field (e.g. "name", "in",
+	// "authorizationUrl", "tokenUrl").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ForbiddenFieldError clusters "field X must not be set in this context"
+    failures (header.name and header.in inside a Headers map, OAuth flow URLs
+    that don't apply to the chosen flow type).
+
+func (e *ForbiddenFieldError) Error() string
+
+func (e *ForbiddenFieldError) Unwrap() error
+
 type FormatValidator[T any] interface {
 	Validate(value T) error
 }
@@ -768,6 +786,14 @@ func (header *Header) UnmarshalJSON(data []byte) error
 
 func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Header does not comply with the OpenAPI spec.
+
+type HeaderInForbidden struct{ ValidationError }
+
+func (e *HeaderInForbidden) As(target any) bool
+
+type HeaderNameForbidden struct{ ValidationError }
+
+func (e *HeaderNameForbidden) As(target any) bool
 
 type HeaderRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -1164,6 +1190,14 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error
 func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if OAuthFlows does not comply with the OpenAPI
     spec.
+
+type OAuthFlowAuthorizationURLForbidden struct{ ValidationError }
+
+func (e *OAuthFlowAuthorizationURLForbidden) As(target any) bool
+
+type OAuthFlowTokenURLForbidden struct{ ValidationError }
+
+func (e *OAuthFlowTokenURLForbidden) As(target any) bool
 
 type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
