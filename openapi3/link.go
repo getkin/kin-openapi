@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"maps"
 )
 
@@ -84,7 +83,7 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if link.OperationID == "" && link.OperationRef == "" {
-		return errors.New("missing operationId or operationRef on link")
+		return newLinkOperationIDOrRefRequired(link.Origin)
 	}
 	if link.OperationID != "" && link.OperationRef != "" {
 		return newLinkOperationIDRefExclusive(link.OperationID, link.OperationRef, link.Origin)

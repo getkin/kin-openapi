@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"maps"
 )
 
@@ -78,7 +77,7 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 		return newExampleValueExternalValueExclusive(example.Origin)
 	}
 	if example.Value == nil && example.ExternalValue == "" {
-		return errors.New("no value or externalValue field")
+		return newExampleValueOrExternalValueRequired(example.Origin)
 	}
 
 	return validateExtensions(ctx, example.Extensions)

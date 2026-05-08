@@ -1685,7 +1685,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			}
 		case TypeArray:
 			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
-				return stack, errors.New("when schema type is 'array', schema 'items' must be non-null")
+				return stack, newSchemaItemsRequired(schema.Origin)
 			}
 		case TypeObject:
 		case TypeNull:
