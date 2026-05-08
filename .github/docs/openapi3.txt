@@ -2567,9 +2567,34 @@ func (server *Server) UnmarshalJSON(data []byte) error
 func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (err error)
     Validate returns an error if Server does not comply with the OpenAPI spec.
 
+type ServerURLMismatchedBraces struct{ ValidationError }
+
+func (e *ServerURLMismatchedBraces) As(target any) bool
+
 type ServerURLRequired struct{ ValidationError }
 
 func (e *ServerURLRequired) As(target any) bool
+
+type ServerURLTemplateError struct {
+	// URL is the server URL whose template failed validation.
+	URL string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ServerURLTemplateError clusters server URL template failures — mismatched
+    braces and undeclared variables (template variables not matched by
+    Server.Variables, or vice versa).
+
+func (e *ServerURLTemplateError) Error() string
+
+func (e *ServerURLTemplateError) Unwrap() error
+
+type ServerURLUndeclaredVariables struct{ ValidationError }
+
+func (e *ServerURLUndeclaredVariables) As(target any) bool
 
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

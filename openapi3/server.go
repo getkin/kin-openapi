@@ -205,17 +205,17 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (e
 
 	opening, closing := strings.Count(server.URL, "{"), strings.Count(server.URL, "}")
 	if opening != closing {
-		return errors.New("server URL has mismatched { and }")
+		return newServerURLMismatchedBraces(server.URL, server.Origin)
 	}
 
 	if opening != len(server.Variables) {
-		return errors.New("server has undeclared variables")
+		return newServerURLUndeclaredVariables(server.URL, server.Origin)
 	}
 
 	for _, name := range componentNames(server.Variables) {
 		v := server.Variables[name]
 		if !strings.Contains(server.URL, "{"+name+"}") {
-			return errors.New("server has undeclared variables")
+			return newServerURLUndeclaredVariables(server.URL, server.Origin)
 		}
 		if err = v.Validate(ctx); err != nil {
 			return
