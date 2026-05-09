@@ -534,6 +534,23 @@ type DynamicRefFieldFor31Plus struct{ ValidationError }
 
 func (e *DynamicRefFieldFor31Plus) As(target any) bool
 
+type EitherFieldRequiredError struct {
+	// Fields is the set of field names, at least one of which must be
+	// set (e.g. ["value", "externalValue"]).
+	Fields []string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    EitherFieldRequiredError clusters "at least one of these fields must be set"
+    failures (example.value vs externalValue, link.operationId vs operationRef).
+
+func (e *EitherFieldRequiredError) Error() string
+
+func (e *EitherFieldRequiredError) Unwrap() error
+
 type ElseFieldFor31Plus struct{ ValidationError }
 
 func (e *ElseFieldFor31Plus) As(target any) bool
@@ -579,6 +596,24 @@ type Encodings map[string]*Encoding
 
 func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Encodings to a copy of data.
+
+type ExactlyOneFieldError struct {
+	// Fields is the set of fields, exactly one of which must be set
+	// (e.g. ["content", "schema"]).
+	Fields []string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ExactlyOneFieldError clusters "exactly one of these fields must be set"
+    failures — e.g. a parameter or header where neither content nor schema is
+    set, or both are.
+
+func (e *ExactlyOneFieldError) Error() string
+
+func (e *ExactlyOneFieldError) Unwrap() error
 
 type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -650,6 +685,10 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 type ExampleValueExternalValueExclusive struct{ ValidationError }
 
 func (e *ExampleValueExternalValueExclusive) As(target any) bool
+
+type ExampleValueOrExternalValueRequired struct{ ValidationError }
+
+func (e *ExampleValueOrExternalValueRequired) As(target any) bool
 
 type Examples map[string]*ExampleRef // Examples represents components' named examples
 
@@ -799,6 +838,14 @@ func (header *Header) UnmarshalJSON(data []byte) error
 func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Header does not comply with the OpenAPI spec.
 
+type HeaderContentSchemaExactlyOne struct{ ValidationError }
+
+func (e *HeaderContentSchemaExactlyOne) As(target any) bool
+
+type HeaderContentSingleEntry struct{ ValidationError }
+
+func (e *HeaderContentSingleEntry) As(target any) bool
+
 type HeaderInForbidden struct{ ValidationError }
 
 func (e *HeaderInForbidden) As(target any) bool
@@ -894,6 +941,10 @@ func (info *Info) UnmarshalJSON(data []byte) error
 func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Info does not comply with the OpenAPI spec.
 
+type InfoRequired struct{ ValidationError }
+
+func (e *InfoRequired) As(target any) bool
+
 type InfoSummaryFieldFor31Plus struct{ ValidationError }
 
 func (e *InfoSummaryFieldFor31Plus) As(target any) bool
@@ -908,6 +959,10 @@ func (e *InfoVersionRequired) As(target any) bool
 
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
+
+type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
+
+func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool
 
 type JSONSchemaDialectFieldFor31Plus struct{ ValidationError }
 
@@ -978,6 +1033,10 @@ func (link *Link) UnmarshalJSON(data []byte) error
 
 func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Link does not comply with the OpenAPI spec.
+
+type LinkOperationIDOrRefRequired struct{ ValidationError }
+
+func (e *LinkOperationIDOrRefRequired) As(target any) bool
 
 type LinkOperationIDRefExclusive struct{ ValidationError }
 
@@ -1420,6 +1479,14 @@ func (parameter *Parameter) WithRequired(value bool) *Parameter
 
 func (parameter *Parameter) WithSchema(value *Schema) *Parameter
 
+type ParameterContentSchemaExactlyOne struct{ ValidationError }
+
+func (e *ParameterContentSchemaExactlyOne) As(target any) bool
+
+type ParameterContentSingleEntry struct{ ValidationError }
+
+func (e *ParameterContentSingleEntry) As(target any) bool
+
 type ParameterNameRequired struct{ ValidationError }
 
 func (e *ParameterNameRequired) As(target any) bool
@@ -1619,6 +1686,10 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 func (paths *Paths) Value(key string) *PathItem
     Value returns the paths for key or nil
+
+type PathsRequired struct{ ValidationError }
+
+func (e *PathsRequired) As(target any) bool
 
 type PatternPropertiesFieldFor31Plus struct{ ValidationError }
 
@@ -2197,6 +2268,28 @@ func (schema *Schema) WithUniqueItems(unique bool) *Schema
 
 func (schema *Schema) WithoutAdditionalProperties() *Schema
 
+type SchemaAdditionalPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaAdditionalPropertiesBothForms) As(target any) bool
+
+type SchemaBothFormsExclusive struct {
+	// Field is the name of the union-typed schema property
+	// (e.g. "additionalProperties", "unevaluatedItems").
+	Field string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaBothFormsExclusive clusters "this union-typed schema field is
+    set to both its boolean and schema forms simultaneously" failures —
+    additionalProperties, unevaluatedItems, unevaluatedProperties.
+
+func (e *SchemaBothFormsExclusive) Error() string
+
+func (e *SchemaBothFormsExclusive) Unwrap() error
+
 type SchemaError struct {
 	// Value is the value that failed validation.
 	Value any
@@ -2224,6 +2317,10 @@ func (err SchemaError) Unwrap() error
 type SchemaFieldFor31Plus struct{ ValidationError }
 
 func (e *SchemaFieldFor31Plus) As(target any) bool
+
+type SchemaItemsRequired struct{ ValidationError }
+
+func (e *SchemaItemsRequired) As(target any) bool
 
 type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
 
@@ -2278,6 +2375,14 @@ type SchemaRefs []*SchemaRef
 func (s SchemaRefs) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedItemsBothForms) As(target any) bool
+
+type SchemaUnevaluatedPropertiesBothForms struct{ ValidationError }
+
+func (e *SchemaUnevaluatedPropertiesBothForms) As(target any) bool
 
 type SchemaValidationOption func(*schemaValidationSettings)
     SchemaValidationOption describes options a user has when validating request
@@ -2636,6 +2741,23 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string)
 
 func (servers Servers) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Servers does not comply with the OpenAPI spec.
+
+type SingleEntryContentError struct {
+	// Subject is the kind of object whose Content map is too large
+	// ("parameter", "header").
+	Subject string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SingleEntryContentError clusters "the content map must contain at most one
+    entry" failures (parameter.content, header.content).
+
+func (e *SingleEntryContentError) Error() string
+
+func (e *SingleEntryContentError) Unwrap() error
 
 type SliceUniqueItemsChecker func(items []any) bool
     SliceUniqueItemsChecker is an function used to check if an given slice have
@@ -3027,6 +3149,23 @@ type ValidationOptions struct {
 	// Has unexported fields.
 }
     ValidationOptions provides configuration for validating OpenAPI documents.
+
+type WebhookNil struct{ ValidationError }
+
+func (e *WebhookNil) As(target any) bool
+
+type WebhookNilError struct {
+	// Name is the webhook key whose value was nil.
+	Name string
+	// Cause is the underlying leaf error. Walked by errors.Unwrap.
+	Cause error
+}
+    WebhookNilError clusters "the value at webhook key X is nil" failures from
+    T.Validate's webhook walk. Carries the offending key name.
+
+func (e *WebhookNilError) Error() string
+
+func (e *WebhookNilError) Unwrap() error
 
 type WebhooksFieldFor31Plus struct{ ValidationError }
 
