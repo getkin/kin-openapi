@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"net/url"
@@ -63,7 +62,7 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if e.URL == "" {
-		return errors.New("url is required")
+		return newExternalDocsURLRequired(e.Origin)
 	}
 	if _, err := url.Parse(e.URL); err != nil {
 		return fmt.Errorf("url is incorrect: %w", err)

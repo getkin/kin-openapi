@@ -386,7 +386,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
 	}
 
 	if flow.Scopes == nil {
-		return errors.New("field 'scopes' is missing")
+		return newOAuthFlowScopesRequired(flow.Origin)
 	}
 
 	return validateExtensions(ctx, flow.Extensions)
@@ -402,7 +402,7 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 	if in := typeIn(oAuthFlowTypeImplicit, oAuthFlowAuthorizationCode); true {
 		switch {
 		case flow.AuthorizationURL == "" && in:
-			return errors.New("field 'authorizationUrl' is empty or missing")
+			return newOAuthFlowAuthorizationURLRequired(flow.Origin)
 		case flow.AuthorizationURL != "" && !in:
 			return errors.New("field 'authorizationUrl' should not be set")
 		case flow.AuthorizationURL != "":
@@ -415,7 +415,7 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 	if in := typeIn(oAuthFlowTypePassword, oAuthFlowTypeClientCredentials, oAuthFlowAuthorizationCode); true {
 		switch {
 		case flow.TokenURL == "" && in:
-			return errors.New("field 'tokenUrl' is empty or missing")
+			return newOAuthFlowTokenURLRequired(flow.Origin)
 		case flow.TokenURL != "" && !in:
 			return errors.New("field 'tokenUrl' should not be set")
 		case flow.TokenURL != "":

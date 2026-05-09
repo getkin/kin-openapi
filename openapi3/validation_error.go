@@ -198,6 +198,48 @@ func (e *ServerURLRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type ExternalDocsURLRequired struct{ ValidationError }
+
+func (e *ExternalDocsURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OperationResponsesRequired struct{ ValidationError }
+
+func (e *OperationResponsesRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type RequestBodyContentRequired struct{ ValidationError }
+
+func (e *RequestBodyContentRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ResponseDescriptionRequired struct{ ValidationError }
+
+func (e *ResponseDescriptionRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OAuthFlowScopesRequired struct{ ValidationError }
+
+func (e *OAuthFlowScopesRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OAuthFlowAuthorizationURLRequired struct{ ValidationError }
+
+func (e *OAuthFlowAuthorizationURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type OAuthFlowTokenURLRequired struct{ ValidationError }
+
+func (e *OAuthFlowTokenURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 // FieldVersionMismatchError leaves — non-schema fields.
 
 type InfoSummaryFieldFor31Plus struct{ ValidationError }
@@ -412,6 +454,41 @@ func newOpenAPIVersionRequired() error {
 func newServerURLRequired(origin *Origin) error {
 	return newRequiredField("server.url",
 		&ServerURLRequired{ValidationError{Message: "value of url must be a non-empty string"}}, origin)
+}
+
+func newExternalDocsURLRequired(origin *Origin) error {
+	return newRequiredField("externalDocs.url",
+		&ExternalDocsURLRequired{ValidationError{Message: "url is required"}}, origin)
+}
+
+func newOperationResponsesRequired(origin *Origin) error {
+	return newRequiredField("operation.responses",
+		&OperationResponsesRequired{ValidationError{Message: "value of responses must be an object"}}, origin)
+}
+
+func newRequestBodyContentRequired(origin *Origin) error {
+	return newRequiredField("requestBody.content",
+		&RequestBodyContentRequired{ValidationError{Message: "content of the request body is required"}}, origin)
+}
+
+func newResponseDescriptionRequired(origin *Origin) error {
+	return newRequiredField("response.description",
+		&ResponseDescriptionRequired{ValidationError{Message: "a short description of the response is required"}}, origin)
+}
+
+func newOAuthFlowScopesRequired(origin *Origin) error {
+	return newRequiredField("oAuthFlow.scopes",
+		&OAuthFlowScopesRequired{ValidationError{Message: "field 'scopes' is missing"}}, origin)
+}
+
+func newOAuthFlowAuthorizationURLRequired(origin *Origin) error {
+	return newRequiredField("oAuthFlow.authorizationUrl",
+		&OAuthFlowAuthorizationURLRequired{ValidationError{Message: "field 'authorizationUrl' is empty or missing"}}, origin)
+}
+
+func newOAuthFlowTokenURLRequired(origin *Origin) error {
+	return newRequiredField("oAuthFlow.tokenUrl",
+		&OAuthFlowTokenURLRequired{ValidationError{Message: "field 'tokenUrl' is empty or missing"}}, origin)
 }
 
 // newSchemaValueError wraps the result of schema.VisitJSON in a

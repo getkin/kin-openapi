@@ -704,6 +704,10 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
     Validate returns an error if ExternalDocs does not comply with the OpenAPI
     spec.
 
+type ExternalDocsURLRequired struct{ ValidationError }
+
+func (e *ExternalDocsURLRequired) As(target any) bool
+
 type FieldVersionMismatchError struct {
 	// Field is the field name flagged (e.g. "summary", "identifier",
 	// "$defs", "prefixItems", "contains", ...).
@@ -1165,6 +1169,18 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
     Validate returns an error if OAuthFlows does not comply with the OpenAPI
     spec.
 
+type OAuthFlowAuthorizationURLRequired struct{ ValidationError }
+
+func (e *OAuthFlowAuthorizationURLRequired) As(target any) bool
+
+type OAuthFlowScopesRequired struct{ ValidationError }
+
+func (e *OAuthFlowScopesRequired) As(target any) bool
+
+type OAuthFlowTokenURLRequired struct{ ValidationError }
+
+func (e *OAuthFlowTokenURLRequired) As(target any) bool
+
 type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -1258,6 +1274,10 @@ func (operation *Operation) UnmarshalJSON(data []byte) error
 func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Operation does not comply with the OpenAPI
     spec.
+
+type OperationResponsesRequired struct{ ValidationError }
+
+func (e *OperationResponsesRequired) As(target any) bool
 
 type Origin struct {
 	Key       *Location             `json:"key,omitempty" yaml:"key,omitempty"`
@@ -1641,6 +1661,10 @@ func (requestBody *RequestBody) WithSchema(value *Schema, consumes []string) *Re
 
 func (requestBody *RequestBody) WithSchemaRef(value *SchemaRef, consumes []string) *RequestBody
 
+type RequestBodyContentRequired struct{ ValidationError }
+
+func (e *RequestBodyContentRequired) As(target any) bool
+
 type RequestBodyRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
@@ -1751,6 +1775,10 @@ func (m ResponseBodies) JSONLookup(token string) (any, error)
 
 func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets ResponseBodies to a copy of data.
+
+type ResponseDescriptionRequired struct{ ValidationError }
+
+func (e *ResponseDescriptionRequired) As(target any) bool
 
 type ResponseRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
