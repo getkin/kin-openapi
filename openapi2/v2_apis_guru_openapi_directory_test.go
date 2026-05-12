@@ -156,7 +156,7 @@ func TestV2ApisGuruOpenapiDirectory(t *testing.T) {
 				require.NoError(t, err)
 
 				var doc openapi2.T
-				err = yaml.Unmarshal(data, &doc)
+				_, err = yaml.Unmarshal(data, &doc, yaml.DecodeOpts{DisableTimestamps: true})
 				golden(t, err, shortName, "load")
 			})
 		}

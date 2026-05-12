@@ -1,1 +1,314 @@
-invalid components: schema "DateRange": invalid example: Error at "/beginning": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$" | Error at "/ending": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$"
+invalid paths: invalid path /asset_report/get: invalid operation POST: example example-1: Error at "/report/items/0/accounts/0": doesn't match schema due to: Error at "/balances/limit": property "limit" is missing
+Schema:
+  {
+    "additionalProperties": true,
+    "description": "A set of fields describing the balance for an account. Balance information may be cached unless the balance object was returned by `/accounts/balance/get`.",
+    "properties": {
+      "available": {
+        "description": "The amount of funds available to be withdrawn from the account, as determined by the financial institution.\n\nFor `credit`-type accounts, the `available` balance typically equals the `limit` less the `current` balance, less any pending outflows plus any pending inflows.\n\nFor `depository`-type accounts, the `available` balance typically equals the `current` balance less any pending outflows plus any pending inflows. For `depository`-type accounts, the `available` balance does not include the overdraft limit.\n\nFor `investment`-type accounts (or `brokerage`-type accounts for API versions 2018-05-22 and earlier), the `available` balance is the total cash available to withdraw as presented by the institution.\n\nNote that not all institutions calculate the `available`  balance. In the event that `available` balance is unavailable, Plaid will return an `available` balance value of `null`.\n\nAvailable balance may be cached and is not guaranteed to be up-to-date in realtime unless the value was returned by `/accounts/balance/get`.\n\nIf `current` is `null` this field is guaranteed not to be `null`.",
+        "format": "double",
+        "nullable": true,
+        "type": "number"
+      },
+      "current": {
+        "description": "The total amount of funds in or owed by the account.\n\nFor `credit`-type accounts, a positive balance indicates the amount owed; a negative amount indicates the lender owing the account holder.\n\nFor `loan`-type accounts, the current balance is the principal remaining on the loan, except in the case of student loan accounts at Sallie Mae (`ins_116944`). For Sallie Mae student loans, the account's balance includes both principal and any outstanding interest.\n\nFor `investment`-type accounts (or `brokerage`-type accounts for API versions 2018-05-22 and earlier), the current balance is the total value of assets as presented by the institution.\n\nNote that balance information may be cached unless the value was returned by `/accounts/balance/get`; if the Item is enabled for Transactions, the balance will be at least as recent as the most recent Transaction update. If you require realtime balance information, use the `available` balance as provided by `/accounts/balance/get`.\n\nWhen returned by `/accounts/balance/get`, this field may be `null`. When this happens, `available` is guaranteed not to be `null`.",
+        "format": "double",
+        "nullable": true,
+        "type": "number"
+      },
+      "iso_currency_code": {
+        "description": "The ISO-4217 currency code of the balance. Always null if `unofficial_currency_code` is non-null.",
+        "nullable": true,
+        "type": "string"
+      },
+      "last_updated_datetime": {
+        "description": "Timestamp in [ISO 8601](https://wikipedia.org/wiki/ISO_8601) format (`YYYY-MM-DDTHH:mm:ssZ`) indicating the last time that the balance for the given account has been updated\n\nThis is currently only provided when the `min_last_updated_datetime` is passed when calling `/accounts/balance/get` for `ins_128026` (Capital One).",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string"
+      },
+      "limit": {
+        "description": "For `credit`-type accounts, this represents the credit limit.\n\nFor `depository`-type accounts, this represents the pre-arranged overdraft limit, which is common for current (checking) accounts in Europe.\n\nIn North America, this field is typically only available for `credit`-type accounts.",
+        "format": "double",
+        "nullable": true,
+        "type": "number"
+      },
+      "unofficial_currency_code": {
+        "description": "The unofficial currency code associated with the balance. Always null if `iso_currency_code` is non-null. Unofficial currency codes are used for currencies that do not have official ISO currency codes, such as cryptocurrencies and the currencies of certain countries.\n\nSee the [currency code schema](https://plaid.com/docs/api/accounts#currency-code-schema) for a full listing of supported `unofficial_currency_code`s.",
+        "nullable": true,
+        "type": "string"
+      }
+    },
+    "required": [
+      "available",
+      "current",
+      "limit",
+      "iso_currency_code",
+      "unofficial_currency_code"
+    ],
+    "title": "AccountBalance",
+    "type": "object"
+  }
+
+Value:
+  {
+    "available": 43200,
+    "current": 43200,
+    "iso_currency_code": "USD",
+    "unofficial_currency_code": null
+  }
+ And Error at "/owners/0/addresses/0/data/country": property "country" is missing
+Schema:
+  {
+    "additionalProperties": true,
+    "description": "Data about the components comprising an address.",
+    "properties": {
+      "city": {
+        "description": "The full city name",
+        "nullable": true,
+        "type": "string"
+      },
+      "country": {
+        "description": "The ISO 3166-1 alpha-2 country code",
+        "nullable": true,
+        "type": "string"
+      },
+      "postal_code": {
+        "description": "The postal code. In API versions 2018-05-22 and earlier, this field is called `zip`.",
+        "nullable": true,
+        "type": "string"
+      },
+      "region": {
+        "description": "The region or state. In API versions 2018-05-22 and earlier, this field is called `state`.\nExample: `\"NC\"`",
+        "nullable": true,
+        "type": "string"
+      },
+      "street": {
+        "description": "The full street address\nExample: `\"564 Main Street, APT 15\"`",
+        "type": "string"
+      }
+    },
+    "required": [
+      "city",
+      "region",
+      "street",
+      "postal_code",
+      "country"
+    ],
+    "title": "AddressData",
+    "type": "object"
+  }
+
+Value:
+  {
+    "city": "Malakoff",
+    "postal_code": "14236",
+    "region": "NY",
+    "street": "2992 Cameron Road"
+  }
+ | Error at "/owners/0/addresses/1/data/country": property "country" is missing
+Schema:
+  {
+    "additionalProperties": true,
+    "description": "Data about the components comprising an address.",
+    "properties": {
+      "city": {
+        "description": "The full city name",
+        "nullable": true,
+        "type": "string"
+      },
+      "country": {
+        "description": "The ISO 3166-1 alpha-2 country code",
+        "nullable": true,
+        "type": "string"
+      },
+      "postal_code": {
+        "description": "The postal code. In API versions 2018-05-22 and earlier, this field is called `zip`.",
+        "nullable": true,
+        "type": "string"
+      },
+      "region": {
+        "description": "The region or state. In API versions 2018-05-22 and earlier, this field is called `state`.\nExample: `\"NC\"`",
+        "nullable": true,
+        "type": "string"
+      },
+      "street": {
+        "description": "The full street address\nExample: `\"564 Main Street, APT 15\"`",
+        "type": "string"
+      }
+    },
+    "required": [
+      "city",
+      "region",
+      "street",
+      "postal_code",
+      "country"
+    ],
+    "title": "AddressData",
+    "type": "object"
+  }
+
+Value:
+  {
+    "city": "San Matias",
+    "postal_code": "93405-2255",
+    "region": "CA",
+    "street": "2493 Leisure Lane"
+  }
+ | Error at "/report/items/0/accounts/1": doesn't match schema due to: Error at "/balances/limit": property "limit" is missing
+Schema:
+  {
+    "additionalProperties": true,
+    "description": "A set of fields describing the balance for an account. Balance information may be cached unless the balance object was returned by `/accounts/balance/get`.",
+    "properties": {
+      "available": {
+        "description": "The amount of funds available to be withdrawn from the account, as determined by the financial institution.\n\nFor `credit`-type accounts, the `available` balance typically equals the `limit` less the `current` balance, less any pending outflows plus any pending inflows.\n\nFor `depository`-type accounts, the `available` balance typically equals the `current` balance less any pending outflows plus any pending inflows. For `depository`-type accounts, the `available` balance does not include the overdraft limit.\n\nFor `investment`-type accounts (or `brokerage`-type accounts for API versions 2018-05-22 and earlier), the `available` balance is the total cash available to withdraw as presented by the institution.\n\nNote that not all institutions calculate the `available`  balance. In the event that `available` balance is unavailable, Plaid will return an `available` balance value of `null`.\n\nAvailable balance may be cached and is not guaranteed to be up-to-date in realtime unless the value was returned by `/accounts/balance/get`.\n\nIf `current` is `null` this field is guaranteed not to be `null`.",
+        "format": "double",
+        "nullable": true,
+        "type": "number"
+      },
+      "current": {
+        "description": "The total amount of funds in or owed by the account.\n\nFor `credit`-type accounts, a positive balance indicates the amount owed; a negative amount indicates the lender owing the account holder.\n\nFor `loan`-type accounts, the current balance is the principal remaining on the loan, except in the case of student loan accounts at Sallie Mae (`ins_116944`). For Sallie Mae student loans, the account's balance includes both principal and any outstanding interest.\n\nFor `investment`-type accounts (or `brokerage`-type accounts for API versions 2018-05-22 and earlier), the current balance is the total value of assets as presented by the institution.\n\nNote that balance information may be cached unless the value was returned by `/accounts/balance/get`; if the Item is enabled for Transactions, the balance will be at least as recent as the most recent Transaction update. If you require realtime balance information, use the `available` balance as provided by `/accounts/balance/get`.\n\nWhen returned by `/accounts/balance/get`, this field may be `null`. When this happens, `available` is guaranteed not to be `null`.",
+        "format": "double",
+        "nullable": true,
+        "type": "number"
+      },
+      "iso_currency_code": {
+        "description": "The ISO-4217 currency code of the balance. Always null if `unofficial_currency_code` is non-null.",
+        "nullable": true,
+        "type": "string"
+      },
+      "last_updated_datetime": {
+        "description": "Timestamp in [ISO 8601](https://wikipedia.org/wiki/ISO_8601) format (`YYYY-MM-DDTHH:mm:ssZ`) indicating the last time that the balance for the given account has been updated\n\nThis is currently only provided when the `min_last_updated_datetime` is passed when calling `/accounts/balance/get` for `ins_128026` (Capital One).",
+        "format": "date-time",
+        "nullable": true,
+        "type": "string"
+      },
+      "limit": {
+        "description": "For `credit`-type accounts, this represents the credit limit.\n\nFor `depository`-type accounts, this represents the pre-arranged overdraft limit, which is common for current (checking) accounts in Europe.\n\nIn North America, this field is typically only available for `credit`-type accounts.",
+        "format": "double",
+        "nullable": true,
+        "type": "number"
+      },
+      "unofficial_currency_code": {
+        "description": "The unofficial currency code associated with the balance. Always null if `iso_currency_code` is non-null. Unofficial currency codes are used for currencies that do not have official ISO currency codes, such as cryptocurrencies and the currencies of certain countries.\n\nSee the [currency code schema](https://plaid.com/docs/api/accounts#currency-code-schema) for a full listing of supported `unofficial_currency_code`s.",
+        "nullable": true,
+        "type": "string"
+      }
+    },
+    "required": [
+      "available",
+      "current",
+      "limit",
+      "iso_currency_code",
+      "unofficial_currency_code"
+    ],
+    "title": "AccountBalance",
+    "type": "object"
+  }
+
+Value:
+  {
+    "available": 100,
+    "current": 110,
+    "iso_currency_code": "USD",
+    "unofficial_currency_code": null
+  }
+ And Error at "/owners/0/addresses/0/data/country": property "country" is missing
+Schema:
+  {
+    "additionalProperties": true,
+    "description": "Data about the components comprising an address.",
+    "properties": {
+      "city": {
+        "description": "The full city name",
+        "nullable": true,
+        "type": "string"
+      },
+      "country": {
+        "description": "The ISO 3166-1 alpha-2 country code",
+        "nullable": true,
+        "type": "string"
+      },
+      "postal_code": {
+        "description": "The postal code. In API versions 2018-05-22 and earlier, this field is called `zip`.",
+        "nullable": true,
+        "type": "string"
+      },
+      "region": {
+        "description": "The region or state. In API versions 2018-05-22 and earlier, this field is called `state`.\nExample: `\"NC\"`",
+        "nullable": true,
+        "type": "string"
+      },
+      "street": {
+        "description": "The full street address\nExample: `\"564 Main Street, APT 15\"`",
+        "type": "string"
+      }
+    },
+    "required": [
+      "city",
+      "region",
+      "street",
+      "postal_code",
+      "country"
+    ],
+    "title": "AddressData",
+    "type": "object"
+  }
+
+Value:
+  {
+    "city": "Malakoff",
+    "postal_code": "14236",
+    "region": "NY",
+    "street": "2992 Cameron Road"
+  }
+ | Error at "/owners/0/addresses/1/data/country": property "country" is missing
+Schema:
+  {
+    "additionalProperties": true,
+    "description": "Data about the components comprising an address.",
+    "properties": {
+      "city": {
+        "description": "The full city name",
+        "nullable": true,
+        "type": "string"
+      },
+      "country": {
+        "description": "The ISO 3166-1 alpha-2 country code",
+        "nullable": true,
+        "type": "string"
+      },
+      "postal_code": {
+        "description": "The postal code. In API versions 2018-05-22 and earlier, this field is called `zip`.",
+        "nullable": true,
+        "type": "string"
+      },
+      "region": {
+        "description": "The region or state. In API versions 2018-05-22 and earlier, this field is called `state`.\nExample: `\"NC\"`",
+        "nullable": true,
+        "type": "string"
+      },
+      "street": {
+        "description": "The full street address\nExample: `\"564 Main Street, APT 15\"`",
+        "type": "string"
+      }
+    },
+    "required": [
+      "city",
+      "region",
+      "street",
+      "postal_code",
+      "country"
+    ],
+    "title": "AddressData",
+    "type": "object"
+  }
+
+Value:
+  {
+    "city": "San Matias",
+    "postal_code": "93405-2255",
+    "region": "CA",
+    "street": "2493 Leisure Lane"
+  }

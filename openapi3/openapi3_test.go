@@ -61,7 +61,7 @@ func TestRefsYAML(t *testing.T) {
 
 	t.Log("Unmarshal *T from YAML")
 	docA := &openapi3.T{}
-	err = yaml.Unmarshal(specYAML, &docA)
+	_, err = yaml.Unmarshal(specYAML, &docA, yaml.DecodeOpts{DisableTimestamps: true})
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
@@ -432,7 +432,7 @@ components:
 		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			doc := &openapi3.T{}
-			err := yaml.Unmarshal([]byte(tt.spec), &doc)
+			_, err := yaml.Unmarshal([]byte(tt.spec), &doc, yaml.DecodeOpts{DisableTimestamps: true})
 			require.NoError(t, err)
 
 			err = doc.Validate(t.Context())

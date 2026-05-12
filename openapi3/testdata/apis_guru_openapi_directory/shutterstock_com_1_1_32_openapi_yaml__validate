@@ -1,1 +1,27 @@
-invalid components: schema "Audio": invalid example: Error at "/added_date": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$"
+invalid components: schema "AudioUrl": invalid example: Error at "/url": property "url" is missing
+Schema:
+  {
+    "description": "Audio License URL object",
+    "example": {
+      "$ref": "#/components/schemas/Url/example"
+    },
+    "properties": {
+      "shorts_loops_stems": {
+        "description": "URL that can be used to download the .zip file containing shorts, loops, and stems",
+        "type": "string"
+      },
+      "url": {
+        "description": "URL that can be used to download the unwatermarked, licensed asset",
+        "type": "string"
+      }
+    },
+    "required": [
+      "url"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "$ref": "#/components/schemas/Url/example"
+  }

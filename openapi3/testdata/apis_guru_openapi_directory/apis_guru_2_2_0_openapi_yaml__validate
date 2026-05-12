@@ -56,7 +56,7 @@ Schema:
 
 Value:
   {
-    "added": "2015-02-22T20:00:45Z",
+    "added": "2015-02-22T20:00:45.000Z",
     "info": {
       "title": "Drive",
       "version": "v2",
@@ -77,7 +77,7 @@ Value:
     },
     "swaggerUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v2/swagger.json",
     "swaggerYamlUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v2/swagger.yaml",
-    "updated": "2016-06-17T00:21:44Z"
+    "updated": "2016-06-17T00:21:44.000Z"
   }
  | Error at "/googleapis.com:drive/versions/v3/openapiVer": property "openapiVer" is missing
 Schema:
@@ -137,7 +137,7 @@ Schema:
 
 Value:
   {
-    "added": "2015-12-12T00:25:13Z",
+    "added": "2015-12-12T00:25:13.000Z",
     "info": {
       "title": "Drive",
       "version": "v3",
@@ -158,5 +158,5 @@ Value:
     },
     "swaggerUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v3/swagger.json",
     "swaggerYamlUrl": "https://api.apis.guru/v2/specs/googleapis.com/drive/v3/swagger.yaml",
-    "updated": "2016-06-17T00:21:44Z"
+    "updated": "2016-06-17T00:21:44.000Z"
   }

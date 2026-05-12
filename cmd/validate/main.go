@@ -48,7 +48,7 @@ func main() {
 		OpenAPI string `json:"openapi" yaml:"openapi"`
 		Swagger string `json:"swagger" yaml:"swagger"`
 	}
-	if err := yaml.Unmarshal(data, &vd); err != nil {
+	if _, err := yaml.Unmarshal(data, &vd, yaml.DecodeOpts{DisableTimestamps: true}); err != nil {
 		log.Fatal(err)
 	}
 
@@ -98,7 +98,7 @@ func main() {
 		}
 
 		var doc openapi2.T
-		if err := yaml.Unmarshal(data, &doc); err != nil {
+		if _, err := yaml.Unmarshal(data, &doc, yaml.DecodeOpts{DisableTimestamps: true}); err != nil {
 			log.Fatalln("Loading error:", err)
 		}
 

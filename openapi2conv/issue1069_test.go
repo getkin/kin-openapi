@@ -199,7 +199,7 @@ paths:
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var doc3 openapi3.T
-			err := yaml.Unmarshal([]byte(tt.v3Spec), &doc3)
+			_, err := yaml.Unmarshal([]byte(tt.v3Spec), &doc3, yaml.DecodeOpts{DisableTimestamps: true})
 			require.NoError(t, err)
 
 			v2, err := openapi2conv.FromV3(&doc3)
