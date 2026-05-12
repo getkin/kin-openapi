@@ -45,7 +45,7 @@ Schema:
       },
       "created_at": {
         "description": "Creation time of the Tweet.",
-        "example": "2021-01-06T18:40:40Z",
+        "example": "2021-01-06T18:40:40.000Z",
         "format": "date-time",
         "type": "string"
       },
@@ -53,7 +53,7 @@ Schema:
         "properties": {
           "editable_until": {
             "description": "Time when Tweet is no longer editable.",
-            "example": "2021-01-06T18:40:40Z",
+            "example": "2021-01-06T18:40:40.000Z",
             "format": "date-time",
             "type": "string"
           },

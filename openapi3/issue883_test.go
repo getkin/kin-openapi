@@ -57,7 +57,7 @@ paths:
 		require.YAMLEq(t, spec, string(marshalledYaml))
 
 		var newDoc openapi3.T
-		err = yaml.Unmarshal(marshalledYaml, &newDoc)
+		_, err = yaml.Unmarshal(marshalledYaml, &newDoc, yaml.DecodeOpts{DisableTimestamps: true})
 		require.NoError(t, err)
 		require.NotNil(t, newDoc.Paths)
 		require.Equal(t, doc, &newDoc)

@@ -1,17 +1,1 @@
-invalid components: schema "AlternativePaymentInstrument-2": invalid example: value must be a string
-Schema:
-  {
-    "description": "The contact organization.",
-    "example": {
-      "$ref": "#/components/schemas/ReadyToPayMethods/example/2/feature"
-    },
-    "maxLength": 255,
-    "nullable": true,
-    "pattern": "^[\\w\\s\\-\\pL,.']+$",
-    "type": "string"
-  }
-
-Value:
-  {
-    "$ref": "#/components/schemas/ReadyToPayMethods/example/2/feature"
-  }
+invalid components: schema "AML": invalid example: string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$"

@@ -1,1 +1,4110 @@
-invalid components: schema "account": invalid example: Error at "/interest_accrued_at": string doesn't match the format "date": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$"
+invalid components: schema "declined_transaction": invalid example: Error at "/card_decline": property "card_decline" is missing
+Schema:
+  {
+    "description": "This is an object giving more details on the network-level event that caused the Declined Transaction. For example, for a card transaction this lists the merchant's industry and location. Note that for backwards compatibility reasons, additional undocumented keys may appear in this object. These should be treated as deprecated and will be removed in the future.",
+    "example": {
+      "ach_decline": {
+        "amount": 1750,
+        "originator_company_descriptive_date": null,
+        "originator_company_discretionary_data": null,
+        "originator_company_id": "0987654321",
+        "originator_company_name": "BIG BANK",
+        "reason": "insufficient_funds",
+        "receiver_id_number": "12345678900",
+        "receiver_name": "IAN CREASE",
+        "trace_number": "021000038461022"
+      },
+      "category": "ach_decline"
+    },
+    "properties": {
+      "ach_decline": {
+        "description": "A ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `ach_decline`.",
+        "example": {
+          "amount": 1750,
+          "originator_company_descriptive_date": null,
+          "originator_company_discretionary_data": null,
+          "originator_company_id": "0987654321",
+          "originator_company_name": "BIG BANK",
+          "reason": "insufficient_funds",
+          "receiver_id_number": "12345678900",
+          "receiver_name": "IAN CREASE",
+          "trace_number": "021000038461022"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "originator_company_descriptive_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_discretionary_data": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_id": {
+            "type": "string"
+          },
+          "originator_company_name": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the ACH transfer was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "credit_entry_refused_by_receiver",
+              "duplicate_return",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "misrouted_return",
+              "no_ach_route",
+              "originator_request",
+              "transaction_not_allowed"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "A credit was refused.",
+              "Other.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Other.",
+              "The account number that was debited does not exist.",
+              "Other.",
+              "The transaction is not allowed per Increase's terms"
+            ]
+          },
+          "receiver_id_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "originator_company_name",
+          "originator_company_descriptive_date",
+          "originator_company_discretionary_data",
+          "originator_company_id",
+          "reason",
+          "receiver_id_number",
+          "receiver_name",
+          "trace_number"
+        ],
+        "title": "ACH Decline",
+        "type": "object",
+        "x-title-plural": "ACH Declines"
+      },
+      "card_decline": {
+        "description": "A Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "digital_wallet_token_id": null,
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA",
+          "network": "visa",
+          "network_details": {
+            "visa": {
+              "electronic_commerce_indicator": "secure_electronic_commerce",
+              "point_of_service_entry_mode": "manual"
+            }
+          },
+          "real_time_decision_id": null,
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "digital_wallet_token_id": {
+            "description": "If the authorization was attempted using a Digital Wallet Token (such as an Apple Pay purchase), the identifier of the token that was used.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_acceptor_id": {
+            "description": "The merchant identifier (commonly abbreviated as MID) of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "description": "The Merchant Category Code (commonly abbreviated as MCC) of the merchant the card is transacting with.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "description": "The city the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "description": "The country the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "description": "The merchant descriptor of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_state": {
+            "description": "The state the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "network": {
+            "description": "The payment network used to process this card authorization",
+            "enum": [
+              "visa"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Visa"
+            ]
+          },
+          "network_details": {
+            "description": "Fields specific to the `network`",
+            "properties": {
+              "visa": {
+                "description": "Fields specific to the `visa` network",
+                "properties": {
+                  "electronic_commerce_indicator": {
+                    "description": "For electronic commerce transactions, this identifies the level of security used in obtaining the customer's payment credential. For mail or telephone order transactions, identifies the type of mail or telephone order.",
+                    "enum": [
+                      "mail_phone_order",
+                      "recurring",
+                      "installment",
+                      "unknown_mail_phone_order",
+                      "secure_electronic_commerce",
+                      "non_authenticated_security_transaction_at_3ds_capable_merchant",
+                      "non_authenticated_security_transaction",
+                      "non_secure_transaction"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Single transaction of a mail/phone order: Use to indicate that the transaction is a mail/phone order purchase, not a recurring transaction or installment payment. For domestic transactions in the US region, this value may also indicate one bill payment transaction in the card-present or card-absent environments.",
+                      "Recurring transaction: Payment indicator used to indicate a recurring transaction that originates from an acquirer in the US region.",
+                      "Installment payment: Payment indicator used to indicate one purchase of goods or services that is billed to the account in multiple charges over a period of time agreed upon by the cardholder and merchant from transactions that originate from an acquirer in the US region.",
+                      "Unknown classification: other mail order: Use to indicate that the type of mail/telephone order is unknown.",
+                      "Secure electronic commerce transaction: Use to indicate that the electronic commerce transaction has been authenticated using e.g., 3-D Secure",
+                      "Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure: Use to identify an electronic commerce transaction where the merchant attempted to authenticate the cardholder using 3-D Secure, but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program.",
+                      "Non-authenticated security transaction: Use to identify an electronic commerce transaction that uses data encryption for security however , cardholder authentication is not performed using 3-D Secure.",
+                      "Non-secure transaction: Use to identify an electronic commerce transaction that has no data protection."
+                    ]
+                  },
+                  "point_of_service_entry_mode": {
+                    "description": "The method used to enter the cardholder's primary account number and card expiration date",
+                    "enum": [
+                      "manual",
+                      "magnetic_stripe_no_cvv",
+                      "optical_code",
+                      "integrated_circuit_card",
+                      "contactless",
+                      "credential_on_file",
+                      "magnetic_stripe",
+                      "contactless_magnetic_stripe",
+                      "integrated_circuit_card_no_cvv"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Manual key entry",
+                      "Magnetic stripe read, without card verification value",
+                      "Optical code",
+                      "Contact chip card",
+                      "Contactless read of chip card",
+                      "Transaction iniated using a credential that has previously been stored on file",
+                      "Magnetic stripe read",
+                      "Contactless read of magnetic stripe data",
+                      "Contact chip card, without card verification value"
+                    ]
+                  }
+                },
+                "required": [
+                  "electronic_commerce_indicator",
+                  "point_of_service_entry_mode"
+                ],
+                "title": "Visa",
+                "type": "object",
+                "x-title-plural": "Visas"
+              }
+            },
+            "required": [
+              "visa"
+            ],
+            "title": "Network Details",
+            "type": "object",
+            "x-title-plural": "Network Detailss"
+          },
+          "real_time_decision_id": {
+            "description": "The identifier of the Real-Time Decision sent to approve or decline this transaction.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transaction was declined.",
+            "enum": [
+              "card_not_active",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "cvv2_mismatch",
+              "transaction_not_allowed",
+              "breaches_limit",
+              "webhook_declined",
+              "webhook_timed_out",
+              "declined_by_stand_in_processing",
+              "invalid_physical_card",
+              "missing_original_authorization"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The Card was not active.",
+              "The account's entity was not active.",
+              "The account was inactive.",
+              "The Card's Account did not have a sufficient available balance.",
+              "The given CVV2 did not match the card's value.",
+              "The attempted card transaction is not allowed per Increase's terms.",
+              "The transaction was blocked by a Limit.",
+              "Your application declined the transaction via webhook.",
+              "Your application webhook did not respond without the required timeout.",
+              "Declined by stand-in processing.",
+              "The card read had an invalid CVV, dCVV, or authorization request cryptogram.",
+              "The original card authorization for this incremental authorization does not exist."
+            ]
+          }
+        },
+        "required": [
+          "merchant_acceptor_id",
+          "merchant_descriptor",
+          "merchant_category_code",
+          "merchant_city",
+          "merchant_country",
+          "network",
+          "network_details",
+          "amount",
+          "currency",
+          "reason",
+          "merchant_state",
+          "real_time_decision_id",
+          "digital_wallet_token_id"
+        ],
+        "title": "Card Decline",
+        "type": "object",
+        "x-title-plural": "Card Declines"
+      },
+      "card_route_decline": {
+        "description": "A Deprecated Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_route_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "merchant_acceptor_id": {
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "type": "string"
+          },
+          "merchant_state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "merchant_acceptor_id",
+          "merchant_city",
+          "merchant_country",
+          "merchant_descriptor",
+          "merchant_state",
+          "merchant_category_code"
+        ],
+        "title": "Deprecated Card Decline",
+        "type": "object",
+        "x-title-plural": "Deprecated Card Declines"
+      },
+      "category": {
+        "description": "The type of decline that took place. We may add additional possible values for this enum over time; your application should be able to handle such additions gracefully.",
+        "enum": [
+          "ach_decline",
+          "card_decline",
+          "check_decline",
+          "inbound_real_time_payments_transfer_decline",
+          "international_ach_decline",
+          "card_route_decline",
+          "other"
+        ],
+        "type": "string",
+        "x-enum-descriptions": [
+          "The Declined Transaction was created by a ACH Decline object. Details will be under the `ach_decline` object.",
+          "The Declined Transaction was created by a Card Decline object. Details will be under the `card_decline` object.",
+          "The Declined Transaction was created by a Check Decline object. Details will be under the `check_decline` object.",
+          "The Declined Transaction was created by a Inbound Real Time Payments Transfer Decline object. Details will be under the `inbound_real_time_payments_transfer_decline` object.",
+          "The Declined Transaction was created by a International ACH Decline object. Details will be under the `international_ach_decline` object.",
+          "The Declined Transaction was created by a Deprecated Card Decline object. Details will be under the `card_route_decline` object.",
+          "The Declined Transaction was made for an undocumented or deprecated reason."
+        ]
+      },
+      "check_decline": {
+        "description": "A Check Decline object. This field will be present in the JSON response if and only if `category` is equal to `check_decline`.",
+        "example": {
+          "amount": -1000,
+          "auxiliary_on_us": "99999",
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "auxiliary_on_us": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the check was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "unable_to_locate_account",
+              "unable_to_process",
+              "refer_to_image",
+              "stop_payment_requested",
+              "returned",
+              "duplicate_presentment",
+              "not_authorized"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Unable to locate account.",
+              "Unable to process.",
+              "Refer to image.",
+              "Stop payment requested for this check.",
+              "Check was returned to sender.",
+              "The check was a duplicate deposit.",
+              "The transaction is not allowed."
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "auxiliary_on_us",
+          "reason"
+        ],
+        "title": "Check Decline",
+        "type": "object",
+        "x-title-plural": "Check Declines"
+      },
+      "inbound_real_time_payments_transfer_decline": {
+        "description": "A Inbound Real Time Payments Transfer Decline object. This field will be present in the JSON response if and only if `category` is equal to `inbound_real_time_payments_transfer_decline`.",
+        "example": {
+          "amount": 100,
+          "creditor_name": "Ian Crease",
+          "currency": "USD",
+          "debtor_account_number": "987654321",
+          "debtor_name": "National Phonograph Company",
+          "debtor_routing_number": "101050001",
+          "reason": "account_number_disabled",
+          "remittance_information": "Invoice 29582",
+          "transaction_identification": "20220501234567891T1BSLZO01745013025"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "creditor_name": {
+            "description": "The name the sender of the transfer specified as the recipient of the transfer.",
+            "type": "string"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code of the declined transfer's currency. This will always be \"USD\" for a Real Time Payments transfer.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "debtor_account_number": {
+            "description": "The account number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "debtor_name": {
+            "description": "The name provided by the sender of the transfer.",
+            "type": "string"
+          },
+          "debtor_routing_number": {
+            "description": "The routing number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transfer was declined.",
+            "enum": [
+              "account_number_canceled",
+              "account_number_disabled",
+              "group_locked",
+              "entity_not_active",
+              "real_time_payments_not_enabled"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "Your account is inactive.",
+              "The account's entity is not active.",
+              "Your account is not enabled to receive Real Time Payments transfers."
+            ]
+          },
+          "remittance_information": {
+            "description": "Additional information included with the transfer.",
+            "nullable": true,
+            "type": "string"
+          },
+          "transaction_identification": {
+            "description": "The Real Time Payments network identification of the declined transfer.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "reason",
+          "creditor_name",
+          "debtor_name",
+          "debtor_account_number",
+          "debtor_routing_number",
+          "transaction_identification",
+          "remittance_information"
+        ],
+        "title": "Inbound Real Time Payments Transfer Decline",
+        "type": "object",
+        "x-title-plural": "Inbound Real Time Payments Transfer Declines"
+      },
+      "international_ach_decline": {
+        "description": "A International ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `international_ach_decline`.",
+        "example": {
+          "amount": -1000,
+          "destination_country_code": "US",
+          "destination_currency_code": "USD",
+          "foreign_exchange_indicator": "fixed_to_fixed",
+          "foreign_exchange_reference": null,
+          "foreign_exchange_reference_indicator": "blank",
+          "foreign_payment_amount": 199,
+          "foreign_trace_number": null,
+          "international_transaction_type_code": "internet_initiated",
+          "originating_currency_code": "USD",
+          "originating_depository_financial_institution_branch_country": "US",
+          "originating_depository_financial_institution_id": "091000019",
+          "originating_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "originating_depository_financial_institution_name": "WELLS FARGO BANK",
+          "originator_city": "BERLIN",
+          "originator_company_entry_description": "RETRY PYMT",
+          "originator_country": "DE",
+          "originator_identification": "770510487A",
+          "originator_name": "BERGHAIN",
+          "originator_postal_code": "50825",
+          "originator_state_or_province": null,
+          "originator_street_address": "Ruedersdorferstr. 7",
+          "payment_related_information": null,
+          "payment_related_information2": null,
+          "receiver_city": "BEVERLY HILLS",
+          "receiver_country": "US",
+          "receiver_identification_number": "1018790279274",
+          "receiver_postal_code": "90210",
+          "receiver_state_or_province": "CA",
+          "receiver_street_address": "123 FAKE ST",
+          "receiving_company_or_individual_name": "IAN CREASE",
+          "receiving_depository_financial_institution_country": "US",
+          "receiving_depository_financial_institution_id": "101050001",
+          "receiving_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "receiving_depository_financial_institution_name": "BLUE RIDGE BANK, NATIONAL ASSOCIATI",
+          "trace_number": "010202909100090"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "destination_country_code": {
+            "type": "string"
+          },
+          "destination_currency_code": {
+            "type": "string"
+          },
+          "foreign_exchange_indicator": {
+            "type": "string"
+          },
+          "foreign_exchange_reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "foreign_exchange_reference_indicator": {
+            "type": "string"
+          },
+          "foreign_payment_amount": {
+            "type": "integer"
+          },
+          "foreign_trace_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "international_transaction_type_code": {
+            "type": "string"
+          },
+          "originating_currency_code": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_branch_country": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "originator_city": {
+            "type": "string"
+          },
+          "originator_company_entry_description": {
+            "type": "string"
+          },
+          "originator_country": {
+            "type": "string"
+          },
+          "originator_identification": {
+            "type": "string"
+          },
+          "originator_name": {
+            "type": "string"
+          },
+          "originator_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_street_address": {
+            "type": "string"
+          },
+          "payment_related_information": {
+            "nullable": true,
+            "type": "string"
+          },
+          "payment_related_information2": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_city": {
+            "type": "string"
+          },
+          "receiver_country": {
+            "type": "string"
+          },
+          "receiver_identification_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_street_address": {
+            "type": "string"
+          },
+          "receiving_company_or_individual_name": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_country": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "foreign_exchange_indicator",
+          "foreign_exchange_reference_indicator",
+          "foreign_exchange_reference",
+          "destination_country_code",
+          "destination_currency_code",
+          "foreign_payment_amount",
+          "foreign_trace_number",
+          "international_transaction_type_code",
+          "originating_currency_code",
+          "originating_depository_financial_institution_name",
+          "originating_depository_financial_institution_id_qualifier",
+          "originating_depository_financial_institution_id",
+          "originating_depository_financial_institution_branch_country",
+          "originator_city",
+          "originator_company_entry_description",
+          "originator_country",
+          "originator_identification",
+          "originator_name",
+          "originator_postal_code",
+          "originator_street_address",
+          "originator_state_or_province",
+          "payment_related_information",
+          "payment_related_information2",
+          "receiver_identification_number",
+          "receiver_street_address",
+          "receiver_city",
+          "receiver_state_or_province",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiving_company_or_individual_name",
+          "receiving_depository_financial_institution_name",
+          "receiving_depository_financial_institution_id_qualifier",
+          "receiving_depository_financial_institution_id",
+          "receiving_depository_financial_institution_country",
+          "trace_number"
+        ],
+        "title": "International ACH Decline",
+        "type": "object",
+        "x-title-plural": "International ACH Declines"
+      }
+    },
+    "required": [
+      "category",
+      "ach_decline",
+      "card_decline",
+      "check_decline",
+      "inbound_real_time_payments_transfer_decline",
+      "international_ach_decline",
+      "card_route_decline"
+    ],
+    "title": "Declined Transaction Source",
+    "type": "object",
+    "x-title-plural": "Declined Transaction Sources"
+  }
+
+Value:
+  {
+    "ach_decline": {
+      "amount": 1750,
+      "originator_company_descriptive_date": null,
+      "originator_company_discretionary_data": null,
+      "originator_company_id": "0987654321",
+      "originator_company_name": "BIG BANK",
+      "reason": "insufficient_funds",
+      "receiver_id_number": "12345678900",
+      "receiver_name": "IAN CREASE",
+      "trace_number": "021000038461022"
+    },
+    "category": "ach_decline"
+  }
+ | Error at "/check_decline": property "check_decline" is missing
+Schema:
+  {
+    "description": "This is an object giving more details on the network-level event that caused the Declined Transaction. For example, for a card transaction this lists the merchant's industry and location. Note that for backwards compatibility reasons, additional undocumented keys may appear in this object. These should be treated as deprecated and will be removed in the future.",
+    "example": {
+      "ach_decline": {
+        "amount": 1750,
+        "originator_company_descriptive_date": null,
+        "originator_company_discretionary_data": null,
+        "originator_company_id": "0987654321",
+        "originator_company_name": "BIG BANK",
+        "reason": "insufficient_funds",
+        "receiver_id_number": "12345678900",
+        "receiver_name": "IAN CREASE",
+        "trace_number": "021000038461022"
+      },
+      "category": "ach_decline"
+    },
+    "properties": {
+      "ach_decline": {
+        "description": "A ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `ach_decline`.",
+        "example": {
+          "amount": 1750,
+          "originator_company_descriptive_date": null,
+          "originator_company_discretionary_data": null,
+          "originator_company_id": "0987654321",
+          "originator_company_name": "BIG BANK",
+          "reason": "insufficient_funds",
+          "receiver_id_number": "12345678900",
+          "receiver_name": "IAN CREASE",
+          "trace_number": "021000038461022"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "originator_company_descriptive_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_discretionary_data": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_id": {
+            "type": "string"
+          },
+          "originator_company_name": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the ACH transfer was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "credit_entry_refused_by_receiver",
+              "duplicate_return",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "misrouted_return",
+              "no_ach_route",
+              "originator_request",
+              "transaction_not_allowed"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "A credit was refused.",
+              "Other.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Other.",
+              "The account number that was debited does not exist.",
+              "Other.",
+              "The transaction is not allowed per Increase's terms"
+            ]
+          },
+          "receiver_id_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "originator_company_name",
+          "originator_company_descriptive_date",
+          "originator_company_discretionary_data",
+          "originator_company_id",
+          "reason",
+          "receiver_id_number",
+          "receiver_name",
+          "trace_number"
+        ],
+        "title": "ACH Decline",
+        "type": "object",
+        "x-title-plural": "ACH Declines"
+      },
+      "card_decline": {
+        "description": "A Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "digital_wallet_token_id": null,
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA",
+          "network": "visa",
+          "network_details": {
+            "visa": {
+              "electronic_commerce_indicator": "secure_electronic_commerce",
+              "point_of_service_entry_mode": "manual"
+            }
+          },
+          "real_time_decision_id": null,
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "digital_wallet_token_id": {
+            "description": "If the authorization was attempted using a Digital Wallet Token (such as an Apple Pay purchase), the identifier of the token that was used.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_acceptor_id": {
+            "description": "The merchant identifier (commonly abbreviated as MID) of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "description": "The Merchant Category Code (commonly abbreviated as MCC) of the merchant the card is transacting with.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "description": "The city the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "description": "The country the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "description": "The merchant descriptor of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_state": {
+            "description": "The state the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "network": {
+            "description": "The payment network used to process this card authorization",
+            "enum": [
+              "visa"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Visa"
+            ]
+          },
+          "network_details": {
+            "description": "Fields specific to the `network`",
+            "properties": {
+              "visa": {
+                "description": "Fields specific to the `visa` network",
+                "properties": {
+                  "electronic_commerce_indicator": {
+                    "description": "For electronic commerce transactions, this identifies the level of security used in obtaining the customer's payment credential. For mail or telephone order transactions, identifies the type of mail or telephone order.",
+                    "enum": [
+                      "mail_phone_order",
+                      "recurring",
+                      "installment",
+                      "unknown_mail_phone_order",
+                      "secure_electronic_commerce",
+                      "non_authenticated_security_transaction_at_3ds_capable_merchant",
+                      "non_authenticated_security_transaction",
+                      "non_secure_transaction"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Single transaction of a mail/phone order: Use to indicate that the transaction is a mail/phone order purchase, not a recurring transaction or installment payment. For domestic transactions in the US region, this value may also indicate one bill payment transaction in the card-present or card-absent environments.",
+                      "Recurring transaction: Payment indicator used to indicate a recurring transaction that originates from an acquirer in the US region.",
+                      "Installment payment: Payment indicator used to indicate one purchase of goods or services that is billed to the account in multiple charges over a period of time agreed upon by the cardholder and merchant from transactions that originate from an acquirer in the US region.",
+                      "Unknown classification: other mail order: Use to indicate that the type of mail/telephone order is unknown.",
+                      "Secure electronic commerce transaction: Use to indicate that the electronic commerce transaction has been authenticated using e.g., 3-D Secure",
+                      "Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure: Use to identify an electronic commerce transaction where the merchant attempted to authenticate the cardholder using 3-D Secure, but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program.",
+                      "Non-authenticated security transaction: Use to identify an electronic commerce transaction that uses data encryption for security however , cardholder authentication is not performed using 3-D Secure.",
+                      "Non-secure transaction: Use to identify an electronic commerce transaction that has no data protection."
+                    ]
+                  },
+                  "point_of_service_entry_mode": {
+                    "description": "The method used to enter the cardholder's primary account number and card expiration date",
+                    "enum": [
+                      "manual",
+                      "magnetic_stripe_no_cvv",
+                      "optical_code",
+                      "integrated_circuit_card",
+                      "contactless",
+                      "credential_on_file",
+                      "magnetic_stripe",
+                      "contactless_magnetic_stripe",
+                      "integrated_circuit_card_no_cvv"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Manual key entry",
+                      "Magnetic stripe read, without card verification value",
+                      "Optical code",
+                      "Contact chip card",
+                      "Contactless read of chip card",
+                      "Transaction iniated using a credential that has previously been stored on file",
+                      "Magnetic stripe read",
+                      "Contactless read of magnetic stripe data",
+                      "Contact chip card, without card verification value"
+                    ]
+                  }
+                },
+                "required": [
+                  "electronic_commerce_indicator",
+                  "point_of_service_entry_mode"
+                ],
+                "title": "Visa",
+                "type": "object",
+                "x-title-plural": "Visas"
+              }
+            },
+            "required": [
+              "visa"
+            ],
+            "title": "Network Details",
+            "type": "object",
+            "x-title-plural": "Network Detailss"
+          },
+          "real_time_decision_id": {
+            "description": "The identifier of the Real-Time Decision sent to approve or decline this transaction.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transaction was declined.",
+            "enum": [
+              "card_not_active",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "cvv2_mismatch",
+              "transaction_not_allowed",
+              "breaches_limit",
+              "webhook_declined",
+              "webhook_timed_out",
+              "declined_by_stand_in_processing",
+              "invalid_physical_card",
+              "missing_original_authorization"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The Card was not active.",
+              "The account's entity was not active.",
+              "The account was inactive.",
+              "The Card's Account did not have a sufficient available balance.",
+              "The given CVV2 did not match the card's value.",
+              "The attempted card transaction is not allowed per Increase's terms.",
+              "The transaction was blocked by a Limit.",
+              "Your application declined the transaction via webhook.",
+              "Your application webhook did not respond without the required timeout.",
+              "Declined by stand-in processing.",
+              "The card read had an invalid CVV, dCVV, or authorization request cryptogram.",
+              "The original card authorization for this incremental authorization does not exist."
+            ]
+          }
+        },
+        "required": [
+          "merchant_acceptor_id",
+          "merchant_descriptor",
+          "merchant_category_code",
+          "merchant_city",
+          "merchant_country",
+          "network",
+          "network_details",
+          "amount",
+          "currency",
+          "reason",
+          "merchant_state",
+          "real_time_decision_id",
+          "digital_wallet_token_id"
+        ],
+        "title": "Card Decline",
+        "type": "object",
+        "x-title-plural": "Card Declines"
+      },
+      "card_route_decline": {
+        "description": "A Deprecated Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_route_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "merchant_acceptor_id": {
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "type": "string"
+          },
+          "merchant_state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "merchant_acceptor_id",
+          "merchant_city",
+          "merchant_country",
+          "merchant_descriptor",
+          "merchant_state",
+          "merchant_category_code"
+        ],
+        "title": "Deprecated Card Decline",
+        "type": "object",
+        "x-title-plural": "Deprecated Card Declines"
+      },
+      "category": {
+        "description": "The type of decline that took place. We may add additional possible values for this enum over time; your application should be able to handle such additions gracefully.",
+        "enum": [
+          "ach_decline",
+          "card_decline",
+          "check_decline",
+          "inbound_real_time_payments_transfer_decline",
+          "international_ach_decline",
+          "card_route_decline",
+          "other"
+        ],
+        "type": "string",
+        "x-enum-descriptions": [
+          "The Declined Transaction was created by a ACH Decline object. Details will be under the `ach_decline` object.",
+          "The Declined Transaction was created by a Card Decline object. Details will be under the `card_decline` object.",
+          "The Declined Transaction was created by a Check Decline object. Details will be under the `check_decline` object.",
+          "The Declined Transaction was created by a Inbound Real Time Payments Transfer Decline object. Details will be under the `inbound_real_time_payments_transfer_decline` object.",
+          "The Declined Transaction was created by a International ACH Decline object. Details will be under the `international_ach_decline` object.",
+          "The Declined Transaction was created by a Deprecated Card Decline object. Details will be under the `card_route_decline` object.",
+          "The Declined Transaction was made for an undocumented or deprecated reason."
+        ]
+      },
+      "check_decline": {
+        "description": "A Check Decline object. This field will be present in the JSON response if and only if `category` is equal to `check_decline`.",
+        "example": {
+          "amount": -1000,
+          "auxiliary_on_us": "99999",
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "auxiliary_on_us": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the check was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "unable_to_locate_account",
+              "unable_to_process",
+              "refer_to_image",
+              "stop_payment_requested",
+              "returned",
+              "duplicate_presentment",
+              "not_authorized"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Unable to locate account.",
+              "Unable to process.",
+              "Refer to image.",
+              "Stop payment requested for this check.",
+              "Check was returned to sender.",
+              "The check was a duplicate deposit.",
+              "The transaction is not allowed."
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "auxiliary_on_us",
+          "reason"
+        ],
+        "title": "Check Decline",
+        "type": "object",
+        "x-title-plural": "Check Declines"
+      },
+      "inbound_real_time_payments_transfer_decline": {
+        "description": "A Inbound Real Time Payments Transfer Decline object. This field will be present in the JSON response if and only if `category` is equal to `inbound_real_time_payments_transfer_decline`.",
+        "example": {
+          "amount": 100,
+          "creditor_name": "Ian Crease",
+          "currency": "USD",
+          "debtor_account_number": "987654321",
+          "debtor_name": "National Phonograph Company",
+          "debtor_routing_number": "101050001",
+          "reason": "account_number_disabled",
+          "remittance_information": "Invoice 29582",
+          "transaction_identification": "20220501234567891T1BSLZO01745013025"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "creditor_name": {
+            "description": "The name the sender of the transfer specified as the recipient of the transfer.",
+            "type": "string"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code of the declined transfer's currency. This will always be \"USD\" for a Real Time Payments transfer.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "debtor_account_number": {
+            "description": "The account number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "debtor_name": {
+            "description": "The name provided by the sender of the transfer.",
+            "type": "string"
+          },
+          "debtor_routing_number": {
+            "description": "The routing number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transfer was declined.",
+            "enum": [
+              "account_number_canceled",
+              "account_number_disabled",
+              "group_locked",
+              "entity_not_active",
+              "real_time_payments_not_enabled"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "Your account is inactive.",
+              "The account's entity is not active.",
+              "Your account is not enabled to receive Real Time Payments transfers."
+            ]
+          },
+          "remittance_information": {
+            "description": "Additional information included with the transfer.",
+            "nullable": true,
+            "type": "string"
+          },
+          "transaction_identification": {
+            "description": "The Real Time Payments network identification of the declined transfer.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "reason",
+          "creditor_name",
+          "debtor_name",
+          "debtor_account_number",
+          "debtor_routing_number",
+          "transaction_identification",
+          "remittance_information"
+        ],
+        "title": "Inbound Real Time Payments Transfer Decline",
+        "type": "object",
+        "x-title-plural": "Inbound Real Time Payments Transfer Declines"
+      },
+      "international_ach_decline": {
+        "description": "A International ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `international_ach_decline`.",
+        "example": {
+          "amount": -1000,
+          "destination_country_code": "US",
+          "destination_currency_code": "USD",
+          "foreign_exchange_indicator": "fixed_to_fixed",
+          "foreign_exchange_reference": null,
+          "foreign_exchange_reference_indicator": "blank",
+          "foreign_payment_amount": 199,
+          "foreign_trace_number": null,
+          "international_transaction_type_code": "internet_initiated",
+          "originating_currency_code": "USD",
+          "originating_depository_financial_institution_branch_country": "US",
+          "originating_depository_financial_institution_id": "091000019",
+          "originating_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "originating_depository_financial_institution_name": "WELLS FARGO BANK",
+          "originator_city": "BERLIN",
+          "originator_company_entry_description": "RETRY PYMT",
+          "originator_country": "DE",
+          "originator_identification": "770510487A",
+          "originator_name": "BERGHAIN",
+          "originator_postal_code": "50825",
+          "originator_state_or_province": null,
+          "originator_street_address": "Ruedersdorferstr. 7",
+          "payment_related_information": null,
+          "payment_related_information2": null,
+          "receiver_city": "BEVERLY HILLS",
+          "receiver_country": "US",
+          "receiver_identification_number": "1018790279274",
+          "receiver_postal_code": "90210",
+          "receiver_state_or_province": "CA",
+          "receiver_street_address": "123 FAKE ST",
+          "receiving_company_or_individual_name": "IAN CREASE",
+          "receiving_depository_financial_institution_country": "US",
+          "receiving_depository_financial_institution_id": "101050001",
+          "receiving_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "receiving_depository_financial_institution_name": "BLUE RIDGE BANK, NATIONAL ASSOCIATI",
+          "trace_number": "010202909100090"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "destination_country_code": {
+            "type": "string"
+          },
+          "destination_currency_code": {
+            "type": "string"
+          },
+          "foreign_exchange_indicator": {
+            "type": "string"
+          },
+          "foreign_exchange_reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "foreign_exchange_reference_indicator": {
+            "type": "string"
+          },
+          "foreign_payment_amount": {
+            "type": "integer"
+          },
+          "foreign_trace_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "international_transaction_type_code": {
+            "type": "string"
+          },
+          "originating_currency_code": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_branch_country": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "originator_city": {
+            "type": "string"
+          },
+          "originator_company_entry_description": {
+            "type": "string"
+          },
+          "originator_country": {
+            "type": "string"
+          },
+          "originator_identification": {
+            "type": "string"
+          },
+          "originator_name": {
+            "type": "string"
+          },
+          "originator_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_street_address": {
+            "type": "string"
+          },
+          "payment_related_information": {
+            "nullable": true,
+            "type": "string"
+          },
+          "payment_related_information2": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_city": {
+            "type": "string"
+          },
+          "receiver_country": {
+            "type": "string"
+          },
+          "receiver_identification_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_street_address": {
+            "type": "string"
+          },
+          "receiving_company_or_individual_name": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_country": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "foreign_exchange_indicator",
+          "foreign_exchange_reference_indicator",
+          "foreign_exchange_reference",
+          "destination_country_code",
+          "destination_currency_code",
+          "foreign_payment_amount",
+          "foreign_trace_number",
+          "international_transaction_type_code",
+          "originating_currency_code",
+          "originating_depository_financial_institution_name",
+          "originating_depository_financial_institution_id_qualifier",
+          "originating_depository_financial_institution_id",
+          "originating_depository_financial_institution_branch_country",
+          "originator_city",
+          "originator_company_entry_description",
+          "originator_country",
+          "originator_identification",
+          "originator_name",
+          "originator_postal_code",
+          "originator_street_address",
+          "originator_state_or_province",
+          "payment_related_information",
+          "payment_related_information2",
+          "receiver_identification_number",
+          "receiver_street_address",
+          "receiver_city",
+          "receiver_state_or_province",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiving_company_or_individual_name",
+          "receiving_depository_financial_institution_name",
+          "receiving_depository_financial_institution_id_qualifier",
+          "receiving_depository_financial_institution_id",
+          "receiving_depository_financial_institution_country",
+          "trace_number"
+        ],
+        "title": "International ACH Decline",
+        "type": "object",
+        "x-title-plural": "International ACH Declines"
+      }
+    },
+    "required": [
+      "category",
+      "ach_decline",
+      "card_decline",
+      "check_decline",
+      "inbound_real_time_payments_transfer_decline",
+      "international_ach_decline",
+      "card_route_decline"
+    ],
+    "title": "Declined Transaction Source",
+    "type": "object",
+    "x-title-plural": "Declined Transaction Sources"
+  }
+
+Value:
+  {
+    "ach_decline": {
+      "amount": 1750,
+      "originator_company_descriptive_date": null,
+      "originator_company_discretionary_data": null,
+      "originator_company_id": "0987654321",
+      "originator_company_name": "BIG BANK",
+      "reason": "insufficient_funds",
+      "receiver_id_number": "12345678900",
+      "receiver_name": "IAN CREASE",
+      "trace_number": "021000038461022"
+    },
+    "category": "ach_decline"
+  }
+ | Error at "/inbound_real_time_payments_transfer_decline": property "inbound_real_time_payments_transfer_decline" is missing
+Schema:
+  {
+    "description": "This is an object giving more details on the network-level event that caused the Declined Transaction. For example, for a card transaction this lists the merchant's industry and location. Note that for backwards compatibility reasons, additional undocumented keys may appear in this object. These should be treated as deprecated and will be removed in the future.",
+    "example": {
+      "ach_decline": {
+        "amount": 1750,
+        "originator_company_descriptive_date": null,
+        "originator_company_discretionary_data": null,
+        "originator_company_id": "0987654321",
+        "originator_company_name": "BIG BANK",
+        "reason": "insufficient_funds",
+        "receiver_id_number": "12345678900",
+        "receiver_name": "IAN CREASE",
+        "trace_number": "021000038461022"
+      },
+      "category": "ach_decline"
+    },
+    "properties": {
+      "ach_decline": {
+        "description": "A ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `ach_decline`.",
+        "example": {
+          "amount": 1750,
+          "originator_company_descriptive_date": null,
+          "originator_company_discretionary_data": null,
+          "originator_company_id": "0987654321",
+          "originator_company_name": "BIG BANK",
+          "reason": "insufficient_funds",
+          "receiver_id_number": "12345678900",
+          "receiver_name": "IAN CREASE",
+          "trace_number": "021000038461022"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "originator_company_descriptive_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_discretionary_data": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_id": {
+            "type": "string"
+          },
+          "originator_company_name": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the ACH transfer was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "credit_entry_refused_by_receiver",
+              "duplicate_return",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "misrouted_return",
+              "no_ach_route",
+              "originator_request",
+              "transaction_not_allowed"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "A credit was refused.",
+              "Other.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Other.",
+              "The account number that was debited does not exist.",
+              "Other.",
+              "The transaction is not allowed per Increase's terms"
+            ]
+          },
+          "receiver_id_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "originator_company_name",
+          "originator_company_descriptive_date",
+          "originator_company_discretionary_data",
+          "originator_company_id",
+          "reason",
+          "receiver_id_number",
+          "receiver_name",
+          "trace_number"
+        ],
+        "title": "ACH Decline",
+        "type": "object",
+        "x-title-plural": "ACH Declines"
+      },
+      "card_decline": {
+        "description": "A Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "digital_wallet_token_id": null,
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA",
+          "network": "visa",
+          "network_details": {
+            "visa": {
+              "electronic_commerce_indicator": "secure_electronic_commerce",
+              "point_of_service_entry_mode": "manual"
+            }
+          },
+          "real_time_decision_id": null,
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "digital_wallet_token_id": {
+            "description": "If the authorization was attempted using a Digital Wallet Token (such as an Apple Pay purchase), the identifier of the token that was used.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_acceptor_id": {
+            "description": "The merchant identifier (commonly abbreviated as MID) of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "description": "The Merchant Category Code (commonly abbreviated as MCC) of the merchant the card is transacting with.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "description": "The city the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "description": "The country the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "description": "The merchant descriptor of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_state": {
+            "description": "The state the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "network": {
+            "description": "The payment network used to process this card authorization",
+            "enum": [
+              "visa"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Visa"
+            ]
+          },
+          "network_details": {
+            "description": "Fields specific to the `network`",
+            "properties": {
+              "visa": {
+                "description": "Fields specific to the `visa` network",
+                "properties": {
+                  "electronic_commerce_indicator": {
+                    "description": "For electronic commerce transactions, this identifies the level of security used in obtaining the customer's payment credential. For mail or telephone order transactions, identifies the type of mail or telephone order.",
+                    "enum": [
+                      "mail_phone_order",
+                      "recurring",
+                      "installment",
+                      "unknown_mail_phone_order",
+                      "secure_electronic_commerce",
+                      "non_authenticated_security_transaction_at_3ds_capable_merchant",
+                      "non_authenticated_security_transaction",
+                      "non_secure_transaction"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Single transaction of a mail/phone order: Use to indicate that the transaction is a mail/phone order purchase, not a recurring transaction or installment payment. For domestic transactions in the US region, this value may also indicate one bill payment transaction in the card-present or card-absent environments.",
+                      "Recurring transaction: Payment indicator used to indicate a recurring transaction that originates from an acquirer in the US region.",
+                      "Installment payment: Payment indicator used to indicate one purchase of goods or services that is billed to the account in multiple charges over a period of time agreed upon by the cardholder and merchant from transactions that originate from an acquirer in the US region.",
+                      "Unknown classification: other mail order: Use to indicate that the type of mail/telephone order is unknown.",
+                      "Secure electronic commerce transaction: Use to indicate that the electronic commerce transaction has been authenticated using e.g., 3-D Secure",
+                      "Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure: Use to identify an electronic commerce transaction where the merchant attempted to authenticate the cardholder using 3-D Secure, but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program.",
+                      "Non-authenticated security transaction: Use to identify an electronic commerce transaction that uses data encryption for security however , cardholder authentication is not performed using 3-D Secure.",
+                      "Non-secure transaction: Use to identify an electronic commerce transaction that has no data protection."
+                    ]
+                  },
+                  "point_of_service_entry_mode": {
+                    "description": "The method used to enter the cardholder's primary account number and card expiration date",
+                    "enum": [
+                      "manual",
+                      "magnetic_stripe_no_cvv",
+                      "optical_code",
+                      "integrated_circuit_card",
+                      "contactless",
+                      "credential_on_file",
+                      "magnetic_stripe",
+                      "contactless_magnetic_stripe",
+                      "integrated_circuit_card_no_cvv"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Manual key entry",
+                      "Magnetic stripe read, without card verification value",
+                      "Optical code",
+                      "Contact chip card",
+                      "Contactless read of chip card",
+                      "Transaction iniated using a credential that has previously been stored on file",
+                      "Magnetic stripe read",
+                      "Contactless read of magnetic stripe data",
+                      "Contact chip card, without card verification value"
+                    ]
+                  }
+                },
+                "required": [
+                  "electronic_commerce_indicator",
+                  "point_of_service_entry_mode"
+                ],
+                "title": "Visa",
+                "type": "object",
+                "x-title-plural": "Visas"
+              }
+            },
+            "required": [
+              "visa"
+            ],
+            "title": "Network Details",
+            "type": "object",
+            "x-title-plural": "Network Detailss"
+          },
+          "real_time_decision_id": {
+            "description": "The identifier of the Real-Time Decision sent to approve or decline this transaction.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transaction was declined.",
+            "enum": [
+              "card_not_active",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "cvv2_mismatch",
+              "transaction_not_allowed",
+              "breaches_limit",
+              "webhook_declined",
+              "webhook_timed_out",
+              "declined_by_stand_in_processing",
+              "invalid_physical_card",
+              "missing_original_authorization"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The Card was not active.",
+              "The account's entity was not active.",
+              "The account was inactive.",
+              "The Card's Account did not have a sufficient available balance.",
+              "The given CVV2 did not match the card's value.",
+              "The attempted card transaction is not allowed per Increase's terms.",
+              "The transaction was blocked by a Limit.",
+              "Your application declined the transaction via webhook.",
+              "Your application webhook did not respond without the required timeout.",
+              "Declined by stand-in processing.",
+              "The card read had an invalid CVV, dCVV, or authorization request cryptogram.",
+              "The original card authorization for this incremental authorization does not exist."
+            ]
+          }
+        },
+        "required": [
+          "merchant_acceptor_id",
+          "merchant_descriptor",
+          "merchant_category_code",
+          "merchant_city",
+          "merchant_country",
+          "network",
+          "network_details",
+          "amount",
+          "currency",
+          "reason",
+          "merchant_state",
+          "real_time_decision_id",
+          "digital_wallet_token_id"
+        ],
+        "title": "Card Decline",
+        "type": "object",
+        "x-title-plural": "Card Declines"
+      },
+      "card_route_decline": {
+        "description": "A Deprecated Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_route_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "merchant_acceptor_id": {
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "type": "string"
+          },
+          "merchant_state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "merchant_acceptor_id",
+          "merchant_city",
+          "merchant_country",
+          "merchant_descriptor",
+          "merchant_state",
+          "merchant_category_code"
+        ],
+        "title": "Deprecated Card Decline",
+        "type": "object",
+        "x-title-plural": "Deprecated Card Declines"
+      },
+      "category": {
+        "description": "The type of decline that took place. We may add additional possible values for this enum over time; your application should be able to handle such additions gracefully.",
+        "enum": [
+          "ach_decline",
+          "card_decline",
+          "check_decline",
+          "inbound_real_time_payments_transfer_decline",
+          "international_ach_decline",
+          "card_route_decline",
+          "other"
+        ],
+        "type": "string",
+        "x-enum-descriptions": [
+          "The Declined Transaction was created by a ACH Decline object. Details will be under the `ach_decline` object.",
+          "The Declined Transaction was created by a Card Decline object. Details will be under the `card_decline` object.",
+          "The Declined Transaction was created by a Check Decline object. Details will be under the `check_decline` object.",
+          "The Declined Transaction was created by a Inbound Real Time Payments Transfer Decline object. Details will be under the `inbound_real_time_payments_transfer_decline` object.",
+          "The Declined Transaction was created by a International ACH Decline object. Details will be under the `international_ach_decline` object.",
+          "The Declined Transaction was created by a Deprecated Card Decline object. Details will be under the `card_route_decline` object.",
+          "The Declined Transaction was made for an undocumented or deprecated reason."
+        ]
+      },
+      "check_decline": {
+        "description": "A Check Decline object. This field will be present in the JSON response if and only if `category` is equal to `check_decline`.",
+        "example": {
+          "amount": -1000,
+          "auxiliary_on_us": "99999",
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "auxiliary_on_us": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the check was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "unable_to_locate_account",
+              "unable_to_process",
+              "refer_to_image",
+              "stop_payment_requested",
+              "returned",
+              "duplicate_presentment",
+              "not_authorized"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Unable to locate account.",
+              "Unable to process.",
+              "Refer to image.",
+              "Stop payment requested for this check.",
+              "Check was returned to sender.",
+              "The check was a duplicate deposit.",
+              "The transaction is not allowed."
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "auxiliary_on_us",
+          "reason"
+        ],
+        "title": "Check Decline",
+        "type": "object",
+        "x-title-plural": "Check Declines"
+      },
+      "inbound_real_time_payments_transfer_decline": {
+        "description": "A Inbound Real Time Payments Transfer Decline object. This field will be present in the JSON response if and only if `category` is equal to `inbound_real_time_payments_transfer_decline`.",
+        "example": {
+          "amount": 100,
+          "creditor_name": "Ian Crease",
+          "currency": "USD",
+          "debtor_account_number": "987654321",
+          "debtor_name": "National Phonograph Company",
+          "debtor_routing_number": "101050001",
+          "reason": "account_number_disabled",
+          "remittance_information": "Invoice 29582",
+          "transaction_identification": "20220501234567891T1BSLZO01745013025"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "creditor_name": {
+            "description": "The name the sender of the transfer specified as the recipient of the transfer.",
+            "type": "string"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code of the declined transfer's currency. This will always be \"USD\" for a Real Time Payments transfer.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "debtor_account_number": {
+            "description": "The account number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "debtor_name": {
+            "description": "The name provided by the sender of the transfer.",
+            "type": "string"
+          },
+          "debtor_routing_number": {
+            "description": "The routing number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transfer was declined.",
+            "enum": [
+              "account_number_canceled",
+              "account_number_disabled",
+              "group_locked",
+              "entity_not_active",
+              "real_time_payments_not_enabled"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "Your account is inactive.",
+              "The account's entity is not active.",
+              "Your account is not enabled to receive Real Time Payments transfers."
+            ]
+          },
+          "remittance_information": {
+            "description": "Additional information included with the transfer.",
+            "nullable": true,
+            "type": "string"
+          },
+          "transaction_identification": {
+            "description": "The Real Time Payments network identification of the declined transfer.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "reason",
+          "creditor_name",
+          "debtor_name",
+          "debtor_account_number",
+          "debtor_routing_number",
+          "transaction_identification",
+          "remittance_information"
+        ],
+        "title": "Inbound Real Time Payments Transfer Decline",
+        "type": "object",
+        "x-title-plural": "Inbound Real Time Payments Transfer Declines"
+      },
+      "international_ach_decline": {
+        "description": "A International ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `international_ach_decline`.",
+        "example": {
+          "amount": -1000,
+          "destination_country_code": "US",
+          "destination_currency_code": "USD",
+          "foreign_exchange_indicator": "fixed_to_fixed",
+          "foreign_exchange_reference": null,
+          "foreign_exchange_reference_indicator": "blank",
+          "foreign_payment_amount": 199,
+          "foreign_trace_number": null,
+          "international_transaction_type_code": "internet_initiated",
+          "originating_currency_code": "USD",
+          "originating_depository_financial_institution_branch_country": "US",
+          "originating_depository_financial_institution_id": "091000019",
+          "originating_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "originating_depository_financial_institution_name": "WELLS FARGO BANK",
+          "originator_city": "BERLIN",
+          "originator_company_entry_description": "RETRY PYMT",
+          "originator_country": "DE",
+          "originator_identification": "770510487A",
+          "originator_name": "BERGHAIN",
+          "originator_postal_code": "50825",
+          "originator_state_or_province": null,
+          "originator_street_address": "Ruedersdorferstr. 7",
+          "payment_related_information": null,
+          "payment_related_information2": null,
+          "receiver_city": "BEVERLY HILLS",
+          "receiver_country": "US",
+          "receiver_identification_number": "1018790279274",
+          "receiver_postal_code": "90210",
+          "receiver_state_or_province": "CA",
+          "receiver_street_address": "123 FAKE ST",
+          "receiving_company_or_individual_name": "IAN CREASE",
+          "receiving_depository_financial_institution_country": "US",
+          "receiving_depository_financial_institution_id": "101050001",
+          "receiving_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "receiving_depository_financial_institution_name": "BLUE RIDGE BANK, NATIONAL ASSOCIATI",
+          "trace_number": "010202909100090"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "destination_country_code": {
+            "type": "string"
+          },
+          "destination_currency_code": {
+            "type": "string"
+          },
+          "foreign_exchange_indicator": {
+            "type": "string"
+          },
+          "foreign_exchange_reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "foreign_exchange_reference_indicator": {
+            "type": "string"
+          },
+          "foreign_payment_amount": {
+            "type": "integer"
+          },
+          "foreign_trace_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "international_transaction_type_code": {
+            "type": "string"
+          },
+          "originating_currency_code": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_branch_country": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "originator_city": {
+            "type": "string"
+          },
+          "originator_company_entry_description": {
+            "type": "string"
+          },
+          "originator_country": {
+            "type": "string"
+          },
+          "originator_identification": {
+            "type": "string"
+          },
+          "originator_name": {
+            "type": "string"
+          },
+          "originator_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_street_address": {
+            "type": "string"
+          },
+          "payment_related_information": {
+            "nullable": true,
+            "type": "string"
+          },
+          "payment_related_information2": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_city": {
+            "type": "string"
+          },
+          "receiver_country": {
+            "type": "string"
+          },
+          "receiver_identification_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_street_address": {
+            "type": "string"
+          },
+          "receiving_company_or_individual_name": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_country": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "foreign_exchange_indicator",
+          "foreign_exchange_reference_indicator",
+          "foreign_exchange_reference",
+          "destination_country_code",
+          "destination_currency_code",
+          "foreign_payment_amount",
+          "foreign_trace_number",
+          "international_transaction_type_code",
+          "originating_currency_code",
+          "originating_depository_financial_institution_name",
+          "originating_depository_financial_institution_id_qualifier",
+          "originating_depository_financial_institution_id",
+          "originating_depository_financial_institution_branch_country",
+          "originator_city",
+          "originator_company_entry_description",
+          "originator_country",
+          "originator_identification",
+          "originator_name",
+          "originator_postal_code",
+          "originator_street_address",
+          "originator_state_or_province",
+          "payment_related_information",
+          "payment_related_information2",
+          "receiver_identification_number",
+          "receiver_street_address",
+          "receiver_city",
+          "receiver_state_or_province",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiving_company_or_individual_name",
+          "receiving_depository_financial_institution_name",
+          "receiving_depository_financial_institution_id_qualifier",
+          "receiving_depository_financial_institution_id",
+          "receiving_depository_financial_institution_country",
+          "trace_number"
+        ],
+        "title": "International ACH Decline",
+        "type": "object",
+        "x-title-plural": "International ACH Declines"
+      }
+    },
+    "required": [
+      "category",
+      "ach_decline",
+      "card_decline",
+      "check_decline",
+      "inbound_real_time_payments_transfer_decline",
+      "international_ach_decline",
+      "card_route_decline"
+    ],
+    "title": "Declined Transaction Source",
+    "type": "object",
+    "x-title-plural": "Declined Transaction Sources"
+  }
+
+Value:
+  {
+    "ach_decline": {
+      "amount": 1750,
+      "originator_company_descriptive_date": null,
+      "originator_company_discretionary_data": null,
+      "originator_company_id": "0987654321",
+      "originator_company_name": "BIG BANK",
+      "reason": "insufficient_funds",
+      "receiver_id_number": "12345678900",
+      "receiver_name": "IAN CREASE",
+      "trace_number": "021000038461022"
+    },
+    "category": "ach_decline"
+  }
+ | Error at "/international_ach_decline": property "international_ach_decline" is missing
+Schema:
+  {
+    "description": "This is an object giving more details on the network-level event that caused the Declined Transaction. For example, for a card transaction this lists the merchant's industry and location. Note that for backwards compatibility reasons, additional undocumented keys may appear in this object. These should be treated as deprecated and will be removed in the future.",
+    "example": {
+      "ach_decline": {
+        "amount": 1750,
+        "originator_company_descriptive_date": null,
+        "originator_company_discretionary_data": null,
+        "originator_company_id": "0987654321",
+        "originator_company_name": "BIG BANK",
+        "reason": "insufficient_funds",
+        "receiver_id_number": "12345678900",
+        "receiver_name": "IAN CREASE",
+        "trace_number": "021000038461022"
+      },
+      "category": "ach_decline"
+    },
+    "properties": {
+      "ach_decline": {
+        "description": "A ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `ach_decline`.",
+        "example": {
+          "amount": 1750,
+          "originator_company_descriptive_date": null,
+          "originator_company_discretionary_data": null,
+          "originator_company_id": "0987654321",
+          "originator_company_name": "BIG BANK",
+          "reason": "insufficient_funds",
+          "receiver_id_number": "12345678900",
+          "receiver_name": "IAN CREASE",
+          "trace_number": "021000038461022"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "originator_company_descriptive_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_discretionary_data": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_id": {
+            "type": "string"
+          },
+          "originator_company_name": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the ACH transfer was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "credit_entry_refused_by_receiver",
+              "duplicate_return",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "misrouted_return",
+              "no_ach_route",
+              "originator_request",
+              "transaction_not_allowed"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "A credit was refused.",
+              "Other.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Other.",
+              "The account number that was debited does not exist.",
+              "Other.",
+              "The transaction is not allowed per Increase's terms"
+            ]
+          },
+          "receiver_id_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "originator_company_name",
+          "originator_company_descriptive_date",
+          "originator_company_discretionary_data",
+          "originator_company_id",
+          "reason",
+          "receiver_id_number",
+          "receiver_name",
+          "trace_number"
+        ],
+        "title": "ACH Decline",
+        "type": "object",
+        "x-title-plural": "ACH Declines"
+      },
+      "card_decline": {
+        "description": "A Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "digital_wallet_token_id": null,
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA",
+          "network": "visa",
+          "network_details": {
+            "visa": {
+              "electronic_commerce_indicator": "secure_electronic_commerce",
+              "point_of_service_entry_mode": "manual"
+            }
+          },
+          "real_time_decision_id": null,
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "digital_wallet_token_id": {
+            "description": "If the authorization was attempted using a Digital Wallet Token (such as an Apple Pay purchase), the identifier of the token that was used.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_acceptor_id": {
+            "description": "The merchant identifier (commonly abbreviated as MID) of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "description": "The Merchant Category Code (commonly abbreviated as MCC) of the merchant the card is transacting with.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "description": "The city the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "description": "The country the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "description": "The merchant descriptor of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_state": {
+            "description": "The state the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "network": {
+            "description": "The payment network used to process this card authorization",
+            "enum": [
+              "visa"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Visa"
+            ]
+          },
+          "network_details": {
+            "description": "Fields specific to the `network`",
+            "properties": {
+              "visa": {
+                "description": "Fields specific to the `visa` network",
+                "properties": {
+                  "electronic_commerce_indicator": {
+                    "description": "For electronic commerce transactions, this identifies the level of security used in obtaining the customer's payment credential. For mail or telephone order transactions, identifies the type of mail or telephone order.",
+                    "enum": [
+                      "mail_phone_order",
+                      "recurring",
+                      "installment",
+                      "unknown_mail_phone_order",
+                      "secure_electronic_commerce",
+                      "non_authenticated_security_transaction_at_3ds_capable_merchant",
+                      "non_authenticated_security_transaction",
+                      "non_secure_transaction"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Single transaction of a mail/phone order: Use to indicate that the transaction is a mail/phone order purchase, not a recurring transaction or installment payment. For domestic transactions in the US region, this value may also indicate one bill payment transaction in the card-present or card-absent environments.",
+                      "Recurring transaction: Payment indicator used to indicate a recurring transaction that originates from an acquirer in the US region.",
+                      "Installment payment: Payment indicator used to indicate one purchase of goods or services that is billed to the account in multiple charges over a period of time agreed upon by the cardholder and merchant from transactions that originate from an acquirer in the US region.",
+                      "Unknown classification: other mail order: Use to indicate that the type of mail/telephone order is unknown.",
+                      "Secure electronic commerce transaction: Use to indicate that the electronic commerce transaction has been authenticated using e.g., 3-D Secure",
+                      "Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure: Use to identify an electronic commerce transaction where the merchant attempted to authenticate the cardholder using 3-D Secure, but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program.",
+                      "Non-authenticated security transaction: Use to identify an electronic commerce transaction that uses data encryption for security however , cardholder authentication is not performed using 3-D Secure.",
+                      "Non-secure transaction: Use to identify an electronic commerce transaction that has no data protection."
+                    ]
+                  },
+                  "point_of_service_entry_mode": {
+                    "description": "The method used to enter the cardholder's primary account number and card expiration date",
+                    "enum": [
+                      "manual",
+                      "magnetic_stripe_no_cvv",
+                      "optical_code",
+                      "integrated_circuit_card",
+                      "contactless",
+                      "credential_on_file",
+                      "magnetic_stripe",
+                      "contactless_magnetic_stripe",
+                      "integrated_circuit_card_no_cvv"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Manual key entry",
+                      "Magnetic stripe read, without card verification value",
+                      "Optical code",
+                      "Contact chip card",
+                      "Contactless read of chip card",
+                      "Transaction iniated using a credential that has previously been stored on file",
+                      "Magnetic stripe read",
+                      "Contactless read of magnetic stripe data",
+                      "Contact chip card, without card verification value"
+                    ]
+                  }
+                },
+                "required": [
+                  "electronic_commerce_indicator",
+                  "point_of_service_entry_mode"
+                ],
+                "title": "Visa",
+                "type": "object",
+                "x-title-plural": "Visas"
+              }
+            },
+            "required": [
+              "visa"
+            ],
+            "title": "Network Details",
+            "type": "object",
+            "x-title-plural": "Network Detailss"
+          },
+          "real_time_decision_id": {
+            "description": "The identifier of the Real-Time Decision sent to approve or decline this transaction.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transaction was declined.",
+            "enum": [
+              "card_not_active",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "cvv2_mismatch",
+              "transaction_not_allowed",
+              "breaches_limit",
+              "webhook_declined",
+              "webhook_timed_out",
+              "declined_by_stand_in_processing",
+              "invalid_physical_card",
+              "missing_original_authorization"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The Card was not active.",
+              "The account's entity was not active.",
+              "The account was inactive.",
+              "The Card's Account did not have a sufficient available balance.",
+              "The given CVV2 did not match the card's value.",
+              "The attempted card transaction is not allowed per Increase's terms.",
+              "The transaction was blocked by a Limit.",
+              "Your application declined the transaction via webhook.",
+              "Your application webhook did not respond without the required timeout.",
+              "Declined by stand-in processing.",
+              "The card read had an invalid CVV, dCVV, or authorization request cryptogram.",
+              "The original card authorization for this incremental authorization does not exist."
+            ]
+          }
+        },
+        "required": [
+          "merchant_acceptor_id",
+          "merchant_descriptor",
+          "merchant_category_code",
+          "merchant_city",
+          "merchant_country",
+          "network",
+          "network_details",
+          "amount",
+          "currency",
+          "reason",
+          "merchant_state",
+          "real_time_decision_id",
+          "digital_wallet_token_id"
+        ],
+        "title": "Card Decline",
+        "type": "object",
+        "x-title-plural": "Card Declines"
+      },
+      "card_route_decline": {
+        "description": "A Deprecated Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_route_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "merchant_acceptor_id": {
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "type": "string"
+          },
+          "merchant_state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "merchant_acceptor_id",
+          "merchant_city",
+          "merchant_country",
+          "merchant_descriptor",
+          "merchant_state",
+          "merchant_category_code"
+        ],
+        "title": "Deprecated Card Decline",
+        "type": "object",
+        "x-title-plural": "Deprecated Card Declines"
+      },
+      "category": {
+        "description": "The type of decline that took place. We may add additional possible values for this enum over time; your application should be able to handle such additions gracefully.",
+        "enum": [
+          "ach_decline",
+          "card_decline",
+          "check_decline",
+          "inbound_real_time_payments_transfer_decline",
+          "international_ach_decline",
+          "card_route_decline",
+          "other"
+        ],
+        "type": "string",
+        "x-enum-descriptions": [
+          "The Declined Transaction was created by a ACH Decline object. Details will be under the `ach_decline` object.",
+          "The Declined Transaction was created by a Card Decline object. Details will be under the `card_decline` object.",
+          "The Declined Transaction was created by a Check Decline object. Details will be under the `check_decline` object.",
+          "The Declined Transaction was created by a Inbound Real Time Payments Transfer Decline object. Details will be under the `inbound_real_time_payments_transfer_decline` object.",
+          "The Declined Transaction was created by a International ACH Decline object. Details will be under the `international_ach_decline` object.",
+          "The Declined Transaction was created by a Deprecated Card Decline object. Details will be under the `card_route_decline` object.",
+          "The Declined Transaction was made for an undocumented or deprecated reason."
+        ]
+      },
+      "check_decline": {
+        "description": "A Check Decline object. This field will be present in the JSON response if and only if `category` is equal to `check_decline`.",
+        "example": {
+          "amount": -1000,
+          "auxiliary_on_us": "99999",
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "auxiliary_on_us": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the check was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "unable_to_locate_account",
+              "unable_to_process",
+              "refer_to_image",
+              "stop_payment_requested",
+              "returned",
+              "duplicate_presentment",
+              "not_authorized"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Unable to locate account.",
+              "Unable to process.",
+              "Refer to image.",
+              "Stop payment requested for this check.",
+              "Check was returned to sender.",
+              "The check was a duplicate deposit.",
+              "The transaction is not allowed."
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "auxiliary_on_us",
+          "reason"
+        ],
+        "title": "Check Decline",
+        "type": "object",
+        "x-title-plural": "Check Declines"
+      },
+      "inbound_real_time_payments_transfer_decline": {
+        "description": "A Inbound Real Time Payments Transfer Decline object. This field will be present in the JSON response if and only if `category` is equal to `inbound_real_time_payments_transfer_decline`.",
+        "example": {
+          "amount": 100,
+          "creditor_name": "Ian Crease",
+          "currency": "USD",
+          "debtor_account_number": "987654321",
+          "debtor_name": "National Phonograph Company",
+          "debtor_routing_number": "101050001",
+          "reason": "account_number_disabled",
+          "remittance_information": "Invoice 29582",
+          "transaction_identification": "20220501234567891T1BSLZO01745013025"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "creditor_name": {
+            "description": "The name the sender of the transfer specified as the recipient of the transfer.",
+            "type": "string"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code of the declined transfer's currency. This will always be \"USD\" for a Real Time Payments transfer.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "debtor_account_number": {
+            "description": "The account number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "debtor_name": {
+            "description": "The name provided by the sender of the transfer.",
+            "type": "string"
+          },
+          "debtor_routing_number": {
+            "description": "The routing number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transfer was declined.",
+            "enum": [
+              "account_number_canceled",
+              "account_number_disabled",
+              "group_locked",
+              "entity_not_active",
+              "real_time_payments_not_enabled"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "Your account is inactive.",
+              "The account's entity is not active.",
+              "Your account is not enabled to receive Real Time Payments transfers."
+            ]
+          },
+          "remittance_information": {
+            "description": "Additional information included with the transfer.",
+            "nullable": true,
+            "type": "string"
+          },
+          "transaction_identification": {
+            "description": "The Real Time Payments network identification of the declined transfer.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "reason",
+          "creditor_name",
+          "debtor_name",
+          "debtor_account_number",
+          "debtor_routing_number",
+          "transaction_identification",
+          "remittance_information"
+        ],
+        "title": "Inbound Real Time Payments Transfer Decline",
+        "type": "object",
+        "x-title-plural": "Inbound Real Time Payments Transfer Declines"
+      },
+      "international_ach_decline": {
+        "description": "A International ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `international_ach_decline`.",
+        "example": {
+          "amount": -1000,
+          "destination_country_code": "US",
+          "destination_currency_code": "USD",
+          "foreign_exchange_indicator": "fixed_to_fixed",
+          "foreign_exchange_reference": null,
+          "foreign_exchange_reference_indicator": "blank",
+          "foreign_payment_amount": 199,
+          "foreign_trace_number": null,
+          "international_transaction_type_code": "internet_initiated",
+          "originating_currency_code": "USD",
+          "originating_depository_financial_institution_branch_country": "US",
+          "originating_depository_financial_institution_id": "091000019",
+          "originating_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "originating_depository_financial_institution_name": "WELLS FARGO BANK",
+          "originator_city": "BERLIN",
+          "originator_company_entry_description": "RETRY PYMT",
+          "originator_country": "DE",
+          "originator_identification": "770510487A",
+          "originator_name": "BERGHAIN",
+          "originator_postal_code": "50825",
+          "originator_state_or_province": null,
+          "originator_street_address": "Ruedersdorferstr. 7",
+          "payment_related_information": null,
+          "payment_related_information2": null,
+          "receiver_city": "BEVERLY HILLS",
+          "receiver_country": "US",
+          "receiver_identification_number": "1018790279274",
+          "receiver_postal_code": "90210",
+          "receiver_state_or_province": "CA",
+          "receiver_street_address": "123 FAKE ST",
+          "receiving_company_or_individual_name": "IAN CREASE",
+          "receiving_depository_financial_institution_country": "US",
+          "receiving_depository_financial_institution_id": "101050001",
+          "receiving_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "receiving_depository_financial_institution_name": "BLUE RIDGE BANK, NATIONAL ASSOCIATI",
+          "trace_number": "010202909100090"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "destination_country_code": {
+            "type": "string"
+          },
+          "destination_currency_code": {
+            "type": "string"
+          },
+          "foreign_exchange_indicator": {
+            "type": "string"
+          },
+          "foreign_exchange_reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "foreign_exchange_reference_indicator": {
+            "type": "string"
+          },
+          "foreign_payment_amount": {
+            "type": "integer"
+          },
+          "foreign_trace_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "international_transaction_type_code": {
+            "type": "string"
+          },
+          "originating_currency_code": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_branch_country": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "originator_city": {
+            "type": "string"
+          },
+          "originator_company_entry_description": {
+            "type": "string"
+          },
+          "originator_country": {
+            "type": "string"
+          },
+          "originator_identification": {
+            "type": "string"
+          },
+          "originator_name": {
+            "type": "string"
+          },
+          "originator_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_street_address": {
+            "type": "string"
+          },
+          "payment_related_information": {
+            "nullable": true,
+            "type": "string"
+          },
+          "payment_related_information2": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_city": {
+            "type": "string"
+          },
+          "receiver_country": {
+            "type": "string"
+          },
+          "receiver_identification_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_street_address": {
+            "type": "string"
+          },
+          "receiving_company_or_individual_name": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_country": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "foreign_exchange_indicator",
+          "foreign_exchange_reference_indicator",
+          "foreign_exchange_reference",
+          "destination_country_code",
+          "destination_currency_code",
+          "foreign_payment_amount",
+          "foreign_trace_number",
+          "international_transaction_type_code",
+          "originating_currency_code",
+          "originating_depository_financial_institution_name",
+          "originating_depository_financial_institution_id_qualifier",
+          "originating_depository_financial_institution_id",
+          "originating_depository_financial_institution_branch_country",
+          "originator_city",
+          "originator_company_entry_description",
+          "originator_country",
+          "originator_identification",
+          "originator_name",
+          "originator_postal_code",
+          "originator_street_address",
+          "originator_state_or_province",
+          "payment_related_information",
+          "payment_related_information2",
+          "receiver_identification_number",
+          "receiver_street_address",
+          "receiver_city",
+          "receiver_state_or_province",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiving_company_or_individual_name",
+          "receiving_depository_financial_institution_name",
+          "receiving_depository_financial_institution_id_qualifier",
+          "receiving_depository_financial_institution_id",
+          "receiving_depository_financial_institution_country",
+          "trace_number"
+        ],
+        "title": "International ACH Decline",
+        "type": "object",
+        "x-title-plural": "International ACH Declines"
+      }
+    },
+    "required": [
+      "category",
+      "ach_decline",
+      "card_decline",
+      "check_decline",
+      "inbound_real_time_payments_transfer_decline",
+      "international_ach_decline",
+      "card_route_decline"
+    ],
+    "title": "Declined Transaction Source",
+    "type": "object",
+    "x-title-plural": "Declined Transaction Sources"
+  }
+
+Value:
+  {
+    "ach_decline": {
+      "amount": 1750,
+      "originator_company_descriptive_date": null,
+      "originator_company_discretionary_data": null,
+      "originator_company_id": "0987654321",
+      "originator_company_name": "BIG BANK",
+      "reason": "insufficient_funds",
+      "receiver_id_number": "12345678900",
+      "receiver_name": "IAN CREASE",
+      "trace_number": "021000038461022"
+    },
+    "category": "ach_decline"
+  }
+ | Error at "/card_route_decline": property "card_route_decline" is missing
+Schema:
+  {
+    "description": "This is an object giving more details on the network-level event that caused the Declined Transaction. For example, for a card transaction this lists the merchant's industry and location. Note that for backwards compatibility reasons, additional undocumented keys may appear in this object. These should be treated as deprecated and will be removed in the future.",
+    "example": {
+      "ach_decline": {
+        "amount": 1750,
+        "originator_company_descriptive_date": null,
+        "originator_company_discretionary_data": null,
+        "originator_company_id": "0987654321",
+        "originator_company_name": "BIG BANK",
+        "reason": "insufficient_funds",
+        "receiver_id_number": "12345678900",
+        "receiver_name": "IAN CREASE",
+        "trace_number": "021000038461022"
+      },
+      "category": "ach_decline"
+    },
+    "properties": {
+      "ach_decline": {
+        "description": "A ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `ach_decline`.",
+        "example": {
+          "amount": 1750,
+          "originator_company_descriptive_date": null,
+          "originator_company_discretionary_data": null,
+          "originator_company_id": "0987654321",
+          "originator_company_name": "BIG BANK",
+          "reason": "insufficient_funds",
+          "receiver_id_number": "12345678900",
+          "receiver_name": "IAN CREASE",
+          "trace_number": "021000038461022"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "originator_company_descriptive_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_discretionary_data": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_company_id": {
+            "type": "string"
+          },
+          "originator_company_name": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the ACH transfer was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "credit_entry_refused_by_receiver",
+              "duplicate_return",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "misrouted_return",
+              "no_ach_route",
+              "originator_request",
+              "transaction_not_allowed"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "A credit was refused.",
+              "Other.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Other.",
+              "The account number that was debited does not exist.",
+              "Other.",
+              "The transaction is not allowed per Increase's terms"
+            ]
+          },
+          "receiver_id_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "originator_company_name",
+          "originator_company_descriptive_date",
+          "originator_company_discretionary_data",
+          "originator_company_id",
+          "reason",
+          "receiver_id_number",
+          "receiver_name",
+          "trace_number"
+        ],
+        "title": "ACH Decline",
+        "type": "object",
+        "x-title-plural": "ACH Declines"
+      },
+      "card_decline": {
+        "description": "A Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "digital_wallet_token_id": null,
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA",
+          "network": "visa",
+          "network_details": {
+            "visa": {
+              "electronic_commerce_indicator": "secure_electronic_commerce",
+              "point_of_service_entry_mode": "manual"
+            }
+          },
+          "real_time_decision_id": null,
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "digital_wallet_token_id": {
+            "description": "If the authorization was attempted using a Digital Wallet Token (such as an Apple Pay purchase), the identifier of the token that was used.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_acceptor_id": {
+            "description": "The merchant identifier (commonly abbreviated as MID) of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "description": "The Merchant Category Code (commonly abbreviated as MCC) of the merchant the card is transacting with.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "description": "The city the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "description": "The country the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "description": "The merchant descriptor of the merchant the card is transacting with.",
+            "type": "string"
+          },
+          "merchant_state": {
+            "description": "The state the merchant resides in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "network": {
+            "description": "The payment network used to process this card authorization",
+            "enum": [
+              "visa"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Visa"
+            ]
+          },
+          "network_details": {
+            "description": "Fields specific to the `network`",
+            "properties": {
+              "visa": {
+                "description": "Fields specific to the `visa` network",
+                "properties": {
+                  "electronic_commerce_indicator": {
+                    "description": "For electronic commerce transactions, this identifies the level of security used in obtaining the customer's payment credential. For mail or telephone order transactions, identifies the type of mail or telephone order.",
+                    "enum": [
+                      "mail_phone_order",
+                      "recurring",
+                      "installment",
+                      "unknown_mail_phone_order",
+                      "secure_electronic_commerce",
+                      "non_authenticated_security_transaction_at_3ds_capable_merchant",
+                      "non_authenticated_security_transaction",
+                      "non_secure_transaction"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Single transaction of a mail/phone order: Use to indicate that the transaction is a mail/phone order purchase, not a recurring transaction or installment payment. For domestic transactions in the US region, this value may also indicate one bill payment transaction in the card-present or card-absent environments.",
+                      "Recurring transaction: Payment indicator used to indicate a recurring transaction that originates from an acquirer in the US region.",
+                      "Installment payment: Payment indicator used to indicate one purchase of goods or services that is billed to the account in multiple charges over a period of time agreed upon by the cardholder and merchant from transactions that originate from an acquirer in the US region.",
+                      "Unknown classification: other mail order: Use to indicate that the type of mail/telephone order is unknown.",
+                      "Secure electronic commerce transaction: Use to indicate that the electronic commerce transaction has been authenticated using e.g., 3-D Secure",
+                      "Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure: Use to identify an electronic commerce transaction where the merchant attempted to authenticate the cardholder using 3-D Secure, but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program.",
+                      "Non-authenticated security transaction: Use to identify an electronic commerce transaction that uses data encryption for security however , cardholder authentication is not performed using 3-D Secure.",
+                      "Non-secure transaction: Use to identify an electronic commerce transaction that has no data protection."
+                    ]
+                  },
+                  "point_of_service_entry_mode": {
+                    "description": "The method used to enter the cardholder's primary account number and card expiration date",
+                    "enum": [
+                      "manual",
+                      "magnetic_stripe_no_cvv",
+                      "optical_code",
+                      "integrated_circuit_card",
+                      "contactless",
+                      "credential_on_file",
+                      "magnetic_stripe",
+                      "contactless_magnetic_stripe",
+                      "integrated_circuit_card_no_cvv"
+                    ],
+                    "nullable": true,
+                    "type": "string",
+                    "x-enum-descriptions": [
+                      "Manual key entry",
+                      "Magnetic stripe read, without card verification value",
+                      "Optical code",
+                      "Contact chip card",
+                      "Contactless read of chip card",
+                      "Transaction iniated using a credential that has previously been stored on file",
+                      "Magnetic stripe read",
+                      "Contactless read of magnetic stripe data",
+                      "Contact chip card, without card verification value"
+                    ]
+                  }
+                },
+                "required": [
+                  "electronic_commerce_indicator",
+                  "point_of_service_entry_mode"
+                ],
+                "title": "Visa",
+                "type": "object",
+                "x-title-plural": "Visas"
+              }
+            },
+            "required": [
+              "visa"
+            ],
+            "title": "Network Details",
+            "type": "object",
+            "x-title-plural": "Network Detailss"
+          },
+          "real_time_decision_id": {
+            "description": "The identifier of the Real-Time Decision sent to approve or decline this transaction.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transaction was declined.",
+            "enum": [
+              "card_not_active",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "cvv2_mismatch",
+              "transaction_not_allowed",
+              "breaches_limit",
+              "webhook_declined",
+              "webhook_timed_out",
+              "declined_by_stand_in_processing",
+              "invalid_physical_card",
+              "missing_original_authorization"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The Card was not active.",
+              "The account's entity was not active.",
+              "The account was inactive.",
+              "The Card's Account did not have a sufficient available balance.",
+              "The given CVV2 did not match the card's value.",
+              "The attempted card transaction is not allowed per Increase's terms.",
+              "The transaction was blocked by a Limit.",
+              "Your application declined the transaction via webhook.",
+              "Your application webhook did not respond without the required timeout.",
+              "Declined by stand-in processing.",
+              "The card read had an invalid CVV, dCVV, or authorization request cryptogram.",
+              "The original card authorization for this incremental authorization does not exist."
+            ]
+          }
+        },
+        "required": [
+          "merchant_acceptor_id",
+          "merchant_descriptor",
+          "merchant_category_code",
+          "merchant_city",
+          "merchant_country",
+          "network",
+          "network_details",
+          "amount",
+          "currency",
+          "reason",
+          "merchant_state",
+          "real_time_decision_id",
+          "digital_wallet_token_id"
+        ],
+        "title": "Card Decline",
+        "type": "object",
+        "x-title-plural": "Card Declines"
+      },
+      "card_route_decline": {
+        "description": "A Deprecated Card Decline object. This field will be present in the JSON response if and only if `category` is equal to `card_route_decline`.",
+        "example": {
+          "amount": -1000,
+          "currency": "USD",
+          "merchant_acceptor_id": "372909060886",
+          "merchant_category_code": "5998",
+          "merchant_city": "5364086000",
+          "merchant_country": "USA",
+          "merchant_descriptor": "TENTS R US",
+          "merchant_state": "CA"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code for the destination account currency.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "merchant_acceptor_id": {
+            "type": "string"
+          },
+          "merchant_category_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_city": {
+            "nullable": true,
+            "type": "string"
+          },
+          "merchant_country": {
+            "type": "string"
+          },
+          "merchant_descriptor": {
+            "type": "string"
+          },
+          "merchant_state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "merchant_acceptor_id",
+          "merchant_city",
+          "merchant_country",
+          "merchant_descriptor",
+          "merchant_state",
+          "merchant_category_code"
+        ],
+        "title": "Deprecated Card Decline",
+        "type": "object",
+        "x-title-plural": "Deprecated Card Declines"
+      },
+      "category": {
+        "description": "The type of decline that took place. We may add additional possible values for this enum over time; your application should be able to handle such additions gracefully.",
+        "enum": [
+          "ach_decline",
+          "card_decline",
+          "check_decline",
+          "inbound_real_time_payments_transfer_decline",
+          "international_ach_decline",
+          "card_route_decline",
+          "other"
+        ],
+        "type": "string",
+        "x-enum-descriptions": [
+          "The Declined Transaction was created by a ACH Decline object. Details will be under the `ach_decline` object.",
+          "The Declined Transaction was created by a Card Decline object. Details will be under the `card_decline` object.",
+          "The Declined Transaction was created by a Check Decline object. Details will be under the `check_decline` object.",
+          "The Declined Transaction was created by a Inbound Real Time Payments Transfer Decline object. Details will be under the `inbound_real_time_payments_transfer_decline` object.",
+          "The Declined Transaction was created by a International ACH Decline object. Details will be under the `international_ach_decline` object.",
+          "The Declined Transaction was created by a Deprecated Card Decline object. Details will be under the `card_route_decline` object.",
+          "The Declined Transaction was made for an undocumented or deprecated reason."
+        ]
+      },
+      "check_decline": {
+        "description": "A Check Decline object. This field will be present in the JSON response if and only if `category` is equal to `check_decline`.",
+        "example": {
+          "amount": -1000,
+          "auxiliary_on_us": "99999",
+          "reason": "insufficient_funds"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "auxiliary_on_us": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the check was declined.",
+            "enum": [
+              "ach_route_canceled",
+              "ach_route_disabled",
+              "breaches_limit",
+              "entity_not_active",
+              "group_locked",
+              "insufficient_funds",
+              "unable_to_locate_account",
+              "unable_to_process",
+              "refer_to_image",
+              "stop_payment_requested",
+              "returned",
+              "duplicate_presentment",
+              "not_authorized"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "The transaction would cause a limit to be exceeded.",
+              "The account's entity is not active.",
+              "Your account is inactive.",
+              "Your account contains insufficient funds.",
+              "Unable to locate account.",
+              "Unable to process.",
+              "Refer to image.",
+              "Stop payment requested for this check.",
+              "Check was returned to sender.",
+              "The check was a duplicate deposit.",
+              "The transaction is not allowed."
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "auxiliary_on_us",
+          "reason"
+        ],
+        "title": "Check Decline",
+        "type": "object",
+        "x-title-plural": "Check Declines"
+      },
+      "inbound_real_time_payments_transfer_decline": {
+        "description": "A Inbound Real Time Payments Transfer Decline object. This field will be present in the JSON response if and only if `category` is equal to `inbound_real_time_payments_transfer_decline`.",
+        "example": {
+          "amount": 100,
+          "creditor_name": "Ian Crease",
+          "currency": "USD",
+          "debtor_account_number": "987654321",
+          "debtor_name": "National Phonograph Company",
+          "debtor_routing_number": "101050001",
+          "reason": "account_number_disabled",
+          "remittance_information": "Invoice 29582",
+          "transaction_identification": "20220501234567891T1BSLZO01745013025"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "creditor_name": {
+            "description": "The name the sender of the transfer specified as the recipient of the transfer.",
+            "type": "string"
+          },
+          "currency": {
+            "description": "The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) code of the declined transfer's currency. This will always be \"USD\" for a Real Time Payments transfer.",
+            "enum": [
+              "CAD",
+              "CHF",
+              "EUR",
+              "GBP",
+              "JPY",
+              "USD"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "Canadian Dollar (CAD)",
+              "Swiss Franc (CHF)",
+              "Euro (EUR)",
+              "British Pound (GBP)",
+              "Japanese Yen (JPY)",
+              "US Dollar (USD)"
+            ]
+          },
+          "debtor_account_number": {
+            "description": "The account number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "debtor_name": {
+            "description": "The name provided by the sender of the transfer.",
+            "type": "string"
+          },
+          "debtor_routing_number": {
+            "description": "The routing number of the account that sent the transfer.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the transfer was declined.",
+            "enum": [
+              "account_number_canceled",
+              "account_number_disabled",
+              "group_locked",
+              "entity_not_active",
+              "real_time_payments_not_enabled"
+            ],
+            "type": "string",
+            "x-enum-descriptions": [
+              "The account number is canceled.",
+              "The account number is disabled.",
+              "Your account is inactive.",
+              "The account's entity is not active.",
+              "Your account is not enabled to receive Real Time Payments transfers."
+            ]
+          },
+          "remittance_information": {
+            "description": "Additional information included with the transfer.",
+            "nullable": true,
+            "type": "string"
+          },
+          "transaction_identification": {
+            "description": "The Real Time Payments network identification of the declined transfer.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "reason",
+          "creditor_name",
+          "debtor_name",
+          "debtor_account_number",
+          "debtor_routing_number",
+          "transaction_identification",
+          "remittance_information"
+        ],
+        "title": "Inbound Real Time Payments Transfer Decline",
+        "type": "object",
+        "x-title-plural": "Inbound Real Time Payments Transfer Declines"
+      },
+      "international_ach_decline": {
+        "description": "A International ACH Decline object. This field will be present in the JSON response if and only if `category` is equal to `international_ach_decline`.",
+        "example": {
+          "amount": -1000,
+          "destination_country_code": "US",
+          "destination_currency_code": "USD",
+          "foreign_exchange_indicator": "fixed_to_fixed",
+          "foreign_exchange_reference": null,
+          "foreign_exchange_reference_indicator": "blank",
+          "foreign_payment_amount": 199,
+          "foreign_trace_number": null,
+          "international_transaction_type_code": "internet_initiated",
+          "originating_currency_code": "USD",
+          "originating_depository_financial_institution_branch_country": "US",
+          "originating_depository_financial_institution_id": "091000019",
+          "originating_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "originating_depository_financial_institution_name": "WELLS FARGO BANK",
+          "originator_city": "BERLIN",
+          "originator_company_entry_description": "RETRY PYMT",
+          "originator_country": "DE",
+          "originator_identification": "770510487A",
+          "originator_name": "BERGHAIN",
+          "originator_postal_code": "50825",
+          "originator_state_or_province": null,
+          "originator_street_address": "Ruedersdorferstr. 7",
+          "payment_related_information": null,
+          "payment_related_information2": null,
+          "receiver_city": "BEVERLY HILLS",
+          "receiver_country": "US",
+          "receiver_identification_number": "1018790279274",
+          "receiver_postal_code": "90210",
+          "receiver_state_or_province": "CA",
+          "receiver_street_address": "123 FAKE ST",
+          "receiving_company_or_individual_name": "IAN CREASE",
+          "receiving_depository_financial_institution_country": "US",
+          "receiving_depository_financial_institution_id": "101050001",
+          "receiving_depository_financial_institution_id_qualifier": "national_clearing_system_number",
+          "receiving_depository_financial_institution_name": "BLUE RIDGE BANK, NATIONAL ASSOCIATI",
+          "trace_number": "010202909100090"
+        },
+        "nullable": true,
+        "properties": {
+          "amount": {
+            "description": "The declined amount in the minor unit of the destination account currency. For dollars, for example, this is cents.",
+            "type": "integer"
+          },
+          "destination_country_code": {
+            "type": "string"
+          },
+          "destination_currency_code": {
+            "type": "string"
+          },
+          "foreign_exchange_indicator": {
+            "type": "string"
+          },
+          "foreign_exchange_reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "foreign_exchange_reference_indicator": {
+            "type": "string"
+          },
+          "foreign_payment_amount": {
+            "type": "integer"
+          },
+          "foreign_trace_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "international_transaction_type_code": {
+            "type": "string"
+          },
+          "originating_currency_code": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_branch_country": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "originating_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "originator_city": {
+            "type": "string"
+          },
+          "originator_company_entry_description": {
+            "type": "string"
+          },
+          "originator_country": {
+            "type": "string"
+          },
+          "originator_identification": {
+            "type": "string"
+          },
+          "originator_name": {
+            "type": "string"
+          },
+          "originator_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "originator_street_address": {
+            "type": "string"
+          },
+          "payment_related_information": {
+            "nullable": true,
+            "type": "string"
+          },
+          "payment_related_information2": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_city": {
+            "type": "string"
+          },
+          "receiver_country": {
+            "type": "string"
+          },
+          "receiver_identification_number": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_postal_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_state_or_province": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiver_street_address": {
+            "type": "string"
+          },
+          "receiving_company_or_individual_name": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_country": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_id_qualifier": {
+            "type": "string"
+          },
+          "receiving_depository_financial_institution_name": {
+            "type": "string"
+          },
+          "trace_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "foreign_exchange_indicator",
+          "foreign_exchange_reference_indicator",
+          "foreign_exchange_reference",
+          "destination_country_code",
+          "destination_currency_code",
+          "foreign_payment_amount",
+          "foreign_trace_number",
+          "international_transaction_type_code",
+          "originating_currency_code",
+          "originating_depository_financial_institution_name",
+          "originating_depository_financial_institution_id_qualifier",
+          "originating_depository_financial_institution_id",
+          "originating_depository_financial_institution_branch_country",
+          "originator_city",
+          "originator_company_entry_description",
+          "originator_country",
+          "originator_identification",
+          "originator_name",
+          "originator_postal_code",
+          "originator_street_address",
+          "originator_state_or_province",
+          "payment_related_information",
+          "payment_related_information2",
+          "receiver_identification_number",
+          "receiver_street_address",
+          "receiver_city",
+          "receiver_state_or_province",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiving_company_or_individual_name",
+          "receiving_depository_financial_institution_name",
+          "receiving_depository_financial_institution_id_qualifier",
+          "receiving_depository_financial_institution_id",
+          "receiving_depository_financial_institution_country",
+          "trace_number"
+        ],
+        "title": "International ACH Decline",
+        "type": "object",
+        "x-title-plural": "International ACH Declines"
+      }
+    },
+    "required": [
+      "category",
+      "ach_decline",
+      "card_decline",
+      "check_decline",
+      "inbound_real_time_payments_transfer_decline",
+      "international_ach_decline",
+      "card_route_decline"
+    ],
+    "title": "Declined Transaction Source",
+    "type": "object",
+    "x-title-plural": "Declined Transaction Sources"
+  }
+
+Value:
+  {
+    "ach_decline": {
+      "amount": 1750,
+      "originator_company_descriptive_date": null,
+      "originator_company_discretionary_data": null,
+      "originator_company_id": "0987654321",
+      "originator_company_name": "BIG BANK",
+      "reason": "insufficient_funds",
+      "receiver_id_number": "12345678900",
+      "receiver_name": "IAN CREASE",
+      "trace_number": "021000038461022"
+    },
+    "category": "ach_decline"
+  }

@@ -59,7 +59,7 @@ components:
 `
 
 	var doc3 openapi3.T
-	err := yaml.Unmarshal([]byte(v3Spec), &doc3)
+	_, err := yaml.Unmarshal([]byte(v3Spec), &doc3, yaml.DecodeOpts{DisableTimestamps: true})
 	require.NoError(t, err, "unmarshal v3 spec")
 
 	// Pre-fix: this call panicked with

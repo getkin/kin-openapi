@@ -7,8 +7,8 @@ Schema:
       "languages": [
         {
           "alerts": 628,
-          "analysis-date": "2000-01-23T04:56:07Z",
-          "commit-date": "2000-01-23T04:56:07Z",
+          "analysis-date": "2000-01-23T04:56:07.000+00:00",
+          "commit-date": "2000-01-23T04:56:07.000+00:00",
           "commit-id": "04d7a2300feec9bbcc48185e370e3b5d3ae4da9d",
           "language": "javascript",
           "lines": 133298,
@@ -16,8 +16,8 @@ Schema:
         },
         {
           "alerts": 628,
-          "analysis-date": "2000-01-23T04:56:07Z",
-          "commit-date": "2000-01-23T04:56:07Z",
+          "analysis-date": "2000-01-23T04:56:07.000+00:00",
+          "commit-date": "2000-01-23T04:56:07.000+00:00",
           "commit-id": "04d7a2300feec9bbcc48185e370e3b5d3ae4da9d",
           "language": "javascript",
           "lines": 133298,
