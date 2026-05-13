@@ -1,0 +1,48 @@
+invalid components: schema "EndUserAgreement": invalid default: Error at "/0": value must be an array
+Schema:
+  {
+    "items": {
+      "default": [
+        "balances",
+        "details",
+        "transactions"
+      ]
+    },
+    "title": "Level of information to access (by default all)",
+    "type": "array"
+  }
+
+Value:
+  "balances"
+ | Error at "/1": value must be an array
+Schema:
+  {
+    "items": {
+      "default": [
+        "balances",
+        "details",
+        "transactions"
+      ]
+    },
+    "title": "Level of information to access (by default all)",
+    "type": "array"
+  }
+
+Value:
+  "details"
+ | Error at "/2": value must be an array
+Schema:
+  {
+    "items": {
+      "default": [
+        "balances",
+        "details",
+        "transactions"
+      ]
+    },
+    "title": "Level of information to access (by default all)",
+    "type": "array"
+  }
+
+Value:
+  "transactions"

@@ -1,0 +1,13 @@
+invalid components: schema "Case": invalid example: minimum string length is 18
+Schema:
+  {
+    "description": "Document ID which is the parent document for the current document. This will be null if the current document is a parent document.",
+    "example": "CDOC3Ygn4ooAvNjHv",
+    "maxLength": 18,
+    "minLength": 18,
+    "nullable": true,
+    "type": "string"
+  }
+
+Value:
+  "CDOC3Ygn4ooAvNjHv"
