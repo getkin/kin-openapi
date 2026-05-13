@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"maps"
 	"strconv"
 
@@ -213,7 +212,7 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 
 	if v := operation.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
-			return fmt.Errorf("invalid external docs: %w", err)
+			return &SectionContextError{Section: "external docs", Cause: err}
 		}
 	}
 
