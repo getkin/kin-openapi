@@ -1,0 +1,197 @@
+invalid components: schema "CreditMemoFromChargeType": invalid example: doesn't match schema due to: Error at "/charges/0": doesn't match schema due to: Error at "/amount": Value is not nullable
+Schema:
+  {
+    "description": "The amount of the credit memo item.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `224.0` or later.\n",
+    "format": "double",
+    "type": "number"
+  }
+
+Value:
+  null
+ | Error at "/productRatePlanChargeId": property "productRatePlanChargeId" is missing
+Schema:
+  {
+    "properties": {
+      "amount": {
+        "description": "The amount of the credit memo item.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `224.0` or later.\n",
+        "format": "double",
+        "type": "number"
+      },
+      "chargeId": {
+        "description": "The ID of the product rate plan charge that the credit memo is created from.\n\n**Note**: This field is not available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "type": "string"
+      },
+      "comment": {
+        "description": "Comments about the product rate plan charge.\n\n**Note**: This field is not available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "description": {
+        "description": "The description of the product rate plan charge.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "financeInformation": {
+        "description": "Container for the finance information related to the product rate plan charge associated with the credit memo.\n",
+        "properties": {
+          "deferredRevenueAccountingCode": {
+            "description": "The accounting code for the deferred revenue, such as Monthly Recurring Liability.\n",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "onAccountAccountingCode": {
+            "description": "The accounting code that maps to an on account in your accounting system.\n",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "recognizedRevenueAccountingCode": {
+            "description": "The accounting code for the recognized revenue, such as Monthly Recurring Charges or Overage Charges.\n",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "revenueRecognitionRuleName": {
+            "description": "The name of the revenue recognition rule governing the revenue schedule.\n",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "memoItemAmount": {
+        "description": "The amount of the credit memo item.\n\n**Note**: This field is not available if you set the `zuora-version` request header to `224.0` or later.\n",
+        "format": "double",
+        "type": "number"
+      },
+      "productRatePlanChargeId": {
+        "description": "The ID of the product rate plan charge that the credit memo is created from.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "type": "string"
+      },
+      "quantity": {
+        "description": "The number of units for the credit memo item.\n",
+        "format": "double",
+        "type": "number"
+      },
+      "serviceEndDate": {
+        "description": "The service end date of the credit memo item. If not specified, the effective end date of the corresponding product rate plan will be used.\n",
+        "format": "date",
+        "type": "string"
+      },
+      "serviceStartDate": {
+        "description": "The service start date of the credit memo item. If not specified, the effective start date of the corresponding product rate plan will be used.\n",
+        "format": "date",
+        "type": "string"
+      }
+    },
+    "required": [
+      "chargeId",
+      "productRatePlanChargeId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "amount": null,
+    "chargeId": "402890555a87d7f5015a88c613c5001e",
+    "comment": "this is comment1",
+    "quantity": 1,
+    "serviceEndDate": "2018-10-17",
+    "serviceStartDate": "2017-10-17"
+  }
+ And Error at "/amount": Value is not nullable
+Schema:
+  {
+    "description": "Custom fields of the Credit Memo Item object. The name of each custom field has the form \u003ccode\u003e*customField*__c\u003c/code\u003e. Custom field names are case sensitive. See [Manage Custom Fields](https://knowledgecenter.zuora.com/BB_Introducing_Z_Business/Manage_Custom_Fields) for more information.\n"
+  }
+
+Value:
+  null
+ | Error at "/charges/1": doesn't match schema due to: Error at "/productRatePlanChargeId": property "productRatePlanChargeId" is missing
+Schema:
+  {
+    "properties": {
+      "amount": {
+        "description": "The amount of the credit memo item.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `224.0` or later.\n",
+        "format": "double",
+        "type": "number"
+      },
+      "chargeId": {
+        "description": "The ID of the product rate plan charge that the credit memo is created from.\n\n**Note**: This field is not available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "type": "string"
+      },
+      "comment": {
+        "description": "Comments about the product rate plan charge.\n\n**Note**: This field is not available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "description": {
+        "description": "The description of the product rate plan charge.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "financeInformation": {
+        "description": "Container for the finance information related to the product rate plan charge associated with the credit memo.\n",
+        "properties": {
+          "deferredRevenueAccountingCode": {
+            "description": "The accounting code for the deferred revenue, such as Monthly Recurring Liability.\n",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "onAccountAccountingCode": {
+            "description": "The accounting code that maps to an on account in your accounting system.\n",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "recognizedRevenueAccountingCode": {
+            "description": "The accounting code for the recognized revenue, such as Monthly Recurring Charges or Overage Charges.\n",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "revenueRecognitionRuleName": {
+            "description": "The name of the revenue recognition rule governing the revenue schedule.\n",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "memoItemAmount": {
+        "description": "The amount of the credit memo item.\n\n**Note**: This field is not available if you set the `zuora-version` request header to `224.0` or later.\n",
+        "format": "double",
+        "type": "number"
+      },
+      "productRatePlanChargeId": {
+        "description": "The ID of the product rate plan charge that the credit memo is created from.\n\n**Note**: This field is only available if you set the `zuora-version` request header to `257.0` or later.\n",
+        "type": "string"
+      },
+      "quantity": {
+        "description": "The number of units for the credit memo item.\n",
+        "format": "double",
+        "type": "number"
+      },
+      "serviceEndDate": {
+        "description": "The service end date of the credit memo item. If not specified, the effective end date of the corresponding product rate plan will be used.\n",
+        "format": "date",
+        "type": "string"
+      },
+      "serviceStartDate": {
+        "description": "The service start date of the credit memo item. If not specified, the effective start date of the corresponding product rate plan will be used.\n",
+        "format": "date",
+        "type": "string"
+      }
+    },
+    "required": [
+      "chargeId",
+      "productRatePlanChargeId"
+    ],
+    "type": "object"
+  }
+
+Value:
+  {
+    "amount": 20,
+    "chargeId": "402890555a7d4022015a7d90906b0067",
+    "comment": "this is comment2",
+    "serviceEndDate": "2018-10-17",
+    "serviceStartDate": "2017-10-17"
+  }

@@ -205,10 +205,7 @@ func disabled(shortName string) bool {
 		"mist_com_0_37_7_openapi_yaml",                                // TODO: flaky
 		"ndhm_gov_in_ndhm_cm_0_5_openapi_yaml",                        // TODO: flaky
 		"nexmo_com_voice_1_3_10_openapi_yaml",                         // TODO: flaky
-		"nordigen_com_2_0__v2__openapi_yaml",                          // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
 		"optimade_local_1_1_0_develop_openapi_yaml",                   // TODO: flaky
-		"unicourt_com_1_0_0_openapi_yaml",                             // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
-		"zuora_com_2021_08_20_openapi_yaml",                           // TODO: YAML dates in map keys https://github.com/invopop/yaml/issues/10
 		"^^^ lines sorted":
 		return true
 	}
