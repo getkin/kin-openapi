@@ -110,7 +110,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 		}
 
 		if err := pathItem.Validate(ctx); err != nil {
-			return fmt.Errorf("invalid path %s: %w", path, err)
+			return &PathValidationError{Path: path, Cause: err}
 		}
 	}
 
