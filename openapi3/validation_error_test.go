@@ -360,10 +360,11 @@ paths: {}
 }
 
 // Document-root fields (openapi, webhooks, jsonSchemaDialect) live on
-// *T which the loader doesn't track, so their Origin is always nil
-// even when IncludeOrigin is enabled. Pinned so callers know to fall
-// back to file-only when the field is at the doc root.
-func TestValidationError_OriginNilForDocumentRootFields(t *testing.T) {
+// *T, which now carries an Origin when IncludeOrigin is set. Their
+// RequiredFieldError / FieldVersionMismatchError therefore carries the
+// document's Origin: scalar root fields resolve precisely via
+// Origin.Fields; object/missing root fields fall back to Origin.Key.
+func TestValidationError_OriginForDocumentRootFields(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -379,7 +380,10 @@ paths: {}
 	var rfe *openapi3.RequiredFieldError
 	require.True(t, errors.As(verr, &rfe))
 	require.Equal(t, "openapi", rfe.Field)
-	require.Nil(t, rfe.Origin, "doc-root fields have no Origin (loader doesn't track *T)")
+	require.NotNil(t, rfe.Origin, "doc-root fields now carry the document's Origin")
+	require.Same(t, doc.Origin, rfe.Origin, "the error carries T.Origin")
+	require.Greater(t, rfe.Origin.Fields["openapi"].Line, 0,
+		`Origin.Fields["openapi"] locates the openapi: line`)
 }
 
 // SchemaValueError clusters "<schema field>'s example/default value

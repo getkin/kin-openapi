@@ -761,11 +761,9 @@ func newLicenseNameRequired(origin *Origin) error {
 		&LicenseNameRequired{ValidationError{Message: "value of license name must be a non-empty string"}}, origin)
 }
 
-// newOpenAPIVersionRequired has no Origin parameter: the OpenAPI version
-// string lives on the document root *T, which the loader doesn't track.
-func newOpenAPIVersionRequired() error {
+func newOpenAPIVersionRequired(origin *Origin) error {
 	return newRequiredField("openapi",
-		&OpenAPIVersionRequired{ValidationError{Message: "value of openapi must be a non-empty string"}}, nil)
+		&OpenAPIVersionRequired{ValidationError{Message: "value of openapi must be a non-empty string"}}, origin)
 }
 
 func newServerURLRequired(origin *Origin) error {
@@ -815,21 +813,19 @@ func newLinkOperationIDOrRefRequired(origin *Origin) error {
 		&LinkOperationIDOrRefRequired{ValidationError{Message: msg}}, origin)
 }
 
-// newInfoRequired and newPathsRequired don't take Origin: both fields
-// live on the document root *T, which the loader doesn't track.
-func newInfoRequired() error {
+func newInfoRequired(origin *Origin) error {
 	return newRequiredField("info",
-		&InfoRequired{ValidationError{Message: "must be an object"}}, nil)
+		&InfoRequired{ValidationError{Message: "must be an object"}}, origin)
 }
 
-func newPathsRequired() error {
+func newPathsRequired(origin *Origin) error {
 	return newRequiredField("paths",
-		&PathsRequired{ValidationError{Message: "must be an object"}}, nil)
+		&PathsRequired{ValidationError{Message: "must be an object"}}, origin)
 }
 
-func newJSONSchemaDialectAbsoluteURIRequired() error {
+func newJSONSchemaDialectAbsoluteURIRequired(origin *Origin) error {
 	return newRequiredField("jsonSchemaDialect",
-		&JSONSchemaDialectAbsoluteURIRequired{ValidationError{Message: "must be an absolute URI with a scheme"}}, nil)
+		&JSONSchemaDialectAbsoluteURIRequired{ValidationError{Message: "must be an absolute URI with a scheme"}}, origin)
 }
 
 // newSchemaBothForms wraps leaf in a *SchemaBothFormsExclusive carrying
@@ -1065,19 +1061,16 @@ func newLicenseIdentifierFieldFor31Plus(origin *Origin) error {
 		&LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
-// newWebhooksFieldFor31Plus and newJSONSchemaDialectFieldFor31Plus have no
-// Origin parameter: both fields live on the document root *T, which the
-// loader doesn't track.
-func newWebhooksFieldFor31Plus() error {
+func newWebhooksFieldFor31Plus(origin *Origin) error {
 	const msg = "field webhooks is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("webhooks",
-		&WebhooksFieldFor31Plus{ValidationError{Message: msg}}, nil)
+		&WebhooksFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
-func newJSONSchemaDialectFieldFor31Plus() error {
+func newJSONSchemaDialectFieldFor31Plus(origin *Origin) error {
 	const msg = "field jsonschemadialect is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("jsonschemadialect",
-		&JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}}, nil)
+		&JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 // fieldFor31PlusLeaves maps field names (as passed to errFieldFor31Plus)
