@@ -10,40 +10,40 @@ import (
 
 // Error() text format: "invalid <section>: <inner>" — byte-identical to
 // the fmt.Errorf wrapper this type replaced.
-func TestSectionContextError_Error(t *testing.T) {
+func TestSectionValidationError_Error(t *testing.T) {
 	inner := errors.New("value of version must be a non-empty string")
-	e := &SectionContextError{Section: "info", Cause: inner}
+	e := &SectionValidationError{Section: "info", Cause: inner}
 	require.Equal(t, "invalid info: value of version must be a non-empty string", e.Error())
 }
 
 // Unwrap returns the inner error so errors.Is / errors.As walk the chain.
-func TestSectionContextError_Unwrap(t *testing.T) {
+func TestSectionValidationError_Unwrap(t *testing.T) {
 	sentinel := errors.New("sentinel")
-	e := &SectionContextError{Section: "components", Cause: sentinel}
+	e := &SectionValidationError{Section: "components", Cause: sentinel}
 	require.True(t, errors.Is(e, sentinel))
 }
 
-func TestPathContextError_Error(t *testing.T) {
+func TestPathValidationError_Error(t *testing.T) {
 	inner := errors.New("bad path item")
-	e := &PathContextError{Path: "/users/{id}", Cause: inner}
+	e := &PathValidationError{Path: "/users/{id}", Cause: inner}
 	require.Equal(t, "invalid path /users/{id}: bad path item", e.Error())
 }
 
-func TestPathContextError_Unwrap(t *testing.T) {
+func TestPathValidationError_Unwrap(t *testing.T) {
 	sentinel := errors.New("sentinel")
-	e := &PathContextError{Path: "/x", Cause: sentinel}
+	e := &PathValidationError{Path: "/x", Cause: sentinel}
 	require.True(t, errors.Is(e, sentinel))
 }
 
-func TestOperationContextError_Error(t *testing.T) {
+func TestOperationValidationError_Error(t *testing.T) {
 	inner := errors.New("bad operation")
-	e := &OperationContextError{Method: "GET", Cause: inner}
+	e := &OperationValidationError{Method: "GET", Cause: inner}
 	require.Equal(t, "invalid operation GET: bad operation", e.Error())
 }
 
-func TestOperationContextError_Unwrap(t *testing.T) {
+func TestOperationValidationError_Unwrap(t *testing.T) {
 	sentinel := errors.New("sentinel")
-	e := &OperationContextError{Method: "POST", Cause: sentinel}
+	e := &OperationValidationError{Method: "POST", Cause: sentinel}
 	require.True(t, errors.Is(e, sentinel))
 }
 
@@ -54,28 +54,28 @@ func TestOperationContextError_Unwrap(t *testing.T) {
 // wrapped.
 func TestSectionPathOperationChain_AsExtraction(t *testing.T) {
 	leaf := errors.New("field const is for OpenAPI >=3.1")
-	chain := &SectionContextError{
+	chain := &SectionValidationError{
 		Section: "paths",
-		Cause: &PathContextError{
+		Cause: &PathValidationError{
 			Path: "/thing",
-			Cause: &OperationContextError{
+			Cause: &OperationValidationError{
 				Method: "GET",
 				Cause:  leaf,
 			},
 		},
 	}
 
-	var sce *SectionContextError
-	require.True(t, errors.As(chain, &sce))
-	require.Equal(t, "paths", sce.Section)
+	var sve *SectionValidationError
+	require.True(t, errors.As(chain, &sve))
+	require.Equal(t, "paths", sve.Section)
 
-	var pce *PathContextError
-	require.True(t, errors.As(chain, &pce))
-	require.Equal(t, "/thing", pce.Path)
+	var pve *PathValidationError
+	require.True(t, errors.As(chain, &pve))
+	require.Equal(t, "/thing", pve.Path)
 
-	var oce *OperationContextError
-	require.True(t, errors.As(chain, &oce))
-	require.Equal(t, "GET", oce.Method)
+	var ove *OperationValidationError
+	require.True(t, errors.As(chain, &ove))
+	require.Equal(t, "GET", ove.Method)
 
 	// And the leaf is still reachable via errors.Is.
 	require.True(t, errors.Is(chain, leaf))
@@ -88,11 +88,11 @@ func TestSectionPathOperationChain_AsExtraction(t *testing.T) {
 	)
 }
 
-// Mixed: a SectionContextError wrapping an arbitrary non-typed error
+// Mixed: a SectionValidationError wrapping an arbitrary non-typed error
 // still renders correctly. Guards against the typed wrapper changing
 // behaviour when the underlying error is not one of our cluster types.
-func TestSectionContextError_WrappingArbitrary(t *testing.T) {
+func TestSectionValidationError_WrappingArbitrary(t *testing.T) {
 	inner := fmt.Errorf("third-party error: %w", errors.New("x"))
-	e := &SectionContextError{Section: "webhooks", Cause: inner}
+	e := &SectionValidationError{Section: "webhooks", Cause: inner}
 	require.Equal(t, "invalid webhooks: third-party error: x", e.Error())
 }

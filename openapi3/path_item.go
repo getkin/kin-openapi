@@ -209,7 +209,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 	for _, method := range componentNames(operations) {
 		operation := operations[method]
 		if err := operation.Validate(ctx); err != nil {
-			return &OperationContextError{Method: method, Cause: err}
+			return &OperationValidationError{Method: method, Cause: err}
 		}
 	}
 

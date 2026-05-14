@@ -1408,24 +1408,24 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
     Validate returns an error if Operation does not comply with the OpenAPI
     spec.
 
-type OperationContextError struct {
-	Method string
-	Cause  error
-}
-    OperationContextError wraps an error originating inside a specific
-    HTTP-method operation under a path. Method is the uppercase method (GET,
-    POST, etc.).
-
-    Use errors.As(err, &oce) to extract the method from a validation error chain
-    without parsing the rendered message.
-
-func (e *OperationContextError) Error() string
-
-func (e *OperationContextError) Unwrap() error
-
 type OperationResponsesRequired struct{ ValidationError }
 
 func (e *OperationResponsesRequired) As(target any) bool
+
+type OperationValidationError struct {
+	Method string
+	Cause  error
+}
+    OperationValidationError wraps an error originating inside a specific
+    HTTP-method operation under a path. Method is the uppercase method (GET,
+    POST, etc.).
+
+    Use errors.As(err, &ove) to extract the method from a validation error chain
+    without parsing the rendered message.
+
+func (e *OperationValidationError) Error() string
+
+func (e *OperationValidationError) Unwrap() error
 
 type Origin struct {
 	Key       *Location             `json:"key,omitempty" yaml:"key,omitempty"`
@@ -1571,20 +1571,6 @@ func (m ParametersMap) JSONLookup(token string) (any, error)
 func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets ParametersMap to a copy of data.
 
-type PathContextError struct {
-	Path  string
-	Cause error
-}
-    PathContextError wraps an error originating inside a specific path. Path is
-    the path template as it appears in the document (e.g. "/users/{id}").
-
-    Use errors.As(err, &pce) to extract the path from a validation error chain
-    without parsing the rendered message.
-
-func (e *PathContextError) Error() string
-
-func (e *PathContextError) Unwrap() error
-
 type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -1643,6 +1629,20 @@ type PathParametersError struct {
     filter without parsing the message.
 
 func (e *PathParametersError) Error() string
+
+type PathValidationError struct {
+	Path  string
+	Cause error
+}
+    PathValidationError wraps an error originating inside a specific path. Path
+    is the path template as it appears in the document (e.g. "/users/{id}").
+
+    Use errors.As(err, &pve) to extract the path from a validation error chain
+    without parsing the rendered message.
+
+func (e *PathValidationError) Error() string
+
+func (e *PathValidationError) Unwrap() error
 
 type Paths struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2536,21 +2536,21 @@ func (m Schemas) JSONLookup(token string) (any, error)
 func (schemas *Schemas) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Schemas to a copy of data.
 
-type SectionContextError struct {
+type SectionValidationError struct {
 	Section string
 	Cause   error
 }
-    SectionContextError wraps an error originating inside one of the top-level
-    OpenAPI document sections (info, paths, components, security, servers, tags,
-    externalDocs, webhooks, jsonSchemaDialect). Section is the OpenAPI field
-    name as it appears in the document root.
+    SectionValidationError wraps an error originating inside one of the
+    top-level OpenAPI document sections (info, paths, components, security,
+    servers, tags, externalDocs, webhooks, jsonSchemaDialect). Section is the
+    OpenAPI field name as it appears in the document root.
 
-    Use errors.As(err, &sce) to extract the section context from a validation
+    Use errors.As(err, &sve) to extract the section context from a validation
     error chain without parsing the rendered message.
 
-func (e *SectionContextError) Error() string
+func (e *SectionValidationError) Error() string
 
-func (e *SectionContextError) Unwrap() error
+func (e *SectionValidationError) Unwrap() error
 
 type SecurityRequirement map[string][]string
     SecurityRequirement is specified by OpenAPI/Swagger standard version 3. See

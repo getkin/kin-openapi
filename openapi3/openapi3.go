@@ -280,14 +280,14 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 
 	var wrap func(error) error
 
-	wrap = func(e error) error { return &SectionContextError{Section: "components", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "components", Cause: e} }
 	if v := doc.Components; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "info", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "info", Cause: e} }
 	if v := doc.Info; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
@@ -296,7 +296,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		return wrap(newInfoRequired())
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "paths", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "paths", Cause: e} }
 	if v := doc.Paths; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
@@ -305,35 +305,35 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		return wrap(newPathsRequired())
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "security", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "security", Cause: e} }
 	if v := doc.Security; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "servers", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "servers", Cause: e} }
 	if v := doc.Servers; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "tags", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "tags", Cause: e} }
 	if v := doc.Tags; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "external docs", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "external docs", Cause: e} }
 	if v := doc.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return wrap(err)
 		}
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "webhooks", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "webhooks", Cause: e} }
 	for _, name := range componentNames(doc.Webhooks) {
 		pathItem := doc.Webhooks[name]
 		if pathItem == nil {
@@ -344,7 +344,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	wrap = func(e error) error { return &SectionContextError{Section: "jsonSchemaDialect", Cause: e} }
+	wrap = func(e error) error { return &SectionValidationError{Section: "jsonSchemaDialect", Cause: e} }
 	if doc.JSONSchemaDialect != "" {
 		u, err := url.Parse(doc.JSONSchemaDialect)
 		if err != nil {

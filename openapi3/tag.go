@@ -90,7 +90,7 @@ func (t *Tag) Validate(ctx context.Context, opts ...ValidationOption) error {
 
 	if v := t.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
-			return &SectionContextError{Section: "external docs", Cause: err}
+			return &SectionValidationError{Section: "external docs", Cause: err}
 		}
 	}
 

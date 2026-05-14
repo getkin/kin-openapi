@@ -1885,7 +1885,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 
 	if v := schema.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
-			return stack, &SectionContextError{Section: "external docs", Cause: err}
+			return stack, &SectionValidationError{Section: "external docs", Cause: err}
 		}
 	}
 
