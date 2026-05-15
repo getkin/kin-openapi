@@ -1,4 +1,4 @@
-invalid paths: invalid path /v1/environments/{environmentId}/settings/{settingId}/value: invalid operation PATCH: example add percentage rules: value must be an object
+invalid paths: invalid path /v1/environments/{environmentId}/settings/{settingId}/value: invalid operation PATCH: invalid example: example add percentage rules: value must be an object
 Schema:
   {
     "additionalProperties": false,

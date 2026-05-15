@@ -1,4 +1,4 @@
-invalid webhooks: webhook "merchant.updated": invalid operation POST: example merchant-updated-with-errors: Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/0/code": value must be a string
+invalid webhooks: webhook "merchant.updated": invalid operation POST: invalid example: example merchant-updated-with-errors: Error at "/data/capabilities/receivePayments/problems/0/verificationErrors/0/code": value must be a string
 Schema:
   {
     "description": "The verification error code.",

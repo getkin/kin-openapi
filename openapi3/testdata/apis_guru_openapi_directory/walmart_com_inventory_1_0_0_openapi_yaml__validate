@@ -1,4 +1,4 @@
-invalid paths: invalid path /v3/feeds: invalid operation POST: example MultiNode_Bulk_Inventory_Update_Request: Error at "/file": property "file" is missing
+invalid paths: invalid path /v3/feeds: invalid operation POST: invalid example: example MultiNode_Bulk_Inventory_Update_Request: Error at "/file": property "file" is missing
 Schema:
   {
     "properties": {

@@ -1,4 +1,4 @@
-invalid paths: invalid path /bet/complex: invalid operation POST: example response: value must be an array
+invalid paths: invalid path /bet/complex: invalid operation POST: invalid example: example response: value must be an array
 Schema:
   {
     "items": {

@@ -1,4 +1,4 @@
-invalid paths: invalid path /debitAccountHolder: invalid operation POST: example debit-account-holder: validation failed due to: error at "/submittedAsync": at '/submittedAsync': got string, want boolean
+invalid paths: invalid path /debitAccountHolder: invalid operation POST: invalid example: example debit-account-holder: validation failed due to: error at "/submittedAsync": at '/submittedAsync': got string, want boolean
 Schema:
   null
 

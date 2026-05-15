@@ -1,4 +1,4 @@
-invalid paths: invalid path /files/{file_id}#add_shared_link: invalid operation PUT: example default: doesn't match schema due to: doesn't match schema due to: Error at "/sequence_id": property "sequence_id" is missing
+invalid paths: invalid path /files/{file_id}#add_shared_link: invalid operation PUT: invalid example: example default: doesn't match schema due to: doesn't match schema due to: Error at "/sequence_id": property "sequence_id" is missing
 Schema:
   {
     "allOf": [

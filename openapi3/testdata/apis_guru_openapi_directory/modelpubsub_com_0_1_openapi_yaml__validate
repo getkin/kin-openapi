@@ -1,4 +1,4 @@
-invalid paths: invalid path /api-v1.0/SafeUnsafeImageWithTags: invalid operation POST: example 0: value must be an object
+invalid paths: invalid path /api-v1.0/SafeUnsafeImageWithTags: invalid operation POST: invalid example: example 0: value must be an object
 Schema:
   {
     "properties": {

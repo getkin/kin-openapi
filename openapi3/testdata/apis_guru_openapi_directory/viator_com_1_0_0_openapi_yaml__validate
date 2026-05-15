@@ -1,4 +1,4 @@
-invalid paths: invalid path /available/products: invalid operation POST: example 1: doesn't match schema due to: Error at "/errorMessage": value must be an array
+invalid paths: invalid path /available/products: invalid operation POST: invalid example: example 1: doesn't match schema due to: Error at "/errorMessage": value must be an array
 Schema:
   {
     "description": "**array** of error message strings",

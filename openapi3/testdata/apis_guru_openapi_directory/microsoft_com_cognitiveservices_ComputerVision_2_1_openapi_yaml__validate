@@ -1,4 +1,4 @@
-invalid components: parameter "DetectOrientation": Successful RecognizePrintedText request: value must be a boolean
+invalid components: parameter "DetectOrientation": invalid example: Successful RecognizePrintedText request: value must be a boolean
 Schema:
   {
     "default": true,

@@ -399,7 +399,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 					return fmt.Errorf("%s: %w", k, err)
 				}
 				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
-					return fmt.Errorf("%s: %w", k, err)
+					return newSchemaValueError("example", fmt.Errorf("%s: %w", k, err), parameter.Origin)
 				}
 			}
 		}

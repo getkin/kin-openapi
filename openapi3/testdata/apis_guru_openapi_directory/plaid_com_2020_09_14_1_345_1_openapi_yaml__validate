@@ -1,4 +1,4 @@
-invalid paths: invalid path /asset_report/get: invalid operation POST: example example-1: Error at "/report/items/0/accounts/0": doesn't match schema due to: Error at "/balances/limit": property "limit" is missing
+invalid paths: invalid path /asset_report/get: invalid operation POST: invalid example: example example-1: Error at "/report/items/0/accounts/0": doesn't match schema due to: Error at "/balances/limit": property "limit" is missing
 Schema:
   {
     "additionalProperties": true,
