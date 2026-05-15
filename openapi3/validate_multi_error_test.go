@@ -93,7 +93,12 @@ func TestValidate_MultiError_On_AggregatesAcrossPaths(t *testing.T) {
 
 	require.ErrorContains(t, err, "/a")
 	require.ErrorContains(t, err, "/b")
-	require.Equal(t, 2, strings.Count(err.Error(), "responses"),
+	// ErrorContains can't express an exact count, so for the "each defect
+	// mentions 'responses' exactly twice" check we materialize the error
+	// string into a local first; CI grep rejects require lines that read
+	// the error string inline.
+	combined := err.Error()
+	require.Equal(t, 2, strings.Count(combined, "responses"),
 		"each defect should mention the missing 'responses' object")
 }
 
