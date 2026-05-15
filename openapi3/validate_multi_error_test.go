@@ -171,3 +171,30 @@ paths:
 	doc := loadDoc(t, goodSpec)
 	require.NoError(t, doc.Validate(context.Background(), openapi3.EnableMultiError()))
 }
+
+// TestResponses_Validate_EmptyAndExtensionAggregate pins a regression caught
+// in review: Responses.Validate previously short-circuited with
+// "return me.result()" right after emitting the empty-responses finding,
+// which meant validateExtensions never ran on empty responses. Under
+// multi-error mode, an empty Responses with a non-x- sibling key on its
+// Extensions map must surface BOTH findings, not just the first one.
+func TestResponses_Validate_EmptyAndExtensionAggregate(t *testing.T) {
+	responses := openapi3.NewResponses()
+	require.Equal(t, 0, responses.Len(), "fixture: Responses must be empty for this test")
+	// Non-x- key in Extensions triggers validateExtensions's
+	// "extra sibling fields" error.
+	responses.Extensions = map[string]any{"bogus-sibling": "anything"}
+
+	ctx := openapi3.WithValidationOptions(context.Background(), openapi3.EnableMultiError())
+	err := responses.Validate(ctx)
+	require.Error(t, err)
+
+	var me openapi3.MultiError
+	require.True(t, errors.As(err, &me), "expected MultiError under EnableMultiError")
+	require.Equal(t, 2, countLeaves(err),
+		"expected one leaf for empty-responses and one for the bogus extension key")
+
+	combined := err.Error()
+	require.Contains(t, combined, "the responses object MUST contain at least one response code")
+	require.Contains(t, combined, "bogus-sibling")
+}
