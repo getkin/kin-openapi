@@ -237,3 +237,13 @@ func (c *errCollector) result() error {
 	}
 	return nil
 }
+
+// finalize emits err (typically the last sibling validation in a container,
+// e.g. the extensions check) and returns the accumulated result. It collapses
+// the trailing emit-then-result pattern into a single line at each call site.
+func (c *errCollector) finalize(err error) error {
+	if e := c.emit(err); e != nil {
+		return e
+	}
+	return c.result()
+}

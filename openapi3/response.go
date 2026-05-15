@@ -88,11 +88,7 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	if err := me.emit(validateExtensions(ctx, responses.Extensions)); err != nil {
-		return err
-	}
-
-	return me.result()
+	return me.finalize(validateExtensions(ctx, responses.Extensions))
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.

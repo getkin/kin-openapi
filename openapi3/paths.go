@@ -128,11 +128,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 		return err
 	}
 
-	if err := me.emit(validateExtensions(ctx, paths.Extensions)); err != nil {
-		return err
-	}
-
-	return me.result()
+	return me.finalize(validateExtensions(ctx, paths.Extensions))
 }
 
 // InMatchingOrder returns paths in the order they are matched against URLs.

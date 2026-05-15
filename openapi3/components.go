@@ -182,11 +182,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 		return err
 	}
 
-	if err := me.emit(validateExtensions(ctx, components.Extensions)); err != nil {
-		return err
-	}
-
-	return me.result()
+	return me.finalize(validateExtensions(ctx, components.Extensions))
 }
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)

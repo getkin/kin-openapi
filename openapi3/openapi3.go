@@ -368,11 +368,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	if err := me.emit(validateExtensions(ctx, doc.Extensions)); err != nil {
-		return err
-	}
-
-	return me.result()
+	return me.finalize(validateExtensions(ctx, doc.Extensions))
 }
 
 // ValidateSchemaJSON validates data against a schema using this document's format validators.

@@ -218,9 +218,5 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	if err := me.emit(validateExtensions(ctx, operation.Extensions)); err != nil {
-		return err
-	}
-
-	return me.result()
+	return me.finalize(validateExtensions(ctx, operation.Extensions))
 }

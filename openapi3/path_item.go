@@ -221,11 +221,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
-	if err := me.emit(validateExtensions(ctx, pathItem.Extensions)); err != nil {
-		return err
-	}
-
-	return me.result()
+	return me.finalize(validateExtensions(ctx, pathItem.Extensions))
 }
 
 // isEmpty's introduced in 546590b1
