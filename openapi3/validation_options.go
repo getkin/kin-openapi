@@ -15,6 +15,7 @@ type ValidationOptions struct {
 	schemaExtensionsInRefProhibited                  bool
 	jsonSchema2020ValidationEnabled                  bool
 	isOpenAPI31OrLater                               bool
+	multiErrorEnabled                                bool
 	regexCompilerFunc                                RegexCompilerFunc
 	extraSiblingFieldsAllowed                        map[string]struct{}
 }
@@ -124,6 +125,23 @@ func ProhibitExtensionsWithRef() ValidationOption {
 	}
 }
 
+// EnableMultiError makes Validate aggregate independent validation errors and
+// return them all as a MultiError, instead of returning the first one and stopping.
+//
+// Aggregation happens at container fan-out points (the document root, Paths,
+// PathItem, Operation, Components, Responses, Webhooks). Validation of a single
+// leaf element (for example, a single Schema) still stops at its first error.
+//
+// By default, Validate returns the first error encountered (fail-fast).
+//
+// Note: callers should use errors.As / errors.Is to inspect the returned error,
+// since MultiError.As and MultiError.Is walk into the contained errors.
+func EnableMultiError() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.multiErrorEnabled = true
+	}
+}
+
 // SetRegexCompiler allows to override the regex implementation used to validate
 // field "pattern".
 func SetRegexCompiler(c RegexCompilerFunc) ValidationOption {
@@ -149,4 +167,73 @@ func getValidationOptions(ctx context.Context) *ValidationOptions {
 		return options
 	}
 	return &ValidationOptions{}
+}
+
+// errCollector aggregates validation errors at a container fan-out point.
+//
+// When multi-error mode is enabled (EnableMultiError), emit records the error
+// and returns nil so the caller continues to the next sibling; if the error is
+// itself a MultiError, its leaves are appended individually so the result is a
+// flat MultiError of fully-wrapped problems (this matches what most consumers
+// expect — one MultiError entry per independent problem).
+//
+// When multi-error mode is off, emit returns the error unchanged so the caller
+// fails fast — preserving the historical behavior byte-for-byte.
+//
+// emitWrapped applies wrap to err, distributing wrap over each leaf when err
+// is a MultiError. This is how container validators attach per-section /
+// per-path / per-operation context to each aggregated leaf.
+//
+// result returns the accumulated MultiError, or nil if none were recorded.
+type errCollector struct {
+	multi bool
+	errs  MultiError
+}
+
+func newErrCollector(ctx context.Context) *errCollector {
+	return &errCollector{multi: getValidationOptions(ctx).multiErrorEnabled}
+}
+
+func (c *errCollector) emit(err error) error {
+	if err == nil {
+		return nil
+	}
+	if !c.multi {
+		return err
+	}
+	if me, ok := err.(MultiError); ok {
+		for _, sub := range me {
+			if e := c.emit(sub); e != nil {
+				return e
+			}
+		}
+		return nil
+	}
+	c.errs = append(c.errs, err)
+	return nil
+}
+
+func (c *errCollector) emitWrapped(wrap func(error) error, err error) error {
+	if err == nil {
+		return nil
+	}
+	if !c.multi {
+		return wrap(err)
+	}
+	if me, ok := err.(MultiError); ok {
+		for _, sub := range me {
+			if e := c.emitWrapped(wrap, sub); e != nil {
+				return e
+			}
+		}
+		return nil
+	}
+	return c.emit(wrap(err))
+}
+
+func (c *errCollector) result() error {
+	if len(c.errs) > 0 {
+		return c.errs
+	}
+	return nil
 }

@@ -75,6 +75,7 @@ func (responses *Responses) Status(status int) *ResponseRef {
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
 func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	me := newErrCollector(ctx)
 
 	if responses.Len() == 0 {
 		return newResponsesNonEmptyRequired(responses.Origin)
@@ -82,12 +83,16 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 
 	for _, key := range responses.Keys() {
 		v := responses.Value(key)
-		if err := v.Validate(ctx); err != nil {
+		if err := me.emit(v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
-	return validateExtensions(ctx, responses.Extensions)
+	if err := me.emit(validateExtensions(ctx, responses.Extensions)); err != nil {
+		return err
+	}
+
+	return me.result()
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.

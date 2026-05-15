@@ -419,7 +419,7 @@ func (components Components) MarshalYAML() (any, error)
 func (components *Components) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Components to a copy of data.
 
-func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) (err error)
+func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Components does not comply with the OpenAPI
     spec.
 
@@ -3161,6 +3161,21 @@ func DisableSchemaPatternValidation() ValidationOption
 func EnableExamplesValidation() ValidationOption
     EnableExamplesValidation does the opposite of DisableExamplesValidation.
     By default, all schema examples are validated.
+
+func EnableMultiError() ValidationOption
+    EnableMultiError makes Validate aggregate independent validation errors
+    and return them all as a MultiError, instead of returning the first one and
+    stopping.
+
+    Aggregation happens at container fan-out points (the document root, Paths,
+    PathItem, Operation, Components, Responses, Webhooks). Validation of a
+    single leaf element (for example, a single Schema) still stops at its first
+    error.
+
+    By default, Validate returns the first error encountered (fail-fast).
+
+    Note: callers should use errors.As / errors.Is to inspect the returned
+    error, since MultiError.As and MultiError.Is walk into the contained errors.
 
 func EnableSchemaDefaultsValidation() ValidationOption
     EnableSchemaDefaultsValidation does the opposite of

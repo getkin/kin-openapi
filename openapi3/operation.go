@@ -189,32 +189,38 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 // Validate returns an error if Operation does not comply with the OpenAPI spec.
 func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	me := newErrCollector(ctx)
 
 	if v := operation.Parameters; v != nil {
-		if err := v.Validate(ctx); err != nil {
+		if err := me.emit(v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
 	if v := operation.RequestBody; v != nil {
-		if err := v.Validate(ctx); err != nil {
+		if err := me.emit(v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
 	if v := operation.Responses; v != nil {
-		if err := v.Validate(ctx); err != nil {
+		if err := me.emit(v.Validate(ctx)); err != nil {
 			return err
 		}
-	} else {
-		return newOperationResponsesRequired(operation.Origin)
+	} else if err := me.emit(newOperationResponsesRequired(operation.Origin)); err != nil {
+		return err
 	}
 
 	if v := operation.ExternalDocs; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return &SectionValidationError{Section: "external docs", Cause: err}
+		wrap := func(e error) error { return &SectionValidationError{Section: "external docs", Cause: e} }
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	return validateExtensions(ctx, operation.Extensions)
+	if err := me.emit(validateExtensions(ctx, operation.Extensions)); err != nil {
+		return err
+	}
+
+	return me.result()
 }

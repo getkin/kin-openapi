@@ -41,13 +41,17 @@ func WithPath(path string, pathItem *PathItem) NewPathsOption {
 // Validate returns an error if Paths does not comply with the OpenAPI spec.
 func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	me := newErrCollector(ctx)
 
 	normalizedPaths := make(map[string]string, paths.Len())
 
 	for _, path := range paths.Keys() {
 		pathItem := paths.Value(path)
 		if path == "" || path[0] != '/' {
-			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
+			if err := me.emit(fmt.Errorf("path %q does not start with a forward slash (/)", path)); err != nil {
+				return err
+			}
+			continue
 		}
 
 		if pathItem == nil {
@@ -57,7 +61,10 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
 		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
-			return fmt.Errorf("conflicting paths %q and %q", path, oldPath)
+			if err := me.emit(fmt.Errorf("conflicting paths %q and %q", path, oldPath)); err != nil {
+				return err
+			}
+			continue
 		}
 		normalizedPaths[path] = path
 
@@ -99,26 +106,33 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 					missing[name] = struct{}{}
 				}
 				if len(missing) != 0 {
-					return &PathParametersError{
+					if err := me.emit(&PathParametersError{
 						Path:    path,
 						Method:  method,
 						Missing: componentNames(missing),
 						Origin:  pathItem.Origin,
+					}); err != nil {
+						return err
 					}
 				}
 			}
 		}
 
-		if err := pathItem.Validate(ctx); err != nil {
-			return &PathValidationError{Path: path, Cause: err}
+		wrapPath := func(e error) error { return &PathValidationError{Path: path, Cause: e} }
+		if err := me.emitWrapped(wrapPath, pathItem.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	if err := paths.validateUniqueOperationIDs(); err != nil {
+	if err := me.emit(paths.validateUniqueOperationIDs()); err != nil {
 		return err
 	}
 
-	return validateExtensions(ctx, paths.Extensions)
+	if err := me.emit(validateExtensions(ctx, paths.Extensions)); err != nil {
+		return err
+	}
+
+	return me.result()
 }
 
 // InMatchingOrder returns paths in the order they are matched against URLs.
