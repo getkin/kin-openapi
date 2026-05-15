@@ -81,7 +81,8 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 		if err := me.emit(newResponsesNonEmptyRequired(responses.Origin)); err != nil {
 			return err
 		}
-		return me.result()
+		// Fall through so validateExtensions still runs and any extension
+		// errors aggregate with the empty-responses finding under multi mode.
 	}
 
 	for _, key := range responses.Keys() {
