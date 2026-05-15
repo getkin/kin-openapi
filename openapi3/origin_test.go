@@ -10,6 +10,27 @@ import (
 
 const originKey = "__origin__"
 
+func TestOrigin_T(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
+	loader.Context = t.Context()
+
+	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
+	require.NoError(t, err)
+
+	require.NotNil(t, doc.Origin)
+	require.NotNil(t, doc.Origin.Key)
+	require.Equal(t,
+		openapi3.Location{
+			File:   "testdata/origin/simple.yaml",
+			Line:   1,
+			Column: 1,
+			Name:   "openapi",
+		},
+		doc.Origin.Fields["openapi"])
+}
+
 func TestOrigin_Info(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true

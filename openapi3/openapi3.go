@@ -16,6 +16,7 @@ import (
 // and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
 	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
 	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
@@ -268,14 +269,14 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if doc.OpenAPI == "" {
-		return newOpenAPIVersionRequired()
+		return newOpenAPIVersionRequired(doc.Origin)
 	}
 
 	if doc.Webhooks != nil && !doc.IsOpenAPI31OrLater() {
-		return newWebhooksFieldFor31Plus()
+		return newWebhooksFieldFor31Plus(doc.Origin)
 	}
 	if doc.JSONSchemaDialect != "" && !doc.IsOpenAPI31OrLater() {
-		return newJSONSchemaDialectFieldFor31Plus()
+		return newJSONSchemaDialectFieldFor31Plus(doc.Origin)
 	}
 
 	var wrap func(error) error
@@ -293,7 +294,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return wrap(err)
 		}
 	} else {
-		return wrap(newInfoRequired())
+		return wrap(newInfoRequired(doc.Origin))
 	}
 
 	wrap = func(e error) error { return &SectionValidationError{Section: "paths", Cause: e} }
@@ -302,7 +303,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return wrap(err)
 		}
 	} else if doc.IsOpenAPI30() {
-		return wrap(newPathsRequired())
+		return wrap(newPathsRequired(doc.Origin))
 	}
 
 	wrap = func(e error) error { return &SectionValidationError{Section: "security", Cause: e} }
@@ -351,7 +352,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			return wrap(err)
 		}
 		if u.Scheme == "" {
-			return wrap(newJSONSchemaDialectAbsoluteURIRequired())
+			return wrap(newJSONSchemaDialectAbsoluteURIRequired(doc.Origin))
 		}
 	}
 

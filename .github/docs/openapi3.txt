@@ -2824,6 +2824,7 @@ func (stringMap *StringMap[V]) UnmarshalJSON(data []byte) (err error)
 
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
 	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
 	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
