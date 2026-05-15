@@ -290,79 +290,90 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		return func(e error) error { return &SectionValidationError{Section: section, Cause: e} }
 	}
 
+	var wrap func(error) error
+
+	wrap = wrapSection("components")
 	if v := doc.Components; v != nil {
-		if err := me.emitWrapped(wrapSection("components"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("info")
 	if v := doc.Info; v != nil {
-		if err := me.emitWrapped(wrapSection("info"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
-	} else if err := me.emit(wrapSection("info")(newInfoRequired(doc.Origin))); err != nil {
+	} else if err := me.emit(wrap(newInfoRequired(doc.Origin))); err != nil {
 		return err
 	}
 
+	wrap = wrapSection("paths")
 	if v := doc.Paths; v != nil {
-		if err := me.emitWrapped(wrapSection("paths"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	} else if doc.IsOpenAPI30() {
-		if err := me.emit(wrapSection("paths")(newPathsRequired(doc.Origin))); err != nil {
+		if err := me.emit(wrap(newPathsRequired(doc.Origin))); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("security")
 	if v := doc.Security; v != nil {
-		if err := me.emitWrapped(wrapSection("security"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("servers")
 	if v := doc.Servers; v != nil {
-		if err := me.emitWrapped(wrapSection("servers"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("tags")
 	if v := doc.Tags; v != nil {
-		if err := me.emitWrapped(wrapSection("tags"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("external docs")
 	if v := doc.ExternalDocs; v != nil {
-		if err := me.emitWrapped(wrapSection("external docs"), v.Validate(ctx)); err != nil {
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("webhooks")
 	for _, name := range componentNames(doc.Webhooks) {
 		pathItem := doc.Webhooks[name]
-		wrapWebhook := func(e error) error {
-			return &SectionValidationError{Section: "webhooks", Cause: fmt.Errorf("webhook %q: %w", name, e)}
-		}
 		if pathItem == nil {
-			if err := me.emit(wrapSection("webhooks")(newWebhookNil(name))); err != nil {
+			if err := me.emit(wrap(newWebhookNil(name))); err != nil {
 				return err
 			}
+			// Nothing to descend into for a nil webhook; the nil itself
+			// is the only finding under this name until the entry is
+			// populated, so continue to the next webhook.
 			continue
 		}
+		wrapWebhook := func(e error) error { return wrap(fmt.Errorf("webhook %q: %w", name, e)) }
 		if err := me.emitWrapped(wrapWebhook, pathItem.Validate(ctx)); err != nil {
 			return err
 		}
 	}
 
+	wrap = wrapSection("jsonSchemaDialect")
 	if doc.JSONSchemaDialect != "" {
-		wrapDialect := wrapSection("jsonSchemaDialect")
 		u, err := url.Parse(doc.JSONSchemaDialect)
 		if err != nil {
-			if err = me.emit(wrapDialect(err)); err != nil {
+			if err = me.emit(wrap(err)); err != nil {
 				return err
 			}
 		} else if u.Scheme == "" {
-			if err := me.emit(wrapDialect(newJSONSchemaDialectAbsoluteURIRequired(doc.Origin))); err != nil {
+			if err := me.emit(wrap(newJSONSchemaDialectAbsoluteURIRequired(doc.Origin))); err != nil {
 				return err
 			}
 		}

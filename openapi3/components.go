@@ -118,6 +118,11 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 				if err := me.emit(fmt.Errorf("%s %q: %w", label, k, idErr)); err != nil {
 					return err
 				}
+				// Skip validating the component's value when its name is
+				// invalid: any leaf error from validate(k) would surface as
+				// "<bad-name>: <leaf-error>" and has no resolution path
+				// until the name is fixed. The continue keeps the noise
+				// per component bounded to a single, actionable finding.
 				continue
 			}
 			wrap := func(e error) error { return fmt.Errorf("%s %q: %w", label, k, e) }

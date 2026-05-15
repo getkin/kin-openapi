@@ -78,7 +78,10 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 	me := newErrCollector(ctx)
 
 	if responses.Len() == 0 {
-		return newResponsesNonEmptyRequired(responses.Origin)
+		if err := me.emit(newResponsesNonEmptyRequired(responses.Origin)); err != nil {
+			return err
+		}
+		return me.result()
 	}
 
 	for _, key := range responses.Keys() {

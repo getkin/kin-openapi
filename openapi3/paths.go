@@ -51,6 +51,9 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 			if err := me.emit(fmt.Errorf("path %q does not start with a forward slash (/)", path)); err != nil {
 				return err
 			}
+			// Skip validating operations under a malformed path key: any
+			// findings below would be addressed under a path that has no
+			// resolution path until the key itself is fixed.
 			continue
 		}
 
@@ -64,6 +67,10 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 			if err := me.emit(fmt.Errorf("conflicting paths %q and %q", path, oldPath)); err != nil {
 				return err
 			}
+			// Skip validating operations under a duplicate path: the
+			// first occurrence already validated its operations under the
+			// canonical path, so re-running would surface duplicate-but-
+			// identical findings without new information.
 			continue
 		}
 		normalizedPaths[path] = path

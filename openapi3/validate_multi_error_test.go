@@ -91,10 +91,9 @@ func TestValidate_MultiError_On_AggregatesAcrossPaths(t *testing.T) {
 	require.True(t, errors.As(err, &me), "expected MultiError")
 	require.Equal(t, 2, countLeaves(err), "expected one leaf per bad path")
 
-	combined := err.Error()
-	require.Contains(t, combined, "/a")
-	require.Contains(t, combined, "/b")
-	require.Equal(t, 2, strings.Count(combined, "responses"),
+	require.ErrorContains(t, err, "/a")
+	require.ErrorContains(t, err, "/b")
+	require.Equal(t, 2, strings.Count(err.Error(), "responses"),
 		"each defect should mention the missing 'responses' object")
 }
 
@@ -106,8 +105,8 @@ func TestValidate_MultiError_On_AggregatesAcrossSections(t *testing.T) {
 
 	var me openapi3.MultiError
 	require.True(t, errors.As(err, &me), "expected MultiError")
-	require.GreaterOrEqual(t, len(me), 2,
-		"expected at least one error per affected section")
+	require.Equal(t, 2, len(me),
+		"expected one error per affected section")
 
 	// Confirm both sections are represented in the chain.
 	var foundComponents, foundPaths bool
