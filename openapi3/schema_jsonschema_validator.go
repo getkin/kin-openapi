@@ -200,13 +200,31 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 	}
 }
 
-// useJSONSchema2020 validates using the JSON Schema 2020-12 validator
+// useJSONSchema2020 validates using the JSON Schema 2020-12 validator.
+//
+// The compiled validator is cached in [compiledJSONSchemaValidators] so that
+// the (expensive) compilation cost is paid once per *Schema rather than once
+// per call. NOTE: racey WRT mutations to *Schema fields after the first
+// call -- mirrors the assumption already made by [compiledPatterns].
 func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, value any) error {
+	if cached, ok := compiledJSONSchemaValidators.Load(schema); ok {
+		return cached.(*jsonSchemaValidator).validate(value)
+	}
+
 	validator, err := newJSONSchemaValidator(schema)
 	if err != nil {
-		// Fall back to built-in validator if compilation fails
+		// Fall back to built-in validator if compilation fails. Compilation
+		// failures are not cached: the compiler is deterministic given the
+		// schema, so if it fails once it will fail again, but caching the
+		// failure would require a sentinel value and the fall-through path
+		// is rare enough that the extra complexity is not worth it.
 		return schema.visitJSON(settings, value)
 	}
 
-	return validator.validate(value)
+	// LoadOrStore so that two goroutines racing on the first compilation for
+	// a given schema converge on a single cached validator. Either compiled
+	// validator is functionally identical, so it is safe to discard ours if
+	// another goroutine stored first.
+	actual, _ := compiledJSONSchemaValidators.LoadOrStore(schema, validator)
+	return actual.(*jsonSchemaValidator).validate(value)
 }

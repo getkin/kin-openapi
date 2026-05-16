@@ -45,7 +45,8 @@ var (
 	// ErrSchemaInputInf may be returned when validating a number
 	ErrSchemaInputInf = errors.New("floating point Inf is not allowed")
 
-	compiledPatterns sync.Map
+	compiledPatterns             sync.Map // map[string]*regexp.Regexp
+	compiledJSONSchemaValidators sync.Map // map[*Schema]*jsonSchemaValidator
 )
 
 // NewSchemaRef simply builds a SchemaRef
