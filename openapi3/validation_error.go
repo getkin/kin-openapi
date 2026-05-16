@@ -1031,6 +1031,21 @@ func newSchemaValueError(valueKind string, cause error, origin *Origin) error {
 	return &SchemaValueError{ValueKind: valueKind, Cause: cause, Origin: origin}
 }
 
+// exampleValueOrigin returns an Origin pinned to the example's `value:`
+// field, used when wrapping a plural Examples entry's validation failure.
+// Falls back to the example's struct origin, then the parent fallback
+// origin (parameter or media type), so consumers always have something
+// useful to deep-link to.
+func exampleValueOrigin(ex *Example, fallback *Origin) *Origin {
+	if ex == nil || ex.Origin == nil {
+		return fallback
+	}
+	if loc, ok := ex.Origin.Fields["value"]; ok {
+		return &Origin{Key: &loc}
+	}
+	return ex.Origin
+}
+
 // newFieldVersionMismatch wraps leaf in a FieldVersionMismatchError for the
 // given field at minimum version 3.1. Used by per-call-site constructors
 // (newInfoSummaryFieldFor31Plus, etc.) and by the dispatch helper

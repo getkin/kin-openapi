@@ -1,4 +1,4 @@
-invalid components: response "AdditionIncidents": example /additions?page[size]=1: Error at "/0": doesn't match schema due to: Error at "/object": property "begin_at" is unsupported
+invalid components: response "AdditionIncidents": invalid example: example /additions?page[size]=1: Error at "/0": doesn't match schema due to: Error at "/object": property "begin_at" is unsupported
 Schema:
   {
     "additionalProperties": false,

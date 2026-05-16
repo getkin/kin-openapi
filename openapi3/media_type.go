@@ -141,7 +141,9 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 						return fmt.Errorf("example %s: %w", k, err)
 					}
 					if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
-						return fmt.Errorf("example %s: %w", k, err)
+						return newSchemaValueError("example",
+							fmt.Errorf("example %s: %w", k, err),
+							exampleValueOrigin(v.Value, mediaType.Origin))
 					}
 				}
 			}

@@ -419,7 +419,7 @@ func (components Components) MarshalYAML() (any, error)
 func (components *Components) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Components to a copy of data.
 
-func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) (err error)
+func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Components does not comply with the OpenAPI
     spec.
 
@@ -2714,7 +2714,7 @@ func (server Server) ParameterNames() ([]string, error)
 func (server *Server) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Server to a copy of data.
 
-func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) (err error)
+func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Server does not comply with the OpenAPI spec.
 
 type ServerURLMismatchedBraces struct{ ValidationError }
@@ -3161,6 +3161,20 @@ func DisableSchemaPatternValidation() ValidationOption
 func EnableExamplesValidation() ValidationOption
     EnableExamplesValidation does the opposite of DisableExamplesValidation.
     By default, all schema examples are validated.
+
+func EnableMultiError() ValidationOption
+    EnableMultiError makes Validate aggregate independent validation errors and
+    return them together as a MultiError instead of returning the first error
+    and stopping. By default, Validate is fail-fast.
+
+    Not every validator reports more than one error yet. Some, such as Schema,
+    run checks that build on earlier ones, so continuing past a failure can
+    hit a nil dereference or produce nonsense secondary errors. We will keep
+    converting more validators in follow-up changes as each one is analyzed.
+
+    To pull a specific error type out of the result, use errors.As(err,
+    &target). It walks into the MultiError automatically, so the same call works
+    whether Validate returned one error or many.
 
 func EnableSchemaDefaultsValidation() ValidationOption
     EnableSchemaDefaultsValidation does the opposite of

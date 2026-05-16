@@ -1,4 +1,4 @@
-invalid paths: invalid path /grants: invalid operation POST: example requestGrant: Error at "/balances": value must be an object
+invalid paths: invalid path /grants: invalid operation POST: invalid example: example requestGrant: Error at "/balances": value must be an object
 Schema:
   {
     "description": "An object containing the details of the existing grant.",

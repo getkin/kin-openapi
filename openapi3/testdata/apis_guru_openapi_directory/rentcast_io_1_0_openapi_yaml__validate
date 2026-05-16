@@ -1,4 +1,4 @@
-invalid paths: invalid path /avm/rent/long-term: invalid operation GET: example Response: validation failed due to: at '': got string, want object
+invalid paths: invalid path /avm/rent/long-term: invalid operation GET: invalid example: example Response: validation failed due to: at '': got string, want object
 Schema:
   null
 

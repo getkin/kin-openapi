@@ -1,4 +1,4 @@
-invalid paths: invalid path /v4/auth/login: invalid operation POST: example null: Error at "/errorCode": Value is not nullable
+invalid paths: invalid path /v4/auth/login: invalid operation POST: invalid example: example null: Error at "/errorCode": Value is not nullable
 Schema:
   {
     "description": "Internal error code",

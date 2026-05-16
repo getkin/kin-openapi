@@ -1,4 +1,4 @@
-invalid paths: invalid path /: invalid operation POST: example objectExample4: Error at "/configs/macos mojave/opera": Value is not nullable
+invalid paths: invalid path /: invalid operation POST: invalid example: example objectExample4: Error at "/configs/macos mojave/opera": Value is not nullable
 Schema:
   {
     "example": [

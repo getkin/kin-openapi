@@ -1,4 +1,4 @@
-invalid webhooks: webhook "/ACCOUNT_CLOSED": invalid operation POST: example accountClosed: validation failed due to: at '': got string, want object
+invalid webhooks: webhook "/ACCOUNT_CLOSED": invalid operation POST: invalid example: example accountClosed: validation failed due to: at '': got string, want object
 Schema:
   null
 

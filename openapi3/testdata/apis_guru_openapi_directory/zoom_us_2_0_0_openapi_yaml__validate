@@ -1,4 +1,4 @@
-invalid paths: invalid path /accounts: invalid operation GET: example response: doesn't match schema due to: Error at "/page_count": value must be an integer
+invalid paths: invalid path /accounts: invalid operation GET: invalid example: example response: doesn't match schema due to: Error at "/page_count": value must be an integer
 Schema:
   {
     "description": "The number of pages returned for the request made.",

@@ -1,4 +1,4 @@
-invalid paths: invalid path /accountHolders: invalid operation POST: example generic: Error at "/errorCode": value must be a string
+invalid paths: invalid path /accountHolders: invalid operation POST: invalid example: example generic: Error at "/errorCode": value must be a string
 Schema:
   {
     "description": "A code that identifies the problem type.",

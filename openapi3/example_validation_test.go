@@ -29,7 +29,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
             param1example:
               value: abcd
    `,
-			errContains: `invalid paths: invalid path /user: invalid operation POST: param1example`,
+			errContains: `invalid paths: invalid path /user: invalid operation POST: invalid example: param1example`,
 		},
 		{
 			name: "valid_parameter_examples",
@@ -67,7 +67,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         email: bad
         password: short
    `,
-			errContains: `invalid paths: invalid path /user: invalid operation POST: example BadUser`,
+			errContains: `invalid paths: invalid path /user: invalid operation POST: invalid example: example BadUser`,
 		},
 		{
 			name: "valid_component_examples",
@@ -178,7 +178,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         password: password
         user_id: 4321
 `,
-			errContains: `ReadWriteOnlyRequest: readOnly property "user_id" in request`,
+			errContains: `invalid example: example ReadWriteOnlyRequest: readOnly property "user_id" in request`,
 		},
 		{
 			name: "invalid_writeonly_response_examples",
@@ -195,7 +195,7 @@ func TestExamplesSchemaValidation(t *testing.T) {
         user_id: 4321
 `,
 
-			errContains: `ReadWriteOnlyResponse: writeOnly property "password" in response`,
+			errContains: `invalid example: example ReadWriteOnlyResponse: writeOnly property "password" in response`,
 		},
 	}
 

@@ -32,11 +32,16 @@ var (
 	patterns        = flag.Bool("patterns", defaultPatterns, "when false, allows schema patterns unsupported by the Go regexp engine")
 )
 
+var (
+	defaultMulti = false
+	multi        = flag.Bool("multi", defaultMulti, "when true, aggregate independent validation errors instead of returning the first one")
+)
+
 func main() {
 	flag.Parse()
 	filename := flag.Arg(0)
 	if len(flag.Args()) != 1 || filename == "" {
-		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
+		log.Fatalf("Usage: go run github.com/getkin/kin-openapi/cmd/validate@latest [--defaults] [--examples] [--ext] [--patterns] [--multi] -- <local YAML or JSON file>\nGot: %+v\n", os.Args)
 	}
 
 	data, err := os.ReadFile(filename)
@@ -77,6 +82,9 @@ func main() {
 		if !*patterns {
 			opts = append(opts, openapi3.DisableSchemaPatternValidation())
 		}
+		if *multi {
+			opts = append(opts, openapi3.EnableMultiError())
+		}
 
 		if err = doc.Validate(loader.Context, opts...); err != nil {
 			log.Fatalln("Validation error:", err)
@@ -95,6 +103,9 @@ func main() {
 		}
 		if *patterns != defaultPatterns {
 			log.Fatal("Flag --patterns is only for OpenAPIv3")
+		}
+		if *multi != defaultMulti {
+			log.Fatal("Flag --multi is only for OpenAPIv3")
 		}
 
 		var doc openapi2.T

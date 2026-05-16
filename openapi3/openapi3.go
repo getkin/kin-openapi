@@ -267,96 +267,119 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		opts = append(opts, IsOpenAPI31OrLater())
 	}
 	ctx = WithValidationOptions(ctx, opts...)
+	me := newErrCollector(ctx)
 
 	if doc.OpenAPI == "" {
-		return newOpenAPIVersionRequired(doc.Origin)
+		if err := me.emit(newOpenAPIVersionRequired(doc.Origin)); err != nil {
+			return err
+		}
 	}
 
 	if doc.Webhooks != nil && !doc.IsOpenAPI31OrLater() {
-		return newWebhooksFieldFor31Plus(doc.Origin)
+		if err := me.emit(newWebhooksFieldFor31Plus(doc.Origin)); err != nil {
+			return err
+		}
 	}
 	if doc.JSONSchemaDialect != "" && !doc.IsOpenAPI31OrLater() {
-		return newJSONSchemaDialectFieldFor31Plus(doc.Origin)
+		if err := me.emit(newJSONSchemaDialectFieldFor31Plus(doc.Origin)); err != nil {
+			return err
+		}
+	}
+
+	wrapSection := func(section string) func(error) error {
+		return func(e error) error { return &SectionValidationError{Section: section, Cause: e} }
 	}
 
 	var wrap func(error) error
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "components", Cause: e} }
+	wrap = wrapSection("components")
 	if v := doc.Components; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "info", Cause: e} }
+	wrap = wrapSection("info")
 	if v := doc.Info; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
-	} else {
-		return wrap(newInfoRequired(doc.Origin))
+	} else if err := me.emit(wrap(newInfoRequired(doc.Origin))); err != nil {
+		return err
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "paths", Cause: e} }
+	wrap = wrapSection("paths")
 	if v := doc.Paths; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	} else if doc.IsOpenAPI30() {
-		return wrap(newPathsRequired(doc.Origin))
+		if err := me.emit(wrap(newPathsRequired(doc.Origin))); err != nil {
+			return err
+		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "security", Cause: e} }
+	wrap = wrapSection("security")
 	if v := doc.Security; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "servers", Cause: e} }
+	wrap = wrapSection("servers")
 	if v := doc.Servers; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "tags", Cause: e} }
+	wrap = wrapSection("tags")
 	if v := doc.Tags; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "external docs", Cause: e} }
+	wrap = wrapSection("external docs")
 	if v := doc.ExternalDocs; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return wrap(err)
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "webhooks", Cause: e} }
+	wrap = wrapSection("webhooks")
 	for _, name := range componentNames(doc.Webhooks) {
 		pathItem := doc.Webhooks[name]
 		if pathItem == nil {
-			return wrap(newWebhookNil(name))
+			if err := me.emit(wrap(newWebhookNil(name))); err != nil {
+				return err
+			}
+			// Nothing to descend into for a nil webhook; the nil itself
+			// is the only finding under this name until the entry is
+			// populated, so continue to the next webhook.
+			continue
 		}
-		if err := pathItem.Validate(ctx); err != nil {
-			return wrap(fmt.Errorf("webhook %q: %w", name, err))
+		wrapWebhook := func(e error) error { return wrap(fmt.Errorf("webhook %q: %w", name, e)) }
+		if err := me.emitWrapped(wrapWebhook, pathItem.Validate(ctx)); err != nil {
+			return err
 		}
 	}
 
-	wrap = func(e error) error { return &SectionValidationError{Section: "jsonSchemaDialect", Cause: e} }
+	wrap = wrapSection("jsonSchemaDialect")
 	if doc.JSONSchemaDialect != "" {
 		u, err := url.Parse(doc.JSONSchemaDialect)
 		if err != nil {
-			return wrap(err)
-		}
-		if u.Scheme == "" {
-			return wrap(newJSONSchemaDialectAbsoluteURIRequired(doc.Origin))
+			if err = me.emit(wrap(err)); err != nil {
+				return err
+			}
+		} else if u.Scheme == "" {
+			if err := me.emit(wrap(newJSONSchemaDialectAbsoluteURIRequired(doc.Origin))); err != nil {
+				return err
+			}
 		}
 	}
 
-	return validateExtensions(ctx, doc.Extensions)
+	return me.finalize(validateExtensions(ctx, doc.Extensions))
 }
 
 // ValidateSchemaJSON validates data against a schema using this document's format validators.

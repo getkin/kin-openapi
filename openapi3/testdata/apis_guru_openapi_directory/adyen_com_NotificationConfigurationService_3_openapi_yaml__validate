@@ -1,4 +1,4 @@
-invalid paths: invalid path /createNotificationConfiguration: invalid operation POST: example basic: Error at "/configurationDetails/active": value must be a boolean
+invalid paths: invalid path /createNotificationConfiguration: invalid operation POST: invalid example: example basic: Error at "/configurationDetails/active": value must be a boolean
 Schema:
   {
     "description": "Indicates whether the notification subscription is active.",

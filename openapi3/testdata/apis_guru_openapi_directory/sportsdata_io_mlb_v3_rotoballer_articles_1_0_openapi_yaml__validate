@@ -1,4 +1,4 @@
-invalid paths: invalid path /{format}/RotoBallerArticles: invalid operation GET: example response: value must be an array
+invalid paths: invalid path /{format}/RotoBallerArticles: invalid operation GET: invalid example: example response: value must be an array
 Schema:
   {
     "items": {
