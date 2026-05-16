@@ -218,8 +218,7 @@ func (paths *Paths) validateUniqueOperationIDs() error {
 				if endpoint > endpointDup { // For make error message a bit more deterministic. May be useful for tests.
 					endpoint, endpointDup = endpointDup, endpoint
 				}
-				return fmt.Errorf("operations %q and %q have the same operation id %q",
-					endpoint, endpointDup, operation.OperationID)
+				return newDuplicateOperationID(endpoint, endpointDup, operation.OperationID)
 			}
 			operationIDs[operation.OperationID] = endpoint
 		}

@@ -526,6 +526,20 @@ func (discriminator *Discriminator) Validate(ctx context.Context, opts ...Valida
     Validate returns an error if Discriminator does not comply with the OpenAPI
     spec.
 
+type DuplicateOperationIDError struct {
+	// OperationID is the duplicated operationId value.
+	OperationID string
+	// Endpoint1 / Endpoint2 are the two offending endpoints, in
+	// deterministic order (lexicographically) for stable error messages.
+	Endpoint1 string
+	Endpoint2 string
+}
+    DuplicateOperationIDError clusters "two operations share an operationId"
+    failures. operationIds must be unique across all paths in a document.
+    Endpoints are rendered as "<METHOD> <path>" (e.g. "POST /things").
+
+func (e *DuplicateOperationIDError) Error() string
+
 type DynamicAnchorFieldFor31Plus struct{ ValidationError }
 
 func (e *DynamicAnchorFieldFor31Plus) As(target any) bool
@@ -754,6 +768,18 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
 type ExternalDocsURLRequired struct{ ValidationError }
 
 func (e *ExternalDocsURLRequired) As(target any) bool
+
+type ExtraSiblingFieldsError struct {
+	// Fields is the list of unexpected sibling field names.
+	Fields []string
+}
+    ExtraSiblingFieldsError clusters "unexpected sibling fields" failures. Most
+    commonly this fires when fields appear alongside a $ref that the OpenAPI
+    spec doesn't allow there, or as unknown keys on objects whose only permitted
+    extras are `x-` extensions. Carries the offending field names so callers can
+    render or filter.
+
+func (e *ExtraSiblingFieldsError) Error() string
 
 type FieldVersionMismatchError struct {
 	// Field is the field name flagged (e.g. "summary", "identifier",
@@ -1611,6 +1637,20 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error
 func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
 
+type PathParameterRequiredError struct {
+	// Param is the path-parameter name (e.g. "groupId").
+	Param string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    PathParameterRequiredError clusters "path parameter X must be required"
+    failures: per the OpenAPI spec, every parameter with `in: path` must be
+    declared with `required: true`. Carries the parameter name so callers can
+    render or filter by it.
+
+func (e *PathParameterRequiredError) Error() string
+
 type PathParametersError struct {
 	// Path is the path template (e.g. "/api/{domain}/{project}/...").
 	Path string
@@ -2404,6 +2444,18 @@ type SchemaRefs []*SchemaRef
 func (s SchemaRefs) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type SchemaTypeError struct {
+	// Type is the rejected type value (e.g. "bool", "int", "http").
+	Type string
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaTypeError clusters "unsupported 'type' value" failures on a Schema.
+    Carries the bad type value so callers can render or dispatch on it.
+
+func (e *SchemaTypeError) Error() string
 
 type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
 

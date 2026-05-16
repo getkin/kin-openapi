@@ -288,6 +288,68 @@ type ForbiddenFieldError struct {
 func (e *ForbiddenFieldError) Error() string { return e.Cause.Error() }
 func (e *ForbiddenFieldError) Unwrap() error { return e.Cause }
 
+// PathParameterRequiredError clusters "path parameter X must be required"
+// failures: per the OpenAPI spec, every parameter with `in: path` must be
+// declared with `required: true`. Carries the parameter name so callers
+// can render or filter by it.
+type PathParameterRequiredError struct {
+	// Param is the path-parameter name (e.g. "groupId").
+	Param string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *PathParameterRequiredError) Error() string {
+	return fmt.Sprintf("path parameter %q must be required", e.Param)
+}
+
+// DuplicateOperationIDError clusters "two operations share an operationId"
+// failures. operationIds must be unique across all paths in a document.
+// Endpoints are rendered as "<METHOD> <path>" (e.g. "POST /things").
+type DuplicateOperationIDError struct {
+	// OperationID is the duplicated operationId value.
+	OperationID string
+	// Endpoint1 / Endpoint2 are the two offending endpoints, in
+	// deterministic order (lexicographically) for stable error messages.
+	Endpoint1 string
+	Endpoint2 string
+}
+
+func (e *DuplicateOperationIDError) Error() string {
+	return fmt.Sprintf("operations %q and %q have the same operation id %q",
+		e.Endpoint1, e.Endpoint2, e.OperationID)
+}
+
+// ExtraSiblingFieldsError clusters "unexpected sibling fields" failures.
+// Most commonly this fires when fields appear alongside a $ref that the
+// OpenAPI spec doesn't allow there, or as unknown keys on objects whose
+// only permitted extras are `x-` extensions. Carries the offending field
+// names so callers can render or filter.
+type ExtraSiblingFieldsError struct {
+	// Fields is the list of unexpected sibling field names.
+	Fields []string
+}
+
+func (e *ExtraSiblingFieldsError) Error() string {
+	return fmt.Sprintf("extra sibling fields: %+v", e.Fields)
+}
+
+// SchemaTypeError clusters "unsupported 'type' value" failures on a
+// Schema. Carries the bad type value so callers can render or dispatch
+// on it.
+type SchemaTypeError struct {
+	// Type is the rejected type value (e.g. "bool", "int", "http").
+	Type string
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaTypeError) Error() string {
+	return fmt.Sprintf("unsupported 'type' value %q", e.Type)
+}
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -1140,4 +1202,24 @@ func newFieldFor31Plus(field string, origin *Origin) error {
 		leaf = &ValidationError{Message: msg}
 	}
 	return newFieldVersionMismatch(field, leaf, origin)
+}
+
+func newPathParameterRequired(param string, origin *Origin) error {
+	return &PathParameterRequiredError{Param: param, Origin: origin}
+}
+
+func newDuplicateOperationID(endpoint1, endpoint2, operationID string) error {
+	return &DuplicateOperationIDError{
+		Endpoint1:   endpoint1,
+		Endpoint2:   endpoint2,
+		OperationID: operationID,
+	}
+}
+
+func newExtraSiblingFields(fields []string) error {
+	return &ExtraSiblingFieldsError{Fields: fields}
+}
+
+func newSchemaTypeError(typ string, origin *Origin) error {
+	return &SchemaTypeError{Type: typ, Origin: origin}
 }

@@ -945,3 +945,96 @@ func TestValidationError_WebhookNilLeaf(t *testing.T) {
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(err, &ve))
 }
+
+func TestValidationError_PathParameterRequired(t *testing.T) {
+	// Path parameters must be declared required: true. A parameter with
+	// in: path and required: false (or omitted) triggers the cluster.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /things/{id}:
+    get:
+      parameters:
+        - { name: id, in: path }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `path parameter "id" must be required`)
+
+	var ppr *openapi3.PathParameterRequiredError
+	require.True(t, errors.As(err, &ppr))
+	require.Equal(t, "id", ppr.Param)
+}
+
+func TestValidationError_DuplicateOperationID(t *testing.T) {
+	// Two operations sharing the same operationId across paths must
+	// surface a DuplicateOperationIDError carrying both endpoints.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+  /b:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `operations "GET /a" and "GET /b" have the same operation id "shared"`)
+
+	var doe *openapi3.DuplicateOperationIDError
+	require.True(t, errors.As(err, &doe))
+	require.Equal(t, "shared", doe.OperationID)
+	require.Equal(t, "GET /a", doe.Endpoint1)
+	require.Equal(t, "GET /b", doe.Endpoint2)
+}
+
+func TestValidationError_ExtraSiblingFields(t *testing.T) {
+	// A non-x- key in Extensions triggers validateExtensions's
+	// "extra sibling fields" error, now typed as ExtraSiblingFieldsError.
+	// Construct a non-empty Responses so the empty-responses guard
+	// doesn't fire first; the only finding then comes from extensions.
+	responses := openapi3.NewResponses(
+		openapi3.WithStatus(200, &openapi3.ResponseRef{
+			Value: openapi3.NewResponse().WithDescription("ok"),
+		}),
+	)
+	responses.Extensions = map[string]any{"bogus": "value"}
+	err := responses.Validate(context.Background())
+	require.ErrorContains(t, err, "extra sibling fields: [bogus]")
+
+	var esf *openapi3.ExtraSiblingFieldsError
+	require.True(t, errors.As(err, &esf))
+	require.Equal(t, []string{"bogus"}, esf.Fields)
+}
+
+func TestValidationError_SchemaTypeError(t *testing.T) {
+	// Unsupported 'type' value on a schema (e.g., "bool" instead of
+	// "boolean") triggers SchemaTypeError carrying the bad value.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad: { type: bool }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `unsupported 'type' value "bool"`)
+
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(err, &ste))
+	require.Equal(t, "bool", ste.Type)
+}
+
+func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
+	t.Helper()
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(src))
+	require.NoError(t, err)
+	return doc
+}

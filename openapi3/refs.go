@@ -4,7 +4,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -118,7 +117,7 @@ func (x *CallbackRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -257,7 +256,7 @@ func (x *ExampleRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -396,7 +395,7 @@ func (x *HeaderRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -535,7 +534,7 @@ func (x *LinkRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -674,7 +673,7 @@ func (x *ParameterRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -813,7 +812,7 @@ func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -952,7 +951,7 @@ func (x *ResponseRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }
@@ -1111,7 +1110,7 @@ func (x *SchemaRef) validateExtras(ctx context.Context) error {
 
 	if len(extras) != 0 {
 		if !validationOpts.isOpenAPI31OrLater {
-			return fmt.Errorf("extra sibling fields: %+v", extras)
+			return newExtraSiblingFields(extras)
 		}
 	}
 	return nil
@@ -1251,7 +1250,7 @@ func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 	}
 
 	if len(extras) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", extras)
+		return newExtraSiblingFields(extras)
 	}
 	return nil
 }

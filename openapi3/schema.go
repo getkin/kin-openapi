@@ -1683,10 +1683,10 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		case TypeObject:
 		case TypeNull:
 			if !validationOpts.jsonSchema2020ValidationEnabled {
-				return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
+				return stack, newSchemaTypeError(schemaType, schema.Origin)
 			}
 		default:
-			return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
+			return stack, newSchemaTypeError(schemaType, schema.Origin)
 		}
 	}
 

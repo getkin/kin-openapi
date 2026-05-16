@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
 	"strings"
 )
 
@@ -23,7 +22,7 @@ func validateExtensions(ctx context.Context, extensions map[string]any) error { 
 	}
 
 	if len(unknowns) != 0 {
-		return fmt.Errorf("extra sibling fields: %+v", unknowns)
+		return newExtraSiblingFields(unknowns)
 	}
 
 	return nil

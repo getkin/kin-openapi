@@ -324,7 +324,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 	}
 
 	if in == ParameterInPath && !parameter.Required {
-		return fmt.Errorf("path parameter %q must be required", parameter.Name)
+		return newPathParameterRequired(parameter.Name, parameter.Origin)
 	}
 
 	// Validate a parameter's serialization method.
