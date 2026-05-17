@@ -218,5 +218,5 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, operation.Extensions))
+	return me.finalize(validateExtensions(ctx, operation.Extensions, operation.Origin))
 }

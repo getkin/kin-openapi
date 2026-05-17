@@ -92,7 +92,7 @@ func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, responses.Extensions))
+	return me.finalize(validateExtensions(ctx, responses.Extensions, responses.Origin))
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
@@ -209,7 +209,7 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
-	return validateExtensions(ctx, response.Extensions)
+	return validateExtensions(ctx, response.Extensions, response.Origin)
 }
 
 // UnmarshalJSON sets ResponseBodies to a copy of data.

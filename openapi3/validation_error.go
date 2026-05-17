@@ -314,6 +314,11 @@ type DuplicateOperationIDError struct {
 	// deterministic order (lexicographically) for stable error messages.
 	Endpoint1 string
 	Endpoint2 string
+	// Origin is the source location of the second (offending) operation
+	// when the document was loaded with Loader.IncludeOrigin = true. The
+	// pre-existing Endpoint1 is implicitly fine; the duplicate landed at
+	// Endpoint2's site, which is the natural "go fix this" pointer.
+	Origin *Origin
 }
 
 func (e *DuplicateOperationIDError) Error() string {
@@ -329,6 +334,10 @@ func (e *DuplicateOperationIDError) Error() string {
 type ExtraSiblingFieldsError struct {
 	// Fields is the list of unexpected sibling field names.
 	Fields []string
+	// Origin is the source location of the parent object that carries
+	// the extra siblings when the document was loaded with
+	// Loader.IncludeOrigin = true.
+	Origin *Origin
 }
 
 func (e *ExtraSiblingFieldsError) Error() string {
@@ -1208,16 +1217,17 @@ func newPathParameterRequired(param string, origin *Origin) error {
 	return &PathParameterRequiredError{Param: param, Origin: origin}
 }
 
-func newDuplicateOperationID(endpoint1, endpoint2, operationID string) error {
+func newDuplicateOperationID(endpoint1, endpoint2, operationID string, origin *Origin) error {
 	return &DuplicateOperationIDError{
 		Endpoint1:   endpoint1,
 		Endpoint2:   endpoint2,
 		OperationID: operationID,
+		Origin:      origin,
 	}
 }
 
-func newExtraSiblingFields(fields []string) error {
-	return &ExtraSiblingFieldsError{Fields: fields}
+func newExtraSiblingFields(fields []string, origin *Origin) error {
+	return &ExtraSiblingFieldsError{Fields: fields, Origin: origin}
 }
 
 func newSchemaTypeError(typ string, origin *Origin) error {

@@ -1894,7 +1894,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 
-	return stack, validateExtensions(ctx, schema.Extensions)
+	return stack, validateExtensions(ctx, schema.Extensions, schema.Origin)
 }
 
 func (schema *Schema) IsMatching(value any) bool {

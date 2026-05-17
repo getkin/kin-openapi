@@ -221,7 +221,7 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, pathItem.Extensions))
+	return me.finalize(validateExtensions(ctx, pathItem.Extensions, pathItem.Origin))
 }
 
 // isEmpty's introduced in 546590b1

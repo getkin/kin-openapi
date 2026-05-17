@@ -187,7 +187,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 		return err
 	}
 
-	return me.finalize(validateExtensions(ctx, components.Extensions))
+	return me.finalize(validateExtensions(ctx, components.Extensions, components.Origin))
 }
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)

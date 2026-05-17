@@ -80,7 +80,7 @@ func (example *Example) Validate(ctx context.Context, opts ...ValidationOption) 
 		return newExampleValueOrExternalValueRequired(example.Origin)
 	}
 
-	return validateExtensions(ctx, example.Extensions)
+	return validateExtensions(ctx, example.Extensions, example.Origin)
 }
 
 // UnmarshalJSON sets Examples to a copy of data.

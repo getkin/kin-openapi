@@ -73,5 +73,5 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, e.Extensions))
+	return me.finalize(validateExtensions(ctx, e.Extensions, e.Origin))
 }

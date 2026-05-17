@@ -142,10 +142,10 @@ func (x *{{ $type.Name }}Ref) validateExtras(ctx context.Context) error {
 	if len(extras) != 0 {
 {{- if eq $type.Name "Schema" }}
 		if !validationOpts.isOpenAPI31OrLater {
-			return newExtraSiblingFields(extras)
+			return newExtraSiblingFields(extras, x.Origin)
 		}
 {{- else }}
-		return newExtraSiblingFields(extras)
+		return newExtraSiblingFields(extras, x.Origin)
 {{- end }}
 	}
 	return nil

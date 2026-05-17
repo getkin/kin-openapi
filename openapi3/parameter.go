@@ -407,7 +407,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	return validateExtensions(ctx, parameter.Extensions)
+	return validateExtensions(ctx, parameter.Extensions, parameter.Origin)
 }
 
 // UnmarshalJSON sets ParametersMap to a copy of data.

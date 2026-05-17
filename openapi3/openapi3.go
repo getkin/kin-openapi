@@ -379,7 +379,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, doc.Extensions))
+	return me.finalize(validateExtensions(ctx, doc.Extensions, doc.Origin))
 }
 
 // ValidateSchemaJSON validates data against a schema using this document's format validators.

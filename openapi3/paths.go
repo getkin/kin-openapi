@@ -135,7 +135,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 		return err
 	}
 
-	return me.finalize(validateExtensions(ctx, paths.Extensions))
+	return me.finalize(validateExtensions(ctx, paths.Extensions, paths.Origin))
 }
 
 // InMatchingOrder returns paths in the order they are matched against URLs.
@@ -218,7 +218,7 @@ func (paths *Paths) validateUniqueOperationIDs() error {
 				if endpoint > endpointDup { // For make error message a bit more deterministic. May be useful for tests.
 					endpoint, endpointDup = endpointDup, endpoint
 				}
-				return newDuplicateOperationID(endpoint, endpointDup, operation.OperationID)
+				return newDuplicateOperationID(endpoint, endpointDup, operation.OperationID, operation.Origin)
 			}
 			operationIDs[operation.OperationID] = endpoint
 		}

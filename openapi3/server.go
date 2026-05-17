@@ -237,7 +237,7 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) er
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, server.Extensions))
+	return me.finalize(validateExtensions(ctx, server.Extensions, server.Origin))
 }
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.
@@ -315,5 +315,5 @@ func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...Vali
 		return fmt.Errorf("field default is required in %s", data)
 	}
 
-	return validateExtensions(ctx, serverVariable.Extensions)
+	return validateExtensions(ctx, serverVariable.Extensions, serverVariable.Origin)
 }

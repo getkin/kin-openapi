@@ -89,7 +89,7 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 		return newLinkOperationIDRefExclusive(link.OperationID, link.OperationRef, link.Origin)
 	}
 
-	return validateExtensions(ctx, link.Extensions)
+	return validateExtensions(ctx, link.Extensions, link.Origin)
 }
 
 // UnmarshalJSON sets Links to a copy of data.

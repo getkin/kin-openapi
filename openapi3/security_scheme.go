@@ -214,7 +214,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 		return fmt.Errorf("security scheme of type %q can't have 'flows'", ss.Type)
 	}
 
-	return validateExtensions(ctx, ss.Extensions)
+	return validateExtensions(ctx, ss.Extensions, ss.Origin)
 }
 
 // OAuthFlows is specified by OpenAPI/Swagger standard version 3.
@@ -313,7 +313,7 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 		}
 	}
 
-	return validateExtensions(ctx, flows.Extensions)
+	return validateExtensions(ctx, flows.Extensions, flows.Origin)
 }
 
 // OAuthFlow is specified by OpenAPI/Swagger standard version 3.
@@ -388,7 +388,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
 		return newOAuthFlowScopesRequired(flow.Origin)
 	}
 
-	return validateExtensions(ctx, flow.Extensions)
+	return validateExtensions(ctx, flow.Extensions, flow.Origin)
 }
 
 func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...ValidationOption) error {
