@@ -94,13 +94,10 @@ func (e *OperationValidationError) Error() string {
 
 func (e *OperationValidationError) Unwrap() error { return e.Cause }
 
-// ---------------------------------------------------------------------
-// Per-site context wrappers (kin #1187 follow-on).
-//
-// Each replaces a previously-bare fmt.Errorf-with-%w wrap in a
-// Validate function so consumers can extract the wrapping context via
-// errors.As without parsing the rendered message. All Unwrap to the
-// wrapped Cause so the inner typed leaf is reachable.
+// Below: narrow-scope context wrappers covering specific validation
+// surfaces inside a section. See the file-level header above for the
+// full inventory and how these relate to the document-wide wrappers
+// above.
 
 // ComponentValidationError wraps validation errors inside the
 // Components container, carrying which sub-section (Schemas,
