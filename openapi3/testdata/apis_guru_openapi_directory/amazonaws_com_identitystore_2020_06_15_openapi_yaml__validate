@@ -1,1 +1,1 @@
-invalid components: schema "AlternateIdentifier": schema pattern "\\(\\?!\\(\\?i\\)\\(arn\\|aws\\):\\)[\\p\\{L\\}\\p\\{M\\}\\p\\{S\\}\\p\\{N\\}\\p\\{P\\}]\\+" failed to compile: error parsing regexp: invalid character class range: `\p\`
+invalid components: schema "AlternateIdentifier": error parsing regexp: invalid character class range: `\p\`

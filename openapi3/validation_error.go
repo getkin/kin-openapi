@@ -379,9 +379,10 @@ func (e *InvalidParameterInError) Error() string {
 // failures. Kin's regex engine is Go's RE2, which rejects Perl features
 // like `(?!...)` lookahead; specs that leak Perl regex patterns (common
 // in AWS-style auto-generated schemas) trip this. Carries the offending
-// pattern and the underlying compilation error so callers can render or
-// dispatch on either. Unwraps to the SchemaError wrap of the regex
-// error so callers walking with errors.As(*SchemaError) still match.
+// pattern as a structured field for typed dispatch, while preserving
+// the underlying SchemaError's rendered message byte-for-byte (Error()
+// delegates to Cause.Error()) so existing string-based consumers and
+// golden fixtures are unaffected.
 type SchemaPatternRegexError struct {
 	// Pattern is the schema's `pattern:` value that failed to compile.
 	Pattern string
@@ -394,9 +395,7 @@ type SchemaPatternRegexError struct {
 	Origin *Origin
 }
 
-func (e *SchemaPatternRegexError) Error() string {
-	return fmt.Sprintf("schema pattern %q failed to compile: %v", e.Pattern, e.Cause)
-}
+func (e *SchemaPatternRegexError) Error() string { return e.Cause.Error() }
 
 func (e *SchemaPatternRegexError) Unwrap() error { return e.Cause }
 

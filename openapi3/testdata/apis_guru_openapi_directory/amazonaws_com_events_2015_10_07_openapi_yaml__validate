@@ -1,1 +1,1 @@
-invalid components: schema "HttpParameters": schema pattern "^(?!\\s*$).+" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "HttpParameters": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

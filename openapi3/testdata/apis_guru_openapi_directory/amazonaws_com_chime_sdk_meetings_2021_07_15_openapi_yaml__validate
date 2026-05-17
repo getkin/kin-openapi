@@ -1,1 +1,1 @@
-invalid components: schema "CreateMeetingRequest": schema pattern "^(?!.*?(.)\\1{3})[-_!@#$a-zA-Z0-9]*$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateMeetingRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

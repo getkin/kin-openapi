@@ -1,1 +1,1 @@
-invalid components: schema "GetMalwareScanSettingsResponse": schema pattern "^(?!aws:)[a-zA-Z+-=._:/]+$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "GetMalwareScanSettingsResponse": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

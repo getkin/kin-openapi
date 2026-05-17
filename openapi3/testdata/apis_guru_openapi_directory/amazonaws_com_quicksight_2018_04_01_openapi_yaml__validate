@@ -1,1 +1,1 @@
-invalid components: schema "ActiveIAMPolicyAssignment": schema pattern "(?=^.{2,256}$)(?!.*\\s)[0-9a-zA-Z-_.:=+@]*$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "ActiveIAMPolicyAssignment": error parsing regexp: invalid or unsupported Perl syntax: `(?=`

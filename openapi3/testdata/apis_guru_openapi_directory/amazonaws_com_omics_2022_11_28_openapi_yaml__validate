@@ -1,1 +1,1 @@
-invalid components: schema "AnnotationImportItemDetail": schema pattern "s3://([a-z0-9][a-z0-9-.]{1,61}[a-z0-9])/(.{1,1024})" failed to compile: error parsing regexp: invalid repeat count: `{1,1024}`
+invalid components: schema "AnnotationImportItemDetail": error parsing regexp: invalid repeat count: `{1,1024}`

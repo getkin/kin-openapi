@@ -1,1 +1,1 @@
-invalid components: schema "AGCOPowerServices.Models.ECU": schema pattern "^[a-zA-Z0-9]{0,4096}$" failed to compile: error parsing regexp: invalid repeat count: `{0,4096}`
+invalid components: schema "AGCOPowerServices.Models.ECU": error parsing regexp: invalid repeat count: `{0,4096}`

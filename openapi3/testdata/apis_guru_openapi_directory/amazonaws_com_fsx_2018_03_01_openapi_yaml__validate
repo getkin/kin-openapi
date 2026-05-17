@@ -1,1 +1,1 @@
-invalid components: schema "ActiveDirectoryBackupAttributes": schema pattern "^arn:(?=[^:]+:fsx:[^:]+:\\d{12}:)((|(?=[a-z0-9-.]{1,63})(?!\\d{1,3}(\\.\\d{1,3}){3})(?![^:]*-{2})(?![^:]*-\\.)(?![^:]*\\.-)[a-z0-9].*(?<!-)):){4}(?!/).{0,1024}$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "ActiveDirectoryBackupAttributes": error parsing regexp: invalid or unsupported Perl syntax: `(?=`

@@ -1,1 +1,1 @@
-invalid components: schema "ARN": schema pattern "^arn:.{16,2044}$" failed to compile: error parsing regexp: invalid repeat count: `{16,2044}`
+invalid components: schema "ARN": error parsing regexp: invalid repeat count: `{16,2044}`

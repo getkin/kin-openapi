@@ -1,1 +1,1 @@
-invalid components: schema "CallAnalyticsJob": schema pattern "^arn:(aws|aws-cn|aws-us-gov|aws-iso-{0,1}[a-z]{0,1}):iam::[0-9]{0,63}:role/[A-Za-z0-9:_/+=,@.-]{0,1024}$" failed to compile: error parsing regexp: invalid repeat count: `{0,1024}`
+invalid components: schema "CallAnalyticsJob": error parsing regexp: invalid repeat count: `{0,1024}`

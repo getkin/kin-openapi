@@ -1,1 +1,1 @@
-invalid components: schema "ConnectionId": schema pattern "^[a-zA-Z0-9+/=]{1,1024}$" failed to compile: error parsing regexp: invalid repeat count: `{1,1024}`
+invalid components: schema "ConnectionId": error parsing regexp: invalid repeat count: `{1,1024}`

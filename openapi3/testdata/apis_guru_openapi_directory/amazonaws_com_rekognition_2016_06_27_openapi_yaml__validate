@@ -1,1 +1,1 @@
-invalid components: schema "CopyProjectVersionRequest": schema pattern "^[A-Za-z0-9][A-Za-z0-9:_/+=,@.-]{0,2048}$" failed to compile: error parsing regexp: invalid repeat count: `{0,2048}`
+invalid components: schema "CopyProjectVersionRequest": error parsing regexp: invalid repeat count: `{0,2048}`

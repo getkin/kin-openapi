@@ -1,1 +1,1 @@
-invalid components: schema "Action": schema pattern "^(?![^:\\\\]*/action/)[^:\\\\]+$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "Action": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

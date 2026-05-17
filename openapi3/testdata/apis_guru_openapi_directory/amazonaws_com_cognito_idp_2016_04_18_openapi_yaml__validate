@@ -1,1 +1,1 @@
-invalid components: schema "DescribeUserPoolDomainResponse": schema pattern "^[0-9A-Za-z\\.\\-_]*(?<!\\.)$" failed to compile: error parsing regexp: invalid named capture: `(?<!\.)$`
+invalid components: schema "DescribeUserPoolDomainResponse": error parsing regexp: invalid named capture: `(?<!\.)$`

@@ -1,1 +1,1 @@
-invalid components: schema "GetPriceListFileUrlRequest": schema pattern "arn:[A-Za-z0-9][-.A-Za-z0-9]{0,62}:pricing:::price-list/[A-Za-z0-9_/.-]{1,1023}" failed to compile: error parsing regexp: invalid repeat count: `{1,1023}`
+invalid components: schema "GetPriceListFileUrlRequest": error parsing regexp: invalid repeat count: `{1,1023}`

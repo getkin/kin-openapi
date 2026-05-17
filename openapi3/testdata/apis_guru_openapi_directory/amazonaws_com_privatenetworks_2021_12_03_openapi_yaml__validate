@@ -1,1 +1,1 @@
-invalid components: schema "TagKey": schema pattern "^(?!aws:)[^\\x00-\\x1f\\x22]+$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "TagKey": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

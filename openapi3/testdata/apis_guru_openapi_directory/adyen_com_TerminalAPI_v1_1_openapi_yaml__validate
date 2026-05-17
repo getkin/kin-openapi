@@ -1,1 +1,1 @@
-invalid components: schema "AbortRequest": schema pattern "^.{0,262144}$" failed to compile: error parsing regexp: invalid repeat count: `{0,262144}`
+invalid components: schema "AbortRequest": error parsing regexp: invalid repeat count: `{0,262144}`

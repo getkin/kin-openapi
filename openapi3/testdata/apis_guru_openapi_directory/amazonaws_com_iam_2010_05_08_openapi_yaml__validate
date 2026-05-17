@@ -1,1 +1,1 @@
-invalid components: schema "CreateAccountAliasRequest": schema pattern "^[a-z0-9]([a-z0-9]|-(?!-)){1,61}[a-z0-9]$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateAccountAliasRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

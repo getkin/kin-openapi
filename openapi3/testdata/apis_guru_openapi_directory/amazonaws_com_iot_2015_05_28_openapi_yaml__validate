@@ -1,1 +1,1 @@
-invalid components: schema "AuditDescription": schema pattern "[\\p{Graph}\\x20]*" failed to compile: error parsing regexp: invalid character class range: `\p{Graph}`
+invalid components: schema "AuditDescription": error parsing regexp: invalid character class range: `\p{Graph}`

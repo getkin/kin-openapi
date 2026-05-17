@@ -1,1 +1,1 @@
-invalid components: schema "CreatePermissionSetRequest": schema pattern "^(-?)P(?=\\d|T\\d)(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)([DW]))?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "CreatePermissionSetRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?=`

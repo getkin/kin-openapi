@@ -1,1 +1,1 @@
-invalid components: schema "CreateEntityRecognizerRequest": schema pattern "^(?![^\\n\\r\\t,]*\\\\n|\\\\r|\\\\t)[^\\n\\r\\t,]+$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateEntityRecognizerRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

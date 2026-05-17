@@ -1,1 +1,1 @@
-invalid components: schema "CreateMemberInput": schema pattern "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?!.*[@'\\\\\"/])[a-zA-Z0-9\\S]*$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "CreateMemberInput": error parsing regexp: invalid or unsupported Perl syntax: `(?=`

@@ -1,1 +1,1 @@
-invalid components: schema "AssociateFirewallRuleGroupRequest": schema pattern "(?!^[0-9]+$)([a-zA-Z0-9\\-_' ']+)" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AssociateFirewallRuleGroupRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`

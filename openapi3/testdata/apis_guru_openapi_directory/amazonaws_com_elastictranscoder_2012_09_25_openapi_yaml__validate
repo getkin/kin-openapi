@@ -1,1 +1,1 @@
-invalid components: schema "Artwork": schema pattern "(^.{1,1020}.jpg$)|(^.{1,1019}.jpeg$)|(^.{1,1020}.png$)" failed to compile: error parsing regexp: invalid repeat count: `{1,1020}`
+invalid components: schema "Artwork": error parsing regexp: invalid repeat count: `{1,1020}`

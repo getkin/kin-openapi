@@ -1,1 +1,1 @@
-invalid components: schema "LedgerName": schema pattern "(?!^.*--)(?!^[0-9]+$)(?!^-)(?!.*-$)^[A-Za-z0-9-]+$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "LedgerName": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
