@@ -1336,6 +1336,173 @@ func TestValidationError_UnresolvedRef(t *testing.T) {
 	require.Equal(t, "external.yaml#/T", ure.Ref)
 }
 
+// openIdConnect security scheme without an openIdConnectUrl triggers
+// RequiredFieldError wrapping *OpenIDConnectURLRequired.
+func TestValidationError_OpenIDConnectURLRequired(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: openIdConnect
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `no OIDC URL found for openIdConnect security scheme`)
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "openIdConnectUrl", rfe.Field)
+	var leaf *openapi3.OpenIDConnectURLRequired
+	require.True(t, errors.As(err, &leaf))
+}
+
+// apiKey security scheme with `in:` set to a value outside
+// {query, header, cookie} triggers APIKeyInInvalidError carrying the
+// rejected value.
+func TestValidationError_APIKeyInInvalid(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: apiKey
+      in: body
+      name: payload
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `should have 'in'. It can be 'query', 'header' or 'cookie', not "body"`)
+
+	var akie *openapi3.APIKeyInInvalidError
+	require.True(t, errors.As(err, &akie))
+	require.Equal(t, "body", akie.Value)
+}
+
+// A non-apiKey scheme that nevertheless declares `in:` triggers
+// ForbiddenFieldError wrapping *SecuritySchemeInForbidden.
+func TestValidationError_SecuritySchemeInForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: basic
+      in: query
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "http" can't have 'in'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "in", ffe.Field)
+	var leaf *openapi3.SecuritySchemeInForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A non-apiKey scheme that declares `name:` triggers
+// ForbiddenFieldError wrapping *SecuritySchemeNameForbidden.
+func TestValidationError_SecuritySchemeNameForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: basic
+      name: something
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "http" can't have 'name'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "name", ffe.Field)
+	var leaf *openapi3.SecuritySchemeNameForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A non-http scheme declaring `bearerFormat:` triggers
+// ForbiddenFieldError wrapping *SecuritySchemeBearerFormatForbidden.
+func TestValidationError_SecuritySchemeBearerFormatForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: apiKey
+      in: query
+      name: x
+      bearerFormat: JWT
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "apiKey" can't have 'bearerFormat'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "bearerFormat", ffe.Field)
+	var leaf *openapi3.SecuritySchemeBearerFormatForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// oauth2 scheme missing `flows:` triggers RequiredFieldError
+// wrapping *SecuritySchemeFlowsRequired.
+func TestValidationError_SecuritySchemeFlowsRequired(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: oauth2
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "oauth2" should have 'flows'`)
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "flows", rfe.Field)
+	var leaf *openapi3.SecuritySchemeFlowsRequired
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A non-oauth2 scheme declaring `flows:` triggers ForbiddenFieldError
+// wrapping *SecuritySchemeFlowsForbidden.
+func TestValidationError_SecuritySchemeFlowsForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: basic
+      flows:
+        password:
+          tokenUrl: https://example.com/token
+          scopes: {}
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "http" can't have 'flows'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "flows", ffe.Field)
+	var leaf *openapi3.SecuritySchemeFlowsForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
 // Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
 func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
 	responses := openapi3.NewResponses(

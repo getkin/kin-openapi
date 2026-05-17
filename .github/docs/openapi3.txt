@@ -252,6 +252,22 @@ func WithValidationOptions(ctx context.Context, opts ...ValidationOption) contex
 
 TYPES
 
+type APIKeyInInvalidError struct {
+	// Value is the rejected `in:` value (empty when the field was
+	// omitted, otherwise the bad value e.g. "body").
+	Value string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    APIKeyInInvalidError clusters "apiKey should have 'in'. It can be 'query',
+    'header' or 'cookie', not X" failures. Fires when an apiKey security scheme
+    either omits `in:` or sets it to a value outside {query, header, cookie}.
+    Carries the rejected value so callers can render or filter; empty string
+    means the field was missing entirely.
+
+func (e *APIKeyInInvalidError) Error() string
+
 type APIKeySecuritySchemeNameRequired struct{ ValidationError }
 
 func (e *APIKeySecuritySchemeNameRequired) As(target any) bool
@@ -1419,6 +1435,10 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 type OpenAPIVersionRequired struct{ ValidationError }
 
 func (e *OpenAPIVersionRequired) As(target any) bool
+
+type OpenIDConnectURLRequired struct{ ValidationError }
+
+func (e *OpenIDConnectURLRequired) As(target any) bool
 
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2754,6 +2774,26 @@ func (ss *SecurityScheme) WithName(value string) *SecurityScheme
 func (ss *SecurityScheme) WithScheme(value string) *SecurityScheme
 
 func (ss *SecurityScheme) WithType(value string) *SecurityScheme
+
+type SecuritySchemeBearerFormatForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool
+
+type SecuritySchemeFlowsForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsForbidden) As(target any) bool
+
+type SecuritySchemeFlowsRequired struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsRequired) As(target any) bool
+
+type SecuritySchemeInForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeInForbidden) As(target any) bool
+
+type SecuritySchemeNameForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeNameForbidden) As(target any) bool
 
 type SecuritySchemeRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields

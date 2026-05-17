@@ -448,6 +448,25 @@ func (e *UnresolvedRefError) Error() string {
 	return fmt.Sprintf("found unresolved ref: %q", e.Ref)
 }
 
+// APIKeyInInvalidError clusters "apiKey should have 'in'. It can be
+// 'query', 'header' or 'cookie', not X" failures. Fires when an
+// apiKey security scheme either omits `in:` or sets it to a value
+// outside {query, header, cookie}. Carries the rejected value so
+// callers can render or filter; empty string means the field was
+// missing entirely.
+type APIKeyInInvalidError struct {
+	// Value is the rejected `in:` value (empty when the field was
+	// omitted, otherwise the bad value e.g. "body").
+	Value string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *APIKeyInInvalidError) Error() string {
+	return fmt.Sprintf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", e.Value)
+}
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -596,6 +615,44 @@ func (e *HeaderContentSingleEntry) As(target any) bool {
 type WebhookNil struct{ ValidationError }
 
 func (e *WebhookNil) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// SecurityScheme leaves wrapped in RequiredFieldError / ForbiddenFieldError.
+
+type OpenIDConnectURLRequired struct{ ValidationError }
+
+func (e *OpenIDConnectURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeFlowsRequired struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeInForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeInForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeNameForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeNameForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeBearerFormatForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeFlowsForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsForbidden) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1341,4 +1398,38 @@ func newInvalidHTTPScheme(scheme string, origin *Origin) error {
 
 func newUnresolvedRef(ref string, origin *Origin) error {
 	return &UnresolvedRefError{Ref: ref, Origin: origin}
+}
+
+func newAPIKeyInInvalid(value string, origin *Origin) error {
+	return &APIKeyInInvalidError{Value: value, Origin: origin}
+}
+
+func newOpenIDConnectURLRequired(schemeName string, origin *Origin) error {
+	return newRequiredField("openIdConnectUrl",
+		&OpenIDConnectURLRequired{ValidationError{Message: fmt.Sprintf("no OIDC URL found for openIdConnect security scheme %q", schemeName)}}, origin)
+}
+
+func newSecuritySchemeFlowsRequired(schemeType string, origin *Origin) error {
+	return newRequiredField("flows",
+		&SecuritySchemeFlowsRequired{ValidationError{Message: fmt.Sprintf("security scheme of type %q should have 'flows'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeInForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("in",
+		&SecuritySchemeInForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'in'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeNameForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("name",
+		&SecuritySchemeNameForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'name'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeBearerFormatForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("bearerFormat",
+		&SecuritySchemeBearerFormatForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'bearerFormat'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeFlowsForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("flows",
+		&SecuritySchemeFlowsForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'flows'", schemeType)}}, origin)
 }

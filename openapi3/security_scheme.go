@@ -169,7 +169,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 		hasFlow = true
 	case "openIdConnect":
 		if ss.OpenIdConnectUrl == "" {
-			return fmt.Errorf("no OIDC URL found for openIdConnect security scheme %q", ss.Name)
+			return newOpenIDConnectURLRequired(ss.Name, ss.Origin)
 		}
 	case "mutualTLS":
 		if !getValidationOptions(ctx).isOpenAPI31OrLater {
@@ -184,34 +184,34 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 		switch ss.In {
 		case "query", "header", "cookie":
 		default:
-			return fmt.Errorf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", ss.In)
+			return newAPIKeyInInvalid(ss.In, ss.Origin)
 		}
 		if ss.Name == "" {
 			return newAPIKeySecuritySchemeNameRequired(ss.Origin)
 		}
 	} else if len(ss.In) > 0 {
-		return fmt.Errorf("security scheme of type %q can't have 'in'", ss.Type)
+		return newSecuritySchemeInForbidden(ss.Type, ss.Origin)
 	} else if len(ss.Name) > 0 {
-		return fmt.Errorf("security scheme of type %q can't have 'name'", ss.Type)
+		return newSecuritySchemeNameForbidden(ss.Type, ss.Origin)
 	}
 
 	// Validate "format"
 	// "bearerFormat" is an arbitrary string so we only check if the scheme supports it
 	if !hasBearerFormat && len(ss.BearerFormat) > 0 {
-		return fmt.Errorf("security scheme of type %q can't have 'bearerFormat'", ss.Type)
+		return newSecuritySchemeBearerFormatForbidden(ss.Type, ss.Origin)
 	}
 
 	// Validate "flow"
 	if hasFlow {
 		flow := ss.Flows
 		if flow == nil {
-			return fmt.Errorf("security scheme of type %q should have 'flows'", ss.Type)
+			return newSecuritySchemeFlowsRequired(ss.Type, ss.Origin)
 		}
 		if err := flow.Validate(ctx); err != nil {
 			return fmt.Errorf("security scheme 'flow' is invalid: %w", err)
 		}
 	} else if ss.Flows != nil {
-		return fmt.Errorf("security scheme of type %q can't have 'flows'", ss.Type)
+		return newSecuritySchemeFlowsForbidden(ss.Type, ss.Origin)
 	}
 
 	return validateExtensions(ctx, ss.Extensions, ss.Origin)
