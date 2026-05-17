@@ -359,7 +359,7 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 			// populated, so continue to the next webhook.
 			continue
 		}
-		wrapWebhook := func(e error) error { return wrap(fmt.Errorf("webhook %q: %w", name, e)) }
+		wrapWebhook := func(e error) error { return wrap(&WebhookValidationError{Name: name, Cause: e}) }
 		if err := me.emitWrapped(wrapWebhook, pathItem.Validate(ctx)); err != nil {
 			return err
 		}

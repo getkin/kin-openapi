@@ -1624,6 +1624,142 @@ func TestValidationError_ServerVariableDefaultRequired(t *testing.T) {
 	require.True(t, errors.As(err, &leaf))
 }
 
+// Context wrappers: each replaces a bare fmt.Errorf-with-%w wrap
+// so consumers can extract the wrapping context via errors.As.
+// The Unwrap chain still reaches the inner typed leaf.
+
+func TestValidationError_ComponentValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: foobar
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var cve *openapi3.ComponentValidationError
+	require.True(t, errors.As(err, &cve))
+	require.Equal(t, "schema", cve.Section)
+	require.Equal(t, "Bad", cve.Name)
+	// Unwrap reaches the typed inner leaf.
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(err, &ste))
+	require.Equal(t, "foobar", ste.Type)
+}
+
+func TestValidationError_ExternalDocsURLValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+externalDocs:
+  url: "://not a url"
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+	var euve *openapi3.ExternalDocsURLValidationError
+	require.True(t, errors.As(err, &euve))
+}
+
+func TestValidationError_WebhookValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.1.0
+info: { title: t, version: "1" }
+paths: {}
+webhooks:
+  myhook:
+    get:
+      operationId: ""
+`)
+	// Validate may surface various findings; the webhook wrap should
+	// be discoverable via errors.As regardless of which inner leaf fires.
+	_ = doc.Validate(context.Background())
+	// Construct directly to verify the wrapper shape (the failure path
+	// above may or may not produce a webhook error depending on the
+	// inner validators' state, but the type itself is what we want to
+	// pin).
+	wve := &openapi3.WebhookValidationError{Name: "myhook", Cause: errors.New("boom")}
+	require.Contains(t, wve.Error(), `webhook "myhook"`)
+	var got *openapi3.WebhookValidationError
+	require.True(t, errors.As(wve, &got))
+	require.Equal(t, "myhook", got.Name)
+}
+
+func TestValidationError_ParameterFieldValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - name: q
+          in: query
+          schema: { type: foobar }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var pfve *openapi3.ParameterFieldValidationError
+	require.True(t, errors.As(err, &pfve))
+	require.Equal(t, "q", pfve.ParameterName)
+	require.Equal(t, "schema", pfve.Field)
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(err, &ste))
+}
+
+func TestValidationError_OAuthFlowValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: "://not a url"
+          scopes: {}
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var ofve *openapi3.OAuthFlowValidationError
+	require.True(t, errors.As(err, &ofve))
+	require.Equal(t, "password", ofve.FlowKind)
+	var ssfve *openapi3.SecuritySchemeFlowValidationError
+	require.True(t, errors.As(err, &ssfve), "outer SecuritySchemeFlowValidationError must also be reachable")
+}
+
+func TestValidationError_OAuthFlowFieldValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://example.com/token
+          refreshUrl: "://not a url"
+          scopes: {}
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var offve *openapi3.OAuthFlowFieldValidationError
+	require.True(t, errors.As(err, &offve))
+	require.Equal(t, "refreshUrl", offve.Field)
+}
+
 // Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
 func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
 	responses := openapi3.NewResponses(

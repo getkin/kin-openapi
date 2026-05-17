@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"maps"
 	"net/url"
 )
@@ -68,7 +67,7 @@ func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) e
 		}
 	}
 	if _, err := url.Parse(e.URL); err != nil {
-		if err := me.emit(fmt.Errorf("url is incorrect: %w", err)); err != nil {
+		if err := me.emit(&ExternalDocsURLValidationError{Cause: err}); err != nil {
 			return err
 		}
 	}

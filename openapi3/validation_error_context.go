@@ -54,3 +54,157 @@ func (e *OperationValidationError) Error() string {
 }
 
 func (e *OperationValidationError) Unwrap() error { return e.Cause }
+
+// ---------------------------------------------------------------------
+// Per-site context wrappers (kin #1187 follow-on).
+//
+// Each replaces a previously-bare fmt.Errorf-with-%w wrap in a
+// Validate function so consumers can extract the wrapping context via
+// errors.As without parsing the rendered message. All Unwrap to the
+// wrapped Cause so the inner typed leaf is reachable.
+
+// ComponentValidationError wraps validation errors inside the
+// Components container, carrying which sub-section (Schemas,
+// Parameters, etc.) and which component name failed.
+type ComponentValidationError struct {
+	// Section is the lowercase singular form of the component bucket
+	// ("schema", "parameter", "header", "request body", "response",
+	// "security scheme", "example", "link", "callback").
+	Section string
+	// Name is the component map key.
+	Name  string
+	Cause error
+}
+
+func (e *ComponentValidationError) Error() string {
+	return fmt.Sprintf("%s %q: %v", e.Section, e.Name, e.Cause)
+}
+
+func (e *ComponentValidationError) Unwrap() error { return e.Cause }
+
+// ExternalDocsURLValidationError wraps the URL parse failure on an
+// ExternalDocs object.
+type ExternalDocsURLValidationError struct {
+	Cause error
+}
+
+func (e *ExternalDocsURLValidationError) Error() string {
+	return fmt.Sprintf("url is incorrect: %v", e.Cause)
+}
+
+func (e *ExternalDocsURLValidationError) Unwrap() error { return e.Cause }
+
+// HeaderFieldValidationError wraps validation errors on a Header's
+// `schema` or `content` sub-objects. Field discriminates the two.
+type HeaderFieldValidationError struct {
+	// Field is "schema" or "content".
+	Field string
+	Cause error
+}
+
+func (e *HeaderFieldValidationError) Error() string {
+	return fmt.Sprintf("header %s is invalid: %v", e.Field, e.Cause)
+}
+
+func (e *HeaderFieldValidationError) Unwrap() error { return e.Cause }
+
+// MediaTypeExampleValidationError wraps validation errors on a named
+// example inside a MediaType.examples map.
+type MediaTypeExampleValidationError struct {
+	// ExampleName is the example map key.
+	ExampleName string
+	Cause       error
+}
+
+func (e *MediaTypeExampleValidationError) Error() string {
+	return fmt.Sprintf("example %s: %v", e.ExampleName, e.Cause)
+}
+
+func (e *MediaTypeExampleValidationError) Unwrap() error { return e.Cause }
+
+// WebhookValidationError wraps validation errors on a named webhook
+// at the document root (OpenAPI 3.1+).
+type WebhookValidationError struct {
+	// Name is the webhook map key.
+	Name  string
+	Cause error
+}
+
+func (e *WebhookValidationError) Error() string {
+	return fmt.Sprintf("webhook %q: %v", e.Name, e.Cause)
+}
+
+func (e *WebhookValidationError) Unwrap() error { return e.Cause }
+
+// ParameterFieldValidationError wraps validation errors on a
+// parameter's `schema` or `content` sub-objects. Field discriminates.
+type ParameterFieldValidationError struct {
+	// ParameterName is the parameter's `name:` value.
+	ParameterName string
+	// Field is "schema" or "content".
+	Field string
+	Cause error
+}
+
+func (e *ParameterFieldValidationError) Error() string {
+	return fmt.Sprintf("parameter %q %s is invalid: %v", e.ParameterName, e.Field, e.Cause)
+}
+
+func (e *ParameterFieldValidationError) Unwrap() error { return e.Cause }
+
+// ParameterExampleValidationError wraps validation errors on a named
+// example inside a parameter's examples map.
+type ParameterExampleValidationError struct {
+	// ExampleName is the example map key.
+	ExampleName string
+	Cause       error
+}
+
+func (e *ParameterExampleValidationError) Error() string {
+	return fmt.Sprintf("%s: %v", e.ExampleName, e.Cause)
+}
+
+func (e *ParameterExampleValidationError) Unwrap() error { return e.Cause }
+
+// SecuritySchemeFlowValidationError wraps validation errors on the
+// outer flows object of an oauth2 security scheme.
+type SecuritySchemeFlowValidationError struct {
+	Cause error
+}
+
+func (e *SecuritySchemeFlowValidationError) Error() string {
+	return fmt.Sprintf("security scheme 'flow' is invalid: %v", e.Cause)
+}
+
+func (e *SecuritySchemeFlowValidationError) Unwrap() error { return e.Cause }
+
+// OAuthFlowValidationError wraps validation errors on a specific
+// OAuth flow inside OAuthFlows.
+type OAuthFlowValidationError struct {
+	// FlowKind is one of "implicit", "password", "clientCredentials",
+	// "authorizationCode".
+	FlowKind string
+	Cause    error
+}
+
+func (e *OAuthFlowValidationError) Error() string {
+	return fmt.Sprintf("the OAuth flow %q is invalid: %v", e.FlowKind, e.Cause)
+}
+
+func (e *OAuthFlowValidationError) Unwrap() error { return e.Cause }
+
+// OAuthFlowFieldValidationError wraps validation errors on a specific
+// field inside an OAuthFlow object. Field discriminates which URL
+// field failed.
+type OAuthFlowFieldValidationError struct {
+	// Field is the offending field name ("refreshUrl" is the only
+	// site today; future URL fields can reuse the same wrapper).
+	Field string
+	Cause error
+}
+
+func (e *OAuthFlowFieldValidationError) Error() string {
+	return fmt.Sprintf("field %q is invalid: %v", e.Field, e.Cause)
+}
+
+func (e *OAuthFlowFieldValidationError) Unwrap() error { return e.Cause }

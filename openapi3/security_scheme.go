@@ -208,7 +208,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 			return newSecuritySchemeFlowsRequired(ss.Type, ss.Origin)
 		}
 		if err := flow.Validate(ctx); err != nil {
-			return fmt.Errorf("security scheme 'flow' is invalid: %w", err)
+			return &SecuritySchemeFlowValidationError{Cause: err}
 		}
 	} else if ss.Flows != nil {
 		return newSecuritySchemeFlowsForbidden(ss.Type, ss.Origin)
@@ -291,25 +291,25 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 
 	if v := flows.Implicit; v != nil {
 		if err := v.validate(ctx, oAuthFlowTypeImplicit, opts...); err != nil {
-			return fmt.Errorf("the OAuth flow 'implicit' is invalid: %w", err)
+			return &OAuthFlowValidationError{FlowKind: "implicit", Cause: err}
 		}
 	}
 
 	if v := flows.Password; v != nil {
 		if err := v.validate(ctx, oAuthFlowTypePassword, opts...); err != nil {
-			return fmt.Errorf("the OAuth flow 'password' is invalid: %w", err)
+			return &OAuthFlowValidationError{FlowKind: "password", Cause: err}
 		}
 	}
 
 	if v := flows.ClientCredentials; v != nil {
 		if err := v.validate(ctx, oAuthFlowTypeClientCredentials, opts...); err != nil {
-			return fmt.Errorf("the OAuth flow 'clientCredentials' is invalid: %w", err)
+			return &OAuthFlowValidationError{FlowKind: "clientCredentials", Cause: err}
 		}
 	}
 
 	if v := flows.AuthorizationCode; v != nil {
 		if err := v.validate(ctx, oAuthFlowAuthorizationCode, opts...); err != nil {
-			return fmt.Errorf("the OAuth flow 'authorizationCode' is invalid: %w", err)
+			return &OAuthFlowValidationError{FlowKind: "authorizationCode", Cause: err}
 		}
 	}
 
@@ -380,7 +380,7 @@ func (flow *OAuthFlow) Validate(ctx context.Context, opts ...ValidationOption) e
 
 	if v := flow.RefreshURL; v != "" {
 		if _, err := url.Parse(v); err != nil {
-			return fmt.Errorf("field 'refreshUrl' is invalid: %w", err)
+			return &OAuthFlowFieldValidationError{Field: "refreshUrl", Cause: err}
 		}
 	}
 

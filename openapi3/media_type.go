@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"maps"
 
 	"github.com/go-openapi/jsonpointer"
@@ -138,11 +137,11 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 				for _, k := range componentNames(examples) {
 					v := examples[k]
 					if err := v.Validate(ctx); err != nil {
-						return fmt.Errorf("example %s: %w", k, err)
+						return &MediaTypeExampleValidationError{ExampleName: k, Cause: err}
 					}
 					if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
 						return newSchemaValueError("example",
-							fmt.Errorf("example %s: %w", k, err),
+							&MediaTypeExampleValidationError{ExampleName: k, Cause: err},
 							exampleValueOrigin(v.Value, mediaType.Origin))
 					}
 				}
