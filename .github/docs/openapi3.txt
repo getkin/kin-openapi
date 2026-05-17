@@ -861,6 +861,8 @@ type ExtraSiblingFieldsError struct {
     extras are `x-` extensions. Carries the offending field names so callers can
     render or filter.
 
+func (e *ExtraSiblingFieldsError) Error() string
+
 type FieldVersionMismatchError struct {
 	// Field is the field name flagged (e.g. "summary", "identifier",
 	// "$defs", "prefixItems", "contains", ...).
