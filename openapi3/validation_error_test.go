@@ -2040,29 +2040,18 @@ func TestValidationError_DuplicateParameter_OriginNilWithoutLoaderTracking(t *te
 }
 
 func TestValidationError_InvalidSerializationMethod_MediaType_CarriesOrigin(t *testing.T) {
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-	// Encoding.Validate is invoked from MediaType.Validate; constructing
-	// a minimal doc that reaches a media-type encoding with a bad style.
-	doc, err := loader.LoadFromData([]byte(`
-openapi: 3.0.3
-info: { title: t, version: "1" }
-paths:
-  /x:
-    post:
-      requestBody:
-        content:
-          multipart/form-data:
-            schema: { type: object, properties: { f: { type: string } } }
-            encoding:
-              f:
-                style: matrix
-      responses: { "200": { description: ok } }
-`))
-	require.NoError(t, err)
-	verr := doc.Validate(context.Background())
+	// Encoding.Validate isn't reached from T.Validate (MediaType.Validate
+	// skips it); exercise it directly with a populated Origin so the
+	// Carries-Origin assertion is meaningful.
+	explode := true
+	enc := &openapi3.Encoding{
+		Style:   "matrix",
+		Explode: &explode,
+		Origin:  &openapi3.Origin{Key: &openapi3.Location{Line: 5, Column: 3}},
+	}
+	err := enc.Validate(context.Background())
 	var isme *openapi3.InvalidSerializationMethodError
-	require.True(t, errors.As(verr, &isme))
+	require.True(t, errors.As(err, &isme))
 	require.Equal(t, "media type", isme.Subject)
 	require.NotNil(t, isme.Origin)
 	require.NotNil(t, isme.Origin.Key)
