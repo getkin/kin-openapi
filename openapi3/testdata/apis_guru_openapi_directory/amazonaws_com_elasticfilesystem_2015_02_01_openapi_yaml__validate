@@ -1,1 +1,1 @@
-invalid components: schema "AccessPointDescription": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AccessPointDescription": schema pattern "^(\\/|(\\/(?!\\.)+[^$#<>;`|&?{}^*/\\n]+){1,4})$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

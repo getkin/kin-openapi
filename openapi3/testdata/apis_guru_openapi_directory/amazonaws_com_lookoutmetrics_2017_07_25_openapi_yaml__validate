@@ -1,1 +1,1 @@
-invalid components: schema "CreateMetricSetRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateMetricSetRequest": schema pattern "^[a-zA-Z](?!.*--)(?!.*-$)[0-9a-zA-Z\\-]*$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

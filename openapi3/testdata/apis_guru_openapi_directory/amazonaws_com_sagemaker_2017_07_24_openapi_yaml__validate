@@ -1,1 +1,1 @@
-invalid components: schema "Alarm": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "Alarm": schema pattern "^(?!\\s*$).+" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

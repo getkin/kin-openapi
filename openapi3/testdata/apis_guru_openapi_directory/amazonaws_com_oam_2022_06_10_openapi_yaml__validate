@@ -1,1 +1,1 @@
-invalid components: schema "CreateLinkInput": error parsing regexp: invalid repeat count: `{0,2047}`
+invalid components: schema "CreateLinkInput": schema pattern "[a-zA-Z0-9][a-zA-Z0-9_:\\.\\-\\/]{0,2047}" failed to compile: error parsing regexp: invalid repeat count: `{0,2047}`

@@ -1,1 +1,1 @@
-invalid components: schema "AssociateEntityToThingRequest": error parsing regexp: invalid character class range: `\p{Alnum}`
+invalid components: schema "AssociateEntityToThingRequest": schema pattern "^urn:tdm:(([a-z]{2}-(gov-)?[a-z]{4,9}-[0-9]{1,3}/[0-9]+/)*[\\p{Alnum}_]+(/[\\p{Alnum}_]+)*):([\\p{Alpha}]*):([\\p{Alnum}_]+(/[\\p{Alnum}_]+)*)$" failed to compile: error parsing regexp: invalid character class range: `\p{Alnum}`

@@ -320,7 +320,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		ParameterInHeader,
 		ParameterInCookie:
 	default:
-		return fmt.Errorf("parameter can't have 'in' value %q", parameter.In)
+		return newInvalidParameterIn(parameter.In, parameter.Origin)
 	}
 
 	if in == ParameterInPath && !parameter.Required {

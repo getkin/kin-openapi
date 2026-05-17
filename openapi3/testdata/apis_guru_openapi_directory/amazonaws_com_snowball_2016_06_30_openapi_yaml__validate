@@ -1,1 +1,1 @@
-invalid components: schema "CreateJobRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "CreateJobRequest": schema pattern "^(?=.{3,100}$).+@.+[.].+$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?=`

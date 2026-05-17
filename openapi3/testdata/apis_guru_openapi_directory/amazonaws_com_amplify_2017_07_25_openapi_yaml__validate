@@ -1,1 +1,1 @@
-invalid components: schema "CreateDomainAssociationRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateDomainAssociationRequest": schema pattern "^(((?!-)[A-Za-z0-9-]{0,62}[A-Za-z0-9])\\.)+((?!-)[A-Za-z0-9-]{1,62}[A-Za-z0-9])(\\.)?$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

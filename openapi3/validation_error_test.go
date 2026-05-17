@@ -1118,6 +1118,106 @@ components:
 	require.Greater(t, esf.Origin.Key.Line, 0)
 }
 
+// A parameter with `in:` set to anything outside {path, query, header,
+// cookie} triggers InvalidParameterInError carrying the rejected
+// value. Most common offender is `in: body` from Swagger 2.0 specs
+// that didn't fully migrate to 3.x.
+func TestValidationError_InvalidParameterIn(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    post:
+      parameters:
+        - { name: payload, in: body, schema: { type: object } }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `parameter can't have 'in' value "body"`)
+
+	var ipe *openapi3.InvalidParameterInError
+	require.True(t, errors.As(err, &ipe))
+	require.Equal(t, "body", ipe.Value)
+}
+
+// Origin tracking for InvalidParameterInError.
+func TestValidationError_InvalidParameterIn_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    post:
+      parameters:
+        - { name: payload, in: body, schema: { type: object } }
+      responses: { "200": { description: ok } }
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var ipe *openapi3.InvalidParameterInError
+	require.True(t, errors.As(verr, &ipe))
+	require.NotNil(t, ipe.Origin)
+	require.NotNil(t, ipe.Origin.Key)
+	require.Greater(t, ipe.Origin.Key.Line, 0)
+}
+
+// A schema `pattern:` using a Perl-only regex feature (lookahead /
+// lookbehind etc.) fails to compile against Go's RE2 and triggers
+// SchemaPatternRegexError. The cluster carries the offending pattern
+// AND chains through to the original *SchemaError via Unwrap so
+// callers walking with errors.As(*SchemaError) still match.
+func TestValidationError_SchemaPatternRegex(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: string
+      pattern: "(?!foo)bar"
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var spre *openapi3.SchemaPatternRegexError
+	require.True(t, errors.As(err, &spre))
+	require.Equal(t, "(?!foo)bar", spre.Pattern)
+
+	// Backward compat: Unwrap reaches the legacy *SchemaError.
+	var se *openapi3.SchemaError
+	require.True(t, errors.As(err, &se), "*SchemaError must still be reachable via Unwrap chain")
+	require.Equal(t, "pattern", se.SchemaField)
+}
+
+// Origin tracking for SchemaPatternRegexError.
+func TestValidationError_SchemaPatternRegex_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: string
+      pattern: "(?!foo)bar"
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var spre *openapi3.SchemaPatternRegexError
+	require.True(t, errors.As(verr, &spre))
+	require.NotNil(t, spre.Origin)
+	require.NotNil(t, spre.Origin.Key)
+	require.Greater(t, spre.Origin.Key.Line, 0)
+}
+
 // Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
 func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
 	responses := openapi3.NewResponses(

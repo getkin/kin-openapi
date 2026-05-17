@@ -1,1 +1,1 @@
-invalid components: schema "ComprehendMedicalAsyncJobProperties": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "ComprehendMedicalAsyncJobProperties": schema pattern "^[0-9a-z\\.\\-_]*(?!\\.)$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

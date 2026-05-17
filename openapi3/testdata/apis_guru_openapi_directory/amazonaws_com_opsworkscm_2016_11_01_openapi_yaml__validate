@@ -1,1 +1,1 @@
-invalid components: schema "AssociateNodeRequest": error parsing regexp: invalid character class range: `\p{Alnum}`
+invalid components: schema "AssociateNodeRequest": schema pattern "^[\\-\\p{Alnum}_:.]+$" failed to compile: error parsing regexp: invalid character class range: `\p{Alnum}`

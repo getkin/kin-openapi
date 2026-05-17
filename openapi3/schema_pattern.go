@@ -21,12 +21,16 @@ func (schema *Schema) compilePattern(c RegexCompilerFunc) (cp RegexMatcher, err 
 		cp, err = regexp.Compile(intoGoRegexp(pattern))
 	}
 	if err != nil {
-		err = &SchemaError{
+		schemaErr := &SchemaError{
 			Schema:      schema,
 			SchemaField: "pattern",
 			Origin:      err,
 			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
 		}
+		// Wrap in a typed cluster (kin #1187 follow-on) so consumers
+		// can dispatch on the regex-compile failure specifically while
+		// errors.As(*SchemaError) still matches via Unwrap.
+		err = newSchemaPatternRegexError(pattern, schemaErr, schema.Origin)
 		return
 	}
 

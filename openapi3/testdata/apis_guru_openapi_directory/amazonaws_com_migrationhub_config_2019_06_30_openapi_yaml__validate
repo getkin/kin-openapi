@@ -1,1 +1,1 @@
-invalid components: schema "DescribeHomeRegionControlsRequest": error parsing regexp: invalid repeat count: `{0,2048}`
+invalid components: schema "DescribeHomeRegionControlsRequest": schema pattern "^[a-zA-Z0-9\\/\\+\\=]{0,2048}$" failed to compile: error parsing regexp: invalid repeat count: `{0,2048}`

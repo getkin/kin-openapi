@@ -1,1 +1,1 @@
-invalid components: schema "AppRegistryConfiguration": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AppRegistryConfiguration": schema pattern "^(?!\\s+$)[\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

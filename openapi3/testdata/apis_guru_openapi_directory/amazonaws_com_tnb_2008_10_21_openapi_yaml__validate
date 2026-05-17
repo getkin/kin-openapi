@@ -1,1 +1,1 @@
-invalid components: schema "TagKey": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "TagKey": schema pattern "^(?!aws:).{1,128}$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

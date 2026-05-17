@@ -1,1 +1,1 @@
-invalid components: schema "CreateLifecyclePolicyRequest": error parsing regexp: invalid character class range: `\p{all}`
+invalid components: schema "CreateLifecyclePolicyRequest": schema pattern "[\\p{all}]*" failed to compile: error parsing regexp: invalid character class range: `\p{all}`

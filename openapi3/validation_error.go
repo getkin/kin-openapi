@@ -359,6 +359,47 @@ func (e *SchemaTypeError) Error() string {
 	return fmt.Sprintf("unsupported 'type' value %q", e.Type)
 }
 
+// InvalidParameterInError clusters "parameter can't have 'in' value X"
+// failures. The OpenAPI 3.x spec accepts only `path`, `query`, `header`,
+// or `cookie`; this fires when a parameter declares anything else
+// (commonly `body`, a Swagger 2.0 leftover).
+type InvalidParameterInError struct {
+	// Value is the rejected `in:` value (e.g. "body", "formData").
+	Value string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidParameterInError) Error() string {
+	return fmt.Sprintf("parameter can't have 'in' value %q", e.Value)
+}
+
+// SchemaPatternRegexError clusters "schema pattern failed to compile"
+// failures. Kin's regex engine is Go's RE2, which rejects Perl features
+// like `(?!...)` lookahead; specs that leak Perl regex patterns (common
+// in AWS-style auto-generated schemas) trip this. Carries the offending
+// pattern and the underlying compilation error so callers can render or
+// dispatch on either. Unwraps to the SchemaError wrap of the regex
+// error so callers walking with errors.As(*SchemaError) still match.
+type SchemaPatternRegexError struct {
+	// Pattern is the schema's `pattern:` value that failed to compile.
+	Pattern string
+	// Cause is the underlying error (a *SchemaError wrapping the
+	// regexp package's syntax error). Unwrap returns this so callers
+	// walking the error chain see the SchemaError.
+	Cause error
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaPatternRegexError) Error() string {
+	return fmt.Sprintf("schema pattern %q failed to compile: %v", e.Pattern, e.Cause)
+}
+
+func (e *SchemaPatternRegexError) Unwrap() error { return e.Cause }
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -1232,4 +1273,12 @@ func newExtraSiblingFields(fields []string, origin *Origin) error {
 
 func newSchemaTypeError(typ string, origin *Origin) error {
 	return &SchemaTypeError{Type: typ, Origin: origin}
+}
+
+func newInvalidParameterIn(value string, origin *Origin) error {
+	return &InvalidParameterInError{Value: value, Origin: origin}
+}
+
+func newSchemaPatternRegexError(pattern string, cause error, origin *Origin) error {
+	return &SchemaPatternRegexError{Pattern: pattern, Cause: cause, Origin: origin}
 }

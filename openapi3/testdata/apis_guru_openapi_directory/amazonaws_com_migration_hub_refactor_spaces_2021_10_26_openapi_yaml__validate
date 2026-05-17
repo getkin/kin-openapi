@@ -1,1 +1,1 @@
-invalid components: schema "ApiGatewayProxyConfig": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "ApiGatewayProxyConfig": schema pattern "^(?!internal-)[a-zA-Z0-9]+[a-zA-Z0-9-_ ]+.*[^-]$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

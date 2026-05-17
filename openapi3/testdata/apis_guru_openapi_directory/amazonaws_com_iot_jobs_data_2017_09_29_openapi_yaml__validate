@@ -1,1 +1,1 @@
-invalid components: schema "DescribeJobExecutionResponse": error parsing regexp: invalid character class range: `\p\`
+invalid components: schema "DescribeJobExecutionResponse": schema pattern "[^\\p\\{C\\}]*\\+" failed to compile: error parsing regexp: invalid character class range: `\p\`

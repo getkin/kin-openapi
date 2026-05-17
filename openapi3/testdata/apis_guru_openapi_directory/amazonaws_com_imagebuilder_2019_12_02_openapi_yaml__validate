@@ -1,1 +1,1 @@
-invalid components: schema "Filter": error parsing regexp: invalid repeat count: `{1,1024}`
+invalid components: schema "Filter": schema pattern "^[a-zA-Z]{1,1024}$" failed to compile: error parsing regexp: invalid repeat count: `{1,1024}`

@@ -1,1 +1,1 @@
-invalid components: schema "AssociateFileSystemInput": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AssociateFileSystemInput": schema pattern "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

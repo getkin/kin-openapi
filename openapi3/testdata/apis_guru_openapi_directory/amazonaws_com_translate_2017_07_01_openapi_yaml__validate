@@ -1,1 +1,1 @@
-invalid components: schema "AppliedTerminology": error parsing regexp: invalid repeat count: `{0,10000}`
+invalid components: schema "AppliedTerminology": schema pattern "[\\P{M}\\p{M}]{0,10000}" failed to compile: error parsing regexp: invalid repeat count: `{0,10000}`

@@ -1,1 +1,1 @@
-invalid components: schema "CreateOrganizationRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateOrganizationRequest": schema pattern "^(?!d-)([\\da-zA-Z]+)([-][\\da-zA-Z]+)*" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

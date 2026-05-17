@@ -1,1 +1,1 @@
-invalid components: schema "CreateScalingPlanRequest": error parsing regexp: invalid character class range: `\p{Print}`
+invalid components: schema "CreateScalingPlanRequest": schema pattern "[\\p{Print}&&[^|:/]]+" failed to compile: error parsing regexp: invalid character class range: `\p{Print}`

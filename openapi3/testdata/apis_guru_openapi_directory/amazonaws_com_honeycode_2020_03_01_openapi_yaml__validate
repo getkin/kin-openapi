@@ -1,1 +1,1 @@
-invalid components: schema "BatchCreateTableRowsRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "BatchCreateTableRowsRequest": schema pattern "^(?!\\s*$).+" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

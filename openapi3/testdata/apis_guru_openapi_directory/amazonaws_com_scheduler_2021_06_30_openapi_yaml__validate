@@ -1,1 +1,1 @@
-invalid components: schema "CreateScheduleInput": error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "CreateScheduleInput": schema pattern "^(?=[/\\.\\-_A-Za-z0-9]+)((?!aws\\.).*)|(\\$(\\.[\\w_-]+(\\[(\\d+|\\*)\\])*)*)$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?=`

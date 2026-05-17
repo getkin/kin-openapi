@@ -1,1 +1,1 @@
-invalid components: schema "AliasName": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AliasName": schema pattern "^(?!D-|d-)([\\da-zA-Z]+)([-]*[\\da-zA-Z])*" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

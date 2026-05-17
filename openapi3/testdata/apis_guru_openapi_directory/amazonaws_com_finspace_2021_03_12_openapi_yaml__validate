@@ -1,1 +1,1 @@
-invalid components: schema "CreateKxClusterRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateKxClusterRequest": schema pattern "^(?![Aa][Ww][Ss])(s|([a-zA-Z][a-zA-Z0-9_]+))" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

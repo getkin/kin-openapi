@@ -1,1 +1,1 @@
-invalid components: schema "FMSPolicyUpdateFirewallCreationConfigAction": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "FMSPolicyUpdateFirewallCreationConfigAction": schema pattern "^((?!\\\\[nr]).)+" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

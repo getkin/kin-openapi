@@ -1,1 +1,1 @@
-invalid components: schema "Account": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "Account": schema pattern "^.+@(?:(?:(?!-)[A-Za-z0-9-]{1,62})?[A-Za-z0-9]{1}\\.)+[A-Za-z]{2,63}$" failed to compile: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

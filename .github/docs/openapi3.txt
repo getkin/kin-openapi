@@ -995,6 +995,20 @@ func (e *InfoVersionRequired) As(target any) bool
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
 
+type InvalidParameterInError struct {
+	// Value is the rejected `in:` value (e.g. "body", "formData").
+	Value string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidParameterInError clusters "parameter can't have 'in' value X"
+    failures. The OpenAPI 3.x spec accepts only `path`, `query`, `header`,
+    or `cookie`; this fires when a parameter declares anything else (commonly
+    `body`, a Swagger 2.0 leftover).
+
+func (e *InvalidParameterInError) Error() string
+
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
 func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool
@@ -2399,6 +2413,29 @@ func (e *SchemaFieldFor31Plus) As(target any) bool
 type SchemaItemsRequired struct{ ValidationError }
 
 func (e *SchemaItemsRequired) As(target any) bool
+
+type SchemaPatternRegexError struct {
+	// Pattern is the schema's `pattern:` value that failed to compile.
+	Pattern string
+	// Cause is the underlying error (a *SchemaError wrapping the
+	// regexp package's syntax error). Unwrap returns this so callers
+	// walking the error chain see the SchemaError.
+	Cause error
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaPatternRegexError clusters "schema pattern failed to compile"
+    failures. Kin's regex engine is Go's RE2, which rejects Perl features
+    like `(?!...)` lookahead; specs that leak Perl regex patterns (common in
+    AWS-style auto-generated schemas) trip this. Carries the offending pattern
+    and the underlying compilation error so callers can render or dispatch
+    on either. Unwraps to the SchemaError wrap of the regex error so callers
+    walking with errors.As(*SchemaError) still match.
+
+func (e *SchemaPatternRegexError) Error() string
+
+func (e *SchemaPatternRegexError) Unwrap() error
 
 type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
 

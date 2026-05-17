@@ -1,1 +1,1 @@
-invalid components: schema "ChangeProgressDetails": error parsing regexp: invalid character class range: `\p{XDigit}`
+invalid components: schema "ChangeProgressDetails": schema pattern "\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{12}" failed to compile: error parsing regexp: invalid character class range: `\p{XDigit}`

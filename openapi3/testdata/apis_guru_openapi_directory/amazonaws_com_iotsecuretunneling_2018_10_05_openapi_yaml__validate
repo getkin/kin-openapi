@@ -1,1 +1,1 @@
-invalid components: schema "DescribeTunnelResponse": error parsing regexp: invalid repeat count: `{1,2048}`
+invalid components: schema "DescribeTunnelResponse": schema pattern "[^\\p{C}]{1,2048}" failed to compile: error parsing regexp: invalid repeat count: `{1,2048}`

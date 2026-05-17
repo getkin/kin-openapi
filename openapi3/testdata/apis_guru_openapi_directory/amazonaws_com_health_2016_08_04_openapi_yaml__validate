@@ -1,1 +1,1 @@
-invalid components: schema "AffectedEntity": error parsing regexp: invalid repeat count: `{0,1600}`
+invalid components: schema "AffectedEntity": schema pattern ".{0,1600}" failed to compile: error parsing regexp: invalid repeat count: `{0,1600}`

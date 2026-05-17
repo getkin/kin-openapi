@@ -1,1 +1,1 @@
-invalid components: schema "AcceptGrantRequest": error parsing regexp: invalid repeat count: `{0,1023}`
+invalid components: schema "AcceptGrantRequest": schema pattern "^arn:aws(-(cn|us-gov|iso-b|iso-c|iso-d))?:[A-Za-z0-9][A-Za-z0-9_/.-]{0,62}:[A-Za-z0-9_/.-]{0,63}:[A-Za-z0-9_/.-]{0,63}:[A-Za-z0-9][A-Za-z0-9:_/+=,@.-]{0,1023}$" failed to compile: error parsing regexp: invalid repeat count: `{0,1023}`
