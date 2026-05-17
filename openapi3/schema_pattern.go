@@ -27,7 +27,7 @@ func (schema *Schema) compilePattern(c RegexCompilerFunc) (cp RegexMatcher, err 
 			Origin:      err,
 			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
 		}
-		// Wrap in a typed cluster (kin #1187 follow-on) so consumers
+		// Wrap in a typed cluster (#1187 follow-on) so consumers
 		// can dispatch on the regex-compile failure specifically while
 		// using errors.As against the legacy *SchemaError still matches
 		// via Unwrap.
