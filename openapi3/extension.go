@@ -9,8 +9,9 @@ import (
 // map that are not explicitly allowed by the validation context. The
 // origin argument is attached to the resulting ExtraSiblingFieldsError
 // so callers can pin the finding to the parent object that carries the
-// unknown keys; pass nil when the parent has no Origin (e.g. doc-root
-// fields, or when the caller is itself synthetic).
+// unknown keys; pass nil when the parent has no Origin (the loader was
+// run with IncludeOrigin = false, or the parent was constructed
+// programmatically without an Origin set).
 func validateExtensions(ctx context.Context, extensions map[string]any, origin *Origin) error { // FIXME: newtype + Validate(...)
 	allowed := getValidationOptions(ctx).extraSiblingFieldsAllowed
 
