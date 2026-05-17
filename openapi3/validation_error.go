@@ -4,8 +4,8 @@ import "fmt"
 
 // ValidationError is the embedded base for every typed validation error
 // emitted by the document validation walker (T.Validate, Info.Validate,
-// Paths.Validate, etc.). Three layers of granularity are exposed; pick
-// whichever the caller needs:
+// Paths.Validate, etc.). Four categories of typed error are exposed;
+// pick whichever the caller needs:
 //
 //  1. Base — *ValidationError. Catchall for "this is a validation
 //     issue, here is the message". Reachable from any leaf via the As
@@ -14,16 +14,35 @@ import "fmt"
 //     *FieldVersionMismatchError. Group families of related failures
 //     and expose the family-level metadata (Field, MinVersion, ...).
 //     Wrap the underlying leaf via Unwrap, so errors.As can still walk
-//     to the leaf.
+//     to the leaf. Some clusters are single-site (e.g. *SchemaTypeError)
+//     and carry only their own fields with no separate leaf.
 //  3. Leaf — one type per call site (e.g. *InfoVersionRequired,
 //     *LicenseIdentifierFieldFor31Plus). Lets callers match an exact
 //     failure point without string comparison.
+//  4. Context wrapper — types like *SectionValidationError,
+//     *PathValidationError, *ParameterFieldValidationError. Add scope
+//     ("which section", "which path", "which parameter") around an
+//     inner error chain but do NOT themselves report a failure
+//     condition — the actual error lives in Cause. Defined in
+//     validation_error_context.go; see that file's header for the
+//     full inventory and conventions.
 //
-// All three are reachable from the same returned error through
+// All four are reachable from the same returned error through
 // standard Go error wrapping (errors.As, errors.Is, errors.Unwrap),
 // so a caller that only needs "is it a validation error?" stops at
 // the base and a caller that wants "is it specifically license.identifier
-// being used in 3.0?" matches the leaf.
+// being used in 3.0?" matches the leaf. A caller that wants "which
+// section did this happen in?" matches the context wrapper and walks
+// further for the cluster/leaf.
+//
+// A canonical error chain therefore looks like:
+//
+//	ComponentValidationError{Section: "schema", Name: "Foo"}
+//	  -> RequiredFieldError{Field: "type"}
+//	    -> SchemaTypeRequired{Message: "..."}
+//
+// Context wrapper carries WHERE, cluster carries WHAT category, leaf
+// carries EXACTLY WHICH case.
 //
 // Backward compatibility: every site that today returns errors.New(msg)
 // migrates to a leaf type that embeds ValidationError with Message set

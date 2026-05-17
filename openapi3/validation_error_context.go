@@ -1,3 +1,42 @@
+// Context wrappers are the 4th category of typed validation errors,
+// alongside the Base / Cluster / Leaf model documented at the top of
+// validation_error.go.
+//
+// A context wrapper carries scope (which section, path, operation,
+// component, parameter, OAuth flow, ...) around an inner error chain.
+// It does NOT itself report a validation failure — the actual error
+// lives in Cause and is reachable via errors.Unwrap / errors.As.
+//
+// Use a context wrapper to extract "where the error happened" without
+// parsing the rendered message. Combine with errors.As against the
+// inner cluster or leaf to also extract "what category" and "exactly
+// which case." A canonical error chain looks like:
+//
+//	ComponentValidationError{Section, Name}      // context wrapper: WHERE
+//	  -> RequiredFieldError{Field}               // cluster: WHAT CATEGORY
+//	    -> SomeFieldRequired{Message}            // leaf: EXACTLY WHICH CASE
+//
+// Two scopes of context wrapper live in this file:
+//
+//   - Document-wide wrappers — SectionValidationError,
+//     PathValidationError, OperationValidationError. Cover entire
+//     top-level scopes of the document.
+//   - Narrow-scope wrappers — ComponentValidationError,
+//     ExternalDocsURLValidationError, HeaderFieldValidationError,
+//     MediaTypeExampleValidationError, WebhookValidationError,
+//     ParameterFieldValidationError, ParameterExampleValidationError,
+//     SecuritySchemeFlowValidationError, OAuthFlowValidationError,
+//     OAuthFlowFieldValidationError. Cover a specific validation
+//     surface inside a section.
+//
+// Both scopes follow the same convention: a discriminator field, a
+// Cause, an Error() that formats as "<context>: <cause-message>", and
+// an Unwrap() that returns Cause.
+//
+// Backward compatibility: every wrapper's Error() format matches the
+// fmt.Errorf-with-%w wrap it replaced, so existing string-matching
+// consumers see identical output.
+
 package openapi3
 
 import "fmt"
