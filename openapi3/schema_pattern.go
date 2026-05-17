@@ -29,7 +29,8 @@ func (schema *Schema) compilePattern(c RegexCompilerFunc) (cp RegexMatcher, err 
 		}
 		// Wrap in a typed cluster (kin #1187 follow-on) so consumers
 		// can dispatch on the regex-compile failure specifically while
-		// errors.As(*SchemaError) still matches via Unwrap.
+		// using errors.As against the legacy *SchemaError still matches
+		// via Unwrap.
 		err = newSchemaPatternRegexError(pattern, schemaErr, schema.Origin)
 		return
 	}

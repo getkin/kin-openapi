@@ -1169,7 +1169,7 @@ paths:
 // lookbehind etc.) fails to compile against Go's RE2 and triggers
 // SchemaPatternRegexError. The cluster carries the offending pattern
 // AND chains through to the original *SchemaError via Unwrap so
-// callers walking with errors.As(*SchemaError) still match.
+// callers using errors.As against the legacy *SchemaError still match.
 func TestValidationError_SchemaPatternRegex(t *testing.T) {
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
