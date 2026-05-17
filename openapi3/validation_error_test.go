@@ -1031,6 +1031,107 @@ components:
 	require.Equal(t, "bool", ste.Type)
 }
 
+// Origin tracking for DuplicateOperationIDError. When IncludeOrigin is
+// set, the cluster carries the offending (second) operation's Origin so
+// consumers can pin the finding at the duplicate operationId rather
+// than at the document root.
+func TestValidationError_DuplicateOperationID_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+  /b:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var doe *openapi3.DuplicateOperationIDError
+	require.True(t, errors.As(verr, &doe))
+	require.NotNil(t, doe.Origin, "cluster should carry the offending operation's Origin when loader tracks origins")
+	require.NotNil(t, doe.Origin.Key, "Origin.Key set by the loader")
+	require.Greater(t, doe.Origin.Key.Line, 0)
+}
+
+// Without IncludeOrigin, DuplicateOperationIDError.Origin is nil — no
+// fabrication of location info that wasn't tracked.
+func TestValidationError_DuplicateOperationID_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+  /b:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+`)
+	verr := doc.Validate(context.Background())
+	var doe *openapi3.DuplicateOperationIDError
+	require.True(t, errors.As(verr, &doe))
+	require.Nil(t, doe.Origin, "Origin should be nil when loader didn't track origins")
+}
+
+// Origin tracking for ExtraSiblingFieldsError. The cluster carries the
+// parent object's Origin so consumers can pin the finding at the
+// container holding the unexpected sibling fields. Exercised here via
+// a $ref with a disallowed sibling, which is the most common surface.
+func TestValidationError_ExtraSiblingFields_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/T"
+                description: should-not-be-here
+components:
+  schemas:
+    T: { type: string }
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var esf *openapi3.ExtraSiblingFieldsError
+	require.True(t, errors.As(verr, &esf))
+	require.NotNil(t, esf.Origin, "cluster should carry the parent object's Origin when loader tracks origins")
+	require.NotNil(t, esf.Origin.Key)
+	require.Greater(t, esf.Origin.Key.Line, 0)
+}
+
+// Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
+func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
+	responses := openapi3.NewResponses(
+		openapi3.WithStatus(200, &openapi3.ResponseRef{
+			Value: openapi3.NewResponse().WithDescription("ok"),
+		}),
+	)
+	responses.Extensions = map[string]any{"bogus": "value"}
+	verr := responses.Validate(context.Background())
+	var esf *openapi3.ExtraSiblingFieldsError
+	require.True(t, errors.As(verr, &esf))
+	require.Nil(t, esf.Origin, "Origin should be nil when the parent object's Origin is unset")
+}
+
 func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
 	t.Helper()
 	loader := openapi3.NewLoader()
