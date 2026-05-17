@@ -407,6 +407,23 @@ type ComponentRef interface {
 	CollectionName() string
 }
 
+type ComponentValidationError struct {
+	// Section is the lowercase singular form of the component bucket
+	// ("schema", "parameter", "header", "request body", "response",
+	// "security scheme", "example", "link", "callback").
+	Section string
+	// Name is the component map key.
+	Name  string
+	Cause error
+}
+    ComponentValidationError wraps validation errors inside the Components
+    container, carrying which sub-section (Schemas, Parameters, etc.) and which
+    component name failed.
+
+func (e *ComponentValidationError) Error() string
+
+func (e *ComponentValidationError) Unwrap() error
+
 type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -820,6 +837,16 @@ type ExternalDocsURLRequired struct{ ValidationError }
 
 func (e *ExternalDocsURLRequired) As(target any) bool
 
+type ExternalDocsURLValidationError struct {
+	Cause error
+}
+    ExternalDocsURLValidationError wraps the URL parse failure on an
+    ExternalDocs object.
+
+func (e *ExternalDocsURLValidationError) Error() string
+
+func (e *ExternalDocsURLValidationError) Unwrap() error
+
 type ExtraSiblingFieldsError struct {
 	// Fields is the list of unexpected sibling field names.
 	Fields []string
@@ -926,6 +953,18 @@ func (e *HeaderContentSchemaExactlyOne) As(target any) bool
 type HeaderContentSingleEntry struct{ ValidationError }
 
 func (e *HeaderContentSingleEntry) As(target any) bool
+
+type HeaderFieldValidationError struct {
+	// Field is "schema" or "content".
+	Field string
+	Cause error
+}
+    HeaderFieldValidationError wraps validation errors on a Header's `schema` or
+    `content` sub-objects. Field discriminates the two.
+
+func (e *HeaderFieldValidationError) Error() string
+
+func (e *HeaderFieldValidationError) Unwrap() error
 
 type HeaderInForbidden struct{ ValidationError }
 
@@ -1351,6 +1390,18 @@ type MediaTypeExampleExamplesExclusive struct{ ValidationError }
 
 func (e *MediaTypeExampleExamplesExclusive) As(target any) bool
 
+type MediaTypeExampleValidationError struct {
+	// ExampleName is the example map key.
+	ExampleName string
+	Cause       error
+}
+    MediaTypeExampleValidationError wraps validation errors on a named example
+    inside a MediaType.examples map.
+
+func (e *MediaTypeExampleValidationError) Error() string
+
+func (e *MediaTypeExampleValidationError) Unwrap() error
+
 type MinContainsFieldFor31Plus struct{ ValidationError }
 
 func (e *MinContainsFieldFor31Plus) As(target any) bool
@@ -1447,6 +1498,19 @@ type OAuthFlowAuthorizationURLRequired struct{ ValidationError }
 
 func (e *OAuthFlowAuthorizationURLRequired) As(target any) bool
 
+type OAuthFlowFieldValidationError struct {
+	// Field is the offending field name ("refreshUrl" is the only
+	// site today; future URL fields can reuse the same wrapper).
+	Field string
+	Cause error
+}
+    OAuthFlowFieldValidationError wraps validation errors on a specific field
+    inside an OAuthFlow object. Field discriminates which URL field failed.
+
+func (e *OAuthFlowFieldValidationError) Error() string
+
+func (e *OAuthFlowFieldValidationError) Unwrap() error
+
 type OAuthFlowScopesRequired struct{ ValidationError }
 
 func (e *OAuthFlowScopesRequired) As(target any) bool
@@ -1458,6 +1522,19 @@ func (e *OAuthFlowTokenURLForbidden) As(target any) bool
 type OAuthFlowTokenURLRequired struct{ ValidationError }
 
 func (e *OAuthFlowTokenURLRequired) As(target any) bool
+
+type OAuthFlowValidationError struct {
+	// FlowKind is one of "implicit", "password", "clientCredentials",
+	// "authorizationCode".
+	FlowKind string
+	Cause    error
+}
+    OAuthFlowValidationError wraps validation errors on a specific OAuth flow
+    inside OAuthFlows.
+
+func (e *OAuthFlowValidationError) Error() string
+
+func (e *OAuthFlowValidationError) Unwrap() error
 
 type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1654,6 +1731,32 @@ func (e *ParameterContentSingleEntry) As(target any) bool
 type ParameterExampleAndExamplesExclusive struct{ ValidationError }
 
 func (e *ParameterExampleAndExamplesExclusive) As(target any) bool
+
+type ParameterExampleValidationError struct {
+	// ExampleName is the example map key.
+	ExampleName string
+	Cause       error
+}
+    ParameterExampleValidationError wraps validation errors on a named example
+    inside a parameter's examples map.
+
+func (e *ParameterExampleValidationError) Error() string
+
+func (e *ParameterExampleValidationError) Unwrap() error
+
+type ParameterFieldValidationError struct {
+	// ParameterName is the parameter's `name:` value.
+	ParameterName string
+	// Field is "schema" or "content".
+	Field string
+	Cause error
+}
+    ParameterFieldValidationError wraps validation errors on a parameter's
+    `schema` or `content` sub-objects. Field discriminates.
+
+func (e *ParameterFieldValidationError) Error() string
+
+func (e *ParameterFieldValidationError) Unwrap() error
 
 type ParameterNameRequired struct{ ValidationError }
 
@@ -2847,6 +2950,16 @@ type SecuritySchemeBearerFormatForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool
 
+type SecuritySchemeFlowValidationError struct {
+	Cause error
+}
+    SecuritySchemeFlowValidationError wraps validation errors on the outer flows
+    object of an oauth2 security scheme.
+
+func (e *SecuritySchemeFlowValidationError) Error() string
+
+func (e *SecuritySchemeFlowValidationError) Unwrap() error
+
 type SecuritySchemeFlowsForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeFlowsForbidden) As(target any) bool
@@ -3479,6 +3592,18 @@ type WebhookNilError struct {
 func (e *WebhookNilError) Error() string
 
 func (e *WebhookNilError) Unwrap() error
+
+type WebhookValidationError struct {
+	// Name is the webhook map key.
+	Name  string
+	Cause error
+}
+    WebhookValidationError wraps validation errors on a named webhook at the
+    document root (OpenAPI 3.1+).
+
+func (e *WebhookValidationError) Error() string
+
+func (e *WebhookValidationError) Unwrap() error
 
 type WebhooksFieldFor31Plus struct{ ValidationError }
 
