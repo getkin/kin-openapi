@@ -29,13 +29,19 @@
 //     OAuthFlowFieldValidationError. Cover a specific validation
 //     surface inside a section.
 //
-// Both scopes follow the same convention: a discriminator field, a
-// Cause, an Error() that formats as "<context>: <cause-message>", and
-// an Unwrap() that returns Cause.
+// Both scopes follow the same shape:
 //
-// Backward compatibility: every wrapper's Error() format matches the
-// fmt.Errorf-with-%w wrap it replaced, so existing string-matching
-// consumers see identical output.
+//   - One or more discriminator fields naming the scope (Section,
+//     Path, ParameterName + Field, etc.).
+//   - A Cause error that holds the wrapped inner error.
+//   - Unwrap() returns Cause so errors.As walks transparently to the
+//     inner cluster or leaf.
+//
+// Error() formats vary per wrapper: each preserves the original
+// fmt.Errorf-with-%w message format byte-for-byte for backward
+// compatibility, so existing string-matching consumers see identical
+// output. There is no canonical "<context>: <cause>" format across
+// wrappers — read each type's Error() if the exact string matters.
 
 package openapi3
 
