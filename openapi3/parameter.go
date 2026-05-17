@@ -56,7 +56,7 @@ func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOpt
 		if v := parameterRef.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
-				return fmt.Errorf("more than one %q parameter has name %q", v.In, v.Name)
+				return newDuplicateParameter(v.In, v.Name, v.Origin)
 			}
 			dupes[key] = struct{}{}
 		}
@@ -357,7 +357,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		smSupported = true
 	}
 	if !smSupported {
-		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
+		e := newInvalidSerializationMethod(in, sm.Style, sm.Explode, parameter.Origin)
 		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
 	}
 
@@ -382,7 +382,7 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 			return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, err)
 		}
 		if parameter.Example != nil && parameter.Examples != nil {
-			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
+			return newParameterExampleAndExamplesExclusive(parameter.Name, parameter.Origin)
 		}
 
 		if vo := getValidationOptions(ctx); vo.examplesValidationDisabled {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"maps"
 	"net/url"
 	"strings"
@@ -312,7 +311,7 @@ func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...Vali
 		if err != nil {
 			return err
 		}
-		return fmt.Errorf("field default is required in %s", data)
+		return newServerVariableDefaultRequired(string(data), serverVariable.Origin)
 	}
 
 	return validateExtensions(ctx, serverVariable.Extensions, serverVariable.Origin)

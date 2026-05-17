@@ -467,6 +467,82 @@ func (e *APIKeyInInvalidError) Error() string {
 	return fmt.Sprintf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", e.Value)
 }
 
+// PathMustStartWithSlashError clusters "path X does not start with a
+// forward slash" failures. Path keys in the paths object must begin
+// with `/`.
+type PathMustStartWithSlashError struct {
+	// Path is the offending path key (e.g. "users/{id}").
+	Path string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *PathMustStartWithSlashError) Error() string {
+	return fmt.Sprintf("path %q does not start with a forward slash (/)", e.Path)
+}
+
+// ConflictingPathsError clusters "conflicting paths X and Y" failures.
+// Fires when two path keys normalize to the same template (e.g.
+// "/users/{a}" and "/users/{b}" both normalize to "/users/{}").
+type ConflictingPathsError struct {
+	// Path1 / Path2 are the two conflicting path keys, in document
+	// order.
+	Path1 string
+	Path2 string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ConflictingPathsError) Error() string {
+	return fmt.Sprintf("conflicting paths %q and %q", e.Path1, e.Path2)
+}
+
+// DuplicateParameterError clusters "more than one X parameter has
+// name Y" failures. Fires when two parameters on an operation (or
+// path item) share the same In + Name combination.
+type DuplicateParameterError struct {
+	// In is the parameter location (e.g. "query", "path", "header").
+	In string
+	// Name is the duplicated parameter name.
+	Name string
+	// Origin is the source location of the offending parameter when
+	// the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *DuplicateParameterError) Error() string {
+	return fmt.Sprintf("more than one %q parameter has name %q", e.In, e.Name)
+}
+
+// InvalidSerializationMethodError clusters "serialization method with
+// style=X and explode=Y is not supported by Z" failures. Fires for
+// invalid (style, explode) combinations on encodings, parameters,
+// and headers. The Subject discriminates which surface is reporting:
+// "media type" for encoding, the parameter location ("path",
+// "query", etc.) for parameters and "header" for headers.
+type InvalidSerializationMethodError struct {
+	// Subject discriminates the calling surface ("media type",
+	// "path"/"query"/"header"/"cookie" for parameters, or "header"
+	// for the header.go site).
+	Subject string
+	// Style is the offending `style:` value.
+	Style string
+	// Explode is the offending `explode:` value.
+	Explode bool
+	// Origin is the source location of the offending object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidSerializationMethodError) Error() string {
+	if e.Subject == "media type" {
+		return fmt.Sprintf("serialization method with style=%q and explode=%v is not supported by media type", e.Style, e.Explode)
+	}
+	return fmt.Sprintf("serialization method with style=%q and explode=%v is not supported by a %s parameter", e.Style, e.Explode, e.Subject)
+}
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -653,6 +729,18 @@ func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool {
 type SecuritySchemeFlowsForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeFlowsForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ParameterExampleAndExamplesExclusive struct{ ValidationError }
+
+func (e *ParameterExampleAndExamplesExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ServerVariableDefaultRequired struct{ ValidationError }
+
+func (e *ServerVariableDefaultRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1432,4 +1520,30 @@ func newSecuritySchemeBearerFormatForbidden(schemeType string, origin *Origin) e
 func newSecuritySchemeFlowsForbidden(schemeType string, origin *Origin) error {
 	return newForbiddenField("flows",
 		&SecuritySchemeFlowsForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'flows'", schemeType)}}, origin)
+}
+
+func newPathMustStartWithSlash(path string, origin *Origin) error {
+	return &PathMustStartWithSlashError{Path: path, Origin: origin}
+}
+
+func newConflictingPaths(path1, path2 string, origin *Origin) error {
+	return &ConflictingPathsError{Path1: path1, Path2: path2, Origin: origin}
+}
+
+func newDuplicateParameter(in, name string, origin *Origin) error {
+	return &DuplicateParameterError{In: in, Name: name, Origin: origin}
+}
+
+func newInvalidSerializationMethod(subject, style string, explode bool, origin *Origin) error {
+	return &InvalidSerializationMethodError{Subject: subject, Style: style, Explode: explode, Origin: origin}
+}
+
+func newParameterExampleAndExamplesExclusive(parameterName string, origin *Origin) error {
+	return newMutuallyExclusiveFields("example", "examples",
+		&ParameterExampleAndExamplesExclusive{ValidationError{Message: fmt.Sprintf("parameter %q example and examples are mutually exclusive", parameterName)}}, origin)
+}
+
+func newServerVariableDefaultRequired(serverData string, origin *Origin) error {
+	return newRequiredField("default",
+		&ServerVariableDefaultRequired{ValidationError{Message: fmt.Sprintf("field default is required in %s", serverData)}}, origin)
 }

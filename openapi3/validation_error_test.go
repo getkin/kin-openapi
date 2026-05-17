@@ -1503,6 +1503,127 @@ components:
 	require.True(t, errors.As(err, &leaf))
 }
 
+// A path key that doesn't start with '/' triggers
+// PathMustStartWithSlashError carrying the offending path.
+func TestValidationError_PathMustStartWithSlash(t *testing.T) {
+	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
+	err := paths.Validate(context.Background())
+	require.ErrorContains(t, err, `path "users/{id}" does not start with a forward slash (/)`)
+
+	var pmss *openapi3.PathMustStartWithSlashError
+	require.True(t, errors.As(err, &pmss))
+	require.Equal(t, "users/{id}", pmss.Path)
+}
+
+// Two path keys normalizing to the same template trigger
+// ConflictingPathsError carrying both paths.
+func TestValidationError_ConflictingPaths(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /users/{a}:
+    get:
+      parameters:
+        - { name: a, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+  /users/{b}:
+    get:
+      parameters:
+        - { name: b, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var cpe *openapi3.ConflictingPathsError
+	require.True(t, errors.As(err, &cpe))
+	require.Contains(t, []string{cpe.Path1, cpe.Path2}, "/users/{a}")
+	require.Contains(t, []string{cpe.Path1, cpe.Path2}, "/users/{b}")
+}
+
+// Two parameters with the same (In, Name) combination on a single
+// operation trigger DuplicateParameterError carrying both.
+func TestValidationError_DuplicateParameter(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - { name: id, in: query, schema: { type: string } }
+        - { name: id, in: query, schema: { type: string } }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `more than one "query" parameter has name "id"`)
+
+	var dpe *openapi3.DuplicateParameterError
+	require.True(t, errors.As(err, &dpe))
+	require.Equal(t, "query", dpe.In)
+	require.Equal(t, "id", dpe.Name)
+}
+
+// An encoding with an unsupported (style, explode) combination
+// triggers InvalidSerializationMethodError carrying Subject "media
+// type".
+func TestValidationError_InvalidSerializationMethod_MediaType(t *testing.T) {
+	explode := true
+	enc := &openapi3.Encoding{Style: "matrix", Explode: &explode}
+	err := enc.Validate(context.Background())
+	require.ErrorContains(t, err, `serialization method with style="matrix" and explode=true is not supported by media type`)
+
+	var isme *openapi3.InvalidSerializationMethodError
+	require.True(t, errors.As(err, &isme))
+	require.Equal(t, "media type", isme.Subject)
+	require.Equal(t, "matrix", isme.Style)
+}
+
+// A parameter with `example` AND `examples` both populated triggers
+// MutuallyExclusiveFieldsError wrapping
+// *ParameterExampleAndExamplesExclusive.
+func TestValidationError_ParameterExampleAndExamplesExclusive(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          example: foo
+          examples:
+            a: { value: bar }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `example and examples are mutually exclusive`)
+
+	var mef *openapi3.MutuallyExclusiveFieldsError
+	require.True(t, errors.As(err, &mef))
+	require.Equal(t, "example", mef.Field1)
+	require.Equal(t, "examples", mef.Field2)
+	var leaf *openapi3.ParameterExampleAndExamplesExclusive
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A server variable without `default` triggers RequiredFieldError
+// wrapping *ServerVariableDefaultRequired.
+func TestValidationError_ServerVariableDefaultRequired(t *testing.T) {
+	sv := &openapi3.ServerVariable{Enum: []string{"a", "b"}}
+	err := sv.Validate(context.Background())
+	require.ErrorContains(t, err, `field default is required in`)
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "default", rfe.Field)
+	var leaf *openapi3.ServerVariableDefaultRequired
+	require.True(t, errors.As(err, &leaf))
+}
+
 // Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
 func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
 	responses := openapi3.NewResponses(

@@ -439,6 +439,21 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
     Validate returns an error if Components does not comply with the OpenAPI
     spec.
 
+type ConflictingPathsError struct {
+	// Path1 / Path2 are the two conflicting path keys, in document
+	// order.
+	Path1 string
+	Path2 string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ConflictingPathsError clusters "conflicting paths X and Y" failures.
+    Fires when two path keys normalize to the same template (e.g. "/users/{a}"
+    and "/users/{b}" both normalize to "/users/{}").
+
+func (e *ConflictingPathsError) Error() string
+
 type ConstFieldFor31Plus struct{ ValidationError }
 
 func (e *ConstFieldFor31Plus) As(target any) bool
@@ -560,6 +575,21 @@ type DuplicateOperationIDError struct {
     Endpoints are rendered as "<METHOD> <path>" (e.g. "POST /things").
 
 func (e *DuplicateOperationIDError) Error() string
+
+type DuplicateParameterError struct {
+	// In is the parameter location (e.g. "query", "path", "header").
+	In string
+	// Name is the duplicated parameter name.
+	Name string
+	// Origin is the source location of the offending parameter when
+	// the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    DuplicateParameterError clusters "more than one X parameter has name Y"
+    failures. Fires when two parameters on an operation (or path item) share the
+    same In + Name combination.
+
+func (e *DuplicateParameterError) Error() string
 
 type DynamicAnchorFieldFor31Plus struct{ ValidationError }
 
@@ -1052,6 +1082,28 @@ type InvalidSecuritySchemeTypeError struct {
     declares anything else.
 
 func (e *InvalidSecuritySchemeTypeError) Error() string
+
+type InvalidSerializationMethodError struct {
+	// Subject discriminates the calling surface ("media type",
+	// "path"/"query"/"header"/"cookie" for parameters, or "header"
+	// for the header.go site).
+	Subject string
+	// Style is the offending `style:` value.
+	Style string
+	// Explode is the offending `explode:` value.
+	Explode bool
+	// Origin is the source location of the offending object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidSerializationMethodError clusters "serialization method with style=X
+    and explode=Y is not supported by Z" failures. Fires for invalid (style,
+    explode) combinations on encodings, parameters, and headers. The Subject
+    discriminates which surface is reporting: "media type" for encoding,
+    the parameter location ("path", "query", etc.) for parameters and "header"
+    for headers.
+
+func (e *InvalidSerializationMethodError) Error() string
 
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
@@ -1599,6 +1651,10 @@ type ParameterContentSingleEntry struct{ ValidationError }
 
 func (e *ParameterContentSingleEntry) As(target any) bool
 
+type ParameterExampleAndExamplesExclusive struct{ ValidationError }
+
+func (e *ParameterExampleAndExamplesExclusive) As(target any) bool
+
 type ParameterNameRequired struct{ ValidationError }
 
 func (e *ParameterNameRequired) As(target any) bool
@@ -1707,6 +1763,18 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error
 
 func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
+
+type PathMustStartWithSlashError struct {
+	// Path is the offending path key (e.g. "users/{id}").
+	Path string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    PathMustStartWithSlashError clusters "path X does not start with a forward
+    slash" failures. Path keys in the paths object must begin with `/`.
+
+func (e *PathMustStartWithSlashError) Error() string
 
 type PathParameterRequiredError struct {
 	// Param is the path-parameter name (e.g. "groupId").
@@ -2934,6 +3002,10 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if ServerVariable does not comply with the OpenAPI
     spec.
+
+type ServerVariableDefaultRequired struct{ ValidationError }
+
+func (e *ServerVariableDefaultRequired) As(target any) bool
 
 type ServerVariables map[string]*ServerVariable
     ServerVariable is specified by OpenAPI/Swagger standard version 3. See

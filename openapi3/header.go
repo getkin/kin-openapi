@@ -67,7 +67,7 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 	if smSupported := false ||
 		sm.Style == SerializationSimple && !sm.Explode ||
 		sm.Style == SerializationSimple && sm.Explode; !smSupported {
-		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a header parameter", sm.Style, sm.Explode)
+		e := newInvalidSerializationMethod("header", sm.Style, sm.Explode, header.Origin)
 		return fmt.Errorf("header schema is invalid: %w", e)
 	}
 
