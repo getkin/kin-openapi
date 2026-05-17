@@ -533,6 +533,11 @@ type DuplicateOperationIDError struct {
 	// deterministic order (lexicographically) for stable error messages.
 	Endpoint1 string
 	Endpoint2 string
+	// Origin is the source location of the second (offending) operation
+	// when the document was loaded with Loader.IncludeOrigin = true. The
+	// pre-existing Endpoint1 is implicitly fine; the duplicate landed at
+	// Endpoint2's site, which is the natural "go fix this" pointer.
+	Origin *Origin
 }
     DuplicateOperationIDError clusters "two operations share an operationId"
     failures. operationIds must be unique across all paths in a document.
@@ -772,6 +777,10 @@ func (e *ExternalDocsURLRequired) As(target any) bool
 type ExtraSiblingFieldsError struct {
 	// Fields is the list of unexpected sibling field names.
 	Fields []string
+	// Origin is the source location of the parent object that carries
+	// the extra siblings when the document was loaded with
+	// Loader.IncludeOrigin = true.
+	Origin *Origin
 }
     ExtraSiblingFieldsError clusters "unexpected sibling fields" failures. Most
     commonly this fires when fields appear alongside a $ref that the OpenAPI
