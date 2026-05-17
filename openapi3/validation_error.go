@@ -345,8 +345,8 @@ func (e *ExtraSiblingFieldsError) Error() string {
 }
 
 // SchemaTypeError clusters "unsupported 'type' value" failures on a
-// Schema. Carries the bad type value so callers can render or dispatch
-// on it.
+// Schema. Carries the bad type value so callers can surface it in
+// user-facing output and filter findings by it.
 type SchemaTypeError struct {
 	// Type is the rejected type value (e.g. "bool", "int", "http").
 	Type string
@@ -433,8 +433,8 @@ func (e *InvalidHTTPSchemeError) Error() string {
 
 // UnresolvedRefError clusters "found unresolved ref: X" failures fired
 // by the loader when a $ref cannot be resolved against the loaded
-// document. Carries the offending ref string so callers can render or
-// dispatch on it.
+// document. Carries the offending ref string so callers can surface
+// it in user-facing output and filter findings by it.
 type UnresolvedRefError struct {
 	// Ref is the unresolved $ref value (e.g. "#/components/schemas/X"
 	// or "external.yaml#/...").
