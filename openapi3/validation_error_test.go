@@ -1218,6 +1218,124 @@ components:
 	require.Greater(t, spre.Origin.Key.Line, 0)
 }
 
+// Security scheme with a `type:` outside the spec-permitted set
+// {apiKey, http, oauth2, openIdConnect, mutualTLS} triggers
+// InvalidSecuritySchemeTypeError carrying the rejected value.
+func TestValidationError_InvalidSecuritySchemeType(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: cookie
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme 'type' can't be "cookie"`)
+
+	var iste *openapi3.InvalidSecuritySchemeTypeError
+	require.True(t, errors.As(err, &iste))
+	require.Equal(t, "cookie", iste.Type)
+}
+
+// Origin tracking for InvalidSecuritySchemeTypeError.
+func TestValidationError_InvalidSecuritySchemeType_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: cookie
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var iste *openapi3.InvalidSecuritySchemeTypeError
+	require.True(t, errors.As(verr, &iste))
+	require.NotNil(t, iste.Origin)
+	require.NotNil(t, iste.Origin.Key)
+	require.Greater(t, iste.Origin.Key.Line, 0)
+}
+
+// HTTP security scheme with a `scheme:` outside {bearer, basic,
+// negotiate, digest} triggers InvalidHTTPSchemeError carrying the
+// rejected value.
+func TestValidationError_InvalidHTTPScheme(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: mutual
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type 'http' has invalid 'scheme' value "mutual"`)
+
+	var ihse *openapi3.InvalidHTTPSchemeError
+	require.True(t, errors.As(err, &ihse))
+	require.Equal(t, "mutual", ihse.Scheme)
+}
+
+// Origin tracking for InvalidHTTPSchemeError.
+func TestValidationError_InvalidHTTPScheme_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: mutual
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var ihse *openapi3.InvalidHTTPSchemeError
+	require.True(t, errors.As(verr, &ihse))
+	require.NotNil(t, ihse.Origin)
+	require.NotNil(t, ihse.Origin.Key)
+	require.Greater(t, ihse.Origin.Key.Line, 0)
+}
+
+// A $ref left with a non-nil Ref string but nil Value at Validate time
+// triggers UnresolvedRefError. Constructed programmatically because
+// the YAML loader is strict about ref resolution at load time; this
+// shape models the in-the-wild case where a spec uses an external
+// $ref that wasn't fetched (testdata/apis_guru_openapi_directory has
+// real examples).
+func TestValidationError_UnresolvedRef(t *testing.T) {
+	doc := &openapi3.T{
+		OpenAPI: "3.0.3",
+		Info:    &openapi3.Info{Title: "t", Version: "1"},
+		Paths:   openapi3.NewPaths(),
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
+				"X": &openapi3.SchemaRef{
+					Ref:   "external.yaml#/T",
+					Value: nil, // unresolved
+				},
+			},
+		},
+	}
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `found unresolved ref: "external.yaml#/T"`)
+
+	var ure *openapi3.UnresolvedRefError
+	require.True(t, errors.As(err, &ure))
+	require.Equal(t, "external.yaml#/T", ure.Ref)
+}
+
 // Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
 func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
 	responses := openapi3.NewResponses(

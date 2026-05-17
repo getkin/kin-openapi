@@ -995,6 +995,20 @@ func (e *InfoVersionRequired) As(target any) bool
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
 
+type InvalidHTTPSchemeError struct {
+	// Scheme is the rejected scheme value (e.g. "mutual", "oauth").
+	Scheme string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidHTTPSchemeError clusters "security scheme of type 'http' has invalid
+    'scheme' value X" failures. The OpenAPI/HTTP-auth registry accepts only
+    `bearer`, `basic`, `negotiate`, `digest`; this fires when an http scheme
+    declares anything else.
+
+func (e *InvalidHTTPSchemeError) Error() string
+
 type InvalidParameterInError struct {
 	// Value is the rejected `in:` value (e.g. "body", "formData").
 	Value string
@@ -1008,6 +1022,20 @@ type InvalidParameterInError struct {
     `body`, a Swagger 2.0 leftover).
 
 func (e *InvalidParameterInError) Error() string
+
+type InvalidSecuritySchemeTypeError struct {
+	// Type is the rejected type value (e.g. "cookie", "saml").
+	Type string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidSecuritySchemeTypeError clusters "security scheme 'type' can't be
+    X" failures. The OpenAPI 3.x spec accepts only `apiKey`, `http`, `oauth2`,
+    `openIdConnect`, and `mutualTLS` (3.1+); this fires when a security scheme
+    declares anything else.
+
+func (e *InvalidSecuritySchemeTypeError) Error() string
 
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
@@ -2427,11 +2455,12 @@ type SchemaPatternRegexError struct {
 }
     SchemaPatternRegexError clusters "schema pattern failed to compile"
     failures. Kin's regex engine is Go's RE2, which rejects Perl features
-    like `(?!...)` lookahead; specs that leak Perl regex patterns (common in
-    AWS-style auto-generated schemas) trip this. Carries the offending pattern
-    and the underlying compilation error so callers can render or dispatch
-    on either. Unwraps to the SchemaError wrap of the regex error so callers
-    walking with errors.As(*SchemaError) still match.
+    like `(?!...)` lookahead; specs that leak Perl regex patterns (common
+    in AWS-style auto-generated schemas) trip this. Carries the offending
+    pattern as a structured field for typed dispatch, while preserving the
+    underlying SchemaError's rendered message byte-for-byte (Error() delegates
+    to Cause.Error()) so existing string-based consumers and golden fixtures are
+    unaffected.
 
 func (e *SchemaPatternRegexError) Error() string
 
@@ -3193,6 +3222,20 @@ func (e *UnevaluatedItemsFieldFor31Plus) As(target any) bool
 type UnevaluatedPropertiesFieldFor31Plus struct{ ValidationError }
 
 func (e *UnevaluatedPropertiesFieldFor31Plus) As(target any) bool
+
+type UnresolvedRefError struct {
+	// Ref is the unresolved $ref value (e.g. "#/components/schemas/X"
+	// or "external.yaml#/...").
+	Ref string
+	// Origin is the source location of the ref-bearing object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    UnresolvedRefError clusters "found unresolved ref: X" failures fired by
+    the loader when a $ref cannot be resolved against the loaded document.
+    Carries the offending ref string so callers can render or dispatch on it.
+
+func (e *UnresolvedRefError) Error() string
 
 type ValidationError struct {
 	Message string

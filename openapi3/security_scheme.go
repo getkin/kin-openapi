@@ -163,7 +163,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 			hasBearerFormat = true
 		case "basic", "negotiate", "digest":
 		default:
-			return fmt.Errorf("security scheme of type 'http' has invalid 'scheme' value %q", scheme)
+			return newInvalidHTTPScheme(scheme, ss.Origin)
 		}
 	case "oauth2":
 		hasFlow = true
@@ -176,7 +176,7 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 			return errValueOfFieldFor31Plus(ss.Type, "type")
 		}
 	default:
-		return fmt.Errorf("security scheme 'type' can't be %q", ss.Type)
+		return newInvalidSecuritySchemeType(ss.Type, ss.Origin)
 	}
 
 	// Validate "in" and "name"

@@ -399,6 +399,55 @@ func (e *SchemaPatternRegexError) Error() string { return e.Cause.Error() }
 
 func (e *SchemaPatternRegexError) Unwrap() error { return e.Cause }
 
+// InvalidSecuritySchemeTypeError clusters "security scheme 'type' can't
+// be X" failures. The OpenAPI 3.x spec accepts only `apiKey`, `http`,
+// `oauth2`, `openIdConnect`, and `mutualTLS` (3.1+); this fires when a
+// security scheme declares anything else.
+type InvalidSecuritySchemeTypeError struct {
+	// Type is the rejected type value (e.g. "cookie", "saml").
+	Type string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidSecuritySchemeTypeError) Error() string {
+	return fmt.Sprintf("security scheme 'type' can't be %q", e.Type)
+}
+
+// InvalidHTTPSchemeError clusters "security scheme of type 'http' has
+// invalid 'scheme' value X" failures. The OpenAPI/HTTP-auth registry
+// accepts only `bearer`, `basic`, `negotiate`, `digest`; this fires
+// when an http scheme declares anything else.
+type InvalidHTTPSchemeError struct {
+	// Scheme is the rejected scheme value (e.g. "mutual", "oauth").
+	Scheme string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidHTTPSchemeError) Error() string {
+	return fmt.Sprintf("security scheme of type 'http' has invalid 'scheme' value %q", e.Scheme)
+}
+
+// UnresolvedRefError clusters "found unresolved ref: X" failures fired
+// by the loader when a $ref cannot be resolved against the loaded
+// document. Carries the offending ref string so callers can render or
+// dispatch on it.
+type UnresolvedRefError struct {
+	// Ref is the unresolved $ref value (e.g. "#/components/schemas/X"
+	// or "external.yaml#/...").
+	Ref string
+	// Origin is the source location of the ref-bearing object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *UnresolvedRefError) Error() string {
+	return fmt.Sprintf("found unresolved ref: %q", e.Ref)
+}
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -1280,4 +1329,16 @@ func newInvalidParameterIn(value string, origin *Origin) error {
 
 func newSchemaPatternRegexError(pattern string, cause error, origin *Origin) error {
 	return &SchemaPatternRegexError{Pattern: pattern, Cause: cause, Origin: origin}
+}
+
+func newInvalidSecuritySchemeType(typ string, origin *Origin) error {
+	return &InvalidSecuritySchemeTypeError{Type: typ, Origin: origin}
+}
+
+func newInvalidHTTPScheme(scheme string, origin *Origin) error {
+	return &InvalidHTTPSchemeError{Scheme: scheme, Origin: origin}
+}
+
+func newUnresolvedRef(ref string, origin *Origin) error {
+	return &UnresolvedRefError{Ref: ref, Origin: origin}
 }
