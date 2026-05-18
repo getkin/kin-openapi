@@ -213,11 +213,6 @@ func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, valu
 
 	validator, err := newJSONSchemaValidator(schema)
 	if err != nil {
-		// Fall back to built-in validator if compilation fails. Compilation
-		// failures are not cached: the compiler is deterministic given the
-		// schema, so if it fails once it will fail again, but caching the
-		// failure would require a sentinel value and the fall-through path
-		// is rare enough that the extra complexity is not worth it.
 		return schema.visitJSON(settings, value)
 	}
 
