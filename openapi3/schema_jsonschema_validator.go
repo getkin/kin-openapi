@@ -216,10 +216,7 @@ func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, valu
 		return schema.visitJSON(settings, value)
 	}
 
-	// LoadOrStore so that two goroutines racing on the first compilation for
-	// a given schema converge on a single cached validator. Either compiled
-	// validator is functionally identical, so it is safe to discard ours if
-	// another goroutine stored first.
-	actual, _ := compiledJSONSchemaValidators.LoadOrStore(schema, validator)
-	return actual.(*jsonSchemaValidator).validate(value)
+	compiledJSONSchemaValidators.Store(schema, validator)
+
+	return validator.validate(value)
 }
