@@ -73,7 +73,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 			// identical findings without new information.
 			continue
 		}
-		normalizedPaths[path] = path
+		normalizedPaths[normalizedPath] = path
 
 		var commonParams []string
 		for _, parameterRef := range pathItem.Parameters {

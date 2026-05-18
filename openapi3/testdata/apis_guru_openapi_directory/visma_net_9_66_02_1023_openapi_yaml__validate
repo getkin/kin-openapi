@@ -1,0 +1,1 @@
+invalid paths: conflicting paths "/controller/api/v1/inventory/internal/{inventoryId}" and "/controller/api/v1/inventory/internal/{inventoryID}"
