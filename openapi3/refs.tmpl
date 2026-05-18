@@ -162,7 +162,7 @@ func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOp
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable

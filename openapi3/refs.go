@@ -133,7 +133,7 @@ func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) er
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -272,7 +272,7 @@ func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) err
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -411,7 +411,7 @@ func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -550,7 +550,7 @@ func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error 
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -689,7 +689,7 @@ func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) e
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -828,7 +828,7 @@ func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption)
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -967,7 +967,7 @@ func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) er
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -1127,7 +1127,7 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
@@ -1266,7 +1266,7 @@ func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOpti
 		return v.Validate(ctx)
 	}
 
-	return foundUnresolvedRef(x.Ref, x.Origin)
+	return newUnresolvedRef(x.Ref, x.Origin)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
