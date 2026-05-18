@@ -202,10 +202,10 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 
 // useJSONSchema2020 validates using the JSON Schema 2020-12 validator.
 //
-// The compiled validator is cached in [compiledJSONSchemaValidators] so that
-// the (expensive) compilation cost is paid once per *Schema rather than once
-// per call. NOTE: racey WRT mutations to *Schema fields after the first
-// call -- mirrors the assumption already made by [compiledPatterns].
+// The compiled validator is cached in compiledJSONSchemaValidators by the address
+// of the Schema object. Note that this validator is cached on first construction,
+// and any changes ot the Schema object will not be reflected in the validator used
+// later in the program.
 func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, value any) error {
 	if cached, ok := compiledJSONSchemaValidators.Load(schema); ok {
 		return cached.(*jsonSchemaValidator).validate(value)
