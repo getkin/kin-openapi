@@ -1,0 +1,1 @@
+invalid paths: conflicting paths "/api/catalog/pvt/subcollection/{subCollectionId}/brand/{categoryId}" and "/api/catalog/pvt/subcollection/{subCollectionId}/brand/{brandId}"

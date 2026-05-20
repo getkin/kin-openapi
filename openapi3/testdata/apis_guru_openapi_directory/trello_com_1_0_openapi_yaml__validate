@@ -1,0 +1,1 @@
+invalid paths: conflicting paths "/boards/{idBoard}/cards/{idCard}" and "/boards/{idBoard}/cards/{filter}"

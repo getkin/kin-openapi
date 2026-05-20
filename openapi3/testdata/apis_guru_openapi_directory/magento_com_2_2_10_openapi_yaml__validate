@@ -1,0 +1,1 @@
+invalid paths: conflicting paths "/V1/bundle-products/{sku}/links/{optionId}" and "/V1/bundle-products/{sku}/links/{id}"

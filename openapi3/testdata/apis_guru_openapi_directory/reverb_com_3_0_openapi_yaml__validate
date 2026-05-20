@@ -1,0 +1,1 @@
+invalid paths: conflicting paths "/conversations/{id}/offer" and "/conversations/{conversation_id}/offer"

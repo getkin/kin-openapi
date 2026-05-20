@@ -1,0 +1,1 @@
+invalid paths: conflicting paths "/restapis/{restapi_id}/resources/{resource_id}" and "/restapis/{restapi_id}/resources/{parent_id}"
