@@ -97,5 +97,5 @@ func (t *Tag) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, t.Extensions))
+	return me.finalize(validateExtensions(ctx, t.Extensions, t.Origin))
 }

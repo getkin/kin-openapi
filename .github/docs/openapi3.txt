@@ -252,6 +252,22 @@ func WithValidationOptions(ctx context.Context, opts ...ValidationOption) contex
 
 TYPES
 
+type APIKeyInInvalidError struct {
+	// Value is the rejected `in:` value (empty when the field was
+	// omitted, otherwise the bad value e.g. "body").
+	Value string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    APIKeyInInvalidError clusters "apiKey should have 'in'. It can be 'query',
+    'header' or 'cookie', not X" failures. Fires when an apiKey security scheme
+    either omits `in:` or sets it to a value outside {query, header, cookie}.
+    Carries the rejected value so callers can render or filter; empty string
+    means the field was missing entirely.
+
+func (e *APIKeyInInvalidError) Error() string
+
 type APIKeySecuritySchemeNameRequired struct{ ValidationError }
 
 func (e *APIKeySecuritySchemeNameRequired) As(target any) bool
@@ -391,6 +407,23 @@ type ComponentRef interface {
 	CollectionName() string
 }
 
+type ComponentValidationError struct {
+	// Section is the lowercase singular form of the component bucket
+	// ("schema", "parameter", "header", "request body", "response",
+	// "security scheme", "example", "link", "callback").
+	Section string
+	// Name is the component map key.
+	Name  string
+	Cause error
+}
+    ComponentValidationError wraps validation errors inside the Components
+    container, carrying which sub-section (Schemas, Parameters, etc.) and which
+    component name failed.
+
+func (e *ComponentValidationError) Error() string
+
+func (e *ComponentValidationError) Unwrap() error
+
 type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -422,6 +455,21 @@ func (components *Components) UnmarshalJSON(data []byte) error
 func (components *Components) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Components does not comply with the OpenAPI
     spec.
+
+type ConflictingPathsError struct {
+	// Path1 / Path2 are the two conflicting path keys, in document
+	// order.
+	Path1 string
+	Path2 string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ConflictingPathsError clusters "conflicting paths X and Y" failures.
+    Fires when two path keys normalize to the same template (e.g. "/users/{a}"
+    and "/users/{b}" both normalize to "/users/{}").
+
+func (e *ConflictingPathsError) Error() string
 
 type ConstFieldFor31Plus struct{ ValidationError }
 
@@ -525,6 +573,40 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error
 func (discriminator *Discriminator) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Discriminator does not comply with the OpenAPI
     spec.
+
+type DuplicateOperationIDError struct {
+	// OperationID is the duplicated operationId value.
+	OperationID string
+	// Endpoint1 / Endpoint2 are the two offending endpoints, in
+	// deterministic order (lexicographically) for stable error messages.
+	Endpoint1 string
+	Endpoint2 string
+	// Origin is the source location of the second (offending) operation
+	// when the document was loaded with Loader.IncludeOrigin = true. The
+	// pre-existing Endpoint1 is implicitly fine; the duplicate landed at
+	// Endpoint2's site, which is the natural "go fix this" pointer.
+	Origin *Origin
+}
+    DuplicateOperationIDError clusters "two operations share an operationId"
+    failures. operationIds must be unique across all paths in a document.
+    Endpoints are rendered as "<METHOD> <path>" (e.g. "POST /things").
+
+func (e *DuplicateOperationIDError) Error() string
+
+type DuplicateParameterError struct {
+	// In is the parameter location (e.g. "query", "path", "header").
+	In string
+	// Name is the duplicated parameter name.
+	Name string
+	// Origin is the source location of the offending parameter when
+	// the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    DuplicateParameterError clusters "more than one X parameter has name Y"
+    failures. Fires when two parameters on an operation (or path item) share the
+    same In + Name combination.
+
+func (e *DuplicateParameterError) Error() string
 
 type DynamicAnchorFieldFor31Plus struct{ ValidationError }
 
@@ -755,6 +837,32 @@ type ExternalDocsURLRequired struct{ ValidationError }
 
 func (e *ExternalDocsURLRequired) As(target any) bool
 
+type ExternalDocsURLValidationError struct {
+	Cause error
+}
+    ExternalDocsURLValidationError wraps the URL parse failure on an
+    ExternalDocs object.
+
+func (e *ExternalDocsURLValidationError) Error() string
+
+func (e *ExternalDocsURLValidationError) Unwrap() error
+
+type ExtraSiblingFieldsError struct {
+	// Fields is the list of unexpected sibling field names.
+	Fields []string
+	// Origin is the source location of the parent object that carries
+	// the extra siblings when the document was loaded with
+	// Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ExtraSiblingFieldsError clusters "unexpected sibling fields" failures. Most
+    commonly this fires when fields appear alongside a $ref that the OpenAPI
+    spec doesn't allow there, or as unknown keys on objects whose only permitted
+    extras are `x-` extensions. Carries the offending field names so callers can
+    render or filter.
+
+func (e *ExtraSiblingFieldsError) Error() string
+
 type FieldVersionMismatchError struct {
 	// Field is the field name flagged (e.g. "summary", "identifier",
 	// "$defs", "prefixItems", "contains", ...).
@@ -845,6 +953,18 @@ func (e *HeaderContentSchemaExactlyOne) As(target any) bool
 type HeaderContentSingleEntry struct{ ValidationError }
 
 func (e *HeaderContentSingleEntry) As(target any) bool
+
+type HeaderFieldValidationError struct {
+	// Field is "schema" or "content".
+	Field string
+	Cause error
+}
+    HeaderFieldValidationError wraps validation errors on a Header's `schema` or
+    `content` sub-objects. Field discriminates the two.
+
+func (e *HeaderFieldValidationError) Error() string
+
+func (e *HeaderFieldValidationError) Unwrap() error
 
 type HeaderInForbidden struct{ ValidationError }
 
@@ -959,6 +1079,70 @@ func (e *InfoVersionRequired) As(target any) bool
 
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
+
+type InvalidHTTPSchemeError struct {
+	// Scheme is the rejected scheme value (e.g. "mutual", "oauth").
+	Scheme string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidHTTPSchemeError clusters "security scheme of type 'http' has invalid
+    'scheme' value X" failures. The OpenAPI/HTTP-auth registry accepts only
+    `bearer`, `basic`, `negotiate`, `digest`; this fires when an http scheme
+    declares anything else.
+
+func (e *InvalidHTTPSchemeError) Error() string
+
+type InvalidParameterInError struct {
+	// Value is the rejected `in:` value (e.g. "body", "formData").
+	Value string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidParameterInError clusters "parameter can't have 'in' value X"
+    failures. The OpenAPI 3.x spec accepts only `path`, `query`, `header`,
+    or `cookie`; this fires when a parameter declares anything else (commonly
+    `body`, a Swagger 2.0 leftover).
+
+func (e *InvalidParameterInError) Error() string
+
+type InvalidSecuritySchemeTypeError struct {
+	// Type is the rejected type value (e.g. "cookie", "saml").
+	Type string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidSecuritySchemeTypeError clusters "security scheme 'type' can't be
+    X" failures. The OpenAPI 3.x spec accepts only `apiKey`, `http`, `oauth2`,
+    `openIdConnect`, and `mutualTLS` (3.1+); this fires when a security scheme
+    declares anything else.
+
+func (e *InvalidSecuritySchemeTypeError) Error() string
+
+type InvalidSerializationMethodError struct {
+	// Subject discriminates the calling surface ("media type",
+	// "path"/"query"/"header"/"cookie" for parameters, or "header"
+	// for the header.go site).
+	Subject string
+	// Style is the offending `style:` value.
+	Style string
+	// Explode is the offending `explode:` value.
+	Explode bool
+	// Origin is the source location of the offending object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidSerializationMethodError clusters "serialization method with style=X
+    and explode=Y is not supported by Z" failures. Fires for invalid (style,
+    explode) combinations on encodings, parameters, and headers. The Subject
+    discriminates which surface is reporting: "media type" for encoding,
+    the parameter location ("path", "query", etc.) for parameters and "header"
+    for headers.
+
+func (e *InvalidSerializationMethodError) Error() string
 
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
@@ -1206,6 +1390,18 @@ type MediaTypeExampleExamplesExclusive struct{ ValidationError }
 
 func (e *MediaTypeExampleExamplesExclusive) As(target any) bool
 
+type MediaTypeExampleValidationError struct {
+	// ExampleName is the example map key.
+	ExampleName string
+	Cause       error
+}
+    MediaTypeExampleValidationError wraps validation errors on a named example
+    inside a MediaType.examples map.
+
+func (e *MediaTypeExampleValidationError) Error() string
+
+func (e *MediaTypeExampleValidationError) Unwrap() error
+
 type MinContainsFieldFor31Plus struct{ ValidationError }
 
 func (e *MinContainsFieldFor31Plus) As(target any) bool
@@ -1302,6 +1498,19 @@ type OAuthFlowAuthorizationURLRequired struct{ ValidationError }
 
 func (e *OAuthFlowAuthorizationURLRequired) As(target any) bool
 
+type OAuthFlowFieldValidationError struct {
+	// Field is the offending field name ("refreshUrl" is the only
+	// site today; future URL fields can reuse the same wrapper).
+	Field string
+	Cause error
+}
+    OAuthFlowFieldValidationError wraps validation errors on a specific field
+    inside an OAuthFlow object. Field discriminates which URL field failed.
+
+func (e *OAuthFlowFieldValidationError) Error() string
+
+func (e *OAuthFlowFieldValidationError) Unwrap() error
+
 type OAuthFlowScopesRequired struct{ ValidationError }
 
 func (e *OAuthFlowScopesRequired) As(target any) bool
@@ -1313,6 +1522,19 @@ func (e *OAuthFlowTokenURLForbidden) As(target any) bool
 type OAuthFlowTokenURLRequired struct{ ValidationError }
 
 func (e *OAuthFlowTokenURLRequired) As(target any) bool
+
+type OAuthFlowValidationError struct {
+	// FlowKind is one of "implicit", "password", "clientCredentials",
+	// "authorizationCode".
+	FlowKind string
+	Cause    error
+}
+    OAuthFlowValidationError wraps validation errors on a specific OAuth flow
+    inside OAuthFlows.
+
+func (e *OAuthFlowValidationError) Error() string
+
+func (e *OAuthFlowValidationError) Unwrap() error
 
 type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1342,6 +1564,10 @@ func (flows *OAuthFlows) Validate(ctx context.Context, opts ...ValidationOption)
 type OpenAPIVersionRequired struct{ ValidationError }
 
 func (e *OpenAPIVersionRequired) As(target any) bool
+
+type OpenIDConnectURLRequired struct{ ValidationError }
+
+func (e *OpenIDConnectURLRequired) As(target any) bool
 
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1502,6 +1728,36 @@ type ParameterContentSingleEntry struct{ ValidationError }
 
 func (e *ParameterContentSingleEntry) As(target any) bool
 
+type ParameterExampleAndExamplesExclusive struct{ ValidationError }
+
+func (e *ParameterExampleAndExamplesExclusive) As(target any) bool
+
+type ParameterExampleValidationError struct {
+	// ExampleName is the example map key.
+	ExampleName string
+	Cause       error
+}
+    ParameterExampleValidationError wraps validation errors on a named example
+    inside a parameter's examples map.
+
+func (e *ParameterExampleValidationError) Error() string
+
+func (e *ParameterExampleValidationError) Unwrap() error
+
+type ParameterFieldValidationError struct {
+	// ParameterName is the parameter's `name:` value.
+	ParameterName string
+	// Field is "schema" or "content".
+	Field string
+	Cause error
+}
+    ParameterFieldValidationError wraps validation errors on a parameter's
+    `schema` or `content` sub-objects. Field discriminates.
+
+func (e *ParameterFieldValidationError) Error() string
+
+func (e *ParameterFieldValidationError) Unwrap() error
+
 type ParameterNameRequired struct{ ValidationError }
 
 func (e *ParameterNameRequired) As(target any) bool
@@ -1610,6 +1866,32 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error
 
 func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if PathItem does not comply with the OpenAPI spec.
+
+type PathMustStartWithSlashError struct {
+	// Path is the offending path key (e.g. "users/{id}").
+	Path string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    PathMustStartWithSlashError clusters "path X does not start with a forward
+    slash" failures. Path keys in the paths object must begin with `/`.
+
+func (e *PathMustStartWithSlashError) Error() string
+
+type PathParameterRequiredError struct {
+	// Param is the path-parameter name (e.g. "groupId").
+	Param string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    PathParameterRequiredError clusters "path parameter X must be required"
+    failures: per the OpenAPI spec, every parameter with `in: path` must be
+    declared with `required: true`. Carries the parameter name so callers can
+    render or filter by it.
+
+func (e *PathParameterRequiredError) Error() string
 
 type PathParametersError struct {
 	// Path is the path template (e.g. "/api/{domain}/{project}/...").
@@ -2351,6 +2633,30 @@ type SchemaItemsRequired struct{ ValidationError }
 
 func (e *SchemaItemsRequired) As(target any) bool
 
+type SchemaPatternRegexError struct {
+	// Pattern is the schema's `pattern:` value that failed to compile.
+	Pattern string
+	// Cause is the underlying error (a *SchemaError wrapping the
+	// regexp package's syntax error). Unwrap returns this so callers
+	// walking the error chain see the SchemaError.
+	Cause error
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaPatternRegexError clusters "schema pattern failed to compile"
+    failures. Kin's regex engine is Go's RE2, which rejects Perl features
+    like `(?!...)` lookahead; specs that leak Perl regex patterns (common
+    in AWS-style auto-generated schemas) trip this. Carries the offending
+    pattern as a structured field for typed dispatch, while preserving the
+    underlying SchemaError's rendered message byte-for-byte (Error() delegates
+    to Cause.Error()) so existing string-based consumers and golden fixtures are
+    unaffected.
+
+func (e *SchemaPatternRegexError) Error() string
+
+func (e *SchemaPatternRegexError) Unwrap() error
+
 type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
 
 func (e *SchemaReadOnlyWriteOnlyExclusive) As(target any) bool
@@ -2404,6 +2710,19 @@ type SchemaRefs []*SchemaRef
 func (s SchemaRefs) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+
+type SchemaTypeError struct {
+	// Type is the rejected type value (e.g. "bool", "int", "http").
+	Type string
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaTypeError clusters "unsupported 'type' value" failures on a Schema.
+    Carries the bad type value so callers can surface it in user-facing output
+    and filter findings by it.
+
+func (e *SchemaTypeError) Error() string
 
 type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
 
@@ -2628,6 +2947,36 @@ func (ss *SecurityScheme) WithScheme(value string) *SecurityScheme
 
 func (ss *SecurityScheme) WithType(value string) *SecurityScheme
 
+type SecuritySchemeBearerFormatForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool
+
+type SecuritySchemeFlowValidationError struct {
+	Cause error
+}
+    SecuritySchemeFlowValidationError wraps validation errors on the outer flows
+    object of an oauth2 security scheme.
+
+func (e *SecuritySchemeFlowValidationError) Error() string
+
+func (e *SecuritySchemeFlowValidationError) Unwrap() error
+
+type SecuritySchemeFlowsForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsForbidden) As(target any) bool
+
+type SecuritySchemeFlowsRequired struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsRequired) As(target any) bool
+
+type SecuritySchemeInForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeInForbidden) As(target any) bool
+
+type SecuritySchemeNameForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeNameForbidden) As(target any) bool
+
 type SecuritySchemeRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
@@ -2767,6 +3116,10 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if ServerVariable does not comply with the OpenAPI
     spec.
+
+type ServerVariableDefaultRequired struct{ ValidationError }
+
+func (e *ServerVariableDefaultRequired) As(target any) bool
 
 type ServerVariables map[string]*ServerVariable
     ServerVariable is specified by OpenAPI/Swagger standard version 3. See
@@ -3096,12 +3449,27 @@ type UnevaluatedPropertiesFieldFor31Plus struct{ ValidationError }
 
 func (e *UnevaluatedPropertiesFieldFor31Plus) As(target any) bool
 
+type UnresolvedRefError struct {
+	// Ref is the unresolved $ref value (e.g. "#/components/schemas/X"
+	// or "external.yaml#/...").
+	Ref string
+	// Origin is the source location of the ref-bearing object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    UnresolvedRefError clusters "found unresolved ref: X" failures fired by the
+    loader when a $ref cannot be resolved against the loaded document. Carries
+    the offending ref string so callers can surface it in user-facing output and
+    filter findings by it.
+
+func (e *UnresolvedRefError) Error() string
+
 type ValidationError struct {
 	Message string
 }
     ValidationError is the embedded base for every typed validation error
     emitted by the document validation walker (T.Validate, Info.Validate,
-    Paths.Validate, etc.). Three layers of granularity are exposed; pick
+    Paths.Validate, etc.). Four categories of typed error are exposed; pick
     whichever the caller needs:
 
      1. Base — *ValidationError. Catchall for "this is a validation issue,
@@ -3110,15 +3478,34 @@ type ValidationError struct {
      2. Cluster — types like *RequiredFieldError or *FieldVersionMismatchError.
         Group families of related failures and expose the family-level metadata
         (Field, MinVersion, ...). Wrap the underlying leaf via Unwrap,
-        so errors.As can still walk to the leaf.
+        so errors.As can still walk to the leaf. Some clusters are single-site
+        (e.g. *SchemaTypeError) and carry only their own fields with no separate
+        leaf.
      3. Leaf — one type per call site (e.g. *InfoVersionRequired,
         *LicenseIdentifierFieldFor31Plus). Lets callers match an exact failure
         point without string comparison.
+     4. Context wrapper — types like *SectionValidationError,
+        *PathValidationError, *ParameterFieldValidationError. Add scope ("which
+        section", "which path", "which parameter") around an inner error chain
+        but do NOT themselves report a failure condition — the actual error
+        lives in Cause. Defined in validation_error_context.go; see that file's
+        header for the full inventory and conventions.
 
-    All three are reachable from the same returned error through standard Go
+    All four are reachable from the same returned error through standard Go
     error wrapping (errors.As, errors.Is, errors.Unwrap), so a caller that only
     needs "is it a validation error?" stops at the base and a caller that wants
     "is it specifically license.identifier being used in 3.0?" matches the leaf.
+    A caller that wants "which section did this happen in?" matches the context
+    wrapper and walks further for the cluster/leaf.
+
+    A canonical error chain therefore looks like:
+
+        ComponentValidationError{Section: "schema", Name: "Foo"}
+          -> RequiredFieldError{Field: "type"}
+            -> SchemaTypeRequired{Message: "..."}
+
+    Context wrapper carries WHERE, cluster carries WHAT category, leaf carries
+    EXACTLY WHICH case.
 
     Backward compatibility: every site that today returns errors.New(msg)
     migrates to a leaf type that embeds ValidationError with Message set to
@@ -3226,6 +3613,18 @@ type WebhookNilError struct {
 func (e *WebhookNilError) Error() string
 
 func (e *WebhookNilError) Unwrap() error
+
+type WebhookValidationError struct {
+	// Name is the webhook map key.
+	Name  string
+	Cause error
+}
+    WebhookValidationError wraps validation errors on a named webhook at the
+    document root (OpenAPI 3.1+).
+
+func (e *WebhookValidationError) Error() string
+
+func (e *WebhookValidationError) Unwrap() error
 
 type WebhooksFieldFor31Plus struct{ ValidationError }
 

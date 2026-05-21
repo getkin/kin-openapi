@@ -85,5 +85,5 @@ func (license *License) Validate(ctx context.Context, opts ...ValidationOption) 
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, license.Extensions))
+	return me.finalize(validateExtensions(ctx, license.Extensions, license.Origin))
 }

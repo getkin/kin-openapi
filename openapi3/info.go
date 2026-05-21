@@ -115,5 +115,5 @@ func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error 
 		}
 	}
 
-	return me.finalize(validateExtensions(ctx, info.Extensions))
+	return me.finalize(validateExtensions(ctx, info.Extensions, info.Origin))
 }

@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -67,28 +66,28 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 	if smSupported := false ||
 		sm.Style == SerializationSimple && !sm.Explode ||
 		sm.Style == SerializationSimple && sm.Explode; !smSupported {
-		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a header parameter", sm.Style, sm.Explode)
-		return fmt.Errorf("header schema is invalid: %w", e)
+		e := newInvalidSerializationMethod("header", sm.Style, sm.Explode, header.Origin)
+		return &HeaderFieldValidationError{Field: "schema", Cause: e}
 	}
 
 	if (header.Schema == nil) == (len(header.Content) == 0) {
-		return fmt.Errorf("header schema is invalid: %w",
-			newHeaderContentSchemaExactlyOne(header, header.Origin))
+		return &HeaderFieldValidationError{Field: "schema",
+			Cause: newHeaderContentSchemaExactlyOne(header, header.Origin)}
 	}
 	if schema := header.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
-			return fmt.Errorf("header schema is invalid: %w", err)
+			return &HeaderFieldValidationError{Field: "schema", Cause: err}
 		}
 	}
 
 	if content := header.Content; content != nil {
 		if len(content) > 1 {
-			return fmt.Errorf("header content is invalid: %w",
-				newHeaderContentSingleEntry(header.Origin))
+			return &HeaderFieldValidationError{Field: "content",
+				Cause: newHeaderContentSingleEntry(header.Origin)}
 		}
 
 		if err := content.Validate(ctx); err != nil {
-			return fmt.Errorf("header content is invalid: %w", err)
+			return &HeaderFieldValidationError{Field: "content", Cause: err}
 		}
 	}
 	return nil

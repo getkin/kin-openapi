@@ -56,7 +56,7 @@ func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOpt
 		if v := parameterRef.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
-				return fmt.Errorf("more than one %q parameter has name %q", v.In, v.Name)
+				return newDuplicateParameter(v.In, v.Name, v.Origin)
 			}
 			dupes[key] = struct{}{}
 		}
@@ -320,11 +320,11 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		ParameterInHeader,
 		ParameterInCookie:
 	default:
-		return fmt.Errorf("parameter can't have 'in' value %q", parameter.In)
+		return newInvalidParameterIn(parameter.In, parameter.Origin)
 	}
 
 	if in == ParameterInPath && !parameter.Required {
-		return fmt.Errorf("path parameter %q must be required", parameter.Name)
+		return newPathParameterRequired(parameter.Name, parameter.Origin)
 	}
 
 	// Validate a parameter's serialization method.
@@ -357,32 +357,32 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 		smSupported = true
 	}
 	if !smSupported {
-		e := fmt.Errorf("serialization method with style=%q and explode=%v is not supported by a %s parameter", sm.Style, sm.Explode, in)
-		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, e)
+		e := newInvalidSerializationMethod(in, sm.Style, sm.Explode, parameter.Origin)
+		return &ParameterFieldValidationError{ParameterName: parameter.Name, Field: "schema", Cause: e}
 	}
 
 	if (parameter.Schema == nil) == (len(parameter.Content) == 0) {
-		return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name,
-			newParameterContentSchemaExactlyOne(parameter.Origin))
+		return &ParameterFieldValidationError{ParameterName: parameter.Name, Field: "schema",
+			Cause: newParameterContentSchemaExactlyOne(parameter.Origin)}
 	}
 
 	if content := parameter.Content; content != nil {
 		if len(content) > 1 {
-			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name,
-				newParameterContentSingleEntry(parameter.Origin))
+			return &ParameterFieldValidationError{ParameterName: parameter.Name, Field: "content",
+				Cause: newParameterContentSingleEntry(parameter.Origin)}
 		}
 
 		if err := content.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q content is invalid: %w", parameter.Name, err)
+			return &ParameterFieldValidationError{ParameterName: parameter.Name, Field: "content", Cause: err}
 		}
 	}
 
 	if schema := parameter.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
-			return fmt.Errorf("parameter %q schema is invalid: %w", parameter.Name, err)
+			return &ParameterFieldValidationError{ParameterName: parameter.Name, Field: "schema", Cause: err}
 		}
 		if parameter.Example != nil && parameter.Examples != nil {
-			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
+			return newParameterExampleAndExamplesExclusive(parameter.Name, parameter.Origin)
 		}
 
 		if vo := getValidationOptions(ctx); vo.examplesValidationDisabled {
@@ -396,18 +396,18 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 			for _, k := range componentNames(examples) {
 				v := examples[k]
 				if err := v.Validate(ctx); err != nil {
-					return fmt.Errorf("%s: %w", k, err)
+					return &ParameterExampleValidationError{ExampleName: k, Cause: err}
 				}
 				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
 					return newSchemaValueError("example",
-						fmt.Errorf("%s: %w", k, err),
+						&ParameterExampleValidationError{ExampleName: k, Cause: err},
 						exampleValueOrigin(v.Value, parameter.Origin))
 				}
 			}
 		}
 	}
 
-	return validateExtensions(ctx, parameter.Extensions)
+	return validateExtensions(ctx, parameter.Extensions, parameter.Origin)
 }
 
 // UnmarshalJSON sets ParametersMap to a copy of data.

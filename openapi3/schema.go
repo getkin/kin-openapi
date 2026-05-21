@@ -1551,7 +1551,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(item.Ref)
+			return stack, newUnresolvedRef(item.Ref, item.Origin)
 		}
 
 		var err error
@@ -1563,7 +1563,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	for _, item := range schema.AnyOf {
 		v := item.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(item.Ref)
+			return stack, newUnresolvedRef(item.Ref, item.Origin)
 		}
 
 		var err error
@@ -1575,7 +1575,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(item.Ref)
+			return stack, newUnresolvedRef(item.Ref, item.Origin)
 		}
 
 		var err error
@@ -1587,7 +1587,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1599,7 +1599,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	if ref := schema.If; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		var err error
 		if stack, err = v.validate(ctx, stack); err != nil {
@@ -1609,7 +1609,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	if ref := schema.Then; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		var err error
 		if stack, err = v.validate(ctx, stack); err != nil {
@@ -1619,7 +1619,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	if ref := schema.Else; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		var err error
 		if stack, err = v.validate(ctx, stack); err != nil {
@@ -1683,10 +1683,10 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		case TypeObject:
 		case TypeNull:
 			if !validationOpts.jsonSchema2020ValidationEnabled {
-				return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
+				return stack, newSchemaTypeError(schemaType, schema.Origin)
 			}
 		default:
-			return stack, fmt.Errorf("unsupported 'type' value %q", schemaType)
+			return stack, newSchemaTypeError(schemaType, schema.Origin)
 		}
 	}
 
@@ -1696,7 +1696,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1712,7 +1712,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1730,7 +1730,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1746,7 +1746,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1760,7 +1760,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1775,7 +1775,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1790,7 +1790,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1805,7 +1805,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1819,7 +1819,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1836,7 +1836,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1853,7 +1853,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1867,7 +1867,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, foundUnresolvedRef(ref.Ref)
+			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
@@ -1894,7 +1894,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		}
 	}
 
-	return stack, validateExtensions(ctx, schema.Extensions)
+	return stack, validateExtensions(ctx, schema.Extensions, schema.Origin)
 }
 
 func (schema *Schema) IsMatching(value any) bool {
@@ -2115,7 +2115,7 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return foundUnresolvedRef(ref.Ref)
+			return newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		if err := v.visitJSON(settings, value); err == nil {
 			if settings.failfast {
@@ -2193,7 +2193,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
-				return foundUnresolvedRef(item.Ref), false
+				return newUnresolvedRef(item.Ref, item.Origin), false
 			}
 
 			if discriminatorRef != "" && discriminatorRef != item.Ref {
@@ -2256,7 +2256,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		for idx, item := range v {
 			v := item.Value
 			if v == nil {
-				return foundUnresolvedRef(item.Ref), false
+				return newUnresolvedRef(item.Ref, item.Origin), false
 			}
 
 			if discriminatorRef != "" && discriminatorRef != item.Ref {
@@ -2294,7 +2294,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
-			return foundUnresolvedRef(item.Ref), false
+			return newUnresolvedRef(item.Ref, item.Origin), false
 		}
 		if err := v.visitJSON(settings, value); err != nil {
 			if settings.failfast {
@@ -2789,7 +2789,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 	if itemSchemaRef := schema.Items; itemSchemaRef != nil {
 		itemSchema := itemSchemaRef.Value
 		if itemSchema == nil {
-			return foundUnresolvedRef(itemSchemaRef.Ref)
+			return newUnresolvedRef(itemSchemaRef.Ref, itemSchemaRef.Origin)
 		}
 		for i, item := range value {
 			if err := itemSchema.visitJSON(settings, item); err != nil {
@@ -2900,7 +2900,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			if propertyRef != nil {
 				p := propertyRef.Value
 				if p == nil {
-					return foundUnresolvedRef(propertyRef.Ref)
+					return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
 				}
 				if err := p.visitJSON(settings, v); err != nil {
 					if settings.failfast {

@@ -115,7 +115,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 	validateMap := func(label string, names []string, validate func(k string) error) error {
 		for _, k := range names {
 			if idErr := ValidateIdentifier(k); idErr != nil {
-				if err := me.emit(fmt.Errorf("%s %q: %w", label, k, idErr)); err != nil {
+				if err := me.emit(&ComponentValidationError{Section: label, Name: k, Cause: idErr}); err != nil {
 					return err
 				}
 				// Skip validating the component's value when its name is
@@ -125,7 +125,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 				// per component bounded to a single, actionable finding.
 				continue
 			}
-			wrap := func(e error) error { return fmt.Errorf("%s %q: %w", label, k, e) }
+			wrap := func(e error) error { return &ComponentValidationError{Section: label, Name: k, Cause: e} }
 			if err := me.emitWrapped(wrap, validate(k)); err != nil {
 				return err
 			}
@@ -187,7 +187,7 @@ func (components *Components) Validate(ctx context.Context, opts ...ValidationOp
 		return err
 	}
 
-	return me.finalize(validateExtensions(ctx, components.Extensions))
+	return me.finalize(validateExtensions(ctx, components.Extensions, components.Origin))
 }
 
 var _ jsonpointer.JSONPointable = (*Schemas)(nil)

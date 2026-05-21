@@ -3,7 +3,6 @@ package openapi3
 import (
 	"cmp"
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 )
@@ -48,7 +47,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 	for _, path := range paths.Keys() {
 		pathItem := paths.Value(path)
 		if path == "" || path[0] != '/' {
-			if err := me.emit(fmt.Errorf("path %q does not start with a forward slash (/)", path)); err != nil {
+			if err := me.emit(newPathMustStartWithSlash(path, paths.Origin)); err != nil {
 				return err
 			}
 			// Skip validating operations under a malformed path key: any
@@ -64,7 +63,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 
 		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
 		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
-			if err := me.emit(fmt.Errorf("conflicting paths %q and %q", path, oldPath)); err != nil {
+			if err := me.emit(newConflictingPaths(path, oldPath, paths.Origin)); err != nil {
 				return err
 			}
 			// Skip validating operations under a duplicate path: the
@@ -135,7 +134,7 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 		return err
 	}
 
-	return me.finalize(validateExtensions(ctx, paths.Extensions))
+	return me.finalize(validateExtensions(ctx, paths.Extensions, paths.Origin))
 }
 
 // InMatchingOrder returns paths in the order they are matched against URLs.
@@ -218,8 +217,7 @@ func (paths *Paths) validateUniqueOperationIDs() error {
 				if endpoint > endpointDup { // For make error message a bit more deterministic. May be useful for tests.
 					endpoint, endpointDup = endpointDup, endpoint
 				}
-				return fmt.Errorf("operations %q and %q have the same operation id %q",
-					endpoint, endpointDup, operation.OperationID)
+				return newDuplicateOperationID(endpoint, endpointDup, operation.OperationID, operation.Origin)
 			}
 			operationIDs[operation.OperationID] = endpoint
 		}

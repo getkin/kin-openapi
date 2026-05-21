@@ -945,3 +945,1132 @@ func TestValidationError_WebhookNilLeaf(t *testing.T) {
 	var ve *openapi3.ValidationError
 	require.True(t, errors.As(err, &ve))
 }
+
+func TestValidationError_PathParameterRequired(t *testing.T) {
+	// Path parameters must be declared required: true. A parameter with
+	// in: path and required: false (or omitted) triggers the cluster.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /things/{id}:
+    get:
+      parameters:
+        - { name: id, in: path }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `path parameter "id" must be required`)
+
+	var ppr *openapi3.PathParameterRequiredError
+	require.True(t, errors.As(err, &ppr))
+	require.Equal(t, "id", ppr.Param)
+}
+
+func TestValidationError_DuplicateOperationID(t *testing.T) {
+	// Two operations sharing the same operationId across paths must
+	// surface a DuplicateOperationIDError carrying both endpoints.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+  /b:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `operations "GET /a" and "GET /b" have the same operation id "shared"`)
+
+	var doe *openapi3.DuplicateOperationIDError
+	require.True(t, errors.As(err, &doe))
+	require.Equal(t, "shared", doe.OperationID)
+	require.Equal(t, "GET /a", doe.Endpoint1)
+	require.Equal(t, "GET /b", doe.Endpoint2)
+}
+
+func TestValidationError_ExtraSiblingFields(t *testing.T) {
+	// A non-x- key in Extensions triggers validateExtensions's
+	// "extra sibling fields" error, now typed as ExtraSiblingFieldsError.
+	// Construct a non-empty Responses so the empty-responses guard
+	// doesn't fire first; the only finding then comes from extensions.
+	responses := openapi3.NewResponses(
+		openapi3.WithStatus(200, &openapi3.ResponseRef{
+			Value: openapi3.NewResponse().WithDescription("ok"),
+		}),
+	)
+	responses.Extensions = map[string]any{"bogus": "value"}
+	err := responses.Validate(context.Background())
+	require.ErrorContains(t, err, "extra sibling fields: [bogus]")
+
+	var esf *openapi3.ExtraSiblingFieldsError
+	require.True(t, errors.As(err, &esf))
+	require.Equal(t, []string{"bogus"}, esf.Fields)
+}
+
+func TestValidationError_SchemaTypeError(t *testing.T) {
+	// Unsupported 'type' value on a schema (e.g., "bool" instead of
+	// "boolean") triggers SchemaTypeError carrying the bad value.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad: { type: bool }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `unsupported 'type' value "bool"`)
+
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(err, &ste))
+	require.Equal(t, "bool", ste.Type)
+}
+
+// Origin tracking for DuplicateOperationIDError. When IncludeOrigin is
+// set, the cluster carries the offending (second) operation's Origin so
+// consumers can pin the finding at the duplicate operationId rather
+// than at the document root.
+func TestValidationError_DuplicateOperationID_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+  /b:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var doe *openapi3.DuplicateOperationIDError
+	require.True(t, errors.As(verr, &doe))
+	require.NotNil(t, doe.Origin, "cluster should carry the offending operation's Origin when loader tracks origins")
+	require.NotNil(t, doe.Origin.Key, "Origin.Key set by the loader")
+	require.Greater(t, doe.Origin.Key.Line, 0)
+}
+
+// Without IncludeOrigin, DuplicateOperationIDError.Origin is nil — no
+// fabrication of location info that wasn't tracked.
+func TestValidationError_DuplicateOperationID_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+  /b:
+    get:
+      operationId: shared
+      responses: { "200": { description: ok } }
+`)
+	verr := doc.Validate(context.Background())
+	var doe *openapi3.DuplicateOperationIDError
+	require.True(t, errors.As(verr, &doe))
+	require.Nil(t, doe.Origin, "Origin should be nil when loader didn't track origins")
+}
+
+// Origin tracking for ExtraSiblingFieldsError. The cluster carries the
+// parent object's Origin so consumers can pin the finding at the
+// container holding the unexpected sibling fields. Exercised here via
+// a $ref with a disallowed sibling, which is the most common surface.
+func TestValidationError_ExtraSiblingFields_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/T"
+                description: should-not-be-here
+components:
+  schemas:
+    T: { type: string }
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var esf *openapi3.ExtraSiblingFieldsError
+	require.True(t, errors.As(verr, &esf))
+	require.NotNil(t, esf.Origin, "cluster should carry the parent object's Origin when loader tracks origins")
+	require.NotNil(t, esf.Origin.Key)
+	require.Greater(t, esf.Origin.Key.Line, 0)
+}
+
+// A parameter with `in:` set to anything outside {path, query, header,
+// cookie} triggers InvalidParameterInError carrying the rejected
+// value. Most common offender is `in: body` from Swagger 2.0 specs
+// that didn't fully migrate to 3.x.
+func TestValidationError_InvalidParameterIn(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    post:
+      parameters:
+        - { name: payload, in: body, schema: { type: object } }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `parameter can't have 'in' value "body"`)
+
+	var ipe *openapi3.InvalidParameterInError
+	require.True(t, errors.As(err, &ipe))
+	require.Equal(t, "body", ipe.Value)
+}
+
+// Origin tracking for InvalidParameterInError.
+func TestValidationError_InvalidParameterIn_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    post:
+      parameters:
+        - { name: payload, in: body, schema: { type: object } }
+      responses: { "200": { description: ok } }
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var ipe *openapi3.InvalidParameterInError
+	require.True(t, errors.As(verr, &ipe))
+	require.NotNil(t, ipe.Origin)
+	require.NotNil(t, ipe.Origin.Key)
+	require.Greater(t, ipe.Origin.Key.Line, 0)
+}
+
+// A schema `pattern:` using a Perl-only regex feature (lookahead /
+// lookbehind etc.) fails to compile against Go's RE2 and triggers
+// SchemaPatternRegexError. The cluster carries the offending pattern
+// AND chains through to the original *SchemaError via Unwrap so
+// callers using errors.As against the legacy *SchemaError still match.
+func TestValidationError_SchemaPatternRegex(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: string
+      pattern: "(?!foo)bar"
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var spre *openapi3.SchemaPatternRegexError
+	require.True(t, errors.As(err, &spre))
+	require.Equal(t, "(?!foo)bar", spre.Pattern)
+
+	// Backward compat: Unwrap reaches the legacy *SchemaError.
+	var se *openapi3.SchemaError
+	require.True(t, errors.As(err, &se), "*SchemaError must still be reachable via Unwrap chain")
+	require.Equal(t, "pattern", se.SchemaField)
+}
+
+// Origin tracking for SchemaPatternRegexError.
+func TestValidationError_SchemaPatternRegex_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: string
+      pattern: "(?!foo)bar"
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var spre *openapi3.SchemaPatternRegexError
+	require.True(t, errors.As(verr, &spre))
+	require.NotNil(t, spre.Origin)
+	require.NotNil(t, spre.Origin.Key)
+	require.Greater(t, spre.Origin.Key.Line, 0)
+}
+
+// Security scheme with a `type:` outside the spec-permitted set
+// {apiKey, http, oauth2, openIdConnect, mutualTLS} triggers
+// InvalidSecuritySchemeTypeError carrying the rejected value.
+func TestValidationError_InvalidSecuritySchemeType(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: cookie
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme 'type' can't be "cookie"`)
+
+	var iste *openapi3.InvalidSecuritySchemeTypeError
+	require.True(t, errors.As(err, &iste))
+	require.Equal(t, "cookie", iste.Type)
+}
+
+// Origin tracking for InvalidSecuritySchemeTypeError.
+func TestValidationError_InvalidSecuritySchemeType_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: cookie
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var iste *openapi3.InvalidSecuritySchemeTypeError
+	require.True(t, errors.As(verr, &iste))
+	require.NotNil(t, iste.Origin)
+	require.NotNil(t, iste.Origin.Key)
+	require.Greater(t, iste.Origin.Key.Line, 0)
+}
+
+// HTTP security scheme with a `scheme:` outside {bearer, basic,
+// negotiate, digest} triggers InvalidHTTPSchemeError carrying the
+// rejected value.
+func TestValidationError_InvalidHTTPScheme(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: mutual
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type 'http' has invalid 'scheme' value "mutual"`)
+
+	var ihse *openapi3.InvalidHTTPSchemeError
+	require.True(t, errors.As(err, &ihse))
+	require.Equal(t, "mutual", ihse.Scheme)
+}
+
+// Origin tracking for InvalidHTTPSchemeError.
+func TestValidationError_InvalidHTTPScheme_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: mutual
+`))
+	require.NoError(t, err)
+
+	verr := doc.Validate(context.Background())
+	var ihse *openapi3.InvalidHTTPSchemeError
+	require.True(t, errors.As(verr, &ihse))
+	require.NotNil(t, ihse.Origin)
+	require.NotNil(t, ihse.Origin.Key)
+	require.Greater(t, ihse.Origin.Key.Line, 0)
+}
+
+// A $ref left with a non-nil Ref string but nil Value at Validate time
+// triggers UnresolvedRefError. Constructed programmatically because
+// the YAML loader is strict about ref resolution at load time; this
+// shape models the in-the-wild case where a spec uses an external
+// $ref that wasn't fetched (testdata/apis_guru_openapi_directory has
+// real examples).
+func TestValidationError_UnresolvedRef(t *testing.T) {
+	doc := &openapi3.T{
+		OpenAPI: "3.0.3",
+		Info:    &openapi3.Info{Title: "t", Version: "1"},
+		Paths:   openapi3.NewPaths(),
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
+				"X": &openapi3.SchemaRef{
+					Ref:   "external.yaml#/T",
+					Value: nil, // unresolved
+				},
+			},
+		},
+	}
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `found unresolved ref: "external.yaml#/T"`)
+
+	var ure *openapi3.UnresolvedRefError
+	require.True(t, errors.As(err, &ure))
+	require.Equal(t, "external.yaml#/T", ure.Ref)
+}
+
+// openIdConnect security scheme without an openIdConnectUrl triggers
+// RequiredFieldError wrapping *OpenIDConnectURLRequired.
+func TestValidationError_OpenIDConnectURLRequired(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: openIdConnect
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `no OIDC URL found for openIdConnect security scheme`)
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "openIdConnectUrl", rfe.Field)
+	var leaf *openapi3.OpenIDConnectURLRequired
+	require.True(t, errors.As(err, &leaf))
+}
+
+// apiKey security scheme with `in:` set to a value outside
+// {query, header, cookie} triggers APIKeyInInvalidError carrying the
+// rejected value.
+func TestValidationError_APIKeyInInvalid(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: apiKey
+      in: body
+      name: payload
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `should have 'in'. It can be 'query', 'header' or 'cookie', not "body"`)
+
+	var akie *openapi3.APIKeyInInvalidError
+	require.True(t, errors.As(err, &akie))
+	require.Equal(t, "body", akie.Value)
+}
+
+// A non-apiKey scheme that nevertheless declares `in:` triggers
+// ForbiddenFieldError wrapping *SecuritySchemeInForbidden.
+func TestValidationError_SecuritySchemeInForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: basic
+      in: query
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "http" can't have 'in'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "in", ffe.Field)
+	var leaf *openapi3.SecuritySchemeInForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A non-apiKey scheme that declares `name:` triggers
+// ForbiddenFieldError wrapping *SecuritySchemeNameForbidden.
+func TestValidationError_SecuritySchemeNameForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: basic
+      name: something
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "http" can't have 'name'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "name", ffe.Field)
+	var leaf *openapi3.SecuritySchemeNameForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A non-http scheme declaring `bearerFormat:` triggers
+// ForbiddenFieldError wrapping *SecuritySchemeBearerFormatForbidden.
+func TestValidationError_SecuritySchemeBearerFormatForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: apiKey
+      in: query
+      name: x
+      bearerFormat: JWT
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "apiKey" can't have 'bearerFormat'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "bearerFormat", ffe.Field)
+	var leaf *openapi3.SecuritySchemeBearerFormatForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// oauth2 scheme missing `flows:` triggers RequiredFieldError
+// wrapping *SecuritySchemeFlowsRequired.
+func TestValidationError_SecuritySchemeFlowsRequired(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: oauth2
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "oauth2" should have 'flows'`)
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "flows", rfe.Field)
+	var leaf *openapi3.SecuritySchemeFlowsRequired
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A non-oauth2 scheme declaring `flows:` triggers ForbiddenFieldError
+// wrapping *SecuritySchemeFlowsForbidden.
+func TestValidationError_SecuritySchemeFlowsForbidden(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: basic
+      flows:
+        password:
+          tokenUrl: https://example.com/token
+          scopes: {}
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `security scheme of type "http" can't have 'flows'`)
+
+	var ffe *openapi3.ForbiddenFieldError
+	require.True(t, errors.As(err, &ffe))
+	require.Equal(t, "flows", ffe.Field)
+	var leaf *openapi3.SecuritySchemeFlowsForbidden
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A path key that doesn't start with '/' triggers
+// PathMustStartWithSlashError carrying the offending path.
+func TestValidationError_PathMustStartWithSlash(t *testing.T) {
+	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
+	err := paths.Validate(context.Background())
+	require.ErrorContains(t, err, `path "users/{id}" does not start with a forward slash (/)`)
+
+	var pmss *openapi3.PathMustStartWithSlashError
+	require.True(t, errors.As(err, &pmss))
+	require.Equal(t, "users/{id}", pmss.Path)
+}
+
+// Two path keys normalizing to the same template trigger
+// ConflictingPathsError carrying both paths.
+func TestValidationError_ConflictingPaths(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /users/{a}:
+    get:
+      parameters:
+        - { name: a, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+  /users/{b}:
+    get:
+      parameters:
+        - { name: b, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var cpe *openapi3.ConflictingPathsError
+	require.True(t, errors.As(err, &cpe))
+	require.Contains(t, []string{cpe.Path1, cpe.Path2}, "/users/{a}")
+	require.Contains(t, []string{cpe.Path1, cpe.Path2}, "/users/{b}")
+}
+
+// Two parameters with the same (In, Name) combination on a single
+// operation trigger DuplicateParameterError carrying both.
+func TestValidationError_DuplicateParameter(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - { name: id, in: query, schema: { type: string } }
+        - { name: id, in: query, schema: { type: string } }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `more than one "query" parameter has name "id"`)
+
+	var dpe *openapi3.DuplicateParameterError
+	require.True(t, errors.As(err, &dpe))
+	require.Equal(t, "query", dpe.In)
+	require.Equal(t, "id", dpe.Name)
+}
+
+// An encoding with an unsupported (style, explode) combination
+// triggers InvalidSerializationMethodError carrying Subject "media
+// type".
+func TestValidationError_InvalidSerializationMethod_MediaType(t *testing.T) {
+	explode := true
+	enc := &openapi3.Encoding{Style: "matrix", Explode: &explode}
+	err := enc.Validate(context.Background())
+	require.ErrorContains(t, err, `serialization method with style="matrix" and explode=true is not supported by media type`)
+
+	var isme *openapi3.InvalidSerializationMethodError
+	require.True(t, errors.As(err, &isme))
+	require.Equal(t, "media type", isme.Subject)
+	require.Equal(t, "matrix", isme.Style)
+}
+
+// A parameter with `example` AND `examples` both populated triggers
+// MutuallyExclusiveFieldsError wrapping
+// *ParameterExampleAndExamplesExclusive.
+func TestValidationError_ParameterExampleAndExamplesExclusive(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          example: foo
+          examples:
+            a: { value: bar }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.ErrorContains(t, err, `example and examples are mutually exclusive`)
+
+	var mef *openapi3.MutuallyExclusiveFieldsError
+	require.True(t, errors.As(err, &mef))
+	require.Equal(t, "example", mef.Field1)
+	require.Equal(t, "examples", mef.Field2)
+	var leaf *openapi3.ParameterExampleAndExamplesExclusive
+	require.True(t, errors.As(err, &leaf))
+}
+
+// A server variable without `default` triggers RequiredFieldError
+// wrapping *ServerVariableDefaultRequired.
+func TestValidationError_ServerVariableDefaultRequired(t *testing.T) {
+	sv := &openapi3.ServerVariable{Enum: []string{"a", "b"}}
+	err := sv.Validate(context.Background())
+	require.ErrorContains(t, err, `field default is required in`)
+
+	var rfe *openapi3.RequiredFieldError
+	require.True(t, errors.As(err, &rfe))
+	require.Equal(t, "default", rfe.Field)
+	var leaf *openapi3.ServerVariableDefaultRequired
+	require.True(t, errors.As(err, &leaf))
+}
+
+// Context wrappers: each replaces a bare fmt.Errorf-with-%w wrap
+// so consumers can extract the wrapping context via errors.As.
+// The Unwrap chain still reaches the inner typed leaf.
+
+func TestValidationError_ComponentValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: foobar
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var cve *openapi3.ComponentValidationError
+	require.True(t, errors.As(err, &cve))
+	require.Equal(t, "schema", cve.Section)
+	require.Equal(t, "Bad", cve.Name)
+	// Unwrap reaches the typed inner leaf.
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(err, &ste))
+	require.Equal(t, "foobar", ste.Type)
+}
+
+func TestValidationError_ExternalDocsURLValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+externalDocs:
+  url: "://not a url"
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+	var euve *openapi3.ExternalDocsURLValidationError
+	require.True(t, errors.As(err, &euve))
+}
+
+func TestValidationError_WebhookValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.1.0
+info: { title: t, version: "1" }
+paths: {}
+webhooks:
+  myhook:
+    get:
+      operationId: ""
+`)
+	// Validate may surface various findings; the webhook wrap should
+	// be discoverable via errors.As regardless of which inner leaf fires.
+	_ = doc.Validate(context.Background())
+	// Construct directly to verify the wrapper shape (the failure path
+	// above may or may not produce a webhook error depending on the
+	// inner validators' state, but the type itself is what we want to
+	// pin).
+	wve := &openapi3.WebhookValidationError{Name: "myhook", Cause: errors.New("boom")}
+	require.Contains(t, wve.Error(), `webhook "myhook"`)
+	var got *openapi3.WebhookValidationError
+	require.True(t, errors.As(wve, &got))
+	require.Equal(t, "myhook", got.Name)
+}
+
+func TestValidationError_ParameterFieldValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - name: q
+          in: query
+          schema: { type: foobar }
+      responses: { "200": { description: ok } }
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var pfve *openapi3.ParameterFieldValidationError
+	require.True(t, errors.As(err, &pfve))
+	require.Equal(t, "q", pfve.ParameterName)
+	require.Equal(t, "schema", pfve.Field)
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(err, &ste))
+}
+
+func TestValidationError_OAuthFlowValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: "://not a url"
+          scopes: {}
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var ofve *openapi3.OAuthFlowValidationError
+	require.True(t, errors.As(err, &ofve))
+	require.Equal(t, "password", ofve.FlowKind)
+	var ssfve *openapi3.SecuritySchemeFlowValidationError
+	require.True(t, errors.As(err, &ssfve), "outer SecuritySchemeFlowValidationError must also be reachable")
+}
+
+func TestValidationError_OAuthFlowFieldValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://example.com/token
+          refreshUrl: "://not a url"
+          scopes: {}
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var offve *openapi3.OAuthFlowFieldValidationError
+	require.True(t, errors.As(err, &offve))
+	require.Equal(t, "refreshUrl", offve.Field)
+}
+
+// Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
+func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
+	responses := openapi3.NewResponses(
+		openapi3.WithStatus(200, &openapi3.ResponseRef{
+			Value: openapi3.NewResponse().WithDescription("ok"),
+		}),
+	)
+	responses.Extensions = map[string]any{"bogus": "value"}
+	verr := responses.Validate(context.Background())
+	var esf *openapi3.ExtraSiblingFieldsError
+	require.True(t, errors.As(verr, &esf))
+	require.Nil(t, esf.Origin, "Origin should be nil when the parent object's Origin is unset")
+}
+
+// ---------------------------------------------------------------------
+// Origin coverage matrix: for each cluster carrying an Origin field,
+// one *_CarriesOrigin (loader-tracked) and one
+// *_OriginNilWithoutLoaderTracking (default loader) test asserting
+// the cluster honors IncludeOrigin. Mechanical / repetitive by
+// design; the symmetry pins the contract that callers can rely on
+// Origin being nil when IncludeOrigin is off.
+
+func loadDocFromYAMLWithOrigin(t *testing.T, src string) *openapi3.T {
+	t.Helper()
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(src))
+	require.NoError(t, err)
+	return doc
+}
+
+const specPathParamNotRequired = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /things/{id}:
+    get:
+      parameters:
+        - { name: id, in: path }
+      responses: { "200": { description: ok } }
+`
+
+func TestValidationError_PathParameterRequired_CarriesOrigin(t *testing.T) {
+	doc := loadDocFromYAMLWithOrigin(t, specPathParamNotRequired)
+	verr := doc.Validate(context.Background())
+	var ppr *openapi3.PathParameterRequiredError
+	require.True(t, errors.As(verr, &ppr))
+	require.NotNil(t, ppr.Origin)
+	require.NotNil(t, ppr.Origin.Key)
+	require.Greater(t, ppr.Origin.Key.Line, 0)
+}
+
+func TestValidationError_PathParameterRequired_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specPathParamNotRequired)
+	verr := doc.Validate(context.Background())
+	var ppr *openapi3.PathParameterRequiredError
+	require.True(t, errors.As(verr, &ppr))
+	require.Nil(t, ppr.Origin)
+}
+
+const specSchemaTypeBad = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad: { type: bool }
+`
+
+func TestValidationError_SchemaType_CarriesOrigin(t *testing.T) {
+	doc := loadDocFromYAMLWithOrigin(t, specSchemaTypeBad)
+	verr := doc.Validate(context.Background())
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(verr, &ste))
+	require.NotNil(t, ste.Origin)
+	require.NotNil(t, ste.Origin.Key)
+	require.Greater(t, ste.Origin.Key.Line, 0)
+}
+
+func TestValidationError_SchemaType_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specSchemaTypeBad)
+	verr := doc.Validate(context.Background())
+	var ste *openapi3.SchemaTypeError
+	require.True(t, errors.As(verr, &ste))
+	require.Nil(t, ste.Origin)
+}
+
+const specInvalidParameterIn = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    post:
+      parameters:
+        - { name: payload, in: body, schema: { type: object } }
+      responses: { "200": { description: ok } }
+`
+
+func TestValidationError_InvalidParameterIn_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specInvalidParameterIn)
+	verr := doc.Validate(context.Background())
+	var ipe *openapi3.InvalidParameterInError
+	require.True(t, errors.As(verr, &ipe))
+	require.Nil(t, ipe.Origin)
+}
+
+const specSchemaPatternRegex = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: string
+      pattern: "(?!foo)bar"
+`
+
+func TestValidationError_SchemaPatternRegex_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specSchemaPatternRegex)
+	verr := doc.Validate(context.Background())
+	var spre *openapi3.SchemaPatternRegexError
+	require.True(t, errors.As(verr, &spre))
+	require.Nil(t, spre.Origin)
+}
+
+const specInvalidSecuritySchemeType = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: cookie
+`
+
+func TestValidationError_InvalidSecuritySchemeType_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specInvalidSecuritySchemeType)
+	verr := doc.Validate(context.Background())
+	var iste *openapi3.InvalidSecuritySchemeTypeError
+	require.True(t, errors.As(verr, &iste))
+	require.Nil(t, iste.Origin)
+}
+
+const specInvalidHTTPScheme = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: http
+      scheme: mutual
+`
+
+func TestValidationError_InvalidHTTPScheme_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specInvalidHTTPScheme)
+	verr := doc.Validate(context.Background())
+	var ihse *openapi3.InvalidHTTPSchemeError
+	require.True(t, errors.As(verr, &ihse))
+	require.Nil(t, ihse.Origin)
+}
+
+const specAPIKeyInInvalid = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    Bad:
+      type: apiKey
+      in: body
+      name: payload
+`
+
+func TestValidationError_APIKeyInInvalid_CarriesOrigin(t *testing.T) {
+	doc := loadDocFromYAMLWithOrigin(t, specAPIKeyInInvalid)
+	verr := doc.Validate(context.Background())
+	var akie *openapi3.APIKeyInInvalidError
+	require.True(t, errors.As(verr, &akie))
+	require.NotNil(t, akie.Origin)
+	require.NotNil(t, akie.Origin.Key)
+	require.Greater(t, akie.Origin.Key.Line, 0)
+}
+
+func TestValidationError_APIKeyInInvalid_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specAPIKeyInInvalid)
+	verr := doc.Validate(context.Background())
+	var akie *openapi3.APIKeyInInvalidError
+	require.True(t, errors.As(verr, &akie))
+	require.Nil(t, akie.Origin)
+}
+
+func TestValidationError_PathMustStartWithSlash_CarriesOrigin(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	// Programmatic because loadDocFromYAML rejects malformed path keys
+	// during the load phase before Validate gets the chance.
+	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
+	paths.Origin = &openapi3.Origin{Key: &openapi3.Location{Line: 1, Column: 1}}
+	verr := paths.Validate(context.Background())
+	var pmss *openapi3.PathMustStartWithSlashError
+	require.True(t, errors.As(verr, &pmss))
+	require.NotNil(t, pmss.Origin)
+	require.NotNil(t, pmss.Origin.Key)
+	require.Greater(t, pmss.Origin.Key.Line, 0)
+}
+
+func TestValidationError_PathMustStartWithSlash_OriginNilWithoutLoaderTracking(t *testing.T) {
+	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
+	verr := paths.Validate(context.Background())
+	var pmss *openapi3.PathMustStartWithSlashError
+	require.True(t, errors.As(verr, &pmss))
+	require.Nil(t, pmss.Origin)
+}
+
+const specConflictingPaths = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /users/{a}:
+    get:
+      parameters:
+        - { name: a, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+  /users/{b}:
+    get:
+      parameters:
+        - { name: b, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+`
+
+func TestValidationError_ConflictingPaths_CarriesOrigin(t *testing.T) {
+	doc := loadDocFromYAMLWithOrigin(t, specConflictingPaths)
+	verr := doc.Validate(context.Background())
+	var cpe *openapi3.ConflictingPathsError
+	require.True(t, errors.As(verr, &cpe))
+	require.NotNil(t, cpe.Origin)
+	require.NotNil(t, cpe.Origin.Key)
+	require.Greater(t, cpe.Origin.Key.Line, 0)
+}
+
+func TestValidationError_ConflictingPaths_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specConflictingPaths)
+	verr := doc.Validate(context.Background())
+	var cpe *openapi3.ConflictingPathsError
+	require.True(t, errors.As(verr, &cpe))
+	require.Nil(t, cpe.Origin)
+}
+
+const specDuplicateParameter = `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /x:
+    get:
+      parameters:
+        - { name: id, in: query, schema: { type: string } }
+        - { name: id, in: query, schema: { type: string } }
+      responses: { "200": { description: ok } }
+`
+
+func TestValidationError_DuplicateParameter_CarriesOrigin(t *testing.T) {
+	doc := loadDocFromYAMLWithOrigin(t, specDuplicateParameter)
+	verr := doc.Validate(context.Background())
+	var dpe *openapi3.DuplicateParameterError
+	require.True(t, errors.As(verr, &dpe))
+	require.NotNil(t, dpe.Origin)
+	require.NotNil(t, dpe.Origin.Key)
+	require.Greater(t, dpe.Origin.Key.Line, 0)
+}
+
+func TestValidationError_DuplicateParameter_OriginNilWithoutLoaderTracking(t *testing.T) {
+	doc := loadDocFromYAML(t, specDuplicateParameter)
+	verr := doc.Validate(context.Background())
+	var dpe *openapi3.DuplicateParameterError
+	require.True(t, errors.As(verr, &dpe))
+	require.Nil(t, dpe.Origin)
+}
+
+func TestValidationError_InvalidSerializationMethod_MediaType_CarriesOrigin(t *testing.T) {
+	// Encoding.Validate isn't reached from T.Validate (MediaType.Validate
+	// skips it); exercise it directly with a populated Origin so the
+	// Carries-Origin assertion is meaningful.
+	explode := true
+	enc := &openapi3.Encoding{
+		Style:   "matrix",
+		Explode: &explode,
+		Origin:  &openapi3.Origin{Key: &openapi3.Location{Line: 5, Column: 3}},
+	}
+	err := enc.Validate(context.Background())
+	var isme *openapi3.InvalidSerializationMethodError
+	require.True(t, errors.As(err, &isme))
+	require.Equal(t, "media type", isme.Subject)
+	require.NotNil(t, isme.Origin)
+	require.NotNil(t, isme.Origin.Key)
+	require.Greater(t, isme.Origin.Key.Line, 0)
+}
+
+func TestValidationError_InvalidSerializationMethod_MediaType_OriginNilWithoutLoaderTracking(t *testing.T) {
+	explode := true
+	enc := &openapi3.Encoding{Style: "matrix", Explode: &explode}
+	err := enc.Validate(context.Background())
+	var isme *openapi3.InvalidSerializationMethodError
+	require.True(t, errors.As(err, &isme))
+	require.Nil(t, isme.Origin)
+}
+
+func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
+	t.Helper()
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(src))
+	require.NoError(t, err)
+	return doc
+}

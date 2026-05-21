@@ -4,8 +4,8 @@ import "fmt"
 
 // ValidationError is the embedded base for every typed validation error
 // emitted by the document validation walker (T.Validate, Info.Validate,
-// Paths.Validate, etc.). Three layers of granularity are exposed; pick
-// whichever the caller needs:
+// Paths.Validate, etc.). Four categories of typed error are exposed;
+// pick whichever the caller needs:
 //
 //  1. Base — *ValidationError. Catchall for "this is a validation
 //     issue, here is the message". Reachable from any leaf via the As
@@ -14,16 +14,35 @@ import "fmt"
 //     *FieldVersionMismatchError. Group families of related failures
 //     and expose the family-level metadata (Field, MinVersion, ...).
 //     Wrap the underlying leaf via Unwrap, so errors.As can still walk
-//     to the leaf.
+//     to the leaf. Some clusters are single-site (e.g. *SchemaTypeError)
+//     and carry only their own fields with no separate leaf.
 //  3. Leaf — one type per call site (e.g. *InfoVersionRequired,
 //     *LicenseIdentifierFieldFor31Plus). Lets callers match an exact
 //     failure point without string comparison.
+//  4. Context wrapper — types like *SectionValidationError,
+//     *PathValidationError, *ParameterFieldValidationError. Add scope
+//     ("which section", "which path", "which parameter") around an
+//     inner error chain but do NOT themselves report a failure
+//     condition — the actual error lives in Cause. Defined in
+//     validation_error_context.go; see that file's header for the
+//     full inventory and conventions.
 //
-// All three are reachable from the same returned error through
+// All four are reachable from the same returned error through
 // standard Go error wrapping (errors.As, errors.Is, errors.Unwrap),
 // so a caller that only needs "is it a validation error?" stops at
 // the base and a caller that wants "is it specifically license.identifier
-// being used in 3.0?" matches the leaf.
+// being used in 3.0?" matches the leaf. A caller that wants "which
+// section did this happen in?" matches the context wrapper and walks
+// further for the cluster/leaf.
+//
+// A canonical error chain therefore looks like:
+//
+//	ComponentValidationError{Section: "schema", Name: "Foo"}
+//	  -> RequiredFieldError{Field: "type"}
+//	    -> SchemaTypeRequired{Message: "..."}
+//
+// Context wrapper carries WHERE, cluster carries WHAT category, leaf
+// carries EXACTLY WHICH case.
 //
 // Backward compatibility: every site that today returns errors.New(msg)
 // migrates to a leaf type that embeds ValidationError with Message set
@@ -288,6 +307,261 @@ type ForbiddenFieldError struct {
 func (e *ForbiddenFieldError) Error() string { return e.Cause.Error() }
 func (e *ForbiddenFieldError) Unwrap() error { return e.Cause }
 
+// PathParameterRequiredError clusters "path parameter X must be required"
+// failures: per the OpenAPI spec, every parameter with `in: path` must be
+// declared with `required: true`. Carries the parameter name so callers
+// can render or filter by it.
+type PathParameterRequiredError struct {
+	// Param is the path-parameter name (e.g. "groupId").
+	Param string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *PathParameterRequiredError) Error() string {
+	return fmt.Sprintf("path parameter %q must be required", e.Param)
+}
+
+// DuplicateOperationIDError clusters "two operations share an operationId"
+// failures. operationIds must be unique across all paths in a document.
+// Endpoints are rendered as "<METHOD> <path>" (e.g. "POST /things").
+type DuplicateOperationIDError struct {
+	// OperationID is the duplicated operationId value.
+	OperationID string
+	// Endpoint1 / Endpoint2 are the two offending endpoints, in
+	// deterministic order (lexicographically) for stable error messages.
+	Endpoint1 string
+	Endpoint2 string
+	// Origin is the source location of the second (offending) operation
+	// when the document was loaded with Loader.IncludeOrigin = true. The
+	// pre-existing Endpoint1 is implicitly fine; the duplicate landed at
+	// Endpoint2's site, which is the natural "go fix this" pointer.
+	Origin *Origin
+}
+
+func (e *DuplicateOperationIDError) Error() string {
+	return fmt.Sprintf("operations %q and %q have the same operation id %q",
+		e.Endpoint1, e.Endpoint2, e.OperationID)
+}
+
+// ExtraSiblingFieldsError clusters "unexpected sibling fields" failures.
+// Most commonly this fires when fields appear alongside a $ref that the
+// OpenAPI spec doesn't allow there, or as unknown keys on objects whose
+// only permitted extras are `x-` extensions. Carries the offending field
+// names so callers can render or filter.
+type ExtraSiblingFieldsError struct {
+	// Fields is the list of unexpected sibling field names.
+	Fields []string
+	// Origin is the source location of the parent object that carries
+	// the extra siblings when the document was loaded with
+	// Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ExtraSiblingFieldsError) Error() string {
+	return fmt.Sprintf("extra sibling fields: %+v", e.Fields)
+}
+
+// SchemaTypeError clusters "unsupported 'type' value" failures on a
+// Schema. Carries the bad type value so callers can surface it in
+// user-facing output and filter findings by it.
+type SchemaTypeError struct {
+	// Type is the rejected type value (e.g. "bool", "int", "http").
+	Type string
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaTypeError) Error() string {
+	return fmt.Sprintf("unsupported 'type' value %q", e.Type)
+}
+
+// InvalidParameterInError clusters "parameter can't have 'in' value X"
+// failures. The OpenAPI 3.x spec accepts only `path`, `query`, `header`,
+// or `cookie`; this fires when a parameter declares anything else
+// (commonly `body`, a Swagger 2.0 leftover).
+type InvalidParameterInError struct {
+	// Value is the rejected `in:` value (e.g. "body", "formData").
+	Value string
+	// Origin is the source location of the offending parameter when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidParameterInError) Error() string {
+	return fmt.Sprintf("parameter can't have 'in' value %q", e.Value)
+}
+
+// SchemaPatternRegexError clusters "schema pattern failed to compile"
+// failures. Kin's regex engine is Go's RE2, which rejects Perl features
+// like `(?!...)` lookahead; specs that leak Perl regex patterns (common
+// in AWS-style auto-generated schemas) trip this. Carries the offending
+// pattern as a structured field for typed dispatch, while preserving
+// the underlying SchemaError's rendered message byte-for-byte (Error()
+// delegates to Cause.Error()) so existing string-based consumers and
+// golden fixtures are unaffected.
+type SchemaPatternRegexError struct {
+	// Pattern is the schema's `pattern:` value that failed to compile.
+	Pattern string
+	// Cause is the underlying error (a *SchemaError wrapping the
+	// regexp package's syntax error). Unwrap returns this so callers
+	// walking the error chain see the SchemaError.
+	Cause error
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaPatternRegexError) Error() string { return e.Cause.Error() }
+
+func (e *SchemaPatternRegexError) Unwrap() error { return e.Cause }
+
+// InvalidSecuritySchemeTypeError clusters "security scheme 'type' can't
+// be X" failures. The OpenAPI 3.x spec accepts only `apiKey`, `http`,
+// `oauth2`, `openIdConnect`, and `mutualTLS` (3.1+); this fires when a
+// security scheme declares anything else.
+type InvalidSecuritySchemeTypeError struct {
+	// Type is the rejected type value (e.g. "cookie", "saml").
+	Type string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidSecuritySchemeTypeError) Error() string {
+	return fmt.Sprintf("security scheme 'type' can't be %q", e.Type)
+}
+
+// InvalidHTTPSchemeError clusters "security scheme of type 'http' has
+// invalid 'scheme' value X" failures. The OpenAPI/HTTP-auth registry
+// accepts only `bearer`, `basic`, `negotiate`, `digest`; this fires
+// when an http scheme declares anything else.
+type InvalidHTTPSchemeError struct {
+	// Scheme is the rejected scheme value (e.g. "mutual", "oauth").
+	Scheme string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidHTTPSchemeError) Error() string {
+	return fmt.Sprintf("security scheme of type 'http' has invalid 'scheme' value %q", e.Scheme)
+}
+
+// UnresolvedRefError clusters "found unresolved ref: X" failures fired
+// by the loader when a $ref cannot be resolved against the loaded
+// document. Carries the offending ref string so callers can surface
+// it in user-facing output and filter findings by it.
+type UnresolvedRefError struct {
+	// Ref is the unresolved $ref value (e.g. "#/components/schemas/X"
+	// or "external.yaml#/...").
+	Ref string
+	// Origin is the source location of the ref-bearing object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *UnresolvedRefError) Error() string {
+	return fmt.Sprintf("found unresolved ref: %q", e.Ref)
+}
+
+// APIKeyInInvalidError clusters "apiKey should have 'in'. It can be
+// 'query', 'header' or 'cookie', not X" failures. Fires when an
+// apiKey security scheme either omits `in:` or sets it to a value
+// outside {query, header, cookie}. Carries the rejected value so
+// callers can render or filter; empty string means the field was
+// missing entirely.
+type APIKeyInInvalidError struct {
+	// Value is the rejected `in:` value (empty when the field was
+	// omitted, otherwise the bad value e.g. "body").
+	Value string
+	// Origin is the source location of the offending security scheme
+	// when the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *APIKeyInInvalidError) Error() string {
+	return fmt.Sprintf("security scheme of type 'apiKey' should have 'in'. It can be 'query', 'header' or 'cookie', not %q", e.Value)
+}
+
+// PathMustStartWithSlashError clusters "path X does not start with a
+// forward slash" failures. Path keys in the paths object must begin
+// with `/`.
+type PathMustStartWithSlashError struct {
+	// Path is the offending path key (e.g. "users/{id}").
+	Path string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *PathMustStartWithSlashError) Error() string {
+	return fmt.Sprintf("path %q does not start with a forward slash (/)", e.Path)
+}
+
+// ConflictingPathsError clusters "conflicting paths X and Y" failures.
+// Fires when two path keys normalize to the same template (e.g.
+// "/users/{a}" and "/users/{b}" both normalize to "/users/{}").
+type ConflictingPathsError struct {
+	// Path1 / Path2 are the two conflicting path keys, in document
+	// order.
+	Path1 string
+	Path2 string
+	// Origin is the source location of the paths object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ConflictingPathsError) Error() string {
+	return fmt.Sprintf("conflicting paths %q and %q", e.Path1, e.Path2)
+}
+
+// DuplicateParameterError clusters "more than one X parameter has
+// name Y" failures. Fires when two parameters on an operation (or
+// path item) share the same In + Name combination.
+type DuplicateParameterError struct {
+	// In is the parameter location (e.g. "query", "path", "header").
+	In string
+	// Name is the duplicated parameter name.
+	Name string
+	// Origin is the source location of the offending parameter when
+	// the document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *DuplicateParameterError) Error() string {
+	return fmt.Sprintf("more than one %q parameter has name %q", e.In, e.Name)
+}
+
+// InvalidSerializationMethodError clusters "serialization method with
+// style=X and explode=Y is not supported by Z" failures. Fires for
+// invalid (style, explode) combinations on encodings, parameters,
+// and headers. The Subject discriminates which surface is reporting:
+// "media type" for encoding, the parameter location ("path",
+// "query", etc.) for parameters and "header" for headers.
+type InvalidSerializationMethodError struct {
+	// Subject discriminates the calling surface ("media type",
+	// "path"/"query"/"header"/"cookie" for parameters, or "header"
+	// for the header.go site).
+	Subject string
+	// Style is the offending `style:` value.
+	Style string
+	// Explode is the offending `explode:` value.
+	Explode bool
+	// Origin is the source location of the offending object when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidSerializationMethodError) Error() string {
+	if e.Subject == "media type" {
+		return fmt.Sprintf("serialization method with style=%q and explode=%v is not supported by media type", e.Style, e.Explode)
+	}
+	return fmt.Sprintf("serialization method with style=%q and explode=%v is not supported by a %s parameter", e.Style, e.Explode, e.Subject)
+}
+
 // ---------------------------------------------------------------------
 // Leaf types — one per call site. Each embeds ValidationError for
 // Error() and As-to-base, and is wrapped in its cluster type when
@@ -436,6 +710,56 @@ func (e *HeaderContentSingleEntry) As(target any) bool {
 type WebhookNil struct{ ValidationError }
 
 func (e *WebhookNil) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+// SecurityScheme leaves wrapped in RequiredFieldError / ForbiddenFieldError.
+
+type OpenIDConnectURLRequired struct{ ValidationError }
+
+func (e *OpenIDConnectURLRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeFlowsRequired struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsRequired) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeInForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeInForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeNameForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeNameForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeBearerFormatForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type SecuritySchemeFlowsForbidden struct{ ValidationError }
+
+func (e *SecuritySchemeFlowsForbidden) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ParameterExampleAndExamplesExclusive struct{ ValidationError }
+
+func (e *ParameterExampleAndExamplesExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ServerVariableDefaultRequired struct{ ValidationError }
+
+func (e *ServerVariableDefaultRequired) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1140,4 +1464,105 @@ func newFieldFor31Plus(field string, origin *Origin) error {
 		leaf = &ValidationError{Message: msg}
 	}
 	return newFieldVersionMismatch(field, leaf, origin)
+}
+
+func newPathParameterRequired(param string, origin *Origin) error {
+	return &PathParameterRequiredError{Param: param, Origin: origin}
+}
+
+func newDuplicateOperationID(endpoint1, endpoint2, operationID string, origin *Origin) error {
+	return &DuplicateOperationIDError{
+		Endpoint1:   endpoint1,
+		Endpoint2:   endpoint2,
+		OperationID: operationID,
+		Origin:      origin,
+	}
+}
+
+func newExtraSiblingFields(fields []string, origin *Origin) error {
+	return &ExtraSiblingFieldsError{Fields: fields, Origin: origin}
+}
+
+func newSchemaTypeError(typ string, origin *Origin) error {
+	return &SchemaTypeError{Type: typ, Origin: origin}
+}
+
+func newInvalidParameterIn(value string, origin *Origin) error {
+	return &InvalidParameterInError{Value: value, Origin: origin}
+}
+
+func newSchemaPatternRegexError(pattern string, cause error, origin *Origin) error {
+	return &SchemaPatternRegexError{Pattern: pattern, Cause: cause, Origin: origin}
+}
+
+func newInvalidSecuritySchemeType(typ string, origin *Origin) error {
+	return &InvalidSecuritySchemeTypeError{Type: typ, Origin: origin}
+}
+
+func newInvalidHTTPScheme(scheme string, origin *Origin) error {
+	return &InvalidHTTPSchemeError{Scheme: scheme, Origin: origin}
+}
+
+func newUnresolvedRef(ref string, origin *Origin) error {
+	return &UnresolvedRefError{Ref: ref, Origin: origin}
+}
+
+func newAPIKeyInInvalid(value string, origin *Origin) error {
+	return &APIKeyInInvalidError{Value: value, Origin: origin}
+}
+
+func newOpenIDConnectURLRequired(schemeName string, origin *Origin) error {
+	return newRequiredField("openIdConnectUrl",
+		&OpenIDConnectURLRequired{ValidationError{Message: fmt.Sprintf("no OIDC URL found for openIdConnect security scheme %q", schemeName)}}, origin)
+}
+
+func newSecuritySchemeFlowsRequired(schemeType string, origin *Origin) error {
+	return newRequiredField("flows",
+		&SecuritySchemeFlowsRequired{ValidationError{Message: fmt.Sprintf("security scheme of type %q should have 'flows'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeInForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("in",
+		&SecuritySchemeInForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'in'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeNameForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("name",
+		&SecuritySchemeNameForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'name'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeBearerFormatForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("bearerFormat",
+		&SecuritySchemeBearerFormatForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'bearerFormat'", schemeType)}}, origin)
+}
+
+func newSecuritySchemeFlowsForbidden(schemeType string, origin *Origin) error {
+	return newForbiddenField("flows",
+		&SecuritySchemeFlowsForbidden{ValidationError{Message: fmt.Sprintf("security scheme of type %q can't have 'flows'", schemeType)}}, origin)
+}
+
+func newPathMustStartWithSlash(path string, origin *Origin) error {
+	return &PathMustStartWithSlashError{Path: path, Origin: origin}
+}
+
+func newConflictingPaths(path1, path2 string, origin *Origin) error {
+	return &ConflictingPathsError{Path1: path1, Path2: path2, Origin: origin}
+}
+
+func newDuplicateParameter(in, name string, origin *Origin) error {
+	return &DuplicateParameterError{In: in, Name: name, Origin: origin}
+}
+
+func newInvalidSerializationMethod(subject, style string, explode bool, origin *Origin) error {
+	return &InvalidSerializationMethodError{Subject: subject, Style: style, Explode: explode, Origin: origin}
+}
+
+func newParameterExampleAndExamplesExclusive(parameterName string, origin *Origin) error {
+	return newMutuallyExclusiveFields("example", "examples",
+		&ParameterExampleAndExamplesExclusive{ValidationError{Message: fmt.Sprintf("parameter %q example and examples are mutually exclusive", parameterName)}}, origin)
+}
+
+func newServerVariableDefaultRequired(serverData string, origin *Origin) error {
+	return newRequiredField("default",
+		&ServerVariableDefaultRequired{ValidationError{Message: fmt.Sprintf("field default is required in %s", serverData)}}, origin)
 }
