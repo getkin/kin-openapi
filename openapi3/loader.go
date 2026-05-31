@@ -26,7 +26,9 @@ func failedToResolveRefFragmentPart(value, what string) error {
 
 // Loader helps deserialize an OpenAPIv3 document
 type Loader struct {
-	// IsExternalRefsAllowed enables visiting other files
+	// IsExternalRefsAllowed enables visiting other files. Enforced only when
+	// ReadFromURIFunc is nil; a custom ReadFromURIFunc bypasses this flag and
+	// owns the access policy itself — see ReadFromURIFunc.
 	IsExternalRefsAllowed bool
 
 	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
@@ -34,7 +36,16 @@ type Loader struct {
 	// concurrent use.
 	IncludeOrigin bool
 
-	// ReadFromURIFunc allows overriding the any file/URL reading func
+	// ReadFromURIFunc overrides how the loader reads a referenced file or URL.
+	//
+	// SECURITY: when a custom ReadFromURIFunc is set, IsExternalRefsAllowed is
+	// NOT enforced — this function alone decides which locations may be read. A
+	// func that reads whatever URI it is handed (e.g. by delegating to
+	// DefaultReadFromURI) resolves external $refs even when IsExternalRefsAllowed
+	// is false, which on untrusted documents enables local file reads
+	// (`$ref: "/etc/passwd"`) and SSRF (`$ref: "http://169.254.169.254/..."`).
+	// A custom func must apply its own scheme/host allowlist, or re-check
+	// IsExternalRefsAllowed, before reading.
 	ReadFromURIFunc ReadFromURIFunc
 
 	// JoinFunc allows overriding how relative $ref paths are resolved against
@@ -101,18 +112,9 @@ func (loader *Loader) allowsExternalRefs(ref string) (err error) {
 }
 
 func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element any) (*url.URL, error) {
-	// When a custom ReadFromURIFunc is installed, the external-ref policy
-	// (IsExternalRefsAllowed) is NOT enforced here: the function itself is fully
-	// responsible for deciding which locations it will read.
-	//
-	// SECURITY: a custom ReadFromURIFunc that reads whatever location it is handed
-	// (for example by delegating straight to DefaultReadFromURI) will resolve
-	// external $refs even when IsExternalRefsAllowed is false. On untrusted
-	// documents that enables local file reads (`$ref: "/etc/passwd"`) and SSRF
-	// (`$ref: "http://169.254.169.254/..."`). A custom func must apply its own
-	// host/scheme allowlist, or re-check IsExternalRefsAllowed, before reading.
-	//
-	// When no custom func is set, enforce IsExternalRefsAllowed here before any I/O.
+	// IsExternalRefsAllowed is enforced here only when no custom ReadFromURIFunc
+	// is installed; otherwise the custom func owns the access policy (see the
+	// SECURITY note on the ReadFromURIFunc field).
 	if loader.ReadFromURIFunc == nil {
 		if err := loader.allowsExternalRefs(ref); err != nil {
 			return nil, err
@@ -340,11 +342,9 @@ func (loader *Loader) resolveRefPath(ref string, path *url.URL) (*url.URL, error
 		return path, nil
 	}
 
-	// When a custom ReadFromURIFunc is installed, IsExternalRefsAllowed is NOT
-	// enforced here — the custom func owns the access policy. See the SECURITY
-	// note on loadSingleElementFromURI: a func that reads any location it is given
-	// resolves external $refs regardless of IsExternalRefsAllowed, enabling local
-	// file reads / SSRF on untrusted documents.
+	// IsExternalRefsAllowed is enforced here only when no custom ReadFromURIFunc
+	// is installed; otherwise the custom func owns the access policy (see the
+	// SECURITY note on the ReadFromURIFunc field).
 	if loader.ReadFromURIFunc == nil {
 		if err := loader.allowsExternalRefs(ref); err != nil {
 			return nil, err
