@@ -10,7 +10,6 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/stretchr/testify v1.9.0
-	github.com/woodsbury/decimal128 v1.3.0
 )
 
 require (

@@ -17,7 +17,6 @@ import (
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
-	"github.com/woodsbury/decimal128"
 )
 
 const (
@@ -2552,10 +2551,10 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	if v := schema.MultipleOf; v != nil {
 		// "A numeric instance is valid only if division by this keyword's
 		//    value results in an integer."
-		numParsed, _ := decimal128.Parse(fmt.Sprintf("%.10f", value))
-		denParsed, _ := decimal128.Parse(fmt.Sprintf("%.10f", *v))
-		_, remainder := numParsed.QuoRem(denParsed)
-		if !remainder.IsZero() {
+		numRat, denRat := &big.Rat{}, &big.Rat{}
+		numRat.SetString(fmt.Sprintf("%.10f", value))
+		denRat.SetString(fmt.Sprintf("%.10f", *v))
+		if !(&big.Rat{}).Quo(numRat, denRat).IsInt() {
 			if settings.failfast {
 				return errSchema
 			}
