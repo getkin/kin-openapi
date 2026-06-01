@@ -17,7 +17,6 @@ import (
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
-	"github.com/mohae/deepcopy"
 	"github.com/woodsbury/decimal128"
 )
 
@@ -2202,7 +2201,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
 			if settings.asreq || settings.asrep {
-				tempValue = deepcopy.Copy(value)
+				tempValue = deepCopyJSONValue(value)
 			}
 
 			if err := v.visitJSON(settings, tempValue); err != nil {
@@ -2265,7 +2264,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
 			if settings.asreq || settings.asrep {
-				tempValue = deepcopy.Copy(value)
+				tempValue = deepCopyJSONValue(value)
 			}
 			if err := v.visitJSON(settings, tempValue); err == nil {
 				ok = true
@@ -3156,6 +3155,25 @@ func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker) {
 
 func unsupportedFormat(format string) error {
 	return fmt.Errorf("unsupported 'format' value %q", format)
+}
+
+func deepCopyJSONValue(v any) any {
+	switch v := v.(type) {
+	case map[string]any:
+		cp := make(map[string]any, len(v))
+		for k, val := range v {
+			cp[k] = deepCopyJSONValue(val)
+		}
+		return cp
+	case []any:
+		cp := make([]any, len(v))
+		for i, val := range v {
+			cp[i] = deepCopyJSONValue(val)
+		}
+		return cp
+	default:
+		return v // string, float64, bool, nil — all immutable
+	}
 }
 
 // UnmarshalJSON sets Schemas to a copy of data.
