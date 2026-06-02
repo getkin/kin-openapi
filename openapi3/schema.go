@@ -3083,9 +3083,9 @@ func (err *SchemaError) Error() string {
 	if len(err.reversePath) > 0 {
 		buf.WriteString(`Error at "`)
 		reversePath := err.reversePath
-		for i := len(reversePath) - 1; i >= 0; i-- {
+		for _, r := range slices.Backward(reversePath) {
 			buf.WriteByte('/')
-			buf.WriteString(reversePath[i])
+			buf.WriteString(r)
 		}
 		buf.WriteString(`": `)
 	}

@@ -182,7 +182,7 @@ func getStructField(t reflect.Type, fieldInfo theFieldInfo) reflect.StructField 
 	for i := range len(fieldInfo.Index) {
 		ff = t.Field(fieldInfo.Index[i])
 		t = ff.Type
-		for t.Kind() == reflect.Ptr {
+		for t.Kind() == reflect.Pointer {
 			t = t.Elem()
 		}
 	}
@@ -201,7 +201,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 	parents = append(parents, typeInfo)
 
 	isNullable := false
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 		isNullable = !isRoot
 	}
@@ -470,7 +470,7 @@ func (g *Generator) generateTypeName(t reflect.Type) string {
 func (g *Generator) generateCycleSchemaRef(t reflect.Type, schema *openapi3.Schema) *openapi3.SchemaRef {
 	var typeName string
 	switch t.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return g.generateCycleSchemaRef(t.Elem(), schema)
 	case reflect.Slice:
 		ref := g.generateCycleSchemaRef(t.Elem(), schema)
@@ -496,8 +496,8 @@ var RefSchemaRef = openapi3.NewSchemaRef("Ref",
 	openapi3.NewObjectSchema().WithProperty("$ref", openapi3.NewStringSchema().WithMinLength(1)))
 
 var (
-	timeType       = reflect.TypeOf(time.Time{})
-	rawMessageType = reflect.TypeOf(json.RawMessage{})
+	timeType       = reflect.TypeFor[time.Time]()
+	rawMessageType = reflect.TypeFor[json.RawMessage]()
 
 	zeroInt   = float64(0)
 	maxInt8   = float64(math.MaxInt8)

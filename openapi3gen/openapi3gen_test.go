@@ -266,16 +266,9 @@ func ExampleGenerator_GenerateSchemaRef() {
 		EmbeddedStruct
 	}
 
-	instance := &ContainerStruct{
-		Name: "Container",
-		EmbeddedStruct: EmbeddedStruct{
-			ID: "Embedded",
-		},
-	}
-
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
 
-	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeFor[*ContainerStruct]())
 	if err != nil {
 		panic(err)
 	}
@@ -310,16 +303,9 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 		*EmbeddedStruct
 	}
 
-	instance := &ContainerStruct{
-		Name: "Container",
-		EmbeddedStruct: &EmbeddedStruct{
-			ID: "Embedded",
-		},
-	}
-
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
 
-	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeFor[*ContainerStruct]())
 	require.NoError(t, err)
 
 	var ok bool
@@ -341,13 +327,6 @@ func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 		*EmbeddedStruct
 	}
 
-	instance := &ContainerStruct{
-		Name: "Container",
-		EmbeddedStruct: &EmbeddedStruct{
-			ID: "Embedded",
-		},
-	}
-
 	customizerFn := func(name string, t reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		return nil
 	}
@@ -355,7 +334,7 @@ func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields(), customizerOpt)
 
-	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeFor[*ContainerStruct]())
 	require.NoError(t, err)
 
 	var ok bool
@@ -373,15 +352,9 @@ func TestCyclicReferences(t *testing.T) {
 		MapCycle   map[*ObjectDiff]*ObjectDiff
 	}
 
-	instance := &ObjectDiff{
-		FieldCycle: nil,
-		SliceCycle: nil,
-		MapCycle:   nil,
-	}
-
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
 
-	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeOf(instance))
+	schemaRef, err := generator.GenerateSchemaRef(reflect.TypeFor[*ObjectDiff]())
 	require.NoError(t, err)
 
 	require.NotNil(t, schemaRef.Value.Properties["FieldCycle"])

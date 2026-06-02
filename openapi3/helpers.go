@@ -212,7 +212,7 @@ func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool) 
 
 	var components map[string]ComponentRef
 
-	componentRefType := reflect.TypeOf(new(ComponentRef)).Elem()
+	componentRefType := reflect.TypeFor[ComponentRef]()
 	if t := reflect.TypeOf(collection); t.Kind() == reflect.Map &&
 		t.Key().Kind() == reflect.String &&
 		t.Elem().AssignableTo(componentRefType) {

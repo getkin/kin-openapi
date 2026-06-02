@@ -20,7 +20,7 @@ type theFieldInfo struct {
 }
 
 func appendFields(fields []theFieldInfo, parentIndex []int, t reflect.Type) []theFieldInfo {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {

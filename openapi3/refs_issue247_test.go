@@ -131,7 +131,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Paths{}, v)
-	require.Equal(t, reflect.TypeOf(&openapi3.Paths{}).Kind(), kind)
+	require.Equal(t, reflect.TypeFor[*openapi3.Paths]().Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet")
 	require.NoError(t, err)
@@ -139,7 +139,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.PathItem{}, v)
-	require.Equal(t, reflect.TypeOf(&openapi3.PathItem{}).Kind(), kind)
+	require.Equal(t, reflect.TypeFor[*openapi3.PathItem]().Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put")
 	require.NoError(t, err)
@@ -147,7 +147,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Operation{}, v)
-	require.Equal(t, reflect.TypeOf(&openapi3.Operation{}).Kind(), kind)
+	require.Equal(t, reflect.TypeFor[*openapi3.Operation]().Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses")
 	require.NoError(t, err)
@@ -155,7 +155,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Responses{}, v)
-	require.Equal(t, reflect.TypeOf(&openapi3.Responses{}).Kind(), kind)
+	require.Equal(t, reflect.TypeFor[*openapi3.Responses]().Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200")
 	require.NoError(t, err)
@@ -163,7 +163,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Response{}, v)
-	require.Equal(t, reflect.TypeOf(&openapi3.Response{}).Kind(), kind)
+	require.Equal(t, reflect.TypeFor[*openapi3.Response]().Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200/content")
 	require.NoError(t, err)
@@ -171,7 +171,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, openapi3.Content{}, v)
-	require.Equal(t, reflect.TypeOf(openapi3.Content{}).Kind(), kind)
+	require.Equal(t, reflect.TypeFor[openapi3.Content]().Kind(), kind)
 
 	ptr, err = jsonpointer.New("/paths/~1pet/put/responses/200/content/application~1json/schema")
 	require.NoError(t, err)
@@ -179,7 +179,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Ref{}, v)
-	require.Equal(t, reflect.Ptr, kind)
+	require.Equal(t, reflect.Pointer, kind)
 	require.Equal(t, "#/components/schemas/Pet", v.(*openapi3.Ref).Ref)
 
 	ptr, err = jsonpointer.New("/components/schemas/Pets/items")
@@ -188,7 +188,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Ref{}, v)
-	require.Equal(t, reflect.Ptr, kind)
+	require.Equal(t, reflect.Pointer, kind)
 	require.Equal(t, "#/components/schemas/Pet", v.(*openapi3.Ref).Ref)
 
 	ptr, err = jsonpointer.New("/components/schemas/Error/properties/code")
@@ -197,7 +197,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Schema{}, v)
-	require.Equal(t, reflect.Ptr, kind)
+	require.Equal(t, reflect.Pointer, kind)
 	require.Equal(t, &openapi3.Types{"integer"}, v.(*openapi3.Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/0")
@@ -206,7 +206,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Schema{}, v)
-	require.Equal(t, reflect.Ptr, kind)
+	require.Equal(t, reflect.Pointer, kind)
 	require.Equal(t, &openapi3.Types{"string"}, v.(*openapi3.Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/1")
@@ -215,7 +215,7 @@ components:
 	require.NoError(t, err)
 	require.NotNil(t, v)
 	require.IsType(t, &openapi3.Schema{}, v)
-	require.Equal(t, reflect.Ptr, kind)
+	require.Equal(t, reflect.Pointer, kind)
 	require.Equal(t, &openapi3.Types{"integer"}, v.(*openapi3.Schema).Type)
 
 	ptr, err = jsonpointer.New("/components/schemas/OneOfTest/oneOf/5")

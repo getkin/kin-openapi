@@ -216,7 +216,6 @@ func TestExamplesSchemaValidation(t *testing.T) {
 	t.Parallel()
 
 	for _, testOption := range testOptions {
-		testOption := testOption
 		t.Run(testOption.name, func(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {
@@ -430,7 +429,6 @@ func TestExampleObjectValidation(t *testing.T) {
 	t.Parallel()
 
 	for _, testOption := range testOptions {
-		testOption := testOption
 		t.Run(testOption.name, func(t *testing.T) {
 			t.Parallel()
 			for _, tc := range testCases {

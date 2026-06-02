@@ -81,10 +81,10 @@ func (l *multipleSourceLoaderExample) resolveSourceFromURI(location fmt.Stringer
 func TestResolveSchemaExternalRef(t *testing.T) {
 	rootLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "spec.json"}
 	externalLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "external.json"}
-	rootSpec := []byte(fmt.Sprintf(
+	rootSpec := fmt.Appendf(nil,
 		`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{},"components":{"schemas":{"Root":{"allOf":[{"$ref":"%s#/components/schemas/External"}]}}}}`,
 		externalLocation.String(),
-	))
+	)
 	externalSpec := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"External Spec"},"paths":{},"components":{"schemas":{"External":{"type":"string"}}}}`)
 	multipleSourceLoader := &multipleSourceLoaderExample{
 		Sources: map[string][]byte{

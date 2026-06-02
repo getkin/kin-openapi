@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 // The program generates refs.go, invoke `go generate ./...` to run.
 package main
