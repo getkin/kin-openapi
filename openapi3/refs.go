@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
-	"github.com/perimeterx/marshmallow"
 )
 
 // CallbackRef represents either a Callback or a $ref to a Callback.
@@ -69,7 +68,10 @@ func (x CallbackRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets CallbackRef to a copy of data.
 func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -208,7 +210,10 @@ func (x ExampleRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ExampleRef to a copy of data.
 func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -347,7 +352,10 @@ func (x HeaderRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets HeaderRef to a copy of data.
 func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -486,7 +494,10 @@ func (x LinkRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets LinkRef to a copy of data.
 func (x *LinkRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -625,7 +636,10 @@ func (x ParameterRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ParameterRef to a copy of data.
 func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -764,7 +778,10 @@ func (x RequestBodyRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets RequestBodyRef to a copy of data.
 func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -903,7 +920,10 @@ func (x ResponseRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ResponseRef to a copy of data.
 func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -1045,7 +1065,10 @@ func (x SchemaRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets SchemaRef to a copy of data.
 func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
@@ -1202,7 +1225,10 @@ func (x SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets SecuritySchemeRef to a copy of data.
 func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
