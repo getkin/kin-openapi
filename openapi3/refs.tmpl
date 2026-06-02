@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
-	"github.com/perimeterx/marshmallow"
 )
 {{ range $type := .Types }}
 // {{ $type.Name }}Ref represents either a {{ $type.Name }} or a $ref to a {{ $type.Name }}.
@@ -74,7 +73,10 @@ func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets {{ $type.Name }}Ref to a copy of data.
 func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if extra, err := marshmallow.Unmarshal(data, &refOnly, marshmallow.WithExcludeKnownFieldsFromMap(true)); err == nil && refOnly.Ref != "" {
+	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+		extra := map[string]any{}
+		_ = json.Unmarshal(data, &extra)
+		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
