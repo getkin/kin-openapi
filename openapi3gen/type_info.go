@@ -20,7 +20,7 @@ type theTypeInfo struct {
 
 // getTypeInfo returns theTypeInfo for the given type.
 func getTypeInfo(t reflect.Type) *theTypeInfo {
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	typeInfosMutex.RLock()

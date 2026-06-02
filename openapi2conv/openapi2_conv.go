@@ -94,9 +94,7 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 		}
 	}
 
-	for key, schema := range ToV3Schemas(doc2.Definitions) {
-		doc3.Components.Schemas[key] = schema
-	}
+	maps.Copy(doc3.Components.Schemas, ToV3Schemas(doc2.Definitions))
 
 	if m := doc2.SecurityDefinitions; len(m) != 0 {
 		doc3SecuritySchemes := make(map[string]*openapi3.SecuritySchemeRef)
@@ -178,9 +176,7 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 		case v3RequestBody != nil:
 			reqBodies = append(reqBodies, v3RequestBody)
 		case v3SchemaMap != nil:
-			for key, v3Schema := range v3SchemaMap {
-				formDataSchemas[key] = v3Schema
-			}
+			maps.Copy(formDataSchemas, v3SchemaMap)
 		default:
 			doc3.Parameters = append(doc3.Parameters, v3Parameter)
 		}

@@ -500,7 +500,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentDoc, componentPath, nil
 
-	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]any{}):
+	case reflect.TypeOf(cursor) == reflect.TypeFor[map[string]any]():
 		codec := func(got, expect any) error {
 			enc, err := json.Marshal(got)
 			if err != nil {
@@ -578,7 +578,7 @@ func drillIntoField(cursor any, fieldName string) (any, error) {
 		for i := range val.NumField() {
 			hasFields = true
 			if yamlTag := val.Type().Field(i).Tag.Get("yaml"); yamlTag != "-" {
-				if tagName := strings.Split(yamlTag, ",")[0]; tagName != "" {
+				if tagName, _, _ := strings.Cut(yamlTag, ","); tagName != "" {
 					if fieldName == tagName {
 						return val.Field(i).Interface(), nil
 					}

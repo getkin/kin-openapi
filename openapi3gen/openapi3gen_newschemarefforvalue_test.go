@@ -25,9 +25,9 @@ func ExampleNewSchemaRefForValue_withSubPackages() {
 	// sample of a type name generator
 	typeNameGenerator := func(t reflect.Type) string {
 		switch t {
-		case reflect.TypeOf(Parent{}):
+		case reflect.TypeFor[Parent]():
 			return parentSchemaName
-		case reflect.TypeOf(subpkg.Child{}):
+		case reflect.TypeFor[subpkg.Child]():
 			return childSchemaName
 		}
 		return t.Name()

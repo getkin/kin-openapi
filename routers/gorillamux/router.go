@@ -180,7 +180,7 @@ func makeServers(in openapi3.Servers) ([]srv, error) {
 func newSrv(serverURL string, server *openapi3.Server, varsUpdater varsf) (srv, error) {
 	var schemes []string
 	if strings.Contains(serverURL, "://") {
-		scheme0 := strings.Split(serverURL, "://")[0]
+		scheme0, _, _ := strings.Cut(serverURL, "://")
 		schemes = permutePart(scheme0, server)
 		serverURL = strings.Replace(serverURL, scheme0+"://", schemes[0]+"://", 1)
 	}
