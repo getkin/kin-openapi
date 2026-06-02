@@ -1,10 +1,10 @@
 [![CI](https://github.com/getkin/kin-openapi/workflows/go/badge.svg)](https://github.com/getkin/kin-openapi/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/getkin/kin-openapi)](https://goreportcard.com/report/github.com/getkin/kin-openapi)
-[![GoDoc](https://godoc.org/github.com/getkin/kin-openapi?status.svg)](https://godoc.org/github.com/getkin/kin-openapi)
+[![Go Reference](https://pkg.go.dev/badge/github.com/getkin/kin-openapi.svg)](https://pkg.go.dev/github.com/getkin/kin-openapi)
 [![Join Gitter Chat Channel -](https://badges.gitter.im/getkin/kin.svg)](https://gitter.im/getkin/kin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Introduction
-A [Go](https://golang.org) project for handling [OpenAPI](https://www.openapis.org/) files. We target:
+A [Go](https://go.dev) project for handling [OpenAPI](https://www.openapis.org/) files. We target:
 * [OpenAPI `v2.0`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/2.0.md) (formerly known as Swagger)
 * [OpenAPI `v3.0`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
 * [OpenAPI `v3.1`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md) Soon! [Tracking issue here.](https://github.com/getkin/kin-openapi/issues/230)
@@ -39,16 +39,16 @@ Here's some projects that depend on _kin-openapi_:
 Be sure to check [OpenAPI Initiative](https://github.com/OAI)'s [great tooling list](https://github.com/OAI/OpenAPI-Specification/blob/master/IMPLEMENTATIONS.md) as well as [OpenAPI.Tools](https://openapi.tools/).
 
 # Structure
-  * _openapi2_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2))
+  * _openapi2_ ([Go Reference](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi2))
     * Support for OpenAPI 2 files, including serialization, deserialization, and validation.
-  * _openapi2conv_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi2conv))
+  * _openapi2conv_ ([Go Reference](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi2conv))
     * Converts OpenAPI 2 files into OpenAPI 3 files.
-  * _openapi3_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3))
+  * _openapi3_ ([Go Reference](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3))
     * Support for OpenAPI 3 files, including serialization, deserialization, and validation.
-  * _openapi3filter_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3filter))
+  * _openapi3filter_ ([Go Reference](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3filter))
     * Validates HTTP requests and responses
     * Provides a [gorilla/mux](https://github.com/gorilla/mux) router for OpenAPI operations
-  * _openapi3gen_ ([godoc](https://godoc.org/github.com/getkin/kin-openapi/openapi3gen))
+  * _openapi3gen_ ([Go Reference](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3gen))
     * Generates `*openapi3.Schema` values for Go types.
 
 # Some recipes
