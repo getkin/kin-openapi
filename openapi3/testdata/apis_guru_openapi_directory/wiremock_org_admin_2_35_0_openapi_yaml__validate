@@ -1,4 +1,4 @@
-invalid components: request body "snapshotRecording": invalid example: value must be an object
+invalid components: request body "snapshotRecording": invalid allOf element: invalid example: value must be an object
 Schema:
   {
     "description": "Criteria for extracting response bodies to a separate file instead of including it in the stub mapping",

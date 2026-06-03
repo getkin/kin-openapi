@@ -1,1 +1,1 @@
-invalid components: schema "ApiGatewayProxyConfig": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "ApiGatewayProxyConfig": invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

@@ -1,4 +1,4 @@
-invalid components: schema "field": invalid example: Error at "/proxy": property "proxy" is missing
+invalid components: schema "field": invalid allOf element: invalid example: Error at "/proxy": property "proxy" is missing
 Schema:
   {
     "example": {

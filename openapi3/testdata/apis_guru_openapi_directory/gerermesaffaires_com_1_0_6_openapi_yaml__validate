@@ -1,4 +1,4 @@
-invalid components: schema "Accounting": invalid example: value must be a string
+invalid components: schema "Accounting": invalid allOf element: invalid example: value must be a string
 Schema:
   {
     "example": [

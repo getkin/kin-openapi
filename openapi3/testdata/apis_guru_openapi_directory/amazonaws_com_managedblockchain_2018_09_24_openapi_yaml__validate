@@ -1,1 +1,1 @@
-invalid components: schema "CreateMemberInput": error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+invalid components: schema "CreateMemberInput": invalid allOf element: invalid allOf element: invalid allOf element: invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?=`

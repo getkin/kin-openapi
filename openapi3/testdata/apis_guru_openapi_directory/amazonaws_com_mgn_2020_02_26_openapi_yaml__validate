@@ -1,1 +1,1 @@
-invalid components: schema "ExportTask": error parsing regexp: invalid repeat count: `{1,1020}`
+invalid components: schema "ExportTask": invalid allOf element: error parsing regexp: invalid repeat count: `{1,1020}`

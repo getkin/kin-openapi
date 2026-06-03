@@ -1,4 +1,4 @@
-invalid components: schema "GetProfitAndLossResponse": invalid example: Error at "/type": property "type" is missing
+invalid components: schema "GetProfitAndLossResponse": invalid anyOf element: invalid example: Error at "/type": property "type" is missing
 Schema:
   {
     "example": {

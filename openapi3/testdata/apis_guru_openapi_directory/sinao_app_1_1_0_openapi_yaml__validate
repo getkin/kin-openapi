@@ -1,1 +1,1 @@
-invalid components: schema "Invoice": extra sibling fields: [type]
+invalid components: schema "Invoice": invalid allOf element: extra sibling fields: [type]

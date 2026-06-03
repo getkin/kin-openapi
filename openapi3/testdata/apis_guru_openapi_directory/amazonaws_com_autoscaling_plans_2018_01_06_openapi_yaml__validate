@@ -1,1 +1,1 @@
-invalid components: schema "CreateScalingPlanRequest": error parsing regexp: invalid character class range: `\p{Print}`
+invalid components: schema "CreateScalingPlanRequest": invalid allOf element: error parsing regexp: invalid character class range: `\p{Print}`

@@ -1,1 +1,1 @@
-invalid components: schema "AssociateFileSystemInput": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AssociateFileSystemInput": invalid allOf element: invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

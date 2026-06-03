@@ -2067,6 +2067,60 @@ func TestValidationError_InvalidSerializationMethod_MediaType_OriginNilWithoutLo
 	require.Nil(t, isme.Origin)
 }
 
+func TestValidationError_SchemaCombinatorElementValidationError(t *testing.T) {
+	for _, tc := range []struct {
+		combinator string
+		yaml       string
+	}{
+		{"oneOf", "      oneOf:\n        - type: foobar\n"},
+		{"anyOf", "      anyOf:\n        - type: foobar\n"},
+		{"allOf", "      allOf:\n        - type: foobar\n"},
+	} {
+		t.Run(tc.combinator, func(t *testing.T) {
+			doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+`+tc.yaml)
+			err := doc.Validate(context.Background())
+			require.Error(t, err)
+
+			var scve *openapi3.SchemaCombinatorElementValidationError
+			require.True(t, errors.As(err, &scve))
+			require.Equal(t, tc.combinator, scve.Combinator)
+			// Unwrap reaches the typed inner leaf.
+			var ste *openapi3.SchemaTypeError
+			require.True(t, errors.As(err, &ste))
+			require.Equal(t, "foobar", ste.Type)
+		})
+	}
+}
+
+func TestValidationError_TagValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+tags:
+  - name: pet
+    externalDocs:
+      url: ""
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var tve *openapi3.TagValidationError
+	require.True(t, errors.As(err, &tve))
+	require.Equal(t, "pet", tve.Name)
+	require.Contains(t, tve.Error(), `tag "pet"`)
+	// Unwrap reaches the typed inner leaf.
+	var edr *openapi3.ExternalDocsURLRequired
+	require.True(t, errors.As(err, &edr))
+}
+
 func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
 	t.Helper()
 	loader := openapi3.NewLoader()
