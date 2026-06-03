@@ -2100,6 +2100,33 @@ components:
 	}
 }
 
+func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *testing.T) {
+	leaf := errors.New("boom")
+
+	// A run of same-combinator wrappers renders the prefix once, not per level.
+	var nested error = leaf
+	for i := 0; i < 5; i++ {
+		nested = &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: nested}
+	}
+	require.Equal(t, "invalid allOf element: boom", nested.Error())
+
+	// The typed chain is untouched: every wrapper level is still walkable.
+	levels := 0
+	for e := nested; e != nil; e = errors.Unwrap(e) {
+		if _, ok := e.(*openapi3.SchemaCombinatorElementValidationError); ok {
+			levels++
+		}
+	}
+	require.Equal(t, 5, levels, "Unwrap must still see every wrapper level")
+
+	// A run of a different combinator is preserved (allOf inside oneOf).
+	mixed := &openapi3.SchemaCombinatorElementValidationError{
+		Combinator: "oneOf",
+		Cause:      &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: leaf},
+	}
+	require.Equal(t, "invalid oneOf element: invalid allOf element: boom", mixed.Error())
+}
+
 func TestValidationError_TagValidationError(t *testing.T) {
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3

@@ -265,7 +265,21 @@ type SchemaCombinatorElementValidationError struct {
 }
 
 func (e *SchemaCombinatorElementValidationError) Error() string {
-	return fmt.Sprintf("invalid %s element: %v", e.Combinator, e.Cause)
+	// Collapse a run of same-combinator wrappers so deeply nested
+	// allOf/anyOf/oneOf does not stutter "invalid allOf element: " once per
+	// nesting level. The typed chain is untouched (Unwrap and errors.As still
+	// see every level); only the rendered message drops the repeats. A run of
+	// a different combinator is preserved, so an allOf inside a oneOf still
+	// shows both scopes.
+	cause := e.Cause
+	for {
+		inner, ok := cause.(*SchemaCombinatorElementValidationError)
+		if !ok || inner.Combinator != e.Combinator {
+			break
+		}
+		cause = inner.Cause
+	}
+	return fmt.Sprintf("invalid %s element: %v", e.Combinator, cause)
 }
 
 func (e *SchemaCombinatorElementValidationError) Unwrap() error { return e.Cause }
