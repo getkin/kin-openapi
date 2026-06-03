@@ -2091,6 +2091,7 @@ components:
 			var scve *openapi3.SchemaCombinatorElementValidationError
 			require.True(t, errors.As(err, &scve))
 			require.Equal(t, tc.combinator, scve.Combinator)
+			require.Contains(t, scve.Error(), "invalid "+tc.combinator+" element")
 			// Unwrap reaches the typed inner leaf.
 			var ste *openapi3.SchemaTypeError
 			require.True(t, errors.As(err, &ste))
