@@ -1,9 +1,1 @@
-invalid components: schema "HealthInformationNotification": invalid example: value must be a string
-Schema:
-  {
-    "example": 100005,
-    "type": "string"
-  }
-
-Value:
-  100005
+invalid components: schema "HIRequest": invalid example: string doesn't match the format "uuid": string doesn't match pattern "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"
