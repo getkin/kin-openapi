@@ -26,8 +26,9 @@
 //     MediaTypeExampleValidationError, WebhookValidationError,
 //     ParameterFieldValidationError, ParameterExampleValidationError,
 //     SecuritySchemeFlowValidationError, OAuthFlowValidationError,
-//     OAuthFlowFieldValidationError. Cover a specific validation
-//     surface inside a section.
+//     OAuthFlowFieldValidationError, SchemaCombinatorElementValidationError,
+//     TagValidationError. Cover a specific validation surface inside a
+//     section.
 //
 // Both scopes follow the same shape:
 //
@@ -250,3 +251,50 @@ func (e *OAuthFlowFieldValidationError) Error() string {
 }
 
 func (e *OAuthFlowFieldValidationError) Unwrap() error { return e.Cause }
+
+// SchemaCombinatorElementValidationError wraps a validation error
+// originating in one of the sub-schemas listed under a schema's oneOf,
+// anyOf, or allOf keyword. Combinator names which keyword the offending
+// element belongs to ("oneOf", "anyOf", "allOf"). The wrapper adds the
+// combinator scope; the actual failure lives in Cause.
+type SchemaCombinatorElementValidationError struct {
+	// Combinator is the keyword whose element failed ("oneOf", "anyOf",
+	// "allOf").
+	Combinator string
+	Cause      error
+}
+
+func (e *SchemaCombinatorElementValidationError) Error() string {
+	// Collapse a run of same-combinator wrappers so deeply nested
+	// allOf/anyOf/oneOf does not stutter "invalid allOf element: " once per
+	// nesting level. The typed chain is untouched (Unwrap and errors.As still
+	// see every level); only the rendered message drops the repeats. A run of
+	// a different combinator is preserved, so an allOf inside a oneOf still
+	// shows both scopes.
+	cause := e.Cause
+	for {
+		inner, ok := cause.(*SchemaCombinatorElementValidationError)
+		if !ok || inner.Combinator != e.Combinator {
+			break
+		}
+		cause = inner.Cause
+	}
+	return fmt.Sprintf("invalid %s element: %v", e.Combinator, cause)
+}
+
+func (e *SchemaCombinatorElementValidationError) Unwrap() error { return e.Cause }
+
+// TagValidationError wraps a validation error originating inside a single
+// tag in the document-root Tags list. Name is the tag's `name:` value, so
+// callers can tell which tag failed without parsing the rendered message.
+type TagValidationError struct {
+	// Name is the tag's `name:` value.
+	Name  string
+	Cause error
+}
+
+func (e *TagValidationError) Error() string {
+	return fmt.Sprintf("tag %q: %v", e.Name, e.Cause)
+}
+
+func (e *TagValidationError) Unwrap() error { return e.Cause }

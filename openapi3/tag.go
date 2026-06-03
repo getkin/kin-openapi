@@ -24,7 +24,8 @@ func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error {
 	me := newErrCollector(ctx)
 
 	for _, v := range tags {
-		if err := me.emit(v.Validate(ctx)); err != nil {
+		wrap := func(e error) error { return &TagValidationError{Name: v.Name, Cause: e} }
+		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
 		}
 	}

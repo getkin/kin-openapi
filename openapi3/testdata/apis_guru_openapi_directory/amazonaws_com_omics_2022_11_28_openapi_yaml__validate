@@ -1,1 +1,1 @@
-invalid components: schema "AnnotationImportItemDetail": error parsing regexp: invalid repeat count: `{1,1024}`
+invalid components: schema "AnnotationImportItemDetail": invalid allOf element: error parsing regexp: invalid repeat count: `{1,1024}`

@@ -1,1 +1,1 @@
-invalid components: schema "CreateOrganizationRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateOrganizationRequest": invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

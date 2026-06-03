@@ -1,1 +1,1 @@
-invalid components: schema "CreateDevEnvironmentRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreateDevEnvironmentRequest": invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

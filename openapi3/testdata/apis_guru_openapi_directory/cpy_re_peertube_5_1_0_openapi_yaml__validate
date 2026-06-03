@@ -1,4 +1,4 @@
-invalid components: schema "Abuse": invalid example: string doesn't match the regular expression "/^[a-z0-9._]+$/"
+invalid components: schema "Abuse": invalid allOf element: invalid example: string doesn't match the regular expression "/^[a-z0-9._]+$/"
 Schema:
   {
     "description": "immutable name of the user, used to find or mention its actor",

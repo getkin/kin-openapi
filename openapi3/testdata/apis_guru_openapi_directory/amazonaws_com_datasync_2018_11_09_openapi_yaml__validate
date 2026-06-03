@@ -1,1 +1,1 @@
-invalid components: schema "AddStorageSystemRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AddStorageSystemRequest": invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

@@ -2612,6 +2612,22 @@ func (e *SchemaBothFormsExclusive) Error() string
 
 func (e *SchemaBothFormsExclusive) Unwrap() error
 
+type SchemaCombinatorElementValidationError struct {
+	// Combinator is the keyword whose element failed ("oneOf", "anyOf",
+	// "allOf").
+	Combinator string
+	Cause      error
+}
+    SchemaCombinatorElementValidationError wraps a validation error originating
+    in one of the sub-schemas listed under a schema's oneOf, anyOf, or allOf
+    keyword. Combinator names which keyword the offending element belongs
+    to ("oneOf", "anyOf", "allOf"). The wrapper adds the combinator scope;
+    the actual failure lives in Cause.
+
+func (e *SchemaCombinatorElementValidationError) Error() string
+
+func (e *SchemaCombinatorElementValidationError) Unwrap() error
+
 type SchemaError struct {
 	// Value is the value that failed validation.
 	Value any
@@ -3317,6 +3333,19 @@ func (t *Tag) UnmarshalJSON(data []byte) error
 
 func (t *Tag) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Tag does not comply with the OpenAPI spec.
+
+type TagValidationError struct {
+	// Name is the tag's `name:` value.
+	Name  string
+	Cause error
+}
+    TagValidationError wraps a validation error originating inside a single tag
+    in the document-root Tags list. Name is the tag's `name:` value, so callers
+    can tell which tag failed without parsing the rendered message.
+
+func (e *TagValidationError) Error() string
+
+func (e *TagValidationError) Unwrap() error
 
 type Tags []*Tag
     Tags is specified by OpenAPI/Swagger 3.0 standard.

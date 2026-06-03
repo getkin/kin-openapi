@@ -1,1 +1,1 @@
-invalid components: schema "AutoScalingPolicyDescription": error parsing regexp: invalid character class range: `\p{Print}`
+invalid components: schema "AutoScalingPolicyDescription": invalid allOf element: error parsing regexp: invalid character class range: `\p{Print}`

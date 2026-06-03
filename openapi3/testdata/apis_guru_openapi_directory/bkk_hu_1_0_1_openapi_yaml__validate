@@ -1,4 +1,4 @@
-invalid components: schema "AlertSearchMethodResponse": invalid example: value must be a string
+invalid components: schema "AlertSearchMethodResponse": invalid oneOf element: invalid example: value must be a string
 Schema:
   {
     "description": "A megálló iránya.",

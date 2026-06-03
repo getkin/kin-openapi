@@ -1,1 +1,1 @@
-invalid components: schema "session": extra sibling fields: [nullable]
+invalid components: schema "session": invalid allOf element: extra sibling fields: [nullable]

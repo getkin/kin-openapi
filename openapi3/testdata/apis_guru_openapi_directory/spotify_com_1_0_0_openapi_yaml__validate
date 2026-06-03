@@ -1,1 +1,1 @@
-invalid components: schema "AlbumObject": extra sibling fields: [description]
+invalid components: schema "AlbumObject": invalid allOf element: extra sibling fields: [description]

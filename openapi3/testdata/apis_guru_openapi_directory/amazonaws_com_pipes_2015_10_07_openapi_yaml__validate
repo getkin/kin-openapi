@@ -1,1 +1,1 @@
-invalid components: schema "CreatePipeRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "CreatePipeRequest": invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

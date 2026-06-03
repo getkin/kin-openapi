@@ -1554,7 +1554,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 
 		var err error
 		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+			return stack, &SchemaCombinatorElementValidationError{Combinator: "oneOf", Cause: err}
 		}
 	}
 
@@ -1566,7 +1566,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 
 		var err error
 		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+			return stack, &SchemaCombinatorElementValidationError{Combinator: "anyOf", Cause: err}
 		}
 	}
 
@@ -1578,7 +1578,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 
 		var err error
 		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+			return stack, &SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: err}
 		}
 	}
 

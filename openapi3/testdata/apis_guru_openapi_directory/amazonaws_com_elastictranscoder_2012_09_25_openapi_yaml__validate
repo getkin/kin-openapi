@@ -1,1 +1,1 @@
-invalid components: schema "Artwork": error parsing regexp: invalid repeat count: `{1,1020}`
+invalid components: schema "Artwork": invalid allOf element: error parsing regexp: invalid repeat count: `{1,1020}`

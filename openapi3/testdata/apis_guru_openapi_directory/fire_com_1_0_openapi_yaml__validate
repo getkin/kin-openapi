@@ -1,4 +1,4 @@
-invalid paths: invalid path /v1/accounts/{ican}/transactions: invalid operation GET: invalid example: value must be a string
+invalid paths: invalid path /v1/accounts/{ican}/transactions: invalid operation GET: invalid oneOf element: invalid example: value must be a string
 Schema:
   {
     "example": 6011329,

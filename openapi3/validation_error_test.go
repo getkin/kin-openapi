@@ -2067,6 +2067,88 @@ func TestValidationError_InvalidSerializationMethod_MediaType_OriginNilWithoutLo
 	require.Nil(t, isme.Origin)
 }
 
+func TestValidationError_SchemaCombinatorElementValidationError(t *testing.T) {
+	for _, tc := range []struct {
+		combinator string
+		yaml       string
+	}{
+		{"oneOf", "      oneOf:\n        - type: foobar\n"},
+		{"anyOf", "      anyOf:\n        - type: foobar\n"},
+		{"allOf", "      allOf:\n        - type: foobar\n"},
+	} {
+		t.Run(tc.combinator, func(t *testing.T) {
+			doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+`+tc.yaml)
+			err := doc.Validate(context.Background())
+			require.Error(t, err)
+
+			var scve *openapi3.SchemaCombinatorElementValidationError
+			require.True(t, errors.As(err, &scve))
+			require.Equal(t, tc.combinator, scve.Combinator)
+			require.Contains(t, scve.Error(), "invalid "+tc.combinator+" element")
+			// Unwrap reaches the typed inner leaf.
+			var ste *openapi3.SchemaTypeError
+			require.True(t, errors.As(err, &ste))
+			require.Equal(t, "foobar", ste.Type)
+		})
+	}
+}
+
+func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *testing.T) {
+	leaf := errors.New("boom")
+
+	// A run of same-combinator wrappers renders the prefix once, not per level.
+	var nested error = leaf
+	for i := 0; i < 5; i++ {
+		nested = &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: nested}
+	}
+	require.Equal(t, "invalid allOf element: boom", nested.Error())
+
+	// The typed chain is untouched: every wrapper level is still walkable.
+	levels := 0
+	for e := nested; e != nil; e = errors.Unwrap(e) {
+		if _, ok := e.(*openapi3.SchemaCombinatorElementValidationError); ok {
+			levels++
+		}
+	}
+	require.Equal(t, 5, levels, "Unwrap must still see every wrapper level")
+
+	// A run of a different combinator is preserved (allOf inside oneOf).
+	mixed := &openapi3.SchemaCombinatorElementValidationError{
+		Combinator: "oneOf",
+		Cause:      &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: leaf},
+	}
+	require.Equal(t, "invalid oneOf element: invalid allOf element: boom", mixed.Error())
+}
+
+func TestValidationError_TagValidationError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+tags:
+  - name: pet
+    externalDocs:
+      url: ""
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var tve *openapi3.TagValidationError
+	require.True(t, errors.As(err, &tve))
+	require.Equal(t, "pet", tve.Name)
+	require.Contains(t, tve.Error(), `tag "pet"`)
+	// Unwrap reaches the typed inner leaf.
+	var edr *openapi3.ExternalDocsURLRequired
+	require.True(t, errors.As(err, &edr))
+}
+
 func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
 	t.Helper()
 	loader := openapi3.NewLoader()

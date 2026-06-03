@@ -1,4 +1,4 @@
-invalid components: schema "inline_response_200": invalid example: Error at "/0": value must be an object
+invalid components: schema "inline_response_200": invalid oneOf element: invalid example: Error at "/0": value must be an object
 Schema:
   {
     "description": "array of text summaries, one per contributing varible",

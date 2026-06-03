@@ -1,1 +1,1 @@
-invalid components: schema "Item": extra sibling fields: [description]
+invalid components: schema "Item": invalid allOf element: invalid oneOf element: extra sibling fields: [description]

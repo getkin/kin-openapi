@@ -1,1 +1,1 @@
-invalid components: schema "AssociateDomainRequest": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "AssociateDomainRequest": invalid allOf element: error parsing regexp: invalid or unsupported Perl syntax: `(?!`

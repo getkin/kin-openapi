@@ -425,7 +425,7 @@ components:
 			name: "tags section is invalid",
 			spec: strings.Replace(spec, tags,
 				strings.ReplaceAll(tags, "url: https://tags-ext-docs.com", "url: ''"), 1),
-			expectedErr: "invalid tags: invalid external docs: url is required",
+			expectedErr: "invalid tags: tag \"pet\": invalid external docs: url is required",
 		},
 	}
 	for i := range tests {

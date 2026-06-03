@@ -1,1 +1,1 @@
-invalid components: schema "AssociateNodeRequest": error parsing regexp: invalid character class range: `\p{Alnum}`
+invalid components: schema "AssociateNodeRequest": invalid allOf element: error parsing regexp: invalid character class range: `\p{Alnum}`
