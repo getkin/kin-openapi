@@ -1676,7 +1676,7 @@ func TestDecodeBody(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	multipartBinaryEncodingCTUnsupported, multipartMimeBinaryEncodingCTUnsupported, err := newTestMultipartForm([]*testFormPart{
+	multipartBinaryEncodingCTFallback, multipartMimeBinaryEncodingCTFallback, err := newTestMultipartForm([]*testFormPart{
 		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
 		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
 	})
@@ -1685,6 +1685,12 @@ func TestDecodeBody(t *testing.T) {
 	multipartBinaryEncodingCTNotMatching, multipartMimeBinaryEncodingCTNotMatching, err := newTestMultipartForm([]*testFormPart{
 		{name: "b", contentType: "application/json", data: strings.NewReader(`{"bar1": "bar1"}`), filename: "b1"},
 		{name: "d", contentType: "application/pdf", data: strings.NewReader("doo1"), filename: "d1"},
+	})
+	require.NoError(t, err)
+
+	multipartBinaryEncodingCTList, multipartMimeBinaryEncodingCTList, err := newTestMultipartForm([]*testFormPart{
+		{name: "b", contentType: "text/plain", data: strings.NewReader("b1data"), filename: "b1"},
+		{name: "d", contentType: "application/json", data: strings.NewReader(`{"d1": "d1"}`), filename: "d1"},
 	})
 	require.NoError(t, err)
 
@@ -1839,9 +1845,9 @@ func TestDecodeBody(t *testing.T) {
 			want: map[string]any{"b": `{"bar1": "bar1"}`, "d": "doo1", "f": []any{`{"foo1": "foo1"}`, "foo2"}},
 		},
 		{
-			name: "multipartEncodingCTUnsupported",
-			mime: multipartMimeBinaryEncodingCTUnsupported,
-			body: multipartBinaryEncodingCTUnsupported,
+			name: "multipartEncodingCTBinaryFallback",
+			mime: multipartMimeBinaryEncodingCTFallback,
+			body: multipartBinaryEncodingCTFallback,
 			schema: openapi3.NewObjectSchema().
 				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
 				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")),
@@ -1849,15 +1855,7 @@ func TestDecodeBody(t *testing.T) {
 				"b": {ContentType: "application/json"},
 				"d": {ContentType: "application/pdf"},
 			},
-			want: map[string]any{"b": map[string]any{"bar1": "bar1"}},
-			wantErr: &ParseError{
-				Kind: KindOther,
-				Cause: &ParseError{
-					Kind:   KindUnsupportedFormat,
-					Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, "application/pdf"),
-				},
-				path: []any{"d"},
-			},
+			want: map[string]any{"b": map[string]any{"bar1": "bar1"}, "d": "doo1"},
 		},
 		{
 			name: "multipartEncodingCTNotMatching",
@@ -1885,6 +1883,19 @@ func TestDecodeBody(t *testing.T) {
 				path: []any{"d"},
 			},
 		},
+		{
+			name: "multipartEncodingCTList",
+			mime: multipartMimeBinaryEncodingCTList,
+			body: multipartBinaryEncodingCTList,
+			schema: openapi3.NewObjectSchema().
+				WithProperty("b", openapi3.NewStringSchema().WithFormat("binary")).
+				WithProperty("d", openapi3.NewStringSchema().WithFormat("binary")),
+			encoding: map[string]*openapi3.Encoding{
+				"b": {ContentType: "application/json, text/plain"},
+				"d": {ContentType: "application/*"},
+			},
+			want: map[string]any{"b": "b1data", "d": map[string]any{"d1": "d1"}},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1910,6 +1921,33 @@ func TestDecodeBody(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Truef(t, reflect.DeepEqual(got, tc.want), "got %v, want %v", got, tc.want)
+		})
+	}
+}
+
+func TestContentTypeAllowedByEncoding(t *testing.T) {
+	testCases := []struct {
+		name                string
+		mediaType           string
+		encodingContentType string
+		want                bool
+	}{
+		{name: "exact match", mediaType: "application/json", encodingContentType: "application/json", want: true},
+		{name: "exact mismatch", mediaType: "application/json", encodingContentType: "application/xml", want: false},
+		{name: "comma list first", mediaType: "image/jpeg", encodingContentType: "image/jpeg, image/png", want: true},
+		{name: "comma list second", mediaType: "image/png", encodingContentType: "image/jpeg, image/png", want: true},
+		{name: "comma list miss", mediaType: "image/gif", encodingContentType: "image/jpeg, image/png", want: false},
+		{name: "comma list no spaces", mediaType: "image/png", encodingContentType: "image/jpeg,image/png", want: true},
+		{name: "subtype wildcard match", mediaType: "image/png", encodingContentType: "image/*", want: true},
+		{name: "subtype wildcard miss", mediaType: "application/pdf", encodingContentType: "image/*", want: false},
+		{name: "full wildcard", mediaType: "application/octet-stream", encodingContentType: "*/*", want: true},
+		{name: "case insensitive", mediaType: "Image/PNG", encodingContentType: "image/png", want: true},
+		{name: "entry with parameters base match", mediaType: "application/xml", encodingContentType: "application/xml; charset=utf-8", want: true},
+		{name: "empty entries ignored", mediaType: "image/png", encodingContentType: " , image/png , ", want: true},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, contentTypeAllowedByEncoding(tc.mediaType, tc.encodingContentType))
 		})
 	}
 }
