@@ -33,9 +33,8 @@ func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error {
 				if err := me.emit(&DuplicateTagError{Name: v.Name, Origin: v.Origin}); err != nil {
 					return err
 				}
-			} else {
-				seen[v.Name] = struct{}{}
 			}
+			seen[v.Name] = struct{}{}
 		}
 		wrap := func(e error) error { return &TagValidationError{Name: v.Name, Cause: e} }
 		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
