@@ -608,6 +608,31 @@ type DuplicateParameterError struct {
 
 func (e *DuplicateParameterError) Error() string
 
+type DuplicateRequiredFieldError struct {
+	// Field is the field name listed more than once in `required`.
+	Field string
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    DuplicateRequiredFieldError clusters "duplicate field in required" failures.
+    The elements of a schema's `required` array MUST be unique (JSON Schema
+    2020-12 §6.5.3 for OpenAPI 3.1, draft-04 for OpenAPI 3.0).
+
+func (e *DuplicateRequiredFieldError) Error() string
+
+type DuplicateTagError struct {
+	// Name is the tag name that appears more than once.
+	Name string
+	// Origin is the source location of the offending tag when the document
+	// was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    DuplicateTagError clusters "more than one tag has name X" failures. Each tag
+    name in the document-root `tags` list MUST be unique (OpenAPI Object).
+
+func (e *DuplicateTagError) Error() string
+
 type DynamicAnchorFieldFor31Plus struct{ ValidationError }
 
 func (e *DynamicAnchorFieldFor31Plus) As(target any) bool
