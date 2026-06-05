@@ -535,6 +535,35 @@ func (e *DuplicateParameterError) Error() string {
 	return fmt.Sprintf("more than one %q parameter has name %q", e.In, e.Name)
 }
 
+// DuplicateRequiredFieldError clusters "duplicate field in required" failures.
+// The elements of a schema's `required` array MUST be unique (JSON Schema
+// 2020-12 §6.5.3 for OpenAPI 3.1, draft-04 for OpenAPI 3.0).
+type DuplicateRequiredFieldError struct {
+	// Field is the field name listed more than once in `required`.
+	Field string
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *DuplicateRequiredFieldError) Error() string {
+	return fmt.Sprintf("duplicate field %q in required", e.Field)
+}
+
+// DuplicateTagError clusters "more than one tag has name X" failures. Each tag
+// name in the document-root `tags` list MUST be unique (OpenAPI Object).
+type DuplicateTagError struct {
+	// Name is the tag name that appears more than once.
+	Name string
+	// Origin is the source location of the offending tag when the document
+	// was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *DuplicateTagError) Error() string {
+	return fmt.Sprintf("more than one tag has name %q", e.Name)
+}
+
 // InvalidSerializationMethodError clusters "serialization method with
 // style=X and explode=Y is not supported by Z" failures. Fires for
 // invalid (style, explode) combinations on encodings, parameters,

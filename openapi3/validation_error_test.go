@@ -2127,6 +2127,46 @@ func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *tes
 	require.Equal(t, "invalid oneOf element: invalid allOf element: boom", mixed.Error())
 }
 
+func TestValidationError_DuplicateRequiredFieldError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: object
+      required: [id, id]
+      properties:
+        id: { type: string }
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var dup *openapi3.DuplicateRequiredFieldError
+	require.True(t, errors.As(err, &dup))
+	require.Equal(t, "id", dup.Field)
+	require.Contains(t, dup.Error(), `duplicate field "id" in required`)
+}
+
+func TestValidationError_DuplicateTagError(t *testing.T) {
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+tags:
+  - name: pet
+  - name: pet
+`)
+	err := doc.Validate(context.Background())
+	require.Error(t, err)
+
+	var dup *openapi3.DuplicateTagError
+	require.True(t, errors.As(err, &dup))
+	require.Equal(t, "pet", dup.Name)
+	require.Contains(t, dup.Error(), `more than one tag has name "pet"`)
+}
+
 func TestValidationError_TagValidationError(t *testing.T) {
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3

@@ -23,7 +23,19 @@ func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 	me := newErrCollector(ctx)
 
+	// Each tag name in the list MUST be unique (OpenAPI Object). Empty names
+	// are left to per-tag validation, not flagged as duplicates here.
+	seen := make(map[string]struct{}, len(tags))
+
 	for _, v := range tags {
+		if v.Name != "" {
+			if _, dup := seen[v.Name]; dup {
+				if err := me.emit(&DuplicateTagError{Name: v.Name, Origin: v.Origin}); err != nil {
+					return err
+				}
+			}
+			seen[v.Name] = struct{}{}
+		}
 		wrap := func(e error) error { return &TagValidationError{Name: v.Name, Cause: e} }
 		if err := me.emitWrapped(wrap, v.Validate(ctx)); err != nil {
 			return err
