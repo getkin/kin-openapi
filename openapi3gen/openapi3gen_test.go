@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -702,5 +704,161 @@ func TestExportComponentSchemasSkipsAnonymousType(t *testing.T) {
 
 	for key := range schemas {
 		assert.NotEmpty(t, key, "every component schema must have a non-empty key")
+	}
+}
+
+func TestEmbeddedFieldGeneratedOnce(t *testing.T) {
+	type Embedded struct {
+		Field string
+	}
+	type Container struct {
+		Embedded
+	}
+
+	calls := 0
+	g := openapi3gen.NewGenerator(
+		openapi3gen.UseAllExportedFields(),
+		openapi3gen.SchemaCustomizer(func(name string, _ reflect.Type, _ reflect.StructTag, _ *openapi3.Schema) error {
+			if name == "Field" {
+				calls++
+			}
+			return nil
+		}),
+	)
+
+	schemaRef, err := g.GenerateSchemaRef(reflect.TypeFor[Container]())
+	require.NoError(t, err)
+	require.Contains(t, schemaRef.Value.Properties, "Field")
+	require.Equal(t, 1, calls)
+}
+
+func TestFieldNameGenerator(t *testing.T) {
+	type Embedded struct {
+		EmbeddedField string
+	}
+	type Container struct {
+		PlainField  string
+		JSONField   string `json:"json_name"`
+		YAMLField   string `yaml:"yaml_name"`
+		TaggedField string `property:"custom_name"`
+		Embedded
+	}
+
+	tests := []struct {
+		name          string
+		generator     openapi3gen.FieldNameGenerator
+		wantFields    []string
+		wantDefaults  map[string]string
+		wantGoFields  []string
+		wantFieldTags map[string]string
+		wantErr       bool
+	}{
+		{
+			name:      "customizes untagged fields",
+			generator: func(_ reflect.StructField, defaultName string) string { return strings.ToLower(defaultName) },
+			wantFields: []string{
+				"plainfield",
+				"json_name",
+				"yaml_name",
+				"taggedfield",
+				"embeddedfield",
+			},
+		},
+		{
+			name:      "customizes explicit json and yaml names",
+			generator: func(_ reflect.StructField, defaultName string) string { return "prefix_" + defaultName },
+			wantFields: []string{
+				"prefix_PlainField",
+				"prefix_json_name",
+				"prefix_yaml_name",
+				"prefix_TaggedField",
+				"prefix_EmbeddedField",
+			},
+		},
+		{
+			name: "uses custom struct tag",
+			generator: func(f reflect.StructField, defaultName string) string {
+				if name := f.Tag.Get("property"); name != "" {
+					return name
+				}
+				return defaultName
+			},
+			wantFields:    []string{"PlainField", "json_name", "yaml_name", "custom_name", "EmbeddedField"},
+			wantFieldTags: map[string]string{"TaggedField": "custom_name"},
+		},
+		{
+			name:      "receives promoted embedded field",
+			generator: func(_ reflect.StructField, defaultName string) string { return defaultName },
+			wantFields: []string{
+				"PlainField",
+				"json_name",
+				"yaml_name",
+				"TaggedField",
+				"EmbeddedField",
+			},
+			wantGoFields: []string{"EmbeddedField"},
+		},
+		{
+			name:      "receives resolved default names",
+			generator: func(field reflect.StructField, defaultName string) string { return defaultName },
+			wantFields: []string{
+				"PlainField",
+				"json_name",
+				"yaml_name",
+				"TaggedField",
+				"EmbeddedField",
+			},
+			wantDefaults: map[string]string{
+				"JSONField":     "json_name",
+				"PlainField":    "PlainField",
+				"YAMLField":     "yaml_name",
+				"EmbeddedField": "EmbeddedField",
+			},
+		},
+		{
+			name:      "empty field names are rejected",
+			generator: func(field reflect.StructField, defaultName string) string { return "" },
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDefaults := make(map[string]string)
+			gotTags := make(map[string]string)
+			gotGoFields := make(map[string]bool)
+
+			g := openapi3gen.NewGenerator(
+				openapi3gen.UseAllExportedFields(),
+				openapi3gen.CreateFieldNameGenerator(func(f reflect.StructField, defaultName string) string {
+					gotDefaults[f.Name] = defaultName
+					gotTags[f.Name] = f.Tag.Get("property")
+					gotGoFields[f.Name] = true
+					return tt.generator(f, defaultName)
+				}),
+			)
+
+			schemaRef, err := g.GenerateSchemaRef(reflect.TypeFor[Container]())
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+
+			require.ElementsMatch(t, tt.wantFields, slices.Collect(maps.Keys(schemaRef.Value.Properties)))
+
+			for field, want := range tt.wantDefaults {
+				require.Equal(t, want, gotDefaults[field])
+			}
+
+			for field, want := range tt.wantFieldTags {
+				require.Equal(t, want, gotTags[field])
+			}
+
+			for _, field := range tt.wantGoFields {
+				require.True(t, gotGoFields[field], "field name generator was not called for %s", field)
+			}
+		})
 	}
 }

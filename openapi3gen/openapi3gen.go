@@ -52,12 +52,19 @@ type ExportComponentSchemasOptions struct {
 
 type TypeNameGenerator func(t reflect.Type) string
 
+// FieldNameGenerator allows client to set custom name for struct fields in the generated schema.
+// defaultName is the name, determined by generator's standard JSON, YAML and Go field name resolution rules.
+// Useful for processing custom binding tags, such as `form` or `xml`.
+// Function should always return non-empty string.
+type FieldNameGenerator func(field reflect.StructField, defaultName string) string
+
 type generatorOpt struct {
 	useAllExportedFields   bool
 	throwErrorOnCycle      bool
 	schemaCustomizer       SchemaCustomizerFn
 	exportComponentSchemas ExportComponentSchemasOptions
 	typeNameGenerator      TypeNameGenerator
+	fieldNameGenerator     FieldNameGenerator
 }
 
 // UseAllExportedFields changes the default behavior of only
@@ -68,6 +75,10 @@ func UseAllExportedFields() Option {
 
 func CreateTypeNameGenerator(tngnrt TypeNameGenerator) Option {
 	return func(x *generatorOpt) { x.typeNameGenerator = tngnrt }
+}
+
+func CreateFieldNameGenerator(fngnrt FieldNameGenerator) Option {
+	return func(x *generatorOpt) { x.fieldNameGenerator = fngnrt }
 }
 
 // ThrowErrorOnCycle changes the default behavior of creating cycle
@@ -342,28 +353,13 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 				if !fieldInfo.HasJSONTag && !g.opts.useAllExportedFields {
 					continue
 				}
+
 				// If asked, try to use yaml tag
 				fieldName, fType := fieldInfo.JSONName, fieldInfo.Type
+				ff := getStructField(t, fieldInfo)
 				if !fieldInfo.HasJSONTag && g.opts.useAllExportedFields {
-					// Handle anonymous fields/embedded structs
-					if t.Field(fieldInfo.Index[0]).Anonymous {
-						ref, err := g.generateSchemaRefFor(parents, fType, fieldName, tag)
-						if err != nil {
-							if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
-								ref = g.generateCycleSchemaRef(fType, schema)
-							} else {
-								return nil, err
-							}
-						}
-						if ref != nil {
-							g.SchemaRefs[ref]++
-							schema.WithPropertyRef(fieldName, ref)
-						}
-					} else {
-						ff := getStructField(t, fieldInfo)
-						if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
-							fieldName, fType = tag, ff.Type
-						}
+					if tag, ok := ff.Tag.Lookup("yaml"); ok && tag != "-" {
+						fieldName = tag
 					}
 				}
 
@@ -372,6 +368,13 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 				if g.opts.schemaCustomizer != nil {
 					ff := getStructField(t, fieldInfo)
 					fieldTag = ff.Tag
+				}
+
+				if g.opts.fieldNameGenerator != nil {
+					fieldName = g.opts.fieldNameGenerator(ff, fieldName)
+					if fieldName == "" {
+						return nil, fmt.Errorf("field name can't be empty")
+					}
 				}
 
 				ref, err := g.generateSchemaRefFor(parents, fType, fieldName, fieldTag)
