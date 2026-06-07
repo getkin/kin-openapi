@@ -33,6 +33,13 @@ type ExportComponentSchemasOptions struct {
 	ExportGenerics         bool
 }
 
+type FieldNameGenerator func(field reflect.StructField, defaultName string) string
+    FieldNameGenerator allows client to set custom name for struct fields in
+    the generated schema. defaultName is the name, determined by generator's
+    standard JSON, YAML and Go field name resolution rules. Useful for
+    processing custom binding tags, such as `form` or `xml`. Function should
+    always return non-empty string.
+
 type Generator struct {
 	Types map[reflect.Type]*openapi3.SchemaRef
 
@@ -59,6 +66,8 @@ type Option func(*generatorOpt)
 func CreateComponentSchemas(exso ExportComponentSchemasOptions) Option
     CreateComponents changes the default behavior to add all schemas as
     components Reduces duplicate schemas in routes
+
+func CreateFieldNameGenerator(fngnrt FieldNameGenerator) Option
 
 func CreateTypeNameGenerator(tngnrt TypeNameGenerator) Option
 
