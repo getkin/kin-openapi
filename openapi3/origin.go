@@ -27,6 +27,13 @@ type Location struct {
 	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
 	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
 	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// EndLine and EndColumn mark the end of the block this location heads (set
+	// only on Origin.Key). For an operation or schema this spans the whole
+	// block, so a consumer can extract the entire element from its source.
+	// Both are zero when the underlying YAML carried no end information.
+	EndLine   int `json:"endLine,omitempty" yaml:"endLine,omitempty"`
+	EndColumn int `json:"endColumn,omitempty" yaml:"endColumn,omitempty"`
 }
 
 // originFromSeq parses the compact []any sequence produced by yaml3's addOrigin.
@@ -97,6 +104,17 @@ func originFromSeq(s []any) *Origin {
 				idx += 3
 			}
 			o.Sequences[sname] = locs
+		}
+	}
+
+	// Trailing block end (yaml3 >= the end-position release): end_delta, end_col.
+	// Reconstruct the end of the whole block on Origin.Key so a consumer can
+	// extract the entire element. Older origin sequences omit these, leaving
+	// EndLine/EndColumn zero. end_col == 0 means no end information was recorded.
+	if o.Key != nil && idx+1 < len(s) {
+		if endCol := toInt(s[idx+1]); endCol > 0 {
+			o.Key.EndLine = keyLine + toInt(s[idx])
+			o.Key.EndColumn = endCol
 		}
 	}
 	return o
