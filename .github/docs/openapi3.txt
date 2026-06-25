@@ -118,6 +118,12 @@ var IncludeOrigin = false
     elements. Deprecated: set Loader.IncludeOrigin instead. This global is read
     by NewLoader for backward compatibility but is not safe for concurrent use.
 
+var SkipSubtree = errors.New("skip schema subtree")
+    SkipSubtree, when returned by a WalkSchemasFunc, tells WalkSchemas not to
+    descend into the current schema's sub-schemas. The schema itself has already
+    been visited. Any other non-nil error stops the walk and is returned by
+    WalkSchemas. It mirrors filepath.SkipDir.
+
 
 FUNCTIONS
 
@@ -3336,6 +3342,24 @@ func (doc *T) ValidateSchemaJSON(schema *Schema, value any, opts ...SchemaValida
     format validators. This is a convenience method that automatically applies
     the document's format validators.
 
+func (doc *T) WalkSchemas(fn WalkSchemasFunc) error
+    WalkSchemas visits every schema reachable from the document exactly once,
+    in document order, invoking fn for each. It follows resolved $ref targets
+    (schema.Value) and guards against reference cycles, so each distinct *Schema
+    is visited a single time regardless of how many references point at it.
+
+    It covers schemas under components (schemas, parameters, headers, request
+    bodies, responses, callbacks), the paths and their operations (parameters,
+    request bodies, responses, headers, callbacks), and webhooks, then recurses
+    through every sub-schema keyword: properties, items, allOf/anyOf/oneOf,
+    not, additionalProperties, prefixItems, contains, patternProperties,
+    dependentSchemas, propertyNames, if/then/else, and $defs.
+
+    It is useful for validation, code generation, schema transformation,
+    $ref/dependency analysis, and documentation: any consumer that needs to act
+    on every schema in a document without re-deriving the (easy to get wrong)
+    traversal itself.
+
 type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -3661,6 +3685,18 @@ type ValidationOptions struct {
 	// Has unexported fields.
 }
     ValidationOptions provides configuration for validating OpenAPI documents.
+
+type WalkSchemasFunc func(location string, schema *SchemaRef) error
+    WalkSchemasFunc is called once for each schema visited by WalkSchemas.
+
+    location is the JSON Pointer (RFC 6901) of the schema within
+    the document, e.g. "/components/schemas/Pet/properties/tag" or
+    "/paths/~1pets/get/responses/200/content/application~1json/schema". sr is
+    never nil and sr.Value is never nil; the callback may modify sr.Value in
+    place, so WalkSchemas serves transformers and not only read-only inspection.
+
+    Returning SkipSubtree skips this schema's sub-schemas; returning any other
+    error aborts the walk and is returned by WalkSchemas.
 
 type WebhookNil struct{ ValidationError }
 

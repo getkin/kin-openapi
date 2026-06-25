@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // walkSpec exercises schemas in components and under a path operation
