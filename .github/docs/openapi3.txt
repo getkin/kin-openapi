@@ -3344,9 +3344,10 @@ func (doc *T) ValidateSchemaJSON(schema *Schema, value any, opts ...SchemaValida
 
 func (doc *T) WalkSchemas(fn WalkSchemasFunc) error
     WalkSchemas visits every schema reachable from the document exactly once,
-    in document order, invoking fn for each. It follows resolved $ref targets
-    (schema.Value) and guards against reference cycles, so each distinct *Schema
-    is visited a single time regardless of how many references point at it.
+    invoking fn for each. It follows resolved $ref targets (schema.Value) and
+    guards against reference cycles, so each distinct *Schema is visited a
+    single time regardless of how many references point at it. Maps are visited
+    in sorted key order, so the traversal is deterministic.
 
     It covers schemas under components (schemas, parameters, headers, request
     bodies, responses, callbacks), the paths and their operations (parameters,
@@ -3686,14 +3687,17 @@ type ValidationOptions struct {
 }
     ValidationOptions provides configuration for validating OpenAPI documents.
 
-type WalkSchemasFunc func(location string, schema *SchemaRef) error
+type WalkSchemasFunc func(jsonPointer string, schema *SchemaRef) error
     WalkSchemasFunc is called once for each schema visited by WalkSchemas.
 
-    location is the JSON Pointer (RFC 6901) of the schema within
+    jsonPointer is the RFC 6901 JSON Pointer of the schema within
     the document, e.g. "/components/schemas/Pet/properties/tag" or
-    "/paths/~1pets/get/responses/200/content/application~1json/schema". sr is
-    never nil and sr.Value is never nil; the callback may modify sr.Value in
-    place, so WalkSchemas serves transformers and not only read-only inspection.
+    "/paths/~1pets/get/responses/200/content/application~1json/schema". It is
+    file-agnostic: once the loader has resolved external $refs the document is
+    a single tree, so the pointer addresses a position in that tree and never
+    encodes a source file. schema is non-nil and schema.Value is non-nil;
+    the callback may modify schema.Value in place, so WalkSchemas serves
+    transformers and not only read-only inspection.
 
     Returning SkipSubtree skips this schema's sub-schemas; returning any other
     error aborts the walk and is returned by WalkSchemas.

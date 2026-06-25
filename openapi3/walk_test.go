@@ -2,6 +2,7 @@ package openapi3_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -129,4 +130,48 @@ func TestWalkSchemas_ErrorAborts(t *testing.T) {
 	})
 	require.ErrorIs(t, err, boom)
 	require.Equal(t, 1, count, "walk should stop at the first error")
+}
+
+// ExampleT_WalkSchemas lists where every schema in a document lives. The walk is
+// deterministic (maps are visited in sorted key order), and the `$ref` to Pet
+// from the response is deduped so Pet is reported once, at its component path.
+func ExampleT_WalkSchemas() {
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: {title: Pets, version: "1.0"}
+paths:
+  /pets:
+    get:
+      responses:
+        "200":
+          description: a list of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id: {type: integer}
+        name: {type: string}
+`))
+	if err != nil {
+		panic(err)
+	}
+
+	_ = doc.WalkSchemas(func(jsonPointer string, schema *openapi3.SchemaRef) error {
+		fmt.Println(jsonPointer)
+		return nil
+	})
+
+	// Output:
+	// /components/schemas/Pet
+	// /components/schemas/Pet/properties/id
+	// /components/schemas/Pet/properties/name
+	// /paths/~1pets/get/responses/200/content/application~1json/schema
 }
