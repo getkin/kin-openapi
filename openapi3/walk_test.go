@@ -57,7 +57,8 @@ components:
 
 func loadWalkSpec(t *testing.T) *openapi3.T {
 	t.Helper()
-	doc, err := openapi3.NewLoader().LoadFromData(walkSpec)
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(walkSpec)
 	require.NoError(t, err)
 	return doc
 }
