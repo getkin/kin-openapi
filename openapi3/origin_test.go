@@ -43,10 +43,12 @@ func TestOrigin_Info(t *testing.T) {
 	require.NotNil(t, doc.Info.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   2,
-			Column: 1,
-			Name:   "info",
+			File:      "testdata/origin/simple.yaml",
+			Line:      2,
+			Column:    1,
+			Name:      "info",
+			EndLine:   4,
+			EndColumn: 14,
 		},
 		doc.Info.Origin.Key)
 
@@ -81,10 +83,12 @@ func TestOrigin_Paths(t *testing.T) {
 	require.NotNil(t, doc.Paths.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   5,
-			Column: 1,
-			Name:   "paths",
+			File:      "testdata/origin/simple.yaml",
+			Line:      5,
+			Column:    1,
+			Name:      "paths",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		doc.Paths.Origin.Key)
 
@@ -93,20 +97,28 @@ func TestOrigin_Paths(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   13,
-			Column: 3,
-			Name:   "/partner-api/test/another-method",
+			File:      "testdata/origin/simple.yaml",
+			Line:      13,
+			Column:    3,
+			Name:      "/partner-api/test/another-method",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Origin.Key)
 
+	// The operation's Origin.Key spans the whole endpoint block: it starts at
+	// `get:` (line 14) and ends at the operation's last content (line 19). This
+	// is what lets a consumer point at the endpoint's location, not just the
+	// exact change site.
 	require.NotNil(t, base.Get.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   14,
-			Column: 5,
-			Name:   "get",
+			File:      "testdata/origin/simple.yaml",
+			Line:      14,
+			Column:    5,
+			Name:      "get",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Get.Origin.Key)
 }
@@ -124,20 +136,24 @@ func TestOrigin_RequestBody(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/request_body.yaml",
-			Line:   8,
-			Column: 7,
-			Name:   "requestBody",
+			File:      "testdata/origin/request_body.yaml",
+			Line:      8,
+			Column:    7,
+			Name:      "requestBody",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Origin.Key)
 
 	require.NotNil(t, base.Content["application/json"].Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/request_body.yaml",
-			Line:   10,
-			Column: 11,
-			Name:   "application/json",
+			File:      "testdata/origin/request_body.yaml",
+			Line:      10,
+			Column:    11,
+			Name:      "application/json",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Content["application/json"].Origin.Key)
 }
@@ -155,10 +171,12 @@ func TestOrigin_Responses(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   17,
-			Column: 7,
-			Name:   "responses",
+			File:      "testdata/origin/simple.yaml",
+			Line:      17,
+			Column:    7,
+			Name:      "responses",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Origin.Key)
 
@@ -167,18 +185,22 @@ func TestOrigin_Responses(t *testing.T) {
 	require.NotNil(t, base.Value("200").Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   18,
-			Column: 9,
-			Name:   "200",
+			File:      "testdata/origin/simple.yaml",
+			Line:      18,
+			Column:    9,
+			Name:      "200",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Value("200").Origin.Key)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/simple.yaml",
-			Line:   18,
-			Column: 9,
-			Name:   "200",
+			File:      "testdata/origin/simple.yaml",
+			Line:      18,
+			Column:    9,
+			Name:      "200",
+			EndLine:   19,
+			EndColumn: 31,
 		},
 		base.Value("200").Value.Origin.Key)
 
@@ -205,10 +227,12 @@ func TestOrigin_Parameters(t *testing.T) {
 	require.NotNil(t, base)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/parameters.yaml",
-			Line:   9,
-			Column: 11,
-			Name:   "name",
+			File:      "testdata/origin/parameters.yaml",
+			Line:      9,
+			Column:    11,
+			Name:      "name",
+			EndLine:   12,
+			EndColumn: 26,
 		},
 		base.Origin.Key)
 
@@ -246,10 +270,12 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 	require.NotNil(t, base.Schema.Value.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/additional_properties.yaml",
-			Line:   14,
-			Column: 17,
-			Name:   "additionalProperties",
+			File:      "testdata/origin/additional_properties.yaml",
+			Line:      14,
+			Column:    17,
+			Name:      "additionalProperties",
+			EndLine:   20,
+			EndColumn: 35,
 		},
 		base.Schema.Value.Origin.Key)
 
@@ -277,10 +303,12 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/external_docs.yaml",
-			Line:   13,
-			Column: 1,
-			Name:   "externalDocs",
+			File:      "testdata/origin/external_docs.yaml",
+			Line:      13,
+			Column:    1,
+			Name:      "externalDocs",
+			EndLine:   15,
+			EndColumn: 38,
 		},
 		base.Origin.Key)
 
@@ -317,10 +345,12 @@ func TestOrigin_Security(t *testing.T) {
 
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/security.yaml",
-			Line:   29,
-			Column: 5,
-			Name:   "petstore_auth",
+			File:      "testdata/origin/security.yaml",
+			Line:      29,
+			Column:    5,
+			Name:      "petstore_auth",
+			EndLine:   36,
+			EndColumn: 38,
 		},
 		base.Origin.Key)
 
@@ -335,19 +365,23 @@ func TestOrigin_Security(t *testing.T) {
 
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/security.yaml",
-			Line:   31,
-			Column: 7,
-			Name:   "flows",
+			File:      "testdata/origin/security.yaml",
+			Line:      31,
+			Column:    7,
+			Name:      "flows",
+			EndLine:   36,
+			EndColumn: 38,
 		},
 		base.Flows.Origin.Key)
 
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/security.yaml",
-			Line:   32,
-			Column: 9,
-			Name:   "implicit",
+			File:      "testdata/origin/security.yaml",
+			Line:      32,
+			Column:    9,
+			Name:      "implicit",
+			EndLine:   36,
+			EndColumn: 38,
 		},
 		base.Flows.Implicit.Origin.Key)
 
@@ -374,10 +408,12 @@ func TestOrigin_Example(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/example.yaml",
-			Line:   14,
-			Column: 15,
-			Name:   "bar",
+			File:      "testdata/origin/example.yaml",
+			Line:      14,
+			Column:    15,
+			Name:      "bar",
+			EndLine:   16,
+			EndColumn: 38, // just past the closing `}` of the flow map `{"bar": "baz"}`
 		},
 		base.Origin.Key)
 
@@ -409,10 +445,12 @@ func TestOrigin_XML(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/xml.yaml",
-			Line:   21,
-			Column: 19,
-			Name:   "xml",
+			File:      "testdata/origin/xml.yaml",
+			Line:      21,
+			Column:    19,
+			Name:      "xml",
+			EndLine:   23,
+			EndColumn: 35,
 		},
 		base.Origin.Key)
 
@@ -608,10 +646,12 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 	require.NotNil(t, base.XML.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/external-schema.yaml",
-			Line:   2,
-			Column: 1,
-			Name:   "xml",
+			File:      "testdata/origin/external-schema.yaml",
+			Line:      2,
+			Column:    1,
+			Name:      "xml",
+			EndLine:   4,
+			EndColumn: 17,
 		},
 		base.XML.Origin.Key)
 
@@ -655,10 +695,12 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 	require.NotNil(t, base.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/external-schema.yaml",
-			Line:   1,
-			Column: 1,
-			Name:   "",
+			File:      "testdata/origin/external-schema.yaml",
+			Line:      1,
+			Column:    1,
+			Name:      "",
+			EndLine:   4,
+			EndColumn: 17,
 		},
 		base.Origin.Key)
 
@@ -762,10 +804,12 @@ func TestOrigin_YAMLAlias(t *testing.T) {
 
 	// All three point to the same anchor node, so origin reflects the anchor location.
 	anchorLoc := &openapi3.Location{
-		File:   "testdata/origin/alias.yaml",
-		Line:   7,
-		Column: 5,
-		Name:   "Base",
+		File:      "testdata/origin/alias.yaml",
+		Line:      7,
+		Column:    5,
+		Name:      "Base",
+		EndLine:   13,
+		EndColumn: 23,
 	}
 	require.Equal(t, anchorLoc, anchor.Origin.Key)
 	require.Equal(t, anchorLoc, alias1.Origin.Key)
@@ -784,10 +828,12 @@ func TestOrigin_Headers(t *testing.T) {
 
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/headers.yaml",
-			Line:   12,
-			Column: 13,
-			Name:   "X-Rate-Limit",
+			File:      "testdata/origin/headers.yaml",
+			Line:      12,
+			Column:    13,
+			Name:      "X-Rate-Limit",
+			EndLine:   15,
+			EndColumn: 30,
 		},
 		headers["X-Rate-Limit"].Value.Origin.Key)
 
@@ -802,10 +848,12 @@ func TestOrigin_Headers(t *testing.T) {
 
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/headers.yaml",
-			Line:   16,
-			Column: 13,
-			Name:   "X-Request-Id",
+			File:      "testdata/origin/headers.yaml",
+			Line:      16,
+			Column:    13,
+			Name:      "X-Request-Id",
+			EndLine:   19,
+			EndColumn: 29,
 		},
 		headers["X-Request-Id"].Value.Origin.Key)
 }
@@ -825,10 +873,12 @@ func TestOrigin_IntegerStatusCode(t *testing.T) {
 	require.NotNil(t, resp200.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/parameters.yaml",
-			Line:   14,
-			Column: 9,
-			Name:   "200",
+			File:      "testdata/origin/parameters.yaml",
+			Line:      14,
+			Column:    9,
+			Name:      "200",
+			EndLine:   15,
+			EndColumn: 26,
 		},
 		resp200.Origin.Key)
 
@@ -836,10 +886,12 @@ func TestOrigin_IntegerStatusCode(t *testing.T) {
 	require.NotNil(t, resp201.Origin)
 	require.Equal(t,
 		&openapi3.Location{
-			File:   "testdata/origin/parameters.yaml",
-			Line:   18,
-			Column: 9,
-			Name:   "201",
+			File:      "testdata/origin/parameters.yaml",
+			Line:      18,
+			Column:    9,
+			Name:      "201",
+			EndLine:   19,
+			EndColumn: 26,
 		},
 		resp201.Origin.Key)
 }

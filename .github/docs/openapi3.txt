@@ -1373,6 +1373,13 @@ type Location struct {
 	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
 	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
 	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// EndLine and EndColumn mark the end of the block this location heads (set
+	// only on Origin.Key). For an operation or schema this spans the whole
+	// block, so a consumer can extract the entire element from its source.
+	// Both are zero when the underlying YAML carried no end information.
+	EndLine   int `json:"endLine,omitempty" yaml:"endLine,omitempty"`
+	EndColumn int `json:"endColumn,omitempty" yaml:"endColumn,omitempty"`
 }
     Location is a struct that contains the location of a field.
 
