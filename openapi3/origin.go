@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/oasdiff/yaml"
@@ -131,6 +132,48 @@ func toInt(v any) int {
 	return 0
 }
 
+// isScalarValuedMapField reports whether v is a non-empty map whose element
+// type is a scalar (string, bool, or a numeric kind). Such a map decodes
+// without an Origin field of its own, unlike a pointer- or struct-valued map
+// whose elements each carry their own Origin.
+func isScalarValuedMapField(v reflect.Value) bool {
+	if v.Kind() != reflect.Map || v.IsNil() || v.Len() == 0 {
+		return false
+	}
+	switch v.Type().Elem().Kind() {
+	case reflect.String, reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	}
+	return false
+}
+
+// recordMapKeyLocations copies the map-key locations from a scalar-valued map's
+// own subtree onto parentOrigin.Sequences[field], so each key is addressable by
+// name (the same shape used for sequence items). It is a no-op when the child
+// carries no origin data. Keys are sorted for deterministic output.
+func recordMapKeyLocations(parentOrigin *Origin, field string, childTree *yaml.OriginTree) {
+	s, ok := childTree.Origin.([]any)
+	if !ok {
+		return
+	}
+	childOrigin := originFromSeq(s)
+	if childOrigin == nil || len(childOrigin.Fields) == 0 {
+		return
+	}
+	locs := make([]Location, 0, len(childOrigin.Fields))
+	for _, loc := range childOrigin.Fields {
+		locs = append(locs, loc)
+	}
+	sort.Slice(locs, func(i, j int) bool { return locs[i].Name < locs[j].Name })
+	if parentOrigin.Sequences == nil {
+		parentOrigin.Sequences = make(map[string][]Location)
+	}
+	parentOrigin.Sequences[field] = locs
+}
+
 // applyOrigins walks a Go struct tree and a parallel OriginTree, setting
 // Origin fields on each struct from the extracted origin data.
 func applyOrigins(v any, tree *yaml.OriginTree) {
@@ -168,12 +211,14 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 	typ := val.Type()
 
 	// Set Origin field for structs whose Origin field has a "-" json tag.
+	var structOrigin *Origin
 	if tree.Origin != nil {
 		if sf, ok := typ.FieldByName("Origin"); ok && sf.Type == originPtrType {
 			tag := sf.Tag.Get("json")
 			if tag == "-" {
 				if s, ok := tree.Origin.([]any); ok {
-					val.FieldByName("Origin").Set(reflect.ValueOf(originFromSeq(s)))
+					structOrigin = originFromSeq(s)
+					val.FieldByName("Origin").Set(reflect.ValueOf(structOrigin))
 				}
 			}
 		}
@@ -190,9 +235,19 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 			continue
 		}
 		childTree := tree.Fields[tag]
-		if childTree != nil {
-			applyOriginsToValue(val.Field(i), childTree)
+		if childTree == nil {
+			continue
 		}
+		// A scalar-valued map (e.g. OAuth scopes: map[string]string) decodes into
+		// a Go map that has no Origin field of its own, so its per-key locations —
+		// present in the child subtree — would otherwise be lost. Record them on
+		// this struct's Origin as a named sequence so a consumer can locate each
+		// entry by key. Object- or pointer-valued maps are excluded: their values
+		// carry their own Origin via the recursion below.
+		if structOrigin != nil && isScalarValuedMapField(val.Field(i)) {
+			recordMapKeyLocations(structOrigin, tag, childTree)
+		}
+		applyOriginsToValue(val.Field(i), childTree)
 	}
 
 	// Handle wrapper types whose inner struct has no json tag:

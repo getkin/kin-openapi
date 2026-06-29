@@ -393,6 +393,16 @@ func TestOrigin_Security(t *testing.T) {
 			Name:   "authorizationUrl",
 		},
 		base.Flows.Implicit.Origin.Fields["authorizationUrl"])
+
+	// scopes is a map[string]string, which decodes without an Origin of its own,
+	// so its per-key locations are recorded on the flow's Origin as a named
+	// sequence (sorted by key).
+	require.Equal(t,
+		[]openapi3.Location{
+			{File: "testdata/origin/security.yaml", Line: 36, Column: 13, Name: "read:pets"},
+			{File: "testdata/origin/security.yaml", Line: 35, Column: 13, Name: "write:pets"},
+		},
+		base.Flows.Implicit.Origin.Sequences["scopes"])
 }
 
 func TestOrigin_Example(t *testing.T) {
