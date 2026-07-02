@@ -68,6 +68,82 @@ paths:
 	require.NoError(t, err)
 }
 
+func TestLoadXquikOpenAPI31(t *testing.T) {
+	spec := []byte(`
+openapi: 3.1.0
+info:
+  title: Xquik API
+  version: "1.0"
+servers:
+  - url: https://xquik.com
+paths:
+  /api/v1/x/tweets/search:
+    get:
+      operationId: searchTweets
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchTweetsResponse'
+      security:
+        - apiKey: []
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    SearchTweetsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tweet'
+    Tweet:
+      type: object
+      required:
+        - id
+        - text
+        - authorUsername
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        authorUsername:
+          type: string
+`)
+	loader := NewLoader()
+
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+	require.Equal(t, "3.1.0", doc.OpenAPI)
+	require.Equal(t, "Xquik API", doc.Info.Title)
+	require.Len(t, doc.Components.Schemas, 2)
+
+	operation := doc.Paths.Value("/api/v1/x/tweets/search").Get
+	require.Equal(t, "searchTweets", operation.OperationID)
+	require.Equal(t, "Search results.", *operation.Responses.Status(200).Value.Description)
+
+	scheme := doc.Components.SecuritySchemes["apiKey"].Value
+	require.Equal(t, "apiKey", scheme.Type)
+	require.Equal(t, "header", scheme.In)
+	require.Equal(t, "X-API-Key", scheme.Name)
+	require.NoError(t, doc.Validate(loader.Context))
+}
+
 func TestIssue731(t *testing.T) {
 	spec := []byte(`
 openapi: 3.0.0
