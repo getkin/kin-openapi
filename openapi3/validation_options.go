@@ -15,6 +15,7 @@ type ValidationOptions struct {
 	schemaExtensionsInRefProhibited                  bool
 	jsonSchema2020ValidationEnabled                  bool
 	isOpenAPI31OrLater                               bool
+	isOpenAPI32OrLater                               bool
 	multiErrorEnabled                                bool
 	regexCompilerFunc                                RegexCompilerFunc
 	extraSiblingFieldsAllowed                        map[string]struct{}
@@ -39,6 +40,15 @@ func IsOpenAPI31OrLater() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.isOpenAPI31OrLater = true              // To distinguish from v3.0
 		options.jsonSchema2020ValidationEnabled = true // TODO: use even for v3.0
+	}
+}
+
+// IsOpenAPI32OrLater enables validation for OpenAPI 3.2 documents.
+func IsOpenAPI32OrLater() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.isOpenAPI31OrLater = true
+		options.isOpenAPI32OrLater = true
+		options.jsonSchema2020ValidationEnabled = true
 	}
 }
 

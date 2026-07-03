@@ -53,8 +53,19 @@ func (doc *T) IsOpenAPI31OrLater() bool {
 	return slices.Contains([]string{"3.1", "3.2"}, doc.OpenAPIMajorMinor())
 }
 
+// IsOpenAPI32OrLater returns whether doc is an OpenAPI document version >=3.2.
+// Returns true for 3.2, 3.2.0, ...
+// And false for cases where IsOpenAPI31OrLater returns true for 3.1.x and for invalid strings.
+func (doc *T) IsOpenAPI32OrLater() bool {
+	return doc.OpenAPIMajorMinor() == "3.2"
+}
+
 func errFieldFor31Plus(field string, origin *Origin) error {
 	return newFieldFor31Plus(field, origin)
+}
+
+func errFieldFor32Plus(field string, origin *Origin) error {
+	return newFieldFor32Plus(field, origin)
 }
 
 func errValueOfFieldFor31Plus(value any, field string) error {
@@ -265,6 +276,9 @@ func (doc *T) GetSchemaValidationOptions() []SchemaValidationOption {
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 	if doc.IsOpenAPI31OrLater() {
 		opts = append(opts, IsOpenAPI31OrLater())
+	}
+	if doc.IsOpenAPI32OrLater() {
+		opts = append(opts, IsOpenAPI32OrLater())
 	}
 	ctx = WithValidationOptions(ctx, opts...)
 	me := newErrCollector(ctx)
