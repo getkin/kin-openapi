@@ -1400,13 +1400,12 @@ func exampleValueOrigin(ex *Example, fallback *Origin) *Origin {
 }
 
 // newFieldVersionMismatch wraps leaf in a FieldVersionMismatchError for the
-// given field at minimum version 3.1. Used by per-call-site constructors
-// (newInfoSummaryFieldFor31Plus, etc.) and by the dispatch helper
-// newFieldFor31Plus that schema.go's reject closure goes through.
-func newFieldVersionMismatch(field string, leaf error, origin *Origin) error {
+// given field at minimum version. Used by per-call-site constructors
+// (newInfoSummaryFieldFor31Plus, etc.) and by dispatch helpers.
+func newFieldVersionMismatch(field, minVersion string, leaf error, origin *Origin) error {
 	return &FieldVersionMismatchError{
 		Field:      field,
-		MinVersion: "3.1",
+		MinVersion: minVersion,
 		Cause:      leaf,
 		Origin:     origin,
 	}
@@ -1420,25 +1419,25 @@ func newFieldVersionMismatch(field string, leaf error, origin *Origin) error {
 func newInfoSummaryFieldFor31Plus(origin *Origin) error {
 	const msg = "field summary is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("summary",
-		&InfoSummaryFieldFor31Plus{ValidationError{Message: msg}}, origin)
+		"3.1", &InfoSummaryFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 func newLicenseIdentifierFieldFor31Plus(origin *Origin) error {
 	const msg = "field identifier is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("identifier",
-		&LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}}, origin)
+		"3.1", &LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 func newWebhooksFieldFor31Plus(origin *Origin) error {
 	const msg = "field webhooks is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("webhooks",
-		&WebhooksFieldFor31Plus{ValidationError{Message: msg}}, origin)
+		"3.1", &WebhooksFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 func newJSONSchemaDialectFieldFor31Plus(origin *Origin) error {
 	const msg = "field jsonschemadialect is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("jsonschemadialect",
-		&JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}}, origin)
+		"3.1", &JSONSchemaDialectFieldFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 // fieldFor31PlusLeaves maps field names (as passed to errFieldFor31Plus)
@@ -1492,7 +1491,12 @@ func newFieldFor31Plus(field string, origin *Origin) error {
 	} else {
 		leaf = &ValidationError{Message: msg}
 	}
-	return newFieldVersionMismatch(field, leaf, origin)
+	return newFieldVersionMismatch(field, "3.1", leaf, origin)
+}
+
+func newFieldFor32Plus(field string, origin *Origin) error {
+	msg := "field " + field + " is for OpenAPI >=3.2"
+	return newFieldVersionMismatch(field, "3.2", &ValidationError{Message: msg}, origin)
 }
 
 func newPathParameterRequired(param string, origin *Origin) error {
