@@ -893,28 +893,28 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 	return nil
 }
 
-func (loader *Loader) resolveMediaTypeRefs(doc *T, mediaType *MediaType, documentPath *url.URL) error {
+func (loader *Loader) resolveMediaTypeRefs(doc *T, mediaType *MediaType, documentPath *url.URL) (err error) {
 	if mediaType == nil {
-		return nil
-	}
-	for _, name := range componentNames(mediaType.Examples) {
-		example := mediaType.Examples[name]
-		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
-			return err
-		}
-		mediaType.Examples[name] = example
+		return
 	}
 	if schema := mediaType.Schema; schema != nil {
-		if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-			return err
+		if err = loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
+			return
 		}
 	}
 	if itemSchema := mediaType.ItemSchema; itemSchema != nil {
-		if err := loader.resolveSchemaRef(doc, itemSchema, documentPath, []string{}); err != nil {
-			return err
+		if err = loader.resolveSchemaRef(doc, itemSchema, documentPath, []string{}); err != nil {
+			return
 		}
 	}
-	return nil
+	for _, name := range componentNames(mediaType.Examples) {
+		example := mediaType.Examples[name]
+		if err = loader.resolveExampleRef(doc, example, documentPath); err != nil {
+			return
+		}
+		mediaType.Examples[name] = example
+	}
+	return
 }
 
 func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL, visited []string) (err error) {
