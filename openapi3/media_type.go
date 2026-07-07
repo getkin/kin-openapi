@@ -15,7 +15,7 @@ type MediaType struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Schema     *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	ItemSchema *SchemaRef `json:"itemSchema,omitempty" yaml:"itemSchema,omitempty"`
+	ItemSchema *SchemaRef `json:"itemSchema,omitempty" yaml:"itemSchema,omitempty"` // OpenAPI >=3.2
 	Example    any        `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples   Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Encoding   Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
