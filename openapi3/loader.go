@@ -756,16 +756,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		return errors.New("cannot contain both schema and content in a parameter")
 	}
 	for _, name := range componentNames(value.Content) {
-		contentType := value.Content[name]
-		if schema := contentType.Schema; schema != nil {
-			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-				return err
-			}
-		}
-		for _, k := range componentNames(contentType.Examples) {
-			if err := loader.resolveExampleRef(doc, contentType.Examples[k], documentPath); err != nil {
-				return err
-			}
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
 		}
 	}
 	if schema := value.Schema; schema != nil {
@@ -828,21 +820,8 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	for _, name := range componentNames(value.Content) {
-		contentType := value.Content[name]
-		if contentType == nil {
-			continue
-		}
-		for _, name := range componentNames(contentType.Examples) {
-			example := contentType.Examples[name]
-			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
-				return err
-			}
-			contentType.Examples[name] = example
-		}
-		if schema := contentType.Schema; schema != nil {
-			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-				return err
-			}
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -901,22 +880,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		}
 	}
 	for _, name := range componentNames(value.Content) {
-		contentType := value.Content[name]
-		if contentType == nil {
-			continue
-		}
-		for _, name := range componentNames(contentType.Examples) {
-			example := contentType.Examples[name]
-			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
-				return err
-			}
-			contentType.Examples[name] = example
-		}
-		if schema := contentType.Schema; schema != nil {
-			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-				return err
-			}
-			contentType.Schema = schema
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
 		}
 	}
 	for _, name := range componentNames(value.Links) {
@@ -926,6 +891,30 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		}
 	}
 	return nil
+}
+
+func (loader *Loader) resolveMediaTypeRefs(doc *T, mediaType *MediaType, documentPath *url.URL) (err error) {
+	if mediaType == nil {
+		return
+	}
+	if schema := mediaType.Schema; schema != nil {
+		if err = loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
+			return
+		}
+	}
+	if itemSchema := mediaType.ItemSchema; itemSchema != nil {
+		if err = loader.resolveSchemaRef(doc, itemSchema, documentPath, []string{}); err != nil {
+			return
+		}
+	}
+	for _, name := range componentNames(mediaType.Examples) {
+		example := mediaType.Examples[name]
+		if err = loader.resolveExampleRef(doc, example, documentPath); err != nil {
+			return
+		}
+		mediaType.Examples[name] = example
+	}
+	return
 }
 
 func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL, visited []string) (err error) {

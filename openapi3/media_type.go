@@ -14,10 +14,11 @@ type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Schema   *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  any        `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	Schema     *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
+	ItemSchema *SchemaRef `json:"itemSchema,omitempty" yaml:"itemSchema,omitempty"` // OpenAPI >=3.2
+	Example    any        `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples   Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding   Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*MediaType)(nil)
@@ -73,10 +74,13 @@ func (mediaType MediaType) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML returns the YAML encoding of MediaType.
 func (mediaType MediaType) MarshalYAML() (any, error) {
-	m := make(map[string]any, 4+len(mediaType.Extensions))
+	m := make(map[string]any, 5+len(mediaType.Extensions))
 	maps.Copy(m, mediaType.Extensions)
 	if x := mediaType.Schema; x != nil {
 		m["schema"] = x
+	}
+	if x := mediaType.ItemSchema; x != nil {
+		m["itemSchema"] = x
 	}
 	if x := mediaType.Example; x != nil {
 		m["example"] = x
@@ -99,6 +103,7 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 	delete(x.Extensions, "schema")
+	delete(x.Extensions, "itemSchema")
 	delete(x.Extensions, "example")
 	delete(x.Extensions, "examples")
 	delete(x.Extensions, "encoding")
@@ -148,6 +153,14 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 			}
 		}
 	}
+	if itemSchema := mediaType.ItemSchema; itemSchema != nil {
+		if !getValidationOptions(ctx).isOpenAPI32OrLater {
+			return errFieldFor32Plus("itemSchema", mediaType.Origin)
+		}
+		if err := itemSchema.Validate(ctx); err != nil {
+			return err
+		}
+	}
 
 	return validateExtensions(ctx, mediaType.Extensions, mediaType.Origin)
 }
@@ -164,6 +177,13 @@ func (mediaType MediaType) JSONLookup(token string) (any, error) {
 		}
 	case "example":
 		return mediaType.Example, nil
+	case "itemSchema":
+		if mediaType.ItemSchema != nil {
+			if mediaType.ItemSchema.Ref != "" {
+				return &Ref{Ref: mediaType.ItemSchema.Ref}, nil
+			}
+			return mediaType.ItemSchema.Value, nil
+		}
 	case "examples":
 		return mediaType.Examples, nil
 	case "encoding":

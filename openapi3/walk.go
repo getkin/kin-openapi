@@ -38,8 +38,8 @@ type WalkSchemasFunc func(jsonPointer string, schema *SchemaRef) error
 // It covers schemas under components (schemas, parameters, headers, request
 // bodies, responses, callbacks), the paths and their operations (parameters,
 // request bodies, responses, headers, callbacks), and webhooks, then recurses
-// through every sub-schema keyword: properties, items, allOf/anyOf/oneOf, not,
-// additionalProperties, prefixItems, contains, patternProperties,
+// through every sub-schema keyword: properties, items, itemSchema,
+// allOf/anyOf/oneOf, not, additionalProperties, prefixItems, contains, patternProperties,
 // dependentSchemas, propertyNames, if/then/else, and $defs.
 //
 // It is useful for validation, code generation, schema transformation,
@@ -220,6 +220,9 @@ func (w *schemaWalker) content(ptr string, content Content) error {
 			continue
 		}
 		if err := w.schemaRef(ptr+"/"+escapeRefString(mediaType)+"/schema", media.Schema); err != nil {
+			return err
+		}
+		if err := w.schemaRef(ptr+"/"+escapeRefString(mediaType)+"/itemSchema", media.ItemSchema); err != nil {
 			return err
 		}
 	}
