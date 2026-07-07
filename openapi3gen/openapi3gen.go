@@ -3,6 +3,7 @@ package openapi3gen
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -373,7 +374,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 				if g.opts.fieldNameGenerator != nil {
 					fieldName = g.opts.fieldNameGenerator(ff, fieldName)
 					if fieldName == "" {
-						return nil, fmt.Errorf("field name can't be empty")
+						return nil, errors.New("field name can't be empty")
 					}
 				}
 

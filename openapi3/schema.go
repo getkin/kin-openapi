@@ -3177,9 +3177,9 @@ func deepCopyJSONValue(v any) any {
 		}
 		return cp
 	case []any:
-		cp := make([]any, len(v))
-		for i, val := range v {
-			cp[i] = deepCopyJSONValue(val)
+		cp := make([]any, 0, len(v))
+		for _, val := range v {
+			cp = append(cp, deepCopyJSONValue(val))
 		}
 		return cp
 	default:
