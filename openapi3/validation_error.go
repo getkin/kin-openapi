@@ -1475,7 +1475,7 @@ var fieldFor31PlusLeaves = map[string]func(msg string) error{
 	"$dynamicRef":           func(m string) error { return &DynamicRefFieldFor31Plus{ValidationError{Message: m}} },
 }
 
-// newFieldFor31Plus dispatches errFieldFor31Plus's per-field message
+// errFieldFor31Plus dispatches errFieldFor31Plus's per-field message
 // to the right typed leaf and wraps it in a FieldVersionMismatchError.
 // Fields not in fieldFor31PlusLeaves fall back to a bare
 // *ValidationError so the caller still gets a stable Message and the
@@ -1483,7 +1483,7 @@ var fieldFor31PlusLeaves = map[string]func(msg string) error{
 //
 // Reached only from schema.go's reject closure with a runtime field
 // name; the four non-schema sites use direct constructors instead.
-func newFieldFor31Plus(field string, origin *Origin) error {
+func errFieldFor31Plus(field string, origin *Origin) error {
 	msg := "field " + field + " is for OpenAPI >=3.1"
 	var leaf error
 	if ctor, ok := fieldFor31PlusLeaves[field]; ok {
@@ -1494,7 +1494,7 @@ func newFieldFor31Plus(field string, origin *Origin) error {
 	return newFieldVersionMismatch(field, "3.1", leaf, origin)
 }
 
-func newFieldFor32Plus(field string, origin *Origin) error {
+func errFieldFor32Plus(field string, origin *Origin) error {
 	msg := "field " + field + " is for OpenAPI >=3.2"
 	return newFieldVersionMismatch(field, "3.2", &ValidationError{Message: msg}, origin)
 }

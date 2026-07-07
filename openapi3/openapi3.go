@@ -60,14 +60,6 @@ func (doc *T) IsOpenAPI32OrLater() bool {
 	return doc.OpenAPIMajorMinor() == "3.2"
 }
 
-func errFieldFor31Plus(field string, origin *Origin) error {
-	return newFieldFor31Plus(field, origin)
-}
-
-func errFieldFor32Plus(field string, origin *Origin) error {
-	return newFieldFor32Plus(field, origin)
-}
-
 func errValueOfFieldFor31Plus(value any, field string) error {
 	return fmt.Errorf("value %q of field %s is for OpenAPI >=3.1", value, field)
 }
