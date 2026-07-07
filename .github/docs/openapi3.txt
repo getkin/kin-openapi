@@ -1648,8 +1648,8 @@ type Operation struct {
 	// Optional body parameter.
 	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 
-	// Responses.
-	Responses *Responses `json:"responses" yaml:"responses"` // Required
+	// Responses are required in OpenAPI 3.0 and optional in OpenAPI 3.1 and later.
+	Responses *Responses `json:"responses" yaml:"responses"`
 
 	// Optional callbacks
 	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
