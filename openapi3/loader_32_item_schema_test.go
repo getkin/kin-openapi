@@ -9,7 +9,8 @@ import (
 )
 
 func TestOpenAPI32MediaTypeItemSchema(t *testing.T) {
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.2.0
 info:
   title: SSE API
