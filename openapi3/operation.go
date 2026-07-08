@@ -33,8 +33,8 @@ type Operation struct {
 	// Optional body parameter.
 	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 
-	// Responses.
-	Responses *Responses `json:"responses" yaml:"responses"` // Required
+	// Responses are required in OpenAPI 3.0 and optional in OpenAPI 3.1 and later.
+	Responses *Responses `json:"responses" yaml:"responses"`
 
 	// Optional callbacks
 	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
@@ -87,7 +87,9 @@ func (operation Operation) MarshalYAML() (any, error) {
 	if x := operation.RequestBody; x != nil {
 		m["requestBody"] = x
 	}
-	m["responses"] = operation.Responses
+	if x := operation.Responses; x != nil {
+		m["responses"] = x
+	}
 	if x := operation.Callbacks; len(x) != 0 {
 		m["callbacks"] = x
 	}
@@ -113,7 +115,11 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &x); err != nil {
 		return unmarshalError(err)
 	}
+
 	_ = json.Unmarshal(data, &x.Extensions)
+	if value, present := x.Extensions["responses"]; present && value == nil {
+		x.Responses = &Responses{explicitlyNull: true}
+	}
 	delete(x.Extensions, "tags")
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
@@ -203,12 +209,14 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	}
 
-	if v := operation.Responses; v != nil {
+	if v := operation.Responses; v != nil && !v.isExplicitlyNull() {
 		if err := me.emit(v.Validate(ctx)); err != nil {
 			return err
 		}
-	} else if err := me.emit(newOperationResponsesRequired(operation.Origin)); err != nil {
-		return err
+	} else if v != nil || !getValidationOptions(ctx).isOpenAPI31OrLater {
+		if err := me.emit(newOperationResponsesRequired(operation.Origin)); err != nil {
+			return err
+		}
 	}
 
 	if v := operation.ExternalDocs; v != nil {

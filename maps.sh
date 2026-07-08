@@ -163,10 +163,14 @@ maplike_UnMarsh() {
 		echo "TODO: impl non-pointer receiver YAML Marshaler"
 		exit 2
 	fi
+	local nil_condition="${name} == nil"
+	if [[ "$type" == '*Responses' ]]; then
+		nil_condition+=" || ${name}.isExplicitlyNull()"
+	fi
 	cat <<EOF >>"$maplike"
 // MarshalYAML returns the YAML encoding of ${type#'*'}.
 func (${name} ${type}) MarshalYAML() (any, error) {
-	if ${name} == nil {
+	if ${nil_condition} {
 		return nil, nil
 	}
 	m := make(map[string]any, ${name}.Len()+len(${name}.Extensions))

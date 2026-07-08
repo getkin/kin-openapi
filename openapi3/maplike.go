@@ -80,7 +80,7 @@ func (responses Responses) JSONLookup(token string) (any, error) {
 
 // MarshalYAML returns the YAML encoding of Responses.
 func (responses *Responses) MarshalYAML() (any, error) {
-	if responses == nil {
+	if responses == nil || responses.isExplicitlyNull() {
 		return nil, nil
 	}
 	m := make(map[string]any, responses.Len()+len(responses.Extensions))
