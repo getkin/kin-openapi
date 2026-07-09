@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL := prepare
 
 .PHONY: help generate format test prepare
 
