@@ -17,10 +17,7 @@ generate:
 	./docs.sh
 
 format:
-	go run golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize@latest -test -diff -fix -omitzero=false ./...
 	go fmt ./...
-	go install github.com/incu6us/goimports-reviser/v3@latest
-	find . -type f -iname '*.go' ! -iname '*.pb.go' -exec goimports-reviser {} \;
 
 test:
 	go test ./...
