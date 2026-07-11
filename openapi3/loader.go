@@ -516,11 +516,45 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		if err := codec(cursor, resolved); err != nil {
 			return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
 		}
+		// The value came from a generic map in T.Extensions (a $ref to an
+		// arbitrary top-level key), so the json round-trip above stripped its
+		// origins. Re-attach them from the file, best-effort.
+		loader.attachOriginToResolved(resolved, componentPath, fragment)
 		return componentDoc, componentPath, nil
 
 	default:
 		return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
 	}
+}
+
+// attachOriginToResolved re-attaches source origins to a component resolved
+// through the generic-map path: a $ref to a schema under an arbitrary top-level
+// key lands in T.Extensions, and the json round-trip in resolveComponent strips
+// its origin. It re-derives the component file's origin tree, walks to the ref
+// fragment, and applies that subtree, so the object carries the same origins a
+// typed resolution would, with the original file's line numbers. Best-effort:
+// any failure leaves the object without origins, exactly as before.
+func (loader *Loader) attachOriginToResolved(resolved any, componentPath *url.URL, fragment string) {
+	if !loader.IncludeOrigin || componentPath == nil {
+		return
+	}
+	data, err := loader.readURL(componentPath)
+	if err != nil {
+		return
+	}
+	tree := originTree(data, componentPath)
+	if tree == nil {
+		return
+	}
+	for _, part := range strings.Split(strings.Trim(fragment, "/"), "/") {
+		if part == "" {
+			continue
+		}
+		if tree = tree.Fields[unescapeRefString(part)]; tree == nil {
+			return
+		}
+	}
+	applyOrigins(resolved, tree)
 }
 
 func readableType(x any) string {
