@@ -8,8 +8,6 @@ import (
 	"github.com/oasdiff/yaml"
 )
 
-const originKey = "__origin__"
-
 var originPtrType = reflect.TypeFor[*Origin]()
 
 // Origin contains the origin of a collection.

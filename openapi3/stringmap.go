@@ -2,7 +2,7 @@ package openapi3
 
 import "encoding/json"
 
-// StringMap is a map[string]string that ignores the origin in the underlying json representation.
+// StringMap is a generic map[string]V with a custom UnmarshalJSON.
 type StringMap[V any] map[string]V
 
 // UnmarshalJSON sets StringMap to a copy of data.
