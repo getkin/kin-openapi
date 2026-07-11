@@ -325,7 +325,7 @@ type OAuthFlow struct {
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
 	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           StringMap[string] `json:"scopes" yaml:"scopes"` // required
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.
