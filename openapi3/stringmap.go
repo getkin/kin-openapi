@@ -11,54 +11,20 @@ func (stringMap *StringMap[V]) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
-// unmarshalStringMapP unmarshals given json into a map[string]*V
+// unmarshalStringMapP unmarshals given json into a map[string]*V.
 func unmarshalStringMapP[V any](data []byte) (map[string]*V, error) {
-	var m map[string]any
+	var m map[string]*V
 	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, err
 	}
-
-	result := make(map[string]*V, len(m))
-	for _, k := range componentNames(m) {
-		value, err := deepCast[V](m[k])
-		if err != nil {
-			return nil, err
-		}
-		result[k] = value
-	}
-
-	return result, nil
+	return m, nil
 }
 
-// unmarshalStringMap unmarshals given json into a map[string]V
+// unmarshalStringMap unmarshals given json into a map[string]V.
 func unmarshalStringMap[V any](data []byte) (map[string]V, error) {
-	var m map[string]any
+	var m map[string]V
 	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, err
 	}
-
-	result := make(map[string]V, len(m))
-	for _, k := range componentNames(m) {
-		value, err := deepCast[V](m[k])
-		if err != nil {
-			return nil, err
-		}
-		result[k] = *value
-	}
-
-	return result, nil
-}
-
-// deepCast casts any value to a value of type V.
-func deepCast[V any](value any) (*V, error) {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-
-	var result V
-	if err = json.Unmarshal(data, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return m, nil
 }
