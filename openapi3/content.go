@@ -115,9 +115,3 @@ func (content Content) Validate(ctx context.Context, opts ...ValidationOption) e
 	}
 	return nil
 }
-
-// UnmarshalJSON sets Content to a copy of data.
-func (content *Content) UnmarshalJSON(data []byte) (err error) {
-	*content, err = unmarshalStringMapP[MediaType](data)
-	return
-}

@@ -135,9 +135,3 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 
 	return validateExtensions(ctx, requestBody.Extensions, requestBody.Origin)
 }
-
-// UnmarshalJSON sets RequestBodies to a copy of data.
-func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error) {
-	*requestBodies, err = unmarshalStringMapP[RequestBodyRef](data)
-	return
-}

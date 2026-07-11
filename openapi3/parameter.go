@@ -409,9 +409,3 @@ func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOpti
 
 	return validateExtensions(ctx, parameter.Extensions, parameter.Origin)
 }
-
-// UnmarshalJSON sets ParametersMap to a copy of data.
-func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error) {
-	*parametersMap, err = unmarshalStringMapP[ParameterRef](data)
-	return
-}

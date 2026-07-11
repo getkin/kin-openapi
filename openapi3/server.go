@@ -243,12 +243,6 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) er
 // ServerVariables is a map of ServerVariable objects keyed by variable name.
 type ServerVariables map[string]*ServerVariable
 
-// UnmarshalJSON sets ServerVariables to a copy of data.
-func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error) {
-	*serverVariables, err = unmarshalStringMapP[ServerVariable](data)
-	return
-}
-
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
