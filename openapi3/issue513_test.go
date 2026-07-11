@@ -1,4 +1,4 @@
-package openapi3
+package openapi3_test
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestExtraSiblingsInRemoteRef(t *testing.T) {
@@ -35,7 +37,7 @@ paths:
                 $ref: http://schemas.sentex.io/store/categories.json
 `
 
-	resolver := func(loader *Loader, url *url.URL) (data []byte, err error) {
+	resolver := func(loader *openapi3.Loader, url *url.URL) (data []byte, err error) {
 		switch url.String() {
 		case "http://schemas.sentex.io/store/categories.json":
 			data = []byte(`
@@ -74,13 +76,13 @@ paths:
 	for _, majmin := range []string{"'3.0'", "'3.1'", "'3.2'"} {
 		t.Run(majmin, func(t *testing.T) {
 			t.Parallel()
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 			sl.ReadFromURIFunc = resolver
 
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.1", majmin)))
 			require.NoError(t, err)
 
-			err = doc.Validate(sl.Context, AllowExtraSiblingFields("$id", "$schema"))
+			err = doc.Validate(sl.Context, openapi3.AllowExtraSiblingFields("$id", "$schema"))
 			require.NoError(t, err)
 		})
 	}
@@ -122,7 +124,7 @@ components:
 	for _, majmin := range []string{"3.0", "3.1"} {
 		t.Run(majmin, func(t *testing.T) {
 			t.Parallel()
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
 			require.NoError(t, err)
 			err = doc.Validate(sl.Context)
@@ -173,7 +175,7 @@ components:
 	for _, majmin := range []string{"3.0", "3.1"} {
 		t.Run(majmin, func(t *testing.T) {
 			t.Parallel()
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
 			require.NoError(t, err)
 			require.Contains(t, doc.Paths.Value("/v1/operation").Delete.Responses.Default().Value.Extensions, `x-my-extension`)
@@ -220,7 +222,7 @@ components:
 	for _, majmin := range []string{"3.0", "3.1"} {
 		t.Run(majmin, func(t *testing.T) {
 			t.Parallel()
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
 			require.NoError(t, err)
 			err = doc.Validate(sl.Context)
@@ -266,10 +268,10 @@ components:
 	for _, majmin := range []string{"3.0", "3.1"} {
 		t.Run(majmin, func(t *testing.T) {
 			t.Parallel()
-			sl := NewLoader()
+			sl := openapi3.NewLoader()
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
 			require.NoError(t, err)
-			err = doc.Validate(sl.Context, AllowExtraSiblingFields("description"))
+			err = doc.Validate(sl.Context, openapi3.AllowExtraSiblingFields("description"))
 			require.NoError(t, err)
 		})
 	}
