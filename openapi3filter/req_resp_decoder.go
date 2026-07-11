@@ -932,6 +932,13 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 	return result, nil
 }
 
+// maxSliceMapToSliceGap bounds how many synthesized nil holes sliceMapToSlice
+// will fill in for a sparse array before rejecting the input. Without this,
+// an attacker-supplied index (e.g. from a deepObject query parameter) drives
+// an allocation proportional to the index itself, regardless of how many
+// elements were actually provided.
+const maxSliceMapToSliceGap = 10000
+
 // example: map[0:map[key:true] 1:map[key:false]] -> [map[key:true] map[key:false]]
 func sliceMapToSlice(m map[string]any) ([]any, error) {
 	var result []any
@@ -942,6 +949,9 @@ func sliceMapToSlice(m map[string]any) ([]any, error) {
 		if err != nil {
 			return nil, fmt.Errorf("array indexes must be integers: %w", err)
 		}
+		if key < 0 {
+			return nil, fmt.Errorf("array indexes must not be negative: %d", key)
+		}
 		keys = append(keys, key)
 	}
 	max := -1
@@ -949,6 +959,12 @@ func sliceMapToSlice(m map[string]any) ([]any, error) {
 		if k > max {
 			max = k
 		}
+	}
+	// max+1 is the size of the slice this loop is about to build; bound the
+	// gap between what was actually supplied (len(m)) and that size so a
+	// single huge index can't force an outsized allocation.
+	if gap := max + 1 - len(m); gap > maxSliceMapToSliceGap {
+		return nil, fmt.Errorf("array index %d is too sparse relative to the %d supplied items", max, len(m))
 	}
 	for i := 0; i <= max; i++ {
 		val, ok := m[strconv.Itoa(i)]
