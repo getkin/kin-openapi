@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"encoding/json"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -34,40 +35,47 @@ paths:
                 $ref: http://schemas.sentex.io/store/categories.json
 `
 
-	// When that site fails to respond:
-	// see https://github.com/getkin/kin-openapi/issues/495
+	resolver := func(loader *Loader, url *url.URL) (data []byte, err error) {
+		switch url.String() {
+		case "http://schemas.sentex.io/store/categories.json":
+			data = []byte(`
+			{
+			  "$id": "http://schemas.sentex.io/store/categories.json",
+			  "$schema": "http://json-schema.org/draft-07/schema#",
+			  "description": "array of category strings",
+			  "type": "array",
+			  "items": {
+			    "allOf": [
+			      {
+			        "$ref": "http://schemas.sentex.io/store/category.json"
+			      }
+			    ]
+			  }
+			}`)
 
-	// http://schemas.sentex.io/store/categories.json
-	// {
-	//   "$id": "http://schemas.sentex.io/store/categories.json",
-	//   "$schema": "http://json-schema.org/draft-07/schema#",
-	//   "description": "array of category strings",
-	//   "type": "array",
-	//   "items": {
-	//     "allOf": [
-	//       {
-	//         "$ref": "http://schemas.sentex.io/store/category.json"
-	//       }
-	//     ]
-	//   }
-	// }
+		case "http://schemas.sentex.io/store/category.json":
+			data = []byte(`
+			{
+			  "$id": "http://schemas.sentex.io/store/category.json",
+			  "$schema": "http://json-schema.org/draft-07/schema#",
+			  "description": "category name for products",
+			  "type": "string",
+			  "pattern": "^[A-Za-z0-9\\-]+$",
+			  "minimum": 1,
+			  "maximum": 30
+			}`)
 
-	// http://schemas.sentex.io/store/category.json
-	// {
-	//   "$id": "http://schemas.sentex.io/store/category.json",
-	//   "$schema": "http://json-schema.org/draft-07/schema#",
-	//   "description": "category name for products",
-	//   "type": "string",
-	//   "pattern": "^[A-Za-z0-9\\-]+$",
-	//   "minimum": 1,
-	//   "maximum": 30
-	// }
+		default:
+			panic(url)
+		}
+		return
+	}
 
-	for _, majmin := range []string{"'3.0'", "'3.1'"} {
+	for _, majmin := range []string{"'3.0'", "'3.1'", "'3.2'"} {
 		t.Run(majmin, func(t *testing.T) {
 			t.Parallel()
 			sl := NewLoader()
-			sl.IsExternalRefsAllowed = true
+			sl.ReadFromURIFunc = resolver
 
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.1", majmin)))
 			require.NoError(t, err)
