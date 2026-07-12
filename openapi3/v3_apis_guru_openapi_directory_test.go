@@ -36,6 +36,7 @@ func isOpenAPIVersion(t *testing.T, path, str string) bool {
 
 	r := bufio.NewScanner(file)
 	for r.Scan() {
+		require.NoError(t, r.Err())
 		if strings.Contains(r.Text(), str) {
 			return true
 		}
@@ -153,7 +154,7 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		files, err := filepath.Glob(goldens + "*")
+		files, err := filepath.Glob(goldens + "/*")
 		require.NoError(t, err)
 		for _, file := range files {
 			shortName := shortNameFromPath(file)
