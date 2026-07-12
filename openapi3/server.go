@@ -119,7 +119,6 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
-	delete(x.Variables, originKey)
 	*server = Server(x)
 	return nil
 }
@@ -243,12 +242,6 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) er
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
 // ServerVariables is a map of ServerVariable objects keyed by variable name.
 type ServerVariables map[string]*ServerVariable
-
-// UnmarshalJSON sets ServerVariables to a copy of data.
-func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error) {
-	*serverVariables, err = unmarshalStringMapP[ServerVariable](data)
-	return
-}
 
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

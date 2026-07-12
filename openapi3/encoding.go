@@ -26,12 +26,6 @@ func NewEncoding() *Encoding {
 // Encodings is a map of encoding objects keyed by field name.
 type Encodings map[string]*Encoding
 
-// UnmarshalJSON sets Encodings to a copy of data.
-func (encodings *Encodings) UnmarshalJSON(data []byte) (err error) {
-	*encodings, err = unmarshalStringMapP[Encoding](data)
-	return
-}
-
 func (encoding *Encoding) WithHeader(name string, header *Header) *Encoding {
 	return encoding.WithHeaderRef(name, &HeaderRef{
 		Value: header,

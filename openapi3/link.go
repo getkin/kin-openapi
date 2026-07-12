@@ -91,9 +91,3 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 
 	return validateExtensions(ctx, link.Extensions, link.Origin)
 }
-
-// UnmarshalJSON sets Links to a copy of data.
-func (links *Links) UnmarshalJSON(data []byte) (err error) {
-	*links, err = unmarshalStringMapP[LinkRef](data)
-	return
-}

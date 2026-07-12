@@ -110,7 +110,6 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	if len(x.Extensions) == 0 {
 		x.Extensions = nil
 	}
-	delete(x.Encoding, originKey)
 	*mediaType = MediaType(x)
 	return nil
 }

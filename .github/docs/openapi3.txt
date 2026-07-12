@@ -407,9 +407,6 @@ func (m Callbacks) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (callbacks *Callbacks) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Callbacks to a copy of data.
-
 type CommentFieldFor31Plus struct{ ValidationError }
 
 func (e *CommentFieldFor31Plus) As(target any) bool
@@ -534,9 +531,6 @@ func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
 
 func (content Content) Get(mime string) *MediaType
 
-func (content *Content) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Content to a copy of data.
-
 func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Content does not comply with the OpenAPI spec.
 
@@ -569,7 +563,7 @@ type Discriminator struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      StringMap[MappingRef] `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	Mapping      map[string]MappingRef `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
     Discriminator is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
@@ -714,9 +708,6 @@ func (encoding *Encoding) WithHeaderRef(name string, ref *HeaderRef) *Encoding
 type Encodings map[string]*Encoding
     Encodings is a map of encoding objects keyed by field name.
 
-func (encodings *Encodings) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Encodings to a copy of data.
-
 type ExactlyOneFieldError struct {
 	// Fields is the set of fields, exactly one of which must be set
 	// (e.g. ["content", "schema"]).
@@ -815,9 +806,6 @@ type Examples map[string]*ExampleRef // Examples represents components' named ex
 func (m Examples) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-
-func (examples *Examples) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Examples to a copy of data.
 
 type ExamplesFieldFor31Plus struct{ ValidationError }
 
@@ -1058,9 +1046,6 @@ type Headers map[string]*HeaderRef // Headers represents components' named heade
 func (m Headers) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-
-func (headers *Headers) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Headers to a copy of data.
 
 type IDFieldFor31Plus struct{ ValidationError }
 
@@ -1310,9 +1295,6 @@ func (m Links) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (links *Links) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Links to a copy of data.
-
 type Loader struct {
 	// IsExternalRefsAllowed enables visiting other files. Enforced only when
 	// ReadFromURIFunc is nil; a custom ReadFromURIFunc bypasses this flag and
@@ -1529,7 +1511,7 @@ type OAuthFlow struct {
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
 	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           StringMap[string] `json:"scopes" yaml:"scopes"` // required
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
 }
     OAuthFlow is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
@@ -1881,9 +1863,6 @@ func (m ParametersMap) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (parametersMap *ParametersMap) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets ParametersMap to a copy of data.
-
 type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -2129,9 +2108,6 @@ func (m RequestBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets RequestBodies to a copy of data.
-
 type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -2289,9 +2265,6 @@ type ResponseBodies map[string]*ResponseRef // ResponseBodies represents compone
 func (m ResponseBodies) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
-
-func (responseBodies *ResponseBodies) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets ResponseBodies to a copy of data.
 
 type ResponseDescriptionRequired struct{ ValidationError }
 
@@ -2925,9 +2898,6 @@ func (m Schemas) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (schemas *Schemas) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets Schemas to a copy of data.
-
 type SectionValidationError struct {
 	Section string
 	Cause   error
@@ -2951,9 +2921,6 @@ type SecurityRequirement map[string][]string
 func NewSecurityRequirement() SecurityRequirement
 
 func (security SecurityRequirement) Authenticate(provider string, scopes ...string) SecurityRequirement
-
-func (security *SecurityRequirement) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets SecurityRequirement to a copy of data.
 
 func (security *SecurityRequirement) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if SecurityRequirement does not comply with the
@@ -3098,9 +3065,6 @@ func (m SecuritySchemes) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
-func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets SecuritySchemes to a copy of data.
-
 type SerializationMethod struct {
 	Style   string
 	Explode bool
@@ -3199,9 +3163,6 @@ type ServerVariables map[string]*ServerVariable
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
     ServerVariables is a map of ServerVariable objects keyed by variable name.
 
-func (serverVariables *ServerVariables) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets ServerVariables to a copy of data.
-
 type Servers []*Server
     Servers is specified by OpenAPI/Swagger standard version 3.
 
@@ -3240,13 +3201,6 @@ type StringFormatValidator = FormatValidator[string]
 func NewRegexpFormatValidator(pattern string) StringFormatValidator
     NewRegexpFormatValidator creates a new FormatValidator that uses a regular
     expression to validate the value.
-
-type StringMap[V any] map[string]V
-    StringMap is a map[string]string that ignores the origin in the underlying
-    json representation.
-
-func (stringMap *StringMap[V]) UnmarshalJSON(data []byte) (err error)
-    UnmarshalJSON sets StringMap to a copy of data.
 
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

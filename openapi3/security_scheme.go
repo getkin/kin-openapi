@@ -325,7 +325,7 @@ type OAuthFlow struct {
 	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
 	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           StringMap[string] `json:"scopes" yaml:"scopes"` // required
+	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.
@@ -425,10 +425,4 @@ func (flow *OAuthFlow) validate(ctx context.Context, typ oAuthFlowType, opts ...
 	}
 
 	return flow.Validate(ctx, opts...)
-}
-
-// UnmarshalJSON sets SecuritySchemes to a copy of data.
-func (securitySchemes *SecuritySchemes) UnmarshalJSON(data []byte) (err error) {
-	*securitySchemes, err = unmarshalStringMapP[SecuritySchemeRef](data)
-	return
 }

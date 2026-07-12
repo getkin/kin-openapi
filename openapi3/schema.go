@@ -3186,9 +3186,3 @@ func deepCopyJSONValue(v any) any {
 		return v // string, float64, bool, nil — all immutable
 	}
 }
-
-// UnmarshalJSON sets Schemas to a copy of data.
-func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
-	*schemas, err = unmarshalStringMapP[SchemaRef](data)
-	return
-}

@@ -13,7 +13,7 @@ type Discriminator struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      StringMap[MappingRef] `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	Mapping      map[string]MappingRef `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 }
 
 // MappingRef is a ref to a Schema objects. Unlike SchemaRefs it is serialised
