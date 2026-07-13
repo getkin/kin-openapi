@@ -312,7 +312,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
-### v0.142.0
+### v0.143.0
 * Removed the `openapi3.StringMap[V]` type (an internal helper for origin-aware map unmarshalling, obsolete since origin tracking moved to a separate `OriginTree` pass). `openapi3.Discriminator.Mapping` field type changed from `StringMap[MappingRef]` to `map[string]MappingRef`, and `openapi3.OAuthFlow.Scopes` from `StringMap[string]` to `map[string]string`.
 
 ### v0.137.0
