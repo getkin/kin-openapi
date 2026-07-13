@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,6 +36,7 @@ func isOpenAPIVersion(t *testing.T, path, str string) bool {
 
 	r := bufio.NewScanner(file)
 	for r.Scan() {
+		require.NoError(t, r.Err())
 		if strings.Contains(r.Text(), str) {
 			return true
 		}
@@ -129,6 +131,7 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 	root := filepath.Join(targetDir, dirName, "APIs")
 
 	underscorer := newUnderscorer()
+	var checkedMu sync.Mutex
 	checked := make(map[string]struct{})
 
 	var paths []string
@@ -141,57 +144,64 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("found %v files in %q", len(paths), root)
 
+	t.Cleanup(func() {
+		err := filepath.Walk(goldens, func(path string, info os.FileInfo, err error) error {
+			if !info.IsDir() {
+				shortName := shortNameFromPath(path)
+				delete(checked, shortName)
+			}
+			return nil
+		})
+		require.NoError(t, err)
+
+		files, err := filepath.Glob(goldens + "/*")
+		require.NoError(t, err)
+		for _, file := range files {
+			shortName := shortNameFromPath(file)
+			if _, ok := checked[shortName]; ok || disabled(shortName) {
+				err := os.Remove(file)
+				require.NoError(t, err)
+			}
+		}
+	})
+
 	for _, path := range paths {
 		shortName := underscorer.Replace(strings.TrimPrefix(path, root)[1:])
 
-		if isOpenAPIVersion(t, path, "openapi: 3") {
-			t.Run(shortName, func(t *testing.T) {
-				if disabled(shortName) {
-					t.SkipNow()
-					return
-				}
-				checked[shortName] = struct{}{}
-				t.Parallel()
+		t.Run(shortName, func(t *testing.T) {
+			if disabled(shortName) {
+				t.SkipNow()
+				return
+			}
+			t.Parallel()
 
-				loader := openapi3.NewLoader()
-				loader.Context = t.Context()
+			if !isOpenAPIVersion(t, path, "openapi: 3") {
+				t.SkipNow()
+				return
+			}
 
-				doc, err := loader.LoadFromFile(path)
-				golden(t, err, shortName, "load")
-				if doc != nil {
-					var opts []openapi3.ValidationOption
+			checkedMu.Lock()
+			checked[shortName] = struct{}{}
+			checkedMu.Unlock()
+
+			loader := openapi3.NewLoader()
+			loader.Context = t.Context()
+
+			doc, err := loader.LoadFromFile(path)
+			golden(t, err, shortName, "load")
+			if doc != nil {
+				var opts []openapi3.ValidationOption
+				err = doc.Validate(loader.Context, opts...)
+				golden(t, err, shortName, "validate")
+
+				if err == nil {
+					openapi3conv.Upgrade(doc, openapi3conv.WithWriter(t.Output()))
 					err = doc.Validate(loader.Context, opts...)
-					golden(t, err, shortName, "validate")
-
-					if err == nil {
-						openapi3conv.Upgrade(doc, openapi3conv.WithWriter(t.Output()))
-						err = doc.Validate(loader.Context, opts...)
-						golden(t, err, shortName, "validatebis")
-					}
+					golden(t, err, shortName, "validatebis")
 				}
-			})
-		}
+			}
+		})
 	}
-
-	err = filepath.Walk(goldens, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			shortName := shortNameFromPath(path)
-			delete(checked, shortName)
-		}
-		return nil
-	})
-	require.NoError(t, err)
-
-	files, err := filepath.Glob(goldens + "*")
-	require.NoError(t, err)
-	for _, file := range files {
-		shortName := shortNameFromPath(file)
-		if _, ok := checked[shortName]; ok || disabled(shortName) {
-			err := os.Remove(file)
-			require.NoError(t, err)
-		}
-	}
-
 }
 
 func disabled(shortName string) bool {
