@@ -17,6 +17,8 @@ import (
 // Renaming or removing a code is a breaking change and is recorded in the
 // README changelog. The full set is available from ValidationErrorCodes.
 //
+// Like net.Error, this interface exists as an assertion target for consumers;
+// the package itself constructs concrete error types and does not consume it.
 // Reach the code of a wrapped error with errors.As:
 //
 //	var coded openapi3.CodedError
