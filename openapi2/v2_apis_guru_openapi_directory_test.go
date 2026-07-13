@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/oasdiff/yaml"
@@ -35,6 +36,7 @@ func isOpenAPIVersion(t *testing.T, path, str string) bool {
 
 	r := bufio.NewScanner(file)
 	for r.Scan() {
+		require.NoError(t, r.Err())
 		if strings.Contains(r.Text(), str) {
 			return true
 		}
@@ -128,6 +130,7 @@ func TestV2ApisGuruOpenapiDirectory(t *testing.T) {
 	root := filepath.Join(targetDir, dirName, "APIs")
 
 	underscorer := newUnderscorer()
+	var checkedMu sync.Mutex
 	checked := make(map[string]struct{})
 
 	var paths []string
@@ -140,48 +143,56 @@ func TestV2ApisGuruOpenapiDirectory(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("found %v files in %q", len(paths), root)
 
+	// Runs after all parallel subtests have completed.
+	t.Cleanup(func() {
+		err := filepath.Walk(goldens, func(path string, info os.FileInfo, err error) error {
+			require.NotNil(t, info)
+			if !info.IsDir() {
+				shortName := shortNameFromPath(path)
+				delete(checked, shortName)
+			}
+			return nil
+		})
+		require.NoError(t, err)
+
+		files, err := filepath.Glob(goldens + "/*")
+		require.NoError(t, err)
+		for _, file := range files {
+			shortName := shortNameFromPath(file)
+			if _, ok := checked[shortName]; ok || disabled(shortName) {
+				err := os.Remove(file)
+				require.NoError(t, err)
+			}
+		}
+	})
+
 	for _, path := range paths {
 		shortName := underscorer.Replace(strings.TrimPrefix(path, root)[1:])
 
-		if isOpenAPIVersion(t, path, "swagger: ") {
-			t.Run(shortName, func(t *testing.T) {
-				if disabled(shortName) {
-					t.SkipNow()
-					return
-				}
-				checked[shortName] = struct{}{}
-				t.Parallel()
+		t.Run(shortName, func(t *testing.T) {
+			if disabled(shortName) {
+				t.SkipNow()
+				return
+			}
+			t.Parallel()
 
-				data, err := os.ReadFile(path)
-				require.NoError(t, err)
+			if !isOpenAPIVersion(t, path, "swagger: ") {
+				t.SkipNow()
+				return
+			}
 
-				var doc openapi2.T
-				_, err = yaml.Unmarshal(data, &doc, yaml.DecodeOpts{DisableTimestamps: true})
-				golden(t, err, shortName, "load")
-			})
-		}
-	}
+			checkedMu.Lock()
+			checked[shortName] = struct{}{}
+			checkedMu.Unlock()
 
-	err = filepath.Walk(goldens, func(path string, info os.FileInfo, err error) error {
-		require.NotNil(t, info)
-		if !info.IsDir() {
-			shortName := shortNameFromPath(path)
-			delete(checked, shortName)
-		}
-		return nil
-	})
-	require.NoError(t, err)
-
-	files, err := filepath.Glob(goldens + "*")
-	require.NoError(t, err)
-	for _, file := range files {
-		shortName := shortNameFromPath(file)
-		if _, ok := checked[shortName]; ok || disabled(shortName) {
-			err := os.Remove(file)
+			data, err := os.ReadFile(path)
 			require.NoError(t, err)
-		}
-	}
 
+			var doc openapi2.T
+			_, err = yaml.Unmarshal(data, &doc, yaml.DecodeOpts{DisableTimestamps: true})
+			golden(t, err, shortName, "load")
+		})
+	}
 }
 
 func disabled(shortName string) bool {
