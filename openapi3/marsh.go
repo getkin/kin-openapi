@@ -43,24 +43,3 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error 
 	// If both unmarshaling attempts fail, return a new error that includes both errors
 	return fmt.Errorf("failed to unmarshal data: json error: %v, yaml error: %v", jsonErr, yamlErr)
 }
-
-// originTree parses data solely for its origin tree, used to re-attach source
-// origins to a component resolved through the generic-map path: a $ref to a
-// schema under an arbitrary top-level key lands in T.Extensions and loses its
-// origin in the json round-trip (see resolveComponent). Returns nil when parsing
-// fails; callers degrade to no origin.
-func originTree(data []byte, location *url.URL) *yaml.OriginTree {
-	var file string
-	if location != nil {
-		file = location.String()
-	}
-	var v any
-	tree, err := yaml.Unmarshal(data, &v, yaml.DecodeOpts{
-		Origin:            yaml.OriginOpt{Enabled: true, File: file},
-		DisableTimestamps: true,
-	})
-	if err != nil {
-		return nil
-	}
-	return tree
-}
