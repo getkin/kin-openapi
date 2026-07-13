@@ -174,6 +174,121 @@ paths:
 	require.Equal(t, example.Value.Value.(map[string]any)["error"].(bool), false)
 }
 
+func TestReferenceObjectMetadataIsVersionAware(t *testing.T) {
+	const spec = `
+openapi: VERSION
+info: {title: Test, version: "1"}
+paths: {}
+components:
+  examples:
+    Base:
+      summary: component summary
+      description: component description
+      value: example
+    Alias:
+      $ref: "#/components/examples/Base"
+      summary: reference summary
+      description: reference description
+  headers:
+    Base:
+      description: component description
+    Alias:
+      $ref: "#/components/headers/Base"
+      description: reference description
+  parameters:
+    Base:
+      name: id
+      in: query
+      description: component description
+    Alias:
+      $ref: "#/components/parameters/Base"
+      description: reference description
+  requestBodies:
+    Base:
+      description: component description
+      content: {}
+    Alias:
+      $ref: "#/components/requestBodies/Base"
+      description: reference description
+  responses:
+    Base:
+      description: component description
+      links:
+        Alias:
+          $ref: "#/components/links/Base"
+          description: reference description
+    Alias:
+      $ref: "#/components/responses/Base"
+      description: reference description
+  links:
+    Base:
+      operationId: test
+      description: component description
+  securitySchemes:
+    Base:
+      type: apiKey
+      name: X-API-Key
+      in: header
+      description: component description
+    Alias:
+      $ref: "#/components/securitySchemes/Base"
+      description: reference description
+`
+
+	for _, test := range []struct {
+		name            string
+		version         string
+		wantSummary     string
+		wantDescription string
+	}{
+		{
+			name:            "OpenAPI 3.0 does not apply reference metadata",
+			version:         "3.0.3",
+			wantSummary:     "component summary",
+			wantDescription: "component description",
+		},
+		{
+			name:            "OpenAPI 3.1 applies reference metadata",
+			version:         "3.1.0",
+			wantSummary:     "reference summary",
+			wantDescription: "reference description",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			loader := NewLoader()
+			doc, err := loader.LoadFromData([]byte(strings.Replace(spec, "VERSION", test.version, 1)))
+			require.NoError(t, err)
+
+			require.Equal(t, test.wantSummary, doc.Components.Examples["Alias"].Value.Summary)
+			descriptions := map[string]string{
+				"example":         doc.Components.Examples["Alias"].Value.Description,
+				"header":          doc.Components.Headers["Alias"].Value.Description,
+				"parameter":       doc.Components.Parameters["Alias"].Value.Description,
+				"request body":    doc.Components.RequestBodies["Alias"].Value.Description,
+				"response":        *doc.Components.Responses["Alias"].Value.Description,
+				"link":            doc.Components.Responses["Base"].Value.Links["Alias"].Value.Description,
+				"security scheme": doc.Components.SecuritySchemes["Alias"].Value.Description,
+			}
+			for name, description := range descriptions {
+				t.Run(name, func(t *testing.T) {
+					require.Equal(t, test.wantDescription, description)
+				})
+			}
+
+			// Applying metadata to aliases must not modify the shared components.
+			require.Equal(t, "component summary", doc.Components.Examples["Base"].Value.Summary)
+			require.Equal(t, "component description", doc.Components.Examples["Base"].Value.Description)
+			require.Equal(t, "component description", doc.Components.Headers["Base"].Value.Description)
+			require.Equal(t, "component description", doc.Components.Parameters["Base"].Value.Description)
+			require.Equal(t, "component description", doc.Components.RequestBodies["Base"].Value.Description)
+			require.Equal(t, "component description", *doc.Components.Responses["Base"].Value.Description)
+			require.Equal(t, "component description", doc.Components.Links["Base"].Value.Description)
+			require.Equal(t, "component description", doc.Components.SecuritySchemes["Base"].Value.Description)
+		})
+	}
+}
+
 func TestLoadErrorOnRefMisuse(t *testing.T) {
 	spec := []byte(`
 openapi: '3.0.0'

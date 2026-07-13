@@ -365,6 +365,9 @@ type CallbackRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Callback
@@ -757,6 +760,9 @@ type ExampleRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Example
@@ -1005,6 +1011,9 @@ type HeaderRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Header
@@ -1254,6 +1263,9 @@ type LinkRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Link
@@ -1806,6 +1818,9 @@ type ParameterRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Parameter
@@ -2072,12 +2087,15 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
     documents.
 
 type Ref struct {
-	Ref        string         `json:"$ref" yaml:"$ref"`
-	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"-" yaml:"-"`
+	Ref         string         `json:"$ref" yaml:"$ref"`
+	Summary     *string        `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Extensions  map[string]any `json:"-" yaml:"-"`
+	Origin      *Origin        `json:"-" yaml:"-"`
 }
-    Ref is specified by OpenAPI/Swagger 3.0 standard. See
-    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#reference-object
+    Ref represents the common fields of an OpenAPI Reference Object.
+    Summary and Description are supported by OpenAPI 3.1 and later. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.2.md#reference-object
 
 func (x Ref) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Ref.
@@ -2163,6 +2181,9 @@ type RequestBodyRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *RequestBody
@@ -2275,6 +2296,9 @@ type ResponseRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Response
@@ -3022,6 +3046,9 @@ type SecuritySchemeRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *SecurityScheme

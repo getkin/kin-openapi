@@ -18,6 +18,12 @@ type {{ $type.Name }}Ref struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 
+	{{- if ne $type.Name "Schema" }}
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	{{- end }}
+
 	Ref   string
 	Value *{{ $type.Name }}
 	extra []string
@@ -56,7 +62,14 @@ func (x *{{ $type.Name }}Ref) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of {{ $type.Name }}Ref.
 func (x {{ $type.Name }}Ref) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref: ref,
+			Extensions: x.Extensions,
+			{{- if ne $type.Name "Schema" }}
+			Summary:     x.Summary,
+			Description: x.Description,
+			{{- end }}
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -79,6 +92,12 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		{{- if ne $type.Name "Schema" }}
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
+		{{- end }}
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 {{- if eq $type.Name "Schema" }}
@@ -123,6 +142,16 @@ func (x *{{ $type.Name }}Ref) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
+	{{- if ne $type.Name "Schema" }}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
+	}
+	{{- end }}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
 			if _, ok := x.Extensions[ex]; !ok {

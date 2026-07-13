@@ -185,7 +185,7 @@ components:
 	}
 }
 
-func TestIssue513KOMixesRefAlongWithOtherFieldsDisallowed(t *testing.T) {
+func TestIssue513ReferenceDescriptionIsVersionAware(t *testing.T) {
 	spec := `
 openapi: "3.0.3"
 info:
@@ -199,7 +199,7 @@ paths:
       summary: Delete something
       responses:
         200:
-          description: A sibling field that the spec says is ignored
+          description: Reference description
           $ref: '#/components/responses/SomeResponseBody'
 components:
   responses:
@@ -226,7 +226,16 @@ components:
 			doc, err := sl.LoadFromData([]byte(strings.ReplaceAll(spec, "3.0.3", majmin)))
 			require.NoError(t, err)
 			err = doc.Validate(sl.Context)
-			require.ErrorContains(t, err, `extra sibling fields: [description]`)
+			if majmin == "3.0" {
+				require.ErrorContains(t, err, `extra sibling fields: [description]`)
+				return
+			}
+			require.NoError(t, err)
+
+			response := doc.Paths.Value("/v1/operation").Delete.Responses.Status(200)
+			require.NotNil(t, response.Value)
+			require.NotNil(t, response.Value.Description)
+			require.Equal(t, "Reference description", *response.Value.Description)
 		})
 	}
 }
