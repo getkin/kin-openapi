@@ -647,14 +647,12 @@ var (
 	errMUSTSecurityScheme = errors.New("invalid securityScheme: value MUST be an object")
 )
 
-func applyHeaderRefMetadata(value *Header, component *HeaderRef, isOpenAPI31OrLater bool) *Header {
+func applyHeaderRefMetadata(value *Header, component *HeaderRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
-		return value
+		return
 	}
 
-	result := *value
-	result.Description = *component.Description
-	return &result
+	value.Description = *component.Description
 }
 
 func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
@@ -669,7 +667,8 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applyHeaderRefMetadata(value.(*Header), component, isOpenAPI31OrLater)
+			component.Value = value.(*Header)
+			applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -699,7 +698,7 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -719,15 +718,12 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 	return nil
 }
 
-// applyParameterRefMetadata applies OpenAPI 3.1 overrides without mutating the referenced Parameter.
-func applyParameterRefMetadata(value *Parameter, component *ParameterRef, isOpenAPI31OrLater bool) *Parameter {
+func applyParameterRefMetadata(value *Parameter, component *ParameterRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
-		return value
+		return
 	}
 
-	result := *value
-	result.Description = *component.Description
-	return &result
+	value.Description = *component.Description
 }
 
 func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
@@ -742,7 +738,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applyParameterRefMetadata(value.(*Parameter), component, isOpenAPI31OrLater)
+			component.Value = value.(*Parameter)
+			applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -772,7 +769,7 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -800,15 +797,12 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 	return nil
 }
 
-// applyRequestBodyRefMetadata applies OpenAPI 3.1 overrides without mutating the referenced RequestBody.
-func applyRequestBodyRefMetadata(value *RequestBody, component *RequestBodyRef, isOpenAPI31OrLater bool) *RequestBody {
+func applyRequestBodyRefMetadata(value *RequestBody, component *RequestBodyRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
-		return value
+		return
 	}
 
-	result := *value
-	result.Description = *component.Description
-	return &result
+	value.Description = *component.Description
 }
 
 func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
@@ -823,7 +817,8 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applyRequestBodyRefMetadata(value.(*RequestBody), component, isOpenAPI31OrLater)
+			component.Value = value.(*RequestBody)
+			applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -853,7 +848,7 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -868,16 +863,12 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	return nil
 }
 
-// applyResponseRefMetadata applies OpenAPI 3.1 overrides without mutating the referenced Response.
-func applyResponseRefMetadata(value *Response, component *ResponseRef, isOpenAPI31OrLater bool) *Response {
+func applyResponseRefMetadata(value *Response, component *ResponseRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
-		return value
+		return
 	}
 
-	result := *value
-	description := *component.Description
-	result.Description = &description
-	return &result
+	value.Description = component.Description
 }
 
 func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
@@ -892,7 +883,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applyResponseRefMetadata(value.(*Response), component, isOpenAPI31OrLater)
+			component.Value = value.(*Response)
+			applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -922,7 +914,7 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -1154,15 +1146,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	return nil
 }
 
-// applySecuritySchemeRefMetadata applies OpenAPI 3.1 overrides without mutating the referenced SecurityScheme.
-func applySecuritySchemeRefMetadata(value *SecurityScheme, component *SecuritySchemeRef, isOpenAPI31OrLater bool) *SecurityScheme {
+func applySecuritySchemeRefMetadata(value *SecurityScheme, component *SecuritySchemeRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
-		return value
+		return
 	}
 
-	result := *value
-	result.Description = *component.Description
-	return &result
+	value.Description = *component.Description
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
@@ -1177,7 +1166,8 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applySecuritySchemeRefMetadata(value.(*SecurityScheme), component, isOpenAPI31OrLater)
+			component.Value = value.(*SecurityScheme)
+			applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -1207,25 +1197,22 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
 
-// applyExampleRefMetadata applies OpenAPI 3.1 overrides without mutating the referenced Example.
-func applyExampleRefMetadata(value *Example, component *ExampleRef, isOpenAPI31OrLater bool) *Example {
+func applyExampleRefMetadata(value *Example, component *ExampleRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || (component.Summary == nil && component.Description == nil) {
-		return value
+		return
 	}
 
-	result := *value
 	if component.Summary != nil {
-		result.Summary = *component.Summary
+		value.Summary = *component.Summary
 	}
 	if component.Description != nil {
-		result.Description = *component.Description
+		value.Description = *component.Description
 	}
-	return &result
 }
 
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
@@ -1236,7 +1223,8 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applyExampleRefMetadata(value.(*Example), component, isOpenAPI31OrLater)
+			component.Value = value.(*Example)
+			applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -1266,7 +1254,7 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
@@ -1327,15 +1315,12 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 	return nil
 }
 
-// applyLinkRefMetadata applies OpenAPI 3.1 overrides without mutating the referenced Link.
-func applyLinkRefMetadata(value *Link, component *LinkRef, isOpenAPI31OrLater bool) *Link {
+func applyLinkRefMetadata(value *Link, component *LinkRef, isOpenAPI31OrLater bool) {
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
-		return value
+		return
 	}
 
-	result := *value
-	result.Description = *component.Description
-	return &result
+	value.Description = *component.Description
 }
 
 func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
@@ -1350,7 +1335,8 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
-			component.Value = applyLinkRefMetadata(value.(*Link), component, isOpenAPI31OrLater)
+			component.Value = value.(*Link)
+			applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -1380,7 +1366,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
-		component.Value = applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
+		applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
