@@ -85,6 +85,20 @@ The `Origin` struct contains three parts:
 
 Origin data is populated by an internal post-processing step after YAML decoding — it is not part of the OpenAPI spec itself. For this reason, Origin fields are excluded from serialization. If you marshal a loaded document back to JSON/YAML, origin data will not appear in the output.
 
+## Identifying validation errors by code
+
+Each validation error carries a stable, kebab-case code (e.g. `operation-responses-required`), independent of the message text, so tools can suppress specific findings, assign per-rule severities, or emit machine-readable diagnostics. The full catalog is available from `openapi3.ValidationErrorCodes()`.
+
+```go
+err := doc.Validate(ctx, openapi3.EnableMultiError())
+for _, e := range err.(openapi3.MultiError) {
+	var coded openapi3.CodedError
+	if errors.As(e, &coded) {
+		fmt.Println(coded.Code(), e) // e.g. "operation-responses-required value of responses must be an object"
+	}
+}
+```
+
 ## Getting OpenAPI operation that matches request
 ```go
 loader := openapi3.NewLoader()

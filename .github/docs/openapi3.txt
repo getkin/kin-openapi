@@ -258,6 +258,11 @@ func ValidateIdentifier(value string) error
     ValidateIdentifier returns an error if the given component name does not
     match IdentifierRegExp.
 
+func ValidationErrorCodes() []string
+    ValidationErrorCodes returns every code a validation error can carry,
+    sorted. TestValidationErrorCodes keeps it in sync with the errors the
+    validators emit.
+
 func WithValidationOptions(ctx context.Context, opts ...ValidationOption) context.Context
     WithValidationOptions allows adding validation options to a context object
     that can be used when validating any OpenAPI type.
@@ -278,6 +283,8 @@ type APIKeyInInvalidError struct {
     either omits `in:` or sets it to a value outside {query, header, cookie}.
     Carries the rejected value so callers can render or filter; empty string
     means the field was missing entirely.
+
+func (e *APIKeyInInvalidError) Code() string
 
 func (e *APIKeyInInvalidError) Error() string
 
@@ -410,6 +417,28 @@ func (m Callbacks) JSONLookup(token string) (any, error)
     JSONLookup implements
     https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
 
+type CodedError interface {
+	error
+	Code() string
+}
+    CodedError is implemented by every typed validation error. Code returns
+    a stable, kebab-case identifier for the validation rule that failed (e.g.
+    "operation-responses-required"), so consumers can suppress specific
+    findings, assign per-rule severities, emit machine-readable diagnostics
+    (e.g. the LSP Diagnostic.code field), or link to per-rule documentation
+    without depending on message text.
+
+    Codes are a contract: message wording may change freely, codes may not.
+    Renaming or removing a code is a breaking change and is recorded in the
+    README changelog. The full set is available from ValidationErrorCodes.
+
+    Reach the code of a wrapped error with errors.As:
+
+        var coded openapi3.CodedError
+        if errors.As(err, &coded) {
+        	fmt.Println(coded.Code())
+        }
+
 type CommentFieldFor31Plus struct{ ValidationError }
 
 func (e *CommentFieldFor31Plus) As(target any) bool
@@ -481,6 +510,8 @@ type ConflictingPathsError struct {
     ConflictingPathsError clusters "conflicting paths X and Y" failures.
     Fires when two path keys normalize to the same template (e.g. "/users/{a}"
     and "/users/{b}" both normalize to "/users/{}").
+
+func (e *ConflictingPathsError) Code() string
 
 func (e *ConflictingPathsError) Error() string
 
@@ -601,6 +632,8 @@ type DuplicateOperationIDError struct {
     failures. operationIds must be unique across all paths in a document.
     Endpoints are rendered as "<METHOD> <path>" (e.g. "POST /things").
 
+func (e *DuplicateOperationIDError) Code() string
+
 func (e *DuplicateOperationIDError) Error() string
 
 type DuplicateParameterError struct {
@@ -616,6 +649,8 @@ type DuplicateParameterError struct {
     failures. Fires when two parameters on an operation (or path item) share the
     same In + Name combination.
 
+func (e *DuplicateParameterError) Code() string
+
 func (e *DuplicateParameterError) Error() string
 
 type DuplicateRequiredFieldError struct {
@@ -629,6 +664,8 @@ type DuplicateRequiredFieldError struct {
     The elements of a schema's `required` array MUST be unique (JSON Schema
     2020-12 §6.5.3 for OpenAPI 3.1, draft-04 for OpenAPI 3.0).
 
+func (e *DuplicateRequiredFieldError) Code() string
+
 func (e *DuplicateRequiredFieldError) Error() string
 
 type DuplicateTagError struct {
@@ -640,6 +677,8 @@ type DuplicateTagError struct {
 }
     DuplicateTagError clusters "more than one tag has name X" failures. Each tag
     name in the document-root `tags` list MUST be unique (OpenAPI Object).
+
+func (e *DuplicateTagError) Code() string
 
 func (e *DuplicateTagError) Error() string
 
@@ -663,6 +702,8 @@ type EitherFieldRequiredError struct {
 }
     EitherFieldRequiredError clusters "at least one of these fields must be set"
     failures (example.value vs externalValue, link.operationId vs operationRef).
+
+func (e *EitherFieldRequiredError) Code() string
 
 func (e *EitherFieldRequiredError) Error() string
 
@@ -724,6 +765,8 @@ type ExactlyOneFieldError struct {
     ExactlyOneFieldError clusters "exactly one of these fields must be set"
     failures — e.g. a parameter or header where neither content nor schema is
     set, or both are.
+
+func (e *ExactlyOneFieldError) Code() string
 
 func (e *ExactlyOneFieldError) Error() string
 
@@ -893,6 +936,8 @@ type ExtraSiblingFieldsError struct {
     extras are `x-` extensions. Carries the offending field names so callers can
     render or filter.
 
+func (e *ExtraSiblingFieldsError) Code() string
+
 func (e *ExtraSiblingFieldsError) Error() string
 
 type FieldVersionMismatchError struct {
@@ -914,6 +959,8 @@ type FieldVersionMismatchError struct {
     (3.1+ keywords used in 3.0 documents). Carries the field name and minimum
     version, wraps the per-site leaf.
 
+func (e *FieldVersionMismatchError) Code() string
+
 func (e *FieldVersionMismatchError) Error() string
 
 func (e *FieldVersionMismatchError) Unwrap() error
@@ -931,6 +978,8 @@ type ForbiddenFieldError struct {
     ForbiddenFieldError clusters "field X must not be set in this context"
     failures (header.name and header.in inside a Headers map, OAuth flow URLs
     that don't apply to the chosen flow type).
+
+func (e *ForbiddenFieldError) Code() string
 
 func (e *ForbiddenFieldError) Error() string
 
@@ -1124,6 +1173,8 @@ type InvalidHTTPSchemeError struct {
     `bearer`, `basic`, `negotiate`, `digest`; this fires when an http scheme
     declares anything else.
 
+func (e *InvalidHTTPSchemeError) Code() string
+
 func (e *InvalidHTTPSchemeError) Error() string
 
 type InvalidParameterInError struct {
@@ -1138,6 +1189,8 @@ type InvalidParameterInError struct {
     or `cookie`; this fires when a parameter declares anything else (commonly
     `body`, a Swagger 2.0 leftover).
 
+func (e *InvalidParameterInError) Code() string
+
 func (e *InvalidParameterInError) Error() string
 
 type InvalidSecuritySchemeTypeError struct {
@@ -1151,6 +1204,8 @@ type InvalidSecuritySchemeTypeError struct {
     X" failures. The OpenAPI 3.x spec accepts only `apiKey`, `http`, `oauth2`,
     `openIdConnect`, and `mutualTLS` (3.1+); this fires when a security scheme
     declares anything else.
+
+func (e *InvalidSecuritySchemeTypeError) Code() string
 
 func (e *InvalidSecuritySchemeTypeError) Error() string
 
@@ -1173,6 +1228,8 @@ type InvalidSerializationMethodError struct {
     discriminates which surface is reporting: "media type" for encoding,
     the parameter location ("path", "query", etc.) for parameters and "header"
     for headers.
+
+func (e *InvalidSerializationMethodError) Code() string
 
 func (e *InvalidSerializationMethodError) Error() string
 
@@ -1487,6 +1544,8 @@ type MutuallyExclusiveFieldsError struct {
     one is allowed" failures (example.value vs externalValue, mediaType.example
     vs examples, license.url vs identifier, link.operationId vs operationRef).
     Carries both field names and wraps the per-site leaf.
+
+func (e *MutuallyExclusiveFieldsError) Code() string
 
 func (e *MutuallyExclusiveFieldsError) Error() string
 
@@ -1928,6 +1987,8 @@ type PathMustStartWithSlashError struct {
     PathMustStartWithSlashError clusters "path X does not start with a forward
     slash" failures. Path keys in the paths object must begin with `/`.
 
+func (e *PathMustStartWithSlashError) Code() string
+
 func (e *PathMustStartWithSlashError) Error() string
 
 type PathParameterRequiredError struct {
@@ -1941,6 +2002,8 @@ type PathParameterRequiredError struct {
     failures: per the OpenAPI spec, every parameter with `in: path` must be
     declared with `required: true`. Carries the parameter name so callers can
     render or filter by it.
+
+func (e *PathParameterRequiredError) Code() string
 
 func (e *PathParameterRequiredError) Error() string
 
@@ -1960,6 +2023,8 @@ type PathParametersError struct {
     than appear in the path template" failures. Carries the path template,
     method, and the list of missing parameter names so callers can render or
     filter without parsing the message.
+
+func (e *PathParametersError) Code() string
 
 func (e *PathParametersError) Error() string
 
@@ -2242,6 +2307,8 @@ type RequiredFieldError struct {
 
         var ivr *InfoVersionRequired
         if errors.As(err, &ivr) { /* knows it's exactly info.version */ }
+
+func (e *RequiredFieldError) Code() string
 
 func (e *RequiredFieldError) Error() string
 
@@ -2651,6 +2718,8 @@ type SchemaBothFormsExclusive struct {
     set to both its boolean and schema forms simultaneously" failures —
     additionalProperties, unevaluatedItems, unevaluatedProperties.
 
+func (e *SchemaBothFormsExclusive) Code() string
+
 func (e *SchemaBothFormsExclusive) Error() string
 
 func (e *SchemaBothFormsExclusive) Unwrap() error
@@ -2723,6 +2792,8 @@ type SchemaPatternRegexError struct {
     to Cause.Error()) so existing string-based consumers and golden fixtures are
     unaffected.
 
+func (e *SchemaPatternRegexError) Code() string
+
 func (e *SchemaPatternRegexError) Error() string
 
 func (e *SchemaPatternRegexError) Unwrap() error
@@ -2791,6 +2862,8 @@ type SchemaTypeError struct {
     SchemaTypeError clusters "unsupported 'type' value" failures on a Schema.
     Carries the bad type value so callers can surface it in user-facing output
     and filter findings by it.
+
+func (e *SchemaTypeError) Code() string
 
 func (e *SchemaTypeError) Error() string
 
@@ -2911,6 +2984,8 @@ type SchemaValueError struct {
     Cause is typed as error (not *SchemaError) because VisitJSON can return
     either a single SchemaError or a MultiError aggregating several. errors.As
     walks both shapes transparently.
+
+func (e *SchemaValueError) Code() string
 
 func (e *SchemaValueError) Error() string
 
@@ -3151,6 +3226,8 @@ type ServerURLTemplateError struct {
     braces and undeclared variables (template variables not matched by
     Server.Variables, or vice versa).
 
+func (e *ServerURLTemplateError) Code() string
+
 func (e *ServerURLTemplateError) Error() string
 
 func (e *ServerURLTemplateError) Unwrap() error
@@ -3213,6 +3290,8 @@ type SingleEntryContentError struct {
 }
     SingleEntryContentError clusters "the content map must contain at most one
     entry" failures (parameter.content, header.content).
+
+func (e *SingleEntryContentError) Code() string
 
 func (e *SingleEntryContentError) Error() string
 
@@ -3565,6 +3644,8 @@ type UnresolvedRefError struct {
     the offending ref string so callers can surface it in user-facing output and
     filter findings by it.
 
+func (e *UnresolvedRefError) Code() string
+
 func (e *UnresolvedRefError) Error() string
 
 type ValidationError struct {
@@ -3744,6 +3825,8 @@ type WebhookNilError struct {
 }
     WebhookNilError clusters "the value at webhook key X is nil" failures from
     T.Validate's webhook walk. Carries the offending key name.
+
+func (e *WebhookNilError) Code() string
 
 func (e *WebhookNilError) Error() string
 
