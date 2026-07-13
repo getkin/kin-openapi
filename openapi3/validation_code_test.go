@@ -5,8 +5,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // codedErrorInventory holds one instance of every validation error the
