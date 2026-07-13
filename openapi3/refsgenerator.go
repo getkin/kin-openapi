@@ -4,7 +4,9 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
+	"go/format"
 	"os"
 	"text/template"
 )
@@ -21,17 +23,6 @@ func main() {
 }
 
 func generateTemplate(filename string, tmpl string) {
-	file, err := os.Create(filename + ".go")
-	if err != nil {
-		panic(err)
-	}
-
-	defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
 	packageTemplate := template.Must(template.New("openapi3-" + filename).Parse(tmpl))
 
 	type componentType struct {
@@ -39,7 +30,8 @@ func generateTemplate(filename string, tmpl string) {
 		CollectionName string
 	}
 
-	if err := packageTemplate.Execute(file, struct {
+	var output bytes.Buffer
+	if err := packageTemplate.Execute(&output, struct {
 		Package string
 		Types   []componentType
 	}{
@@ -56,6 +48,14 @@ func generateTemplate(filename string, tmpl string) {
 			{Name: "SecurityScheme", CollectionName: "securitySchemes"},
 		},
 	}); err != nil {
+		panic(err)
+	}
+
+	formatted, err := format.Source(output.Bytes())
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(filename+".go", formatted, 0o644); err != nil {
 		panic(err)
 	}
 }

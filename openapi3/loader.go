@@ -647,7 +647,17 @@ var (
 	errMUSTSecurityScheme = errors.New("invalid securityScheme: value MUST be an object")
 )
 
+func applyHeaderRefMetadata(value *Header, component *HeaderRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTHeader
 	}
@@ -658,6 +668,7 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Header)
+			applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -687,6 +698,7 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -706,7 +718,17 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 	return nil
 }
 
+func applyParameterRefMetadata(value *Parameter, component *ParameterRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTParameter
 	}
@@ -717,6 +739,7 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Parameter)
+			applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -746,6 +769,7 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -773,7 +797,17 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 	return nil
 }
 
+func applyRequestBodyRefMetadata(value *RequestBody, component *RequestBodyRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTRequestBody
 	}
@@ -784,6 +818,7 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*RequestBody)
+			applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -813,6 +848,7 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -827,7 +863,17 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	return nil
 }
 
+func applyResponseRefMetadata(value *Response, component *ResponseRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = component.Description
+}
+
 func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTResponse
 	}
@@ -838,6 +884,7 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Response)
+			applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -867,6 +914,7 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -1098,7 +1146,17 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	return nil
 }
 
+func applySecuritySchemeRefMetadata(value *SecurityScheme, component *SecuritySchemeRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTSecurityScheme
 	}
@@ -1109,6 +1167,7 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*SecurityScheme)
+			applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -1138,17 +1197,34 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
 
+func applyExampleRefMetadata(value *Example, component *ExampleRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || (component.Summary == nil && component.Description == nil) {
+		return
+	}
+
+	if component.Summary != nil {
+		value.Summary = *component.Summary
+	}
+	if component.Description != nil {
+		value.Description = *component.Description
+	}
+}
+
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Example)
+			applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -1178,6 +1254,7 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
@@ -1238,7 +1315,17 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 	return nil
 }
 
+func applyLinkRefMetadata(value *Link, component *LinkRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTLink
 	}
@@ -1249,6 +1336,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Link)
+			applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
@@ -1278,6 +1366,7 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 			component.setRefPath(resolved.RefPath())
 		}
 		defer loader.unvisitRef(ref, component.Value)
+		applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }

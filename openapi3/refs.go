@@ -17,6 +17,9 @@ type CallbackRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Callback
@@ -51,7 +54,12 @@ func (x *CallbackRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -74,6 +82,10 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -99,6 +111,14 @@ func (x *CallbackRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -159,6 +179,9 @@ type ExampleRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Example
@@ -193,7 +216,12 @@ func (x *ExampleRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -216,6 +244,10 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -241,6 +273,14 @@ func (x *ExampleRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -301,6 +341,9 @@ type HeaderRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Header
@@ -335,7 +378,12 @@ func (x *HeaderRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -358,6 +406,10 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -383,6 +435,14 @@ func (x *HeaderRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -443,6 +503,9 @@ type LinkRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Link
@@ -477,7 +540,12 @@ func (x *LinkRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -500,6 +568,10 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -525,6 +597,14 @@ func (x *LinkRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -585,6 +665,9 @@ type ParameterRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Parameter
@@ -619,7 +702,12 @@ func (x *ParameterRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -642,6 +730,10 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -667,6 +759,14 @@ func (x *ParameterRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -727,6 +827,9 @@ type RequestBodyRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *RequestBody
@@ -761,7 +864,12 @@ func (x *RequestBodyRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -784,6 +892,10 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -809,6 +921,14 @@ func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -869,6 +989,9 @@ type ResponseRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Response
@@ -903,7 +1026,12 @@ func (x *ResponseRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -926,6 +1054,10 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -951,6 +1083,14 @@ func (x *ResponseRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
@@ -1048,7 +1188,10 @@ func (x *SchemaRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:        ref,
+			Extensions: x.Extensions,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1174,6 +1317,9 @@ type SecuritySchemeRef struct {
 	// are allowed by the openapi spec.
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
+	// Reference Object summary and description are supported in OpenAPI 3.1+.
+	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *SecurityScheme
@@ -1208,7 +1354,12 @@ func (x *SecuritySchemeRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{Ref: ref, Extensions: x.Extensions}, nil
+		return &Ref{
+			Ref:         ref,
+			Extensions:  x.Extensions,
+			Summary:     x.Summary,
+			Description: x.Description,
+		}, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1231,6 +1382,10 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
+		x.Summary = refOnly.Summary
+		x.Description = refOnly.Description
+		delete(extra, "summary")
+		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
 			for k := range extra {
@@ -1256,6 +1411,14 @@ func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 	allowed := validationOpts.extraSiblingFieldsAllowed
 	if allowed == nil {
 		allowed = make(map[string]struct{})
+	}
+	if !validationOpts.isOpenAPI31OrLater {
+		if _, ok := allowed["description"]; x.Description != nil && !ok {
+			extras = append(extras, "description")
+		}
+		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
+			extras = append(extras, "summary")
+		}
 	}
 	for _, ex := range x.extra {
 		if _, ok := allowed[ex]; !ok {
