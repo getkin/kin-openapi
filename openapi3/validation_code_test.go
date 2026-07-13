@@ -116,31 +116,97 @@ func TestValidationErrorCodes(t *testing.T) {
 		"catalog and inventory diverge: update ValidationErrorCodes and codedErrorInventory together")
 }
 
-// TestValidationErrorCodes_EndToEnd exercises the code surface through a real
-// document validation.
+// TestValidationErrorCodes_EndToEnd proves codes are reachable with errors.As
+// through every wrapper shape Validate produces: the inventory test covers
+// which codes exist; this covers that a consumer can get to them. One row per
+// unwrap path, not per code.
 func TestValidationErrorCodes_EndToEnd(t *testing.T) {
-	const spec = `
+	for _, tc := range []struct {
+		name    string // the wrapper chain under test
+		spec    string
+		expects string
+	}{
+		{
+			name: "doc root, unwrapped",
+			spec: `
+openapi: ""
+info: { title: t, version: "1" }
+paths: {}
+`,
+			expects: "openapi-required",
+		},
+		{
+			name: "path and operation wrappers",
+			spec: `
 openapi: 3.0.0
 info: { title: t, version: "1" }
 paths:
   /a:
     get:
       summary: no responses
-`
-	loader := openapi3.NewLoader()
-	doc, err := loader.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	verr := doc.Validate(t.Context(), openapi3.EnableMultiError())
-	require.Error(t, verr)
+`,
+			expects: "operation-responses-required",
+		},
+		{
+			name: "section wrapper inside an operation",
+			spec: `
+openapi: 3.0.0
+info: { title: t, version: "1" }
+paths:
+  /a:
+    get:
+      externalDocs: { description: d }
+      responses:
+        "200": { description: ok }
+`,
+			expects: "external-docs-url-required",
+		},
+		{
+			name: "component wrapper",
+			spec: `
+openapi: 3.0.0
+info: { title: t, version: "1" }
+paths: {}
+components:
+  securitySchemes:
+    s: { type: bogus }
+`,
+			expects: "security-scheme-type-invalid",
+		},
+		{
+			name: "schema nested in a component",
+			spec: `
+openapi: 3.0.0
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    S: { type: string, const: x }
+`,
+			expects: "const-field-for-3-1-plus",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			doc, err := loader.LoadFromData([]byte(tc.spec))
+			require.NoError(t, err)
 
-	var codes []string
-	for _, e := range verr.(openapi3.MultiError) {
-		var coded openapi3.CodedError
-		require.ErrorAs(t, e, &coded, "every validation error carries a code")
-		codes = append(codes, coded.Code())
-	}
-	require.Contains(t, codes, "operation-responses-required")
-	for _, c := range codes {
-		require.Contains(t, openapi3.ValidationErrorCodes(), c, "emitted codes come from the catalog")
+			verr := doc.Validate(t.Context(), openapi3.EnableMultiError())
+			require.Error(t, verr)
+			var multi openapi3.MultiError
+			require.ErrorAs(t, verr, &multi)
+			require.NotEmpty(t, multi)
+
+			var codes []string
+			for _, e := range multi {
+				var coded openapi3.CodedError
+				require.ErrorAs(t, e, &coded, "a code must be reachable through the %s chain (error: %v)", tc.name, e)
+				codes = append(codes, coded.Code())
+			}
+			require.Contains(t, codes, tc.expects)
+			for _, c := range codes {
+				require.Contains(t, openapi3.ValidationErrorCodes(), c, "emitted codes come from the catalog")
+			}
+		})
 	}
 }
