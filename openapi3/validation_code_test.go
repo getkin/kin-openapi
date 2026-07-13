@@ -127,7 +127,8 @@ paths:
     get:
       summary: no responses
 `
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	verr := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, verr)
