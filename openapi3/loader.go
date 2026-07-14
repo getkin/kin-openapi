@@ -546,7 +546,7 @@ func (loader *Loader) attachOriginToResolved(resolved any, componentPath *url.UR
 	if tree == nil {
 		return
 	}
-	for _, part := range strings.Split(strings.Trim(fragment, "/"), "/") {
+	for part := range strings.SplitSeq(strings.Trim(fragment, "/"), "/") {
 		if part == "" {
 			continue
 		}
