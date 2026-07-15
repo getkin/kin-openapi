@@ -3343,6 +3343,18 @@ func (doc *T) ValidateSchemaJSON(schema *Schema, value any, opts ...SchemaValida
     format validators. This is a convenience method that automatically applies
     the document's format validators.
 
+func (doc *T) WalkParameters(fn WalkParametersFunc) error
+    WalkParameters visits every parameter reachable from the document exactly
+    once, invoking fn for each. It follows resolved $ref targets (param.Value),
+    so each distinct *Parameter is visited a single time regardless of how
+    many references point at it. Maps are visited in sorted key order, so the
+    traversal is deterministic.
+
+    It covers components.parameters, path items, operations, callbacks,
+    and webhooks. It is the parameter counterpart of WalkSchemas: useful for
+    validation, linting, parameter transformation, and documentation, without
+    re-deriving the (easy to get wrong) traversal.
+
 func (doc *T) WalkSchemas(fn WalkSchemasFunc) error
     WalkSchemas visits every schema reachable from the document exactly once,
     invoking fn for each. It follows resolved $ref targets (schema.Value) and
@@ -3690,6 +3702,20 @@ type ValidationOptions struct {
 	// Has unexported fields.
 }
     ValidationOptions provides configuration for validating OpenAPI documents.
+
+type WalkParametersFunc func(jsonPointer string, param *ParameterRef) error
+    WalkParametersFunc is called once for each parameter visited by
+    WalkParameters.
+
+    jsonPointer is the RFC 6901 JSON Pointer of the parameter
+    within the document, e.g. "/components/parameters/Limit" or
+    "/paths/~1pets/get/parameters/0". For a parameter referenced from several
+    places it is the pointer of the first visit, and components are visited
+    first, so a shared parameter is reported at its definition. param is non-nil
+    and param.Value is non-nil; the callback may modify param.Value in place,
+    so WalkParameters serves transformers and not only read-only inspection.
+
+    Returning a non-nil error aborts the walk and is returned by WalkParameters.
 
 type WalkSchemasFunc func(jsonPointer string, schema *SchemaRef) error
     WalkSchemasFunc is called once for each schema visited by WalkSchemas.
