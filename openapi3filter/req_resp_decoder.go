@@ -38,6 +38,8 @@ const (
 	KindInvalidFormat
 )
 
+var deepObjectBracketRE = regexp.MustCompile(`\[(.*?)\]`)
+
 // ParseError describes errors which happens while parse operation's parameters, requestBody, or response.
 type ParseError struct {
 	Kind   ParseErrorKind
@@ -665,8 +667,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 				if !regexp.MustCompile(fmt.Sprintf(`^%s\[`, regexp.QuoteMeta(param))).MatchString(key) {
 					continue
 				}
-
-				matches := regexp.MustCompile(`\[(.*?)\]`).FindAllStringSubmatch(key, -1)
+				matches := deepObjectBracketRE.FindAllStringSubmatch(key, -1)
 				switch l := len(matches); {
 				case l == 0:
 					// A query parameter's name does not match the required format, so skip it.
