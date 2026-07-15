@@ -64,6 +64,12 @@ type Loader struct {
 
 	visitedDocuments map[string]*T
 
+	// originTrees retains each visited document's origin tree (keyed like
+	// visitedDocuments) when IncludeOrigin is set, so resolveComponent can
+	// re-attach origins to components that lose them in the generic-map path
+	// without re-reading or re-parsing the file.
+	originTrees map[string]*originTree
+
 	visitedRefs map[string]struct{}
 	visitedPath []string
 	backtrack   map[string][]func(value any)
@@ -133,7 +139,7 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 	if err != nil {
 		return nil, err
 	}
-	if err := unmarshal(data, element, loader.IncludeOrigin, resolvedPath); err != nil {
+	if _, err := unmarshal(data, element, loader.IncludeOrigin, resolvedPath); err != nil {
 		return nil, err
 	}
 
@@ -169,7 +175,7 @@ func (loader *Loader) LoadFromIoReader(reader io.Reader) (*T, error) {
 func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
-	if err := unmarshal(data, doc, loader.IncludeOrigin, nil); err != nil {
+	if _, err := unmarshal(data, doc, loader.IncludeOrigin, nil); err != nil {
 		return nil, err
 	}
 	if err := loader.ResolveRefsIn(doc, nil); err != nil {
@@ -198,8 +204,15 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	doc := &T{}
 	loader.visitedDocuments[uri] = doc
 
-	if err := unmarshal(data, doc, loader.IncludeOrigin, location); err != nil {
+	tree, err := unmarshal(data, doc, loader.IncludeOrigin, location)
+	if err != nil {
 		return nil, err
+	}
+	if tree != nil {
+		if loader.originTrees == nil {
+			loader.originTrees = make(map[string]*originTree)
+		}
+		loader.originTrees[uri] = tree
 	}
 
 	doc.url = copyURI(location)
@@ -468,7 +481,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		if err2 != nil {
 			return nil, nil, err
 		}
-		if err2 = unmarshal(data, &cursor, loader.IncludeOrigin, path); err2 != nil {
+		if _, err2 = unmarshal(data, &cursor, loader.IncludeOrigin, path); err2 != nil {
 			return nil, nil, err
 		}
 		if cursor, err2 = drill(cursor); err2 != nil || cursor == nil {
@@ -530,19 +543,16 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 // attachOriginToResolved re-attaches source origins to a component resolved
 // through the generic-map path: a $ref to a schema under an arbitrary top-level
 // key lands in T.Extensions, and the json round-trip in resolveComponent strips
-// its origin. It re-derives the component file's origin tree, walks to the ref
-// fragment, and applies that subtree, so the object carries the same origins a
-// typed resolution would, with the original file's line numbers. Best-effort:
-// any failure leaves the object without origins, exactly as before.
+// its origin. It walks the document's retained origin tree (see originTrees,
+// populated when the file was first unmarshaled: no re-read, no re-parse) down
+// to the ref fragment and applies that subtree, so the object carries the same
+// origins a typed resolution would, with the original file's line numbers.
+// Best-effort: a missing tree or fragment leaves the object without origins.
 func (loader *Loader) attachOriginToResolved(resolved any, componentPath *url.URL, fragment string) {
 	if !loader.IncludeOrigin || componentPath == nil {
 		return
 	}
-	data, err := loader.readURL(componentPath)
-	if err != nil {
-		return
-	}
-	tree := originTree(data, componentPath)
+	tree := loader.originTrees[componentPath.String()]
 	if tree == nil {
 		return
 	}

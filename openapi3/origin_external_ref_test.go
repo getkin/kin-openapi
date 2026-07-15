@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"net/url"
 	"path/filepath"
 	"testing"
 
@@ -28,4 +29,27 @@ func TestOrigin_ExternalRefToArbitraryTopLevelKey(t *testing.T) {
 	require.Equal(t, "arbitrary_key_schemas.yaml", filepath.Base(user.Origin.Key.File),
 		"origin points at the file the schema lives in, not the referencing document")
 	require.NotZero(t, user.Origin.Key.Line, "the origin has a source line")
+}
+
+// Re-attaching origins reuses the origin tree retained at load time: resolving
+// the arbitrary-key $ref must not read any file a second time.
+func TestOrigin_ExternalRefToArbitraryTopLevelKey_NoRereads(t *testing.T) {
+	reads := map[string]int{}
+	loader := NewLoader()
+	loader.IncludeOrigin = true
+	loader.ReadFromURIFunc = func(l *Loader, location *url.URL) ([]byte, error) {
+		reads[location.String()]++
+		return DefaultReadFromURI(l, location)
+	}
+
+	doc, err := loader.LoadFromFile("testdata/origin/arbitrary_key.yaml")
+	require.NoError(t, err)
+
+	user := doc.Paths.Value("/users").Get.Responses.Value("200").Value.Content["application/json"].Schema.Value
+	require.NotNil(t, user.Origin, "origins are attached")
+
+	require.Len(t, reads, 2, "the root and the $ref'd file")
+	for location, n := range reads {
+		require.Equalf(t, 1, n, "%s must be read exactly once", location)
+	}
 }

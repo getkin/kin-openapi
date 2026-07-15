@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"net/url"
 	"reflect"
 	"sort"
 	"strings"
@@ -326,23 +325,6 @@ func jsonTagName(f reflect.StructField) string {
 	return name
 }
 
-// originTree parses data solely for its origin tree, used to re-attach source
-// origins to a component resolved through the generic-map path: a $ref to a
-// schema under an arbitrary top-level key lands in T.Extensions and loses its
-// origin in the json round-trip (see resolveComponent). Returns nil when parsing
-// fails; callers degrade to no origin.
-func originTree(data []byte, location *url.URL) *yaml.OriginTree {
-	var file string
-	if location != nil {
-		file = location.String()
-	}
-	var v any
-	tree, err := yaml.Unmarshal(data, &v, yaml.DecodeOpts{
-		Origin:            yaml.OriginOpt{Enabled: true, File: file},
-		DisableTimestamps: true,
-	})
-	if err != nil {
-		return nil
-	}
-	return tree
-}
+// originTree aliases the decoder-side origin tree, so the loader and marsh can
+// carry it without referencing the yaml package directly.
+type originTree = yaml.OriginTree
