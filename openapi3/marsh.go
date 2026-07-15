@@ -17,12 +17,15 @@ func unmarshalError(jsonUnmarshalErr error) error {
 	return jsonUnmarshalErr
 }
 
-func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error {
+// unmarshal decodes data into v. It returns the document origin tree when
+// includeOrigin is set and the data took the yaml path (json input carries no
+// origins), so the caller can retain it (see Loader.originTrees).
+func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*originTree, error) {
 	var jsonErr, yamlErr error
 
 	// See https://github.com/getkin/kin-openapi/issues/680
 	if jsonErr = json.Unmarshal(data, v); jsonErr == nil {
-		return nil
+		return nil, nil
 	}
 
 	// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
@@ -35,11 +38,11 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error 
 		DisableTimestamps: true,
 	}); err == nil {
 		applyOrigins(v, tree)
-		return nil
+		return tree, nil
 	} else {
 		yamlErr = err
 	}
 
 	// If both unmarshaling attempts fail, return a new error that includes both errors
-	return fmt.Errorf("failed to unmarshal data: json error: %v, yaml error: %v", jsonErr, yamlErr)
+	return nil, fmt.Errorf("failed to unmarshal data: json error: %v, yaml error: %v", jsonErr, yamlErr)
 }

@@ -324,3 +324,7 @@ func jsonTagName(f reflect.StructField) string {
 	name, _, _ := strings.Cut(tag, ",")
 	return name
 }
+
+// originTree aliases the decoder-side origin tree, so the loader and marsh can
+// carry it without referencing the yaml package directly.
+type originTree = yaml.OriginTree
