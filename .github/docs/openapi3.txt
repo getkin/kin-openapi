@@ -292,6 +292,8 @@ type APIKeySecuritySchemeNameRequired struct{ ValidationError }
 
 func (e *APIKeySecuritySchemeNameRequired) As(target any) bool
 
+func (e *APIKeySecuritySchemeNameRequired) Code() string
+
 type AdditionalProperties = BoolSchema
     AdditionalProperties is a type alias for BoolSchema, kept for backward
     compatibility.
@@ -299,6 +301,8 @@ type AdditionalProperties = BoolSchema
 type AnchorFieldFor31Plus struct{ ValidationError }
 
 func (e *AnchorFieldFor31Plus) As(target any) bool
+
+func (e *AnchorFieldFor31Plus) Code() string
 
 type BoolSchema struct {
 	Has    *bool
@@ -428,9 +432,11 @@ type CodedError interface {
     (e.g. the LSP Diagnostic.code field), or link to per-rule documentation
     without depending on message text.
 
-    Codes are a contract: message wording may change freely, codes may not.
-    Renaming or removing a code is a breaking change and is recorded in the
-    README changelog. The full set is available from ValidationErrorCodes.
+    Every code is declared as a literal on its error type; nothing is derived.
+    Codes are a contract: message wording and Go type names may change freely,
+    codes may not. Renaming or removing a code is a breaking change and
+    is recorded in the README changelog. The full set is available from
+    ValidationErrorCodes.
 
     Like net.Error, this interface exists as an assertion target for consumers;
     the package itself constructs concrete error types and does not consume it.
@@ -444,6 +450,8 @@ type CodedError interface {
 type CommentFieldFor31Plus struct{ ValidationError }
 
 func (e *CommentFieldFor31Plus) As(target any) bool
+
+func (e *CommentFieldFor31Plus) Code() string
 
 type ComponentRef interface {
 	RefString() string
@@ -521,6 +529,8 @@ type ConstFieldFor31Plus struct{ ValidationError }
 
 func (e *ConstFieldFor31Plus) As(target any) bool
 
+func (e *ConstFieldFor31Plus) Code() string
+
 type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -548,6 +558,8 @@ type ContainsFieldFor31Plus struct{ ValidationError }
 
 func (e *ContainsFieldFor31Plus) As(target any) bool
 
+func (e *ContainsFieldFor31Plus) Code() string
+
 type Content map[string]*MediaType
     Content is specified by OpenAPI/Swagger 3.0 standard.
 
@@ -574,25 +586,43 @@ type ContentEncodingFieldFor31Plus struct{ ValidationError }
 
 func (e *ContentEncodingFieldFor31Plus) As(target any) bool
 
+func (e *ContentEncodingFieldFor31Plus) Code() string
+
 type ContentMediaTypeFieldFor31Plus struct{ ValidationError }
 
 func (e *ContentMediaTypeFieldFor31Plus) As(target any) bool
+
+func (e *ContentMediaTypeFieldFor31Plus) Code() string
 
 type ContentSchemaFieldFor31Plus struct{ ValidationError }
 
 func (e *ContentSchemaFieldFor31Plus) As(target any) bool
 
+func (e *ContentSchemaFieldFor31Plus) Code() string
+
+type DefaultViolatesSchema struct{ SchemaValueError }
+
+func (e *DefaultViolatesSchema) As(target any) bool
+
+func (e *DefaultViolatesSchema) Code() string
+
 type DefsFieldFor31Plus struct{ ValidationError }
 
 func (e *DefsFieldFor31Plus) As(target any) bool
+
+func (e *DefsFieldFor31Plus) Code() string
 
 type DependentRequiredFieldFor31Plus struct{ ValidationError }
 
 func (e *DependentRequiredFieldFor31Plus) As(target any) bool
 
+func (e *DependentRequiredFieldFor31Plus) Code() string
+
 type DependentSchemasFieldFor31Plus struct{ ValidationError }
 
 func (e *DependentSchemasFieldFor31Plus) As(target any) bool
+
+func (e *DependentSchemasFieldFor31Plus) Code() string
 
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -688,9 +718,13 @@ type DynamicAnchorFieldFor31Plus struct{ ValidationError }
 
 func (e *DynamicAnchorFieldFor31Plus) As(target any) bool
 
+func (e *DynamicAnchorFieldFor31Plus) Code() string
+
 type DynamicRefFieldFor31Plus struct{ ValidationError }
 
 func (e *DynamicRefFieldFor31Plus) As(target any) bool
+
+func (e *DynamicRefFieldFor31Plus) Code() string
 
 type EitherFieldRequiredError struct {
 	// Fields is the set of field names, at least one of which must be
@@ -705,8 +739,6 @@ type EitherFieldRequiredError struct {
     EitherFieldRequiredError clusters "at least one of these fields must be set"
     failures (example.value vs externalValue, link.operationId vs operationRef).
 
-func (e *EitherFieldRequiredError) Code() string
-
 func (e *EitherFieldRequiredError) Error() string
 
 func (e *EitherFieldRequiredError) Unwrap() error
@@ -714,6 +746,8 @@ func (e *EitherFieldRequiredError) Unwrap() error
 type ElseFieldFor31Plus struct{ ValidationError }
 
 func (e *ElseFieldFor31Plus) As(target any) bool
+
+func (e *ElseFieldFor31Plus) Code() string
 
 type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -767,8 +801,6 @@ type ExactlyOneFieldError struct {
     ExactlyOneFieldError clusters "exactly one of these fields must be set"
     failures — e.g. a parameter or header where neither content nor schema is
     set, or both are.
-
-func (e *ExactlyOneFieldError) Code() string
 
 func (e *ExactlyOneFieldError) Error() string
 
@@ -848,9 +880,22 @@ type ExampleValueExternalValueExclusive struct{ ValidationError }
 
 func (e *ExampleValueExternalValueExclusive) As(target any) bool
 
+func (e *ExampleValueExternalValueExclusive) Code() string
+
 type ExampleValueOrExternalValueRequired struct{ ValidationError }
 
 func (e *ExampleValueOrExternalValueRequired) As(target any) bool
+
+func (e *ExampleValueOrExternalValueRequired) Code() string
+
+type ExampleViolatesSchema struct{ SchemaValueError }
+    ExampleViolatesSchema and DefaultViolatesSchema mark which schema value kind
+    failed. They embed SchemaValueError, and their As exposes it, so errors.As
+    with a *SchemaValueError target keeps matching.
+
+func (e *ExampleViolatesSchema) As(target any) bool
+
+func (e *ExampleViolatesSchema) Code() string
 
 type Examples map[string]*ExampleRef // Examples represents components' named examples
 
@@ -861,6 +906,8 @@ func (m Examples) JSONLookup(token string) (any, error)
 type ExamplesFieldFor31Plus struct{ ValidationError }
 
 func (e *ExamplesFieldFor31Plus) As(target any) bool
+
+func (e *ExamplesFieldFor31Plus) Code() string
 
 type ExclusiveBound struct {
 	Bool  *bool    // For OpenAPI 3.0 style (modifier for min/max)
@@ -914,6 +961,8 @@ type ExternalDocsURLRequired struct{ ValidationError }
 
 func (e *ExternalDocsURLRequired) As(target any) bool
 
+func (e *ExternalDocsURLRequired) Code() string
+
 type ExternalDocsURLValidationError struct {
 	Cause error
 }
@@ -961,8 +1010,6 @@ type FieldVersionMismatchError struct {
     (3.1+ keywords used in 3.0 documents). Carries the field name and minimum
     version, wraps the per-site leaf.
 
-func (e *FieldVersionMismatchError) Code() string
-
 func (e *FieldVersionMismatchError) Error() string
 
 func (e *FieldVersionMismatchError) Unwrap() error
@@ -980,8 +1027,6 @@ type ForbiddenFieldError struct {
     ForbiddenFieldError clusters "field X must not be set in this context"
     failures (header.name and header.in inside a Headers map, OAuth flow URLs
     that don't apply to the chosen flow type).
-
-func (e *ForbiddenFieldError) Code() string
 
 func (e *ForbiddenFieldError) Error() string
 
@@ -1033,9 +1078,13 @@ type HeaderContentSchemaExactlyOne struct{ ValidationError }
 
 func (e *HeaderContentSchemaExactlyOne) As(target any) bool
 
+func (e *HeaderContentSchemaExactlyOne) Code() string
+
 type HeaderContentSingleEntry struct{ ValidationError }
 
 func (e *HeaderContentSingleEntry) As(target any) bool
+
+func (e *HeaderContentSingleEntry) Code() string
 
 type HeaderFieldValidationError struct {
 	// Field is "schema" or "content".
@@ -1053,9 +1102,13 @@ type HeaderInForbidden struct{ ValidationError }
 
 func (e *HeaderInForbidden) As(target any) bool
 
+func (e *HeaderInForbidden) Code() string
+
 type HeaderNameForbidden struct{ ValidationError }
 
 func (e *HeaderNameForbidden) As(target any) bool
+
+func (e *HeaderNameForbidden) Code() string
 
 type HeaderRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -1111,9 +1164,13 @@ type IDFieldFor31Plus struct{ ValidationError }
 
 func (e *IDFieldFor31Plus) As(target any) bool
 
+func (e *IDFieldFor31Plus) Code() string
+
 type IfFieldFor31Plus struct{ ValidationError }
 
 func (e *IfFieldFor31Plus) As(target any) bool
+
+func (e *IfFieldFor31Plus) Code() string
 
 type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1148,17 +1205,25 @@ type InfoRequired struct{ ValidationError }
 
 func (e *InfoRequired) As(target any) bool
 
+func (e *InfoRequired) Code() string
+
 type InfoSummaryFieldFor31Plus struct{ ValidationError }
 
 func (e *InfoSummaryFieldFor31Plus) As(target any) bool
+
+func (e *InfoSummaryFieldFor31Plus) Code() string
 
 type InfoTitleRequired struct{ ValidationError }
 
 func (e *InfoTitleRequired) As(target any) bool
 
+func (e *InfoTitleRequired) Code() string
+
 type InfoVersionRequired struct{ ValidationError }
 
 func (e *InfoVersionRequired) As(target any) bool
+
+func (e *InfoVersionRequired) Code() string
 
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
@@ -1235,13 +1300,23 @@ func (e *InvalidSerializationMethodError) Code() string
 
 func (e *InvalidSerializationMethodError) Error() string
 
+type ItemSchemaFieldFor32Plus struct{ ValidationError }
+
+func (e *ItemSchemaFieldFor32Plus) As(target any) bool
+
+func (e *ItemSchemaFieldFor32Plus) Code() string
+
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
 func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool
 
+func (e *JSONSchemaDialectAbsoluteURIRequired) Code() string
+
 type JSONSchemaDialectFieldFor31Plus struct{ ValidationError }
 
 func (e *JSONSchemaDialectFieldFor31Plus) As(target any) bool
+
+func (e *JSONSchemaDialectFieldFor31Plus) Code() string
 
 type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1275,13 +1350,19 @@ type LicenseIdentifierFieldFor31Plus struct{ ValidationError }
 
 func (e *LicenseIdentifierFieldFor31Plus) As(target any) bool
 
+func (e *LicenseIdentifierFieldFor31Plus) Code() string
+
 type LicenseNameRequired struct{ ValidationError }
 
 func (e *LicenseNameRequired) As(target any) bool
 
+func (e *LicenseNameRequired) Code() string
+
 type LicenseURLIdentifierExclusive struct{ ValidationError }
 
 func (e *LicenseURLIdentifierExclusive) As(target any) bool
+
+func (e *LicenseURLIdentifierExclusive) Code() string
 
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1313,9 +1394,13 @@ type LinkOperationIDOrRefRequired struct{ ValidationError }
 
 func (e *LinkOperationIDOrRefRequired) As(target any) bool
 
+func (e *LinkOperationIDOrRefRequired) Code() string
+
 type LinkOperationIDRefExclusive struct{ ValidationError }
 
 func (e *LinkOperationIDRefExclusive) As(target any) bool
+
+func (e *LinkOperationIDRefExclusive) Code() string
 
 type LinkRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -1456,6 +1541,8 @@ type MaxContainsFieldFor31Plus struct{ ValidationError }
 
 func (e *MaxContainsFieldFor31Plus) As(target any) bool
 
+func (e *MaxContainsFieldFor31Plus) Code() string
+
 type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -1500,6 +1587,8 @@ type MediaTypeExampleExamplesExclusive struct{ ValidationError }
 
 func (e *MediaTypeExampleExamplesExclusive) As(target any) bool
 
+func (e *MediaTypeExampleExamplesExclusive) Code() string
+
 type MediaTypeExampleValidationError struct {
 	// ExampleName is the example map key.
 	ExampleName string
@@ -1515,6 +1604,8 @@ func (e *MediaTypeExampleValidationError) Unwrap() error
 type MinContainsFieldFor31Plus struct{ ValidationError }
 
 func (e *MinContainsFieldFor31Plus) As(target any) bool
+
+func (e *MinContainsFieldFor31Plus) Code() string
 
 type MultiError []error
     MultiError is a collection of errors, intended for when multiple issues need
@@ -1546,8 +1637,6 @@ type MutuallyExclusiveFieldsError struct {
     one is allowed" failures (example.value vs externalValue, mediaType.example
     vs examples, license.url vs identifier, link.operationId vs operationRef).
     Carries both field names and wraps the per-site leaf.
-
-func (e *MutuallyExclusiveFieldsError) Code() string
 
 func (e *MutuallyExclusiveFieldsError) Error() string
 
@@ -1606,9 +1695,13 @@ type OAuthFlowAuthorizationURLForbidden struct{ ValidationError }
 
 func (e *OAuthFlowAuthorizationURLForbidden) As(target any) bool
 
+func (e *OAuthFlowAuthorizationURLForbidden) Code() string
+
 type OAuthFlowAuthorizationURLRequired struct{ ValidationError }
 
 func (e *OAuthFlowAuthorizationURLRequired) As(target any) bool
+
+func (e *OAuthFlowAuthorizationURLRequired) Code() string
 
 type OAuthFlowFieldValidationError struct {
 	// Field is the offending field name ("refreshUrl" is the only
@@ -1627,13 +1720,19 @@ type OAuthFlowScopesRequired struct{ ValidationError }
 
 func (e *OAuthFlowScopesRequired) As(target any) bool
 
+func (e *OAuthFlowScopesRequired) Code() string
+
 type OAuthFlowTokenURLForbidden struct{ ValidationError }
 
 func (e *OAuthFlowTokenURLForbidden) As(target any) bool
 
+func (e *OAuthFlowTokenURLForbidden) Code() string
+
 type OAuthFlowTokenURLRequired struct{ ValidationError }
 
 func (e *OAuthFlowTokenURLRequired) As(target any) bool
+
+func (e *OAuthFlowTokenURLRequired) Code() string
 
 type OAuthFlowValidationError struct {
 	// FlowKind is one of "implicit", "password", "clientCredentials",
@@ -1677,9 +1776,13 @@ type OpenAPIVersionRequired struct{ ValidationError }
 
 func (e *OpenAPIVersionRequired) As(target any) bool
 
+func (e *OpenAPIVersionRequired) Code() string
+
 type OpenIDConnectURLRequired struct{ ValidationError }
 
 func (e *OpenIDConnectURLRequired) As(target any) bool
+
+func (e *OpenIDConnectURLRequired) Code() string
 
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -1749,6 +1852,8 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 type OperationResponsesRequired struct{ ValidationError }
 
 func (e *OperationResponsesRequired) As(target any) bool
+
+func (e *OperationResponsesRequired) Code() string
 
 type OperationValidationError struct {
 	Method string
@@ -1836,13 +1941,19 @@ type ParameterContentSchemaExactlyOne struct{ ValidationError }
 
 func (e *ParameterContentSchemaExactlyOne) As(target any) bool
 
+func (e *ParameterContentSchemaExactlyOne) Code() string
+
 type ParameterContentSingleEntry struct{ ValidationError }
 
 func (e *ParameterContentSingleEntry) As(target any) bool
 
+func (e *ParameterContentSingleEntry) Code() string
+
 type ParameterExampleAndExamplesExclusive struct{ ValidationError }
 
 func (e *ParameterExampleAndExamplesExclusive) As(target any) bool
+
+func (e *ParameterExampleAndExamplesExclusive) Code() string
 
 type ParameterExampleValidationError struct {
 	// ExampleName is the example map key.
@@ -1873,6 +1984,8 @@ func (e *ParameterFieldValidationError) Unwrap() error
 type ParameterNameRequired struct{ ValidationError }
 
 func (e *ParameterNameRequired) As(target any) bool
+
+func (e *ParameterNameRequired) Code() string
 
 type ParameterRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -2120,17 +2233,25 @@ type PathsRequired struct{ ValidationError }
 
 func (e *PathsRequired) As(target any) bool
 
+func (e *PathsRequired) Code() string
+
 type PatternPropertiesFieldFor31Plus struct{ ValidationError }
 
 func (e *PatternPropertiesFieldFor31Plus) As(target any) bool
+
+func (e *PatternPropertiesFieldFor31Plus) Code() string
 
 type PrefixItemsFieldFor31Plus struct{ ValidationError }
 
 func (e *PrefixItemsFieldFor31Plus) As(target any) bool
 
+func (e *PrefixItemsFieldFor31Plus) Code() string
+
 type PropertyNamesFieldFor31Plus struct{ ValidationError }
 
 func (e *PropertyNamesFieldFor31Plus) As(target any) bool
+
+func (e *PropertyNamesFieldFor31Plus) Code() string
 
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
     ReadFromURIFunc defines a function which reads the contents of a resource
@@ -2243,6 +2364,8 @@ type RequestBodyContentRequired struct{ ValidationError }
 
 func (e *RequestBodyContentRequired) As(target any) bool
 
+func (e *RequestBodyContentRequired) Code() string
+
 type RequestBodyRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
 	// are allowed by the openapi spec.
@@ -2310,8 +2433,6 @@ type RequiredFieldError struct {
         var ivr *InfoVersionRequired
         if errors.As(err, &ivr) { /* knows it's exactly info.version */ }
 
-func (e *RequiredFieldError) Code() string
-
 func (e *RequiredFieldError) Error() string
 
 func (e *RequiredFieldError) Unwrap() error
@@ -2359,6 +2480,8 @@ func (m ResponseBodies) JSONLookup(token string) (any, error)
 type ResponseDescriptionRequired struct{ ValidationError }
 
 func (e *ResponseDescriptionRequired) As(target any) bool
+
+func (e *ResponseDescriptionRequired) Code() string
 
 type ResponseRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -2468,6 +2591,8 @@ func (responses *Responses) Value(key string) *ResponseRef
 type ResponsesNonEmptyRequired struct{ ValidationError }
 
 func (e *ResponsesNonEmptyRequired) As(target any) bool
+
+func (e *ResponsesNonEmptyRequired) Code() string
 
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -2706,6 +2831,8 @@ type SchemaAdditionalPropertiesBothForms struct{ ValidationError }
 
 func (e *SchemaAdditionalPropertiesBothForms) As(target any) bool
 
+func (e *SchemaAdditionalPropertiesBothForms) Code() string
+
 type SchemaBothFormsExclusive struct {
 	// Field is the name of the union-typed schema property
 	// (e.g. "additionalProperties", "unevaluatedItems").
@@ -2719,8 +2846,6 @@ type SchemaBothFormsExclusive struct {
     SchemaBothFormsExclusive clusters "this union-typed schema field is
     set to both its boolean and schema forms simultaneously" failures —
     additionalProperties, unevaluatedItems, unevaluatedProperties.
-
-func (e *SchemaBothFormsExclusive) Code() string
 
 func (e *SchemaBothFormsExclusive) Error() string
 
@@ -2770,9 +2895,13 @@ type SchemaFieldFor31Plus struct{ ValidationError }
 
 func (e *SchemaFieldFor31Plus) As(target any) bool
 
+func (e *SchemaFieldFor31Plus) Code() string
+
 type SchemaItemsRequired struct{ ValidationError }
 
 func (e *SchemaItemsRequired) As(target any) bool
+
+func (e *SchemaItemsRequired) Code() string
 
 type SchemaPatternRegexError struct {
 	// Pattern is the schema's `pattern:` value that failed to compile.
@@ -2803,6 +2932,8 @@ func (e *SchemaPatternRegexError) Unwrap() error
 type SchemaReadOnlyWriteOnlyExclusive struct{ ValidationError }
 
 func (e *SchemaReadOnlyWriteOnlyExclusive) As(target any) bool
+
+func (e *SchemaReadOnlyWriteOnlyExclusive) Code() string
 
 type SchemaRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -2873,9 +3004,13 @@ type SchemaUnevaluatedItemsBothForms struct{ ValidationError }
 
 func (e *SchemaUnevaluatedItemsBothForms) As(target any) bool
 
+func (e *SchemaUnevaluatedItemsBothForms) Code() string
+
 type SchemaUnevaluatedPropertiesBothForms struct{ ValidationError }
 
 func (e *SchemaUnevaluatedPropertiesBothForms) As(target any) bool
+
+func (e *SchemaUnevaluatedPropertiesBothForms) Code() string
 
 type SchemaValidationOption func(*schemaValidationSettings)
     SchemaValidationOption describes options a user has when validating request
@@ -2987,8 +3122,6 @@ type SchemaValueError struct {
     either a single SchemaError or a MultiError aggregating several. errors.As
     walks both shapes transparently.
 
-func (e *SchemaValueError) Code() string
-
 func (e *SchemaValueError) Error() string
 
 func (e *SchemaValueError) Unwrap() error
@@ -3092,6 +3225,8 @@ type SecuritySchemeBearerFormatForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeBearerFormatForbidden) As(target any) bool
 
+func (e *SecuritySchemeBearerFormatForbidden) Code() string
+
 type SecuritySchemeFlowValidationError struct {
 	Cause error
 }
@@ -3106,17 +3241,25 @@ type SecuritySchemeFlowsForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeFlowsForbidden) As(target any) bool
 
+func (e *SecuritySchemeFlowsForbidden) Code() string
+
 type SecuritySchemeFlowsRequired struct{ ValidationError }
 
 func (e *SecuritySchemeFlowsRequired) As(target any) bool
+
+func (e *SecuritySchemeFlowsRequired) Code() string
 
 type SecuritySchemeInForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeInForbidden) As(target any) bool
 
+func (e *SecuritySchemeInForbidden) Code() string
+
 type SecuritySchemeNameForbidden struct{ ValidationError }
 
 func (e *SecuritySchemeNameForbidden) As(target any) bool
+
+func (e *SecuritySchemeNameForbidden) Code() string
 
 type SecuritySchemeRef struct {
 	// Extensions only captures fields starting with 'x-' as no other fields
@@ -3215,6 +3358,8 @@ type ServerURLRequired struct{ ValidationError }
 
 func (e *ServerURLRequired) As(target any) bool
 
+func (e *ServerURLRequired) Code() string
+
 type ServerURLTemplateError struct {
 	// URL is the server URL whose template failed validation.
 	URL string
@@ -3264,6 +3409,8 @@ type ServerVariableDefaultRequired struct{ ValidationError }
 
 func (e *ServerVariableDefaultRequired) As(target any) bool
 
+func (e *ServerVariableDefaultRequired) Code() string
+
 type ServerVariables map[string]*ServerVariable
     ServerVariable is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-variable-object
@@ -3292,8 +3439,6 @@ type SingleEntryContentError struct {
 }
     SingleEntryContentError clusters "the content map must contain at most one
     entry" failures (parameter.content, header.content).
-
-func (e *SingleEntryContentError) Code() string
 
 func (e *SingleEntryContentError) Error() string
 
@@ -3503,6 +3648,8 @@ type ThenFieldFor31Plus struct{ ValidationError }
 
 func (e *ThenFieldFor31Plus) As(target any) bool
 
+func (e *ThenFieldFor31Plus) Code() string
+
 type Types []string
     Types represents the type(s) of a schema.
 
@@ -3629,9 +3776,13 @@ type UnevaluatedItemsFieldFor31Plus struct{ ValidationError }
 
 func (e *UnevaluatedItemsFieldFor31Plus) As(target any) bool
 
+func (e *UnevaluatedItemsFieldFor31Plus) Code() string
+
 type UnevaluatedPropertiesFieldFor31Plus struct{ ValidationError }
 
 func (e *UnevaluatedPropertiesFieldFor31Plus) As(target any) bool
+
+func (e *UnevaluatedPropertiesFieldFor31Plus) Code() string
 
 type UnresolvedRefError struct {
 	// Ref is the unresolved $ref value (e.g. "#/components/schemas/X"
@@ -3849,6 +4000,8 @@ func (e *WebhookValidationError) Unwrap() error
 type WebhooksFieldFor31Plus struct{ ValidationError }
 
 func (e *WebhooksFieldFor31Plus) As(target any) bool
+
+func (e *WebhooksFieldFor31Plus) Code() string
 
 type XML struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

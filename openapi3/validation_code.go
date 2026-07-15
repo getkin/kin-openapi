@@ -1,10 +1,6 @@
 package openapi3
 
-import (
-	"slices"
-	"strings"
-	"unicode"
-)
+import "slices"
 
 // CodedError is implemented by every typed validation error. Code returns a
 // stable, kebab-case identifier for the validation rule that failed (e.g.
@@ -13,9 +9,11 @@ import (
 // (e.g. the LSP Diagnostic.code field), or link to per-rule documentation
 // without depending on message text.
 //
-// Codes are a contract: message wording may change freely, codes may not.
-// Renaming or removing a code is a breaking change and is recorded in the
-// README changelog. The full set is available from ValidationErrorCodes.
+// Every code is declared as a literal on its error type; nothing is derived.
+// Codes are a contract: message wording and Go type names may change freely,
+// codes may not. Renaming or removing a code is a breaking change and is
+// recorded in the README changelog. The full set is available from
+// ValidationErrorCodes.
 //
 // Like net.Error, this interface exists as an assertion target for consumers;
 // the package itself constructs concrete error types and does not consume it.
@@ -30,91 +28,132 @@ type CodedError interface {
 	Code() string
 }
 
-func (e *RequiredFieldError) Code() string {
-	return codeToken(e.Field) + "-required"
+func (e *AnchorFieldFor31Plus) Code() string             { return "anchor-field-for-3-1-plus" }
+func (e *APIKeyInInvalidError) Code() string             { return "security-scheme-apikey-in-invalid" }
+func (e *APIKeySecuritySchemeNameRequired) Code() string { return "security-scheme-name-required" }
+func (e *CommentFieldFor31Plus) Code() string            { return "comment-field-for-3-1-plus" }
+func (e *ConflictingPathsError) Code() string            { return "conflicting-paths" }
+func (e *ConstFieldFor31Plus) Code() string              { return "const-field-for-3-1-plus" }
+func (e *ContainsFieldFor31Plus) Code() string           { return "contains-field-for-3-1-plus" }
+func (e *ContentEncodingFieldFor31Plus) Code() string    { return "content-encoding-field-for-3-1-plus" }
+func (e *ContentMediaTypeFieldFor31Plus) Code() string {
+	return "content-media-type-field-for-3-1-plus"
 }
-
-func (e *FieldVersionMismatchError) Code() string {
-	return codeToken(e.Field) + "-field-for-" + strings.ReplaceAll(e.MinVersion, ".", "-") + "-plus"
+func (e *ContentSchemaFieldFor31Plus) Code() string { return "content-schema-field-for-3-1-plus" }
+func (e *DefaultViolatesSchema) Code() string       { return "default-violates-schema" }
+func (e *DefsFieldFor31Plus) Code() string          { return "defs-field-for-3-1-plus" }
+func (e *DependentRequiredFieldFor31Plus) Code() string {
+	return "dependent-required-field-for-3-1-plus"
 }
-
-func (e *SchemaValueError) Code() string {
-	return codeToken(e.ValueKind) + "-violates-schema"
+func (e *DependentSchemasFieldFor31Plus) Code() string { return "dependent-schemas-field-for-3-1-plus" }
+func (e *DuplicateOperationIDError) Code() string      { return "duplicate-operation-id" }
+func (e *DuplicateParameterError) Code() string        { return "duplicate-parameter" }
+func (e *DuplicateRequiredFieldError) Code() string    { return "duplicate-required-field" }
+func (e *DuplicateTagError) Code() string              { return "duplicate-tag" }
+func (e *DynamicAnchorFieldFor31Plus) Code() string    { return "dynamic-anchor-field-for-3-1-plus" }
+func (e *DynamicRefFieldFor31Plus) Code() string       { return "dynamic-ref-field-for-3-1-plus" }
+func (e *ElseFieldFor31Plus) Code() string             { return "else-field-for-3-1-plus" }
+func (e *ExamplesFieldFor31Plus) Code() string         { return "examples-field-for-3-1-plus" }
+func (e *ExampleValueExternalValueExclusive) Code() string {
+	return "value-external-value-mutually-exclusive"
 }
-
-func (e *MutuallyExclusiveFieldsError) Code() string {
-	return codeToken(e.Field1) + "-" + codeToken(e.Field2) + "-mutually-exclusive"
+func (e *ExampleValueOrExternalValueRequired) Code() string {
+	return "value-or-external-value-required"
 }
-
-func (e *ForbiddenFieldError) Code() string {
-	return codeToken(e.Field) + "-forbidden"
+func (e *ExampleViolatesSchema) Code() string                { return "example-violates-schema" }
+func (e *ExternalDocsURLRequired) Code() string              { return "external-docs-url-required" }
+func (e *ExtraSiblingFieldsError) Code() string              { return "extra-sibling-fields" }
+func (e *HeaderContentSchemaExactlyOne) Code() string        { return "content-or-schema-exactly-one" }
+func (e *HeaderContentSingleEntry) Code() string             { return "header-content-single-entry" }
+func (e *HeaderInForbidden) Code() string                    { return "in-forbidden" }
+func (e *HeaderNameForbidden) Code() string                  { return "name-forbidden" }
+func (e *IDFieldFor31Plus) Code() string                     { return "id-field-for-3-1-plus" }
+func (e *IfFieldFor31Plus) Code() string                     { return "if-field-for-3-1-plus" }
+func (e *InfoRequired) Code() string                         { return "info-required" }
+func (e *InfoSummaryFieldFor31Plus) Code() string            { return "summary-field-for-3-1-plus" }
+func (e *InfoTitleRequired) Code() string                    { return "info-title-required" }
+func (e *InfoVersionRequired) Code() string                  { return "info-version-required" }
+func (e *InvalidHTTPSchemeError) Code() string               { return "security-scheme-http-scheme-invalid" }
+func (e *InvalidParameterInError) Code() string              { return "parameter-in-invalid" }
+func (e *InvalidSecuritySchemeTypeError) Code() string       { return "security-scheme-type-invalid" }
+func (e *InvalidSerializationMethodError) Code() string      { return "serialization-method-invalid" }
+func (e *ItemSchemaFieldFor32Plus) Code() string             { return "item-schema-field-for-3-2-plus" }
+func (e *JSONSchemaDialectAbsoluteURIRequired) Code() string { return "json-schema-dialect-required" }
+func (e *JSONSchemaDialectFieldFor31Plus) Code() string {
+	return "jsonschemadialect-field-for-3-1-plus"
 }
-
-func (e *EitherFieldRequiredError) Code() string {
-	return joinCodeTokens(e.Fields) + "-required"
+func (e *LicenseIdentifierFieldFor31Plus) Code() string { return "identifier-field-for-3-1-plus" }
+func (e *LicenseNameRequired) Code() string             { return "license-name-required" }
+func (e *LicenseURLIdentifierExclusive) Code() string   { return "url-identifier-mutually-exclusive" }
+func (e *LinkOperationIDOrRefRequired) Code() string    { return "operation-id-or-operation-ref-required" }
+func (e *LinkOperationIDRefExclusive) Code() string {
+	return "operation-id-operation-ref-mutually-exclusive"
 }
-
-func (e *ExactlyOneFieldError) Code() string {
-	return joinCodeTokens(e.Fields) + "-exactly-one"
+func (e *MaxContainsFieldFor31Plus) Code() string { return "max-contains-field-for-3-1-plus" }
+func (e *MediaTypeExampleExamplesExclusive) Code() string {
+	return "example-examples-mutually-exclusive"
 }
-
-func (e *SchemaBothFormsExclusive) Code() string {
-	return codeToken(e.Field) + "-both-forms-exclusive"
+func (e *MinContainsFieldFor31Plus) Code() string          { return "min-contains-field-for-3-1-plus" }
+func (e *OAuthFlowAuthorizationURLForbidden) Code() string { return "authorization-url-forbidden" }
+func (e *OAuthFlowAuthorizationURLRequired) Code() string {
+	return "oauth-flow-authorization-url-required"
 }
-
-func (e *SingleEntryContentError) Code() string {
-	return codeToken(e.Subject) + "-content-single-entry"
+func (e *OAuthFlowScopesRequired) Code() string          { return "oauth-flow-scopes-required" }
+func (e *OAuthFlowTokenURLForbidden) Code() string       { return "token-url-forbidden" }
+func (e *OAuthFlowTokenURLRequired) Code() string        { return "oauth-flow-token-url-required" }
+func (e *OpenAPIVersionRequired) Code() string           { return "openapi-required" }
+func (e *OpenIDConnectURLRequired) Code() string         { return "openid-connect-url-required" }
+func (e *OperationResponsesRequired) Code() string       { return "operation-responses-required" }
+func (e *ParameterContentSchemaExactlyOne) Code() string { return "content-or-schema-exactly-one" }
+func (e *ParameterContentSingleEntry) Code() string      { return "parameter-content-single-entry" }
+func (e *ParameterExampleAndExamplesExclusive) Code() string {
+	return "example-examples-mutually-exclusive"
 }
-
-func (e *DuplicateRequiredFieldError) Code() string { return "duplicate-required-field" }
-func (e *DuplicateTagError) Code() string           { return "duplicate-tag" }
-func (e *PathParametersError) Code() string         { return "path-parameters-mismatch" }
-func (e *ServerURLTemplateError) Code() string      { return "server-url-template-invalid" }
-func (e *WebhookNilError) Code() string             { return "webhook-nil" }
-func (e *PathParameterRequiredError) Code() string  { return "path-parameter-required" }
-func (e *DuplicateOperationIDError) Code() string   { return "duplicate-operation-id" }
-func (e *ExtraSiblingFieldsError) Code() string     { return "extra-sibling-fields" }
-func (e *SchemaTypeError) Code() string             { return "schema-type-unsupported" }
-func (e *InvalidParameterInError) Code() string     { return "parameter-in-invalid" }
-func (e *SchemaPatternRegexError) Code() string     { return "schema-pattern-regex-invalid" }
-func (e *InvalidSecuritySchemeTypeError) Code() string {
-	return "security-scheme-type-invalid"
-}
-func (e *InvalidHTTPSchemeError) Code() string      { return "security-scheme-http-scheme-invalid" }
-func (e *UnresolvedRefError) Code() string          { return "unresolved-ref" }
-func (e *APIKeyInInvalidError) Code() string        { return "security-scheme-apikey-in-invalid" }
+func (e *ParameterNameRequired) Code() string       { return "parameter-name-required" }
 func (e *PathMustStartWithSlashError) Code() string { return "path-must-start-with-slash" }
-func (e *ConflictingPathsError) Code() string       { return "conflicting-paths" }
-func (e *DuplicateParameterError) Code() string     { return "duplicate-parameter" }
-func (e *InvalidSerializationMethodError) Code() string {
-	return "serialization-method-invalid"
+func (e *PathParameterRequiredError) Code() string  { return "path-parameter-required" }
+func (e *PathParametersError) Code() string         { return "path-parameters-mismatch" }
+func (e *PathsRequired) Code() string               { return "paths-required" }
+func (e *PatternPropertiesFieldFor31Plus) Code() string {
+	return "pattern-properties-field-for-3-1-plus"
 }
-
-// codeToken renders a field path as a code segment: "$" is stripped, "." joins
-// with "-", known acronyms stay single words ("oAuthFlow" -> "oauth-flow"),
-// and camelCase splits on "-" ("externalDocs.url" -> "external-docs-url").
-func codeToken(field string) string {
-	field = strings.TrimPrefix(field, "$")
-	field = strings.ReplaceAll(field, ".", "-")
-	field = strings.ReplaceAll(field, "oAuth", "oauth")
-	field = strings.ReplaceAll(field, "openId", "openid")
-	var b strings.Builder
-	for i, r := range field {
-		if i > 0 && unicode.IsUpper(r) {
-			b.WriteByte('-')
-		}
-		b.WriteRune(unicode.ToLower(r))
-	}
-	return b.String()
+func (e *PrefixItemsFieldFor31Plus) Code() string   { return "prefix-items-field-for-3-1-plus" }
+func (e *PropertyNamesFieldFor31Plus) Code() string { return "property-names-field-for-3-1-plus" }
+func (e *RequestBodyContentRequired) Code() string  { return "request-body-content-required" }
+func (e *ResponseDescriptionRequired) Code() string { return "response-description-required" }
+func (e *ResponsesNonEmptyRequired) Code() string   { return "responses-required" }
+func (e *SchemaAdditionalPropertiesBothForms) Code() string {
+	return "additional-properties-both-forms-exclusive"
 }
-
-func joinCodeTokens(fields []string) string {
-	tokens := make([]string, len(fields))
-	for i, f := range fields {
-		tokens[i] = codeToken(f)
-	}
-	return strings.Join(tokens, "-or-")
+func (e *SchemaFieldFor31Plus) Code() string    { return "schema-field-for-3-1-plus" }
+func (e *SchemaItemsRequired) Code() string     { return "schema-items-required" }
+func (e *SchemaPatternRegexError) Code() string { return "schema-pattern-regex-invalid" }
+func (e *SchemaReadOnlyWriteOnlyExclusive) Code() string {
+	return "read-only-write-only-mutually-exclusive"
 }
+func (e *SchemaTypeError) Code() string { return "schema-type-unsupported" }
+func (e *SchemaUnevaluatedItemsBothForms) Code() string {
+	return "unevaluated-items-both-forms-exclusive"
+}
+func (e *SchemaUnevaluatedPropertiesBothForms) Code() string {
+	return "unevaluated-properties-both-forms-exclusive"
+}
+func (e *SecuritySchemeBearerFormatForbidden) Code() string { return "bearer-format-forbidden" }
+func (e *SecuritySchemeFlowsForbidden) Code() string        { return "flows-forbidden" }
+func (e *SecuritySchemeFlowsRequired) Code() string         { return "flows-required" }
+func (e *SecuritySchemeInForbidden) Code() string           { return "in-forbidden" }
+func (e *SecuritySchemeNameForbidden) Code() string         { return "name-forbidden" }
+func (e *ServerURLRequired) Code() string                   { return "server-url-required" }
+func (e *ServerURLTemplateError) Code() string              { return "server-url-template-invalid" }
+func (e *ServerVariableDefaultRequired) Code() string       { return "default-required" }
+func (e *ThenFieldFor31Plus) Code() string                  { return "then-field-for-3-1-plus" }
+func (e *UnevaluatedItemsFieldFor31Plus) Code() string      { return "unevaluated-items-field-for-3-1-plus" }
+func (e *UnevaluatedPropertiesFieldFor31Plus) Code() string {
+	return "unevaluated-properties-field-for-3-1-plus"
+}
+func (e *UnresolvedRefError) Code() string     { return "unresolved-ref" }
+func (e *WebhookNilError) Code() string        { return "webhook-nil" }
+func (e *WebhooksFieldFor31Plus) Code() string { return "webhooks-field-for-3-1-plus" }
 
 // ValidationErrorCodes returns every code a validation error can carry,
 // sorted. TestValidationErrorCodes keeps it in sync with the errors the

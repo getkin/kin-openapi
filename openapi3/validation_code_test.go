@@ -10,90 +10,115 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// codedErrorInventory holds one instance of every validation error the
-// openapi3 validators emit, with the strings the emit sites use. When a
-// validation is added, renamed, or removed, update both this inventory and
-// ValidationErrorCodes -- TestValidationErrorCodes fails until the two agree,
-// which keeps the exported catalog honest.
+// codedErrorInventory holds one instance of every typed validation error.
+// Codes are literals on the types, so zero values suffice. When a validation
+// is added, renamed, or removed, update this inventory and
+// ValidationErrorCodes together; TestValidationErrorCodes fails until the two
+// agree, which keeps the exported catalog honest.
 func codedErrorInventory() []openapi3.CodedError {
-	var errs []openapi3.CodedError
-
-	for _, f := range []string{
-		"default", "externalDocs.url", "flows", "info", "info.title", "info.version",
-		"jsonSchemaDialect", "license.name", "oAuthFlow.authorizationUrl", "oAuthFlow.scopes",
-		"oAuthFlow.tokenUrl", "openapi", "openIdConnectUrl", "operation.responses",
-		"parameter.name", "paths", "requestBody.content", "response.description",
-		"responses", "schema.items", "securityScheme.name", "server.url",
-	} {
-		errs = append(errs, &openapi3.RequiredFieldError{Field: f})
-	}
-
-	// fields allowed from OAS 3.1 (see Schema.Validate and the per-object
-	// validators) and from OAS 3.2 (itemSchema)
-	for _, f := range []string{
-		"summary", "identifier", "webhooks", "jsonschemadialect",
-		"$anchor", "$comment", "$defs", "$dynamicAnchor", "$dynamicRef", "$id", "$schema",
-		"const", "contains", "contentEncoding", "contentMediaType", "contentSchema",
-		"dependentRequired", "dependentSchemas", "else", "examples", "if",
-		"maxContains", "minContains", "patternProperties", "prefixItems",
-		"propertyNames", "then", "unevaluatedItems", "unevaluatedProperties",
-	} {
-		errs = append(errs, &openapi3.FieldVersionMismatchError{Field: f, MinVersion: "3.1"})
-	}
-	errs = append(errs, &openapi3.FieldVersionMismatchError{Field: "itemSchema", MinVersion: "3.2"})
-
-	for _, k := range []string{"example", "default"} {
-		errs = append(errs, &openapi3.SchemaValueError{ValueKind: k})
-	}
-
-	for _, p := range [][2]string{
-		{"value", "externalValue"}, {"example", "examples"}, {"url", "identifier"},
-		{"operationId", "operationRef"}, {"readOnly", "writeOnly"},
-	} {
-		errs = append(errs, &openapi3.MutuallyExclusiveFieldsError{Field1: p[0], Field2: p[1]})
-	}
-
-	for _, f := range []string{"authorizationUrl", "bearerFormat", "flows", "in", "name", "tokenUrl"} {
-		errs = append(errs, &openapi3.ForbiddenFieldError{Field: f})
-	}
-
-	for _, f := range []string{"additionalProperties", "unevaluatedItems", "unevaluatedProperties"} {
-		errs = append(errs, &openapi3.SchemaBothFormsExclusive{Field: f})
-	}
-
-	for _, s := range []string{"header", "parameter"} {
-		errs = append(errs, &openapi3.SingleEntryContentError{Subject: s})
-	}
-
-	return append(errs,
-		&openapi3.EitherFieldRequiredError{Fields: []string{"value", "externalValue"}},
-		&openapi3.EitherFieldRequiredError{Fields: []string{"operationId", "operationRef"}},
-		&openapi3.ExactlyOneFieldError{Fields: []string{"content", "schema"}},
+	return []openapi3.CodedError{
+		&openapi3.AnchorFieldFor31Plus{},
+		&openapi3.APIKeyInInvalidError{},
+		&openapi3.APIKeySecuritySchemeNameRequired{},
+		&openapi3.CommentFieldFor31Plus{},
+		&openapi3.ConflictingPathsError{},
+		&openapi3.ConstFieldFor31Plus{},
+		&openapi3.ContainsFieldFor31Plus{},
+		&openapi3.ContentEncodingFieldFor31Plus{},
+		&openapi3.ContentMediaTypeFieldFor31Plus{},
+		&openapi3.ContentSchemaFieldFor31Plus{},
+		&openapi3.DefaultViolatesSchema{},
+		&openapi3.DefsFieldFor31Plus{},
+		&openapi3.DependentRequiredFieldFor31Plus{},
+		&openapi3.DependentSchemasFieldFor31Plus{},
+		&openapi3.DuplicateOperationIDError{},
+		&openapi3.DuplicateParameterError{},
 		&openapi3.DuplicateRequiredFieldError{},
 		&openapi3.DuplicateTagError{},
-		&openapi3.PathParametersError{},
-		&openapi3.ServerURLTemplateError{},
-		&openapi3.WebhookNilError{},
-		&openapi3.PathParameterRequiredError{},
-		&openapi3.DuplicateOperationIDError{},
+		&openapi3.DynamicAnchorFieldFor31Plus{},
+		&openapi3.DynamicRefFieldFor31Plus{},
+		&openapi3.ElseFieldFor31Plus{},
+		&openapi3.ExamplesFieldFor31Plus{},
+		&openapi3.ExampleValueExternalValueExclusive{},
+		&openapi3.ExampleValueOrExternalValueRequired{},
+		&openapi3.ExampleViolatesSchema{},
+		&openapi3.ExternalDocsURLRequired{},
 		&openapi3.ExtraSiblingFieldsError{},
-		&openapi3.SchemaTypeError{},
-		&openapi3.InvalidParameterInError{},
-		&openapi3.SchemaPatternRegexError{},
-		&openapi3.InvalidSecuritySchemeTypeError{},
+		&openapi3.HeaderContentSchemaExactlyOne{},
+		&openapi3.HeaderContentSingleEntry{},
+		&openapi3.HeaderInForbidden{},
+		&openapi3.HeaderNameForbidden{},
+		&openapi3.IDFieldFor31Plus{},
+		&openapi3.IfFieldFor31Plus{},
+		&openapi3.InfoRequired{},
+		&openapi3.InfoSummaryFieldFor31Plus{},
+		&openapi3.InfoTitleRequired{},
+		&openapi3.InfoVersionRequired{},
 		&openapi3.InvalidHTTPSchemeError{},
-		&openapi3.UnresolvedRefError{},
-		&openapi3.APIKeyInInvalidError{},
-		&openapi3.PathMustStartWithSlashError{},
-		&openapi3.ConflictingPathsError{},
-		&openapi3.DuplicateParameterError{},
+		&openapi3.InvalidParameterInError{},
+		&openapi3.InvalidSecuritySchemeTypeError{},
 		&openapi3.InvalidSerializationMethodError{},
-	)
+		&openapi3.ItemSchemaFieldFor32Plus{},
+		&openapi3.JSONSchemaDialectAbsoluteURIRequired{},
+		&openapi3.JSONSchemaDialectFieldFor31Plus{},
+		&openapi3.LicenseIdentifierFieldFor31Plus{},
+		&openapi3.LicenseNameRequired{},
+		&openapi3.LicenseURLIdentifierExclusive{},
+		&openapi3.LinkOperationIDOrRefRequired{},
+		&openapi3.LinkOperationIDRefExclusive{},
+		&openapi3.MaxContainsFieldFor31Plus{},
+		&openapi3.MediaTypeExampleExamplesExclusive{},
+		&openapi3.MinContainsFieldFor31Plus{},
+		&openapi3.OAuthFlowAuthorizationURLForbidden{},
+		&openapi3.OAuthFlowAuthorizationURLRequired{},
+		&openapi3.OAuthFlowScopesRequired{},
+		&openapi3.OAuthFlowTokenURLForbidden{},
+		&openapi3.OAuthFlowTokenURLRequired{},
+		&openapi3.OpenAPIVersionRequired{},
+		&openapi3.OpenIDConnectURLRequired{},
+		&openapi3.OperationResponsesRequired{},
+		&openapi3.ParameterContentSchemaExactlyOne{},
+		&openapi3.ParameterContentSingleEntry{},
+		&openapi3.ParameterExampleAndExamplesExclusive{},
+		&openapi3.ParameterNameRequired{},
+		&openapi3.PathMustStartWithSlashError{},
+		&openapi3.PathParameterRequiredError{},
+		&openapi3.PathParametersError{},
+		&openapi3.PathsRequired{},
+		&openapi3.PatternPropertiesFieldFor31Plus{},
+		&openapi3.PrefixItemsFieldFor31Plus{},
+		&openapi3.PropertyNamesFieldFor31Plus{},
+		&openapi3.RequestBodyContentRequired{},
+		&openapi3.ResponseDescriptionRequired{},
+		&openapi3.ResponsesNonEmptyRequired{},
+		&openapi3.SchemaAdditionalPropertiesBothForms{},
+		&openapi3.SchemaFieldFor31Plus{},
+		&openapi3.SchemaItemsRequired{},
+		&openapi3.SchemaPatternRegexError{},
+		&openapi3.SchemaReadOnlyWriteOnlyExclusive{},
+		&openapi3.SchemaTypeError{},
+		&openapi3.SchemaUnevaluatedItemsBothForms{},
+		&openapi3.SchemaUnevaluatedPropertiesBothForms{},
+		&openapi3.SecuritySchemeBearerFormatForbidden{},
+		&openapi3.SecuritySchemeFlowsForbidden{},
+		&openapi3.SecuritySchemeFlowsRequired{},
+		&openapi3.SecuritySchemeInForbidden{},
+		&openapi3.SecuritySchemeNameForbidden{},
+		&openapi3.ServerURLRequired{},
+		&openapi3.ServerURLTemplateError{},
+		&openapi3.ServerVariableDefaultRequired{},
+		&openapi3.ThenFieldFor31Plus{},
+		&openapi3.UnevaluatedItemsFieldFor31Plus{},
+		&openapi3.UnevaluatedPropertiesFieldFor31Plus{},
+		&openapi3.UnresolvedRefError{},
+		&openapi3.WebhookNilError{},
+		&openapi3.WebhooksFieldFor31Plus{},
+	}
 }
 
-// TestValidationErrorCodes pins the code contract: every inventory error
-// yields a code from the exported catalog, every catalog entry is yielded by
-// some inventory error, and the catalog is sorted, unique, kebab-case.
+// TestValidationErrorCodes pins the code contract: every typed error yields a
+// code from the exported catalog, every catalog entry is yielded by some
+// type, and the catalog is sorted, unique, kebab-case.
 func TestValidationErrorCodes(t *testing.T) {
 	catalog := openapi3.ValidationErrorCodes()
 	require.True(t, slices.IsSorted(catalog), "catalog must be sorted")

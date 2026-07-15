@@ -1376,12 +1376,43 @@ func newAPIKeySecuritySchemeNameRequired(origin *Origin) error {
 		&APIKeySecuritySchemeNameRequired{ValidationError{Message: msg}}, origin)
 }
 
+// ExampleViolatesSchema and DefaultViolatesSchema mark which schema value kind
+// failed. They embed SchemaValueError, and their As exposes it, so errors.As
+// with a *SchemaValueError target keeps matching.
+type ExampleViolatesSchema struct{ SchemaValueError }
+
+func (e *ExampleViolatesSchema) As(target any) bool {
+	return asSchemaValueError(target, &e.SchemaValueError)
+}
+
+type DefaultViolatesSchema struct{ SchemaValueError }
+
+func (e *DefaultViolatesSchema) As(target any) bool {
+	return asSchemaValueError(target, &e.SchemaValueError)
+}
+
+func asSchemaValueError(target any, sve *SchemaValueError) bool {
+	t, ok := target.(**SchemaValueError)
+	if !ok {
+		return false
+	}
+	*t = sve
+	return true
+}
+
 // newSchemaValueError wraps the result of schema.VisitJSON in a
 // *SchemaValueError cluster, identifying which schema sub-field
 // (example, default, ...) carried the offending value. cause is
 // either a *SchemaError or a MultiError of them.
 func newSchemaValueError(valueKind string, cause error, origin *Origin) error {
-	return &SchemaValueError{ValueKind: valueKind, Cause: cause, Origin: origin}
+	sve := SchemaValueError{ValueKind: valueKind, Cause: cause, Origin: origin}
+	switch valueKind {
+	case "example":
+		return &ExampleViolatesSchema{sve}
+	case "default":
+		return &DefaultViolatesSchema{sve}
+	}
+	return &sve
 }
 
 // exampleValueOrigin returns an Origin pinned to the example's `value:`
@@ -1494,9 +1525,25 @@ func errFieldFor31Plus(field string, origin *Origin) error {
 	return newFieldVersionMismatch(field, "3.1", leaf, origin)
 }
 
+type ItemSchemaFieldFor32Plus struct{ ValidationError }
+
+func (e *ItemSchemaFieldFor32Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+var fieldFor32PlusLeaves = map[string]func(msg string) error{
+	"itemSchema": func(m string) error { return &ItemSchemaFieldFor32Plus{ValidationError{Message: m}} },
+}
+
 func errFieldFor32Plus(field string, origin *Origin) error {
 	msg := "field " + field + " is for OpenAPI >=3.2"
-	return newFieldVersionMismatch(field, "3.2", &ValidationError{Message: msg}, origin)
+	var leaf error
+	if ctor, ok := fieldFor32PlusLeaves[field]; ok {
+		leaf = ctor(msg)
+	} else {
+		leaf = &ValidationError{Message: msg}
+	}
+	return newFieldVersionMismatch(field, "3.2", leaf, origin)
 }
 
 func newPathParameterRequired(param string, origin *Origin) error {
