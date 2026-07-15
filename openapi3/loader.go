@@ -64,11 +64,12 @@ type Loader struct {
 
 	visitedDocuments map[string]*T
 
-	// originTrees retains each visited document's origin tree (keyed like
-	// visitedDocuments) when IncludeOrigin is set, so resolveComponent can
-	// re-attach origins to components that lose them in the generic-map path
-	// without re-reading or re-parsing the file.
-	originTrees map[string]*originTree
+	// originTrees retains each loaded document's origin tree, keyed by the
+	// document itself so insert and lookup cannot disagree, populated when
+	// IncludeOrigin is set. resolveComponent uses it to re-attach origins to
+	// components that lose them in the generic-map path, without re-reading
+	// or re-parsing the file.
+	originTrees map[*T]*originTree
 
 	visitedRefs map[string]struct{}
 	visitedPath []string
@@ -146,6 +147,18 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 	return resolvedPath, nil
 }
 
+// rememberOriginTree retains doc's origin tree for attachOriginToResolved.
+// tree is nil when IncludeOrigin is off or the data took the json path.
+func (loader *Loader) rememberOriginTree(doc *T, tree *originTree) {
+	if tree == nil {
+		return
+	}
+	if loader.originTrees == nil {
+		loader.originTrees = make(map[*T]*originTree)
+	}
+	loader.originTrees[doc] = tree
+}
+
 func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 	if f := loader.ReadFromURIFunc; f != nil {
 		return f(loader, location)
@@ -175,9 +188,11 @@ func (loader *Loader) LoadFromIoReader(reader io.Reader) (*T, error) {
 func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
-	if _, err := unmarshal(data, doc, loader.IncludeOrigin, nil); err != nil {
+	tree, err := unmarshal(data, doc, loader.IncludeOrigin, nil)
+	if err != nil {
 		return nil, err
 	}
+	loader.rememberOriginTree(doc, tree)
 	if err := loader.ResolveRefsIn(doc, nil); err != nil {
 		return nil, err
 	}
@@ -208,12 +223,7 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	if err != nil {
 		return nil, err
 	}
-	if tree != nil {
-		if loader.originTrees == nil {
-			loader.originTrees = make(map[string]*originTree)
-		}
-		loader.originTrees[uri] = tree
-	}
+	loader.rememberOriginTree(doc, tree)
 
 	doc.url = copyURI(location)
 
@@ -532,7 +542,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		// The value came from a generic map in T.Extensions (a $ref to an
 		// arbitrary top-level key), so the json round-trip above stripped its
 		// origins. Re-attach them from the file, best-effort.
-		loader.attachOriginToResolved(resolved, componentPath, fragment)
+		loader.attachOriginToResolved(resolved, componentDoc, fragment)
 		return componentDoc, componentPath, nil
 
 	default:
@@ -544,15 +554,15 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 // through the generic-map path: a $ref to a schema under an arbitrary top-level
 // key lands in T.Extensions, and the json round-trip in resolveComponent strips
 // its origin. It walks the document's retained origin tree (see originTrees,
-// populated when the file was first unmarshaled: no re-read, no re-parse) down
-// to the ref fragment and applies that subtree, so the object carries the same
-// origins a typed resolution would, with the original file's line numbers.
+// populated when the document was first unmarshaled: no re-read, no re-parse)
+// down to the ref fragment and applies that subtree, so the object carries the
+// same origins a typed resolution would, with the original file's line numbers.
 // Best-effort: a missing tree or fragment leaves the object without origins.
-func (loader *Loader) attachOriginToResolved(resolved any, componentPath *url.URL, fragment string) {
-	if !loader.IncludeOrigin || componentPath == nil {
+func (loader *Loader) attachOriginToResolved(resolved any, componentDoc *T, fragment string) {
+	if !loader.IncludeOrigin {
 		return
 	}
-	tree := loader.originTrees[componentPath.String()]
+	tree := loader.originTrees[componentDoc]
 	if tree == nil {
 		return
 	}

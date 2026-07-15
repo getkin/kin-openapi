@@ -53,3 +53,35 @@ func TestOrigin_ExternalRefToArbitraryTopLevelKey_NoRereads(t *testing.T) {
 		require.Equalf(t, 1, n, "%s must be read exactly once", location)
 	}
 }
+
+// Keying the retained trees by document also serves documents loaded from
+// memory (no location): a $ref to an arbitrary top-level key in the same
+// document gets its origin attached too.
+func TestOrigin_InternalRefToArbitraryTopLevelKey_FromData(t *testing.T) {
+	const spec = `
+openapi: 3.0.0
+info: { title: t, version: "1" }
+paths:
+  /users:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/User'
+User:
+  type: object
+  properties:
+    id: { type: string }
+`
+	loader := NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	user := doc.Paths.Value("/users").Get.Responses.Value("200").Value.Content["application/json"].Schema.Value
+	require.NotNil(t, user.Origin, "a same-document arbitrary-key $ref carries an origin")
+	require.NotZero(t, user.Origin.Key.Line)
+}
