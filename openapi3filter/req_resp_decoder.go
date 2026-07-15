@@ -539,7 +539,13 @@ func (d *urlValuesDecoder) DecodeArray(param string, sm *openapi3.SerializationM
 		case "pipeDelimited":
 			delim = "|"
 		}
-		values = strings.Split(values[0], delim)
+		// strings.Split always allocates a new slice, even when the delimiter
+		// is absent (single-element arrays — the common case). Reuse values[:1].
+		if strings.Contains(values[0], delim) {
+			values = strings.Split(values[0], delim)
+		} else {
+			values = values[:1]
+		}
 	}
 	val, err := d.parseArray(values, schema)
 	return val, ok, err
