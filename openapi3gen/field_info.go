@@ -46,6 +46,11 @@ iteration:
 				fields = appendFields(fields, index, f.Type)
 				continue iteration
 			}
+			jsonName, _, _ := strings.Cut(jsonTag, ",")
+			if jsonName == "" {
+				fields = appendFields(fields, index, f.Type)
+				continue iteration
+			}
 		}
 
 		// Ignore certain types

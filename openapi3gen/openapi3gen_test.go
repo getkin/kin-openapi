@@ -318,6 +318,33 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 	require.Equal(t, true, ok)
 }
 
+func TestEmbeddedStructsWithNamelessJSONTag(t *testing.T) {
+	type NestedStruct struct {
+		Field1 string `json:"field1"`
+		Field2 string `json:"field2"`
+	}
+
+	type PointerContainerStruct struct {
+		*NestedStruct `json:",omitempty"`
+	}
+
+	type ValueContainerStruct struct {
+		NestedStruct `json:",omitempty"`
+	}
+
+	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
+	for _, typ := range []reflect.Type{
+		reflect.TypeFor[*PointerContainerStruct](),
+		reflect.TypeFor[*ValueContainerStruct](),
+	} {
+		schemaRef, err := generator.GenerateSchemaRef(typ)
+		require.NoError(t, err)
+		require.Contains(t, schemaRef.Value.Properties, "field1")
+		require.Contains(t, schemaRef.Value.Properties, "field2")
+		require.NotContains(t, schemaRef.Value.Properties, "NestedStruct")
+	}
+}
+
 // See: https://github.com/getkin/kin-openapi/issues/500
 func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 	type EmbeddedStruct struct {
