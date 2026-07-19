@@ -227,6 +227,11 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		}
 		return nil
 	}
+	// #1096 keeps empty strings as ""; with allowEmptyValue skip schema checks
+	// (format, pattern, ...) like we used to when the value was nil.
+	if s, ok := value.(string); ok && s == "" && parameter.AllowEmptyValue {
+		return nil
+	}
 	if schema == nil {
 		// A parameter's schema is not defined so skip validation of a parameter's value.
 		return nil
