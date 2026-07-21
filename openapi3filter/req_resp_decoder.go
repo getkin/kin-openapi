@@ -1124,6 +1124,9 @@ func pathFromKeys(kk []string) []any {
 // Every item is parsed as a primitive value.
 // The function returns an error when an error happened while parse array's items.
 func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
+	if schemaRef.Value.Items == nil || schemaRef.Value.Items.Value == nil {
+		return nil, fmt.Errorf("array items schema is required for decoding")
+	}
 	var value []any
 	for i, v := range raw {
 		item, err := parsePrimitive(v, schemaRef.Value.Items)
@@ -1418,6 +1421,9 @@ func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 		case propType.Is("object"):
 			return nil, fmt.Errorf("unsupported schema of request body's property %q", propName)
 		case propType.Is("array"):
+			if propSchema.Value.Items == nil || propSchema.Value.Items.Value == nil {
+				return nil, fmt.Errorf("unsupported schema of request body's property %q: array items required", propName)
+			}
 			items := propSchema.Value.Items.Value
 			if !(items.Type.Is("string") || items.Type.Is("integer") || items.Type.Is("number") || items.Type.Is("boolean")) {
 				return nil, fmt.Errorf("unsupported schema of request body's property %q", propName)
@@ -1561,6 +1567,9 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 				}
 			}
 			if valueSchema.Value.Type.Is("array") {
+				if valueSchema.Value.Items == nil {
+					return nil, fmt.Errorf("unsupported schema of multipart part %q: array items required", name)
+				}
 				valueSchema = valueSchema.Value.Items
 			}
 		}
