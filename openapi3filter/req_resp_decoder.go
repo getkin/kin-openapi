@@ -194,6 +194,10 @@ func defaultContentParameterDecoder(param *openapi3.Parameter, values []string) 
 		err = fmt.Errorf("parameter %q has no content schema", param.Name)
 		return
 	}
+	if mt.Schema == nil {
+		err = fmt.Errorf("parameter %q content media type has no schema", param.Name)
+		return
+	}
 	outSchema = mt.Schema.Value
 
 	unmarshal := func(encoded string, paramSchema *openapi3.SchemaRef) (decoded any, err error) {

@@ -568,3 +568,40 @@ paths:
 	})
 	require.Error(t, err)
 }
+
+// TestValidateRequestContentParameterWithoutSchema is a regression test for
+// GHSA-jpcw-4wr7-c3vq: a "content" parameter whose media type has no
+// "schema" is legal per the OpenAPI spec (doc.Validate accepts it) but used
+// to nil-pointer-dereference/panic in defaultContentParameterDecoder instead
+// of returning a validation error.
+func TestValidateRequestContentParameterWithoutSchema(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: poc, version: "1.0.0"}
+paths:
+  /c:
+    get:
+      parameters:
+        - name: cfg
+          in: query
+          content:
+            application/json: {}
+      responses:
+        "200": {description: ok}
+`
+	router := setupTestRouter(t, spec)
+
+	req, err := http.NewRequest(http.MethodGet, "/c?cfg=1", nil)
+	require.NoError(t, err)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	require.NotPanics(t, func() {
+		err = ValidateRequest(t.Context(), &RequestValidationInput{
+			Request:    req,
+			PathParams: pathParams,
+			Route:      route,
+		})
+	})
+	require.Error(t, err)
+}
