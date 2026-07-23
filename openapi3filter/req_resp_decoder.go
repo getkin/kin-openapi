@@ -1142,7 +1142,7 @@ func pathFromKeys(kk []string) []any {
 // The function returns an error when an error happened while parse array's items.
 func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 	if schemaRef.Value.Items == nil || schemaRef.Value.Items.Value == nil {
-		return nil, fmt.Errorf("array items schema is required for decoding")
+		return nil, errors.New("array items schema is required for decoding")
 	}
 	var value []any
 	for i, v := range raw {
