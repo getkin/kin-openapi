@@ -692,9 +692,10 @@ func buildValidationHandler(tt *validationTest) (*ValidationHandler, error) {
 		tt.fields.File = "testdata/fixtures/petstore.json"
 	}
 	h := &ValidationHandler{
-		Handler:      tt.fields.Handler,
-		File:         tt.fields.File,
-		ErrorEncoder: tt.fields.ErrorEncoder,
+		AuthenticationFunc: NoopAuthenticationFunc,
+		Handler:            tt.fields.Handler,
+		File:               tt.fields.File,
+		ErrorEncoder:       tt.fields.ErrorEncoder,
 	}
 	tt.wantErr = tt.wantErr ||
 		(tt.wantErrBody != "") ||
@@ -731,9 +732,10 @@ func (e *mockErrorEncoder) Encode(ctx context.Context, err error, w http.Respons
 
 func runTest_ServeHTTP(t *testing.T, handler http.Handler, encoder ErrorEncoder, req *http.Request) *http.Response {
 	h := &ValidationHandler{
-		Handler:      handler,
-		ErrorEncoder: encoder,
-		File:         "testdata/fixtures/petstore.json",
+		AuthenticationFunc: NoopAuthenticationFunc,
+		Handler:            handler,
+		ErrorEncoder:       encoder,
+		File:               "testdata/fixtures/petstore.json",
 	}
 	err := h.Load()
 	require.NoError(t, err)
@@ -744,8 +746,9 @@ func runTest_ServeHTTP(t *testing.T, handler http.Handler, encoder ErrorEncoder,
 
 func runTest_Middleware(t *testing.T, handler http.Handler, encoder ErrorEncoder, req *http.Request) *http.Response {
 	h := &ValidationHandler{
-		ErrorEncoder: encoder,
-		File:         "testdata/fixtures/petstore.json",
+		AuthenticationFunc: NoopAuthenticationFunc,
+		ErrorEncoder:       encoder,
+		File:               "testdata/fixtures/petstore.json",
 	}
 	err := h.Load()
 	require.NoError(t, err)
