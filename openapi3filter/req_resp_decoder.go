@@ -514,10 +514,24 @@ func (d *urlValuesDecoder) DecodePrimitive(param string, sm *openapi3.Serializat
 		return nil, ok, nil
 	}
 
-	if schema.Value.Type == nil && schema.Value.Pattern != "" {
-		return values[0], ok, nil
+	// For scalar params, Go's url.Values may hold repeated keys. Prefer the first
+	// non-empty occurrence so an empty leading value cannot hide a later one
+	// from schema validation (see #1230). A single empty value is still returned
+	// so allowEmptyValue behavior is preserved.
+	raw := values[0]
+	if raw == "" && len(values) > 1 {
+		for _, v := range values[1:] {
+			if v != "" {
+				raw = v
+				break
+			}
+		}
 	}
-	val, err := parsePrimitive(values[0], schema)
+
+	if schema.Value.Type == nil && schema.Value.Pattern != "" {
+		return raw, ok, nil
+	}
+	val, err := parsePrimitive(raw, schema)
 	return val, ok, err
 }
 
