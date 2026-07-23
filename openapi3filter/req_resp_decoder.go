@@ -514,10 +514,23 @@ func (d *urlValuesDecoder) DecodePrimitive(param string, sm *openapi3.Serializat
 		return nil, ok, nil
 	}
 
-	if schema.Value.Type == nil && schema.Value.Pattern != "" {
-		return values[0], ok, nil
+	// Repeated query keys: prefer the first non-empty value so an empty
+	// leading occurrence cannot hide a later value from schema validation
+	// (#1230). A lone empty string is still returned unchanged.
+	raw := values[0]
+	if raw == "" && len(values) > 1 {
+		for _, v := range values[1:] {
+			if v != "" {
+				raw = v
+				break
+			}
+		}
 	}
-	val, err := parsePrimitive(values[0], schema)
+
+	if schema.Value.Type == nil && schema.Value.Pattern != "" {
+		return raw, ok, nil
+	}
+	val, err := parsePrimitive(raw, schema)
 	return val, ok, err
 }
 
