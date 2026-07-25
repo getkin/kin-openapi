@@ -1,0 +1,50 @@
+{
+    "components": {
+        "schemas": {
+            "Probe": {
+                "properties": {
+                    "deep": {
+                        "$ref": "#/components/schemas/ext_Comp"
+                    }
+                },
+                "type": "object"
+            },
+            "ext_Comp": {
+                "discriminator": {
+                    "mapping": {
+                        "container": "#/components/schemas/ext_Container"
+                    },
+                    "propertyName": "type"
+                },
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/ext_Container"
+                    }
+                ]
+            },
+            "ext_Container": {
+                "properties": {
+                    "children": {
+                        "items": {
+                            "$ref": "#/components/schemas/ext_Comp"
+                        },
+                        "type": "array"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "type"
+                ],
+                "type": "object"
+            }
+        }
+    },
+    "info": {
+        "title": "external recursive discriminated union",
+        "version": "1.0.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {}
+}

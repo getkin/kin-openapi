@@ -1116,19 +1116,25 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	}
 	// Discriminator mapping refs are a special case since they are not full
 	// ref objects but are plain strings that reference schema objects.
-	// Only resolve refs that look like external references (contain a path).
-	// Plain schema names like "Dog" or internal refs like "#/components/schemas/Dog"
-	// don't need to be resolved by the loader.
+	// Plain schema names like "Dog" are not references and are left alone.
 	if value.Discriminator != nil {
+		inExternalDoc := documentPath != nil && documentPath.Path != "" && documentPath.Path != loader.rootLocation
 		for _, k := range componentNames(value.Discriminator.Mapping) {
 			v := value.Discriminator.Mapping[k]
-			// Only resolve if it looks like an external ref (contains path separator)
-			if strings.Contains(v.Ref, "/") && !strings.HasPrefix(v.Ref, "#") {
-				if err := loader.resolveSchemaRef(doc, (*SchemaRef)(&v), documentPath, visited); err != nil {
-					return err
-				}
-				value.Discriminator.Mapping[k] = v
+			if !strings.Contains(v.Ref, "/") {
+				continue
 			}
+			// A document-local mapping needs resolving only when it lives in
+			// another document, because InternalizeRefs then has to rewrite it
+			// against that document. One in the root document is already
+			// written against the document it will end up in.
+			if strings.HasPrefix(v.Ref, "#") && !inExternalDoc {
+				continue
+			}
+			if err := loader.resolveSchemaRef(doc, (*SchemaRef)(&v), documentPath, visited); err != nil {
+				return err
+			}
+			value.Discriminator.Mapping[k] = v
 		}
 	}
 

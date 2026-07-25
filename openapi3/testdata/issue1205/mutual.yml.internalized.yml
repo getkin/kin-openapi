@@ -1,0 +1,85 @@
+{
+    "components": {
+        "schemas": {
+            "Root": {
+                "properties": {
+                    "a": {
+                        "$ref": "#/components/schemas/mutual-a_AUnion"
+                    },
+                    "b": {
+                        "$ref": "#/components/schemas/mutual-b_BUnion"
+                    }
+                },
+                "type": "object"
+            },
+            "mutual-a_ALeaf": {
+                "properties": {
+                    "kind": {
+                        "type": "string"
+                    },
+                    "over": {
+                        "$ref": "#/components/schemas/mutual-b_BUnion"
+                    },
+                    "self": {
+                        "$ref": "#/components/schemas/mutual-a_AUnion"
+                    }
+                },
+                "required": [
+                    "kind"
+                ],
+                "type": "object"
+            },
+            "mutual-a_AUnion": {
+                "discriminator": {
+                    "mapping": {
+                        "across": "#/components/schemas/mutual-b_BUnion",
+                        "aleaf": "#/components/schemas/mutual-a_ALeaf"
+                    },
+                    "propertyName": "kind"
+                },
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/mutual-a_ALeaf"
+                    }
+                ]
+            },
+            "mutual-b_BLeaf": {
+                "properties": {
+                    "back": {
+                        "$ref": "#/components/schemas/mutual-a_AUnion"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "self": {
+                        "$ref": "#/components/schemas/mutual-b_BUnion"
+                    }
+                },
+                "required": [
+                    "kind"
+                ],
+                "type": "object"
+            },
+            "mutual-b_BUnion": {
+                "discriminator": {
+                    "mapping": {
+                        "across": "#/components/schemas/mutual-a_AUnion",
+                        "bleaf": "#/components/schemas/mutual-b_BLeaf"
+                    },
+                    "propertyName": "kind"
+                },
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/mutual-b_BLeaf"
+                    }
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "mutually recursive unions across documents",
+        "version": "1.0.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {}
+}

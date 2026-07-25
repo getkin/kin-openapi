@@ -27,6 +27,9 @@ func TestInternalizeRefs(t *testing.T) {
 		{"testdata/issue959/openapi.yml"},
 		{"testdata/interalizationNameCollision/api.yml"},
 		{"testdata/discriminator.yml"},
+		{"testdata/discriminatorLocalMapping.yml"},
+		{"testdata/issue1205/openapi.yml"},
+		{"testdata/issue1205/mutual.yml"},
 	}
 
 	for _, test := range tests {

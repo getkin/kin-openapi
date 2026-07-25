@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: mutually recursive unions across documents
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Root:
+      type: object
+      properties:
+        a:
+          $ref: './mutual-a.yml#/components/schemas/AUnion'
+        b:
+          $ref: './mutual-b.yml#/components/schemas/BUnion'

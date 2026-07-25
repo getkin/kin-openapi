@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: local discriminator mappings
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Dog:
+      type: object
+      properties:
+        petType:
+          type: string
+    Cat:
+      type: object
+      properties:
+        petType:
+          type: string
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Dog'
+        - $ref: '#/components/schemas/Cat'
+      discriminator:
+        propertyName: petType
+        mapping:
+          dog: Dog
+          cat: '#/components/schemas/Cat'

@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: recursive discriminated union
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Comp:
+      oneOf:
+        - $ref: '#/components/schemas/Container'
+      discriminator:
+        propertyName: type
+        mapping:
+          container: '#/components/schemas/Container'
+    Container:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comp'

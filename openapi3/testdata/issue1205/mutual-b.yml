@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info:
+  title: mutually recursive union b
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    BUnion:
+      oneOf:
+        - $ref: '#/components/schemas/BLeaf'
+      discriminator:
+        propertyName: kind
+        mapping:
+          bleaf: '#/components/schemas/BLeaf'
+          across: './mutual-a.yml#/components/schemas/AUnion'
+    BLeaf:
+      type: object
+      required: [kind]
+      properties:
+        kind:
+          type: string
+        back:
+          $ref: './mutual-a.yml#/components/schemas/AUnion'
+        self:
+          $ref: '#/components/schemas/BUnion'

@@ -1,0 +1,12 @@
+openapi: 3.1.0
+info:
+  title: external recursive discriminated union
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Probe:
+      type: object
+      properties:
+        deep:
+          $ref: './ext.yml#/components/schemas/Comp'
