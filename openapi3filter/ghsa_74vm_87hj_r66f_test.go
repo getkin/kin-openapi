@@ -44,7 +44,8 @@ paths:
 
 func validatedInput(t *testing.T, spec string, hdr http.Header) *openapi3filter.ResponseValidationInput {
 	t.Helper()
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	err = doc.Validate(t.Context())
 	require.NoError(t, err)
