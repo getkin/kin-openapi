@@ -111,6 +111,7 @@ func (e *OAuthFlowScopesRequired) Code() string          { return "oauth-flow-sc
 func (e *OAuthFlowTokenURLForbidden) Code() string       { return "token-url-forbidden" }
 func (e *OAuthFlowTokenURLRequired) Code() string        { return "oauth-flow-token-url-required" }
 func (e *OpenAPIVersionRequired) Code() string           { return "openapi-required" }
+func (e *OpenAPIVersionUnsupportedError) Code() string   { return "openapi-version-unsupported" }
 func (e *OpenIDConnectURLRequired) Code() string         { return "openid-connect-url-required" }
 func (e *OperationResponsesRequired) Code() string       { return "operation-responses-required" }
 func (e *ParameterContentSchemaExactlyOne) Code() string { return "content-or-schema-exactly-one" }
@@ -226,6 +227,7 @@ var validationErrorCodes = []string{
 	"oauth-flow-scopes-required",
 	"oauth-flow-token-url-required",
 	"openapi-required",
+	"openapi-version-unsupported",
 	"openid-connect-url-required",
 	"operation-id-operation-ref-mutually-exclusive",
 	"operation-id-or-operation-ref-required",
