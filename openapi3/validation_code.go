@@ -28,6 +28,15 @@ type CodedError interface {
 	Code() string
 }
 
+func (e *AdditionalOperationsDuplicateMethodError) Code() string {
+	return "additional-operations-duplicate-method"
+}
+func (e *AdditionalOperationsFieldFor32Plus) Code() string {
+	return "additional-operations-field-for-3-2-plus"
+}
+func (e *AdditionalOperationsInvalidMethodError) Code() string {
+	return "additional-operations-invalid-method"
+}
 func (e *AnchorFieldFor31Plus) Code() string             { return "anchor-field-for-3-1-plus" }
 func (e *APIKeyInInvalidError) Code() string             { return "security-scheme-apikey-in-invalid" }
 func (e *APIKeySecuritySchemeNameRequired) Code() string { return "security-scheme-name-required" }
@@ -119,6 +128,7 @@ func (e *PatternPropertiesFieldFor31Plus) Code() string {
 }
 func (e *PrefixItemsFieldFor31Plus) Code() string   { return "prefix-items-field-for-3-1-plus" }
 func (e *PropertyNamesFieldFor31Plus) Code() string { return "property-names-field-for-3-1-plus" }
+func (e *QueryFieldFor32Plus) Code() string         { return "query-field-for-3-2-plus" }
 func (e *RequestBodyContentRequired) Code() string  { return "request-body-content-required" }
 func (e *ResponseDescriptionRequired) Code() string { return "response-description-required" }
 func (e *ResponsesNonEmptyRequired) Code() string   { return "responses-required" }
@@ -163,6 +173,9 @@ func ValidationErrorCodes() []string {
 }
 
 var validationErrorCodes = []string{
+	"additional-operations-duplicate-method",
+	"additional-operations-field-for-3-2-plus",
+	"additional-operations-invalid-method",
 	"additional-properties-both-forms-exclusive",
 	"anchor-field-for-3-1-plus",
 	"authorization-url-forbidden",
@@ -227,6 +240,7 @@ var validationErrorCodes = []string{
 	"pattern-properties-field-for-3-1-plus",
 	"prefix-items-field-for-3-1-plus",
 	"property-names-field-for-3-1-plus",
+	"query-field-for-3-2-plus",
 	"read-only-write-only-mutually-exclusive",
 	"request-body-content-required",
 	"response-description-required",

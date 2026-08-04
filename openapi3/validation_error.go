@@ -535,6 +535,36 @@ func (e *DuplicateParameterError) Error() string {
 	return fmt.Sprintf("more than one %q parameter has name %q", e.In, e.Name)
 }
 
+// AdditionalOperationsDuplicateMethodError clusters "additionalOperations
+// key duplicates a fixed field" failures. OpenAPI 3.2's
+// `additionalOperations` map may only carry methods that have no dedicated
+// Path Item Object field.
+type AdditionalOperationsDuplicateMethodError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *AdditionalOperationsDuplicateMethodError) Error() string {
+	return fmt.Sprintf("additionalOperations key %q duplicates a fixed path item field", e.Method)
+}
+
+// AdditionalOperationsInvalidMethodError clusters "additionalOperations key
+// is not an HTTP method" failures. Keys must be RFC 9110 tokens.
+type AdditionalOperationsInvalidMethodError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *AdditionalOperationsInvalidMethodError) Error() string {
+	return fmt.Sprintf("additionalOperations key %q is not a valid HTTP method token", e.Method)
+}
+
 // DuplicateRequiredFieldError clusters "duplicate field in required" failures.
 // The elements of a schema's `required` array MUST be unique (JSON Schema
 // 2020-12 §6.5.3 for OpenAPI 3.1, draft-04 for OpenAPI 3.0).
@@ -1531,8 +1561,24 @@ func (e *ItemSchemaFieldFor32Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type QueryFieldFor32Plus struct{ ValidationError }
+
+func (e *QueryFieldFor32Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type AdditionalOperationsFieldFor32Plus struct{ ValidationError }
+
+func (e *AdditionalOperationsFieldFor32Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 var fieldFor32PlusLeaves = map[string]func(msg string) error{
 	"itemSchema": func(m string) error { return &ItemSchemaFieldFor32Plus{ValidationError{Message: m}} },
+	"query":      func(m string) error { return &QueryFieldFor32Plus{ValidationError{Message: m}} },
+	"additionalOperations": func(m string) error {
+		return &AdditionalOperationsFieldFor32Plus{ValidationError{Message: m}}
+	},
 }
 
 func errFieldFor32Plus(field string, origin *Origin) error {
@@ -1544,6 +1590,14 @@ func errFieldFor32Plus(field string, origin *Origin) error {
 		leaf = &ValidationError{Message: msg}
 	}
 	return newFieldVersionMismatch(field, "3.2", leaf, origin)
+}
+
+func newAdditionalOperationsDuplicateMethod(method string, origin *Origin) error {
+	return &AdditionalOperationsDuplicateMethodError{Method: method, Origin: origin}
+}
+
+func newAdditionalOperationsInvalidMethod(method string, origin *Origin) error {
+	return &AdditionalOperationsInvalidMethodError{Method: method, Origin: origin}
 }
 
 func newPathParameterRequired(param string, origin *Origin) error {

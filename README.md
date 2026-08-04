@@ -6,7 +6,8 @@
 A [Go](https://go.dev) project for handling [OpenAPI](https://www.openapis.org/) files. We target:
 * [OpenAPI `v2.0`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/2.0.md) (formerly known as Swagger)
 * [OpenAPI `v3.0`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
-* [OpenAPI `v3.1`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md) Soon! [Tracking issue here.](https://github.com/getkin/kin-openapi/issues/230)
+* [OpenAPI `v3.1`](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md)
+* [OpenAPI `v3.2`](https://spec.openapis.org/oas/v3.2.0.html) Partially: Media Type Object `itemSchema`, Path Item Object `query` (the HTTP `QUERY` method) and `additionalOperations` (custom HTTP methods).
 
 Licensed under the [MIT License](./LICENSE).
 
@@ -325,6 +326,11 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ```
 
 ## CHANGELOG: Sub-v1 breaking API changes
+
+### v0.147.0
+* `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).
+* `(*openapi3.PathItem).GetOperation(string)` and `(*openapi3.PathItem).Operations()` now also report the new `openapi3.PathItem.Query` field (the OpenAPI 3.2 HTTP `QUERY` method) and the `openapi3.PathItem.AdditionalOperations` entries. Routers and validators consequently match these methods.
+* `openapi2conv.FromV3(..)` and `openapi2conv.FromV3PathItem(..)` now return an error for operations whose HTTP method Swagger 2.0 cannot express (`QUERY`, `TRACE`, `CONNECT` and custom methods) instead of panic-ing.
 
 ### v0.145.0
 * `(*openapi3.PathItem).GetOperation(string)` now returns `nil` on unhandled HTTP methods instead of panic-ing.

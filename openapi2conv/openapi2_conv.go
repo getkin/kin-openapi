@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"net/url"
 	"slices"
 	"strings"
@@ -715,6 +716,9 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 			if operation == nil {
 				continue
 			}
+			if err := checkV2Method(method); err != nil {
+				return nil, fmt.Errorf("path %q: %w", path, err)
+			}
 			doc2Operation, err := FromV3Operation(doc3, operation)
 			if err != nil {
 				return nil, err
@@ -978,11 +982,37 @@ func FromV3SecurityRequirements(requirements openapi3.SecurityRequirements) open
 	return result
 }
 
+// openapi2Methods are the HTTP methods Swagger 2.0's Path Item Object is able
+// to express. Anything else - the OpenAPI 3.2 QUERY field, CONNECT, TRACE, or a
+// custom method held in additionalOperations - has no v2 counterpart.
+var openapi2Methods = map[string]struct{}{
+	http.MethodDelete:  {},
+	http.MethodGet:     {},
+	http.MethodHead:    {},
+	http.MethodOptions: {},
+	http.MethodPatch:   {},
+	http.MethodPost:    {},
+	http.MethodPut:     {},
+}
+
+// checkV2Method reports whether an operation registered under method can be
+// carried over to a Swagger 2.0 document. Calling openapi2's SetOperation with
+// an unsupported method panics, so callers must guard with this first.
+func checkV2Method(method string) error {
+	if _, ok := openapi2Methods[method]; !ok {
+		return fmt.Errorf("unsupported HTTP method %q: it cannot be expressed in OpenAPI 2.0 (Swagger)", method)
+	}
+	return nil
+}
+
 func FromV3PathItem(doc3 *openapi3.T, pathItem *openapi3.PathItem) (*openapi2.PathItem, error) {
 	result := &openapi2.PathItem{
 		Extensions: stripNonExtensions(pathItem.Extensions),
 	}
 	for method, operation := range pathItem.Operations() {
+		if err := checkV2Method(method); err != nil {
+			return nil, err
+		}
 		r, err := FromV3Operation(doc3, operation)
 		if err != nil {
 			return nil, err

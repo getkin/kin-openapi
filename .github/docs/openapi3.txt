@@ -18,6 +18,8 @@ OpenAPI 3.1 Features:
 
 OpenAPI 3.2 Features:
   - Media Type Object itemSchema for streaming sequential media types
+  - Path Item Object query field for the HTTP QUERY method
+  - Path Item Object additionalOperations for custom HTTP methods
 
 The implementation maintains 100% backward compatibility with OpenAPI 3.0.
 
@@ -79,6 +81,10 @@ const (
 	SerializationPipeDelimited  = "pipeDelimited"
 	SerializationDeepObject     = "deepObject"
 )
+const MethodQuery = "QUERY"
+    MethodQuery is the HTTP QUERY method, introduced as a fixed Path Item Object
+    field by OpenAPI 3.2. The net/http package has no constant for it.
+
 
 VARIABLES
 
@@ -293,6 +299,41 @@ type APIKeySecuritySchemeNameRequired struct{ ValidationError }
 func (e *APIKeySecuritySchemeNameRequired) As(target any) bool
 
 func (e *APIKeySecuritySchemeNameRequired) Code() string
+
+type AdditionalOperationsDuplicateMethodError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    AdditionalOperationsDuplicateMethodError clusters "additionalOperations key
+    duplicates a fixed field" failures. OpenAPI 3.2's `additionalOperations` map
+    may only carry methods that have no dedicated Path Item Object field.
+
+func (e *AdditionalOperationsDuplicateMethodError) Code() string
+
+func (e *AdditionalOperationsDuplicateMethodError) Error() string
+
+type AdditionalOperationsFieldFor32Plus struct{ ValidationError }
+
+func (e *AdditionalOperationsFieldFor32Plus) As(target any) bool
+
+func (e *AdditionalOperationsFieldFor32Plus) Code() string
+
+type AdditionalOperationsInvalidMethodError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    AdditionalOperationsInvalidMethodError clusters "additionalOperations key is
+    not an HTTP method" failures. Keys must be RFC 9110 tokens.
+
+func (e *AdditionalOperationsInvalidMethodError) Code() string
+
+func (e *AdditionalOperationsInvalidMethodError) Error() string
 
 type AdditionalProperties = BoolSchema
     AdditionalProperties is a type alias for BoolSchema, kept for backward
@@ -2109,8 +2150,14 @@ type PathItem struct {
 	Post        *Operation `json:"post,omitempty" yaml:"post,omitempty"`
 	Put         *Operation `json:"put,omitempty" yaml:"put,omitempty"`
 	Trace       *Operation `json:"trace,omitempty" yaml:"trace,omitempty"`
+	Query       *Operation `json:"query,omitempty" yaml:"query,omitempty"` // OpenAPI >=3.2
 	Servers     Servers    `json:"servers,omitempty" yaml:"servers,omitempty"`
 	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+
+	// AdditionalOperations maps custom HTTP method names to operations.
+	// Keys are case-sensitive HTTP method tokens and must not duplicate
+	// the methods covered by the fixed fields above.
+	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
 }
     PathItem is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
@@ -2124,6 +2171,10 @@ func (pathItem PathItem) MarshalYAML() (any, error)
     MarshalYAML returns the YAML encoding of PathItem.
 
 func (pathItem *PathItem) Operations() map[string]*Operation
+    Operations returns pathItem's operations keyed by HTTP method,
+    including the OpenAPI 3.2 QUERY field and any AdditionalOperations. When an
+    AdditionalOperations key collides with a fixed field, the fixed field wins
+    (Validate reports the duplicate separately).
 
 func (pathItem *PathItem) SetOperation(method string, operation *Operation)
 
@@ -2293,6 +2344,12 @@ type PropertyNamesFieldFor31Plus struct{ ValidationError }
 func (e *PropertyNamesFieldFor31Plus) As(target any) bool
 
 func (e *PropertyNamesFieldFor31Plus) Code() string
+
+type QueryFieldFor32Plus struct{ ValidationError }
+
+func (e *QueryFieldFor32Plus) As(target any) bool
+
+func (e *QueryFieldFor32Plus) Code() string
 
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
     ReadFromURIFunc defines a function which reads the contents of a resource
