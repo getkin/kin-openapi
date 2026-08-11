@@ -2663,7 +2663,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 				me = append(me, err)
 			}
 		}
-		if !cp.MatchString(value) {
+		if cp != nil && !cp.MatchString(value) {
 			err := &SchemaError{
 				Value:                 value,
 				Schema:                schema,
