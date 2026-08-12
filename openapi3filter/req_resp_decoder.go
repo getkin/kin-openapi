@@ -1694,7 +1694,7 @@ func ZipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Sch
 			for {
 				n, err := rc.Read(buffer)
 				if 0 < n {
-					content = append(content, buffer...)
+					content = append(content, buffer[:n]...)
 				}
 				if err == io.EOF {
 					break
