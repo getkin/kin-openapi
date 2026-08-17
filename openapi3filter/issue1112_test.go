@@ -156,3 +156,13 @@ func TestIssue1112IgnoresUnrelatedQueryKeys(t *testing.T) {
 	require.False(t, found)
 	require.Nil(t, value)
 }
+
+func TestIssue1112ParameterNameWithRegexpCharacters(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+
+	value, found, err := issue1112Decode(t, "properties.v1", "properties.v1[color]=black", schema)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, map[string]any{"color": "black"}, value)
+}
