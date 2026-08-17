@@ -97,3 +97,19 @@ func TestIssue1112EmptyFreeFormValue(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, map[string]any{"color": ""}, value)
 }
+
+func TestIssue1112KnownPropertyKeepsTypedValue(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+	schema.Value.Properties["limit"] = &openapi3.SchemaRef{
+		Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}},
+	}
+
+	value, found, err := issue1112Decode(t, "properties", "properties[limit]=7&properties[color]=black", schema)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, map[string]any{
+		"limit": int64(7),
+		"color": "black",
+	}, value)
+}
