@@ -65,3 +65,15 @@ func TestIssue1112SingleFreeFormProperty(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, map[string]any{"color": "black"}, value)
 }
+
+func TestIssue1112NestedFreeFormProperty(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+
+	value, found, err := issue1112Decode(t, "properties", "properties[meta][color]=black", schema)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, map[string]any{
+		"meta": map[string]any{"color": "black"},
+	}, value)
+}
