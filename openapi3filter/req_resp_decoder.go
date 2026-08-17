@@ -1079,6 +1079,15 @@ func buildResObj(params map[string]any, parentKeys []string, key string, schema 
 					resultMap[k] = r
 				}
 			}
+		} else if schema.Value.AdditionalProperties.Has != nil && *schema.Value.AdditionalProperties.Has {
+			// additionalProperties: true is free-form: retain dynamic values as
+			// decoded query-string data, but never overwrite schema-decoded
+			// properties.
+			for k, v := range objectParams {
+				if _, exists := resultMap[k]; !exists {
+					resultMap[k] = v
+				}
+			}
 		}
 
 		return resultMap, nil
