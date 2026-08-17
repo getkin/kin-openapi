@@ -146,3 +146,13 @@ func TestIssue1112SchemaValuedAdditionalPropertiesStayTyped(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, map[string]any{"count": int64(7)}, value)
 }
+
+func TestIssue1112IgnoresUnrelatedQueryKeys(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+
+	value, found, err := issue1112Decode(t, "properties", "other[color]=black", schema)
+
+	require.NoError(t, err)
+	require.False(t, found)
+	require.Nil(t, value)
+}
