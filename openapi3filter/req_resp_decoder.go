@@ -740,7 +740,7 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 		return nil, false, err
 	}
 
-	found := false
+	found := sm.Style == "deepObject" && len(props) > 0 && decodesAdditionalProperties(schema.Value)
 	for propName := range schema.Value.Properties {
 		if _, ok := props[propName]; ok {
 			found = true
