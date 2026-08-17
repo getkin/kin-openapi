@@ -176,3 +176,17 @@ func TestIssue1112RepeatedFreeFormValueStillRequiresIndexes(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "array items must be set with indexes")
 }
+
+func TestIssue1112NestedKnownFreeFormObject(t *testing.T) {
+	metaSchema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{})
+	schema.Value.Properties["meta"] = metaSchema
+
+	value, found, err := issue1112Decode(t, "properties", "properties[meta][color]=black", schema)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, map[string]any{
+		"meta": map[string]any{"color": "black"},
+	}, value)
+}
