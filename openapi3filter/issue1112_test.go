@@ -166,3 +166,13 @@ func TestIssue1112ParameterNameWithRegexpCharacters(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, map[string]any{"color": "black"}, value)
 }
+
+func TestIssue1112RepeatedFreeFormValueStillRequiresIndexes(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+
+	_, found, err := issue1112Decode(t, "properties", "properties[tag]=one&properties[tag]=two", schema)
+
+	require.False(t, found)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "array items must be set with indexes")
+}
