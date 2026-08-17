@@ -190,3 +190,29 @@ func TestIssue1112NestedKnownFreeFormObject(t *testing.T) {
 		"meta": map[string]any{"color": "black"},
 	}, value)
 }
+
+func TestIssue1112SchemaValuedNestedExtraneousPropertyRemainsIgnored(t *testing.T) {
+	childSchema := &openapi3.SchemaRef{
+		Value: &openapi3.Schema{
+			Type: &openapi3.Types{"object"},
+			Properties: map[string]*openapi3.SchemaRef{
+				"item1": {
+					Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}},
+				},
+			},
+		},
+	}
+	dynamicObject := issue1112ObjectSchema(openapi3.AdditionalProperties{Schema: childSchema})
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{})
+	schema.Value.Properties["obj"] = dynamicObject
+
+	value, found, err := issue1112Decode(t, "param", "param[obj][prop1][inexistent]=1", schema)
+
+	require.NoError(t, err)
+	require.False(t, found)
+	require.Equal(t, map[string]any{
+		"obj": map[string]any{
+			"prop1": map[string]any{},
+		},
+	}, value)
+}
