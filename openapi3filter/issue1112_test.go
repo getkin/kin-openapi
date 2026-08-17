@@ -55,3 +55,13 @@ func TestIssue1112FreeFormDeepObject(t *testing.T) {
 	}, value)
 	require.NoError(t, schema.Value.VisitJSON(value))
 }
+
+func TestIssue1112SingleFreeFormProperty(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
+
+	value, found, err := issue1112Decode(t, "properties", "properties[color]=black", schema)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, map[string]any{"color": "black"}, value)
+}
