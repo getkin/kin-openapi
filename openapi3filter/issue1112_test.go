@@ -133,3 +133,16 @@ func TestIssue1112UnspecifiedAdditionalPropertiesRemainUnchanged(t *testing.T) {
 	require.False(t, found)
 	require.Equal(t, map[string]any{}, value)
 }
+
+func TestIssue1112SchemaValuedAdditionalPropertiesStayTyped(t *testing.T) {
+	integerSchema := &openapi3.SchemaRef{
+		Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}},
+	}
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Schema: integerSchema})
+
+	value, found, err := issue1112Decode(t, "properties", "properties[count]=7", schema)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, map[string]any{"count": int64(7)}, value)
+}
