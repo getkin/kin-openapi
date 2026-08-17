@@ -1,6 +1,6 @@
 module github.com/getkin/kin-openapi
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/go-openapi/jsonpointer v0.21.0
@@ -21,6 +21,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
