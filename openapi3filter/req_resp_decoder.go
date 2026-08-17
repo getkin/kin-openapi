@@ -664,6 +664,13 @@ const (
 	urlDecoderDelimiter = "\x1F" // should not conflict with URL characters
 )
 
+func decodesAdditionalProperties(schema *openapi3.Schema) bool {
+	if schema.AdditionalProperties.Schema != nil {
+		return true
+	}
+	return schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has
+}
+
 func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (map[string]any, bool, error) {
 	var propsFn func(url.Values) (map[string]string, error)
 	switch sm.Style {
