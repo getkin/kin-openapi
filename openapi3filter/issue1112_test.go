@@ -123,3 +123,13 @@ func TestIssue1112AdditionalPropertiesFalseDoesNotBecomeFreeForm(t *testing.T) {
 	require.False(t, found)
 	require.Equal(t, map[string]any{}, value)
 }
+
+func TestIssue1112UnspecifiedAdditionalPropertiesRemainUnchanged(t *testing.T) {
+	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{})
+
+	value, found, err := issue1112Decode(t, "properties", "properties[color]=black", schema)
+
+	require.NoError(t, err)
+	require.False(t, found)
+	require.Equal(t, map[string]any{}, value)
+}
