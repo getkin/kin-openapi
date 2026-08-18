@@ -8,10 +8,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3filter"
-
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3filter"
 )
 
 func TestEncodedPathAuthorizationBypass(t *testing.T) {
