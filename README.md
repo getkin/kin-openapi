@@ -1,6 +1,7 @@
 [![CI](https://github.com/getkin/kin-openapi/workflows/go/badge.svg)](https://github.com/getkin/kin-openapi/actions)
 [![Go Reference](https://pkg.go.dev/badge/github.com/getkin/kin-openapi.svg)](https://pkg.go.dev/github.com/getkin/kin-openapi)
 [![Join Gitter Chat Channel -](https://badges.gitter.im/getkin/kin.svg)](https://gitter.im/getkin/kin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![inspect.software](https://raw.githubusercontent.com/inspect-software/badges/main/v1/g/getkin/kin-openapi.svg)](https://inspect.software/software/getkin/kin-openapi)
 
 # Introduction
 A [Go](https://go.dev) project for handling [OpenAPI](https://www.openapis.org/) files. We target:
