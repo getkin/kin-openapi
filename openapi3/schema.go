@@ -2361,6 +2361,80 @@ func (schema *Schema) visitJSONBoolean(settings *schemaValidationSettings, value
 	return
 }
 
+// multipleOfSlack bounds, as a negative power of two, how far a value may sit
+// from the nearest multiple and still count as one, measured relative to the
+// value itself. A float64 carries about 2^-53 of relative error, so this is a
+// couple of units in the last place: enough to absorb the error a caller's own
+// arithmetic introduced, small enough that a genuine remainder never fits.
+//
+// The window must be measured against the value and not against the quotient.
+// A quotient-relative window grows without bound, and once value/multipleOf
+// reaches 2^49 it exceeds one half, at which point every number validates.
+const multipleOfSlack = 51
+
+// multipleOfFailure reports whether value satisfies multipleOf, and the reason
+// when it does not.
+//
+// The comparison runs on exact rationals rather than on decimals formatted at a
+// fixed precision. A fixed precision is only correct inside a narrow magnitude
+// band: above it the formatting emits binary representation error and rejects
+// valid values, and below it every operand formats to zero, which both accepts
+// any value and divides by zero.
+func multipleOfFailure(value, multipleOf float64) (string, bool) {
+	// A non-finite multipleOf cannot be reported: SchemaError renders the whole
+	// schema as JSON and NaN has no JSON encoding, so building that error would
+	// panic instead of describing the problem. Treat it as no constraint, which
+	// at least replaces the division-by-zero panic the fixed-precision
+	// formatting produced here.
+	if math.IsNaN(multipleOf) || math.IsInf(multipleOf, 0) {
+		return "", true
+	}
+	// JSON Schema requires multipleOf to be strictly greater than zero. Without
+	// this guard a zero or negative value either divided by zero or accepted
+	// every number.
+	if multipleOf <= 0 {
+		return fmt.Sprintf("multipleOf must be greater than zero, got %g", multipleOf), false
+	}
+	// VisitJSON rejects a non-finite number before any keyword runs, but the
+	// exported VisitJSONNumber does not, so one can still reach this point.
+	// Reporting it here is out of scope: SchemaError marshals Value, and NaN has
+	// no JSON encoding, so the error would panic when rendered. Preserve the
+	// existing outcome and leave that entry point to a separate change.
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return "", true
+	}
+	notAMultiple := fmt.Sprintf("number must be a multiple of %g", multipleOf)
+
+	exactValue := new(big.Rat).SetFloat64(value)
+	exactMultipleOf := new(big.Rat).SetFloat64(multipleOf)
+	quotient := new(big.Rat).Quo(exactValue, exactMultipleOf)
+	if quotient.IsInt() {
+		return "", true
+	}
+
+	// The quotient is not an integer, so floor and floor+1 bracket it. Both are
+	// computed through big.Int, which no quotient can overflow. Compare the two
+	// candidate multiples against the value itself rather than comparing the
+	// quotient against an integer, so the window stays tied to the value's own
+	// precision at every magnitude.
+	floor := new(big.Int).Div(quotient.Num(), quotient.Denom())
+	var distance *big.Rat
+	for _, k := range []*big.Int{floor, new(big.Int).Add(floor, big.NewInt(1))} {
+		gap := new(big.Rat).Sub(exactValue, new(big.Rat).Mul(new(big.Rat).SetInt(k), exactMultipleOf))
+		gap.Abs(gap)
+		if distance == nil || gap.Cmp(distance) < 0 {
+			distance = gap
+		}
+	}
+
+	slack := new(big.Rat).SetFrac(big.NewInt(1), new(big.Int).Lsh(big.NewInt(1), multipleOfSlack))
+	tolerance := new(big.Rat).Mul(new(big.Rat).Abs(exactValue), slack)
+	if distance.Cmp(tolerance) <= 0 {
+		return "", true
+	}
+	return notAMultiple, false
+}
+
 func (schema *Schema) VisitJSONNumber(value float64) error {
 	settings := newSchemaValidationSettings()
 	return schema.visitJSONNumber(settings, value)
@@ -2563,10 +2637,8 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	if v := schema.MultipleOf; v != nil {
 		// "A numeric instance is valid only if division by this keyword's
 		//    value results in an integer."
-		numRat, denRat := &big.Rat{}, &big.Rat{}
-		numRat.SetString(fmt.Sprintf("%.10f", value))
-		denRat.SetString(fmt.Sprintf("%.10f", *v))
-		if !(&big.Rat{}).Quo(numRat, denRat).IsInt() {
+		reason, ok := multipleOfFailure(value, *v)
+		if !ok {
 			if settings.failfast {
 				return errSchema
 			}
@@ -2574,7 +2646,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				Value:                 value,
 				Schema:                schema,
 				SchemaField:           "multipleOf",
-				Reason:                fmt.Sprintf("number must be a multiple of %g", *v),
+				Reason:                reason,
 				customizeMessageError: settings.customizeMessageError,
 			}
 			if !settings.multiError {

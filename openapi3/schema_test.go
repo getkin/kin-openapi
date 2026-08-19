@@ -1501,7 +1501,7 @@ func TestIssue817(t *testing.T) {
 		Min:        &min,
 		MultipleOf: &mulOf,
 	}
-	validData := []float64{2.07, 8.1, 19628.87, 323.39, 40428.2, 1.13}
+	validData := []float64{2.07, 8.1, 19628.87, 323.39, 40428.2, 1.13, 999999999.99, 999999999.90, -999999999.99}
 	for _, data := range validData {
 		require.NoError(t, schema.VisitJSON(data))
 	}
@@ -1527,4 +1527,107 @@ func TestIssue817(t *testing.T) {
 		schema.MultipleOf = &data.mulfOf
 		require.ErrorContains(t, schema.VisitJSON(data.data), fmt.Sprintf("number must be a multiple of %+v", data.mulfOf))
 	}
+}
+
+// computedFloat keeps an expression off the constant-folding path so the test
+// sees the float64 a caller would actually produce at run time. Written as a
+// literal, 0.1+0.2 is evaluated exactly by the compiler and never carries the
+// binary noise these cases exist to cover.
+//
+//go:noinline
+func computedFloat(a, b float64) float64 { return a + b }
+
+//go:noinline
+func scaledFloat(a, b float64) float64 { return a * b }
+
+func TestSchemaMultipleOfAcrossMagnitudes(t *testing.T) {
+	numberSchema := func(multipleOf float64) *Schema {
+		return &Schema{Type: &Types{"number"}, MultipleOf: &multipleOf}
+	}
+
+	t.Run("large magnitudes are multiples of their own precision", func(t *testing.T) {
+		for _, value := range []float64{999999999.99, 999999999.90, -999999999.99, 1e15} {
+			require.NoError(t, numberSchema(0.01).VisitJSON(value), "value %v", value)
+		}
+	})
+
+	t.Run("representation error in a computed value is tolerated", func(t *testing.T) {
+		require.NoError(t, numberSchema(0.1).VisitJSON(computedFloat(0.1, 0.2)))
+		require.NoError(t, numberSchema(0.1).VisitJSON(computedFloat(0.3, -0.1)))
+		require.NoError(t, numberSchema(0.1).VisitJSON(scaledFloat(1.1, 3)))
+		require.NoError(t, numberSchema(1).VisitJSON(scaledFloat(4.35, 100)))
+	})
+
+	t.Run("a multipleOf smaller than the value precision still divides", func(t *testing.T) {
+		require.NoError(t, numberSchema(1e-12).VisitJSON(5.0))
+		require.NoError(t, numberSchema(1e-15).VisitJSON(1e15))
+		require.NoError(t, numberSchema(1e-323).VisitJSON(5e-323))
+		require.ErrorContains(t, numberSchema(1e-12).VisitJSON(0.0000000000015),
+			"number must be a multiple of 1e-12")
+	})
+
+	t.Run("a value far below the multipleOf is not a multiple", func(t *testing.T) {
+		require.ErrorContains(t, numberSchema(0.01).VisitJSON(1e-300),
+			"number must be a multiple of 0.01")
+	})
+
+	t.Run("zero is a multiple of anything positive", func(t *testing.T) {
+		require.NoError(t, numberSchema(0.01).VisitJSON(0.0))
+	})
+
+	t.Run("a non-finite value keeps its existing outcome", func(t *testing.T) {
+		// VisitJSON rejects these before any keyword runs; VisitJSONNumber does
+		// not. Reporting them from multipleOf is a separate change, because
+		// SchemaError marshals Value and NaN has no JSON encoding.
+		for _, value := range []float64{math.NaN(), math.Inf(1), math.Inf(-1)} {
+			require.NoError(t, numberSchema(0.01).VisitJSONNumber(value))
+			require.Error(t, numberSchema(0.01).VisitJSON(value))
+		}
+	})
+
+	t.Run("multipleOf must be greater than zero", func(t *testing.T) {
+		for _, multipleOf := range []float64{0, -0.01, -5} {
+			require.ErrorContains(t, numberSchema(multipleOf).VisitJSON(5.0),
+				"multipleOf must be greater than zero")
+		}
+	})
+
+	t.Run("a degenerate multipleOf does not crash the validator", func(t *testing.T) {
+		// Every one of these divided by zero before: the fixed-precision
+		// formatting turned them into a zero denominator.
+		for _, multipleOf := range []float64{0, -0.01, math.NaN(), math.Inf(1), 1e-12, 1e-323} {
+			require.NotPanics(t, func() { _ = numberSchema(multipleOf).VisitJSON(5.0) },
+				"multipleOf %v", multipleOf)
+		}
+	})
+
+	t.Run("a large quotient does not widen the accepted window", func(t *testing.T) {
+		// The window is relative to the value, not to value/multipleOf. Tied to
+		// the quotient it would exceed one half around 2^49 and accept
+		// everything; 2^50 leaves a remainder of 1 against 3 and of 4 against 5,
+		// and both operands here are exact integers, so no rounding is involved.
+		require.ErrorContains(t, numberSchema(3).VisitJSON(math.Pow(2, 50)),
+			"number must be a multiple of 3")
+		require.ErrorContains(t, numberSchema(5).VisitJSON(math.Pow(2, 50)),
+			"number must be a multiple of 5")
+		require.NoError(t, numberSchema(3).VisitJSON(math.Pow(2, 50)-1))
+	})
+
+	t.Run("the window does not reach a half step", func(t *testing.T) {
+		for _, multipleOf := range []float64{0.01, 0.1, 1, 3, 1e-7} {
+			for _, k := range []float64{1, 7, 1000, 999999} {
+				value := k*multipleOf + multipleOf/2
+				require.Error(t, numberSchema(multipleOf).VisitJSON(value),
+					"multipleOf %v at k %v", multipleOf, k)
+			}
+		}
+	})
+
+	t.Run("the failure names the offending keyword", func(t *testing.T) {
+		err := numberSchema(0.01).VisitJSON(0.005)
+		var schemaErr *SchemaError
+		require.ErrorAs(t, err, &schemaErr)
+		require.Equal(t, "multipleOf", schemaErr.SchemaField)
+		require.Equal(t, "number must be a multiple of 0.01", schemaErr.Reason)
+	})
 }
