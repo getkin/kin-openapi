@@ -44,7 +44,7 @@ paths:
 	err = ValidateRequest(context.Background(), input)
 	require.NoError(t, err)
 
-	// XXX not yet fixed
+	// #1255 not yet fixed
 	// require.Equal(t, []string{"false"}, req.URL.Query()["flag"])
 	require.Equal(t, []string{"", "false"}, req.URL.Query()["flag"])
 }
