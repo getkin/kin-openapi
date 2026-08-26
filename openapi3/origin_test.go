@@ -8,8 +8,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-const originKey = "__origin__"
-
 func TestOrigin_T(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
@@ -436,10 +434,6 @@ func TestOrigin_Example(t *testing.T) {
 		},
 		base.Origin.Fields.Get("summary"))
 
-	// Example.Value is an any-typed field, so __origin__ is stripped from it during unmarshaling.
-	require.NotContains(t,
-		base.Value,
-		originKey)
 }
 
 func TestOrigin_XML(t *testing.T) {
@@ -483,50 +477,6 @@ func TestOrigin_XML(t *testing.T) {
 		base.Origin.Fields.Get("prefix"))
 }
 
-// TestOrigin_AnyFieldsStripped verifies that __origin__ is absent from all
-// any-typed fields (Schema.Enum, Schema.Default, Schema.Example,
-// Parameter.Example, MediaType.Example, Link.RequestBody) after loading.
-// These fields have no dedicated UnmarshalJSON; extractOrigins strips
-// __origin__ before JSON marshaling so it never reaches these values.
-func TestOrigin_AnyFieldsStripped(t *testing.T) {
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-	doc, err := loader.LoadFromFile("testdata/origin/any_fields.yaml")
-	require.NoError(t, err)
-
-	op := doc.Paths.Find("/items").Get
-	resp := op.Responses.Value("200").Value
-
-	// Parameter.Example
-	paramEx := op.Parameters[0].Value.Example.(map[string]any)
-	require.NotContains(t, paramEx, originKey, "Parameter.Example must not contain __origin__")
-
-	// MediaType.Example
-	mediaEx := resp.Content["application/json"].Example.(map[string]any)
-	require.NotContains(t, mediaEx, originKey, "MediaType.Example must not contain __origin__")
-
-	schema := resp.Content["application/json"].Schema.Value
-
-	// Schema.Default
-	schemaDefault := schema.Default.(map[string]any)
-	require.NotContains(t, schemaDefault, originKey, "Schema.Default must not contain __origin__")
-
-	// Schema.Example
-	schemaEx := schema.Example.(map[string]any)
-	require.NotContains(t, schemaEx, originKey, "Schema.Example must not contain __origin__")
-
-	// Schema.Enum items
-	for i, v := range schema.Enum {
-		m, ok := v.(map[string]any)
-		require.True(t, ok, "Schema.Enum[%d] must be a map", i)
-		require.NotContains(t, m, originKey, "Schema.Enum[%d] must not contain __origin__", i)
-	}
-
-	// Link.RequestBody
-	linkRB := resp.Links["self"].Value.RequestBody.(map[string]any)
-	require.NotContains(t, linkRB, originKey, "Link.RequestBody must not contain __origin__")
-}
-
 func TestOrigin_ExampleWithArrayValue(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
@@ -536,110 +486,9 @@ func TestOrigin_ExampleWithArrayValue(t *testing.T) {
 	example := doc.Paths.Find("/subscribe").Post.RequestBody.Value.Content["application/json"].Examples["bar"]
 	require.NotNil(t, example.Value)
 
-	// The example value contains a list of objects; __origin__ must be stripped from each.
+	// The example value is a list of objects and decodes as plain data.
 	value := example.Value.Value.(map[string]any)
-	items := value["items"].([]any)
-	for _, item := range items {
-		itemMap := item.(map[string]any)
-		require.NotContains(t, itemMap, "__origin__")
-	}
-}
-
-// TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
-// contains a property named "__origin__", highlighting a limitation in the current implementation.
-func TestOrigin_ConstAndExamplesStripped(t *testing.T) {
-	var data = `
-openapi: "3.1.0"
-info:
-  title: Test
-  version: "1.0"
-paths: {}
-components:
-  schemas:
-    Foo:
-      type: object
-      const: {x: reuven}
-      examples:
-        - {y: value}
-`
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-
-	doc, err := loader.LoadFromData([]byte(data))
-	require.NoError(t, err)
-
-	schema := doc.Components.Schemas["Foo"].Value
-	require.NotNil(t, schema)
-
-	constMap, ok := schema.Const.(map[string]any)
-	require.True(t, ok)
-	require.NotContains(t, constMap, originKey)
-
-	require.Len(t, schema.Examples, 1)
-	exampleMap, ok := schema.Examples[0].(map[string]any)
-	require.True(t, ok)
-	require.NotContains(t, exampleMap, originKey)
-}
-
-func TestOrigin_OriginExistsInProperties(t *testing.T) {
-	var data = `
-paths:
-  /foo:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Foo"
-components:
-  schemas:
-    Foo:
-      type: object
-      properties:
-        __origin__:
-          type: string
-`
-
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-
-	_, err := loader.LoadFromData([]byte(data))
-	require.Error(t, err)
-	require.Equal(t, `failed to unmarshal data: json error: invalid character 'p' looking for beginning of value, yaml error: error converting YAML to JSON: yaml: unmarshal errors:
-  line 0: mapping key "__origin__" already defined at line 17`, err.Error())
-}
-
-// TestOrigin_ExtensionValuesStripped verifies that __origin__ metadata injected
-// by the YAML decoder is not present in any-typed extension values.
-// Regression test: extension values that are YAML objects received __origin__
-// from the yaml3 decoder but it was never stripped, causing spurious diffs
-// between specs loaded from different file paths.
-func TestOrigin_ExtensionValuesStripped(t *testing.T) {
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-
-	doc, err := loader.LoadFromFile("testdata/origin/extensions.yaml")
-	require.NoError(t, err)
-
-	val, ok := doc.Extensions["x-object-extension"]
-	require.True(t, ok, "x-object-extension must be present")
-
-	m, ok := val.(map[string]any)
-	require.True(t, ok, "x-object-extension value must be a map")
-
-	require.NotContains(t, m, originKey, "__origin__ must be stripped from extension object values")
-
-	// Also verify stripping works for a nested type (Info), covering the 20
-	// per-type UnmarshalJSON call sites with a single representative case.
-	infoVal, ok := doc.Info.Extensions["x-info-extension"]
-	require.True(t, ok, "x-info-extension must be present")
-
-	infoMap, ok := infoVal.(map[string]any)
-	require.True(t, ok, "x-info-extension value must be a map")
-
-	require.NotContains(t, infoMap, originKey, "__origin__ must be stripped from nested extension object values")
+	require.Len(t, value["items"].([]any), 2)
 }
 
 func TestOrigin_WithExternalRef(t *testing.T) {
@@ -684,11 +533,8 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 		base.XML.Origin.Fields.Get("prefix"))
 }
 
-// TestOrigin_WithExternalRefRootOrigin verifies that the root-level schema of an
-// externally $ref'd YAML file carries Origin metadata. Previously, only nested
-// schemas (values inside a parent mapping) received __origin__ injection; the
-// root mapping of a document was skipped. This test covers the fix in yaml3's
-// document() decoder that injects __origin__ for the root mapping too.
+// The root-level schema of an externally $ref'd file carries an Origin, not
+// only the schemas nested inside a parent mapping.
 func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
@@ -722,43 +568,6 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 			Name:   "type",
 		},
 		base.Origin.Fields.Get("type"))
-}
-
-// TestOrigin_MaplikeNoOriginKey verifies that __origin__ does not appear as a
-// map key in Responses, Paths, or Callback maplike types after loading.
-// The if k == originKey blocks in their UnmarshalJSON were removed; this
-// confirms extractOrigins strips __origin__ before it reaches those iterators.
-func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
-	require.NoError(t, err)
-
-	// Paths map must not contain __origin__ as a path key
-	require.Nil(t, doc.Paths.Find(originKey), "Paths must not contain __origin__ as a key")
-
-	// Responses map must not contain __origin__ as a status code key
-	op := doc.Paths.Find("/partner-api/test/some-method").Get
-	require.Nil(t, op.Responses.Value(originKey), "Responses must not contain __origin__ as a key")
-}
-
-func TestOrigin_NoSpuriousOriginsInComponents(t *testing.T) {
-	loader := openapi3.NewLoader()
-	loader.IncludeOrigin = true
-
-	doc, err := loader.LoadFromFile("testdata/origin/components.yaml")
-
-	require.Nil(t, doc.Components.Schemas[originKey])
-	require.Nil(t, doc.Components.Parameters[originKey])
-	require.Nil(t, doc.Components.Headers[originKey])
-	require.Nil(t, doc.Components.RequestBodies[originKey])
-	require.Nil(t, doc.Components.Responses[originKey])
-	require.Nil(t, doc.Components.SecuritySchemes[originKey])
-	require.Nil(t, doc.Components.Examples[originKey])
-	require.Nil(t, doc.Components.Links[originKey])
-	require.Nil(t, doc.Components.Callbacks[originKey])
-
-	require.NoError(t, err)
 }
 
 // TestOrigin_RequiredSequence verifies that Origin.Sequences records the
@@ -800,7 +609,7 @@ func TestOrigin_RequiredSequence(t *testing.T) {
 
 // TestOrigin_YAMLAlias verifies that a schema referenced via YAML alias loads
 // without error and carries origin metadata from the anchor definition.
-// Multiple aliases of the same anchor must not produce duplicate __origin__ keys.
+// Multiple aliases of the same anchor must each resolve to their own origin.
 func TestOrigin_YAMLAlias(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true

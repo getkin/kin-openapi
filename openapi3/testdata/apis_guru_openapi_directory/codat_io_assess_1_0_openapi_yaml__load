@@ -1,1 +1,2 @@
-failed to unmarshal data: json error: invalid character 'o' looking for beginning of value, yaml error: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal object into field Schema.examples of type []interface {}
+failed to unmarshal data: json error: invalid character 'o' looking for beginning of value, yaml error: yaml: unmarshal errors:
+  line 4692: cannot unmarshal !!map into []interface {}

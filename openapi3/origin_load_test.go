@@ -6,9 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestOrigin_LoadAllTestdata verifies that enabling origin tracking does not
-// break loading of any spec in the testdata directory. It catches regressions
-// where __origin__ leaks into fields and causes unmarshal failures or panics.
+// Enabling origin tracking must not break loading any spec in testdata.
 func TestOrigin_LoadAllTestdata(t *testing.T) {
 	specs := []struct {
 		name         string

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
+	yaml "go.yaml.in/yaml/v3"
 )
 
 // CallbackRef represents either a Callback or a $ref to a Callback.
@@ -71,6 +72,15 @@ func (x CallbackRef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(y)
+}
+
+// UnmarshalYAML sets CallbackRef from node.
+func (x *CallbackRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
 }
 
 // UnmarshalJSON sets CallbackRef to a copy of data.
@@ -235,6 +245,15 @@ func (x ExampleRef) MarshalJSON() ([]byte, error) {
 	return json.Marshal(y)
 }
 
+// UnmarshalYAML sets ExampleRef from node.
+func (x *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
+}
+
 // UnmarshalJSON sets ExampleRef to a copy of data.
 func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
@@ -395,6 +414,15 @@ func (x HeaderRef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(y)
+}
+
+// UnmarshalYAML sets HeaderRef from node.
+func (x *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
 }
 
 // UnmarshalJSON sets HeaderRef to a copy of data.
@@ -559,6 +587,15 @@ func (x LinkRef) MarshalJSON() ([]byte, error) {
 	return json.Marshal(y)
 }
 
+// UnmarshalYAML sets LinkRef from node.
+func (x *LinkRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
+}
+
 // UnmarshalJSON sets LinkRef to a copy of data.
 func (x *LinkRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
@@ -719,6 +756,15 @@ func (x ParameterRef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(y)
+}
+
+// UnmarshalYAML sets ParameterRef from node.
+func (x *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
 }
 
 // UnmarshalJSON sets ParameterRef to a copy of data.
@@ -883,6 +929,15 @@ func (x RequestBodyRef) MarshalJSON() ([]byte, error) {
 	return json.Marshal(y)
 }
 
+// UnmarshalYAML sets RequestBodyRef from node.
+func (x *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
+}
+
 // UnmarshalJSON sets RequestBodyRef to a copy of data.
 func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
@@ -1045,6 +1100,15 @@ func (x ResponseRef) MarshalJSON() ([]byte, error) {
 	return json.Marshal(y)
 }
 
+// UnmarshalYAML sets ResponseRef from node.
+func (x *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
+}
+
 // UnmarshalJSON sets ResponseRef to a copy of data.
 func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
@@ -1203,6 +1267,31 @@ func (x SchemaRef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(y)
+}
+
+// UnmarshalYAML sets SchemaRef from node.
+func (x *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, nil, nil, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	// OAS 3.1 / JSON Schema 2020-12: schema keywords alongside a $ref are valid
+	// and are merged with the resolved reference, so they are held on sibling
+	// until resolveSchemaRef can apply them.
+	var hasSiblings bool
+	for _, k := range x.extra {
+		if !strings.HasPrefix(k, "x-") {
+			hasSiblings = true
+			break
+		}
+	}
+	if hasSiblings {
+		var sibling Schema
+		if err := node.Decode(&sibling); err == nil {
+			x.sibling = &sibling
+		}
+	}
+	return nil
 }
 
 // UnmarshalJSON sets SchemaRef to a copy of data.
@@ -1371,6 +1460,15 @@ func (x SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(y)
+}
+
+// UnmarshalYAML sets SecuritySchemeRef from node.
+func (x *SecuritySchemeRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+	return nil
 }
 
 // UnmarshalJSON sets SecuritySchemeRef to a copy of data.

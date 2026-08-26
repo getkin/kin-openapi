@@ -2105,7 +2105,7 @@ func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *tes
 
 	// A run of same-combinator wrappers renders the prefix once, not per level.
 	var nested error = leaf
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		nested = &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: nested}
 	}
 	require.Equal(t, "invalid allOf element: boom", nested.Error())

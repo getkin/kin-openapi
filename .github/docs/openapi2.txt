@@ -7,6 +7,13 @@ backwards-compatible with version 2, version 3 elements have been used.
 
 See https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md
 
+FUNCTIONS
+
+func UnmarshalFromData(data []byte, doc *T) error
+    UnmarshalFromData loads a document from swagger 2.0 bytes in either JSON or
+    YAML. The v3 side has Loader for this; here the whole job is the decode.
+
+
 TYPES
 
 type Header struct {

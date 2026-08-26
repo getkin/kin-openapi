@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oasdiff/yaml"
+	"github.com/getkin/kin-openapi/internal/yamlconv"
 )
 
 func unmarshalError(jsonUnmarshalErr error) error {
@@ -24,11 +24,18 @@ func unmarshal(data []byte, v any) error {
 		return nil
 	}
 
-	// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
-	if _, yamlErr = yaml.Unmarshal(data, v, yaml.DecodeOpts{DisableTimestamps: true}); yamlErr == nil {
+	// YAML reaches these types through JSON, since they implement
+	// UnmarshalJSON and not UnmarshalYAML.
+	if yamlErr = yamlconv.Unmarshal(data, v); yamlErr == nil {
 		return nil
 	}
 
 	// If both unmarshaling attempts fail, return a new error that includes both errors
 	return fmt.Errorf("failed to unmarshal data: json error: %v, yaml error: %v", jsonErr, yamlErr)
+}
+
+// UnmarshalFromData loads a document from swagger 2.0 bytes in either JSON or
+// YAML. The v3 side has Loader for this; here the whole job is the decode.
+func UnmarshalFromData(data []byte, doc *T) error {
+	return unmarshal(data, doc)
 }

@@ -3,8 +3,8 @@ package openapi3_test
 import (
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/assert"
+	yaml "go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )

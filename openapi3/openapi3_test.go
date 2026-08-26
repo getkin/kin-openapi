@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/getkin/kin-openapi/internal/yamlconv"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -55,13 +55,13 @@ func TestRefsYAML(t *testing.T) {
 	loader := openapi3.NewLoader()
 
 	t.Log("Marshal *T to YAML")
-	data, err := yaml.Marshal(spec())
+	data, err := yamlconv.Marshal(spec())
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
 	t.Log("Unmarshal *T from YAML")
 	docA := &openapi3.T{}
-	_, err = yaml.Unmarshal(specYAML, &docA, yaml.DecodeOpts{DisableTimestamps: true})
+	err = yamlconv.Unmarshal(specYAML, &docA)
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 
@@ -80,9 +80,9 @@ func TestRefsYAML(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("Ensure representations match")
-	dataA, err := yaml.Marshal(docA)
+	dataA, err := yamlconv.Marshal(docA)
 	require.NoError(t, err)
-	dataB, err := yaml.Marshal(docB)
+	dataB, err := yamlconv.Marshal(docB)
 	require.NoError(t, err)
 	require.YAMLEq(t, string(data), string(specYAML))
 	require.YAMLEq(t, string(data), string(dataA))
@@ -432,7 +432,7 @@ components:
 		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			doc := &openapi3.T{}
-			_, err := yaml.Unmarshal([]byte(tt.spec), &doc, yaml.DecodeOpts{DisableTimestamps: true})
+			err := yamlconv.Unmarshal([]byte(tt.spec), &doc)
 			require.NoError(t, err)
 
 			err = doc.Validate(t.Context())

@@ -1,12 +1,22 @@
 package openapi3
 
+// Origin records where each element of a document came from: the position of
+// the key that heads a collection, of each of its fields, and of the scalar
+// items in its sequence-valued fields.
+//
+// The positions are read from the nodes as the document decodes. A node knows
+// where it starts, so the only piece it cannot supply is Key -- the key above
+// it belongs to the parent, which stamps it.
+
 import (
 	"encoding/json"
 	"reflect"
 	"slices"
+	"sort"
 	"strings"
+	"sync"
 
-	"github.com/oasdiff/yaml"
+	yaml "go.yaml.in/yaml/v3"
 )
 
 var originPtrType = reflect.TypeFor[*Origin]()
@@ -108,296 +118,318 @@ type Location struct {
 	EndColumn int `json:"endColumn,omitempty" yaml:"endColumn,omitempty"`
 }
 
-// originFromSeq parses the compact []any sequence produced by yaml3's addOrigin.
+// originTree is a decoded document's node tree together with what the origins
+// read off it were stamped against. A $ref resolved later decodes a subtree of
+// this, and must stamp the file the subtree came from rather than whichever
+// document happened to be decoded last.
+type originTree struct {
+	node *yaml.Node
+	file string
+	ends *endIndex
+}
+
+// originMu guards the three package-level variables below for the length of a
+// decode. They exist because UnmarshalYAML receives a node and nothing else,
+// with no way to carry per-decode state through the call, and a lock is what
+// makes them safe to hold that way.
 //
-// Format: [file, key_name, key_line, key_col, nf, f1_name, f1_delta, f1_col, ..., ns, s1_name, s1_count, s1_l0_delta, s1_c0, ...]
-func originFromSeq(s []any) *Origin {
-	// Need at least: file, key_name, key_line, key_col, nf, ns
-	if len(s) < 6 {
+// The cost is that decodes serialise even when each has its own Loader, which
+// TestIssue741 does. Correctness first: without this the three race, and the
+// path this replaces passed the file as an argument and did not.
+//
+// A file recorded on the node itself would remove the need, since the callback
+// already receives the node, but go-yaml's Node has no field for it.
+var originMu sync.Mutex
+
+// originFileVar is the file stamped into origins for the decode in progress.
+// UnmarshalYAML receives a node and nothing else, so the file cannot be passed
+// through the call.
+var originFileVar string
+
+// originEnabledVar mirrors the includeOrigin argument unmarshal receives, which
+// comes from the Loader. The package-level IncludeOrigin only seeds NewLoader,
+// so a caller that set it on its Loader alone would be missed.
+var originEnabledVar bool
+
+// Shared machinery for the UnmarshalYAML methods: extension collection, and
+// origins read from the node being decoded.
+//
+// Origins record where an element starts, not where it ends. A consumer that
+// needs the extent of a block derives it from the next key or sequence item at
+// the same or shallower indentation.
+
+func nativeOriginFile() string { return originFileVar }
+
+// mappingValue returns the value node for key, or nil.
+func mappingValue(node *yaml.Node, key string) *yaml.Node {
+	_, v := mappingEntry(node, key)
+	return v
+}
+
+// mappingEntry returns both halves of a mapping entry, the key being what a
+// value's origin records as its own location. Merge keys are applied, so a
+// field a merge brought in is found here the same as one written in place.
+func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
+	if node.Kind != yaml.MappingNode {
+		return nil, nil
+	}
+	for _, kv := range mappingPairs(node) {
+		if kv[0].Value == key {
+			return kv[0], kv[1]
+		}
+	}
+	return nil, nil
+}
+
+// originFromNode builds the origin data a mapping can see for itself: where
+// each of its field keys is, and where the scalar items of its sequence-valued
+// fields are.
+//
+// Origin.Key is not set here -- it is the location of the key heading this
+// mapping in its parent, which a node does not know. See setChildOriginKeys.
+func originFromNode(node *yaml.Node, file string) *Origin {
+	// Origins are opt-in: without this every decode pays for them.
+	if !originEnabledVar {
 		return nil
 	}
-	file, _ := s[0].(string)
-	keyName, _ := s[1].(string)
-	keyLine := toInt(s[2])
-	keyCol := toInt(s[3])
-
-	o := &Origin{
-		Key: &Location{
-			File:   file,
-			Line:   keyLine,
-			Column: keyCol,
-			Name:   keyName,
-		},
+	if node == nil || node.Kind != yaml.MappingNode {
+		return nil
 	}
+	o := &Origin{}
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		k, v := node.Content[i], node.Content[i+1]
+		if o.Fields == nil {
+			o.Fields = make(FieldLocations, 0, len(node.Content)/2)
+		}
+		o.Fields = append(o.Fields, Location{File: file, Line: k.Line, Column: k.Column, Name: k.Value})
 
-	idx := 4
-	nf := toInt(s[idx])
-	idx++
-	if nf > 0 && idx+nf*3 <= len(s) {
-		o.Fields = make(FieldLocations, 0, nf)
-		for range nf {
-			fname, _ := s[idx].(string)
-			delta := toInt(s[idx+1])
-			col := toInt(s[idx+2])
-			o.Fields = append(o.Fields, Location{
-				File:   file,
-				Line:   keyLine + delta,
-				Column: col,
-				Name:   fname,
-			})
-			idx += 3
+		if v.Kind != yaml.SequenceNode {
+			continue
+		}
+		var locs []Location
+		for _, item := range v.Content {
+			if item.Kind == yaml.ScalarNode {
+				locs = append(locs, Location{File: file, Line: item.Line, Column: item.Column, Name: item.Value})
+			}
+		}
+		if len(locs) > 0 {
+			if o.Sequences == nil {
+				o.Sequences = make(map[string][]Location)
+			}
+			o.Sequences[k.Value] = locs
 		}
 	}
-
-	if idx >= len(s) {
-		return o
-	}
-	ns := toInt(s[idx])
-	idx++
-	if ns > 0 {
-		o.Sequences = make(map[string][]Location, ns)
-		for range ns {
-			if idx >= len(s) {
-				break
-			}
-			sname, _ := s[idx].(string)
-			idx++
-			if idx >= len(s) {
-				break
-			}
-			count := toInt(s[idx])
-			idx++
-			locs := make([]Location, 0, count)
-			for j := 0; j < count && idx+2 < len(s); j++ {
-				name, _ := s[idx].(string)
-				delta := toInt(s[idx+1])
-				col := toInt(s[idx+2])
-				locs = append(locs, Location{File: file, Line: keyLine + delta, Column: col, Name: name})
-				idx += 3
-			}
-			o.Sequences[sname] = locs
-		}
-	}
-
-	// Trailing block end (yaml3 >= the end-position release): end_delta, end_col.
-	// Reconstruct the end of the whole block on Origin.Key so a consumer can
-	// extract the entire element. Older origin sequences omit these, leaving
-	// EndLine/EndColumn zero. end_col == 0 means no end information was recorded.
-	if o.Key != nil && idx+1 < len(s) {
-		if endCol := toInt(s[idx+1]); endCol > 0 {
-			o.Key.EndLine = keyLine + toInt(s[idx])
-			o.Key.EndColumn = endCol
-		}
+	if o.Fields == nil && o.Sequences == nil {
+		return nil
 	}
 	return o
 }
 
-// toInt converts numeric types to int. Handles int/uint64 from YAML decoding.
-func toInt(v any) int {
-	switch n := v.(type) {
-	case int:
-		return n
-	case uint64:
-		return int(n)
-	}
-	return 0
-}
-
-// isScalarValuedMapField reports whether v is a non-empty map whose element
-// type is a scalar (string, bool, or a numeric kind). Such a map decodes
-// without an Origin field of its own, unlike a pointer- or struct-valued map
-// whose elements each carry their own Origin.
-func isScalarValuedMapField(v reflect.Value) bool {
-	if v.Kind() != reflect.Map || v.IsNil() || v.Len() == 0 {
-		return false
-	}
-	switch v.Type().Elem().Kind() {
-	case reflect.String, reflect.Bool,
-		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Float32, reflect.Float64:
-		return true
-	}
-	return false
-}
-
-// recordMapKeyLocations moves the map-key locations from a scalar-valued map's
-// own subtree onto parentOrigin.Sequences[field], so each key is addressable by
-// name (the same shape used for sequence items). It is a no-op when the child
-// carries no origin data. Keys are sorted for deterministic output.
+// setChildOriginKeys sets Origin.Key on the immediate children of a mapping,
+// from the key node heading each one.
 //
-// childOrigin is discarded here, and nothing else holds its Fields, so the
-// slice is sorted and handed over in place rather than copied.
-func recordMapKeyLocations(parentOrigin *Origin, field string, childTree *yaml.OriginTree) {
-	s, ok := childTree.Origin.([]any)
-	if !ok {
+// This is the only origin data a node cannot supply for itself: UnmarshalYAML
+// receives the value node, and Key is the position of the key above it. Each
+// child sets its own children's keys in turn, so one level per call covers the
+// tree.
+func setChildOriginKeys(node *yaml.Node, container any, file string) {
+	if !originEnabledVar {
 		return
 	}
-	childOrigin := originFromSeq(s)
-	if childOrigin == nil || len(childOrigin.Fields) == 0 {
+	if node == nil || node.Kind != yaml.MappingNode {
 		return
 	}
-	locs := childOrigin.Fields
-	slices.SortFunc(locs, func(a, b Location) int { return strings.Compare(a.Name, b.Name) })
-	if parentOrigin.Sequences == nil {
-		parentOrigin.Sequences = make(map[string][]Location)
-	}
-	parentOrigin.Sequences[field] = locs
-}
-
-// applyOrigins walks a Go struct tree and a parallel OriginTree, setting
-// Origin fields on each struct from the extracted origin data.
-func applyOrigins(v any, tree *yaml.OriginTree) {
-	if tree == nil {
-		return
-	}
-	applyOriginsToValue(reflect.ValueOf(v), tree)
-}
-
-func applyOriginsToValue(val reflect.Value, tree *yaml.OriginTree) {
-	// Keep track of the last pointer so we can pass it to struct handlers
-	// (needed for calling methods like Map() on maplike types).
-	var ptr reflect.Value
-	for val.Kind() == reflect.Pointer || val.Kind() == reflect.Interface {
-		if val.IsNil() {
+	v := reflect.ValueOf(container)
+	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
+		if v.IsNil() {
 			return
 		}
-		if val.Kind() == reflect.Pointer {
-			ptr = val
+		v = v.Elem()
+	}
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		keyNode, valNode := node.Content[i], node.Content[i+1]
+		child := childByKey(v, keyNode.Value)
+		if !child.IsValid() {
+			continue
 		}
-		val = val.Elem()
-	}
+		setOriginKey(child, keyNode, valNode, file)
+		recordScalarMapKeys(v, child, keyNode, valNode, file)
 
-	switch val.Kind() {
-	case reflect.Struct:
-		applyOriginsToStruct(val, ptr, tree)
-	case reflect.Map:
-		applyOriginsToMap(val, tree)
-	case reflect.Slice:
-		applyOriginsToSlice(val, tree)
-	}
-}
-
-func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.OriginTree) {
-	typ := val.Type()
-
-	// Set Origin field for structs whose Origin field has a "-" json tag.
-	var structOrigin *Origin
-	if tree.Origin != nil {
-		if sf, ok := typ.FieldByName("Origin"); ok && sf.Type == originPtrType {
-			tag := sf.Tag.Get("json")
-			if tag == "-" {
-				if s, ok := tree.Origin.([]any); ok {
-					structOrigin = originFromSeq(s)
-					val.FieldByName("Origin").Set(reflect.ValueOf(structOrigin))
+		switch c := deref(child); c.Kind() {
+		case reflect.Map:
+			// A map-valued field (Content, Headers, Links) holds children of
+			// its own, keyed in valNode. The generic map decoder gives them no
+			// hook of their own, so descend.
+			if c.CanInterface() {
+				setChildOriginKeys(valNode, c.Interface(), file)
+			}
+		case reflect.Slice:
+			// A sequence item has no key above it, so it takes its own first
+			// key as its Key.
+			if valNode.Kind != yaml.SequenceNode {
+				continue
+			}
+			for j := 0; j < len(valNode.Content) && j < c.Len(); j++ {
+				item := valNode.Content[j]
+				if item.Kind == yaml.MappingNode && len(item.Content) > 0 {
+					setOriginKey(c.Index(j), item.Content[0], item, file)
 				}
 			}
 		}
 	}
+}
 
-	// Recurse into exported struct fields using json tags
-	for i := range typ.NumField() {
-		sf := typ.Field(i)
-		if !sf.IsExported() {
-			continue
+func deref(v reflect.Value) reflect.Value {
+	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
+		if v.IsNil() {
+			return v
 		}
-		tag := jsonTagName(sf)
-		if tag == "" || tag == "-" {
-			continue
-		}
-		childTree := tree.Fields[tag]
-		if childTree == nil {
-			continue
-		}
-		// A scalar-valued map (e.g. OAuth scopes: map[string]string) decodes into
-		// a Go map that has no Origin field of its own, so its per-key locations —
-		// present in the child subtree — would otherwise be lost. Record them on
-		// this struct's Origin as a named sequence so a consumer can locate each
-		// entry by key. Object- or pointer-valued maps are excluded: their values
-		// carry their own Origin via the recursion below.
-		if structOrigin != nil && isScalarValuedMapField(val.Field(i)) {
-			recordMapKeyLocations(structOrigin, tag, childTree)
-		}
-		applyOriginsToValue(val.Field(i), childTree)
+		v = v.Elem()
 	}
+	return v
+}
 
-	// Handle wrapper types whose inner struct has no json tag:
-	// - *Ref types (e.g. SchemaRef, ResponseRef) have a "Value" field
-	// - BoolSchema (AdditionalProperties, UnevaluatedProperties, UnevaluatedItems) has a "Schema" field
-	// The origin tree data applies to the inner struct, not a sub-key.
-	for _, fieldName := range []string{"Value", "Schema"} {
-		vf := val.FieldByName(fieldName)
-		if !vf.IsValid() || vf.Kind() != reflect.Pointer || vf.IsNil() {
-			continue
+// childByKey finds the struct field or map entry a mapping key decoded into.
+func childByKey(v reflect.Value, key string) reflect.Value {
+	switch v.Kind() {
+	case reflect.Map:
+		if v.IsNil() {
+			return reflect.Value{}
 		}
-		sf, _ := typ.FieldByName(fieldName)
-		if sf.Tag.Get("json") == "" {
-			applyOriginsToValue(vf, tree)
-		}
-	}
-
-	// Handle "maplike" types (Paths, Responses, Callback) whose items are
-	// stored in an unexported map accessible via a Map() method.
-	// Use the original pointer (if available) since dereferenced values
-	// are not addressable.
-	receiver := val
-	if ptr.IsValid() {
-		receiver = ptr
-	} else if val.CanAddr() {
-		receiver = val.Addr()
-	}
-	if receiver.Kind() == reflect.Pointer {
-		if mapMethod := receiver.MethodByName("Map"); mapMethod.IsValid() {
-			results := mapMethod.Call(nil)
-			if len(results) == 1 {
-				applyOriginsToMap(results[0], tree)
+		return v.MapIndex(reflect.ValueOf(key))
+	case reflect.Struct:
+		t := v.Type()
+		for i := range t.NumField() {
+			f := t.Field(i)
+			if !f.IsExported() {
+				continue
+			}
+			if name, _, _ := strings.Cut(f.Tag.Get("yaml"), ","); name == key {
+				return v.Field(i)
 			}
 		}
 	}
+	return reflect.Value{}
 }
 
-func applyOriginsToMap(val reflect.Value, tree *yaml.OriginTree) {
-	if tree.Fields == nil {
+// setOriginKey stamps Key on a child carrying an *Origin, from the key's own
+// position. The extent of what the key heads is the consumer's to derive.
+func setOriginKey(child reflect.Value, keyNode, valNode *yaml.Node, file string) {
+	if !originEnabledVar {
 		return
 	}
-	for _, key := range val.MapKeys() {
-		childTree := tree.Fields[key.String()]
-		if childTree == nil {
-			continue
+	keyNode, valNode = resolveAlias(keyNode, valNode)
+	for child.Kind() == reflect.Pointer || child.Kind() == reflect.Interface {
+		if child.IsNil() {
+			return
 		}
-		elem := val.MapIndex(key)
-		// Map values are not addressable. For pointer-typed values we can
-		// recurse directly. For value types we must copy, apply, and set back.
-		if elem.Kind() == reflect.Pointer || elem.Kind() == reflect.Interface {
-			applyOriginsToValue(elem, childTree)
-		} else if elem.Kind() == reflect.Struct {
-			// Copy to a settable value
-			cp := reflect.New(elem.Type()).Elem()
-			cp.Set(elem)
-			applyOriginsToStruct(cp, reflect.Value{}, childTree)
-			val.SetMapIndex(key, cp)
+		child = child.Elem()
+	}
+	if child.Kind() != reflect.Struct {
+		return
+	}
+	f := child.FieldByName("Origin")
+	if !f.IsValid() || f.Type() != originPtrType || !f.CanSet() {
+		// No origin of its own; it may still wrap something that has one.
+		descendToWrapped(child, keyNode, valNode, file)
+		return
+	}
+	if f.IsNil() {
+		f.Set(reflect.ValueOf(&Origin{}))
+	}
+	key := withEnd(Location{
+		File:   file,
+		Line:   keyNode.Line,
+		Column: keyNode.Column,
+		Name:   keyNode.Value,
+	}, valNode)
+	f.Interface().(*Origin).Key = &key
+	// A wrapper and the thing it holds occupy the same node, so both carry
+	// that node's origin. Value is the $ref wrappers; Schema is BoolSchema,
+	// which holds either a bool or a schema.
+	descendToWrapped(child, keyNode, valNode, file)
+}
+
+// descendToWrapped stamps the thing a wrapper holds, which occupies the same
+// node. Value is the $ref wrappers; Schema is BoolSchema, which holds either a
+// bool or a schema.
+func descendToWrapped(child reflect.Value, keyNode, valNode *yaml.Node, file string) {
+	if child.Kind() != reflect.Struct {
+		return
+	}
+	for _, name := range [...]string{"Value", "Schema"} {
+		if inner := child.FieldByName(name); inner.IsValid() {
+			setOriginKey(inner, keyNode, valNode, file)
 		}
 	}
 }
 
-func applyOriginsToSlice(val reflect.Value, tree *yaml.OriginTree) {
-	for i := 0; i < val.Len() && i < len(tree.Items); i++ {
-		if tree.Items[i] != nil {
-			applyOriginsToValue(val.Index(i), tree.Items[i])
+// stampRootOrigin gives a document root the position of the document itself.
+//
+// Origin.Key is normally the key heading a mapping in its parent, stamped by
+// that parent. A root has none -- an externally $ref'd file may be a bare
+// schema -- so it takes the root node's own position and an empty name.
+// Applied only when nothing has already set Key, so a type that supplies its
+// own keeps it.
+func stampRootOrigin(v any, node *yaml.Node) {
+	if !originEnabledVar || node == nil {
+		return
+	}
+	rv := reflect.ValueOf(v)
+	for rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Interface {
+		if rv.IsNil() {
+			return
 		}
+		rv = rv.Elem()
 	}
+	if rv.Kind() != reflect.Struct {
+		return
+	}
+	f := rv.FieldByName("Origin")
+	if !f.IsValid() || f.Type() != originPtrType || !f.CanSet() || f.IsNil() {
+		return
+	}
+	o := f.Interface().(*Origin)
+	if o.Key != nil {
+		return
+	}
+	key := withEnd(Location{File: nativeOriginFile(), Line: node.Line, Column: node.Column}, node)
+	o.Key = &key
 }
 
-// jsonTagName returns the JSON field name from a struct field's json tag.
-func jsonTagName(f reflect.StructField) string {
-	tag := f.Tag.Get("json")
-	if tag == "" {
-		return ""
+// recordScalarMapKeys records where each key of a scalar-valued map sits.
+//
+// A map[string]string -- scopes on an OAuth flow, say -- decodes to a plain Go
+// map with nowhere to hang an Origin of its own, so its keys are recorded on
+// the enclosing struct's Origin under the field name, sorted by key.
+func recordScalarMapKeys(container, child reflect.Value, keyNode, valNode *yaml.Node, file string) {
+	if child.Kind() != reflect.Map || valNode == nil || valNode.Kind != yaml.MappingNode {
+		return
 	}
-	name, _, _ := strings.Cut(tag, ",")
-	return name
+	// A map of structs or pointers carries origins on its values instead.
+	switch child.Type().Elem().Kind() {
+	case reflect.Struct, reflect.Pointer, reflect.Interface, reflect.Map, reflect.Slice:
+		return
+	}
+	f := container.FieldByName("Origin")
+	if !f.IsValid() || f.Type() != originPtrType || !f.CanSet() {
+		return
+	}
+	if f.IsNil() {
+		f.Set(reflect.ValueOf(&Origin{}))
+	}
+	var locs []Location
+	for i := 0; i+1 < len(valNode.Content); i += 2 {
+		k := valNode.Content[i]
+		locs = append(locs, Location{File: file, Line: k.Line, Column: k.Column, Name: k.Value})
+	}
+	if len(locs) == 0 {
+		return
+	}
+	sort.Slice(locs, func(i, j int) bool { return locs[i].Name < locs[j].Name })
+	o := f.Interface().(*Origin)
+	if o.Sequences == nil {
+		o.Sequences = make(map[string][]Location)
+	}
+	o.Sequences[keyNode.Value] = locs
 }
-
-// originTree aliases the decoder-side origin tree, so the loader and marsh can
-// carry it without referencing the yaml package directly.
-type originTree = yaml.OriginTree

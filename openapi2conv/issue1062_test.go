@@ -3,9 +3,9 @@ package openapi2conv_test
 import (
 	"testing"
 
-	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 
+	"github.com/getkin/kin-openapi/internal/yamlconv"
 	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -59,7 +59,7 @@ components:
 `
 
 	var doc3 openapi3.T
-	_, err := yaml.Unmarshal([]byte(v3Spec), &doc3, yaml.DecodeOpts{DisableTimestamps: true})
+	err := yamlconv.Unmarshal([]byte(v3Spec), &doc3)
 	require.NoError(t, err, "unmarshal v3 spec")
 
 	// Pre-fix: this call panicked with

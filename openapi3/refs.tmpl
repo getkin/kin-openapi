@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
+	yaml "go.yaml.in/yaml/v3"
 )
 {{ range $type := .Types }}
 // {{ $type.Name }}Ref represents either a {{ $type.Name }} or a $ref to a {{ $type.Name }}.
@@ -81,6 +82,33 @@ func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(y)
+}
+
+// UnmarshalYAML sets {{ $type.Name }}Ref from node.
+func (x *{{ $type.Name }}Ref) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
+	if !unmarshalRefYAML(node, &x.Ref{{ if ne $type.Name "Schema" }}, &x.Summary, &x.Description{{ else }}, nil, nil{{ end }}, &x.Extensions, &x.extra) {
+		return node.Decode(&x.Value)
+	}
+{{- if eq $type.Name "Schema" }}
+	// OAS 3.1 / JSON Schema 2020-12: schema keywords alongside a $ref are valid
+	// and are merged with the resolved reference, so they are held on sibling
+	// until resolveSchemaRef can apply them.
+	var hasSiblings bool
+	for _, k := range x.extra {
+		if !strings.HasPrefix(k, "x-") {
+			hasSiblings = true
+			break
+		}
+	}
+	if hasSiblings {
+		var sibling Schema
+		if err := node.Decode(&sibling); err == nil {
+			x.sibling = &sibling
+		}
+	}
+{{- end }}
+	return nil
 }
 
 // UnmarshalJSON sets {{ $type.Name }}Ref to a copy of data.

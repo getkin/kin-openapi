@@ -13,9 +13,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 
+	"github.com/getkin/kin-openapi/internal/yamlconv"
 	"github.com/getkin/kin-openapi/openapi2"
 )
 
@@ -189,7 +189,7 @@ func TestV2ApisGuruOpenapiDirectory(t *testing.T) {
 			require.NoError(t, err)
 
 			var doc openapi2.T
-			_, err = yaml.Unmarshal(data, &doc, yaml.DecodeOpts{DisableTimestamps: true})
+			err = yamlconv.Unmarshal(data, &doc)
 			golden(t, err, shortName, "load")
 		})
 	}

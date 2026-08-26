@@ -5,10 +5,9 @@ go 1.25
 require (
 	github.com/go-openapi/jsonpointer v0.22.5
 	github.com/gorilla/mux v1.8.0
-	github.com/oasdiff/yaml v0.1.1
-	github.com/oasdiff/yaml3 v0.0.14
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/stretchr/testify v1.9.0
+	go.yaml.in/yaml/v3 v3.0.5
 )
 
 require (
