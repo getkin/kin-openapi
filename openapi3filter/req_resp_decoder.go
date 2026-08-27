@@ -792,7 +792,11 @@ func (d *headerParamDecoder) DecodeArray(param string, sm *openapi3.Serializatio
 		return nil, ok, nil
 	}
 
-	val, err := parseArray(strings.Split(raw[0], ","), schema)
+	parts := strings.Split(raw[0], ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	val, err := parseArray(parts, schema)
 	return val, ok, err
 }
 
