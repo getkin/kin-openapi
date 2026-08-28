@@ -151,6 +151,17 @@ type Schema struct {
 
 	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
 
+	// Always is set when the schema was written as a JSON Schema boolean
+	// schema rather than an object, and says what that schema always does:
+	// `true` accepts every instance, `false` accepts none. It is nil for an
+	// ordinary object schema, and Validate rejects one that carries any other
+	// keyword.
+	//
+	// Neither direction goes through a struct tag, hence the "-" on both:
+	// UnmarshalJSON takes the bare boolean before the field decode, and
+	// MarshalYAML emits it again ahead of the field map. OpenAPI >=3.1.
+	Always *bool `json:"-" yaml:"-"`
+
 	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
 	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
 	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"` // OpenAPI >=3.1
@@ -480,6 +491,10 @@ func (schema Schema) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML returns the YAML encoding of Schema.
 func (schema Schema) MarshalYAML() (any, error) {
+	if x := schema.Always; x != nil {
+		return *x, nil
+	}
+
 	m := make(map[string]any, 61+len(schema.Extensions))
 	maps.Copy(m, schema.Extensions)
 
@@ -684,8 +699,28 @@ func (schema Schema) MarshalYAML() (any, error) {
 	return m, nil
 }
 
+// unmarshalBooleanSchema reports whether data is a JSON Schema boolean schema,
+// and its value if so. Only a bare `true` or `false` qualifies; an object, a
+// string or anything else is an ordinary schema for the caller to decode.
+func unmarshalBooleanSchema(data []byte) (bool, bool) {
+	var boolean bool
+	if err := json.Unmarshal(data, &boolean); err != nil {
+		return false, false
+	}
+	return boolean, true
+}
+
 // UnmarshalJSON sets Schema to a copy of data.
 func (schema *Schema) UnmarshalJSON(data []byte) error {
+	// JSON Schema 2020-12 allows a boolean wherever a schema is expected, so
+	// every SchemaRef position can hold one. SchemaRef.UnmarshalJSON funnels
+	// into here, which is why this one case covers them all.
+	if boolean, ok := unmarshalBooleanSchema(data); ok {
+		origin := schema.Origin
+		*schema = Schema{Always: &boolean, Origin: origin}
+		return nil
+	}
+
 	type SchemaBis Schema
 	var x SchemaBis
 	if err := json.Unmarshal(data, &x); err != nil {
@@ -1379,6 +1414,14 @@ func (schema *Schema) IsEmpty() bool {
 	if cs := schema.ContentSchema; cs != nil && cs.Value != nil && !cs.Value.IsEmpty() {
 		return false
 	}
+	// Last, so a schema carrying both a boolean and other keywords is judged by
+	// the keywords. Neither boolean is empty: `false` rejects every instance,
+	// and `true` is accepted by visitJSON explicitly rather than by skipping
+	// validation, which is what leaves `not: true` free to reject.
+	if schema.Always != nil {
+		return false
+	}
+
 	return true
 }
 
@@ -1401,6 +1444,23 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	validationOpts := getValidationOptions(ctx)
 
 	stack = append(stack, schema)
+
+	// A boolean schema carries no other keyword. One that does would marshal
+	// back as the bare boolean and silently drop the rest, so reject it rather
+	// than let a hand-built value lose content on the next serialization.
+	if schema.Always != nil {
+		// A boolean schema is JSON Schema 2020-12, so 3.0 has no such thing:
+		// there a schema MUST be a Schema Object.
+		if !validationOpts.isOpenAPI31OrLater {
+			return stack, newBooleanSchemaFor31Plus(schema.Origin)
+		}
+		rest := *schema
+		rest.Always = nil
+		if !rest.IsEmpty() || len(schema.Extensions) != 0 {
+			return stack, newSchemaBooleanFieldsExclusive(schema.Origin)
+		}
+		return stack, nil
+	}
 
 	if schema.ReadOnly && schema.WriteOnly {
 		return stack, newSchemaReadOnlyWriteOnlyExclusive(schema.Origin)
@@ -1971,6 +2031,22 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		}
 		if math.IsInf(value, 0) {
 			return ErrSchemaInputInf
+		}
+	}
+
+	if x := schema.Always; x != nil {
+		if *x {
+			return
+		}
+		if settings.failfast {
+			return errSchema
+		}
+		return &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "boolean",
+			Reason:                "the false schema accepts no value",
+			customizeMessageError: settings.customizeMessageError,
 		}
 	}
 

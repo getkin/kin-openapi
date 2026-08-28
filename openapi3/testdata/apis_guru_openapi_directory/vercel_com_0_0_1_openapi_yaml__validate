@@ -1,0 +1,6 @@
+invalid paths: invalid path /v1/teams/{teamId}/members/{uid}: invalid operation PATCH: invalid default: validation failed due to: at '': got array, want string
+Schema:
+  null
+
+Value:
+  null

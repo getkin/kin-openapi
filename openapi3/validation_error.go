@@ -914,6 +914,12 @@ func (e *SchemaReadOnlyWriteOnlyExclusive) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type SchemaBooleanFieldsExclusive struct{ ValidationError }
+
+func (e *SchemaBooleanFieldsExclusive) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 // ForbiddenFieldError leaves.
 
 type HeaderNameForbidden struct{ ValidationError }
@@ -972,6 +978,12 @@ func (e *JSONSchemaDialectFieldFor31Plus) As(target any) bool {
 type ConstFieldFor31Plus struct{ ValidationError }
 
 func (e *ConstFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type BooleanSchemaFor31Plus struct{ ValidationError }
+
+func (e *BooleanSchemaFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1359,6 +1371,12 @@ func newSchemaReadOnlyWriteOnlyExclusive(origin *Origin) error {
 		&SchemaReadOnlyWriteOnlyExclusive{ValidationError{Message: msg}}, origin)
 }
 
+func newSchemaBooleanFieldsExclusive(origin *Origin) error {
+	const msg = "a boolean schema carries no other keyword, and the others would be lost on marshal"
+	return newMutuallyExclusiveFields("boolean schema", "schema keywords",
+		&SchemaBooleanFieldsExclusive{ValidationError{Message: msg}}, origin)
+}
+
 // newForbiddenField wraps leaf in a *ForbiddenFieldError carrying the
 // name of the field that the spec forbids in the current context.
 func newForbiddenField(field string, leaf error, origin *Origin) error {
@@ -1487,6 +1505,12 @@ func newLicenseIdentifierFieldFor31Plus(origin *Origin) error {
 	const msg = "field identifier is for OpenAPI >=3.1"
 	return newFieldVersionMismatch("identifier",
 		"3.1", &LicenseIdentifierFieldFor31Plus{ValidationError{Message: msg}}, origin)
+}
+
+func newBooleanSchemaFor31Plus(origin *Origin) error {
+	const msg = "a boolean schema is for OpenAPI >=3.1; before that a schema MUST be a Schema Object"
+	return newFieldVersionMismatch("boolean schema",
+		"3.1", &BooleanSchemaFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 func newWebhooksFieldFor31Plus(origin *Origin) error {

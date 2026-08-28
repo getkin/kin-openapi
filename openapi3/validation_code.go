@@ -42,6 +42,7 @@ func (e *APIKeyInInvalidError) Code() string             { return "security-sche
 func (e *APIKeySecuritySchemeNameRequired) Code() string { return "security-scheme-name-required" }
 func (e *CommentFieldFor31Plus) Code() string            { return "comment-field-for-3-1-plus" }
 func (e *ConflictingPathsError) Code() string            { return "conflicting-paths" }
+func (e *BooleanSchemaFor31Plus) Code() string           { return "boolean-schema-for-3-1-plus" }
 func (e *ConstFieldFor31Plus) Code() string              { return "const-field-for-3-1-plus" }
 func (e *ContainsFieldFor31Plus) Code() string           { return "contains-field-for-3-1-plus" }
 func (e *ContentEncodingFieldFor31Plus) Code() string    { return "content-encoding-field-for-3-1-plus" }
@@ -141,6 +142,9 @@ func (e *SchemaPatternRegexError) Code() string { return "schema-pattern-regex-i
 func (e *SchemaReadOnlyWriteOnlyExclusive) Code() string {
 	return "read-only-write-only-mutually-exclusive"
 }
+func (e *SchemaBooleanFieldsExclusive) Code() string {
+	return "boolean-schema-with-other-keywords"
+}
 func (e *SchemaTypeError) Code() string { return "schema-type-unsupported" }
 func (e *SchemaUnevaluatedItemsBothForms) Code() string {
 	return "unevaluated-items-both-forms-exclusive"
@@ -180,6 +184,8 @@ var validationErrorCodes = []string{
 	"anchor-field-for-3-1-plus",
 	"authorization-url-forbidden",
 	"bearer-format-forbidden",
+	"boolean-schema-for-3-1-plus",
+	"boolean-schema-with-other-keywords",
 	"comment-field-for-3-1-plus",
 	"conflicting-paths",
 	"const-field-for-3-1-plus",
