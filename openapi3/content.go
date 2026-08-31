@@ -61,6 +61,33 @@ func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content {
 	}
 }
 
+func (content Content) get(mime string) *MediaType {
+	if v := content[mime]; v != nil {
+		return v
+	}
+
+	i := strings.IndexByte(mime, ';')
+	if i < 0 {
+		i = len(mime)
+	}
+	mediaType, parameters := mime[:i], mime[i:]
+	if !strings.ContainsRune(mediaType, '/') {
+		return nil
+	}
+
+	for _, candidate := range componentNames(content) {
+		i = strings.IndexByte(candidate, ';')
+		if i < 0 {
+			i = len(candidate)
+		}
+		candidateType, candidateParameters := candidate[:i], candidate[i:]
+		if parameters == candidateParameters && strings.EqualFold(mediaType, candidateType) {
+			return content[candidate]
+		}
+	}
+	return nil
+}
+
 func (content Content) Get(mime string) *MediaType {
 	// If the mime is empty then short-circuit to the wildcard.
 	// We do this here so that we catch only the specific case of
@@ -70,7 +97,7 @@ func (content Content) Get(mime string) *MediaType {
 	}
 	// Start by making the most specific match possible
 	// by using the mime type in full.
-	if v := content[mime]; v != nil {
+	if v := content.get(mime); v != nil {
 		return v
 	}
 	// If an exact match is not found then we strip all
@@ -83,7 +110,7 @@ func (content Content) Get(mime string) *MediaType {
 		i = len(mime)
 	}
 	mime = mime[:i]
-	if v := content[mime]; v != nil {
+	if v := content.get(mime); v != nil {
 		return v
 	}
 	// If the x/y pattern has no specific match then we
@@ -96,7 +123,7 @@ func (content Content) Get(mime string) *MediaType {
 		return nil
 	}
 	mime = mime[:i] + "/*"
-	if v := content[mime]; v != nil {
+	if v := content.get(mime); v != nil {
 		return v
 	}
 	// Finally, the most generic match of */* is returned
