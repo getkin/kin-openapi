@@ -1298,6 +1298,10 @@ func applyExampleRefMetadata(value *Example, component *ExampleRef, isOpenAPI31O
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
 	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
 
+	if component.isEmpty() {
+		return errMUSTExample
+	}
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
