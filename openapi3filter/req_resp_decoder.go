@@ -1300,18 +1300,7 @@ func UnregisterBodyDecoder(contentType string) {
 }
 
 func getBodyDecoder(contentType string) (BodyDecoder, bool) {
-	if decoder, ok := bodyDecoders[contentType]; ok {
-		return decoder, true
-	}
-	if !strings.ContainsRune(contentType, '/') {
-		return nil, false
-	}
-	for _, candidate := range slices.Sorted(maps.Keys(bodyDecoders)) {
-		if strings.EqualFold(contentType, candidate) {
-			return bodyDecoders[candidate], true
-		}
-	}
-	return nil, false
+	return lookupByContentType(bodyDecoders, contentType)
 }
 
 var headerCT = http.CanonicalHeaderKey("Content-Type")

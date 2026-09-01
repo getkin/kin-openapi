@@ -133,6 +133,14 @@ func TestContent_Get(t *testing.T) {
 			want:    caseVariant,
 		},
 		{
+			// No declaration matches verbatim, so the case-insensitive search
+			// decides between them: the lexicographically smallest one wins.
+			name:    "case variants resolve deterministically",
+			content: contentWithCaseVariants,
+			mime:    "Application/Json",
+			want:    caseVariant,
+		},
+		{
 			name:    "invalid mime type remains case sensitive",
 			content: contentWithMalformedType,
 			mime:    "TEXT",

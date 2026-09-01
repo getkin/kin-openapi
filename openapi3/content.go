@@ -61,31 +61,44 @@ func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content {
 	}
 }
 
+// splitMediaType separates the type/subtype portion of a mime from its
+// parameters, which keep the leading ';' and their original case: RFC 9110
+// section 5.6.6 leaves parameter values case-sensitive unless the parameter
+// itself says otherwise.
+func splitMediaType(mime string) (mediaType, parameters string) {
+	if i := strings.IndexByte(mime, ';'); i >= 0 {
+		return mime[:i], mime[i:]
+	}
+	return mime, ""
+}
+
 func (content Content) get(mime string) *MediaType {
 	if v := content[mime]; v != nil {
 		return v
 	}
 
-	i := strings.IndexByte(mime, ';')
-	if i < 0 {
-		i = len(mime)
-	}
-	mediaType, parameters := mime[:i], mime[i:]
+	mediaType, parameters := splitMediaType(mime)
 	if !strings.ContainsRune(mediaType, '/') {
 		return nil
 	}
 
-	for _, candidate := range componentNames(content) {
-		i = strings.IndexByte(candidate, ';')
-		if i < 0 {
-			i = len(candidate)
+	// Compare against each declaration. The lexicographically smallest match is
+	// taken so that a document declaring several case variants of one media
+	// type still resolves deterministically.
+	match := ""
+	for candidate := range content {
+		if match != "" && candidate >= match {
+			continue
 		}
-		candidateType, candidateParameters := candidate[:i], candidate[i:]
+		candidateType, candidateParameters := splitMediaType(candidate)
 		if parameters == candidateParameters && strings.EqualFold(mediaType, candidateType) {
-			return content[candidate]
+			match = candidate
 		}
 	}
-	return nil
+	if match == "" {
+		return nil
+	}
+	return content[match]
 }
 
 func (content Content) Get(mime string) *MediaType {
@@ -102,28 +115,25 @@ func (content Content) Get(mime string) *MediaType {
 	}
 	// If an exact match is not found then we strip all
 	// metadata from the mime type and only use the x/y
-	// portion.
-	i := strings.IndexByte(mime, ';')
-	if i < 0 {
-		// If there is no metadata then preserve the full mime type
-		// string for later wildcard searches.
-		i = len(mime)
-	}
-	mime = mime[:i]
-	if v := content.get(mime); v != nil {
-		return v
+	// portion. Without metadata the full mime type is
+	// preserved for later wildcard searches, and retrying
+	// it here would repeat the search above.
+	mime, parameters := splitMediaType(mime)
+	if parameters != "" {
+		if v := content.get(mime); v != nil {
+			return v
+		}
 	}
 	// If the x/y pattern has no specific match then we
 	// try the x/* pattern.
-	i = strings.IndexByte(mime, '/')
+	i := strings.IndexByte(mime, '/')
 	if i < 0 {
 		// In the case that the given mime type is not valid because it is
 		// missing the subtype we return nil so that this does not accidentally
 		// resolve with the wildcard.
 		return nil
 	}
-	mime = mime[:i] + "/*"
-	if v := content.get(mime); v != nil {
+	if v := content.get(mime[:i] + "/*"); v != nil {
 		return v
 	}
 	// Finally, the most generic match of */* is returned
