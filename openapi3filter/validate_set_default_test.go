@@ -801,3 +801,20 @@ func TestValidateRequestBodyAndSetDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRequestBodyAndSetDefaultCaseInsensitiveContentType(t *testing.T) {
+	schema := openapi3.NewObjectSchema().
+		WithProperty("name", openapi3.NewStringSchema().WithDefault("default"))
+	requestBody := openapi3.NewRequestBody().WithJSONSchema(schema).WithRequired(true)
+
+	httpReq, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader([]byte(`{}`)))
+	require.NoError(t, err)
+	httpReq.Header.Add(headerCT, "APPLICATION/JSON")
+
+	err = ValidateRequestBody(t.Context(), &RequestValidationInput{Request: httpReq}, requestBody)
+	require.NoError(t, err)
+
+	validatedReqBody, err := io.ReadAll(httpReq.Body)
+	require.NoError(t, err)
+	require.JSONEq(t, `{"name":"default"}`, string(validatedReqBody))
+}

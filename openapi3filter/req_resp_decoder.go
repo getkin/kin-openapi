@@ -1299,6 +1299,10 @@ func UnregisterBodyDecoder(contentType string) {
 	delete(bodyDecoders, contentType)
 }
 
+func getBodyDecoder(contentType string) (BodyDecoder, bool) {
+	return lookupByContentType(bodyDecoders, contentType)
+}
+
 var headerCT = http.CanonicalHeaderKey("Content-Type")
 
 const (
@@ -1394,7 +1398,7 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 		}
 	}
 
-	decoder, ok := bodyDecoders[mediaType]
+	decoder, ok := getBodyDecoder(mediaType)
 	if !ok {
 		// A binary part with no registered decoder (e.g. image/png) is read as
 		// raw bytes: encoding.contentType restricts the accepted media types but

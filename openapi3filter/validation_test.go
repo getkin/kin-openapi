@@ -414,6 +414,12 @@ func TestValidateRequestBody(t *testing.T) {
 			data: strings.NewReader("foo"),
 		},
 		{
+			name: "case-insensitive content type",
+			body: openapi3.NewRequestBody().WithContent(plainTextContent).WithRequired(true),
+			mime: "TEXT/PLAIN",
+			data: strings.NewReader("foo"),
+		},
+		{
 			name: "not declared content",
 			body: openapi3.NewRequestBody().WithRequired(true),
 			mime: "application/json",
