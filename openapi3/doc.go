@@ -31,4 +31,12 @@
 //	if doc.IsOpenAPI32OrLater() {
 //	    // Handle OpenAPI 3.2 specific features
 //	}
+//
+// The document's `openapi` field is parsed as MAJOR[.MINOR[.PATCH]] and
+// compared numerically, so
+// minor and patch releases newer than this library — 3.0.99, 3.3.0, 3.10.0 —
+// are recognized and validated with the feature set of their minor version.
+// T.Validate reports a version string that doesn't parse, or that names a
+// major version other than 3, as an *OpenAPIVersionUnsupportedError; an
+// empty one as an *OpenAPIVersionRequired.
 package openapi3
