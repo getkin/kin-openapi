@@ -1316,7 +1316,9 @@ func (schema *Schema) IsEmpty() bool {
 		schema.Const != nil {
 		return false
 	}
-	if n := schema.Not; n != nil && n.Value != nil && !n.Value.IsEmpty() {
+	// Any `not` makes the schema non-empty, an empty one included: `not: {}`
+	// matches nothing, since the empty schema matches everything.
+	if schema.Not != nil {
 		return false
 	}
 	if ap := schema.AdditionalProperties.Schema; ap != nil && ap.Value != nil && !ap.Value.IsEmpty() {
