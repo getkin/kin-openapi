@@ -3,6 +3,7 @@ package openapi3
 import (
 	"errors"
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -232,6 +233,79 @@ func TestNumberFormats(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 			}
+		})
+	}
+}
+
+func TestIntegerFormatOutOfInt64Range(t *testing.T) {
+	type testCase struct {
+		name    string
+		format  string
+		value   float64
+		wantErr bool
+	}
+	DefineIntegerFormatValidator("anyInt64", NewCallbackValidator(func(value int64) error {
+		return nil
+	}))
+	testCases := []testCase{
+		{
+			name:    "int64 accepts the largest representable value",
+			format:  "int64",
+			value:   float64(math.MaxInt64),
+			wantErr: false,
+		},
+		{
+			name:    "int64 accepts the smallest representable value",
+			format:  "int64",
+			value:   float64(math.MinInt64),
+			wantErr: false,
+		},
+		{
+			name:    "int64 rejects 1e19",
+			format:  "int64",
+			value:   1e19,
+			wantErr: true,
+		},
+		{
+			name:    "int64 rejects -1e19",
+			format:  "int64",
+			value:   -1e19,
+			wantErr: true,
+		},
+		{
+			name:    "int64 rejects 1e30",
+			format:  "int64",
+			value:   1e30,
+			wantErr: true,
+		},
+		{
+			name:    "int32 rejects 1e19",
+			format:  "int32",
+			value:   1e19,
+			wantErr: true,
+		},
+		{
+			name:    "custom integer format rejects 1e19",
+			format:  "anyInt64",
+			value:   1e19,
+			wantErr: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := &Schema{
+				Type:   &Types{"integer"},
+				Format: tc.format,
+			}
+			err := schema.VisitJSON(tc.value)
+			if !tc.wantErr {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			var schemaError = &SchemaError{}
+			require.ErrorAs(t, err, &schemaError)
+			require.NotZero(t, schemaError.Reason)
 		})
 	}
 }

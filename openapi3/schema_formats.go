@@ -106,6 +106,19 @@ func NewRangeFormatValidator[T int64 | float64](min, max T) FormatValidator[T] {
 	return rangeFormat[T]{min: min, max: max}
 }
 
+// validateIntegerFormat converts a JSON number for an integer format validator. A float64
+// outside the int64 range wraps back into it on conversion, so it is rejected here instead.
+func validateIntegerFormat(validator IntegerFormatValidator, value float64) error {
+	switch {
+	case value == float64(math.MaxInt64): // math.MaxInt64 has no float64 representation: it rounds up to 2^63
+		return validator.Validate(math.MaxInt64)
+	case value >= float64(math.MinInt64) && value < float64(math.MaxInt64):
+		return validator.Validate(int64(value))
+	default:
+		return fmt.Errorf("value should be between %v and %v", int64(math.MinInt64), int64(math.MaxInt64))
+	}
+}
+
 // NewRegexpFormatValidator creates a new FormatValidator that uses a regular expression to validate the value.
 func NewRegexpFormatValidator(pattern string) StringFormatValidator {
 	re, err := regexp.Compile(pattern)

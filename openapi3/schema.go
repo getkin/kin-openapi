@@ -2563,7 +2563,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				f, ok = SchemaIntegerFormats[format]
 			}
 			if ok {
-				if err := f.Validate(int64(value)); err != nil {
+				if err := validateIntegerFormat(f, value); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
 					if errors.As(err, &schemaErr) {
