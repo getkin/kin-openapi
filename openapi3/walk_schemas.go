@@ -40,7 +40,8 @@ type WalkSchemasFunc func(jsonPointer string, schema *SchemaRef) error
 // request bodies, responses, headers, callbacks), and webhooks, then recurses
 // through every sub-schema keyword: properties, items, itemSchema,
 // allOf/anyOf/oneOf, not, additionalProperties, prefixItems, contains, patternProperties,
-// dependentSchemas, propertyNames, if/then/else, and $defs.
+// dependentSchemas, propertyNames, if/then/else, unevaluatedItems,
+// unevaluatedProperties, contentSchema, and $defs.
 //
 // It is useful for validation, code generation, schema transformation,
 // $ref/dependency analysis, and documentation: any consumer that needs to act
@@ -52,6 +53,15 @@ func (doc *T) WalkSchemas(fn WalkSchemasFunc) error {
 	}
 	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{})}
 	return w.document(doc)
+}
+
+// WalkSubtree visits sr and every schema reachable from it through sub-schema
+// keywords, invoking fn for each. It is WalkSchemas scoped to a single schema:
+// the same descent, cycle guard, and SkipSubtree semantics, with jsonPointer
+// relative to sr, whose own pointer is the empty string.
+func (sr *SchemaRef) WalkSubtree(fn WalkSchemasFunc) error {
+	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{})}
+	return w.schemaRef("", sr)
 }
 
 type schemaWalker struct {
@@ -306,6 +316,19 @@ func (w *schemaWalker) schemaRef(ptr string, sr *SchemaRef) error {
 		return err
 	}
 	if err := w.schemaRef(ptr+"/else", s.Else); err != nil {
+		return err
+	}
+	if s.UnevaluatedItems.Schema != nil {
+		if err := w.schemaRef(ptr+"/unevaluatedItems", s.UnevaluatedItems.Schema); err != nil {
+			return err
+		}
+	}
+	if s.UnevaluatedProperties.Schema != nil {
+		if err := w.schemaRef(ptr+"/unevaluatedProperties", s.UnevaluatedProperties.Schema); err != nil {
+			return err
+		}
+	}
+	if err := w.schemaRef(ptr+"/contentSchema", s.ContentSchema); err != nil {
 		return err
 	}
 	for _, name := range slices.Sorted(maps.Keys(s.Defs)) {

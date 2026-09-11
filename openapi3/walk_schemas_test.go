@@ -3,6 +3,7 @@ package openapi3_test
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -174,4 +175,80 @@ components:
 	// /components/schemas/Pet/properties/id
 	// /components/schemas/Pet/properties/name
 	// /paths/~1pets/get/responses/200/content/application~1json/schema
+}
+
+func TestWalkSubtree(t *testing.T) {
+	node := openapi3.NewSchema()
+	node.Properties = openapi3.Schemas{
+		"child": openapi3.NewSchemaRef("", openapi3.NewSchema()),
+	}
+	// pointer cycle: self must be visited once, not looped
+	node.Properties["self"] = openapi3.NewSchemaRef("", node)
+	root := openapi3.NewSchemaRef("", node)
+
+	var visited []string
+	err := root.WalkSubtree(func(loc string, sr *openapi3.SchemaRef) error {
+		visited = append(visited, loc)
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"", "/properties/child"}, visited)
+}
+
+func TestWalkSubtree_SkipSubtree(t *testing.T) {
+	node := openapi3.NewSchema()
+	node.Properties = openapi3.Schemas{
+		"child": openapi3.NewSchemaRef("", openapi3.NewSchema()),
+	}
+
+	var visited []string
+	err := openapi3.NewSchemaRef("", node).WalkSubtree(func(loc string, sr *openapi3.SchemaRef) error {
+		visited = append(visited, loc)
+		return openapi3.SkipSubtree
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{""}, visited)
+}
+
+// Every openapi3.Schema field whose type can carry subschemas must be visited
+// by the walk. The check is type-driven: a new field of a subschema-bearing
+// kind fails here until the walker descends into it, instead of being silently
+// skipped by every WalkSchemas and WalkSubtree consumer.
+func TestWalkSubtree_VisitsEverySubschemaField(t *testing.T) {
+	schemaType := reflect.TypeFor[openapi3.Schema]()
+	for i := range schemaType.NumField() {
+		field := schemaType.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+
+		marker := openapi3.NewSchema()
+		markerRef := openapi3.NewSchemaRef("", marker)
+		var value any
+		switch field.Type {
+		case reflect.TypeFor[*openapi3.SchemaRef]():
+			value = markerRef
+		case reflect.TypeFor[openapi3.SchemaRefs]():
+			value = openapi3.SchemaRefs{markerRef}
+		case reflect.TypeFor[openapi3.Schemas]():
+			value = openapi3.Schemas{"k": markerRef}
+		case reflect.TypeFor[openapi3.BoolSchema]():
+			value = openapi3.BoolSchema{Schema: markerRef}
+		default:
+			continue
+		}
+
+		parent := openapi3.NewSchema()
+		reflect.ValueOf(parent).Elem().FieldByName(field.Name).Set(reflect.ValueOf(value))
+
+		found := false
+		err := openapi3.NewSchemaRef("", parent).WalkSubtree(func(_ string, sr *openapi3.SchemaRef) error {
+			if sr.Value == marker {
+				found = true
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		require.Truef(t, found, "openapi3.Schema.%s carries subschemas but the walk does not visit it; add it to schemaWalker.schemaRef", field.Name)
+	}
 }
