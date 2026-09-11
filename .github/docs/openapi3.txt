@@ -3111,6 +3111,12 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
     Validate returns an error if SchemaRef does not comply with the OpenAPI
     spec.
 
+func (sr *SchemaRef) WalkSubtree(fn WalkSchemasFunc) error
+    WalkSubtree visits sr and every schema reachable from it through sub-schema
+    keywords, invoking fn for each. It is WalkSchemas scoped to a single schema:
+    the same descent, cycle guard, and SkipSubtree semantics, with jsonPointer
+    relative to sr, whose own pointer is the empty string.
+
 type SchemaRefs []*SchemaRef
 
 func (s SchemaRefs) JSONLookup(token string) (any, error)
@@ -3720,12 +3726,13 @@ func (doc *T) WalkSchemas(fn WalkSchemasFunc) error
     single time regardless of how many references point at it. Maps are visited
     in sorted key order, so the traversal is deterministic.
 
-    It covers schemas under components (schemas, parameters, headers, request
-    bodies, responses, callbacks), the paths and their operations (parameters,
-    request bodies, responses, headers, callbacks), and webhooks, then
-    recurses through every sub-schema keyword: properties, items, itemSchema,
-    allOf/anyOf/oneOf, not, additionalProperties, prefixItems, contains,
-    patternProperties, dependentSchemas, propertyNames, if/then/else, and $defs.
+    It covers schemas under components (schemas, parameters, headers,
+    request bodies, responses, callbacks), the paths and their operations
+    (parameters, request bodies, responses, headers, callbacks), and webhooks,
+    then recurses through every sub-schema keyword: properties, items,
+    itemSchema, allOf/anyOf/oneOf, not, additionalProperties, prefixItems,
+    contains, patternProperties, dependentSchemas, propertyNames, if/then/else,
+    unevaluatedItems, unevaluatedProperties, contentSchema, and $defs.
 
     It is useful for validation, code generation, schema transformation,
     $ref/dependency analysis, and documentation: any consumer that needs to act
