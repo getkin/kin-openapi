@@ -159,8 +159,8 @@ func WithIntegerFormatValidator(name string, validator IntegerFormatValidator) S
 // EnableJSONSchema2020 enables JSON Schema 2020-12 compliant validation.
 // This enables support for OpenAPI 3.1 and JSON Schema 2020-12 features.
 // When enabled, validation uses the jsonschema library instead of the built-in validator.
-// Schema compilation errors are returned to the caller; validation does not fall back
-// to the built-in validator when a schema cannot be compiled.
+// Unresolved schema references are returned to the caller instead of being
+// silently ignored by falling back to the built-in validator.
 func EnableJSONSchema2020() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.useJSONSchema2020 = true }
 }
