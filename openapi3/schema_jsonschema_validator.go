@@ -12,8 +12,10 @@ import (
 
 // jsonSchemaValidator wraps the santhosh-tekuri/jsonschema validator
 type jsonSchemaValidator struct {
-	compiler *jsonschema.Compiler
-	schema   *jsonschema.Schema
+	compiler                   *jsonschema.Compiler
+	schema                     *jsonschema.Schema
+	hasInternalRefs            bool
+	usesJSONSchema2020Features bool
 }
 
 // newJSONSchemaValidator creates a new validator using JSON Schema 2020-12
@@ -32,6 +34,8 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 	// Boolean schemas are valid JSON Schema resources as well.
 	schemaMap, _ := schemaDocument.(map[string]any)
 	transformOpenAPIToJSONSchema(schemaMap)
+	hasInternalRefs := containsInternalSchemaRef(schemaDocument)
+	usesJSONSchema2020Features := hasJSONSchema2020Features(schemaDocument)
 	if err := addInternalSchemaRefs(schemaMap, schema); err != nil {
 		return nil, fmt.Errorf("failed to prepare schema references: %w", err)
 	}
@@ -56,29 +60,74 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 	}
 
 	return &jsonSchemaValidator{
-		compiler: compiler,
-		schema:   compiledSchema,
+		compiler:                   compiler,
+		schema:                     compiledSchema,
+		hasInternalRefs:            hasInternalRefs,
+		usesJSONSchema2020Features: usesJSONSchema2020Features,
 	}, nil
 }
 
-// addInternalSchemaRefs preserves the document-relative component references
-// present on a resolved Schema. VisitJSON receives a subtree rather than the
-// containing OpenAPI document, so expose the resolved targets under the same
-// JSON Pointer paths before compiling the standalone resource.
+func containsInternalSchemaRef(node any) bool {
+	switch node := node.(type) {
+	case map[string]any:
+		if ref, ok := node["$ref"].(string); ok && strings.HasPrefix(ref, "#/components/schemas/") {
+			return true
+		}
+		for _, value := range node {
+			if containsInternalSchemaRef(value) {
+				return true
+			}
+		}
+	case []any:
+		for _, value := range node {
+			if containsInternalSchemaRef(value) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hasJSONSchema2020Features(node any) bool {
+	features := map[string]struct{}{
+		"const": {}, "contains": {}, "contentSchema": {}, "dependentRequired": {},
+		"dependentSchemas": {}, "$defs": {}, "if": {}, "then": {}, "else": {},
+		"prefixItems": {}, "propertyNames": {}, "unevaluatedItems": {},
+		"unevaluatedProperties": {},
+	}
+	switch node := node.(type) {
+	case map[string]any:
+		for key, value := range node {
+			if _, ok := features[key]; ok {
+				return true
+			}
+			if hasJSONSchema2020Features(value) {
+				return true
+			}
+		}
+	case []any:
+		for _, value := range node {
+			if hasJSONSchema2020Features(value) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// addInternalSchemaRefs preserves document-relative references present on a
+// resolved Schema. VisitJSON receives a subtree rather than the containing
+// OpenAPI document, so copy each resolved target into local $defs and rewrite
+// its reference. This also handles references to a nested property or item.
 func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
 	if schemaMap == nil || schema == nil {
 		return nil
 	}
-	components := make(map[string]any)
+	refs := make(map[string]any)
 	err := NewSchemaRef("", schema).WalkSubtree(func(_ string, ref *SchemaRef) error {
 		if ref.Ref == "" || !strings.HasPrefix(ref.Ref, "#/components/schemas/") || ref.Value == nil {
 			return nil
 		}
-		name := strings.TrimPrefix(ref.Ref, "#/components/schemas/")
-		if i := strings.IndexByte(name, '/'); i >= 0 {
-			name = name[:i]
-		}
-		name = unescapeRefString(name)
 		var target any
 		bytes, err := json.Marshal(ref.Value)
 		if err != nil {
@@ -90,16 +139,47 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
 		if targetMap, ok := target.(map[string]any); ok {
 			transformOpenAPIToJSONSchema(targetMap)
 		}
-		components[name] = target
+		refs[ref.Ref] = target
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	if len(components) > 0 {
-		schemaMap["components"] = map[string]any{"schemas": components}
+	if len(refs) == 0 {
+		return nil
+	}
+	defs := make(map[string]any, len(refs))
+	ids := make(map[string]string, len(refs))
+	for ref := range refs {
+		ids[ref] = fmt.Sprintf("ref%d", len(ids))
+	}
+	rewriteInternalSchemaRefs(schemaMap, refs, ids, defs)
+	if len(defs) > 0 {
+		schemaMap["$defs"] = defs
+		rewriteInternalSchemaRefs(defs, refs, ids, defs)
 	}
 	return nil
+}
+
+func rewriteInternalSchemaRefs(node any, refs map[string]any, ids map[string]string, defs map[string]any) {
+	switch node := node.(type) {
+	case map[string]any:
+		if ref, ok := node["$ref"].(string); ok {
+			if id, exists := ids[ref]; exists {
+				node["$ref"] = "#/$defs/" + id
+				if _, added := defs[id]; !added {
+					defs[id] = refs[ref]
+				}
+			}
+		}
+		for _, value := range node {
+			rewriteInternalSchemaRefs(value, refs, ids, defs)
+		}
+	case []any:
+		for _, value := range node {
+			rewriteInternalSchemaRefs(value, refs, ids, defs)
+		}
+	}
 }
 
 func registerFormatValidators(compiler *jsonschema.Compiler, schemaMap map[string]any, settings *schemaValidationSettings) {
@@ -333,8 +413,12 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 
 // useJSONSchema2020 validates using the JSON Schema 2020-12 validator
 func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, value any) error {
+	usesJSONSchema2020Features := schemaUsesJSONSchema2020Features(schema)
 	validator, err := newJSONSchemaValidator(schema, settings)
 	if err != nil {
+		if !usesJSONSchema2020Features {
+			return schema.visitJSON(settings, value)
+		}
 		// A resolved OpenAPI component reference can be registered above. If a
 		// reference still cannot be resolved, do not silently drop its constraints.
 		// Keep the existing fallback for other compiler limitations (for example,
@@ -344,6 +428,21 @@ func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, valu
 		}
 		return schema.visitJSON(settings, value)
 	}
+	if validator.hasInternalRefs && !validator.usesJSONSchema2020Features {
+		return schema.visitJSON(settings, value)
+	}
 
 	return validator.validate(value)
+}
+
+func schemaUsesJSONSchema2020Features(schema *Schema) bool {
+	bytes, err := json.Marshal(schema)
+	if err != nil {
+		return false
+	}
+	var document any
+	if err := json.Unmarshal(bytes, &document); err != nil {
+		return false
+	}
+	return hasJSONSchema2020Features(document)
 }

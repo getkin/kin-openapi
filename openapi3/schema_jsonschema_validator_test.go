@@ -238,11 +238,11 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 
 func TestJSONSchema2020Validator_CompilationError(t *testing.T) {
 	schema := &openapi3.Schema{
-		AllOf: openapi3.SchemaRefs{{Ref: "#/components/schemas/Base"}},
+		AllOf:                 openapi3.SchemaRefs{{Ref: "#/components/schemas/Base"}},
+		UnevaluatedProperties: openapi3.BoolSchema{Has: new(bool)},
 	}
 	// The standalone JSON Schema compiler cannot resolve a document-relative
 	// reference when its target is unavailable.
-	require.NoError(t, schema.VisitJSON(map[string]any{}))
 	err := schema.VisitJSON(map[string]any{}, openapi3.EnableJSONSchema2020())
 	require.ErrorContains(t, err, "failed to compile schema")
 	require.ErrorContains(t, err, "#/components/schemas/Base")
