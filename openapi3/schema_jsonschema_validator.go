@@ -24,13 +24,17 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 		return nil, fmt.Errorf("failed to marshal schema: %w", err)
 	}
 
-	var schemaMap map[string]any
-	if err := json.Unmarshal(schemaBytes, &schemaMap); err != nil {
+	var schemaDocument any
+	if err := json.Unmarshal(schemaBytes, &schemaDocument); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal schema: %w", err)
 	}
 
-	// OpenAPI 3.1 specific transformations
+	// Boolean schemas are valid JSON Schema resources as well.
+	schemaMap, _ := schemaDocument.(map[string]any)
 	transformOpenAPIToJSONSchema(schemaMap)
+	if err := addInternalSchemaRefs(schemaMap, schema); err != nil {
+		return nil, fmt.Errorf("failed to prepare schema references: %w", err)
+	}
 
 	// Create compiler
 	compiler := jsonschema.NewCompiler()
@@ -41,7 +45,7 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 
 	// Add the schema
 	schemaURL := "https://example.com/schema.json"
-	if err := compiler.AddResource(schemaURL, schemaMap); err != nil {
+	if err := compiler.AddResource(schemaURL, schemaDocument); err != nil {
 		return nil, fmt.Errorf("failed to add schema resource: %w", err)
 	}
 
@@ -55,6 +59,47 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 		compiler: compiler,
 		schema:   compiledSchema,
 	}, nil
+}
+
+// addInternalSchemaRefs preserves the document-relative component references
+// present on a resolved Schema. VisitJSON receives a subtree rather than the
+// containing OpenAPI document, so expose the resolved targets under the same
+// JSON Pointer paths before compiling the standalone resource.
+func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
+	if schemaMap == nil || schema == nil {
+		return nil
+	}
+	components := make(map[string]any)
+	err := NewSchemaRef("", schema).WalkSubtree(func(_ string, ref *SchemaRef) error {
+		if ref.Ref == "" || !strings.HasPrefix(ref.Ref, "#/components/schemas/") || ref.Value == nil {
+			return nil
+		}
+		name := strings.TrimPrefix(ref.Ref, "#/components/schemas/")
+		if i := strings.IndexByte(name, '/'); i >= 0 {
+			name = name[:i]
+		}
+		name = unescapeRefString(name)
+		var target any
+		bytes, err := json.Marshal(ref.Value)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(bytes, &target); err != nil {
+			return err
+		}
+		if targetMap, ok := target.(map[string]any); ok {
+			transformOpenAPIToJSONSchema(targetMap)
+		}
+		components[name] = target
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if len(components) > 0 {
+		schemaMap["components"] = map[string]any{"schemas": components}
+	}
+	return nil
 }
 
 func registerFormatValidators(compiler *jsonschema.Compiler, schemaMap map[string]any, settings *schemaValidationSettings) {
@@ -146,10 +191,10 @@ func transformOpenAPIToJSONSchema(schema map[string]any) {
 	if nullable, ok := schema["nullable"].(bool); ok && nullable {
 		if typeVal, ok := schema["type"].(string); ok {
 			// Convert to type array with null
-			schema["type"] = []string{typeVal, "null"}
+			schema["type"] = []any{typeVal, "null"}
 		} else if _, hasType := schema["type"]; !hasType {
 			// nullable: true without type - add "null" to allow null values
-			schema["type"] = []string{"null"}
+			schema["type"] = []any{"null"}
 		}
 		delete(schema, "nullable")
 	}
@@ -290,7 +335,13 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, value any) error {
 	validator, err := newJSONSchemaValidator(schema, settings)
 	if err != nil {
-		// Fall back to built-in validator if compilation fails
+		// A resolved OpenAPI component reference can be registered above. If a
+		// reference still cannot be resolved, do not silently drop its constraints.
+		// Keep the existing fallback for other compiler limitations (for example,
+		// regex syntax accepted by OpenAPI but rejected by Go's regexp package).
+		if strings.Contains(err.Error(), "json-pointer") && strings.Contains(err.Error(), "not found") {
+			return err
+		}
 		return schema.visitJSON(settings, value)
 	}
 
