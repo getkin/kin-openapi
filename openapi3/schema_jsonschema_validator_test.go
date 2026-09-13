@@ -236,17 +236,16 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 	})
 }
 
-func TestJSONSchema2020Validator_Fallback(t *testing.T) {
-	t.Run("fallback on compilation error", func(t *testing.T) {
-		// Create a schema that might cause compilation issues
-		schema := &openapi3.Schema{
-			Type: &openapi3.Types{"string"},
-		}
-
-		// Should not panic, even if there's an issue
-		err := schema.VisitJSON("test", openapi3.EnableJSONSchema2020())
-		require.NoError(t, err)
-	})
+func TestJSONSchema2020Validator_CompilationError(t *testing.T) {
+	schema := &openapi3.Schema{
+		AllOf: openapi3.SchemaRefs{{Ref: "#/components/schemas/Base"}},
+	}
+	// The standalone JSON Schema compiler cannot resolve a document-relative
+	// reference when its target is unavailable.
+	require.NoError(t, schema.VisitJSON(map[string]any{}))
+	err := schema.VisitJSON(map[string]any{}, openapi3.EnableJSONSchema2020())
+	require.ErrorContains(t, err, "failed to compile schema")
+	require.ErrorContains(t, err, "#/components/schemas/Base")
 }
 
 func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
