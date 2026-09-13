@@ -1,1 +1,1 @@
-invalid components: schema "ErrorContext": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1beta1/{name}" and "/v1beta1/{groupName}"

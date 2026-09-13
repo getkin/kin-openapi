@@ -30,13 +30,21 @@ func TestCallbackRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -79,13 +87,21 @@ func TestExampleRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -128,13 +144,21 @@ func TestHeaderRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -168,13 +192,21 @@ func TestLinkRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -217,13 +249,21 @@ func TestParameterRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -266,13 +306,21 @@ func TestRequestBodyRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -315,13 +363,21 @@ func TestResponseRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -364,13 +420,21 @@ func TestSchemaRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
@@ -413,13 +477,21 @@ func TestSecuritySchemeRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.EqualError(t, err, "extra sibling fields: [something]")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
