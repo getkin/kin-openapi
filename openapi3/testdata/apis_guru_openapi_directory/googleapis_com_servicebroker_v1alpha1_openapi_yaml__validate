@@ -1,1 +1,1 @@
-invalid components: schema "GoogleCloudServicebrokerV1alpha1__ListCatalogResponse": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1alpha1/{parent}/v2/service_instances/{instanceId}/service_bindings/{binding_id}" and "/v1alpha1/{parent}/v2/service_instances/{instanceId}/service_bindings/{bindingId}"

@@ -1103,14 +1103,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/T"
-                description: should-not-be-here
+                x-prohibited: should-not-be-here
 components:
   schemas:
     T: { type: string }
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(context.Background(), openapi3.ProhibitExtensionsWithRef())
 	var esf *openapi3.ExtraSiblingFieldsError
 	require.True(t, errors.As(verr, &esf))
 	require.NotNil(t, esf.Origin, "cluster should carry the parent object's Origin when loader tracks origins")

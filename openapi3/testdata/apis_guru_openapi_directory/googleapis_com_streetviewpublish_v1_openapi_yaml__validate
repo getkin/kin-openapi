@@ -1,1 +1,1 @@
-invalid components: schema "BatchGetPhotosResponse": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1/photo/{photoId}" and "/v1/photo/{id}"

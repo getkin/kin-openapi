@@ -1,1 +1,1 @@
-invalid components: schema "Assessment": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1/{parent}/notes" and "/v1/{name}/notes"

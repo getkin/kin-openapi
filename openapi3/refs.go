@@ -112,7 +112,7 @@ func (x *CallbackRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -120,12 +120,16 @@ func (x *CallbackRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -274,7 +278,7 @@ func (x *ExampleRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -282,12 +286,16 @@ func (x *ExampleRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -436,7 +444,7 @@ func (x *HeaderRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -444,12 +452,16 @@ func (x *HeaderRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -598,7 +610,7 @@ func (x *LinkRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -606,12 +618,16 @@ func (x *LinkRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -760,7 +776,7 @@ func (x *ParameterRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -768,12 +784,16 @@ func (x *ParameterRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -922,7 +942,7 @@ func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -930,12 +950,16 @@ func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -1084,7 +1108,7 @@ func (x *ResponseRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -1092,12 +1116,16 @@ func (x *ResponseRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -1256,12 +1284,16 @@ func (x *SchemaRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
@@ -1412,7 +1444,7 @@ func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 	if allowed == nil {
 		allowed = make(map[string]struct{})
 	}
-	if !validationOpts.isOpenAPI31OrLater {
+	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
 		if _, ok := allowed["description"]; x.Description != nil && !ok {
 			extras = append(extras, "description")
 		}
@@ -1420,12 +1452,16 @@ func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 			extras = append(extras, "summary")
 		}
 	}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
+	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
+	// explicit extension policy below and validation of inline objects.
+	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
+		for _, ex := range x.extra {
+			if _, ok := allowed[ex]; !ok {
+				if _, ok := x.Extensions[ex]; !ok {
+					extras = append(extras, ex)
+				}
+				// extras in the Extensions checked below
 			}
-			// extras in the Extensions checked below
 		}
 	}
 
