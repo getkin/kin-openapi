@@ -336,14 +336,12 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 		return
 	}
 
-	for _, list := range []SchemaRefs{s.AllOf, s.AnyOf, s.OneOf} {
-		for _, s2 := range list {
-			isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)
-			if s2 != nil {
-				doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
-			}
+	_ = forEachSchemaRef(s, func(suffix string, ref *SchemaRef) error {
+		if isSchemaApplicatorRef(suffix) {
+			doc.derefSchemaRef(ref, refNameResolver, parentIsExternal)
 		}
-	}
+		return nil
+	})
 
 	// Discriminator mapping values are special cases since they are not full
 	// ref objects but are string references to schema objects.
@@ -364,19 +362,46 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 		}
 	}
 
-	for _, name := range componentNames(s.Properties) {
-		s2 := s.Properties[name]
-		isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)
-		if s2 != nil {
-			doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
+	_ = forEachSchemaRef(s, func(suffix string, ref *SchemaRef) error {
+		if !isSchemaApplicatorRef(suffix) {
+			doc.derefSchemaRef(ref, refNameResolver, parentIsExternal)
 		}
+		return nil
+	})
+}
+
+func isSchemaApplicatorRef(pointerSuffix string) bool {
+	return strings.HasPrefix(pointerSuffix, "/allOf/") ||
+		strings.HasPrefix(pointerSuffix, "/anyOf/") ||
+		strings.HasPrefix(pointerSuffix, "/oneOf/")
+}
+
+func (doc *T) derefSchemaRef(s *SchemaRef, refNameResolver RefNameResolver, parentIsExternal bool) bool {
+	if s == nil {
+		return false
 	}
-	for _, ref := range []*SchemaRef{s.Not, s.AdditionalProperties.Schema, s.Items} {
-		isExternal := doc.addSchemaToSpec(ref, refNameResolver, parentIsExternal)
-		if ref != nil {
-			doc.derefSchema(ref.Value, refNameResolver, isExternal || parentIsExternal)
-		}
+
+	if target := s.siblingTarget; target != nil {
+		// Internalize the referenced target, never the effective use-site wrapper.
+		// The outer Ref remains the serialization identity and follows the target's
+		// rewritten name, while sibling refs keep their use-site base path.
+		isExternal := doc.derefSchemaRef(target, refNameResolver, parentIsExternal)
+		s.Ref = target.Ref
+		doc.derefSchema(s.sibling, refNameResolver, parentIsExternal)
+		return isExternal
 	}
+
+	isExternal := doc.addSchemaToSpec(s, refNameResolver, parentIsExternal)
+
+	// A sibling schema is written at the reference use site, so its relative
+	// refs inherit the parent's location rather than the referenced target's.
+	// It remains a transformation source even in OpenAPI 3.0, where it is not
+	// part of the effective Value.
+	if s.sibling != s.Value {
+		doc.derefSchema(s.sibling, refNameResolver, parentIsExternal)
+	}
+	doc.derefSchema(s.Value, refNameResolver, isExternal || parentIsExternal)
+	return isExternal
 }
 
 func (doc *T) derefHeaders(hs Headers, refNameResolver RefNameResolver, parentIsExternal bool) {
@@ -400,10 +425,8 @@ func (doc *T) derefExamples(es Examples, refNameResolver RefNameResolver, parent
 func (doc *T) derefContent(c Content, refNameResolver RefNameResolver, parentIsExternal bool) {
 	for _, name := range componentNames(c) {
 		mediatype := c[name]
-		isExternal := doc.addSchemaToSpec(mediatype.Schema, refNameResolver, parentIsExternal)
-		if mediatype.Schema != nil {
-			doc.derefSchema(mediatype.Schema.Value, refNameResolver, isExternal || parentIsExternal)
-		}
+		doc.derefSchemaRef(mediatype.Schema, refNameResolver, parentIsExternal)
+		doc.derefSchemaRef(mediatype.ItemSchema, refNameResolver, parentIsExternal)
 		doc.derefExamples(mediatype.Examples, refNameResolver, parentIsExternal)
 		for _, name := range componentNames(mediatype.Encoding) {
 			e := mediatype.Encoding[name]
@@ -440,11 +463,8 @@ func (doc *T) derefResponseBodies(es ResponseBodies, refNameResolver RefNameReso
 }
 
 func (doc *T) derefParameter(p Parameter, refNameResolver RefNameResolver, parentIsExternal bool) {
-	isExternal := doc.addSchemaToSpec(p.Schema, refNameResolver, parentIsExternal)
+	doc.derefSchemaRef(p.Schema, refNameResolver, parentIsExternal)
 	doc.derefContent(p.Content, refNameResolver, parentIsExternal)
-	if p.Schema != nil {
-		doc.derefSchema(p.Schema.Value, refNameResolver, isExternal || parentIsExternal)
-	}
 }
 
 func (doc *T) derefRequestBody(r RequestBody, refNameResolver RefNameResolver, parentIsExternal bool) {
