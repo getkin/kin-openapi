@@ -1156,8 +1156,21 @@ type SchemaRef struct {
 	Value *Schema
 	extra []string
 	// sibling holds keyword siblings of a $ref (OAS 3.1 / JSON Schema 2020-12).
-	// It is populated during unmarshal and applied to Value after $ref resolution.
+	// It is the source representation used for serialization. In OAS 3.1+ it
+	// also becomes Value, with siblingTarget appended as an allOf conjunct.
 	sibling *Schema
+	// siblingErr is deferred until resolution, when the root OpenAPI dialect is
+	// known. Malformed siblings are errors in OAS 3.1 but remain ignored in 3.0.
+	siblingErr error
+	// siblingTarget is the synthetic allOf edge from sibling to the resolved
+	// target. Keeping Ref on this edge makes recursive effective schemas safe to
+	// marshal, while pointer identity lets SchemaRef.MarshalYAML omit it from the
+	// original source representation.
+	siblingTarget *SchemaRef
+	// syntheticSiblingTarget marks an internal ref inserted into a sibling
+	// schema. It lives on the edge so shallow copies of its owning SchemaRef can
+	// discover and reuse it.
+	syntheticSiblingTarget bool
 
 	refPath *url.URL
 }
@@ -1165,6 +1178,8 @@ type SchemaRef struct {
 var _ jsonpointer.JSONPointable = (*SchemaRef)(nil)
 
 func (x *SchemaRef) isEmpty() bool { return x == nil || x.Ref == "" && x.Value == nil }
+
+func (x *SchemaRef) originSubtree() any { return x.sibling }
 
 // RefString returns the $ref value.
 func (x *SchemaRef) RefString() string { return x.Ref }
@@ -1188,6 +1203,37 @@ func (x *SchemaRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
+		if x.sibling != nil {
+			m := make(map[string]any, 1+len(x.Extensions))
+			m["$ref"] = ref
+			sibling := x.sibling
+			if target := x.siblingTarget; target != nil {
+				copy := *sibling
+				copy.AllOf = make(SchemaRefs, 0, len(sibling.AllOf))
+				for _, item := range sibling.AllOf {
+					if item != target {
+						copy.AllOf = append(copy.AllOf, item)
+					}
+				}
+				sibling = &copy
+			}
+			y, err := sibling.MarshalYAML()
+			if err != nil {
+				return nil, err
+			}
+			if sibling, ok := y.(map[string]any); ok {
+				for key, value := range sibling {
+					// SchemaRef.Extensions is the public source of x-* fields.
+					if !strings.HasPrefix(key, "x-") {
+						m[key] = value
+					}
+				}
+			}
+			for key, value := range x.Extensions {
+				m[key] = value
+			}
+			return m, nil
+		}
 		return &Ref{
 			Ref:        ref,
 			Extensions: x.Extensions,
@@ -1207,6 +1253,9 @@ func (x SchemaRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets SchemaRef to a copy of data.
 func (x *SchemaRef) UnmarshalJSON(data []byte) error {
+	// Clear the previous input before decoding so reusing a destination cannot
+	// retain stale sibling state.
+	*x = SchemaRef{}
 	var refOnly Ref
 	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
@@ -1216,9 +1265,8 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 		x.Origin = refOnly.Origin
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			// OAS 3.1 / JSON Schema 2020-12: sibling keywords alongside $ref are valid
-			// and must be merged with the resolved reference. Parse the full object so
-			// the sibling fields are available after $ref resolution in resolveSchemaRef.
+			// Decode siblings through Schema itself. This deliberately gives them
+			// the same round-trip behavior as schemas without $ref.
 			hasSiblings := false
 			for k := range extra {
 				if !strings.HasPrefix(k, "x-") {
@@ -1228,7 +1276,15 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 			}
 			if hasSiblings {
 				var sibling Schema
-				if err := json.Unmarshal(data, &sibling); err == nil {
+				if err := json.Unmarshal(data, &sibling); err != nil {
+					x.siblingErr = err
+				} else {
+					delete(sibling.Extensions, "$ref")
+					for key := range sibling.Extensions {
+						if strings.HasPrefix(key, "x-") {
+							delete(sibling.Extensions, key)
+						}
+					}
 					x.sibling = &sibling
 				}
 			}
