@@ -175,7 +175,8 @@ Item:
 	items := marshaledUse["items"].(map[string]any)
 	require.True(t, strings.HasPrefix(items["$ref"].(string), "#/components/schemas/"))
 
-	roundTripped, err := openapi3.NewLoader().LoadFromData(data)
+	roundTripLoader := openapi3.NewLoader()
+	roundTripped, err := roundTripLoader.LoadFromData(data)
 	require.NoError(t, err, "the internalized document must not require external access")
 	roundTrippedUse := roundTripped.Components.Schemas["Root"].Value.Properties["use"]
 	require.Nil(t, roundTrippedUse.Value.Items)
