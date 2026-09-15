@@ -143,7 +143,8 @@ components:
 }`, string(data))
 	documentData, err := json.Marshal(doc)
 	require.NoError(t, err)
-	roundTripped, err := openapi3.NewLoader().LoadFromData(documentData)
+	roundTripLoader := openapi3.NewLoader()
+	roundTripped, err := roundTripLoader.LoadFromData(documentData)
 	require.NoError(t, err)
 	roundTrippedUse := roundTripped.Components.Schemas["Use"].Value
 	require.Error(t, roundTrippedUse.VisitJSON("xx", openapi3.EnableJSONSchema2020()))
@@ -370,7 +371,8 @@ components:
 }
 
 func TestSchemaRefSiblingAnchorsPartiallyAnnotatedAliasCycle(t *testing.T) {
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.1.0
 info:
   title: partially annotated alias cycle
@@ -395,7 +397,8 @@ components:
 }
 
 func TestSchemaRefSiblingsAreIgnoredOnOpenAPI30AliasCycle(t *testing.T) {
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.0.3
 info:
   title: ref-only cycle with ignored siblings
@@ -461,7 +464,8 @@ components:
 }
 
 func TestSchemaRefSiblingStructuralCycleKeepsAliasTarget(t *testing.T) {
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(`
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.1.0
 info:
   title: structural sibling cycle
@@ -582,7 +586,8 @@ components:
 
 	for _, version := range []string{"3.0.3", "3.1.0"} {
 		t.Run(version, func(t *testing.T) {
-			doc, err := openapi3.NewLoader().LoadFromData([]byte(fmt.Sprintf(spec, version)))
+			loader := openapi3.NewLoader()
+			doc, err := loader.LoadFromData([]byte(fmt.Sprintf(spec, version)))
 			require.NoError(t, err)
 			use := doc.Components.Schemas["Use"]
 			data, err := json.Marshal(use)
@@ -617,11 +622,13 @@ components:
         type: integer
 `
 
-	doc, err := openapi3.NewLoader().LoadFromData([]byte(fmt.Sprintf(spec, "3.0.3")))
+	loader30 := openapi3.NewLoader()
+	doc, err := loader30.LoadFromData([]byte(fmt.Sprintf(spec, "3.0.3")))
 	require.NoError(t, err, "OpenAPI 3.0 ignores malformed fields next to $ref")
 	require.Equal(t, "string", doc.Components.Schemas["Use"].Value.Type.Slice()[0])
 
-	_, err = openapi3.NewLoader().LoadFromData([]byte(fmt.Sprintf(spec, "3.1.0")))
+	loader31 := openapi3.NewLoader()
+	_, err = loader31.LoadFromData([]byte(fmt.Sprintf(spec, "3.1.0")))
 	require.Error(t, err, "OpenAPI 3.1 treats the adjacent fields as a Schema Object")
 }
 
