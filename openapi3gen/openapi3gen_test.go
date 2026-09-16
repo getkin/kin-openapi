@@ -889,3 +889,39 @@ func TestFieldNameGenerator(t *testing.T) {
 		})
 	}
 }
+
+// A type reached via two sibling fields gets regenerated once per field, each with its own
+// SchemaCustomizer-set description. Both share a component name, so whichever one wins used to
+// depend on Go's randomized map iteration order; this checks it's always the same one.
+func TestSchemaCustomizerRecursiveTypeDescriptionIsDeterministic(t *testing.T) {
+	type Node struct {
+		Sub []*Node `json:"sub,omitempty"`
+	}
+	type Wrapper struct {
+		Left  []*Node `json:"left,omitempty" desctag:"left-desc"`
+		Right []*Node `json:"right,omitempty" desctag:"right-desc"`
+	}
+
+	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		if d := tag.Get("desctag"); d != "" {
+			schema.Description = d
+		}
+		return nil
+	})
+
+	var first string
+	for i := range 200 {
+		schemas := make(openapi3.Schemas)
+		_, err := openapi3gen.NewSchemaRefForValue(&Wrapper{}, schemas, openapi3gen.UseAllExportedFields(), customizer)
+		require.NoError(t, err)
+		require.Contains(t, schemas, "Node")
+
+		desc := schemas["Node"].Value.Description
+		require.Contains(t, []string{"left-desc", "right-desc"}, desc)
+		if i == 0 {
+			first = desc
+		} else {
+			require.Equal(t, first, desc, "Node schema description must be stable across repeated generations, not depend on map iteration order (iteration %d)", i)
+		}
+	}
+}
