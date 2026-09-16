@@ -4,6 +4,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/url"
 	"strings"
 
@@ -1229,9 +1230,7 @@ func (x SchemaRef) MarshalYAML() (any, error) {
 					}
 				}
 			}
-			for key, value := range x.Extensions {
-				m[key] = value
-			}
+			maps.Copy(m, x.Extensions)
 			return m, nil
 		}
 		return &Ref{

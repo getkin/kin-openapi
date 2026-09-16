@@ -351,7 +351,7 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 		// details. Let their owner expose them to origin propagation without
 		// teaching this generic walker about concrete OpenAPI types.
 		if receiver.CanInterface() {
-			if provider, ok := receiver.Interface().(originSubtreeProvider); ok {
+			if provider, ok := reflect.TypeAssert[originSubtreeProvider](receiver); ok {
 				if subtree := provider.originSubtree(); subtree != nil {
 					applyOrigins(subtree, tree)
 				}
