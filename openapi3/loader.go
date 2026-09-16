@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -1179,7 +1180,7 @@ func (loader *Loader) resolveSchemaTarget(
 	}()
 
 	var target *Schema
-	var resolved *SchemaRef
+	var resolved SchemaRef
 	if isSingleRefElement(ref) {
 		var schema Schema
 		targetPath, loadErr := loader.loadSingleElementFromURI(ref, documentPath, &schema)
@@ -1193,8 +1194,7 @@ func (loader *Loader) resolveSchemaTarget(
 			return nil, nil, err
 		}
 	} else {
-		resolved = new(SchemaRef)
-		componentDoc, componentPath, resolveErr := loader.resolveComponent(doc, ref, documentPath, resolved)
+		componentDoc, componentPath, resolveErr := loader.resolveComponent(doc, ref, documentPath, &resolved)
 		if resolveErr != nil {
 			return nil, nil, resolveErr
 		}
@@ -1206,7 +1206,7 @@ func (loader *Loader) resolveSchemaTarget(
 			node.resolving = false
 			return nil, resolved.RefPath(), nil
 		}
-		if err := prepareSchemaRefSiblings(resolved, resolution.isOpenAPI31OrLater); err != nil {
+		if err := prepareSchemaRefSiblings(&resolved, resolution.isOpenAPI31OrLater); err != nil {
 			return nil, nil, err
 		}
 		// Publish a concrete schema before descending into its children. Ordinary
@@ -1215,7 +1215,7 @@ func (loader *Loader) resolveSchemaTarget(
 		if resolved.Ref == "" || resolved.sibling != nil && resolution.isOpenAPI31OrLater {
 			node.value = resolved.Value
 		}
-		if err := loader.resolveSchemaRef(componentDoc, resolved, componentPath, resolution); err != nil {
+		if err := loader.resolveSchemaRef(componentDoc, &resolved, componentPath, resolution); err != nil {
 			return nil, nil, err
 		}
 		target = resolved.Value
@@ -1276,10 +1276,8 @@ func prepareSchemaRefSiblings(component *SchemaRef, isOpenAPI31OrLater bool) err
 	// then point back to a real effective schema rather than forcing the resolver
 	// to guess which sibling fields belong in a cycle placeholder.
 	component.Value = component.sibling
-	for _, item := range component.sibling.AllOf {
-		if item == component.siblingTarget {
-			return nil
-		}
+	if slices.Contains(component.sibling.AllOf, component.siblingTarget) {
+		return nil
 	}
 	component.sibling.AllOf = append(component.sibling.AllOf, component.siblingTarget)
 	return nil
