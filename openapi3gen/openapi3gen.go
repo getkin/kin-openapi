@@ -117,6 +117,10 @@ type Generator struct {
 	// An OpenAPI identifier has been assigned to each.
 	SchemaRefs map[*openapi3.SchemaRef]int
 
+	// schemaRefOrder is SchemaRefs' keys in first-seen order, so NewSchemaRefForValue can iterate
+	// them deterministically instead of ranging over the map (Go randomizes map iteration order).
+	schemaRefOrder []*openapi3.SchemaRef
+
 	// componentSchemaRefs is a set of schemas that must be defined in the components to avoid cycles
 	// or if we have specified create components schemas
 	componentSchemaRefs map[string]struct{}
@@ -135,6 +139,14 @@ func NewGenerator(opts ...Option) *Generator {
 	}
 }
 
+// trackSchemaRef records ref in SchemaRefs, and in schemaRefOrder the first time it's seen.
+func (g *Generator) trackSchemaRef(ref *openapi3.SchemaRef) {
+	if _, exists := g.SchemaRefs[ref]; !exists {
+		g.schemaRefOrder = append(g.schemaRefOrder, ref)
+	}
+	g.SchemaRefs[ref]++
+}
+
 func (g *Generator) GenerateSchemaRef(t reflect.Type) (*openapi3.SchemaRef, error) {
 	//check generatorOpt consistency here
 	return g.generateSchemaRefFor(nil, t, "_root", "")
@@ -146,7 +158,7 @@ func (g *Generator) NewSchemaRefForValue(value any, schemas openapi3.Schemas) (*
 	if err != nil {
 		return nil, err
 	}
-	for ref := range g.SchemaRefs {
+	for _, ref := range g.schemaRefOrder {
 		refName := ref.Ref
 		if g.opts.exportComponentSchemas.ExportComponentSchemas && strings.HasPrefix(refName, "#/components/schemas/") {
 			refName = strings.TrimPrefix(refName, "#/components/schemas/")
@@ -170,7 +182,7 @@ func (g *Generator) NewSchemaRefForValue(value any, schemas openapi3.Schemas) (*
 
 func (g *Generator) generateSchemaRefFor(parents []*theTypeInfo, t reflect.Type, name string, tag reflect.StructTag) (*openapi3.SchemaRef, error) {
 	if ref := g.Types[t]; ref != nil && g.opts.schemaCustomizer == nil {
-		g.SchemaRefs[ref]++
+		g.trackSchemaRef(ref)
 		return ref, nil
 	}
 	ref, err := g.generateWithoutSaving(parents, t, name, tag)
@@ -183,7 +195,7 @@ func (g *Generator) generateSchemaRefFor(parents []*theTypeInfo, t reflect.Type,
 	}
 	if ref != nil {
 		g.Types[t] = ref
-		g.SchemaRefs[ref]++
+		g.trackSchemaRef(ref)
 	}
 	return ref, nil
 }
@@ -225,20 +237,20 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			vs, err := g.generateSchemaRefFor(parents, v.Type, name, tag)
 			if err != nil {
 				if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
-					g.SchemaRefs[vs]++
+					g.trackSchemaRef(vs)
 					return vs, nil
 				}
 				return nil, err
 			}
 			refSchemaRef := RefSchemaRef
-			g.SchemaRefs[refSchemaRef]++
+			g.trackSchemaRef(refSchemaRef)
 			ref := openapi3.NewSchemaRef(t.Name(), &openapi3.Schema{
 				OneOf: []*openapi3.SchemaRef{
 					refSchemaRef,
 					vs,
 				},
 			})
-			g.SchemaRefs[ref]++
+			g.trackSchemaRef(ref)
 			return ref, nil
 		}
 	}
@@ -316,7 +328,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 				}
 			}
 			if items != nil {
-				g.SchemaRefs[items]++
+				g.trackSchemaRef(items)
 				schema.Items = items
 			}
 		}
@@ -332,7 +344,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			}
 		}
 		if additionalProperties != nil {
-			g.SchemaRefs[additionalProperties]++
+			g.trackSchemaRef(additionalProperties)
 			schema.AdditionalProperties = openapi3.AdditionalProperties{Schema: additionalProperties}
 		}
 
@@ -387,7 +399,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 					}
 				}
 				if ref != nil {
-					g.SchemaRefs[ref]++
+					g.trackSchemaRef(ref)
 					schema.WithPropertyRef(fieldName, ref)
 				}
 
