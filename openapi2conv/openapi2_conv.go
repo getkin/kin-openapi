@@ -436,6 +436,17 @@ func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.Res
 			result.Content[mime] = openapi3.NewMediaType().WithSchemaRef(schema)
 		}
 	}
+	if examples := response.Examples; len(examples) > 0 {
+		if result.Content == nil {
+			result.Content = make(openapi3.Content, len(examples))
+		}
+		for mime, example := range examples {
+			if result.Content[mime] == nil {
+				result.Content[mime] = openapi3.NewMediaType()
+			}
+			result.Content[mime].Example = example
+		}
+	}
 	if headers := response.Headers; len(headers) > 0 {
 		result.Headers = ToV3Headers(headers)
 	}
