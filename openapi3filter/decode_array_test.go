@@ -1,6 +1,7 @@
 package openapi3filter
 
 import (
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -195,6 +196,17 @@ func TestDecodeArray_IntegerItems(t *testing.T) {
 		require.ErrorAs(t, err, &pe)
 		require.Equal(t, []any{1}, pe.Path())
 	})
+}
+
+func TestHeaderDecodeArray_TrimsOptionalWhitespace(t *testing.T) {
+	sm := &openapi3.SerializationMethod{Style: "simple", Explode: false}
+	schema := decodeArrayIntSchema()
+	dec := &headerParamDecoder{header: http.Header{"X-Pages": {"1, 3, 10"}}}
+
+	got, found, err := dec.DecodeArray("X-Pages", sm, schema)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, []any{int64(1), int64(3), int64(10)}, got)
 }
 
 func TestDecodeArray_DeepObjectRejected(t *testing.T) {
