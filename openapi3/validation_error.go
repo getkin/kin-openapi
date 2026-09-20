@@ -378,6 +378,28 @@ func (e *SchemaTypeError) Error() string {
 	return fmt.Sprintf("unsupported 'type' value %q", e.Type)
 }
 
+// OpenAPIVersionUnsupportedError clusters "the document's `openapi` field
+// doesn't name a supported OpenAPI version" failures. Fires when the value
+// doesn't parse as MAJOR[.MINOR[.PATCH]] (e.g. "v3.1", "3.x", "3.1.0.2") or
+// parses with a major version other than 3 (e.g. "4.0.0"): this package
+// implements OpenAPI 3.x only. Unknown 3.x minor/patch releases (3.3, 3.99,
+// 3.0.99, ...) are accepted, so documents targeting future 3.x specs keep
+// validating. A missing/empty value is reported as *OpenAPIVersionRequired
+// instead. Carries the offending value so callers can render or filter.
+type OpenAPIVersionUnsupportedError struct {
+	// Value is the rejected `openapi` value (e.g. "4.0.0", "garbage").
+	Value string
+	// Origin is the source location of the offending element when the
+	// document was loaded with Loader.IncludeOrigin = true. Nil for
+	// document-root fields (Loader doesn't track Origin on *T) and on
+	// loads where origin tracking was off.
+	Origin *Origin
+}
+
+func (e *OpenAPIVersionUnsupportedError) Error() string {
+	return fmt.Sprintf("unsupported openapi version %q: only OpenAPI 3.x documents are supported", e.Value)
+}
+
 // InvalidParameterInError clusters "parameter can't have 'in' value X"
 // failures. The OpenAPI 3.x spec accepts only `path`, `query`, `header`,
 // or `cookie`; this fires when a parameter declares anything else
@@ -1159,6 +1181,10 @@ func newLicenseNameRequired(origin *Origin) error {
 func newOpenAPIVersionRequired(origin *Origin) error {
 	return newRequiredField("openapi",
 		&OpenAPIVersionRequired{ValidationError{Message: "value of openapi must be a non-empty string"}}, origin)
+}
+
+func newOpenAPIVersionUnsupported(value string, origin *Origin) error {
+	return &OpenAPIVersionUnsupportedError{Value: value, Origin: origin}
 }
 
 func newServerURLRequired(origin *Origin) error {

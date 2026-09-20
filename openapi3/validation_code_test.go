@@ -78,6 +78,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.OAuthFlowTokenURLForbidden{},
 		&openapi3.OAuthFlowTokenURLRequired{},
 		&openapi3.OpenAPIVersionRequired{},
+		&openapi3.OpenAPIVersionUnsupportedError{},
 		&openapi3.OpenIDConnectURLRequired{},
 		&openapi3.OperationResponsesRequired{},
 		&openapi3.ParameterContentSchemaExactlyOne{},
