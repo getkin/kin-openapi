@@ -1,1 +1,1 @@
-invalid components: schema "AgentPool": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1/{name}" and "/v1/{jobName}"

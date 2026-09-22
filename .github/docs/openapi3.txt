@@ -3996,9 +3996,8 @@ type ValidationOption func(options *ValidationOptions)
 
 func AllowExtensionsWithRef() ValidationOption
     AllowExtensionsWithRef allows extensions (fields starting with 'x-') as
-    siblings for $ref fields. This is the default. Non-extension fields are
-    prohibited unless allowed explicitly with the AllowExtraSiblingFields
-    option.
+    siblings for $ref fields. This is the default. OpenAPI 3.0 Reference Object
+    siblings are ignored by default.
 
 func AllowExtraSiblingFields(fields ...string) ValidationOption
     AllowExtraSiblingFields called as AllowExtraSiblingFields("description")
@@ -4064,8 +4063,8 @@ func IsOpenAPI32OrLater() ValidationOption
 func ProhibitExtensionsWithRef() ValidationOption
     ProhibitExtensionsWithRef causes the validation to return an error if
     extensions (fields starting with 'x-') are found as siblings for $ref
-    fields. Non-extension fields are prohibited unless allowed explicitly with
-    the AllowExtraSiblingFields option.
+    fields, even in OpenAPI 3.0. Use AllowExtraSiblingFields to allow specific
+    extensions.
 
 func SetRegexCompiler(c RegexCompilerFunc) ValidationOption
     SetRegexCompiler allows to override the regex implementation used to

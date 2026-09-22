@@ -117,8 +117,7 @@ func DisableExamplesValidation() ValidationOption {
 
 // AllowExtensionsWithRef allows extensions (fields starting with 'x-')
 // as siblings for $ref fields. This is the default.
-// Non-extension fields are prohibited unless allowed explicitly with the
-// AllowExtraSiblingFields option.
+// OpenAPI 3.0 Reference Object siblings are ignored by default.
 func AllowExtensionsWithRef() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.schemaExtensionsInRefProhibited = false
@@ -127,8 +126,8 @@ func AllowExtensionsWithRef() ValidationOption {
 
 // ProhibitExtensionsWithRef causes the validation to return an
 // error if extensions (fields starting with 'x-') are found as
-// siblings for $ref fields. Non-extension fields are prohibited
-// unless allowed explicitly with the AllowExtraSiblingFields option.
+// siblings for $ref fields, even in OpenAPI 3.0. Use AllowExtraSiblingFields
+// to allow specific extensions.
 func ProhibitExtensionsWithRef() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.schemaExtensionsInRefProhibited = true
