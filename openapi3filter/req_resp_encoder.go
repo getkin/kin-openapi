@@ -7,13 +7,21 @@ import (
 )
 
 func encodeBody(body any, mediaType string) ([]byte, error) {
-	if encoder := RegisteredBodyEncoder(mediaType); encoder != nil {
+	if encoder, ok := getBodyEncoder(mediaType); ok {
 		return encoder(body)
 	}
 	return nil, &ParseError{
 		Kind:   KindUnsupportedFormat,
 		Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, mediaType),
 	}
+}
+
+// getBodyEncoder mirrors getBodyDecoder so that a body matched and decoded
+// under a case variant of its declared media type can also be re-encoded.
+func getBodyEncoder(contentType string) (BodyEncoder, bool) {
+	bodyEncodersM.RLock()
+	defer bodyEncodersM.RUnlock()
+	return lookupByContentType(bodyEncoders, contentType)
 }
 
 // BodyEncoder really is an (encoding/json).Marshaler
