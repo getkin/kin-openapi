@@ -135,8 +135,11 @@ func joinValues(values []any, sep string) string {
 	return strings.Join(strValues, sep)
 }
 
-// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected
+// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected.
+// Existing values for the parameter (for example an empty/unparseable query value) are replaced so defaults
+// do not create duplicate keys (see #1255).
 func populateDefaultQueryParameters(q url.Values, parameterName string, value any, explode bool) {
+	q.Del(parameterName)
 	switch t := value.(type) {
 	case []any:
 		if explode {
