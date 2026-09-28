@@ -1613,6 +1613,26 @@ func TestDecodeParameter(t *testing.T) {
 	}
 }
 
+func TestHeaderDecodeObject_RepeatedFieldLines(t *testing.T) {
+	schema := objectOf("id", stringSchema, "name", stringSchema)
+	for _, tc := range []struct {
+		name  string
+		sm    *openapi3.SerializationMethod
+		lines []string
+	}{
+		{"simple", &openapi3.SerializationMethod{Style: "simple"}, []string{"id,foo", "name,bar"}},
+		{"simple explode", &openapi3.SerializationMethod{Style: "simple", Explode: true}, []string{"id=foo", "name=bar"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dec := &headerParamDecoder{header: http.Header{"X-Object": tc.lines}}
+			got, found, err := dec.DecodeObject("X-Object", tc.sm, schema)
+			require.NoError(t, err)
+			require.True(t, found)
+			require.Equal(t, map[string]any{"id": "foo", "name": "bar"}, got)
+		})
+	}
+}
+
 func TestDecodeBody(t *testing.T) {
 	urlencodedForm := make(url.Values)
 	urlencodedForm.Set("a", "a1")
