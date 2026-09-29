@@ -47,7 +47,7 @@ func TestRouter(t *testing.T) {
 			openapi3.WithPath("/onlyGET", &openapi3.PathItem{
 				Get: helloGET,
 			}),
-			openapi3.WithPath("/params/{x}/{y}/{z.*}", &openapi3.PathItem{
+			openapi3.WithPath("/params/{x}/{y}/{z*}", &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x").WithSchema(openapi3.NewStringSchema())},

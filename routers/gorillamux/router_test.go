@@ -64,7 +64,7 @@ func TestRouter(t *testing.T) {
 			openapi3.WithPath("/books/{bookid}.json", &openapi3.PathItem{
 				Post: booksPOST,
 				Parameters: openapi3.Parameters{
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid2").WithSchema(openapi3.NewStringSchema())},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid").WithSchema(openapi3.NewStringSchema())},
 				},
 			}),
 			openapi3.WithPath("/partial", &openapi3.PathItem{
