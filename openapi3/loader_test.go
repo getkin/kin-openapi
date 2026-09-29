@@ -605,9 +605,9 @@ components:
 paths:
   /users/{id}:
     get:
-      operationId: getUserById,
+      operationId: getUserById
       parameters:
-        - name: id,
+        - name: id
           in: path
           required: true
           schema:

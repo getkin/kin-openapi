@@ -76,6 +76,114 @@ paths:
 `,
 			wantErr: `operations "POST /pets" and "POST /users" have the same operation id "createPet"`,
 		},
+		{
+			name: "ok, path parameter name matches template",
+			spec: `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Repro
+paths:
+  /pets/{petId}:
+    get:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+`,
+		},
+		{
+			name: "path parameter name swapped with template placeholder",
+			spec: `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Repro
+paths:
+  /pets/{petId}:
+    get:
+      operationId: showPetById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+`,
+			wantErr: `operation GET /pets/{petId} must define exactly all path parameters (missing: [id petId])`,
+		},
+		{
+			name: "leftover template placeholder after a matching name",
+			spec: `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Repro
+paths:
+  /{a}/{b}:
+    get:
+      parameters:
+        - name: a
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+`,
+			wantErr: `operation GET /{a}/{b} must define exactly all path parameters (missing: [b])`,
+		},
+		{
+			name: "ok, gorilla mux regex decoration on placeholder",
+			spec: `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Repro
+paths:
+  /params/{z:.*}:
+    get:
+      parameters:
+        - name: z
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+`,
+		},
+		{
+			name: "ok, legacy trailing-wildcard decoration on placeholder",
+			spec: `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Repro
+paths:
+  /files/{path*}:
+    get:
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+`,
+		},
 	}
 
 	for i := range tests {

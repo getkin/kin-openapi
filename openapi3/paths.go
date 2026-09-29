@@ -93,33 +93,36 @@ func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) erro
 					}
 				}
 			}
-			if expected := len(setParams) + len(commonParams); expected != len(varsInPath) {
-				expected -= len(varsInPath)
-				if expected < 0 {
-					expected *= -1
-				}
-				missing := make(map[string]struct{}, expected)
-				definedParams := append(setParams, commonParams...)
-				for _, name := range definedParams {
-					if _, ok := varsInPath[name]; !ok {
-						missing[name] = struct{}{}
-					}
-				}
-				for _, name := range componentNames(varsInPath) {
-					if slices.Contains(definedParams, name) {
-						break
-					}
+			definedParams := make(map[string]struct{}, len(setParams)+len(commonParams))
+			for _, name := range setParams {
+				definedParams[name] = struct{}{}
+			}
+			for _, name := range commonParams {
+				definedParams[name] = struct{}{}
+			}
+			templateParams := make(map[string]struct{}, len(varsInPath))
+			for name := range varsInPath {
+				templateParams[pathTemplateParamName(name)] = struct{}{}
+			}
+			missing := make(map[string]struct{})
+			for name := range definedParams {
+				if _, ok := templateParams[name]; !ok {
 					missing[name] = struct{}{}
 				}
-				if len(missing) != 0 {
-					if err := me.emit(&PathParametersError{
-						Path:    path,
-						Method:  method,
-						Missing: componentNames(missing),
-						Origin:  pathItem.Origin,
-					}); err != nil {
-						return err
-					}
+			}
+			for name := range templateParams {
+				if _, ok := definedParams[name]; !ok {
+					missing[name] = struct{}{}
+				}
+			}
+			if len(missing) != 0 {
+				if err := me.emit(&PathParametersError{
+					Path:    path,
+					Method:  method,
+					Missing: componentNames(missing),
+					Origin:  pathItem.Origin,
+				}); err != nil {
+					return err
 				}
 			}
 		}
@@ -272,4 +275,17 @@ func normalizeTemplatedPath(path string) (string, uint, map[string]struct{}) {
 		cc = c
 	}
 	return buffTpl.String(), count, vars
+}
+
+// pathTemplateParamName returns the OpenAPI parameter name implied by a
+// path-template placeholder. This library's routers decorate placeholders:
+// gorilla/mux uses {name:regex}, and the legacy router uses a trailing *
+// for wildcards ({name*}). Those suffixes are stripped so declared
+// parameter names can be compared to the template. The colon is stripped
+// first because a gorilla pattern such as {z:.*} otherwise ends in '*'.
+func pathTemplateParamName(name string) string {
+	if i := strings.IndexByte(name, ':'); i >= 0 {
+		name = name[:i]
+	}
+	return strings.TrimSuffix(name, "*")
 }
