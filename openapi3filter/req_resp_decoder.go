@@ -805,7 +805,7 @@ func (d *headerParamDecoder) DecodeArray(param string, sm *openapi3.Serializatio
 		return nil, ok, nil
 	}
 
-	parts := strings.Split(raw[0], ",")
+	parts := strings.Split(strings.Join(raw, ","), ",")
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
@@ -827,7 +827,7 @@ func (d *headerParamDecoder) DecodeObject(param string, sm *openapi3.Serializati
 		// HTTP request does not contain a corresponding header.
 		return nil, ok, nil
 	}
-	props, err := propsFromString(raw[0], ",", valueDelim)
+	props, err := propsFromString(strings.Join(raw, ","), ",", valueDelim)
 	if err != nil {
 		return nil, ok, err
 	}

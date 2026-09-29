@@ -209,6 +209,17 @@ func TestHeaderDecodeArray_TrimsOptionalWhitespace(t *testing.T) {
 	require.Equal(t, []any{int64(1), int64(3), int64(10)}, got)
 }
 
+func TestHeaderDecodeArray_RepeatedFieldLines(t *testing.T) {
+	sm := &openapi3.SerializationMethod{Style: "simple", Explode: false}
+	schema := decodeArrayIntSchema()
+	dec := &headerParamDecoder{header: http.Header{"X-Pages": {"1", "3, 10"}}}
+
+	got, found, err := dec.DecodeArray("X-Pages", sm, schema)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, []any{int64(1), int64(3), int64(10)}, got)
+}
+
 func TestDecodeArray_DeepObjectRejected(t *testing.T) {
 	sm := &openapi3.SerializationMethod{Style: "deepObject", Explode: true}
 	dec := &urlValuesDecoder{values: url.Values{"param": {"x"}}}
