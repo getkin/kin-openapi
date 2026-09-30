@@ -9,7 +9,33 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 )
+
+func TestValidateResponseContentTypeCaseInsensitive(t *testing.T) {
+	content := openapi3.Content{
+		"text/plain": openapi3.NewMediaType().WithSchema(openapi3.NewStringSchema()),
+	}
+	operation := openapi3.NewOperation()
+	operation.Responses = openapi3.NewResponses(openapi3.WithStatus(
+		http.StatusOK,
+		&openapi3.ResponseRef{Value: openapi3.NewResponse().WithContent(content)},
+	))
+	input := &ResponseValidationInput{
+		RequestValidationInput: &RequestValidationInput{
+			Request: &http.Request{Method: http.MethodGet},
+			Route: &routers.Route{
+				Spec:      &openapi3.T{OpenAPI: "3.0.3"},
+				Operation: operation,
+			},
+		},
+		Status: http.StatusOK,
+		Header: http.Header{headerCT: []string{"TEXT/PLAIN"}},
+		Body:   io.NopCloser(strings.NewReader("hello")),
+	}
+
+	require.NoError(t, ValidateResponse(t.Context(), input))
+}
 
 func Test_validateResponseHeader(t *testing.T) {
 	type args struct {
