@@ -10,8 +10,9 @@ import (
 )
 
 func unmarshalError(jsonUnmarshalErr error) error {
-	if before, after, found := strings.Cut(jsonUnmarshalErr.Error(), "Bis"); found && before != "" && after != "" {
+	if before, after, found := strings.Cut(jsonUnmarshalErr.Error(), "Bis"); found && before != "" {
 		before = strings.ReplaceAll(before, " Go struct ", " ")
+		before = strings.ReplaceAll(before, " Go ", " ")
 		return fmt.Errorf("%s%s", before, strings.ReplaceAll(after, "Bis", ""))
 	}
 	return jsonUnmarshalErr
