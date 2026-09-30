@@ -184,10 +184,6 @@ func TestBooleanSchema_RejectsOtherKeywords(t *testing.T) {
 // VisitJSON documents EnableJSONSchema2020 as the way to validate a 3.1
 // schema, and a boolean schema exists only in 3.1, so the option's path has to
 // agree with the built-in one.
-//
-// It is not purely external: useJSONSchema2020 falls back to visitJSON when the
-// schema does not compile, which is what a bare boolean at the root does, so
-// both paths are exercised here.
 func TestBooleanSchema_JSONSchema2020(t *testing.T) {
 	schemas := loadBooleanSchemas(t).Components.Schemas
 	opt := openapi3.EnableJSONSchema2020()
