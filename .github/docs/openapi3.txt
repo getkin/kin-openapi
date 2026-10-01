@@ -3508,8 +3508,9 @@ type ServerURLTemplateError struct {
 	Origin *Origin
 }
     ServerURLTemplateError clusters server URL template failures — mismatched
-    braces and undeclared variables (template variables not matched by
-    Server.Variables, or vice versa).
+    braces, undeclared variables (template variables not matched by
+    Server.Variables) and unused variables (Server.Variables entries the URL
+    template never references).
 
 func (e *ServerURLTemplateError) Code() string
 
@@ -3520,6 +3521,10 @@ func (e *ServerURLTemplateError) Unwrap() error
 type ServerURLUndeclaredVariables struct{ ValidationError }
 
 func (e *ServerURLUndeclaredVariables) As(target any) bool
+
+type ServerURLUnusedVariables struct{ ValidationError }
+
+func (e *ServerURLUnusedVariables) As(target any) bool
 
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
