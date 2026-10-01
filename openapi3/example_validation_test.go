@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -202,7 +203,12 @@ func TestExamplesSchemaValidation(t *testing.T) {
 	testOptions := []struct {
 		name                      string
 		disableExamplesValidation bool
+		useDefaultOptions         bool
 	}{
+		{
+			name:              "examples_validation_default",
+			useDefaultOptions: true,
+		},
 		{
 			name:                      "examples_validation_disabled",
 			disableExamplesValidation: true,
@@ -340,7 +346,9 @@ components:
 					doc, err := loader.LoadFromData(spec.Bytes())
 					require.NoError(t, err)
 
-					if testOption.disableExamplesValidation {
+					if testOption.useDefaultOptions {
+						err = doc.Validate(loader.Context)
+					} else if testOption.disableExamplesValidation {
 						err = doc.Validate(loader.Context, DisableExamplesValidation())
 					} else {
 						err = doc.Validate(loader.Context, EnableExamplesValidation())
@@ -519,5 +527,64 @@ components:
 				})
 			}
 		})
+	}
+}
+
+// Request and response example direction must not affect later validation with
+// the same parent context, including when body validation returns an error.
+func TestBodyExampleValidationContext(t *testing.T) {
+	for _, direction := range []string{"request", "response"} {
+		for _, invalid := range []bool{false, true} {
+			name := direction
+			if invalid {
+				name += "_invalid"
+			}
+			t.Run(name, func(t *testing.T) {
+				readOnly := NewStringSchema()
+				readOnly.ReadOnly = true
+				writeOnly := NewStringSchema()
+				writeOnly.WriteOnly = true
+				schema := NewObjectSchema().
+					WithProperty("id", readOnly).
+					WithProperty("password", writeOnly).
+					WithProperty("name", NewStringSchema()).
+					WithRequired([]string{"id", "password", "name"})
+				example := map[string]any{"name": "example"}
+				if direction == "request" {
+					example["password"] = "example-password"
+				} else {
+					example["id"] = "example-id"
+				}
+				if invalid {
+					delete(example, "name")
+				}
+				content := NewContentWithJSONSchema(schema)
+				content["application/json"].Example = example
+				ctx := WithValidationOptions(context.Background(), EnableSchemaFormatValidation())
+				var err error
+				if direction == "request" {
+					err = (&RequestBody{Content: content}).Validate(ctx)
+				} else {
+					response := NewResponse().WithDescription("success")
+					response.Content = content
+					err = response.Validate(ctx)
+				}
+				if invalid {
+					require.ErrorContains(t, err, `property "name" is missing`)
+				} else {
+					require.NoError(t, err)
+				}
+
+				neutral := &MediaType{
+					Schema: &SchemaRef{Value: schema},
+					Example: map[string]any{
+						"id": "example-id", "password": "example-password", "name": "example",
+					},
+				}
+				require.NoError(t, neutral.Validate(ctx))
+				delete(neutral.Example.(map[string]any), "id")
+				require.ErrorContains(t, neutral.Validate(ctx), `property "id" is missing`)
+			})
+		}
 	}
 }
