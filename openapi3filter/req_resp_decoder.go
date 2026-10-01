@@ -1692,6 +1692,15 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 
 // FileBodyDecoder is a body decoder that decodes a file body to a string.
 func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error) {
+	if reader, ok := body.(*bytes.Reader); ok && reader.Len() > 0 {
+		// Request validation has already buffered the body. Copy it directly to
+		// string storage instead of allocating another intermediate byte slice.
+		var data strings.Builder
+		if _, err := reader.WriteTo(&data); err != nil {
+			return nil, err
+		}
+		return data.String(), nil
+	}
 	data, err := io.ReadAll(body)
 	if err != nil {
 		return nil, err
