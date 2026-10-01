@@ -643,7 +643,7 @@ func TestValidationError_ParameterAndAPIKeyNameLeaves(t *testing.T) {
 
 // Pin ServerURLTemplateError cluster + leaf reachability for the three
 // server URL template sites (mismatched braces, undeclared variables
-// in two flavours).
+// in two flavours, unused variables).
 func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
 	t.Run("mismatched braces", func(t *testing.T) {
 		s := &openapi3.Server{URL: "https://example.com/{x"}
@@ -683,6 +683,25 @@ func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
 
 		var leaf *openapi3.ServerURLUndeclaredVariables
 		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("unused variables", func(t *testing.T) {
+		s := &openapi3.Server{
+			URL:       "https://api.example.com/v1",
+			Variables: map[string]*openapi3.ServerVariable{"region": {Default: "us-east"}},
+		}
+		err := s.Validate(context.Background())
+		require.EqualError(t, err, "server has unused variable region")
+
+		var sue *openapi3.ServerURLTemplateError
+		require.True(t, errors.As(err, &sue))
+		require.Equal(t, "https://api.example.com/v1", sue.URL)
+
+		var leaf *openapi3.ServerURLUnusedVariables
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
 	})
 }
 

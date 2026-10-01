@@ -175,8 +175,9 @@ func (e *FieldVersionMismatchError) Error() string { return e.Cause.Error() }
 func (e *FieldVersionMismatchError) Unwrap() error { return e.Cause }
 
 // ServerURLTemplateError clusters server URL template failures —
-// mismatched braces and undeclared variables (template variables not
-// matched by Server.Variables, or vice versa).
+// mismatched braces, undeclared variables (template variables not
+// matched by Server.Variables) and unused variables (Server.Variables
+// entries the URL template never references).
 type ServerURLTemplateError struct {
 	// URL is the server URL whose template failed validation.
 	URL string
@@ -675,6 +676,12 @@ func (e *ServerURLMismatchedBraces) As(target any) bool {
 type ServerURLUndeclaredVariables struct{ ValidationError }
 
 func (e *ServerURLUndeclaredVariables) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ServerURLUnusedVariables struct{ ValidationError }
+
+func (e *ServerURLUnusedVariables) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1182,6 +1189,12 @@ func newServerURLUndeclaredVariables(serverURL string, origin *Origin) error {
 	const msg = "server has undeclared variables"
 	return newServerURLTemplateError(serverURL,
 		&ServerURLUndeclaredVariables{ValidationError{Message: msg}}, origin)
+}
+
+func newServerURLUnusedVariables(serverURL string, variable string, origin *Origin) error {
+	msg := fmt.Sprintf("server has unused variable %s", variable)
+	return newServerURLTemplateError(serverURL,
+		&ServerURLUnusedVariables{ValidationError{Message: msg}}, origin)
 }
 
 func newSchemaItemsRequired(origin *Origin) error {

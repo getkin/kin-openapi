@@ -194,6 +194,32 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 	return params, input, true
 }
 
+// serverURLTemplateVariables returns the names of the variables that
+// serverURL's template references, deduplicated and in order of first
+// appearance. A trailing "{" without a closing "}" yields no name: the URL is
+// already reported as having mismatched braces by the caller.
+func serverURLTemplateVariables(serverURL string) []string {
+	var names []string
+	seen := make(map[string]struct{})
+	for {
+		i := strings.IndexByte(serverURL, '{')
+		if i < 0 {
+			return names
+		}
+		serverURL = serverURL[i+1:]
+		j := strings.IndexByte(serverURL, '}')
+		if j < 0 {
+			return names
+		}
+		name := serverURL[:j]
+		serverURL = serverURL[j+1:]
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			names = append(names, name)
+		}
+	}
+}
+
 // Validate returns an error if Server does not comply with the OpenAPI spec.
 func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
@@ -212,16 +238,23 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) er
 		}
 	}
 
-	if opening != len(server.Variables) {
-		if err := me.emit(newServerURLUndeclaredVariables(server.URL, server.Origin)); err != nil {
-			return err
+	// Compare the names the URL template references against the declared
+	// variables, rather than comparing counts: a variable the URL never
+	// references is declared but unused, which is a different defect from a
+	// reference the URL never declared, and the two need not cancel out.
+	for _, name := range serverURLTemplateVariables(server.URL) {
+		if _, ok := server.Variables[name]; !ok {
+			if err := me.emit(newServerURLUndeclaredVariables(server.URL, server.Origin)); err != nil {
+				return err
+			}
+			break
 		}
 	}
 
 	for _, name := range componentNames(server.Variables) {
 		v := server.Variables[name]
 		if !strings.Contains(server.URL, "{"+name+"}") {
-			if err := me.emit(newServerURLUndeclaredVariables(server.URL, server.Origin)); err != nil {
+			if err := me.emit(newServerURLUnusedVariables(server.URL, name, server.Origin)); err != nil {
 				return err
 			}
 			// Variable name doesn't appear in the URL template; descending

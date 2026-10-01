@@ -90,6 +90,83 @@ func TestServerValidation(t *testing.T) {
 	}
 }
 
+// A variable that Server.Variables declares but Server.URL never references
+// is unused, not undeclared: the two defects call for opposite edits, so
+// mislabelling one sends the reader to fix the wrong half of the spec.
+func TestServerValidationUnusedVariables(t *testing.T) {
+	tests := []struct {
+		name             string
+		input            *Server
+		expectedErrorMsg string // empty = expect no error
+	}{
+		{
+			"when a declared variable is missing from the URL",
+			&Server{
+				URL: "https://api.example.com/v1",
+				Variables: ServerVariables{
+					"region": &ServerVariable{Default: "us-east"},
+				},
+			},
+			"server has unused variable region",
+		},
+		{
+			"when the URL references no variables at all",
+			&Server{
+				URL: "https://{x}.example.com",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+					"y": &ServerVariable{Default: "com"},
+				},
+			},
+			"server has unused variable y",
+		},
+		{
+			"when only surplus variables are declared",
+			&Server{
+				URL: "https://api.example.com/{x}",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+					"y": &ServerVariable{Default: "com"},
+					"z": &ServerVariable{Default: "net"},
+				},
+			},
+			"server has unused variable y",
+		},
+		{
+			"an undeclared reference outranks an unused variable",
+			&Server{
+				URL: "https://{y}.example.com",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+				},
+			},
+			"server has undeclared variables",
+		},
+		{
+			"a repeated reference is declared once",
+			&Server{
+				URL: "https://{x}.example.com/{x}",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+				},
+			},
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.input.Validate(t.Context())
+
+			if test.expectedErrorMsg == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, test.expectedErrorMsg)
+			}
+		})
+	}
+}
+
 func testServerParamValues(server *Server, input string, expected *serverMatch) func(*testing.T) {
 	return func(t *testing.T) {
 		args, remaining, ok := server.MatchRawURL(input)
