@@ -102,7 +102,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 		}
 
 		// Reject if specification request body if not present (not wanted) but is present in the HTTP request
-		if options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
+		if requestBody == nil && options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
 			err := &RequestError{
 				Input: input,
 				Err:   errors.New("request body not allowed for this request"),
