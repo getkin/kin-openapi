@@ -50,6 +50,14 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 			}
 			doc3.AddServer(&openapi3.Server{URL: u.String()})
 		}
+	} else if basePath := doc2.BasePath; basePath != "" {
+		// Swagger 2.0 makes `host` optional, in which case the host serving
+		// the documentation is to be used. There is then no host to build an
+		// absolute URL from, but `basePath` still applies, and OpenAPI 3
+		// allows a relative server URL. Emit the base path on its own rather
+		// than dropping it: with no servers the default server URL of "/" is
+		// assumed, so `/v1` used to disappear (issue #1284).
+		doc3.AddServer(&openapi3.Server{URL: basePath})
 	}
 
 	doc3.Components.Schemas = make(map[string]*openapi3.SchemaRef)
