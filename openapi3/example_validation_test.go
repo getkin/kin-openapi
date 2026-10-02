@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -202,7 +203,12 @@ func TestExamplesSchemaValidation(t *testing.T) {
 	testOptions := []struct {
 		name                      string
 		disableExamplesValidation bool
+		useDefaultOptions         bool
 	}{
+		{
+			name:              "examples_validation_default",
+			useDefaultOptions: true,
+		},
 		{
 			name:                      "examples_validation_disabled",
 			disableExamplesValidation: true,
@@ -340,7 +346,9 @@ components:
 					doc, err := loader.LoadFromData(spec.Bytes())
 					require.NoError(t, err)
 
-					if testOption.disableExamplesValidation {
+					if testOption.useDefaultOptions {
+						err = doc.Validate(loader.Context)
+					} else if testOption.disableExamplesValidation {
 						err = doc.Validate(loader.Context, DisableExamplesValidation())
 					} else {
 						err = doc.Validate(loader.Context, EnableExamplesValidation())
@@ -520,4 +528,204 @@ components:
 			}
 		})
 	}
+}
+
+// Request and response example direction must not affect later validation with
+// the same parent context, including when body validation returns an error.
+func TestBodyExampleValidationContext(t *testing.T) {
+	for _, direction := range []string{"request", "response"} {
+		for _, invalid := range []bool{false, true} {
+			name := direction
+			if invalid {
+				name += "_invalid"
+			}
+			t.Run(name, func(t *testing.T) {
+				readOnly := NewStringSchema()
+				readOnly.ReadOnly = true
+				writeOnly := NewStringSchema()
+				writeOnly.WriteOnly = true
+				schema := NewObjectSchema().
+					WithProperty("id", readOnly).
+					WithProperty("password", writeOnly).
+					WithProperty("name", NewStringSchema()).
+					WithRequired([]string{"id", "password", "name"})
+				example := map[string]any{"name": "example"}
+				if direction == "request" {
+					example["password"] = "example-password"
+				} else {
+					example["id"] = "example-id"
+				}
+				if invalid {
+					delete(example, "name")
+				}
+				content := NewContentWithJSONSchema(schema)
+				content["application/json"].Example = example
+				ctx := WithValidationOptions(context.Background(), EnableSchemaFormatValidation())
+				var err error
+				if direction == "request" {
+					err = (&RequestBody{Content: content}).Validate(ctx)
+				} else {
+					response := NewResponse().WithDescription("success")
+					response.Content = content
+					err = response.Validate(ctx)
+				}
+				if invalid {
+					require.ErrorContains(t, err, `property "name" is missing`)
+				} else {
+					require.NoError(t, err)
+				}
+
+				neutral := &MediaType{
+					Schema: &SchemaRef{Value: schema},
+					Example: map[string]any{
+						"id": "example-id", "password": "example-password", "name": "example",
+					},
+				}
+				require.NoError(t, neutral.Validate(ctx))
+				delete(neutral.Example.(map[string]any), "id")
+				require.ErrorContains(t, neutral.Validate(ctx), `property "id" is missing`)
+			})
+		}
+	}
+}
+
+// Schema examples describe reusable schema values. Only examples on a media
+// type describe a request or response payload.
+func TestMediaTypeReusableSchemaExamples(t *testing.T) {
+	for _, direction := range []string{"request", "response"} {
+		for _, shape := range []string{"root", "property", "items"} {
+			for _, explicit := range []bool{false, true} {
+				name := direction + "/" + shape + "/default"
+				if explicit {
+					name = direction + "/" + shape + "/explicit"
+				}
+				t.Run(name, func(t *testing.T) {
+					id := NewStringSchema()
+					id.ReadOnly = true
+					secret := NewStringSchema()
+					secret.WriteOnly = true
+					value := NewObjectSchema().WithProperty("id", id).WithProperty("secret", secret).
+						WithRequired([]string{"id", "secret"})
+					value.Example = map[string]any{"id": "id", "secret": "secret"}
+					var payload any = map[string]any{"secret": "secret"}
+					if direction == "response" {
+						payload = map[string]any{"id": "id"}
+					}
+					schema := value
+					switch shape {
+					case "property":
+						// An omitted response-only (or request-only) property may
+						// contain an example of its own reusable object schema.
+						value.ReadOnly = direction == "request"
+						value.WriteOnly = direction == "response"
+						schema = NewObjectSchema().WithProperty("details", value)
+						payload = map[string]any{}
+					case "items":
+						items := NewArraySchema().WithItems(value)
+						schema = NewObjectSchema().WithProperty("files", items)
+						payload = map[string]any{"files": []any{payload}}
+					}
+					mediaType := &MediaType{Schema: &SchemaRef{Value: schema}, Example: payload}
+					content := Content{"application/json": mediaType}
+					ctx := t.Context()
+					if explicit {
+						ctx = WithValidationOptions(ctx, EnableExamplesValidation())
+					}
+					before := *getValidationOptions(ctx)
+					if direction == "request" {
+						require.NoError(t, (&RequestBody{Content: content}).Validate(ctx))
+					} else {
+						require.NoError(t, NewResponse().WithDescription("ok").WithContent(content).Validate(ctx))
+					}
+					require.Equal(t, before, *getValidationOptions(ctx))
+				})
+			}
+		}
+	}
+}
+
+func TestMediaTypePayloadExampleDirection(t *testing.T) {
+	for _, direction := range []string{"request", "response"} {
+		for _, named := range []bool{false, true} {
+			name := direction + "/example"
+			if named {
+				name = direction + "/examples"
+			}
+			t.Run(name, func(t *testing.T) {
+				property := NewStringSchema()
+				property.ReadOnly = direction == "request"
+				property.WriteOnly = direction == "response"
+				schema := NewObjectSchema().WithProperty("forbidden", property)
+				schema.Example = map[string]any{"forbidden": "schema annotation"}
+				mediaType := &MediaType{Schema: &SchemaRef{Value: schema}}
+				payload := map[string]any{"forbidden": "payload"}
+				if named {
+					mediaType.Examples = Examples{"payload": &ExampleRef{Value: &Example{Value: payload}}}
+				} else {
+					mediaType.Example = payload
+				}
+				content := Content{"application/json": mediaType}
+				var err error
+				if direction == "request" {
+					err = (&RequestBody{Content: content}).Validate(t.Context())
+					require.ErrorContains(t, err, `readOnly property "forbidden" in request`)
+				} else {
+					err = NewResponse().WithDescription("ok").WithContent(content).Validate(t.Context())
+					require.ErrorContains(t, err, `writeOnly property "forbidden" in response`)
+				}
+				if named {
+					require.ErrorContains(t, err, "example payload:")
+				}
+			})
+		}
+	}
+}
+
+func TestMediaTypeSchemaValidationOptions(t *testing.T) {
+	for _, direction := range []string{"request", "response"} {
+		t.Run(direction, func(t *testing.T) {
+			validate := func(schema *Schema, opts ...ValidationOption) error {
+				content := NewContentWithJSONSchema(schema)
+				if direction == "request" {
+					return (&RequestBody{Content: content}).Validate(t.Context(), opts...)
+				}
+				return NewResponse().WithDescription("ok").WithContent(content).Validate(t.Context(), opts...)
+			}
+			schema := NewStringSchema()
+			schema.Example = 42
+			require.ErrorContains(t, validate(schema), "invalid example")
+			require.NoError(t, validate(schema, DisableExamplesValidation()))
+			schema.Example = nil
+			schema.Default = 42
+			require.ErrorContains(t, validate(schema), "invalid default")
+			require.NoError(t, validate(schema, DisableSchemaDefaultsValidation()))
+			schema.Default = nil
+			schema.Format = "unknown-format"
+			require.NoError(t, validate(schema))
+			require.Error(t, validate(schema, EnableSchemaFormatValidation()))
+			schema.Type = &Types{"invalid-type"}
+			require.Error(t, validate(schema, DisableExamplesValidation()))
+		})
+	}
+}
+
+func TestMediaTypeItemSchemaExamples(t *testing.T) {
+	readOnly := NewStringSchema()
+	readOnly.ReadOnly = true
+	writeOnly := NewStringSchema()
+	writeOnly.WriteOnly = true
+	schema := NewObjectSchema().WithProperty("id", readOnly).WithProperty("secret", writeOnly)
+	schema.Example = map[string]any{"id": "id", "secret": "secret"}
+	mediaType := &MediaType{ItemSchema: &SchemaRef{Value: schema}}
+	content := Content{"application/json-seq": mediaType}
+	request := &RequestBody{Content: content}
+	require.ErrorContains(t, request.Validate(t.Context()), "itemSchema")
+	ctx := WithValidationOptions(t.Context(), IsOpenAPI32OrLater())
+	before := *getValidationOptions(ctx)
+	require.NoError(t, request.Validate(ctx))
+	require.NoError(t, NewResponse().WithDescription("ok").WithContent(content).Validate(ctx))
+	require.Equal(t, before, *getValidationOptions(ctx))
+	schema.Example = 42
+	require.ErrorContains(t, request.Validate(ctx), "invalid example")
+	require.NoError(t, request.Validate(t.Context(), IsOpenAPI32OrLater(), DisableExamplesValidation()))
 }

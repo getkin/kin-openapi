@@ -191,8 +191,9 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 	if response.Description == nil {
 		return newResponseDescriptionRequired(response.Origin)
 	}
-	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
+	if vo := *getValidationOptions(ctx); !vo.examplesValidationDisabled {
 		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, true
+		ctx = context.WithValue(ctx, validationOptionsKey{}, &vo)
 	}
 
 	if content := response.Content; content != nil {

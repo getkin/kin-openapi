@@ -125,8 +125,9 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 		return newRequestBodyContentRequired(requestBody.Origin)
 	}
 
-	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
+	if vo := *getValidationOptions(ctx); !vo.examplesValidationDisabled {
 		vo.examplesValidationAsReq, vo.examplesValidationAsRes = true, false
+		ctx = context.WithValue(ctx, validationOptionsKey{}, &vo)
 	}
 
 	if err := requestBody.Content.Validate(ctx); err != nil {
