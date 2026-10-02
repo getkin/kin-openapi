@@ -152,6 +152,9 @@ func (e *SchemaUnevaluatedItemsBothForms) Code() string {
 func (e *SchemaUnevaluatedPropertiesBothForms) Code() string {
 	return "unevaluated-properties-both-forms-exclusive"
 }
+func (e *SecurityRequirementSchemeUndefinedError) Code() string {
+	return "security-requirement-scheme-undefined"
+}
 func (e *SecuritySchemeBearerFormatForbidden) Code() string { return "bearer-format-forbidden" }
 func (e *SecuritySchemeFlowsForbidden) Code() string        { return "flows-forbidden" }
 func (e *SecuritySchemeFlowsRequired) Code() string         { return "flows-required" }
@@ -255,6 +258,7 @@ var validationErrorCodes = []string{
 	"schema-items-required",
 	"schema-pattern-regex-invalid",
 	"schema-type-unsupported",
+	"security-requirement-scheme-undefined",
 	"security-scheme-apikey-in-invalid",
 	"security-scheme-http-scheme-invalid",
 	"security-scheme-name-required",
