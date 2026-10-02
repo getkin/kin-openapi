@@ -50,6 +50,13 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 			}
 			doc3.AddServer(&openapi3.Server{URL: u.String()})
 		}
+	} else if basePath := doc2.BasePath; basePath != "" {
+		u := url.URL{Path: basePath}
+		if strings.HasPrefix(basePath, "//") {
+			// A leading "//" would otherwise introduce an authority.
+			u.Path = "/." + basePath
+		}
+		doc3.AddServer(&openapi3.Server{URL: u.String()})
 	}
 
 	doc3.Components.Schemas = make(map[string]*openapi3.SchemaRef)
