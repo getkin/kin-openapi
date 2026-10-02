@@ -121,8 +121,16 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 	if mediaType == nil {
 		return nil
 	}
+
+	// Schema annotations describe reusable values, not request or response
+	// payloads. Keep direction only when validating this media type's examples.
+	schemaCtx := ctx
+	if vo := *getValidationOptions(ctx); vo.examplesValidationAsReq || vo.examplesValidationAsRes {
+		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, false
+		schemaCtx = context.WithValue(ctx, validationOptionsKey{}, &vo)
+	}
 	if schema := mediaType.Schema; schema != nil {
-		if err := schema.Validate(ctx); err != nil {
+		if err := schema.Validate(schemaCtx); err != nil {
 			return err
 		}
 
@@ -156,7 +164,7 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 		if !getValidationOptions(ctx).isOpenAPI32OrLater {
 			return errFieldFor32Plus("itemSchema", mediaType.Origin)
 		}
-		if err := itemSchema.Validate(ctx); err != nil {
+		if err := itemSchema.Validate(schemaCtx); err != nil {
 			return err
 		}
 	}
