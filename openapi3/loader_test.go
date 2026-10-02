@@ -729,7 +729,7 @@ servers:
 		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                "",
 		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: "",
 		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 `invalid servers: field default is required in {"enum":["www"]}`,
-		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
+		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has unused variable x",
 		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
 	} {
 		t.Run(value, func(t *testing.T) {
