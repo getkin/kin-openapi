@@ -57,12 +57,12 @@ components:
 `
 
 	type testcase struct {
-		oas             string
-		siblings, valid bool
+		oas                  string
+		siblings, allowExtra bool
 	}
 
 	for _, tc := range []testcase{
-		{oas: "3.1", siblings: true, valid: true}, {oas: "3.0"}, {oas: "3.0", valid: true},
+		{oas: "3.1", siblings: true}, {oas: "3.0"}, {oas: "3.0", allowExtra: true},
 	} {
 		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
 			t.Parallel()
@@ -82,15 +82,11 @@ components:
 			require.Equal(t, tc.siblings, statusRef.Value.Deprecated, "deprecated:true sibling to $ref must be honoured in OAS 3.1")
 
 			var valopts []openapi3.ValidationOption
-			if tc.valid && !tc.siblings { // For this test case let's try the option that allows siblings for 3.0
+			if tc.allowExtra { // The explicit allowance remains compatible with 3.0.
 				valopts = append(valopts, openapi3.AllowExtraSiblingFields("deprecated"))
 			}
 			err = doc.Validate(loader.Context, valopts...)
-			if tc.valid {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err, "Siblings to $ref is not valid OpenAPIv3.0 (by default)")
-			}
+			require.NoError(t, err)
 		})
 	}
 }

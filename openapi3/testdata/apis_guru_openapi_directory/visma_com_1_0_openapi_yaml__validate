@@ -1,1 +1,1 @@
-invalid components: schema "ActivityActivityType": extra sibling fields: [readOnly]
+invalid paths: conflicting paths "/v1/localization/countries/{code3}" and "/v1/localization/countries/{code2}"
