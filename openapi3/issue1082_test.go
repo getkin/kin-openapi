@@ -220,3 +220,46 @@ func TestIssue1082_VersionAndUnresolvedControls(t *testing.T) {
 	var undefined *openapi3.SecurityRequirementSchemeUndefinedError
 	require.False(t, errors.As(err, &undefined), "declared but unresolved is an existing reference error")
 }
+
+func TestIssue1082_RootExtensionsLast(t *testing.T) {
+	for _, version := range []string{"3.0.3", "3.1.2", "3.2.0", "3.3.0", "unrecognized"} {
+		t.Run(version, func(t *testing.T) {
+			doc := securityRequirementsDoc(t)
+			doc.OpenAPI = version
+			doc.Security = openapi3.SecurityRequirements{{"missing": {}}}
+			doc.Extensions = map[string]any{"extra": true, "x-custom": true}
+			var scheme *openapi3.SecurityRequirementSchemeUndefinedError
+			var extension *openapi3.ExtraSiblingFieldsError
+			var multi openapi3.MultiError
+
+			err := doc.Validate(t.Context())
+			require.ErrorAs(t, doc.Validate(t.Context(), openapi3.EnableMultiError()), &multi)
+			if version == "3.0.3" || version == "3.1.2" {
+				// As elsewhere in document validation, fields precede extensions.
+				require.ErrorAs(t, err, &scheme)
+				require.Equal(t, "/security/0/missing", scheme.JSONPointer)
+				require.Len(t, multi, 2)
+				require.ErrorAs(t, multi[0], &scheme)
+			} else {
+				// URI-capable and unrecognized versions do not resolve names locally.
+				require.ErrorAs(t, err, &extension)
+				require.Len(t, multi, 1)
+			}
+			require.ErrorAs(t, multi[len(multi)-1], &extension)
+
+			err = doc.Validate(t.Context(), openapi3.AllowExtraSiblingFields("extra"))
+			if version == "3.0.3" || version == "3.1.2" {
+				require.ErrorAs(t, err, &scheme)
+			} else {
+				require.NoError(t, err)
+			}
+			doc.Security = openapi3.SecurityRequirements{{"bearerAuth": {}}}
+			require.ErrorAs(t, doc.Validate(t.Context()), &extension)
+			require.NoError(t, doc.Validate(t.Context(), openapi3.AllowExtraSiblingFields("extra")))
+
+			doc.Info.Title = ""
+			var title *openapi3.InfoTitleRequired
+			require.ErrorAs(t, doc.Validate(t.Context()), &title)
+		})
+	}
+}
