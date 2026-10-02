@@ -1305,6 +1305,16 @@ func (schema *Schema) PermitsNull() bool {
 
 // IsEmpty tells whether schema is equivalent to the empty schema `{}`.
 func (schema *Schema) IsEmpty() bool {
+	return schema.isEmpty(make(map[*Schema]struct{}))
+}
+
+func (schema *Schema) isEmpty(visited map[*Schema]struct{}) bool {
+	if _, ok := visited[schema]; ok {
+		return true
+	}
+	visited[schema] = struct{}{}
+	defer delete(visited, schema)
+
 	if schema.Type != nil || schema.Format != "" || len(schema.Enum) != 0 ||
 		schema.UniqueItems || schema.ExclusiveMin.IsSet() || schema.ExclusiveMax.IsSet() ||
 		schema.Nullable || schema.ReadOnly || schema.WriteOnly || schema.AllowEmptyValue ||
@@ -1316,54 +1326,54 @@ func (schema *Schema) IsEmpty() bool {
 		schema.Const != nil {
 		return false
 	}
-	if n := schema.Not; n != nil && n.Value != nil && !n.Value.IsEmpty() {
+	if n := schema.Not; n != nil && n.Value != nil && !n.Value.isEmpty(visited) {
 		return false
 	}
-	if ap := schema.AdditionalProperties.Schema; ap != nil && ap.Value != nil && !ap.Value.IsEmpty() {
+	if ap := schema.AdditionalProperties.Schema; ap != nil && ap.Value != nil && !ap.Value.isEmpty(visited) {
 		return false
 	}
 	if apa := schema.AdditionalProperties.Has; apa != nil && !*apa {
 		return false
 	}
-	if items := schema.Items; items != nil && items.Value != nil && !items.Value.IsEmpty() {
+	if items := schema.Items; items != nil && items.Value != nil && !items.Value.isEmpty(visited) {
 		return false
 	}
 	for _, s := range schema.PrefixItems {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
-	if c := schema.Contains; c != nil && c.Value != nil && !c.Value.IsEmpty() {
+	if c := schema.Contains; c != nil && c.Value != nil && !c.Value.isEmpty(visited) {
 		return false
 	}
 	if schema.MinContains != nil || schema.MaxContains != nil {
 		return false
 	}
 	for _, s := range schema.Properties {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
 	for _, s := range schema.PatternProperties {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
 	for _, s := range schema.DependentSchemas {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
-	if pn := schema.PropertyNames; pn != nil && pn.Value != nil && !pn.Value.IsEmpty() {
+	if pn := schema.PropertyNames; pn != nil && pn.Value != nil && !pn.Value.isEmpty(visited) {
 		return false
 	}
-	if ui := schema.UnevaluatedItems.Schema; ui != nil && ui.Value != nil && !ui.Value.IsEmpty() {
+	if ui := schema.UnevaluatedItems.Schema; ui != nil && ui.Value != nil && !ui.Value.isEmpty(visited) {
 		return false
 	}
 	if uih := schema.UnevaluatedItems.Has; uih != nil && !*uih {
 		return false
 	}
-	if up := schema.UnevaluatedProperties.Schema; up != nil && up.Value != nil && !up.Value.IsEmpty() {
+	if up := schema.UnevaluatedProperties.Schema; up != nil && up.Value != nil && !up.Value.isEmpty(visited) {
 		return false
 	}
 	if uph := schema.UnevaluatedProperties.Has; uph != nil && !*uph {
@@ -1373,27 +1383,27 @@ func (schema *Schema) IsEmpty() bool {
 		return false
 	}
 	for _, s := range schema.OneOf {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
 	for _, s := range schema.AnyOf {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
 	for _, s := range schema.AllOf {
-		if ss := s.Value; ss != nil && !ss.IsEmpty() {
+		if ss := s.Value; ss != nil && !ss.isEmpty(visited) {
 			return false
 		}
 	}
-	if f := schema.If; f != nil && f.Value != nil && !f.Value.IsEmpty() {
+	if f := schema.If; f != nil && f.Value != nil && !f.Value.isEmpty(visited) {
 		return false
 	}
-	if t := schema.Then; t != nil && t.Value != nil && !t.Value.IsEmpty() {
+	if t := schema.Then; t != nil && t.Value != nil && !t.Value.isEmpty(visited) {
 		return false
 	}
-	if e := schema.Else; e != nil && e.Value != nil && !e.Value.IsEmpty() {
+	if e := schema.Else; e != nil && e.Value != nil && !e.Value.isEmpty(visited) {
 		return false
 	}
 	if len(schema.DependentRequired) != 0 {
@@ -1411,7 +1421,7 @@ func (schema *Schema) IsEmpty() bool {
 	if schema.ContentMediaType != "" || schema.ContentEncoding != "" {
 		return false
 	}
-	if cs := schema.ContentSchema; cs != nil && cs.Value != nil && !cs.Value.IsEmpty() {
+	if cs := schema.ContentSchema; cs != nil && cs.Value != nil && !cs.Value.isEmpty(visited) {
 		return false
 	}
 	// Last, so a schema carrying both a boolean and other keywords is judged by
@@ -2009,14 +2019,57 @@ func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
 }
 
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (err error) {
-	if settings.visitedSchemas == nil {
-		settings.visitedSchemas = make(map[*Schema]struct{})
+	instance, release := settings.schemaInstance(value)
+	defer release()
+	return schema.visitJSONInstance(settings, value, instance)
+}
+
+func (settings *schemaValidationSettings) schemaInstance(value any) (*schemaInstance, func()) {
+	rv := reflect.ValueOf(value)
+	if rv.IsValid() {
+		switch rv.Kind() {
+		case reflect.Map, reflect.Pointer, reflect.Slice:
+			identity := jsonValueIdentity{typ: rv.Type(), pointer: rv.Pointer()}
+			if rv.Kind() == reflect.Slice {
+				// Two subslices may start at the same backing-array address while
+				// representing different logical JSON arrays. Only an exact active
+				// slice identity should close a recursive instance cycle.
+				identity.length = rv.Len()
+				identity.capacity = rv.Cap()
+			}
+			if settings.instances == nil {
+				settings.instances = make(map[jsonValueIdentity]*schemaInstance)
+				settings.instanceUses = make(map[*schemaInstance]int)
+			}
+			instance := settings.instances[identity]
+			if instance == nil {
+				instance = new(schemaInstance)
+				settings.instances[identity] = instance
+			}
+			settings.instanceUses[instance]++
+			return instance, func() {
+				settings.instanceUses[instance]--
+				if settings.instanceUses[instance] == 0 {
+					delete(settings.instanceUses, instance)
+					delete(settings.instances, identity)
+				}
+			}
+		}
 	}
-	if _, visited := settings.visitedSchemas[schema]; visited {
+
+	return new(schemaInstance), func() {}
+}
+
+func (schema *Schema) visitJSONInstance(settings *schemaValidationSettings, value any, instance *schemaInstance) (err error) {
+	if settings.visitedSchemas == nil {
+		settings.visitedSchemas = make(map[schemaVisit]struct{})
+	}
+	visit := schemaVisit{schema: schema, instance: instance}
+	if _, visited := settings.visitedSchemas[visit]; visited {
 		return nil
 	}
-	settings.visitedSchemas[schema] = struct{}{}
-	defer delete(settings.visitedSchemas, schema)
+	settings.visitedSchemas[visit] = struct{}{}
+	defer delete(settings.visitedSchemas, visit)
 
 	switch value := value.(type) {
 	case nil:
@@ -2059,11 +2112,11 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		}
 	}
 
-	if err = schema.visitNotOperation(settings, value); err != nil {
+	if err = schema.visitNotOperation(settings, value, instance); err != nil {
 		return
 	}
 	var run bool
-	if err, run = schema.visitXOFOperations(settings, value); err != nil || !run {
+	if err, run = schema.visitXOFOperations(settings, value, instance); err != nil || !run {
 		return
 	}
 	if err = schema.visitEnumOperation(settings, value); err != nil {
@@ -2206,13 +2259,13 @@ func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, va
 	return
 }
 
-func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value any) (err error) {
+func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value any, instance *schemaInstance) (err error) {
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
 			return newUnresolvedRef(ref.Ref, ref.Origin)
 		}
-		if err := v.visitJSON(settings, value); err == nil {
+		if err := v.visitJSONInstance(settings, value, instance); err == nil {
 			if settings.failfast {
 				return errSchema
 			}
@@ -2271,7 +2324,7 @@ func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
 	}
 }
 
-func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
+func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any, instance *schemaInstance) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
 		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
@@ -2300,7 +2353,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				tempValue = deepCopyJSONValue(value)
 			}
 
-			if err := v.visitJSON(settings, tempValue); err != nil {
+			if err := v.visitJSONInstance(settings, tempValue, instance); err != nil {
 				validationErrors = append(validationErrors, err)
 				continue
 			}
@@ -2332,7 +2385,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 
 		// run again to inject default value that defined in matched oneOf schema
 		if settings.asreq || settings.asrep {
-			_ = v[matchedOneOfIndices[0]].Value.visitJSON(settings, value)
+			_ = v[matchedOneOfIndices[0]].Value.visitJSONInstance(settings, value, instance)
 		}
 		visitedOneOf = true
 	}
@@ -2362,7 +2415,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if settings.asreq || settings.asrep {
 				tempValue = deepCopyJSONValue(value)
 			}
-			if err := v.visitJSON(settings, tempValue); err == nil {
+			if err := v.visitJSONInstance(settings, tempValue, instance); err == nil {
 				ok = true
 				matchedAnyOfIdx = idx
 				break
@@ -2381,7 +2434,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			}, false
 		}
 
-		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
+		_ = v[matchedAnyOfIdx].Value.visitJSONInstance(settings, value, instance)
 		visitedAnyOf = true
 	}
 
@@ -2391,9 +2444,15 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		if v == nil {
 			return newUnresolvedRef(item.Ref, item.Origin), false
 		}
-		if err := v.visitJSON(settings, value); err != nil {
+		if err := v.visitJSONInstance(settings, value, instance); err != nil {
 			if settings.failfast {
 				return errSchema, false
+			}
+			if item.syntheticSiblingTarget && len(validationErrors) == 0 {
+				// The target conjunct is an implementation detail of a $ref with
+				// siblings. Preserve the target's original diagnostic and JSON path
+				// instead of exposing a synthetic allOf layer to callers.
+				return err, false
 			}
 			validationErrors = append(validationErrors, err)
 		}

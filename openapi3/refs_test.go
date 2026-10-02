@@ -327,7 +327,7 @@ func TestResponseRef_Extensions(t *testing.T) {
 
 func TestSchemaRef_Extensions(t *testing.T) {
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 
 	ref := openapi3.SchemaRef{}
 	err := json.Unmarshal(data, &ref)

@@ -13,7 +13,7 @@ import (
 {{ range $type := .Types }}
 func Test{{ $type.Name }}Ref_Extensions(t *testing.T) {
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet",{{ if eq $type.Name "Schema" }}"something":"integer",{{ end }}"x-order":1}`)
 
 	ref := openapi3.{{ $type.Name }}Ref{}
 	err := json.Unmarshal(data, &ref)

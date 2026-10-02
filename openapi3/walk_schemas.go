@@ -238,15 +238,6 @@ func (w *schemaWalker) content(ptr string, content Content) error {
 	return nil
 }
 
-func (w *schemaWalker) schemaRefs(ptr string, refs SchemaRefs) error {
-	for i, sub := range refs {
-		if err := w.schemaRef(ptr+"/"+strconv.Itoa(i), sub); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (w *schemaWalker) schemaRef(ptr string, sr *SchemaRef) error {
 	if sr == nil || sr.Value == nil {
 		return nil
@@ -265,74 +256,95 @@ func (w *schemaWalker) schemaRef(ptr string, sr *SchemaRef) error {
 		return err
 	}
 
+	return forEachSchemaRef(s, func(suffix string, child *SchemaRef) error {
+		return w.schemaRef(ptr+suffix, child)
+	})
+}
+
+// forEachSchemaRef visits every direct SchemaRef child of s in deterministic
+// order. Keeping this list in one place prevents schema resolvers,
+// transformers, and walkers from silently diverging when Schema grows a new
+// subschema keyword.
+func forEachSchemaRef(s *Schema, fn func(pointerSuffix string, ref *SchemaRef) error) error {
+	if s == nil {
+		return nil
+	}
+
 	for _, name := range slices.Sorted(maps.Keys(s.Properties)) {
-		if err := w.schemaRef(ptr+"/properties/"+escapeRefString(name), s.Properties[name]); err != nil {
+		if err := fn("/properties/"+escapeRefString(name), s.Properties[name]); err != nil {
 			return err
 		}
 	}
-	if err := w.schemaRef(ptr+"/items", s.Items); err != nil {
+	if err := fn("/items", s.Items); err != nil {
 		return err
 	}
 	if s.AdditionalProperties.Schema != nil {
-		if err := w.schemaRef(ptr+"/additionalProperties", s.AdditionalProperties.Schema); err != nil {
+		if err := fn("/additionalProperties", s.AdditionalProperties.Schema); err != nil {
 			return err
 		}
 	}
-	if err := w.schemaRefs(ptr+"/allOf", s.AllOf); err != nil {
+	for _, group := range []struct {
+		keyword string
+		refs    SchemaRefs
+	}{
+		{keyword: "allOf", refs: s.AllOf},
+		{keyword: "anyOf", refs: s.AnyOf},
+		{keyword: "oneOf", refs: s.OneOf},
+	} {
+		for i, child := range group.refs {
+			if err := fn("/"+group.keyword+"/"+strconv.Itoa(i), child); err != nil {
+				return err
+			}
+		}
+	}
+	if err := fn("/not", s.Not); err != nil {
 		return err
 	}
-	if err := w.schemaRefs(ptr+"/anyOf", s.AnyOf); err != nil {
-		return err
+	for i, child := range s.PrefixItems {
+		if err := fn("/prefixItems/"+strconv.Itoa(i), child); err != nil {
+			return err
+		}
 	}
-	if err := w.schemaRefs(ptr+"/oneOf", s.OneOf); err != nil {
-		return err
-	}
-	if err := w.schemaRef(ptr+"/not", s.Not); err != nil {
-		return err
-	}
-	if err := w.schemaRefs(ptr+"/prefixItems", s.PrefixItems); err != nil {
-		return err
-	}
-	if err := w.schemaRef(ptr+"/contains", s.Contains); err != nil {
+	if err := fn("/contains", s.Contains); err != nil {
 		return err
 	}
 	for _, name := range slices.Sorted(maps.Keys(s.PatternProperties)) {
-		if err := w.schemaRef(ptr+"/patternProperties/"+escapeRefString(name), s.PatternProperties[name]); err != nil {
+		if err := fn("/patternProperties/"+escapeRefString(name), s.PatternProperties[name]); err != nil {
 			return err
 		}
 	}
 	for _, name := range slices.Sorted(maps.Keys(s.DependentSchemas)) {
-		if err := w.schemaRef(ptr+"/dependentSchemas/"+escapeRefString(name), s.DependentSchemas[name]); err != nil {
+		if err := fn("/dependentSchemas/"+escapeRefString(name), s.DependentSchemas[name]); err != nil {
 			return err
 		}
 	}
-	if err := w.schemaRef(ptr+"/propertyNames", s.PropertyNames); err != nil {
+	if err := fn("/propertyNames", s.PropertyNames); err != nil {
 		return err
 	}
-	if err := w.schemaRef(ptr+"/if", s.If); err != nil {
+	if err := fn("/if", s.If); err != nil {
 		return err
 	}
-	if err := w.schemaRef(ptr+"/then", s.Then); err != nil {
+	if err := fn("/then", s.Then); err != nil {
 		return err
 	}
-	if err := w.schemaRef(ptr+"/else", s.Else); err != nil {
+	if err := fn("/else", s.Else); err != nil {
 		return err
 	}
 	if s.UnevaluatedItems.Schema != nil {
-		if err := w.schemaRef(ptr+"/unevaluatedItems", s.UnevaluatedItems.Schema); err != nil {
+		if err := fn("/unevaluatedItems", s.UnevaluatedItems.Schema); err != nil {
 			return err
 		}
 	}
 	if s.UnevaluatedProperties.Schema != nil {
-		if err := w.schemaRef(ptr+"/unevaluatedProperties", s.UnevaluatedProperties.Schema); err != nil {
+		if err := fn("/unevaluatedProperties", s.UnevaluatedProperties.Schema); err != nil {
 			return err
 		}
 	}
-	if err := w.schemaRef(ptr+"/contentSchema", s.ContentSchema); err != nil {
+	if err := fn("/contentSchema", s.ContentSchema); err != nil {
 		return err
 	}
 	for _, name := range slices.Sorted(maps.Keys(s.Defs)) {
-		if err := w.schemaRef(ptr+"/$defs/"+escapeRefString(name), s.Defs[name]); err != nil {
+		if err := fn("/$defs/"+escapeRefString(name), s.Defs[name]); err != nil {
 			return err
 		}
 	}

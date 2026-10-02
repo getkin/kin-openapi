@@ -249,6 +249,6 @@ func TestWalkSubtree_VisitsEverySubschemaField(t *testing.T) {
 			return nil
 		})
 		require.NoError(t, err)
-		require.Truef(t, found, "openapi3.Schema.%s carries subschemas but the walk does not visit it; add it to schemaWalker.schemaRef", field.Name)
+		require.Truef(t, found, "openapi3.Schema.%s carries subschemas but the walk does not visit it; add it to forEachSchemaRef", field.Name)
 	}
 }
