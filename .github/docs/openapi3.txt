@@ -3298,6 +3298,23 @@ func (security *SecurityRequirement) Validate(ctx context.Context, opts ...Valid
     Validate returns an error if SecurityRequirement does not comply with the
     OpenAPI spec.
 
+type SecurityRequirementSchemeUndefinedError struct {
+	ValidationError
+	Scheme string
+	// JSONPointer locates the offending name in a Security Requirement Object.
+	// Shared objects are reported at their first location in document order.
+	JSONPointer string
+	// Origin is the containing document or operation's source location.
+	Origin *Origin
+}
+    SecurityRequirementSchemeUndefinedError reports an implicit security scheme
+    name that is absent from the entry document's components.securitySchemes.
+    It is emitted by T.Validate for OpenAPI 3.0 and 3.1 documents.
+
+func (e *SecurityRequirementSchemeUndefinedError) As(target any) bool
+
+func (e *SecurityRequirementSchemeUndefinedError) Code() string
+
 type SecurityRequirements []SecurityRequirement
 
 func NewSecurityRequirements() *SecurityRequirements

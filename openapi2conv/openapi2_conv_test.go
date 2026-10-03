@@ -601,6 +601,32 @@ const exampleV2 = `
 			"default_security_1": []
 		}
 	],
+	"securityDefinitions": {
+		"default_security_0": {
+			"type": "oauth2",
+			"flow": "implicit",
+			"authorizationUrl": "https://test.example.com/oauth/authorize",
+			"scopes": {
+				"scope0": "Scope 0",
+				"scope1": "Scope 1"
+			}
+		},
+		"default_security_1": {
+			"type": "basic"
+		},
+		"get_security_0": {
+			"type": "oauth2",
+			"flow": "implicit",
+			"authorizationUrl": "https://test.example.com/oauth/authorize",
+			"scopes": {
+				"scope0": "Scope 0",
+				"scope1": "Scope 1"
+			}
+		},
+		"get_security_1": {
+			"type": "basic"
+		}
+	},
 	"swagger": "2.0",
 	"tags": [
 		{
@@ -703,6 +729,40 @@ const exampleV3 = `
 					"baz"
 				],
 				"type": "string"
+			}
+		},
+		"securitySchemes": {
+			"default_security_0": {
+				"type": "oauth2",
+				"flows": {
+					"implicit": {
+						"authorizationUrl": "https://test.example.com/oauth/authorize",
+						"scopes": {
+							"scope0": "Scope 0",
+							"scope1": "Scope 1"
+						}
+					}
+				}
+			},
+			"default_security_1": {
+				"type": "http",
+				"scheme": "basic"
+			},
+			"get_security_0": {
+				"type": "oauth2",
+				"flows": {
+					"implicit": {
+						"authorizationUrl": "https://test.example.com/oauth/authorize",
+						"scopes": {
+							"scope0": "Scope 0",
+							"scope1": "Scope 1"
+						}
+					}
+				}
+			},
+			"get_security_1": {
+				"type": "http",
+				"scheme": "basic"
 			}
 		}
 	},

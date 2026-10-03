@@ -105,6 +105,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.SchemaTypeError{},
 		&openapi3.SchemaUnevaluatedItemsBothForms{},
 		&openapi3.SchemaUnevaluatedPropertiesBothForms{},
+		&openapi3.SecurityRequirementSchemeUndefinedError{},
 		&openapi3.SecuritySchemeBearerFormatForbidden{},
 		&openapi3.SecuritySchemeFlowsForbidden{},
 		&openapi3.SecuritySchemeFlowsRequired{},

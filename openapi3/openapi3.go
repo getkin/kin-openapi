@@ -384,6 +384,9 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
+	if err := me.emit(doc.validateSecurityRequirements(ctx)); err != nil {
+		return err
+	}
 	return me.finalize(validateExtensions(ctx, doc.Extensions, doc.Origin))
 }
 

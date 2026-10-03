@@ -419,6 +419,23 @@ func (e *SchemaPatternRegexError) Error() string { return e.Cause.Error() }
 
 func (e *SchemaPatternRegexError) Unwrap() error { return e.Cause }
 
+// SecurityRequirementSchemeUndefinedError reports an implicit security scheme
+// name that is absent from the entry document's components.securitySchemes.
+// It is emitted by T.Validate for OpenAPI 3.0 and 3.1 documents.
+type SecurityRequirementSchemeUndefinedError struct {
+	ValidationError
+	Scheme string
+	// JSONPointer locates the offending name in a Security Requirement Object.
+	// Shared objects are reported at their first location in document order.
+	JSONPointer string
+	// Origin is the containing document or operation's source location.
+	Origin *Origin
+}
+
+func (e *SecurityRequirementSchemeUndefinedError) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 // InvalidSecuritySchemeTypeError clusters "security scheme 'type' can't
 // be X" failures. The OpenAPI 3.x spec accepts only `apiKey`, `http`,
 // `oauth2`, `openIdConnect`, and `mutualTLS` (3.1+); this fires when a
