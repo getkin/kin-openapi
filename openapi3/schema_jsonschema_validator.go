@@ -423,7 +423,7 @@ func schemaUsesJSONSchema2020Features(schema *Schema) bool {
 	return errors.Is(err, errJSONSchema2020FeatureFound)
 }
 
-var errJSONSchema2020FeatureFound = errors.New("JSON Schema 2020 validation keyword found")
+var errJSONSchema2020FeatureFound = errors.New("json schema 2020 validation keyword found")
 
 func schemaHasJSONSchema2020FallbackGuardKeyword(schema *Schema) bool {
 	return schema.Const != nil ||
