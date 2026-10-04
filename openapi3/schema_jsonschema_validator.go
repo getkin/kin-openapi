@@ -12,10 +12,9 @@ import (
 
 // jsonSchemaValidator wraps the santhosh-tekuri/jsonschema validator
 type jsonSchemaValidator struct {
-	compiler                   *jsonschema.Compiler
-	schema                     *jsonschema.Schema
-	hasInternalRefs            bool
-	usesJSONSchema2020Features bool
+	compiler        *jsonschema.Compiler
+	schema          *jsonschema.Schema
+	hasInternalRefs bool
 }
 
 // newJSONSchemaValidator creates a new validator using JSON Schema 2020-12
@@ -35,7 +34,6 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 	schemaMap, _ := schemaDocument.(map[string]any)
 	transformOpenAPIToJSONSchema(schemaMap)
 	hasInternalRefs := containsInternalSchemaRef(schemaDocument)
-	usesJSONSchema2020Features := hasJSONSchema2020Features(schemaDocument)
 	if err := addInternalSchemaRefs(schemaMap, schema); err != nil {
 		return nil, fmt.Errorf("failed to prepare schema references: %w", err)
 	}
@@ -60,10 +58,9 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 	}
 
 	return &jsonSchemaValidator{
-		compiler:                   compiler,
-		schema:                     compiledSchema,
-		hasInternalRefs:            hasInternalRefs,
-		usesJSONSchema2020Features: usesJSONSchema2020Features,
+		compiler:        compiler,
+		schema:          compiledSchema,
+		hasInternalRefs: hasInternalRefs,
 	}, nil
 }
 
@@ -81,33 +78,6 @@ func containsInternalSchemaRef(node any) bool {
 	case []any:
 		for _, value := range node {
 			if containsInternalSchemaRef(value) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func hasJSONSchema2020Features(node any) bool {
-	features := map[string]struct{}{
-		"const": {}, "contains": {}, "contentSchema": {}, "dependentRequired": {},
-		"dependentSchemas": {}, "$defs": {}, "if": {}, "then": {}, "else": {},
-		"prefixItems": {}, "propertyNames": {}, "unevaluatedItems": {},
-		"unevaluatedProperties": {},
-	}
-	switch node := node.(type) {
-	case map[string]any:
-		for key, value := range node {
-			if _, ok := features[key]; ok {
-				return true
-			}
-			if hasJSONSchema2020Features(value) {
-				return true
-			}
-		}
-	case []any:
-		for _, value := range node {
-			if hasJSONSchema2020Features(value) {
 				return true
 			}
 		}
@@ -428,21 +398,40 @@ func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, valu
 		}
 		return schema.visitJSON(settings, value)
 	}
-	if validator.hasInternalRefs && !validator.usesJSONSchema2020Features {
+	if validator.hasInternalRefs && !usesJSONSchema2020Features {
 		return schema.visitJSON(settings, value)
 	}
 
 	return validator.validate(value)
 }
 
+// schemaUsesJSONSchema2020Features checks the keywords that guard the legacy
+// fallback. Annotations such as examples must not turn an ordinary reference
+// into a compilation error instead of a fallback.
 func schemaUsesJSONSchema2020Features(schema *Schema) bool {
-	bytes, err := json.Marshal(schema)
-	if err != nil {
+	if schema == nil {
 		return false
 	}
-	var document any
-	if err := json.Unmarshal(bytes, &document); err != nil {
-		return false
-	}
-	return hasJSONSchema2020Features(document)
+	// WalkSubtree follows resolved refs and guards against cycles. Stop at the
+	// first validation keyword rather than serializing the schema just to inspect it.
+	err := NewSchemaRef("", schema).WalkSubtree(func(_ string, ref *SchemaRef) error {
+		if schemaHasJSONSchema2020FallbackGuardKeyword(ref.Value) {
+			return errJSONSchema2020FeatureFound
+		}
+		return nil
+	})
+	return errors.Is(err, errJSONSchema2020FeatureFound)
+}
+
+var errJSONSchema2020FeatureFound = errors.New("JSON Schema 2020 validation keyword found")
+
+func schemaHasJSONSchema2020FallbackGuardKeyword(schema *Schema) bool {
+	return schema.Const != nil ||
+		len(schema.PrefixItems) != 0 || schema.Contains != nil ||
+		len(schema.DependentSchemas) != 0 || schema.PropertyNames != nil ||
+		schema.UnevaluatedItems.Has != nil || schema.UnevaluatedItems.Schema != nil ||
+		schema.UnevaluatedProperties.Has != nil || schema.UnevaluatedProperties.Schema != nil ||
+		schema.If != nil || schema.Then != nil || schema.Else != nil ||
+		len(schema.DependentRequired) != 0 || len(schema.Defs) != 0 ||
+		schema.ContentSchema != nil
 }
