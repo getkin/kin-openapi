@@ -1,1 +1,1 @@
-invalid components: schema "GoogleIamAdminV1AuditData": extra sibling fields: [description]
+invalid paths: conflicting paths "/v2/{parent}" and "/v2/{name}"

@@ -1,1 +1,1 @@
-invalid components: schema "CommitCursorRequest": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1/admin/{parent}/subscriptions" and "/v1/admin/{name}/subscriptions"

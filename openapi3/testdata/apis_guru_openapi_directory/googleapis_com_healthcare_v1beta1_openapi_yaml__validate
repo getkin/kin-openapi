@@ -1,1 +1,1 @@
-invalid components: schema "Action": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1beta1/{sourceStore}:deidentify" and "/v1beta1/{sourceDataset}:deidentify"

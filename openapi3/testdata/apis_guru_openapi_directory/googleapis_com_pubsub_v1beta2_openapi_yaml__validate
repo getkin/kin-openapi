@@ -1,1 +1,1 @@
-invalid components: schema "Binding": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1beta2/{subscription}" and "/v1beta2/{name}"

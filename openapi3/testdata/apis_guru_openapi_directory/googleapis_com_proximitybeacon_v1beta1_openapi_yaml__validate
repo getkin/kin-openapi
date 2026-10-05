@@ -1,1 +1,1 @@
-invalid components: schema "Beacon": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1beta1/{beaconName}" and "/v1beta1/{attachmentName}"
