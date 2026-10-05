@@ -63,6 +63,16 @@ func testSchema(example schemaExample) func(*testing.T) {
 	}
 }
 
+func TestRecursiveSchemaDistinguishesOverlappingSlices(t *testing.T) {
+	schema := NewArraySchema().WithMinItems(1)
+	schema.Items = &SchemaRef{Value: schema}
+
+	value := make([]any, 1)
+	value[0] = value[:0]
+	require.Error(t, schema.VisitJSON(value),
+		"a shorter subslice with the same backing address is a distinct JSON instance")
+}
+
 func validateSchemaJSON(t *testing.T, schema *Schema, value any, opts ...SchemaValidationOption) error {
 	data, err := json.Marshal(value)
 	require.NoError(t, err)

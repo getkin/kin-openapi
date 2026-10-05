@@ -347,6 +347,16 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 		receiver = val.Addr()
 	}
 	if receiver.Kind() == reflect.Pointer {
+		// Some decoded source subtrees are intentionally private implementation
+		// details. Let their owner expose them to origin propagation without
+		// teaching this generic walker about concrete OpenAPI types.
+		if receiver.CanInterface() {
+			if provider, ok := reflect.TypeAssert[originSubtreeProvider](receiver); ok {
+				if subtree := provider.originSubtree(); subtree != nil {
+					applyOrigins(subtree, tree)
+				}
+			}
+		}
 		if mapMethod := receiver.MethodByName("Map"); mapMethod.IsValid() {
 			results := mapMethod.Call(nil)
 			if len(results) == 1 {
@@ -354,6 +364,10 @@ func applyOriginsToStruct(val reflect.Value, ptr reflect.Value, tree *yaml.Origi
 			}
 		}
 	}
+}
+
+type originSubtreeProvider interface {
+	originSubtree() any
 }
 
 func applyOriginsToMap(val reflect.Value, tree *yaml.OriginTree) {
