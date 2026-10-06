@@ -94,8 +94,12 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
 		return nil
 	}
 	refs := make(map[string]any)
-	err := NewSchemaRef("", schema).WalkSubtree(func(_ string, ref *SchemaRef) error {
+	// Recursive schemas reference an already-visited target, which WalkSubtree would not report.
+	err := NewSchemaRef("", schema).walkSubtreeRefs(func(_ string, ref *SchemaRef) error {
 		if ref.Ref == "" || !strings.HasPrefix(ref.Ref, "#/components/schemas/") || ref.Value == nil {
+			return nil
+		}
+		if _, ok := refs[ref.Ref]; ok {
 			return nil
 		}
 		var target any

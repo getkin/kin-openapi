@@ -64,9 +64,18 @@ func (sr *SchemaRef) WalkSubtree(fn WalkSchemasFunc) error {
 	return w.schemaRef("", sr)
 }
 
+// walkSubtreeRefs is WalkSubtree, but it also invokes fn, without descending,
+// for each $ref to a schema already visited, so that every reference of a
+// shared or cyclic subtree is reported.
+func (sr *SchemaRef) walkSubtreeRefs(fn WalkSchemasFunc) error {
+	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{}), revisitRefs: true}
+	return w.schemaRef("", sr)
+}
+
 type schemaWalker struct {
-	fn   WalkSchemasFunc
-	seen map[*Schema]struct{}
+	fn          WalkSchemasFunc
+	seen        map[*Schema]struct{}
+	revisitRefs bool
 }
 
 // escapeRefString escapes a single JSON Pointer reference token per RFC 6901:
@@ -254,6 +263,11 @@ func (w *schemaWalker) schemaRef(ptr string, sr *SchemaRef) error {
 	s := sr.Value
 	if _, ok := w.seen[s]; ok {
 		// Already visited (shared $ref target or reference cycle).
+		if w.revisitRefs && sr.Ref != "" {
+			if err := w.fn(ptr, sr); err != nil && !errors.Is(err, SkipSubtree) {
+				return err
+			}
+		}
 		return nil
 	}
 	w.seen[s] = struct{}{}
