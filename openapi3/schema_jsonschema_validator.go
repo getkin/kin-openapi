@@ -428,6 +428,7 @@ var errJSONSchema2020FeatureFound = errors.New("json schema 2020 validation keyw
 func schemaHasJSONSchema2020FallbackGuardKeyword(schema *Schema) bool {
 	return schema.Const != nil ||
 		len(schema.PrefixItems) != 0 || schema.Contains != nil ||
+		len(schema.PatternProperties) != 0 ||
 		len(schema.DependentSchemas) != 0 || schema.PropertyNames != nil ||
 		schema.UnevaluatedItems.Has != nil || schema.UnevaluatedItems.Schema != nil ||
 		schema.UnevaluatedProperties.Has != nil || schema.UnevaluatedProperties.Schema != nil ||
