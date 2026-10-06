@@ -248,6 +248,35 @@ func TestJSONSchema2020Validator_CompilationError(t *testing.T) {
 	require.ErrorContains(t, err, "#/components/schemas/Base")
 }
 
+func TestJSONSchema2020Validator_PatternPropertiesWithComponentRef(t *testing.T) {
+	const spec = `
+openapi: 3.1.0
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Node:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+        tagged:
+          type: object
+          patternProperties:
+            "^x": {$ref: "#/components/schemas/Node"}
+`
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	node := doc.Components.Schemas["Node"].Value
+
+	opt := openapi3.EnableJSONSchema2020()
+	err = node.VisitJSON(map[string]any{"name": "a", "tagged": map[string]any{"x1": map[string]any{}}}, opt)
+	require.Error(t, err)
+	err = node.VisitJSON(map[string]any{"name": "a", "tagged": map[string]any{"x1": map[string]any{"name": "b"}, "y": map[string]any{}}}, opt)
+	require.NoError(t, err)
+}
+
 func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
 	// These tests verify that transformOpenAPIToJSONSchema recurses into
 	// OpenAPI 3.1 / JSON Schema 2020-12 fields. Each sub-test uses a nested
