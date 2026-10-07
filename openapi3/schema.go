@@ -2009,14 +2009,11 @@ func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
 }
 
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (err error) {
-	if settings.visitedSchemas == nil {
-		settings.visitedSchemas = make(map[*Schema]struct{})
-	}
-	if _, visited := settings.visitedSchemas[schema]; visited {
+	if slices.Contains(settings.visitedSchemas[settings.visitedSchemasStart:], schema) {
 		return nil
 	}
-	settings.visitedSchemas[schema] = struct{}{}
-	defer delete(settings.visitedSchemas, schema)
+	settings.visitedSchemas = append(settings.visitedSchemas, schema)
+	defer func() { settings.visitedSchemas = settings.visitedSchemas[:len(settings.visitedSchemas)-1] }()
 
 	switch value := value.(type) {
 	case nil:
@@ -2141,9 +2138,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 // Cycle detection only applies to schemas visiting the same value,
 // so recursive schemas still get applied to nested values.
 func (schema *Schema) visitNestedJSON(settings *schemaValidationSettings, value any) error {
-	visited := settings.visitedSchemas
-	settings.visitedSchemas = nil
-	defer func() { settings.visitedSchemas = visited }()
+	start := settings.visitedSchemasStart
+	settings.visitedSchemasStart = len(settings.visitedSchemas)
+	defer func() { settings.visitedSchemasStart = start }()
 	return schema.visitJSON(settings, value)
 }
 

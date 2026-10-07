@@ -37,7 +37,9 @@ type schemaValidationSettings struct {
 
 	// visitedSchemas provides pointer-identity cycle detection for runtime
 	// validation, matching the stack-based detection in Schema.validate().
-	visitedSchemas map[*Schema]struct{}
+	// Only visitedSchemas[visitedSchemasStart:] were visited for the current value.
+	visitedSchemas      []*Schema
+	visitedSchemasStart int
 }
 
 // FailFast returns schema validation errors quicker.
