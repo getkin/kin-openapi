@@ -2069,9 +2069,6 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	if err = schema.visitEnumOperation(settings, value); err != nil {
 		return
 	}
-	if err = schema.visitConstOperation(settings, value); err != nil {
-		return
-	}
 
 	switch value := value.(type) {
 	case nil:
@@ -2167,39 +2164,6 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 			Schema:                schema,
 			SchemaField:           "enum",
 			Reason:                "value is not one of the allowed values " + string(allowedValues),
-			customizeMessageError: settings.customizeMessageError,
-		}
-	}
-	return
-}
-
-func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, value any) (err error) {
-	if schema.Const == nil {
-		return
-	}
-	var match bool
-	switch c := value.(type) {
-	case json.Number:
-		var f float64
-		if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
-			return err
-		}
-		match = reflect.DeepEqual(schema.Const, f)
-	case int64:
-		match = reflect.DeepEqual(schema.Const, float64(c))
-	default:
-		match = reflect.DeepEqual(schema.Const, value)
-	}
-	if !match {
-		if settings.failfast {
-			return errSchema
-		}
-		constVal, _ := json.Marshal(schema.Const)
-		return &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "const",
-			Reason:                "value must be " + string(constVal),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
