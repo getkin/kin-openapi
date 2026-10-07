@@ -17,7 +17,7 @@ type Operation struct {
 	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
 	Parameters   Parameters             `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses    map[string]*Response   `json:"responses" yaml:"responses"`
+	Responses    *Responses             `json:"responses" yaml:"responses"`
 	Consumes     []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
 	Produces     []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
 	Schemes      []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
