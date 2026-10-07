@@ -331,6 +331,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
 * `(*openapi3.Schema).VisitJSON(..)` without the `openapi3.EnableJSONSchema2020()` option no longer validates the OpenAPI 3.1 `const` and `prefixItems` keywords. Like the other 3.1-only keywords, they are validated by the JSON Schema 2020-12 validator, which `openapi3filter` enables for 3.1 documents. `items` still applies only past the `prefixItems` positions.
+* OpenAPI 3.0 validation (`(*openapi3.T).Validate(..)`, `(*openapi3.Schema).Validate(..)` without `openapi3.IsOpenAPI31OrLater()`) now rejects a `type` with more than one entry (`openapi3.TypeArrayFor31Plus`) and a numeric `exclusiveMinimum`/`exclusiveMaximum` (`openapi3.ExclusiveBoundNumberFor31Plus`), as those forms only exist since OpenAPI 3.1.
 
 ### v0.147.0
 * `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).

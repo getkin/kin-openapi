@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -241,6 +242,33 @@ func TestValidationError_SchemaFieldFor31PlusLeaves(t *testing.T) {
 				require.True(t, errors.As(err, &l))
 			},
 			field: "patternProperties",
+		},
+		{
+			name:   "type array",
+			schema: &openapi3.Schema{Type: &openapi3.Types{"string", "integer"}},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.TypeArrayFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "type",
+		},
+		{
+			name:   "numeric exclusiveMinimum",
+			schema: &openapi3.Schema{Type: &openapi3.Types{"number"}, ExclusiveMin: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(0)}},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ExclusiveBoundNumberFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "exclusiveMinimum",
+		},
+		{
+			name:   "numeric exclusiveMaximum",
+			schema: &openapi3.Schema{Type: &openapi3.Types{"number"}, ExclusiveMax: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(10)}},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ExclusiveBoundNumberFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "exclusiveMaximum",
 		},
 	}
 	for _, c := range cases {
@@ -2214,4 +2242,26 @@ func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
 	doc, err := loader.LoadFromData([]byte(src))
 	require.NoError(t, err)
 	return doc
+}
+
+// The 3.0 forms of type and of the exclusive bounds stay valid in 3.0, and the
+// 3.1 forms stay valid in 3.1.
+func TestValidationError_TypeAndExclusiveBoundForms(t *testing.T) {
+	for _, schema := range []*openapi3.Schema{
+		{Type: &openapi3.Types{"string"}},
+		{Type: &openapi3.Types{"number"}, Min: openapi3.Float64Ptr(0), ExclusiveMin: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
+		{Type: &openapi3.Types{"number"}, Max: openapi3.Float64Ptr(10), ExclusiveMax: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
+	} {
+		assert.NoError(t, schema.Validate(t.Context()))
+	}
+
+	ctx31 := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
+	for _, schema := range []*openapi3.Schema{
+		{Type: &openapi3.Types{"string", "null"}},
+		{Type: &openapi3.Types{"number"}, ExclusiveMin: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(0)}},
+		{Type: &openapi3.Types{"number"}, ExclusiveMax: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(10)}},
+	} {
+		assert.Error(t, schema.Validate(t.Context()))
+		assert.NoError(t, schema.Validate(ctx31))
+	}
 }

@@ -1011,6 +1011,12 @@ func (e *BooleanSchemaFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type ExclusiveBoundNumberFor31Plus struct{ ValidationError }
+
+func (e *ExclusiveBoundNumberFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 type ExamplesFieldFor31Plus struct{ ValidationError }
 
 func (e *ExamplesFieldFor31Plus) As(target any) bool {
@@ -1080,6 +1086,12 @@ func (e *IfFieldFor31Plus) As(target any) bool {
 type ThenFieldFor31Plus struct{ ValidationError }
 
 func (e *ThenFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type TypeArrayFor31Plus struct{ ValidationError }
+
+func (e *TypeArrayFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1541,6 +1553,18 @@ func newBooleanSchemaFor31Plus(origin *Origin) error {
 	const msg = "a boolean schema is for OpenAPI >=3.1; before that a schema MUST be a Schema Object"
 	return newFieldVersionMismatch("boolean schema",
 		"3.1", &BooleanSchemaFor31Plus{ValidationError{Message: msg}}, origin)
+}
+
+func newTypeArrayFor31Plus(origin *Origin) error {
+	const msg = "an array of types is for OpenAPI >=3.1; before that type MUST be a single string"
+	return newFieldVersionMismatch("type",
+		"3.1", &TypeArrayFor31Plus{ValidationError{Message: msg}}, origin)
+}
+
+func newExclusiveBoundNumberFor31Plus(field string, origin *Origin) error {
+	msg := "a numeric " + field + " is for OpenAPI >=3.1; before that it MUST be a boolean"
+	return newFieldVersionMismatch(field,
+		"3.1", &ExclusiveBoundNumberFor31Plus{ValidationError{Message: msg}}, origin)
 }
 
 func newWebhooksFieldFor31Plus(origin *Origin) error {
