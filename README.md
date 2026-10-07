@@ -328,6 +328,14 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.150.0
+* `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
+* `(*openapi3.Schema).VisitJSON(..)` without the `openapi3.EnableJSONSchema2020()` option no longer validates the OpenAPI 3.1 `const` and `prefixItems` keywords. Like the other 3.1-only keywords, they are validated by the JSON Schema 2020-12 validator, which `openapi3filter` enables for 3.1 documents. `items` still applies only past the `prefixItems` positions.
+* OpenAPI 3.0 validation (`(*openapi3.T).Validate(..)`, `(*openapi3.Schema).Validate(..)` without `openapi3.IsOpenAPI31OrLater()`) now rejects a `type` with more than one entry (`openapi3.TypeArrayFor31Plus`) and a numeric `exclusiveMinimum`/`exclusiveMaximum` (`openapi3.ExclusiveBoundNumberFor31Plus`), as those forms only exist since OpenAPI 3.1.
+* OpenAPI 3.1+ validation now rejects a boolean `exclusiveMinimum`/`exclusiveMaximum` (`openapi3.ExclusiveBoundBooleanBefore31`), as JSON Schema 2020-12 requires a number. `openapi3.FieldVersionMismatchError` gained a `RemovedIn` field, set instead of `MinVersion` for such forms.
+* Since OpenAPI 3.1 `nullable` is an unknown keyword: it is still accepted by `Validate` and still decoded into `openapi3.Schema.Nullable`, but `(*openapi3.Schema).VisitJSON(..)` with `openapi3.EnableJSONSchema2020()` (hence `openapi3filter` on 3.1+ documents) no longer lets it allow `null`. Use a `type` array including `"null"` instead. Without that option `nullable` keeps its OpenAPI 3.0 meaning.
+* `(*openapi3.Schema).VisitJSON(..)` with `openapi3.EnableJSONSchema2020()` no longer rewrites OpenAPI 3.0 forms (boolean `exclusiveMinimum`/`exclusiveMaximum`) or strips OpenAPI-only keywords before handing the schema to the JSON Schema 2020-12 validator. A schema must pass `Validate` before being used with `VisitJSON`.
+
 ### v0.147.0
 * `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).
 * `(*openapi3.PathItem).GetOperation(string)` and `(*openapi3.PathItem).Operations()` now also report the new `openapi3.PathItem.Query` field (the OpenAPI 3.2 HTTP `QUERY` method) and the `openapi3.PathItem.AdditionalOperations` entries. Routers and validators consequently match these methods.

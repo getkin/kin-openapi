@@ -1,7 +1,6 @@
 package gorillamux
 
 import (
-	"context"
 	"net/http"
 	"sort"
 	"testing"
@@ -129,7 +128,7 @@ func TestRouter(t *testing.T) {
 		}
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err := NewRouter(doc)
 	require.NoError(t, err)
@@ -170,7 +169,7 @@ func TestRouter(t *testing.T) {
 			"port": {Default: "8000"},
 		}},
 	}
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)
@@ -194,7 +193,7 @@ func TestRouter(t *testing.T) {
 			"server": {Default: "/api/v1"},
 		}},
 	}
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)
@@ -221,7 +220,7 @@ func TestPermuteScheme(t *testing.T) {
 		"sche": {Default: "http"},
 		"me":   {Default: "s", Enum: []string{"", "s"}},
 	}}
-	err := server.Validate(context.Background())
+	err := server.Validate(t.Context())
 	require.NoError(t, err)
 	perms := permutePart(scheme0, server)
 	require.Equal(t, []string{"http", "https"}, perms)
@@ -229,7 +228,7 @@ func TestPermuteScheme(t *testing.T) {
 
 func TestServerPath(t *testing.T) {
 	server := &openapi3.Server{URL: "http://example.com"}
-	err := server.Validate(context.Background())
+	err := server.Validate(t.Context())
 	require.NoError(t, err)
 
 	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
@@ -290,7 +289,7 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 			}),
 		),
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := NewRouter(doc)
 	require.NoError(t, err)
@@ -327,7 +326,7 @@ func TestRelativeURL(t *testing.T) {
 			}),
 		),
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := NewRouter(doc)
 	require.NoError(t, err)

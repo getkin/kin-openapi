@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -71,7 +70,7 @@ func TestValidate_MultiError_Off_PreservesFailFast(t *testing.T) {
 	// Without EnableMultiError, Validate returns the first error and stops.
 	// The returned error is a single typed error, not a MultiError.
 	doc := loadDoc(t, twoBadPathsSpec)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -84,7 +83,7 @@ func TestValidate_MultiError_On_AggregatesAcrossPaths(t *testing.T) {
 	// -> Paths-level MultiError -> PathValidationError per bad path. Walking
 	// the tree must yield one leaf per independent problem.
 	doc := loadDoc(t, twoBadPathsSpec)
-	err := doc.Validate(context.Background(), openapi3.EnableMultiError())
+	err := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -105,7 +104,7 @@ func TestValidate_MultiError_On_AggregatesAcrossPaths(t *testing.T) {
 func TestValidate_MultiError_On_AggregatesAcrossSections(t *testing.T) {
 	// Problems in different document sections are also aggregated.
 	doc := loadDoc(t, twoBadSectionsSpec)
-	err := doc.Validate(context.Background(), openapi3.EnableMultiError())
+	err := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -143,7 +142,7 @@ paths:
     get: {}
 `
 	doc := loadDoc(t, oneBadPathSpec)
-	err := doc.Validate(context.Background(), openapi3.EnableMultiError())
+	err := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -169,7 +168,7 @@ paths:
           description: ok
 `
 	doc := loadDoc(t, goodSpec)
-	require.NoError(t, doc.Validate(context.Background(), openapi3.EnableMultiError()))
+	require.NoError(t, doc.Validate(t.Context(), openapi3.EnableMultiError()))
 }
 
 // TestResponses_Validate_EmptyAndExtensionAggregate pins a regression caught
@@ -185,7 +184,7 @@ func TestResponses_Validate_EmptyAndExtensionAggregate(t *testing.T) {
 	// "extra sibling fields" error.
 	responses.Extensions = map[string]any{"bogus-sibling": "anything"}
 
-	ctx := openapi3.WithValidationOptions(context.Background(), openapi3.EnableMultiError())
+	ctx := openapi3.WithValidationOptions(t.Context(), openapi3.EnableMultiError())
 	err := responses.Validate(ctx)
 	require.Error(t, err)
 

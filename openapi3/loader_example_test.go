@@ -50,10 +50,7 @@ properties:
 
 	// ReadFromURIFunc strips the prefix and reads from the real filesystem.
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, location *url.URL) ([]byte, error) {
-		p := location.Path
-		if strings.HasPrefix(p, prefix) {
-			p = p[len(prefix):]
-		}
+		p := strings.TrimPrefix(location.Path, prefix)
 		return os.ReadFile(filepath.Join(dir, filepath.FromSlash(p)))
 	}
 

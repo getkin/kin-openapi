@@ -14,6 +14,7 @@ func TestSchemaUsesJSONSchema2020Features(t *testing.T) {
 		{"const", &Schema{Const: false}},
 		{"prefixItems", &Schema{PrefixItems: SchemaRefs{ref()}}},
 		{"contains", &Schema{Contains: ref()}},
+		{"patternProperties", &Schema{PatternProperties: Schemas{"^x": ref()}}},
 		{"dependentSchemas", &Schema{DependentSchemas: Schemas{"x": ref()}}},
 		{"propertyNames", &Schema{PropertyNames: ref()}},
 		{"unevaluatedItems false", &Schema{UnevaluatedItems: BoolSchema{Has: &falseValue}}},

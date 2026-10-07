@@ -160,8 +160,11 @@ type FieldVersionMismatchError struct {
 	// "$defs", "prefixItems", "contains", ...).
 	Field string
 	// MinVersion is the minimum OpenAPI version that allows the field
-	// (e.g. "3.1").
+	// (e.g. "3.1"). Empty when the field is flagged for RemovedIn instead.
 	MinVersion string
+	// RemovedIn is the OpenAPI version that no longer allows the field
+	// (e.g. "3.1" for a boolean exclusiveMinimum). Empty when the field is flagged for MinVersion instead.
+	RemovedIn string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
 	// Origin is the source location of the offending element when the
@@ -1010,6 +1013,18 @@ func (e *BooleanSchemaFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
+type ExclusiveBoundBooleanBefore31 struct{ ValidationError }
+
+func (e *ExclusiveBoundBooleanBefore31) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type ExclusiveBoundNumberFor31Plus struct{ ValidationError }
+
+func (e *ExclusiveBoundNumberFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
 type ExamplesFieldFor31Plus struct{ ValidationError }
 
 func (e *ExamplesFieldFor31Plus) As(target any) bool {
@@ -1079,6 +1094,12 @@ func (e *IfFieldFor31Plus) As(target any) bool {
 type ThenFieldFor31Plus struct{ ValidationError }
 
 func (e *ThenFieldFor31Plus) As(target any) bool {
+	return asValidationError(target, &e.ValidationError)
+}
+
+type TypeArrayFor31Plus struct{ ValidationError }
+
+func (e *TypeArrayFor31Plus) As(target any) bool {
 	return asValidationError(target, &e.ValidationError)
 }
 
@@ -1540,6 +1561,28 @@ func newBooleanSchemaFor31Plus(origin *Origin) error {
 	const msg = "a boolean schema is for OpenAPI >=3.1; before that a schema MUST be a Schema Object"
 	return newFieldVersionMismatch("boolean schema",
 		"3.1", &BooleanSchemaFor31Plus{ValidationError{Message: msg}}, origin)
+}
+
+func newTypeArrayFor31Plus(origin *Origin) error {
+	const msg = "an array of types is for OpenAPI >=3.1; before that type MUST be a single string"
+	return newFieldVersionMismatch("type",
+		"3.1", &TypeArrayFor31Plus{ValidationError{Message: msg}}, origin)
+}
+
+func newExclusiveBoundNumberFor31Plus(field string, origin *Origin) error {
+	msg := "a numeric " + field + " is for OpenAPI >=3.1; before that it MUST be a boolean"
+	return newFieldVersionMismatch(field,
+		"3.1", &ExclusiveBoundNumberFor31Plus{ValidationError{Message: msg}}, origin)
+}
+
+func newExclusiveBoundBooleanBefore31(field string, origin *Origin) error {
+	msg := "a boolean " + field + " is for OpenAPI <3.1; since then it MUST be a number"
+	return &FieldVersionMismatchError{
+		Field:     field,
+		RemovedIn: "3.1",
+		Cause:     &ExclusiveBoundBooleanBefore31{ValidationError{Message: msg}},
+		Origin:    origin,
+	}
 }
 
 func newWebhooksFieldFor31Plus(origin *Origin) error {

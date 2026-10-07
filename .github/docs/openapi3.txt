@@ -992,6 +992,18 @@ func (eb ExclusiveBound) MarshalYAML() (any, error)
 func (eb *ExclusiveBound) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ExclusiveBound to a copy of data.
 
+type ExclusiveBoundBooleanBefore31 struct{ ValidationError }
+
+func (e *ExclusiveBoundBooleanBefore31) As(target any) bool
+
+func (e *ExclusiveBoundBooleanBefore31) Code() string
+
+type ExclusiveBoundNumberFor31Plus struct{ ValidationError }
+
+func (e *ExclusiveBoundNumberFor31Plus) As(target any) bool
+
+func (e *ExclusiveBoundNumberFor31Plus) Code() string
+
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -1086,8 +1098,11 @@ type FieldVersionMismatchError struct {
 	// "$defs", "prefixItems", "contains", ...).
 	Field string
 	// MinVersion is the minimum OpenAPI version that allows the field
-	// (e.g. "3.1").
+	// (e.g. "3.1"). Empty when the field is flagged for RemovedIn instead.
 	MinVersion string
+	// RemovedIn is the OpenAPI version that no longer allows the field
+	// (e.g. "3.1" for a boolean exclusiveMinimum). Empty when the field is flagged for MinVersion instead.
+	RemovedIn string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
 	// Origin is the source location of the offending element when the
@@ -2865,7 +2880,12 @@ func (schema Schema) MarshalYAML() (any, error)
 
 func (schema *Schema) NewRef() *SchemaRef
 
-func (schema *Schema) PermitsNull() bool
+func (schema *Schema) PermitsNull(opts ...SchemaValidationOption) bool
+    PermitsNull returns true when a schema is Nullable (only in OpenAPI 3.0)
+    or when "null" is among the allowed types. In OpenAPI 3.1+, nullable is an
+    unknown keyword.
+
+    Usage: schema.PermitsNull(EnableJSONSchema2020()) for 3.1+
 
 func (schema *Schema) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Schema to a copy of data.
@@ -2876,7 +2896,9 @@ func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) er
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
     VisitJSON applies a Schema to the given data, considering opts.
     To validate data against an OpenAPIv3.1+ schema, be sure to pass the
-    EnableJSONSchema2020() option.
+    EnableJSONSchema2020() option. The schema must have passed Validate (for
+    the document's OpenAPI version) first: VisitJSON's behaviour on an invalid
+    schema is undefined.
 
 func (schema *Schema) VisitJSONArray(value []any) error
 
@@ -2937,6 +2959,7 @@ func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema
 func (schema *Schema) WithMinProperties(i int64) *Schema
 
 func (schema *Schema) WithNullable() *Schema
+    WithNullable set Nullable (OpenAPI 3.0) For 3.1+ append TypeNull to Types.
 
 func (schema *Schema) WithPattern(pattern string) *Schema
 
@@ -2947,6 +2970,10 @@ func (schema *Schema) WithProperty(name string, propertySchema *Schema) *Schema
 func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema
 
 func (schema *Schema) WithRequired(required []string) *Schema
+
+func (schema *Schema) WithTypes(typs ...string) *Schema
+    WithTypes adds the given types to the schema's Type, initializing it if nil.
+    See Types.With.
 
 func (schema *Schema) WithUniqueItems(unique bool) *Schema
 
@@ -3812,6 +3839,12 @@ func (e *ThenFieldFor31Plus) As(target any) bool
 
 func (e *ThenFieldFor31Plus) Code() string
 
+type TypeArrayFor31Plus struct{ ValidationError }
+
+func (e *TypeArrayFor31Plus) As(target any) bool
+
+func (e *TypeArrayFor31Plus) Code() string
+
 type Types []string
     Types represents the type(s) of a schema.
 
@@ -3832,6 +3865,16 @@ type Types []string
 
         schema := &Schema{Type: &Types{"string", "null"}}
         // JSON: {"type": ["string", "null"]}
+
+func (types *Types) Clone() Types
+    Clone returns a copy of the types that shares no memory with the receiver.
+    Returns nil if types is nil.
+
+    Example:
+
+        types := &Types{"string"}
+        clone := types.Clone()
+        clone.With("null")  // types is still {"string"}
 
 func (pTypes *Types) Includes(typ string) bool
     Includes returns true if the given type is included in the type array.
@@ -3933,6 +3976,24 @@ func (types *Types) Slice() []string
         slice := types.Slice()  // []string{"string", "null"}
 
 func (types *Types) UnmarshalJSON(data []byte) error
+
+func (types *Types) With(typs ...string)
+    With adds the given types to the receiver, skipping those already present.
+    Duplicates are removed, keeping the first occurrence. types must not be nil.
+
+    Example:
+
+        types := &Types{"string"}
+        types.With("null", "string")  // types is now {"string", "null"}
+
+func (types *Types) Without(typs ...string)
+    Without removes the given types from the receiver. Duplicates are removed,
+    keeping the first occurrence. Does nothing if types is nil.
+
+    Example:
+
+        types := &Types{"string", "null"}
+        types.Without("null")  // types is now {"string"}
 
 type UnevaluatedItemsFieldFor31Plus struct{ ValidationError }
 

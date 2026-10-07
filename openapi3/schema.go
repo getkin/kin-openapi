@@ -318,6 +318,62 @@ func (types *Types) IsEmpty() bool {
 	return types == nil || len(*types) == 0
 }
 
+// Clone returns a copy of the types that shares no memory with the receiver.
+// Returns nil if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	clone := types.Clone()
+//	clone.With("null")  // types is still {"string"}
+func (types *Types) Clone() Types {
+	if types == nil {
+		return nil
+	}
+	return slices.Clone(*types)
+}
+
+// With adds the given types to the receiver, skipping those already present.
+// Duplicates are removed, keeping the first occurrence.
+// types must not be nil.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.With("null", "string")  // types is now {"string", "null"}
+func (types *Types) With(typs ...string) {
+	*types = uniqueTypes(slices.Concat(*types, typs))
+}
+
+// Without removes the given types from the receiver.
+// Duplicates are removed, keeping the first occurrence.
+// Does nothing if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	types.Without("null")  // types is now {"string"}
+func (types *Types) Without(typs ...string) {
+	if types == nil {
+		return
+	}
+	// Cloning keeps DeleteFunc from modifying a backing array other slices may share.
+	*types = slices.DeleteFunc(uniqueTypes(slices.Clone(*types)), func(typ string) bool {
+		return slices.Contains(typs, typ)
+	})
+}
+
+// uniqueTypes removes duplicates from ts in place, keeping the first occurrence.
+func uniqueTypes(ts Types) Types {
+	unique := ts[:0]
+	for _, typ := range ts {
+		if !slices.Contains(unique, typ) {
+			unique = append(unique, typ)
+		}
+	}
+	return unique
+}
+
 func (pTypes *Types) MarshalJSON() ([]byte, error) {
 	x, err := pTypes.MarshalYAML()
 	if err != nil {
@@ -1117,8 +1173,20 @@ func NewObjectSchema() *Schema {
 	}
 }
 
+// WithNullable set Nullable (OpenAPI 3.0)
+// For 3.1+ append TypeNull to Types.
 func (schema *Schema) WithNullable() *Schema {
 	schema.Nullable = true
+	return schema
+}
+
+// WithTypes adds the given types to the schema's Type, initializing it if nil.
+// See Types.With.
+func (schema *Schema) WithTypes(typs ...string) *Schema {
+	if schema.Type == nil {
+		schema.Type = &Types{}
+	}
+	schema.Type.With(typs...)
 	return schema
 }
 
@@ -1299,7 +1367,20 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 	return schema
 }
 
-func (schema *Schema) PermitsNull() bool {
+// PermitsNull returns true when a schema is Nullable (only in OpenAPI 3.0)
+// or when "null" is among the allowed types.
+// In OpenAPI 3.1+, nullable is an unknown keyword.
+//
+// Usage: schema.PermitsNull(EnableJSONSchema2020()) for 3.1+
+func (schema *Schema) PermitsNull(opts ...SchemaValidationOption) bool {
+	settings := newSchemaValidationSettings(opts...)
+	return schema.permitsNull(settings)
+}
+
+func (schema *Schema) permitsNull(settings *schemaValidationSettings) bool {
+	if settings.useJSONSchema2020 {
+		return schema.Type.IncludesNull()
+	}
 	return schema.Nullable || schema.Type.IncludesNull()
 }
 
@@ -1491,6 +1572,15 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			}
 			return errFieldFor31Plus(field, schema.Origin)
 		}
+		if schema.Type.IsMultiple() { // In 3.0 but only as a single string
+			return stack, newTypeArrayFor31Plus(schema.Origin)
+		}
+		if schema.ExclusiveMin.Value != nil { // In 3.0 but only as bool
+			return stack, newExclusiveBoundNumberFor31Plus("exclusiveMinimum", schema.Origin)
+		}
+		if schema.ExclusiveMax.Value != nil { // In 3.0 but only as bool
+			return stack, newExclusiveBoundNumberFor31Plus("exclusiveMaximum", schema.Origin)
+		}
 		if schema.Const != nil {
 			if err := reject("const"); err != nil {
 				return stack, err
@@ -1615,6 +1705,17 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			if err := reject("contentSchema"); err != nil {
 				return stack, err
 			}
+		}
+	}
+
+	// Reject the OAS 3.0 forms that 3.1 / JSON Schema 2020-12 removed. (nullable
+	// is not rejected: since 3.1 it is an unknown keyword, which JSON Schema ignores.)
+	if validationOpts.isOpenAPI31OrLater {
+		if schema.ExclusiveMin.Bool != nil {
+			return stack, newExclusiveBoundBooleanBefore31("exclusiveMinimum", schema.Origin)
+		}
+		if schema.ExclusiveMax.Bool != nil {
+			return stack, newExclusiveBoundBooleanBefore31("exclusiveMaximum", schema.Origin)
 		}
 	}
 
@@ -1999,6 +2100,8 @@ func (schema *Schema) IsMatchingJSONObject(value map[string]any) bool {
 
 // VisitJSON applies a Schema to the given data, considering opts.
 // To validate data against an OpenAPIv3.1+ schema, be sure to pass the EnableJSONSchema2020() option.
+// The schema must have passed Validate (for the document's OpenAPI version) first:
+// VisitJSON's behaviour on an invalid schema is undefined.
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error {
 	settings := newSchemaValidationSettings(opts...)
 
@@ -2008,21 +2111,30 @@ func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
 	return schema.visitJSON(settings, value)
 }
 
+// visitChildJSON validates a value nested within the one currently visited,
+// such as an array item or an object property.
+// Cycle detection only applies to schemas visiting the same value,
+// so recursive schemas still get applied to nested values.
+func (schema *Schema) visitChildJSON(settings *schemaValidationSettings, value any) error {
+	var start int
+	start, settings.visitedBase = settings.visitedBase, len(settings.visitedSchemas)
+	defer func() { settings.visitedBase = start }()
+	return schema.visitJSON(settings, value)
+}
+
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (err error) {
-	if settings.visitedSchemas == nil {
-		settings.visitedSchemas = make(map[*Schema]struct{})
-	}
-	if _, visited := settings.visitedSchemas[schema]; visited {
+	if slices.Contains(settings.visitedSchemas[settings.visitedBase:], schema) {
 		return nil
 	}
-	settings.visitedSchemas[schema] = struct{}{}
-	defer delete(settings.visitedSchemas, schema)
+	depth := len(settings.visitedSchemas)
+	settings.visitedSchemas = append(settings.visitedSchemas, schema)
+	defer func() { settings.visitedSchemas = settings.visitedSchemas[:depth] }()
 
 	switch value := value.(type) {
 	case nil:
 		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
 		// those could allow for a nullable value even though this one doesn't
-		if schema.PermitsNull() {
+		if schema.permitsNull(settings) {
 			return
 		}
 	case float64:
@@ -2067,9 +2179,6 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		return
 	}
 	if err = schema.visitEnumOperation(settings, value); err != nil {
-		return
-	}
-	if err = schema.visitConstOperation(settings, value); err != nil {
 		return
 	}
 
@@ -2167,39 +2276,6 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 			Schema:                schema,
 			SchemaField:           "enum",
 			Reason:                "value is not one of the allowed values " + string(allowedValues),
-			customizeMessageError: settings.customizeMessageError,
-		}
-	}
-	return
-}
-
-func (schema *Schema) visitConstOperation(settings *schemaValidationSettings, value any) (err error) {
-	if schema.Const == nil {
-		return
-	}
-	var match bool
-	switch c := value.(type) {
-	case json.Number:
-		var f float64
-		if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
-			return err
-		}
-		match = reflect.DeepEqual(schema.Const, f)
-	case int64:
-		match = reflect.DeepEqual(schema.Const, float64(c))
-	default:
-		match = reflect.DeepEqual(schema.Const, value)
-	}
-	if !match {
-		if settings.failfast {
-			return errSchema
-		}
-		constVal, _ := json.Marshal(schema.Const)
-		return &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "const",
-			Reason:                "value must be " + string(constVal),
 			customizeMessageError: settings.customizeMessageError,
 		}
 	}
@@ -2419,7 +2495,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
 func (schema *Schema) visitJSONNull(settings *schemaValidationSettings) (err error) {
-	if schema.PermitsNull() {
+	if schema.permitsNull(settings) {
 		return
 	}
 	if settings.failfast {
@@ -2952,38 +3028,17 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		me = append(me, err)
 	}
 
-	// "prefixItems": the schema at index i validates the item at index i.
-	// Positions the array does not reach are simply unconstrained.
-	for i, prefixItemRef := range schema.PrefixItems {
-		if i >= len(value) {
-			break
-		}
-		prefixItemSchema := prefixItemRef.Value
-		if prefixItemSchema == nil {
-			return newUnresolvedRef(prefixItemRef.Ref, prefixItemRef.Origin)
-		}
-		if err := prefixItemSchema.visitJSON(settings, value[i]); err != nil {
-			err = markSchemaErrorIndex(err, i)
-			if !settings.multiError {
-				return err
-			}
-			if itemMe, ok := err.(MultiError); ok {
-				me = append(me, itemMe...)
-			} else {
-				me = append(me, err)
-			}
-		}
-	}
-
 	// "items" applies to the positions prefixItems does not cover. Without
 	// prefixItems that is every position, which is the OAS 3.0 behaviour.
+	// prefixItems itself is OpenAPI 3.1 only and left to the JSON Schema 2020-12
+	// validator (EnableJSONSchema2020), like the other 3.1 sub-schema keywords.
 	if itemSchemaRef := schema.Items; itemSchemaRef != nil {
 		itemSchema := itemSchemaRef.Value
 		if itemSchema == nil {
 			return newUnresolvedRef(itemSchemaRef.Ref, itemSchemaRef.Origin)
 		}
 		for i := len(schema.PrefixItems); i < len(value); i++ {
-			if err := itemSchema.visitJSON(settings, value[i]); err != nil {
+			if err := itemSchema.visitChildJSON(settings, value[i]); err != nil {
 				err = markSchemaErrorIndex(err, i)
 				if !settings.multiError {
 					return err
@@ -3093,7 +3148,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				if p == nil {
 					return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
 				}
-				if err := p.visitJSON(settings, v); err != nil {
+				if err := p.visitChildJSON(settings, v); err != nil {
 					if settings.failfast {
 						return errSchema
 					}
@@ -3112,7 +3167,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		}
 		if allowed := schema.AdditionalProperties.Has; allowed == nil || *allowed {
 			if additionalProperties != nil {
-				if err := additionalProperties.visitJSON(settings, v); err != nil {
+				if err := additionalProperties.visitChildJSON(settings, v); err != nil {
 					if settings.failfast {
 						return errSchema
 					}

@@ -1,7 +1,6 @@
 package openapi3filter_test
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -31,7 +30,7 @@ func TestCircularAllOf_VisitJSONNoCrash(t *testing.T) {
 	}
 	recursive.AllOf = openapi3.SchemaRefs{{Value: recursive}}
 
-	require.NoError(t, recursive.Validate(context.Background()))
+	require.NoError(t, recursive.Validate(t.Context()))
 	_ = recursive.VisitJSON(map[string]any{"name": "test"})
 }
 
@@ -69,7 +68,7 @@ func TestCircularAllOf_DecodeValueNoCrash(t *testing.T) {
 	route, pathParams, err := router.FindRoute(req)
 	require.NoError(t, err)
 
-	err = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+	err = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 		Request: req, PathParams: pathParams, Route: route,
 		Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 	})

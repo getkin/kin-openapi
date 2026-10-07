@@ -63,7 +63,13 @@ func (e *DuplicateTagError) Code() string              { return "duplicate-tag" 
 func (e *DynamicAnchorFieldFor31Plus) Code() string    { return "dynamic-anchor-field-for-3-1-plus" }
 func (e *DynamicRefFieldFor31Plus) Code() string       { return "dynamic-ref-field-for-3-1-plus" }
 func (e *ElseFieldFor31Plus) Code() string             { return "else-field-for-3-1-plus" }
-func (e *ExamplesFieldFor31Plus) Code() string         { return "examples-field-for-3-1-plus" }
+func (e *ExclusiveBoundBooleanBefore31) Code() string {
+	return "exclusive-bound-boolean-before-3-1"
+}
+func (e *ExclusiveBoundNumberFor31Plus) Code() string {
+	return "exclusive-bound-number-for-3-1-plus"
+}
+func (e *ExamplesFieldFor31Plus) Code() string { return "examples-field-for-3-1-plus" }
 func (e *ExampleValueExternalValueExclusive) Code() string {
 	return "value-external-value-mutually-exclusive"
 }
@@ -163,6 +169,7 @@ func (e *SecuritySchemeNameForbidden) Code() string         { return "name-forbi
 func (e *ServerURLRequired) Code() string                   { return "server-url-required" }
 func (e *ServerURLTemplateError) Code() string              { return "server-url-template-invalid" }
 func (e *ServerVariableDefaultRequired) Code() string       { return "default-required" }
+func (e *TypeArrayFor31Plus) Code() string                  { return "type-array-for-3-1-plus" }
 func (e *ThenFieldFor31Plus) Code() string                  { return "then-field-for-3-1-plus" }
 func (e *UnevaluatedItemsFieldFor31Plus) Code() string      { return "unevaluated-items-field-for-3-1-plus" }
 func (e *UnevaluatedPropertiesFieldFor31Plus) Code() string {
@@ -212,6 +219,8 @@ var validationErrorCodes = []string{
 	"example-examples-mutually-exclusive",
 	"example-violates-schema",
 	"examples-field-for-3-1-plus",
+	"exclusive-bound-boolean-before-3-1",
+	"exclusive-bound-number-for-3-1-plus",
 	"external-docs-url-required",
 	"extra-sibling-fields",
 	"flows-forbidden",
@@ -269,6 +278,7 @@ var validationErrorCodes = []string{
 	"summary-field-for-3-1-plus",
 	"then-field-for-3-1-plus",
 	"token-url-forbidden",
+	"type-array-for-3-1-plus",
 	"unevaluated-items-both-forms-exclusive",
 	"unevaluated-items-field-for-3-1-plus",
 	"unevaluated-properties-both-forms-exclusive",
