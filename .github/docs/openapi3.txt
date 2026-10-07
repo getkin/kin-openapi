@@ -992,6 +992,12 @@ func (eb ExclusiveBound) MarshalYAML() (any, error)
 func (eb *ExclusiveBound) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ExclusiveBound to a copy of data.
 
+type ExclusiveBoundNumberFor31Plus struct{ ValidationError }
+
+func (e *ExclusiveBoundNumberFor31Plus) As(target any) bool
+
+func (e *ExclusiveBoundNumberFor31Plus) Code() string
+
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -3812,6 +3818,12 @@ type ThenFieldFor31Plus struct{ ValidationError }
 func (e *ThenFieldFor31Plus) As(target any) bool
 
 func (e *ThenFieldFor31Plus) Code() string
+
+type TypeArrayFor31Plus struct{ ValidationError }
+
+func (e *TypeArrayFor31Plus) As(target any) bool
+
+func (e *TypeArrayFor31Plus) Code() string
 
 type Types []string
     Types represents the type(s) of a schema.

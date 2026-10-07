@@ -1491,6 +1491,15 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			}
 			return errFieldFor31Plus(field, schema.Origin)
 		}
+		if schema.Type.IsMultiple() { // In 3.0 but only as a single string
+			return stack, newTypeArrayFor31Plus(schema.Origin)
+		}
+		if schema.ExclusiveMin.Value != nil { // In 3.0 but only as bool
+			return stack, newExclusiveBoundNumberFor31Plus("exclusiveMinimum", schema.Origin)
+		}
+		if schema.ExclusiveMax.Value != nil { // In 3.0 but only as bool
+			return stack, newExclusiveBoundNumberFor31Plus("exclusiveMaximum", schema.Origin)
+		}
 		if schema.Const != nil {
 			if err := reject("const"); err != nil {
 				return stack, err
