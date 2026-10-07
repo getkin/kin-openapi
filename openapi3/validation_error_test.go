@@ -2246,15 +2246,21 @@ func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
 // The 3.0 forms of type and of the exclusive bounds stay valid in 3.0, and the
 // 3.1 forms stay valid in 3.1.
 func TestValidationError_TypeAndExclusiveBoundForms(t *testing.T) {
+	ctx31 := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
+
 	for _, schema := range []*openapi3.Schema{
 		{Type: &openapi3.Types{"string"}},
 		{Type: &openapi3.Types{"number"}, Min: openapi3.Float64Ptr(0), ExclusiveMin: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
 		{Type: &openapi3.Types{"number"}, Max: openapi3.Float64Ptr(10), ExclusiveMax: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
 	} {
 		assert.NoError(t, schema.Validate(t.Context()))
+		if schema.Type.Is("string") {
+			assert.NoError(t, schema.Validate(ctx31)) // We're missing differentiation of "string" and ["string"]
+		} else {
+			assert.Error(t, schema.Validate(ctx31))
+		}
 	}
 
-	ctx31 := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
 	for _, schema := range []*openapi3.Schema{
 		{Type: &openapi3.Types{"string", "null"}},
 		{Type: &openapi3.Types{"number"}, ExclusiveMin: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(0)}},
@@ -2263,4 +2269,35 @@ func TestValidationError_TypeAndExclusiveBoundForms(t *testing.T) {
 		assert.Error(t, schema.Validate(t.Context()))
 		assert.NoError(t, schema.Validate(ctx31))
 	}
+}
+
+// JSON Schema 2020-12 (OpenAPI 3.1) requires the exclusive bounds to be numbers,
+// so the OpenAPI 3.0 boolean form is rejected there.
+func TestValidationError_ExclusiveBoundBooleanBefore31(t *testing.T) {
+	ctx31 := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
+
+	for field, schema := range map[string]*openapi3.Schema{
+		"exclusiveMinimum": {Type: &openapi3.Types{"number"}, Min: openapi3.Float64Ptr(0), ExclusiveMin: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
+		"exclusiveMaximum": {Type: &openapi3.Types{"number"}, Max: openapi3.Float64Ptr(10), ExclusiveMax: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(false)}},
+	} {
+		t.Run(field, func(t *testing.T) {
+			err := schema.Validate(ctx31)
+			require.Error(t, err)
+
+			var fvm *openapi3.FieldVersionMismatchError
+			require.True(t, errors.As(err, &fvm))
+			require.Equal(t, field, fvm.Field)
+			require.Equal(t, "3.1", fvm.RemovedIn)
+			require.Empty(t, fvm.MinVersion)
+
+			var l *openapi3.ExclusiveBoundBooleanBefore31
+			require.True(t, errors.As(err, &l))
+			require.Equal(t, "exclusive-bound-boolean-before-3-1", l.Code())
+		})
+	}
+
+	// nullable is not rejected: since 3.1 it is an unknown keyword.
+	actuallyJustStringSchema := openapi3.Schema{Type: &openapi3.Types{"string"}, Nullable: true}
+	err := actuallyJustStringSchema.Validate(ctx31)
+	require.NoError(t, err)
 }

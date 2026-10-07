@@ -1299,7 +1299,20 @@ func (schema *Schema) WithAdditionalProperties(v *Schema) *Schema {
 	return schema
 }
 
-func (schema *Schema) PermitsNull() bool {
+// PermitsNull returns true when a schema is Nullable (only in OpenAPI 3.0)
+// or when "null" is among the allowed types.
+// In OpenAPI 3.1+, nullable is an unknown keyword.
+//
+// Usage: schema.PermitsNull(EnableJSONSchema2020()) for 3.1+
+func (schema *Schema) PermitsNull(opts ...SchemaValidationOption) bool {
+	settings := newSchemaValidationSettings(opts...)
+	return schema.permitsNull(settings)
+}
+
+func (schema *Schema) permitsNull(settings *schemaValidationSettings) bool {
+	if settings.useJSONSchema2020 {
+		return schema.Type.IncludesNull()
+	}
 	return schema.Nullable || schema.Type.IncludesNull()
 }
 
@@ -1624,6 +1637,17 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			if err := reject("contentSchema"); err != nil {
 				return stack, err
 			}
+		}
+	}
+
+	// Reject the OAS 3.0 forms that 3.1 / JSON Schema 2020-12 removed. (nullable
+	// is not rejected: since 3.1 it is an unknown keyword, which JSON Schema ignores.)
+	if validationOpts.isOpenAPI31OrLater {
+		if schema.ExclusiveMin.Bool != nil {
+			return stack, newExclusiveBoundBooleanBefore31("exclusiveMinimum", schema.Origin)
+		}
+		if schema.ExclusiveMax.Bool != nil {
+			return stack, newExclusiveBoundBooleanBefore31("exclusiveMaximum", schema.Origin)
 		}
 	}
 
@@ -2031,7 +2055,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	case nil:
 		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
 		// those could allow for a nullable value even though this one doesn't
-		if schema.PermitsNull() {
+		if schema.permitsNull(settings) {
 			return
 		}
 	case float64:
@@ -2392,7 +2416,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
 func (schema *Schema) visitJSONNull(settings *schemaValidationSettings) (err error) {
-	if schema.PermitsNull() {
+	if schema.permitsNull(settings) {
 		return
 	}
 	if settings.failfast {

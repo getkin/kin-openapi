@@ -103,6 +103,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.SchemaBooleanFieldsExclusive{},
 		&openapi3.BooleanSchemaFor31Plus{},
 		&openapi3.ExclusiveBoundNumberFor31Plus{},
+		&openapi3.ExclusiveBoundBooleanBefore31{},
 		&openapi3.SchemaTypeError{},
 		&openapi3.SchemaUnevaluatedItemsBothForms{},
 		&openapi3.SchemaUnevaluatedPropertiesBothForms{},

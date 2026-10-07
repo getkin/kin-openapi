@@ -1214,7 +1214,7 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 // The function panics when a schema has a non-primitive type.
 func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 	for _, typ := range schema.Value.Type.Slice() {
-		if raw == "" && typ != "string" {
+		if raw == "" && typ != openapi3.TypeString {
 			return nil, nil
 		}
 		if v, err = parsePrimitiveCase(raw, schema, typ); err == nil {

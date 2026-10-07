@@ -240,18 +240,8 @@ func validateNumberFormat(format string, settings *schemaValidationSettings, val
 
 // transformOpenAPIToJSONSchema converts OpenAPI 3.0/3.1 specific keywords to JSON Schema format
 func transformOpenAPIToJSONSchema(schema map[string]any) {
-	// Handle nullable - in OpenAPI 3.0, nullable is a boolean flag
-	// In OpenAPI 3.1 / JSON Schema 2020-12, we use type arrays
-	if nullable, ok := schema["nullable"].(bool); ok && nullable {
-		if typeVal, ok := schema["type"].(string); ok {
-			// Convert to type array with null
-			schema["type"] = []any{typeVal, "null"}
-		} else if _, hasType := schema["type"]; !hasType {
-			// nullable: true without type - add "null" to allow null values
-			schema["type"] = []any{"null"}
-		}
-		delete(schema, "nullable")
-	}
+	// nullable is not converted: since OpenAPI 3.1 it is an unknown keyword,
+	// which JSON Schema 2020-12 ignores. A type array including "null" is the 3.1 way.
 
 	// Handle exclusiveMinimum/exclusiveMaximum
 	// In OpenAPI 3.0, these are booleans alongside minimum/maximum

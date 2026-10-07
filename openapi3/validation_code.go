@@ -63,6 +63,9 @@ func (e *DuplicateTagError) Code() string              { return "duplicate-tag" 
 func (e *DynamicAnchorFieldFor31Plus) Code() string    { return "dynamic-anchor-field-for-3-1-plus" }
 func (e *DynamicRefFieldFor31Plus) Code() string       { return "dynamic-ref-field-for-3-1-plus" }
 func (e *ElseFieldFor31Plus) Code() string             { return "else-field-for-3-1-plus" }
+func (e *ExclusiveBoundBooleanBefore31) Code() string {
+	return "exclusive-bound-boolean-before-3-1"
+}
 func (e *ExclusiveBoundNumberFor31Plus) Code() string {
 	return "exclusive-bound-number-for-3-1-plus"
 }
@@ -216,6 +219,7 @@ var validationErrorCodes = []string{
 	"example-examples-mutually-exclusive",
 	"example-violates-schema",
 	"examples-field-for-3-1-plus",
+	"exclusive-bound-boolean-before-3-1",
 	"exclusive-bound-number-for-3-1-plus",
 	"external-docs-url-required",
 	"extra-sibling-fields",

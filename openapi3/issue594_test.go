@@ -26,6 +26,24 @@ func TestIssue594(t *testing.T) {
 	doc.Paths.Value("/marketing/contacts/search/emails").Post = nil
 	doc.Components.Schemas["full-segment"].Value.Example = nil
 
+	// This document is OpenAPI 3.1.0 yet relies on nullable, which since 3.1 is
+	// an unknown keyword: it no longer lets an example be null.
+	err = doc.Validate(sl.Context)
+	require.ErrorContains(t, err, `invalid example: validation failed due to: error at "/hard_bounces": at '/hard_bounces': got null, want integer`)
+
+	// Spelled the 3.1 way, the document is valid.
+	err = doc.WalkSchemas(func(_ string, ref *openapi3.SchemaRef) error {
+		if s := ref.Value; s.Nullable {
+			s.Nullable = false
+			if !s.Type.IsEmpty() && !s.Type.IncludesNull() {
+				types := append(openapi3.Types{}, *s.Type...)
+				types = append(types, openapi3.TypeNull)
+				s.Type = &types
+			}
+		}
+		return nil
+	})
+	require.NoError(t, err)
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
 }
