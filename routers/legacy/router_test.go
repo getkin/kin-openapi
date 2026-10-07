@@ -1,7 +1,6 @@
 package legacy_test
 
 import (
-	"context"
 	"net/http"
 	"sort"
 	"testing"
@@ -128,7 +127,7 @@ func TestRouter(t *testing.T) {
 		}
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err := legacy.NewRouter(doc)
 	require.NoError(t, err)
@@ -168,7 +167,7 @@ func TestRouter(t *testing.T) {
 			"d1": {Default: "example", Enum: []string{"example"}},
 		}},
 	}
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err = legacy.NewRouter(doc)
 	require.NoError(t, err)
@@ -208,7 +207,7 @@ func TestRouter(t *testing.T) {
 	doc.Paths.Set("/withExamples", &openapi3.PathItem{
 		Get: &openapi3.Operation{Responses: responses},
 	})
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.Error(t, err)
 	r, err = legacy.NewRouter(doc)
 	require.Error(t, err)

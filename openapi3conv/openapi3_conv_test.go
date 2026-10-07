@@ -2,7 +2,6 @@ package openapi3conv_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -27,7 +26,7 @@ func loadV30(t *testing.T, raw string) *openapi3.T {
 // 3.0 must remain valid after canonicalization to the latest 3.x.
 func requireValidate(t *testing.T, doc *openapi3.T, when string) {
 	t.Helper()
-	require.NoError(t, doc.Validate(context.Background()),
+	require.NoError(t, doc.Validate(t.Context()),
 		"document must validate %s Upgrade", when)
 }
 

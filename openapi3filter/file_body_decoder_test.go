@@ -2,7 +2,6 @@ package openapi3filter
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -139,7 +138,7 @@ func TestFileBodyValidationAndReplay(t *testing.T) {
 			require.NoError(t, err)
 			req.Header.Set("Content-Type", "application/octet-stream")
 			body := &openapi3.RequestBody{Content: openapi3.NewContentWithSchema(tc.schema, []string{"application/octet-stream"})}
-			err = ValidateRequestBody(context.Background(), &RequestValidationInput{Request: req}, body)
+			err = ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)
 			if tc.valid {
 				require.NoError(t, err)
 			} else {
@@ -176,7 +175,7 @@ func TestFileBodyValidationCustomDecoder(t *testing.T) {
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", mediaType)
 	body := &openapi3.RequestBody{Content: openapi3.NewContentWithSchema(openapi3.NewStringSchema().WithEnum("decoded"), []string{mediaType})}
-	require.NoError(t, ValidateRequestBody(context.Background(), &RequestValidationInput{Request: req}, body))
+	require.NoError(t, ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body))
 	require.Equal(t, 1, calls)
 }
 
@@ -215,7 +214,7 @@ func BenchmarkFileBodyValidation(b *testing.B) {
 					b.Fatal(err)
 				}
 				req.Header.Set("Content-Type", "application/octet-stream")
-				if err := ValidateRequestBody(context.Background(), &RequestValidationInput{Request: req}, body); err != nil {
+				if err := ValidateRequestBody(b.Context(), &RequestValidationInput{Request: req}, body); err != nil {
 					b.Fatal(err)
 				}
 				req.Body.Close()

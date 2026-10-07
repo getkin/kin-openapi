@@ -1,7 +1,6 @@
 package openapi3filter_test
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -56,7 +55,7 @@ func TestYAMLNaNInfNoPanic(t *testing.T) {
 
 			var got error
 			panicVal := catchPanicValue(func() {
-				got = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+				got = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 					Request: req, PathParams: pathParams, Route: route,
 					Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 				})

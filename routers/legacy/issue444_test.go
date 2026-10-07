@@ -2,7 +2,6 @@ package legacy_test
 
 import (
 	"bytes"
-	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -54,6 +53,6 @@ foo: bar
 		PathParams: pathParams,
 		Route:      route,
 	}
-	err = openapi3filter.ValidateRequest(context.Background(), reqValidationInput)
+	err = openapi3filter.ValidateRequest(t.Context(), reqValidationInput)
 	require.NoError(t, err)
 }

@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"bytes"
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -560,7 +559,7 @@ func TestBodyExampleValidationContext(t *testing.T) {
 				}
 				content := NewContentWithJSONSchema(schema)
 				content["application/json"].Example = example
-				ctx := WithValidationOptions(context.Background(), EnableSchemaFormatValidation())
+				ctx := WithValidationOptions(t.Context(), EnableSchemaFormatValidation())
 				var err error
 				if direction == "request" {
 					err = (&RequestBody{Content: content}).Validate(ctx)

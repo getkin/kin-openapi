@@ -2,7 +2,6 @@ package openapi3filter_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -108,7 +107,7 @@ func TestArrayItemsNil_UrlencodedNoPanic(t *testing.T) {
 
 	var reqErr error
 	panicVal := catchPanicValue(func() {
-		reqErr = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		reqErr = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
@@ -139,7 +138,7 @@ func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {
 
 	var reqErr error
 	panicVal := catchPanicValue(func() {
-		reqErr = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		reqErr = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
@@ -163,7 +162,7 @@ func TestArrayItemsNil_ResponseHeaderNoPanic(t *testing.T) {
 
 	var respErr error
 	panicVal := catchPanicValue(func() {
-		respErr = openapi3filter.ValidateResponse(context.Background(), &openapi3filter.ResponseValidationInput{
+		respErr = openapi3filter.ValidateResponse(t.Context(), &openapi3filter.ResponseValidationInput{
 			RequestValidationInput: &openapi3filter.RequestValidationInput{
 				Request: req, PathParams: pathParams, Route: route,
 				Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
@@ -208,7 +207,7 @@ func TestArrayItemsNil_QueryNoPanic(t *testing.T) {
 
 	var got error
 	panicVal := catchPanicValue(func() {
-		got = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		got = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
@@ -250,7 +249,7 @@ func TestArrayItemsNil_DeepObjectNoPanic(t *testing.T) {
 
 	var got error
 	panicVal := catchPanicValue(func() {
-		got = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		got = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
@@ -293,7 +292,7 @@ func TestArrayItemsNil_UrlencodedAllOfNoPanic(t *testing.T) {
 	require.NoError(t, err)
 
 	panicVal := catchPanicValue(func() {
-		_ = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		_ = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
