@@ -32,7 +32,6 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 
 	// Boolean schemas are valid JSON Schema resources as well.
 	schemaMap, _ := schemaDocument.(map[string]any)
-	transformOpenAPIToJSONSchema(schemaMap)
 	hasInternalRefs := containsInternalSchemaRef(schemaDocument)
 	if err := addInternalSchemaRefs(schemaMap, schema); err != nil {
 		return nil, fmt.Errorf("failed to prepare schema references: %w", err)
@@ -109,9 +108,6 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
 		}
 		if err := json.Unmarshal(bytes, &target); err != nil {
 			return err
-		}
-		if targetMap, ok := target.(map[string]any); ok {
-			transformOpenAPIToJSONSchema(targetMap)
 		}
 		refs[ref.Ref] = target
 		return nil
@@ -236,84 +232,6 @@ func validateNumberFormat(format string, settings *schemaValidationSettings, val
 		}
 	}
 	return f.Validate(value)
-}
-
-// transformOpenAPIToJSONSchema converts OpenAPI 3.0/3.1 specific keywords to JSON Schema format
-func transformOpenAPIToJSONSchema(schema map[string]any) {
-	// nullable is not converted: since OpenAPI 3.1 it is an unknown keyword,
-	// which JSON Schema 2020-12 ignores. A type array including "null" is the 3.1 way.
-
-	// Handle exclusiveMinimum/exclusiveMaximum
-	// In OpenAPI 3.0, these are booleans alongside minimum/maximum
-	// In JSON Schema 2020-12, they are numeric values
-	if exclusiveMin, ok := schema["exclusiveMinimum"].(bool); ok {
-		if exclusiveMin {
-			if schemaMin, ok := schema["minimum"].(float64); ok {
-				schema["exclusiveMinimum"] = schemaMin
-				delete(schema, "minimum")
-			} else {
-				delete(schema, "exclusiveMinimum")
-			}
-		} else {
-			// exclusiveMinimum: false means inclusive, which is the JSON Schema default
-			delete(schema, "exclusiveMinimum")
-		}
-	}
-	if exclusiveMax, ok := schema["exclusiveMaximum"].(bool); ok {
-		if exclusiveMax {
-			if schemaMax, ok := schema["maximum"].(float64); ok {
-				schema["exclusiveMaximum"] = schemaMax
-				delete(schema, "maximum")
-			} else {
-				delete(schema, "exclusiveMaximum")
-			}
-		} else {
-			// exclusiveMaximum: false means inclusive, which is the JSON Schema default
-			delete(schema, "exclusiveMaximum")
-		}
-	}
-
-	// Remove OpenAPI-specific keywords that aren't in JSON Schema
-	delete(schema, "discriminator")
-	delete(schema, "xml")
-	delete(schema, "externalDocs")
-	delete(schema, "example") // Use "examples" in 2020-12
-
-	// Recursively transform nested schemas (single schema fields)
-	for _, key := range []string{
-		"additionalProperties", "items", "not",
-		// OpenAPI 3.1 / JSON Schema 2020-12 fields
-		"contains", "propertyNames", "unevaluatedItems", "unevaluatedProperties",
-		"if", "then", "else", "contentSchema",
-	} {
-		if val, ok := schema[key]; ok {
-			if nestedSchema, ok := val.(map[string]any); ok {
-				transformOpenAPIToJSONSchema(nestedSchema)
-			}
-		}
-	}
-
-	// Transform schema arrays (oneOf, anyOf, allOf, prefixItems)
-	for _, key := range []string{"oneOf", "anyOf", "allOf", "prefixItems"} {
-		if val, ok := schema[key].([]any); ok {
-			for _, item := range val {
-				if nestedSchema, ok := item.(map[string]any); ok {
-					transformOpenAPIToJSONSchema(nestedSchema)
-				}
-			}
-		}
-	}
-
-	// Transform schema maps (properties, patternProperties, dependentSchemas, $defs)
-	for _, key := range []string{"properties", "patternProperties", "dependentSchemas", "$defs"} {
-		if props, ok := schema[key].(map[string]any); ok {
-			for _, propVal := range props {
-				if propSchema, ok := propVal.(map[string]any); ok {
-					transformOpenAPIToJSONSchema(propSchema)
-				}
-			}
-		}
-	}
 }
 
 // validate validates a value against the compiled JSON Schema
