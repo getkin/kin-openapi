@@ -328,6 +328,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.150.0
+* `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
+
 ### v0.147.0
 * `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).
 * `(*openapi3.PathItem).GetOperation(string)` and `(*openapi3.PathItem).Operations()` now also report the new `openapi3.PathItem.Query` field (the OpenAPI 3.2 HTTP `QUERY` method) and the `openapi3.PathItem.AdditionalOperations` entries. Routers and validators consequently match these methods.

@@ -29,7 +29,7 @@ type Operation struct {
 	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
 	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
 	Parameters   Parameters             `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses    map[string]*Response   `json:"responses" yaml:"responses"`
+	Responses    *Responses             `json:"responses" yaml:"responses"`
 	Consumes     []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
 	Produces     []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
 	Schemes      []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
@@ -129,6 +129,39 @@ func (response Response) MarshalJSON() ([]byte, error)
 
 func (response *Response) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Response to a copy of data.
+
+type Responses struct {
+	Extensions map[string]any `json:"-" yaml:"-"`
+
+	// Has unexported fields.
+}
+    Responses is specified by OpenAPI/Swagger 2.0 standard. See
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/2.0.md#responses-object
+
+func NewResponsesWithCapacity(cap int) *Responses
+    NewResponsesWithCapacity builds a responses object of the given capacity.
+
+func (responses *Responses) Delete(key string)
+    Delete removes the entry associated with key 'key' from 'responses'.
+
+func (responses *Responses) Len() int
+    Len returns the amount of keys in responses excluding responses.Extensions.
+
+func (responses *Responses) Map() map[string]*Response
+    Map returns responses as a 'map'. Note: iteration on Go maps is not ordered.
+
+func (responses Responses) MarshalJSON() ([]byte, error)
+    MarshalJSON returns the JSON encoding of Responses.
+
+func (responses *Responses) Set(key string, value *Response)
+    Set adds or replaces key 'key' of 'responses' with 'value'. Note:
+    'responses' MUST be non-nil
+
+func (responses *Responses) UnmarshalJSON(data []byte) error
+    UnmarshalJSON sets Responses to a copy of data.
+
+func (responses *Responses) Value(key string) *Response
+    Value returns the response for key or nil
 
 type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`

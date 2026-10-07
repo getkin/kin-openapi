@@ -196,8 +196,9 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 	}
 
 	if responses := operation.Responses; responses != nil {
-		doc3.Responses = openapi3.NewResponsesWithCapacity(len(responses))
-		for k, response := range responses {
+		doc3.Responses = openapi3.NewResponsesWithCapacity(responses.Len())
+		doc3.Responses.Extensions = stripNonExtensions(responses.Extensions)
+		for k, response := range responses.Map() {
 			responseRef3, err := ToV3Response(response, operation.Produces)
 			if err != nil {
 				return nil, err
@@ -1167,7 +1168,11 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 		if err != nil {
 			return nil, err
 		}
-		result.Responses = resultResponses
+		result.Responses = openapi2.NewResponsesWithCapacity(len(resultResponses))
+		result.Responses.Extensions = stripNonExtensions(responses.Extensions)
+		for k, response := range resultResponses {
+			result.Responses.Set(k, response)
+		}
 	}
 	return result, nil
 }
