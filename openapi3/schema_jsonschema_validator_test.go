@@ -94,7 +94,7 @@ func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("nullable conversion", func(t *testing.T) {
+	t.Run("nullable is an unknown keyword", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type:     &openapi3.Types{"string"},
 			Nullable: true,
@@ -103,8 +103,12 @@ func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
 		err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020())
 		require.NoError(t, err)
 
+		// Since OpenAPI 3.1, null is allowed by a type array including "null", not by nullable.
 		err = schema.VisitJSON(nil, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err)
+		require.Error(t, err)
+
+		// The built-in (OpenAPI 3.0) validator still honours nullable.
+		require.NoError(t, schema.VisitJSON(nil))
 	})
 
 	t.Run("const validation", func(t *testing.T) {
@@ -279,80 +283,59 @@ components:
 
 func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
 	// These tests verify that transformOpenAPIToJSONSchema recurses into
-	// OpenAPI 3.1 / JSON Schema 2020-12 fields. Each sub-test uses a nested
-	// schema with nullable:true (an OpenAPI 3.0-ism) that must be converted
-	// to a type array for the JSON Schema 2020-12 validator to handle null.
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields. Each sub-test nests a schema
+	// with a boolean exclusiveMinimum (an OpenAPI 3.0-ism) that must be
+	// converted to a number for the JSON Schema 2020-12 validator to reject 0.
+	positive := func() *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Value: &openapi3.Schema{
+			Type:         &openapi3.Types{"number"},
+			Min:          openapi3.Float64Ptr(0),
+			ExclusiveMin: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)},
+		}}
+	}
+	opt := openapi3.EnableJSONSchema2020()
 
-	t.Run("prefixItems with nullable nested schema", func(t *testing.T) {
+	t.Run("prefixItems", func(t *testing.T) {
 		schema := &openapi3.Schema{
-			Type: &openapi3.Types{"array"},
-			PrefixItems: openapi3.SchemaRefs{
-				&openapi3.SchemaRef{Value: &openapi3.Schema{
-					Type:     &openapi3.Types{"string"},
-					Nullable: true,
-				}},
-			},
+			Type:        &openapi3.Types{"array"},
+			PrefixItems: openapi3.SchemaRefs{positive()},
 		}
-
-		err := schema.VisitJSON([]any{"hello"}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err)
-
-		err = schema.VisitJSON([]any{nil}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "null should be accepted after nullable conversion in prefixItems")
+		require.NoError(t, schema.VisitJSON([]any{1}, opt))
+		require.Error(t, schema.VisitJSON([]any{0}, opt))
 	})
 
-	t.Run("contains with nullable nested schema", func(t *testing.T) {
+	t.Run("contains", func(t *testing.T) {
 		schema := &openapi3.Schema{
-			Type: &openapi3.Types{"array"},
-			Contains: &openapi3.SchemaRef{Value: &openapi3.Schema{
-				Type:     &openapi3.Types{"string"},
-				Nullable: true,
-			}},
+			Type:     &openapi3.Types{"array"},
+			Contains: positive(),
 		}
-
-		err := schema.VisitJSON([]any{nil}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "null should match contains after nullable conversion")
+		require.NoError(t, schema.VisitJSON([]any{0, 1}, opt))
+		require.Error(t, schema.VisitJSON([]any{0}, opt))
 	})
 
-	t.Run("patternProperties with nullable nested schema", func(t *testing.T) {
+	t.Run("patternProperties", func(t *testing.T) {
+		schema := &openapi3.Schema{
+			Type:              &openapi3.Types{"object"},
+			PatternProperties: openapi3.Schemas{"^x-": positive()},
+		}
+		require.NoError(t, schema.VisitJSON(map[string]any{"x-val": 1}, opt))
+		require.Error(t, schema.VisitJSON(map[string]any{"x-val": 0}, opt))
+	})
+
+	t.Run("dependentSchemas", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"object"},
-			PatternProperties: openapi3.Schemas{
-				"^x-": &openapi3.SchemaRef{Value: &openapi3.Schema{
-					Type:     &openapi3.Types{"string"},
-					Nullable: true,
-				}},
-			},
-		}
-
-		err := schema.VisitJSON(map[string]any{"x-val": nil}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "null should be accepted after nullable conversion in patternProperties")
-	})
-
-	t.Run("dependentSchemas with nullable nested schema", func(t *testing.T) {
-		schema := &openapi3.Schema{
-			Type: &openapi3.Types{"object"},
-			Properties: openapi3.Schemas{
-				"name": &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
-				"tag":  &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}, Nullable: true}},
-			},
 			DependentSchemas: openapi3.Schemas{
 				"name": &openapi3.SchemaRef{Value: &openapi3.Schema{
-					Properties: openapi3.Schemas{
-						"tag": &openapi3.SchemaRef{Value: &openapi3.Schema{
-							Type:     &openapi3.Types{"string"},
-							Nullable: true,
-						}},
-					},
+					Properties: openapi3.Schemas{"count": positive()},
 				}},
 			},
 		}
-
-		err := schema.VisitJSON(map[string]any{"name": "foo", "tag": nil}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "null should be accepted after nullable conversion in dependentSchemas")
+		require.NoError(t, schema.VisitJSON(map[string]any{"name": "foo", "count": 1}, opt))
+		require.Error(t, schema.VisitJSON(map[string]any{"name": "foo", "count": 0}, opt))
 	})
 
-	t.Run("propertyNames with nullable not applicable but transform should not crash", func(t *testing.T) {
+	t.Run("propertyNames", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"object"},
 			PropertyNames: &openapi3.SchemaRef{Value: &openapi3.Schema{
@@ -360,59 +343,42 @@ func TestJSONSchema2020Validator_TransformRecursesInto31Fields(t *testing.T) {
 				MinLength: 1,
 			}},
 		}
-
-		err := schema.VisitJSON(map[string]any{"abc": 1}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err)
-
-		err = schema.VisitJSON(map[string]any{"": 1}, openapi3.EnableJSONSchema2020())
-		require.Error(t, err, "empty property name should fail minLength")
+		require.NoError(t, schema.VisitJSON(map[string]any{"abc": 1}, opt))
+		require.Error(t, schema.VisitJSON(map[string]any{"": 1}, opt), "empty property name should fail minLength")
 	})
 
-	t.Run("unevaluatedItems with nullable nested schema", func(t *testing.T) {
+	t.Run("unevaluatedItems", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"array"},
 			PrefixItems: openapi3.SchemaRefs{
-				&openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}}},
+				&openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
 			},
-			UnevaluatedItems: openapi3.BoolSchema{Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{
-				Type:     &openapi3.Types{"string"},
-				Nullable: true,
-			}}},
+			UnevaluatedItems: openapi3.BoolSchema{Schema: positive()},
 		}
-
-		err := schema.VisitJSON([]any{1, nil}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "null should be accepted after nullable conversion in unevaluatedItems")
+		require.NoError(t, schema.VisitJSON([]any{"a", 1}, opt))
+		require.Error(t, schema.VisitJSON([]any{"a", 0}, opt))
 	})
 
-	t.Run("unevaluatedProperties with nullable nested schema", func(t *testing.T) {
+	t.Run("unevaluatedProperties", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"object"},
 			Properties: openapi3.Schemas{
 				"name": &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
 			},
-			UnevaluatedProperties: openapi3.BoolSchema{Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{
-				Type:     &openapi3.Types{"string"},
-				Nullable: true,
-			}}},
+			UnevaluatedProperties: openapi3.BoolSchema{Schema: positive()},
 		}
-
-		err := schema.VisitJSON(map[string]any{"name": "foo", "extra": nil}, openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "null should be accepted after nullable conversion in unevaluatedProperties")
+		require.NoError(t, schema.VisitJSON(map[string]any{"name": "foo", "extra": 1}, opt))
+		require.Error(t, schema.VisitJSON(map[string]any{"name": "foo", "extra": 0}, opt))
 	})
 
-	t.Run("contentSchema with nullable nested schema", func(t *testing.T) {
+	t.Run("contentSchema", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type:             &openapi3.Types{"string"},
 			ContentMediaType: "application/json",
-			ContentSchema: &openapi3.SchemaRef{Value: &openapi3.Schema{
-				Type:     &openapi3.Types{"object"},
-				Nullable: true,
-			}},
+			ContentSchema:    positive(),
 		}
-
-		// contentSchema transform should not crash and should handle nullable
-		err := schema.VisitJSON("null", openapi3.EnableJSONSchema2020())
-		require.NoError(t, err, "contentSchema transform should handle nullable nested schema")
+		// contentSchema is an annotation in 2020-12: the transform must not crash on it.
+		require.NoError(t, schema.VisitJSON("0", opt))
 	})
 }
 

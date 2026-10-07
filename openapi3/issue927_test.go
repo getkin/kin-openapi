@@ -46,6 +46,12 @@ components:
 			require.False(t, doc.Components.Schemas["String"].Value.Nullable)
 			require.True(t, doc.Components.Schemas["NullableString"].Value.Nullable)
 			require.True(t, doc.Components.Schemas["NullableRef"].Value.Nullable)
+
+			// Since 3.1 nullable is an unknown keyword: it is kept but does not allow null.
+			for _, name := range []string{"NullableString", "NullableRef"} {
+				err := doc.Components.Schemas[name].Value.VisitJSON(nil, openapi3.EnableJSONSchema2020())
+				require.Error(t, err, name)
+			}
 		})
 	}
 }

@@ -992,6 +992,12 @@ func (eb ExclusiveBound) MarshalYAML() (any, error)
 func (eb *ExclusiveBound) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets ExclusiveBound to a copy of data.
 
+type ExclusiveBoundBooleanBefore31 struct{ ValidationError }
+
+func (e *ExclusiveBoundBooleanBefore31) As(target any) bool
+
+func (e *ExclusiveBoundBooleanBefore31) Code() string
+
 type ExclusiveBoundNumberFor31Plus struct{ ValidationError }
 
 func (e *ExclusiveBoundNumberFor31Plus) As(target any) bool
@@ -1092,8 +1098,11 @@ type FieldVersionMismatchError struct {
 	// "$defs", "prefixItems", "contains", ...).
 	Field string
 	// MinVersion is the minimum OpenAPI version that allows the field
-	// (e.g. "3.1").
+	// (e.g. "3.1"). Empty when the field is flagged for RemovedIn instead.
 	MinVersion string
+	// RemovedIn is the OpenAPI version that no longer allows the field
+	// (e.g. "3.1" for a boolean exclusiveMinimum). Empty when the field is flagged for MinVersion instead.
+	RemovedIn string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
 	// Origin is the source location of the offending element when the
@@ -2872,7 +2881,12 @@ func (schema Schema) MarshalYAML() (any, error)
 
 func (schema *Schema) NewRef() *SchemaRef
 
-func (schema *Schema) PermitsNull() bool
+func (schema *Schema) PermitsNull(opts ...SchemaValidationOption) bool
+    PermitsNull returns true when a schema is Nullable (only in OpenAPI 3.0)
+    or when "null" is among the allowed types. In OpenAPI 3.1+, nullable is an
+    unknown keyword.
+
+    Usage: schema.PermitsNull(EnableJSONSchema2020()) for 3.1+
 
 func (schema *Schema) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Schema to a copy of data.

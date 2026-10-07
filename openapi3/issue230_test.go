@@ -71,17 +71,25 @@ paths:
 			Type:     &openapi3.Types{"string"},
 			Nullable: true,
 		}
+		opt := openapi3.EnableJSONSchema2020()
 
 		// Should accept string
-		err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020())
+		err := schema.VisitJSON("hello")
+		require.NoError(t, err)
+		err = schema.VisitJSON("hello", opt)
 		require.NoError(t, err)
 
 		// Should accept null
-		err = schema.VisitJSON(nil, openapi3.EnableJSONSchema2020())
+		err = schema.VisitJSON(nil)
 		require.NoError(t, err)
+		// nullable is OpenAPI 3.0 only: JSON Schema 2020-12 validation ignores it.
+		err = schema.VisitJSON(nil, opt)
+		require.Error(t, err)
 
 		// Should reject number
-		err = schema.VisitJSON(123, openapi3.EnableJSONSchema2020())
+		err = schema.VisitJSON(123)
+		require.Error(t, err)
+		err = schema.VisitJSON(123, opt)
 		require.Error(t, err)
 	})
 
