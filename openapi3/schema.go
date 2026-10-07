@@ -2952,31 +2952,10 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		me = append(me, err)
 	}
 
-	// "prefixItems": the schema at index i validates the item at index i.
-	// Positions the array does not reach are simply unconstrained.
-	for i, prefixItemRef := range schema.PrefixItems {
-		if i >= len(value) {
-			break
-		}
-		prefixItemSchema := prefixItemRef.Value
-		if prefixItemSchema == nil {
-			return newUnresolvedRef(prefixItemRef.Ref, prefixItemRef.Origin)
-		}
-		if err := prefixItemSchema.visitJSON(settings, value[i]); err != nil {
-			err = markSchemaErrorIndex(err, i)
-			if !settings.multiError {
-				return err
-			}
-			if itemMe, ok := err.(MultiError); ok {
-				me = append(me, itemMe...)
-			} else {
-				me = append(me, err)
-			}
-		}
-	}
-
 	// "items" applies to the positions prefixItems does not cover. Without
 	// prefixItems that is every position, which is the OAS 3.0 behaviour.
+	// prefixItems itself is OpenAPI 3.1 only and left to the JSON Schema 2020-12
+	// validator (EnableJSONSchema2020), like the other 3.1 sub-schema keywords.
 	if itemSchemaRef := schema.Items; itemSchemaRef != nil {
 		itemSchema := itemSchemaRef.Value
 		if itemSchema == nil {

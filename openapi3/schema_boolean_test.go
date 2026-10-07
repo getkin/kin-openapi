@@ -100,7 +100,8 @@ func TestBooleanSchema_FalseItemsClosesTuple(t *testing.T) {
 	require.NoError(t, closed.VisitJSON([]any{"a", float64(1)}))
 
 	require.Error(t, closed.VisitJSON([]any{"a", float64(1), "extra"}), "items: false forbids a third element")
-	require.Error(t, closed.VisitJSON([]any{float64(1), "a"}), "prefixItems is positional")
+	// The built-in validator leaves prefixItems to the 2020-12 validator, see TestBooleanSchema_ClosesTupleUnder2020.
+	require.NoError(t, closed.VisitJSON([]any{float64(1), "a"}), "items: false does not apply to the prefix")
 }
 
 // A boolean schema marshals back to the bare boolean it was written as, not to
@@ -200,8 +201,8 @@ func TestBooleanSchema_JSONSchema2020(t *testing.T) {
 	require.Error(t, schemas["Nothing"].Value.VisitJSON(float64(1), opt), "not: true matches nothing")
 }
 
-// The 2020-12 validator has to agree with the built-in one about a closed
-// tuple, since a document does not say which validator will read it.
+// The 2020-12 validator has to agree with the built-in one about where a closed
+// tuple ends, and it also checks the prefixItems positions.
 func TestBooleanSchema_ClosesTupleUnder2020(t *testing.T) {
 	closed := loadBooleanSchemas(t).Components.Schemas["ClosedTuple"].Value
 	opt := openapi3.EnableJSONSchema2020()

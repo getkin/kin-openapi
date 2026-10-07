@@ -9,7 +9,8 @@ import (
 )
 
 // prefixItems is positional: the schema at index i validates the item at index
-// i, and items governs the positions past the end of the list.
+// i, and items governs the positions past the end of the list. prefixItems is
+// validated by the JSON Schema 2020-12 validator; the built-in one ignores it.
 const prefixItemsSpec = `
 openapi: 3.1.0
 info:
@@ -47,42 +48,43 @@ func prefixItemsSchema(t *testing.T, name string) *openapi3.Schema {
 // list in a different order fails.
 func TestPrefixItems_Positional(t *testing.T) {
 	tuple := prefixItemsSchema(t, "Tuple")
+	opt := openapi3.EnableJSONSchema2020()
 
-	require.NoError(t, tuple.VisitJSON([]any{"a", float64(1)}))
-	require.Error(t, tuple.VisitJSON([]any{float64(1), "a"}), "the values are in the wrong positions")
-	require.Error(t, tuple.VisitJSON([]any{float64(1), float64(1)}), "index 0 must be a string")
-	require.Error(t, tuple.VisitJSON([]any{"a", "b"}), "index 1 must be an integer")
+	require.NoError(t, tuple.VisitJSON([]any{"a", float64(1)}, opt))
+	require.Error(t, tuple.VisitJSON([]any{float64(1), "a"}, opt), "the values are in the wrong positions")
+	require.Error(t, tuple.VisitJSON([]any{float64(1), float64(1)}, opt), "index 0 must be a string")
+	require.Error(t, tuple.VisitJSON([]any{"a", "b"}, opt), "index 1 must be an integer")
 }
 
 // The error names the offending index rather than the array as a whole.
 func TestPrefixItems_ErrorCarriesTheIndex(t *testing.T) {
-	err := prefixItemsSchema(t, "Tuple").VisitJSON([]any{"a", "b"})
+	opt := openapi3.EnableJSONSchema2020()
+	err := prefixItemsSchema(t, "Tuple").VisitJSON([]any{"a", "b"}, opt)
 	require.Error(t, err)
-
-	var schemaErr *openapi3.SchemaError
-	require.ErrorAs(t, err, &schemaErr)
-	require.Equal(t, []string{"1"}, schemaErr.JSONPointer())
+	require.ErrorContains(t, err, `error at "/1"`)
 }
 
 // A short array leaves the later entries unapplied; prefixItems constrains the
 // positions that exist, and minItems is what requires them to exist.
 func TestPrefixItems_ShorterThanTheList(t *testing.T) {
 	tuple := prefixItemsSchema(t, "Tuple")
+	opt := openapi3.EnableJSONSchema2020()
 
-	require.NoError(t, tuple.VisitJSON([]any{}))
-	require.NoError(t, tuple.VisitJSON([]any{"a"}))
-	require.Error(t, tuple.VisitJSON([]any{float64(1)}), "index 0 is still checked")
+	require.NoError(t, tuple.VisitJSON([]any{}, opt))
+	require.NoError(t, tuple.VisitJSON([]any{"a"}, opt))
+	require.Error(t, tuple.VisitJSON([]any{float64(1)}, opt), "index 0 is still checked")
 }
 
 // items governs only the positions past prefixItems, so the prefix keeps its
 // own types and the tail takes the items schema.
 func TestPrefixItems_ItemsAppliesPastThePrefix(t *testing.T) {
 	tail := prefixItemsSchema(t, "Tail")
+	opt := openapi3.EnableJSONSchema2020()
 
-	require.NoError(t, tail.VisitJSON([]any{"a", float64(1)}))
-	require.NoError(t, tail.VisitJSON([]any{"a", float64(1), true, false}))
-	require.Error(t, tail.VisitJSON([]any{"a", float64(1), "not a boolean"}), "the tail must match items")
-	require.Error(t, tail.VisitJSON([]any{true, float64(1)}), "items must not apply to the prefix")
+	require.NoError(t, tail.VisitJSON([]any{"a", float64(1)}, opt))
+	require.NoError(t, tail.VisitJSON([]any{"a", float64(1), true, false}, opt))
+	require.Error(t, tail.VisitJSON([]any{"a", float64(1), "not a boolean"}, opt), "the tail must match items")
+	require.Error(t, tail.VisitJSON([]any{true, float64(1)}, opt), "items must not apply to the prefix")
 }
 
 // Without prefixItems, items applies to every position, which is what OAS 3.0
@@ -112,7 +114,8 @@ components:
 
 // Every failing position is reported when multiple errors are requested.
 func TestPrefixItems_MultiError(t *testing.T) {
-	err := prefixItemsSchema(t, "Tuple").VisitJSON([]any{float64(1), "a"}, openapi3.MultiErrors())
+	opt := openapi3.EnableJSONSchema2020()
+	err := prefixItemsSchema(t, "Tuple").VisitJSON([]any{float64(1), "a"}, opt, openapi3.MultiErrors())
 	require.Error(t, err)
 
 	var multi openapi3.MultiError
