@@ -2136,6 +2136,17 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	}
 }
 
+// visitNestedJSON validates a value nested within the one currently visited,
+// such as an array item or an object property.
+// Cycle detection only applies to schemas visiting the same value,
+// so recursive schemas still get applied to nested values.
+func (schema *Schema) visitNestedJSON(settings *schemaValidationSettings, value any) error {
+	visited := settings.visitedSchemas
+	settings.visitedSchemas = nil
+	defer func() { settings.visitedSchemas = visited }()
+	return schema.visitJSON(settings, value)
+}
+
 func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, value any) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
@@ -2962,7 +2973,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		if prefixItemSchema == nil {
 			return newUnresolvedRef(prefixItemRef.Ref, prefixItemRef.Origin)
 		}
-		if err := prefixItemSchema.visitJSON(settings, value[i]); err != nil {
+		if err := prefixItemSchema.visitNestedJSON(settings, value[i]); err != nil {
 			err = markSchemaErrorIndex(err, i)
 			if !settings.multiError {
 				return err
@@ -2983,7 +2994,7 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 			return newUnresolvedRef(itemSchemaRef.Ref, itemSchemaRef.Origin)
 		}
 		for i := len(schema.PrefixItems); i < len(value); i++ {
-			if err := itemSchema.visitJSON(settings, value[i]); err != nil {
+			if err := itemSchema.visitNestedJSON(settings, value[i]); err != nil {
 				err = markSchemaErrorIndex(err, i)
 				if !settings.multiError {
 					return err
@@ -3093,7 +3104,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				if p == nil {
 					return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
 				}
-				if err := p.visitJSON(settings, v); err != nil {
+				if err := p.visitNestedJSON(settings, v); err != nil {
 					if settings.failfast {
 						return errSchema
 					}
@@ -3112,7 +3123,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		}
 		if allowed := schema.AdditionalProperties.Has; allowed == nil || *allowed {
 			if additionalProperties != nil {
-				if err := additionalProperties.visitJSON(settings, v); err != nil {
+				if err := additionalProperties.visitNestedJSON(settings, v); err != nil {
 					if settings.failfast {
 						return errSchema
 					}
