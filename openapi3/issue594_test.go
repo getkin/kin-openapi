@@ -35,10 +35,8 @@ func TestIssue594(t *testing.T) {
 	err = doc.WalkSchemas(func(_ string, ref *openapi3.SchemaRef) error {
 		if s := ref.Value; s.Nullable {
 			s.Nullable = false
-			if !s.Type.IsEmpty() && !s.Type.IncludesNull() {
-				types := append(openapi3.Types{}, *s.Type...)
-				types = append(types, openapi3.TypeNull)
-				s.Type = &types
+			if !s.Type.IsEmpty() {
+				s.Type.With(openapi3.TypeNull)
 			}
 		}
 		return nil

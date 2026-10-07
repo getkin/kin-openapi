@@ -318,6 +318,62 @@ func (types *Types) IsEmpty() bool {
 	return types == nil || len(*types) == 0
 }
 
+// Clone returns a copy of the types that shares no memory with the receiver.
+// Returns nil if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	clone := types.Clone()
+//	clone.With("null")  // types is still {"string"}
+func (types *Types) Clone() Types {
+	if types == nil {
+		return nil
+	}
+	return slices.Clone(*types)
+}
+
+// With adds the given types to the receiver, skipping those already present.
+// Duplicates are removed, keeping the first occurrence.
+// types must not be nil.
+//
+// Example:
+//
+//	types := &Types{"string"}
+//	types.With("null", "string")  // types is now {"string", "null"}
+func (types *Types) With(typs ...string) {
+	*types = uniqueTypes(slices.Concat(*types, typs))
+}
+
+// Without removes the given types from the receiver.
+// Duplicates are removed, keeping the first occurrence.
+// Does nothing if types is nil.
+//
+// Example:
+//
+//	types := &Types{"string", "null"}
+//	types.Without("null")  // types is now {"string"}
+func (types *Types) Without(typs ...string) {
+	if types == nil {
+		return
+	}
+	// Cloning keeps DeleteFunc from modifying a backing array other slices may share.
+	*types = slices.DeleteFunc(uniqueTypes(slices.Clone(*types)), func(typ string) bool {
+		return slices.Contains(typs, typ)
+	})
+}
+
+// uniqueTypes removes duplicates from ts in place, keeping the first occurrence.
+func uniqueTypes(ts Types) Types {
+	unique := ts[:0]
+	for _, typ := range ts {
+		if !slices.Contains(unique, typ) {
+			unique = append(unique, typ)
+		}
+	}
+	return unique
+}
+
 func (pTypes *Types) MarshalJSON() ([]byte, error) {
 	x, err := pTypes.MarshalYAML()
 	if err != nil {
@@ -1117,8 +1173,20 @@ func NewObjectSchema() *Schema {
 	}
 }
 
+// WithNullable set Nullable (OpenAPI 3.0)
+// For 3.1+ append TypeNull to Types.
 func (schema *Schema) WithNullable() *Schema {
 	schema.Nullable = true
+	return schema
+}
+
+// WithTypes adds the given types to the schema's Type, initializing it if nil.
+// See Types.With.
+func (schema *Schema) WithTypes(typs ...string) *Schema {
+	if schema.Type == nil {
+		schema.Type = &Types{}
+	}
+	schema.Type.With(typs...)
 	return schema
 }
 

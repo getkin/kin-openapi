@@ -3,7 +3,6 @@ package openapi3conv
 import (
 	"fmt"
 	"io"
-	"slices"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -260,11 +259,11 @@ func (w *walker) rewriteNullable(s *openapi3.Schema) {
 	if !s.Nullable {
 		return
 	}
-	if s.Type != nil && len(*s.Type) > 0 {
-		if !slices.Contains(*s.Type, openapi3.TypeNull) {
-			newTypes := append(*s.Type, openapi3.TypeNull)
-			s.Type = &newTypes
-		}
+	if !s.Type.IsEmpty() {
+		// s.Type may be shared with other schemas: copy it before adding null.
+		types := s.Type.Clone()
+		types.With(openapi3.TypeNull)
+		s.Type = &types
 	}
 	w.logf("nullable: true -> dropped (Types=%v)", s.Type)
 	s.Nullable = false
