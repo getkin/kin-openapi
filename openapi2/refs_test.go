@@ -40,5 +40,5 @@ func TestSchemaRef_UnmarshalJSON_Value(t *testing.T) {
 	assert.Empty(t, ref.Ref)
 	require.NotNil(t, ref.Value)
 	require.NotNil(t, ref.Value.Type)
-	assert.Contains(t, *ref.Value.Type, "string")
+	assert.Contains(t, ref.Value.Type.Slice(), "string")
 }
