@@ -453,11 +453,10 @@ func (e *InvalidSecuritySchemeTypeError) Error() string {
 }
 
 // InvalidHTTPSchemeError clusters "security scheme of type 'http' has
-// invalid 'scheme' value X" failures. The OpenAPI/HTTP-auth registry
-// accepts only `bearer`, `basic`, `negotiate`, `digest`; this fires
-// when an http scheme declares anything else.
+// invalid 'scheme' value X" failures. This fires when an http scheme
+// is empty or is not a valid HTTP authentication scheme name.
 type InvalidHTTPSchemeError struct {
-	// Scheme is the rejected scheme value (e.g. "mutual", "oauth").
+	// Scheme is the rejected scheme value (e.g. "", "not valid").
 	Scheme string
 	// Origin is the source location of the offending security scheme
 	// when the document was loaded with Loader.IncludeOrigin = true.

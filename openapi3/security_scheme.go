@@ -7,6 +7,7 @@ import (
 	"maps"
 	"net/url"
 	"slices"
+	"strings"
 )
 
 // SecurityScheme is specified by OpenAPI/Swagger standard version 3.
@@ -157,14 +158,13 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 	case "apiKey":
 		hasIn = true
 	case "http":
+		// Scheme names are case-insensitive tokens (RFC 7235) that only
+		// SHOULD be registered with IANA, so unregistered ones are accepted.
 		scheme := ss.Scheme
-		switch scheme {
-		case "bearer":
-			hasBearerFormat = true
-		case "basic", "negotiate", "digest":
-		default:
+		if !isHTTPAuthScheme(scheme) {
 			return newInvalidHTTPScheme(scheme, ss.Origin)
 		}
+		hasBearerFormat = strings.EqualFold(scheme, "bearer")
 	case "oauth2":
 		hasFlow = true
 	case "openIdConnect":
@@ -215,6 +215,23 @@ func (ss *SecurityScheme) Validate(ctx context.Context, opts ...ValidationOption
 	}
 
 	return validateExtensions(ctx, ss.Extensions, ss.Origin)
+}
+
+// isHTTPAuthScheme reports whether value is a valid HTTP authentication
+// scheme name, that is an RFC 7230 token.
+func isHTTPAuthScheme(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, c := range value {
+		switch {
+		case 'a' <= c && c <= 'z', 'A' <= c && c <= 'Z', '0' <= c && c <= '9':
+		case strings.ContainsRune("!#$%&'*+-.^_`|~", c):
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // OAuthFlows is specified by OpenAPI/Swagger standard version 3.

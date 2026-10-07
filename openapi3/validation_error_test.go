@@ -1281,9 +1281,9 @@ components:
 	require.Greater(t, iste.Origin.Key.Line, 0)
 }
 
-// HTTP security scheme with a `scheme:` outside {bearer, basic,
-// negotiate, digest} triggers InvalidHTTPSchemeError carrying the
-// rejected value.
+// HTTP security scheme with a `scheme:` that is not a valid HTTP
+// authentication scheme name triggers InvalidHTTPSchemeError carrying
+// the rejected value.
 func TestValidationError_InvalidHTTPScheme(t *testing.T) {
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
@@ -1293,14 +1293,14 @@ components:
   securitySchemes:
     Bad:
       type: http
-      scheme: mutual
+      scheme: not valid
 `)
 	err := doc.Validate(context.Background())
-	require.ErrorContains(t, err, `security scheme of type 'http' has invalid 'scheme' value "mutual"`)
+	require.ErrorContains(t, err, `security scheme of type 'http' has invalid 'scheme' value "not valid"`)
 
 	var ihse *openapi3.InvalidHTTPSchemeError
 	require.True(t, errors.As(err, &ihse))
-	require.Equal(t, "mutual", ihse.Scheme)
+	require.Equal(t, "not valid", ihse.Scheme)
 }
 
 // Origin tracking for InvalidHTTPSchemeError.
@@ -1315,7 +1315,7 @@ components:
   securitySchemes:
     Bad:
       type: http
-      scheme: mutual
+      scheme: not valid
 `))
 	require.NoError(t, err)
 
@@ -1930,7 +1930,7 @@ components:
   securitySchemes:
     Bad:
       type: http
-      scheme: mutual
+      scheme: not valid
 `
 
 func TestValidationError_InvalidHTTPScheme_OriginNilWithoutLoaderTracking(t *testing.T) {
