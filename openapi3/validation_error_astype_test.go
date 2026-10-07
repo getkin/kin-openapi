@@ -7,7 +7,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -22,7 +21,7 @@ import (
 // hierarchy at all three layers (cluster, leaf, base) confirms the
 // design is idiomatic under Go 1.26's improved errors API.
 func TestValidationError_AsTypeWalksAllLayers(t *testing.T) {
-	err := (&openapi3.Info{Title: "x"}).Validate(context.Background())
+	err := (&openapi3.Info{Title: "x"}).Validate(t.Context())
 
 	// Cluster.
 	rfe, ok := errors.AsType[*openapi3.RequiredFieldError](err)

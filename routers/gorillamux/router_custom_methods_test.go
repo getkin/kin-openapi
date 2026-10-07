@@ -1,7 +1,6 @@
 package gorillamux
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -55,7 +54,7 @@ func TestRouterCustomMethods(t *testing.T) {
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(customMethodsSpec))
 	require.NoError(t, err)
-	require.NoError(t, doc.Validate(context.Background()))
+	require.NoError(t, doc.Validate(t.Context()))
 
 	router, err := NewRouter(doc)
 	require.NoError(t, err)

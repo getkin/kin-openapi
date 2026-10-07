@@ -1,7 +1,6 @@
 package openapi3filter
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -102,7 +101,7 @@ paths:
 				require.NoError(t, err)
 				options := tt.options
 				options.MultiError = multiError
-				err = ValidateRequest(context.Background(), &RequestValidationInput{
+				err = ValidateRequest(t.Context(), &RequestValidationInput{
 					Request:    request,
 					Route:      route,
 					PathParams: pathParams,

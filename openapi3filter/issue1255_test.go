@@ -1,7 +1,6 @@
 package openapi3filter
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -41,7 +40,7 @@ paths:
 		PathParams: pathParams,
 		Route:      route,
 	}
-	err = ValidateRequest(context.Background(), input)
+	err = ValidateRequest(t.Context(), input)
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"false"}, req.URL.Query()["flag"])
