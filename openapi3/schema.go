@@ -3277,6 +3277,8 @@ type SchemaError struct {
 	Reason string
 	// Origin is the original error that caused this error.
 	Origin error
+	// cause is the error of the JSON Schema 2020-12 validator this error was converted from.
+	cause error
 	// customizeMessageError is a function that can be used to customize the error message.
 	customizeMessageError func(err *SchemaError) string
 }
@@ -3330,7 +3332,9 @@ func (err *SchemaError) Error() string {
 
 	buf := bytes.NewBuffer(make([]byte, 0, 256))
 
-	if len(err.reversePath) > 0 {
+	// The Reason of an error converted from the JSON Schema 2020-12 validator
+	// already names the path.
+	if len(err.reversePath) > 0 && err.cause == nil {
 		buf.WriteString(`Error at "`)
 		reversePath := err.reversePath
 		for _, r := range slices.Backward(reversePath) {
@@ -3372,6 +3376,9 @@ func (err *SchemaError) Error() string {
 }
 
 func (err SchemaError) Unwrap() error {
+	if err.Origin == nil && err.cause != nil {
+		return err.cause
+	}
 	return err.Origin
 }
 
