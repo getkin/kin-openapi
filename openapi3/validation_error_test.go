@@ -601,6 +601,13 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 		var leaf *openapi3.SchemaReadOnlyWriteOnlyExclusive
 		require.True(t, errors.As(err, &leaf))
 	})
+
+	// 3.1 takes readOnly and writeOnly from JSON Schema 2020-12, which does
+	// not forbid both.
+	t.Run("schema readOnly and writeOnly in 3.1", func(t *testing.T) {
+		schema := &openapi3.Schema{ReadOnly: true, WriteOnly: true}
+		require.NoError(t, schema.Validate(t.Context(), openapi3.IsOpenAPI31OrLater()))
+	})
 }
 
 // Pin ForbiddenFieldError cluster + leaf reachability for the four
