@@ -7,6 +7,8 @@ import (
 )
 
 func TestIssue573(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`paths:
   /ping:
     get:

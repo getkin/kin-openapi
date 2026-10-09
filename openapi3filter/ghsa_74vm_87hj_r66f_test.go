@@ -62,12 +62,16 @@ func validatedInput(t *testing.T, spec string, hdr http.Header) *openapi3filter.
 }
 
 func TestControl_ResponseBodyNilSchema(t *testing.T) {
+	t.Parallel()
+
 	in := validatedInput(t, specBody, http.Header{"Content-Type": {"application/json"}})
 	err := openapi3filter.ValidateResponse(t.Context(), in)
 	require.NoError(t, err)
 }
 
 func TestResponseHeaderNilSchema(t *testing.T) {
+	t.Parallel()
+
 	in := validatedInput(t, specHeader, http.Header{"Content-Type": {"application/json"}})
 	err := openapi3filter.ValidateResponse(t.Context(), in)
 	require.NoError(t, err)

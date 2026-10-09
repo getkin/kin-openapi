@@ -532,6 +532,8 @@ components:
 // Request and response example direction must not affect later validation with
 // the same parent context, including when body validation returns an error.
 func TestBodyExampleValidationContext(t *testing.T) {
+	t.Parallel()
+
 	for _, direction := range []string{"request", "response"} {
 		for _, invalid := range []bool{false, true} {
 			name := direction
@@ -591,6 +593,8 @@ func TestBodyExampleValidationContext(t *testing.T) {
 // Schema examples describe reusable schema values. Only examples on a media
 // type describe a request or response payload.
 func TestMediaTypeReusableSchemaExamples(t *testing.T) {
+	t.Parallel()
+
 	for _, direction := range []string{"request", "response"} {
 		for _, shape := range []string{"root", "property", "items"} {
 			for _, explicit := range []bool{false, true} {
@@ -644,6 +648,8 @@ func TestMediaTypeReusableSchemaExamples(t *testing.T) {
 }
 
 func TestMediaTypePayloadExampleDirection(t *testing.T) {
+	t.Parallel()
+
 	for _, direction := range []string{"request", "response"} {
 		for _, named := range []bool{false, true} {
 			name := direction + "/example"
@@ -681,6 +687,8 @@ func TestMediaTypePayloadExampleDirection(t *testing.T) {
 }
 
 func TestMediaTypeSchemaValidationOptions(t *testing.T) {
+	t.Parallel()
+
 	for _, direction := range []string{"request", "response"} {
 		t.Run(direction, func(t *testing.T) {
 			validate := func(schema *Schema, opts ...ValidationOption) error {
@@ -709,6 +717,8 @@ func TestMediaTypeSchemaValidationOptions(t *testing.T) {
 }
 
 func TestMediaTypeItemSchemaExamples(t *testing.T) {
+	t.Parallel()
+
 	readOnly := NewStringSchema()
 	readOnly.ReadOnly = true
 	writeOnly := NewStringSchema()

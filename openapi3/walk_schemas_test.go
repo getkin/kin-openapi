@@ -66,6 +66,8 @@ func loadWalkSpec(t *testing.T) *openapi3.T {
 }
 
 func TestWalkSchemas(t *testing.T) {
+	t.Parallel()
+
 	doc := loadWalkSpec(t)
 
 	locsByPtr := map[*openapi3.Schema][]string{}
@@ -102,6 +104,8 @@ func TestWalkSchemas(t *testing.T) {
 }
 
 func TestWalkSchemas_SkipSubtree(t *testing.T) {
+	t.Parallel()
+
 	doc := loadWalkSpec(t)
 
 	var visited []string
@@ -121,6 +125,8 @@ func TestWalkSchemas_SkipSubtree(t *testing.T) {
 }
 
 func TestWalkSchemas_ErrorAborts(t *testing.T) {
+	t.Parallel()
+
 	doc := loadWalkSpec(t)
 
 	boom := errors.New("boom")
@@ -178,6 +184,8 @@ components:
 }
 
 func TestWalkSubtree(t *testing.T) {
+	t.Parallel()
+
 	node := openapi3.NewSchema()
 	node.Properties = openapi3.Schemas{
 		"child": openapi3.NewSchemaRef("", openapi3.NewSchema()),
@@ -196,6 +204,8 @@ func TestWalkSubtree(t *testing.T) {
 }
 
 func TestWalkSubtree_SkipSubtree(t *testing.T) {
+	t.Parallel()
+
 	node := openapi3.NewSchema()
 	node.Properties = openapi3.Schemas{
 		"child": openapi3.NewSchemaRef("", openapi3.NewSchema()),
@@ -215,6 +225,8 @@ func TestWalkSubtree_SkipSubtree(t *testing.T) {
 // kind fails here until the walker descends into it, instead of being silently
 // skipped by every WalkSchemas and WalkSubtree consumer.
 func TestWalkSubtree_VisitsEverySubschemaField(t *testing.T) {
+	t.Parallel()
+
 	schemaType := reflect.TypeFor[openapi3.Schema]()
 	for i := range schemaType.NumField() {
 		field := schemaType.Field(i)

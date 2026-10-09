@@ -47,6 +47,8 @@ func prefixItemsSchema(t *testing.T, name string) *openapi3.Schema {
 // Each entry validates its own index, so swapping two values that satisfy the
 // list in a different order fails.
 func TestPrefixItems_Positional(t *testing.T) {
+	t.Parallel()
+
 	tuple := prefixItemsSchema(t, "Tuple")
 	opt := openapi3.EnableJSONSchema2020()
 
@@ -58,6 +60,8 @@ func TestPrefixItems_Positional(t *testing.T) {
 
 // The error names the offending index rather than the array as a whole.
 func TestPrefixItems_ErrorCarriesTheIndex(t *testing.T) {
+	t.Parallel()
+
 	opt := openapi3.EnableJSONSchema2020()
 	err := prefixItemsSchema(t, "Tuple").VisitJSON([]any{"a", "b"}, opt)
 	require.Error(t, err)
@@ -67,6 +71,8 @@ func TestPrefixItems_ErrorCarriesTheIndex(t *testing.T) {
 // A short array leaves the later entries unapplied; prefixItems constrains the
 // positions that exist, and minItems is what requires them to exist.
 func TestPrefixItems_ShorterThanTheList(t *testing.T) {
+	t.Parallel()
+
 	tuple := prefixItemsSchema(t, "Tuple")
 	opt := openapi3.EnableJSONSchema2020()
 
@@ -78,6 +84,8 @@ func TestPrefixItems_ShorterThanTheList(t *testing.T) {
 // items governs only the positions past prefixItems, so the prefix keeps its
 // own types and the tail takes the items schema.
 func TestPrefixItems_ItemsAppliesPastThePrefix(t *testing.T) {
+	t.Parallel()
+
 	tail := prefixItemsSchema(t, "Tail")
 	opt := openapi3.EnableJSONSchema2020()
 
@@ -90,6 +98,8 @@ func TestPrefixItems_ItemsAppliesPastThePrefix(t *testing.T) {
 // Without prefixItems, items applies to every position, which is what OAS 3.0
 // documents rely on.
 func TestPrefixItems_AbsentLeavesItemsUnchanged(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:
@@ -114,6 +124,8 @@ components:
 
 // Every failing position is reported when multiple errors are requested.
 func TestPrefixItems_MultiError(t *testing.T) {
+	t.Parallel()
+
 	opt := openapi3.EnableJSONSchema2020()
 	err := prefixItemsSchema(t, "Tuple").VisitJSON([]any{float64(1), "a"}, opt, openapi3.MultiErrors())
 	require.Error(t, err)

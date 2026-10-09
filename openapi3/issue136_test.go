@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue136(t *testing.T) {
+	t.Parallel()
+
 	specf := func(dflt string) string {
 		return `
 openapi: 3.0.2

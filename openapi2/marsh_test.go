@@ -7,6 +7,8 @@ import (
 )
 
 func TestUnmarshalError(t *testing.T) {
+	t.Parallel()
+
 	{
 		v2 := []byte(`
 openapi: '2.0'

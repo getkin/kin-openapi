@@ -12,6 +12,8 @@ import (
 )
 
 func Test_validateResponseHeader(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		headerName string
 		headerRef  *openapi3.HeaderRef

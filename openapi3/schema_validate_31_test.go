@@ -9,6 +9,8 @@ import (
 )
 
 func TestSchemaValidate31SubSchemas(t *testing.T) {
+	t.Parallel()
+
 	ctx := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
 
 	// Helper: a schema with an invalid nested schema (pattern with bad regex)

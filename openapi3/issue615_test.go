@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue615(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/recursiveRef/issue615.yml")

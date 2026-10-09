@@ -130,6 +130,8 @@ func codedErrorInventory() []openapi3.CodedError {
 // code from the exported catalog, every catalog entry is yielded by some
 // type, and the catalog is sorted, unique, kebab-case.
 func TestValidationErrorCodes(t *testing.T) {
+	t.Parallel()
+
 	catalog := openapi3.ValidationErrorCodes()
 	require.True(t, slices.IsSorted(catalog), "catalog must be sorted")
 	require.Equal(t, len(slices.Compact(slices.Clone(catalog))), len(catalog), "catalog must be unique")
@@ -156,6 +158,8 @@ func TestValidationErrorCodes(t *testing.T) {
 // which codes exist; this covers that a consumer can get to them. One row per
 // unwrap path, not per code.
 func TestValidationErrorCodes_EndToEnd(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name    string // the wrapper chain under test
 		spec    string

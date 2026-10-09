@@ -13,6 +13,8 @@ import (
 )
 
 func TestIssue1110(t *testing.T) {
+	t.Parallel()
+
 	// Test case: POST with application/x-www-form-urlencoded
 	// Schema has two optional properties (not required)
 	// Sending only one param should be valid since no fields are required

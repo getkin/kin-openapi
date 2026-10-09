@@ -99,6 +99,8 @@ func TestIssue1243StringFormatValidatorsApplyToOpenAPI31(t *testing.T) {
 }
 
 func TestIssue1243UnregisteredFormatsStayAnnotationsUnderOpenAPI31(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: 3.1.0
 info:

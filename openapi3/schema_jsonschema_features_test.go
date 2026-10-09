@@ -3,6 +3,8 @@ package openapi3
 import "testing"
 
 func TestSchemaUsesJSONSchema2020Features(t *testing.T) {
+	t.Parallel()
+
 	falseValue := false
 	ref := func() *SchemaRef { return &SchemaRef{Value: &Schema{}} }
 
@@ -38,6 +40,8 @@ func TestSchemaUsesJSONSchema2020Features(t *testing.T) {
 }
 
 func TestSchemaUsesJSONSchema2020FeaturesNestedAndLegacy(t *testing.T) {
+	t.Parallel()
+
 	falseValue := false
 	zeroCount := uint64(0)
 	zeroNumber := float64(0)

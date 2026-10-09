@@ -13,6 +13,8 @@ import (
 )
 
 func TestIssue1069V2ToV3(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		v2Spec   string
@@ -108,6 +110,8 @@ paths:
 }
 
 func TestIssue1069V3ToV2(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		v3Spec   string

@@ -8,6 +8,8 @@ import (
 )
 
 func TestIssue746(t *testing.T) {
+	t.Parallel()
+
 	schema := &Schema{}
 	err := schema.UnmarshalJSON([]byte(`{"additionalProperties": false}`))
 	require.NoError(t, err)

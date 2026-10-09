@@ -15,6 +15,8 @@ import (
 )
 
 func TestEncodedPathAuthorizationBypass(t *testing.T) {
+	t.Parallel()
+
 	var authCalls atomic.Int64
 	var downstreamRoute atomic.Value
 	var protectedID atomic.Value

@@ -12,6 +12,8 @@ import (
 )
 
 func TestValidationWithIntegerEnum(t *testing.T) {
+	t.Parallel()
+
 	t.Run("PUT Request", func(t *testing.T) {
 		const spec = `
 openapi: 3.0.0
@@ -161,6 +163,8 @@ paths:
 }
 
 func TestValidationWithStringEnum(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:

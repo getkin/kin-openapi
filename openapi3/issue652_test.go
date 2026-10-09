@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue652(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 

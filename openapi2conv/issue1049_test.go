@@ -8,6 +8,8 @@ import (
 )
 
 func TestIssue1049(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 {
   "swagger": "2.0",

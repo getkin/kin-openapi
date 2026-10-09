@@ -31,6 +31,8 @@ func v2v3YAML(spec2 []byte) (doc3 *openapi3.T, err error) {
 }
 
 func TestIssue187(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 {
   "swagger": "2.0",
@@ -111,6 +113,8 @@ func TestIssue187(t *testing.T) {
 }
 
 func TestIssue237(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 swagger: '2.0'
 info:
@@ -170,6 +174,8 @@ paths:
 }
 
 func TestPR449(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 swagger: '2.0'
 info:

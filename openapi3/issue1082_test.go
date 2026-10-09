@@ -40,6 +40,8 @@ func securityRequirementsCallback(op *openapi3.Operation) *openapi3.CallbackRef 
 }
 
 func TestIssue1082_UndeclaredSecuritySchemes(t *testing.T) {
+	t.Parallel()
+
 	for _, version := range []string{"3.0.3", "3.1.2"} {
 		for _, tc := range []struct {
 			name   string
@@ -84,6 +86,8 @@ func TestIssue1082_UndeclaredSecuritySchemes(t *testing.T) {
 }
 
 func TestIssue1082_Controls(t *testing.T) {
+	t.Parallel()
+
 	for _, security := range []openapi3.SecurityRequirements{
 		nil, {}, {{}}, {{"bearerAuth": {}}}, {{"bearerAuth": {"role"}}},
 	} {
@@ -107,6 +111,8 @@ func TestIssue1082_Controls(t *testing.T) {
 }
 
 func TestIssue1082_ErrorMetadataAndMultiError(t *testing.T) {
+	t.Parallel()
+
 	doc := securityRequirementsDoc(t)
 	doc.Security = openapi3.SecurityRequirements{{"z": {}, "a~/": {}, "bearerAuth": {}}, {"other": {}}}
 	op := securityRequirementsOperation()
@@ -153,6 +159,8 @@ func TestIssue1082_ErrorMetadataAndMultiError(t *testing.T) {
 }
 
 func TestIssue1082_SharedCallbacksAndDocumentNamespace(t *testing.T) {
+	t.Parallel()
+
 	doc := securityRequirementsDoc(t)
 	op := securityRequirementsOperation()
 	callback := securityRequirementsCallback(op)
@@ -174,6 +182,8 @@ func TestIssue1082_SharedCallbacksAndDocumentNamespace(t *testing.T) {
 }
 
 func TestIssue1082_EntryDocumentForExternalPath(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
@@ -205,6 +215,8 @@ components:
 }
 
 func TestIssue1082_VersionAndUnresolvedControls(t *testing.T) {
+	t.Parallel()
+
 	for _, version := range []string{"3.2.0", "3.3.0", "unrecognized"} {
 		doc := securityRequirementsDoc(t)
 		doc.OpenAPI = version
@@ -222,6 +234,8 @@ func TestIssue1082_VersionAndUnresolvedControls(t *testing.T) {
 }
 
 func TestIssue1082_RootExtensionsLast(t *testing.T) {
+	t.Parallel()
+
 	for _, version := range []string{"3.0.3", "3.1.2", "3.2.0", "3.3.0", "unrecognized"} {
 		t.Run(version, func(t *testing.T) {
 			doc := securityRequirementsDoc(t)

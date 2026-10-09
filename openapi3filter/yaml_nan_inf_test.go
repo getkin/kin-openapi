@@ -37,6 +37,8 @@ paths:
 `
 
 func TestYAMLNaNInfNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(yamlNaNInfNumberSpec))
 	require.NoError(t, err)

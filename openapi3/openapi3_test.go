@@ -14,6 +14,8 @@ import (
 )
 
 func TestRefsJSON(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 
 	t.Log("Marshal *T to JSON")
@@ -52,6 +54,8 @@ func TestRefsJSON(t *testing.T) {
 }
 
 func TestRefsYAML(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 
 	t.Log("Marshal *T to YAML")
@@ -330,6 +334,8 @@ func spec() *openapi3.T {
 }
 
 func TestValidation(t *testing.T) {
+	t.Parallel()
+
 	version := `
 openapi: 3.0.2
 `
@@ -446,6 +452,8 @@ components:
 }
 
 func TestAddRemoveServer(t *testing.T) {
+	t.Parallel()
+
 	testServerLines := []*openapi3.Server{{URL: "test0.com"}, {URL: "test1.com"}, {URL: "test3.com"}}
 
 	doc3 := &openapi3.T{

@@ -9,6 +9,8 @@ import (
 )
 
 func TestValidateInfo_SummaryIn30(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: '3'
 paths: {}
@@ -28,6 +30,8 @@ info:
 }
 
 func TestValidateInfo_SummaryIn31(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: '3.1'
 paths: {}

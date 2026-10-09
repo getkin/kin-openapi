@@ -11,6 +11,8 @@ import (
 )
 
 func TestSchemaRef_UnmarshalJSON_Ref(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/definitions/Pet"}`)
 
 	var ref openapi2.SchemaRef
@@ -21,6 +23,8 @@ func TestSchemaRef_UnmarshalJSON_Ref(t *testing.T) {
 }
 
 func TestSchemaRef_UnmarshalJSON_RefWithExtensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/definitions/Pet","x-order":1,"something":"extra"}`)
 
 	var ref openapi2.SchemaRef
@@ -32,6 +36,8 @@ func TestSchemaRef_UnmarshalJSON_RefWithExtensions(t *testing.T) {
 }
 
 func TestSchemaRef_UnmarshalJSON_Value(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"type":"string"}`)
 
 	var ref openapi2.SchemaRef

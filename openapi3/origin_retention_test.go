@@ -11,6 +11,8 @@ import (
 // second copy the loader used to hold for the lifetime of the loader, which on
 // a large spec was a third of everything it retained.
 func TestOriginTree_NotRetainedForAnOrdinarySpec(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IncludeOrigin = true
 	loader.Context = t.Context()
@@ -32,6 +34,8 @@ func TestOriginTree_NotRetainedForAnOrdinarySpec(t *testing.T) {
 // capability together: dropping the tree for the referenced file would leave
 // the resolved schema without an origin.
 func TestOriginTree_RetainedOnlyWhereItCanBeRead(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -59,6 +63,8 @@ func TestOriginTree_RetainedOnlyWhereItCanBeRead(t *testing.T) {
 // Without IncludeOrigin there is no tree to begin with, so the new condition
 // cannot change anything here.
 func TestOriginTree_NotRetainedWhenOriginsAreOff(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.Context = t.Context()

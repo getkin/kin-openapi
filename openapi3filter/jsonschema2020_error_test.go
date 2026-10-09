@@ -39,6 +39,8 @@ paths:
 // in its SchemaError, as one refused by a 3.0 document does: a caller answers
 // 400 for a body that is not the object and 422 for a broken field by them.
 func TestJSONSchema2020_RequestBodyErrorCarriesItsStructure(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(jsonSchema2020ErrorSpec))
 	require.NoError(t, err)

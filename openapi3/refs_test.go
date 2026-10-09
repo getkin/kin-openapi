@@ -12,6 +12,8 @@ import (
 )
 
 func TestCallbackRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -58,6 +60,8 @@ func TestCallbackRef_Extensions(t *testing.T) {
 }
 
 func TestExampleRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -104,6 +108,8 @@ func TestExampleRef_Extensions(t *testing.T) {
 }
 
 func TestHeaderRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -142,6 +148,8 @@ func TestHeaderRef_Extensions(t *testing.T) {
 }
 
 func TestLinkRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -188,6 +196,8 @@ func TestLinkRef_Extensions(t *testing.T) {
 }
 
 func TestParameterRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -234,6 +244,8 @@ func TestParameterRef_Extensions(t *testing.T) {
 }
 
 func TestRequestBodyRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -280,6 +292,8 @@ func TestRequestBodyRef_Extensions(t *testing.T) {
 }
 
 func TestResponseRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -326,6 +340,8 @@ func TestResponseRef_Extensions(t *testing.T) {
 }
 
 func TestSchemaRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 
@@ -372,6 +388,8 @@ func TestSchemaRef_Extensions(t *testing.T) {
 }
 
 func TestSecuritySchemeRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
 	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
 

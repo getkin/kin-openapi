@@ -50,6 +50,8 @@ components:
 }
 
 func TestValidateRequestDefault(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		url      string
 		expected []string

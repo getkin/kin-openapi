@@ -11,6 +11,8 @@ import (
 const originKey = "__origin__"
 
 func TestOrigin_T(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -32,6 +34,8 @@ func TestOrigin_T(t *testing.T) {
 }
 
 func TestOrigin_Info(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -72,6 +76,8 @@ func TestOrigin_Info(t *testing.T) {
 }
 
 func TestOrigin_Paths(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -124,6 +130,8 @@ func TestOrigin_Paths(t *testing.T) {
 }
 
 func TestOrigin_RequestBody(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -159,6 +167,8 @@ func TestOrigin_RequestBody(t *testing.T) {
 }
 
 func TestOrigin_Responses(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -215,6 +225,8 @@ func TestOrigin_Responses(t *testing.T) {
 }
 
 func TestOrigin_Parameters(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -256,6 +268,8 @@ func TestOrigin_Parameters(t *testing.T) {
 }
 
 func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -290,6 +304,8 @@ func TestOrigin_SchemaInAdditionalProperties(t *testing.T) {
 }
 
 func TestOrigin_ExternalDocs(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -332,6 +348,8 @@ func TestOrigin_ExternalDocs(t *testing.T) {
 }
 
 func TestOrigin_Security(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -406,6 +424,8 @@ func TestOrigin_Security(t *testing.T) {
 }
 
 func TestOrigin_Example(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -443,6 +463,8 @@ func TestOrigin_Example(t *testing.T) {
 }
 
 func TestOrigin_XML(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -489,6 +511,8 @@ func TestOrigin_XML(t *testing.T) {
 // These fields have no dedicated UnmarshalJSON; extractOrigins strips
 // __origin__ before JSON marshaling so it never reaches these values.
 func TestOrigin_AnyFieldsStripped(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromFile("testdata/origin/any_fields.yaml")
@@ -528,6 +552,8 @@ func TestOrigin_AnyFieldsStripped(t *testing.T) {
 }
 
 func TestOrigin_ExampleWithArrayValue(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromFile("testdata/origin/example_with_array.yaml")
@@ -548,6 +574,8 @@ func TestOrigin_ExampleWithArrayValue(t *testing.T) {
 // TestOrigin_OriginExistsInProperties verifies that loading fails when a specification
 // contains a property named "__origin__", highlighting a limitation in the current implementation.
 func TestOrigin_ConstAndExamplesStripped(t *testing.T) {
+	t.Parallel()
+
 	var data = `
 openapi: "3.1.0"
 info:
@@ -582,6 +610,8 @@ components:
 }
 
 func TestOrigin_OriginExistsInProperties(t *testing.T) {
+	t.Parallel()
+
 	var data = `
 paths:
   /foo:
@@ -617,6 +647,8 @@ components:
 // from the yaml3 decoder but it was never stripped, causing spurious diffs
 // between specs loaded from different file paths.
 func TestOrigin_ExtensionValuesStripped(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
@@ -643,6 +675,8 @@ func TestOrigin_ExtensionValuesStripped(t *testing.T) {
 }
 
 func TestOrigin_WithExternalRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -690,6 +724,8 @@ func TestOrigin_WithExternalRef(t *testing.T) {
 // root mapping of a document was skipped. This test covers the fix in yaml3's
 // document() decoder that injects __origin__ for the root mapping too.
 func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.IncludeOrigin = true
@@ -729,6 +765,8 @@ func TestOrigin_WithExternalRefRootOrigin(t *testing.T) {
 // The if k == originKey blocks in their UnmarshalJSON were removed; this
 // confirms extractOrigins strips __origin__ before it reaches those iterators.
 func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromFile("testdata/origin/simple.yaml")
@@ -743,6 +781,8 @@ func TestOrigin_MaplikeNoOriginKey(t *testing.T) {
 }
 
 func TestOrigin_NoSpuriousOriginsInComponents(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
@@ -766,6 +806,8 @@ func TestOrigin_NoSpuriousOriginsInComponents(t *testing.T) {
 // These locations are used by NewSourceFromSequenceItem to pinpoint
 // breaking changes to individual required field names.
 func TestOrigin_RequiredSequence(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
@@ -802,6 +844,8 @@ func TestOrigin_RequiredSequence(t *testing.T) {
 // without error and carries origin metadata from the anchor definition.
 // Multiple aliases of the same anchor must not produce duplicate __origin__ keys.
 func TestOrigin_YAMLAlias(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
@@ -828,6 +872,8 @@ func TestOrigin_YAMLAlias(t *testing.T) {
 
 // TestOrigin_Headers verifies that response header origin is tracked correctly.
 func TestOrigin_Headers(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
@@ -873,6 +919,8 @@ func TestOrigin_Headers(t *testing.T) {
 // strings ("200":). Bare integers produce map[any]any in the
 // YAML decoder, which required a dedicated fix in extractOrigins.
 func TestOrigin_IntegerStatusCode(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
@@ -928,6 +976,8 @@ func TestOrigin_Disabled(t *testing.T) {
 // mapping-valued fields were missing from the origin and source
 // location lookups returned nil.
 func TestOrigin_MappingFields(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 

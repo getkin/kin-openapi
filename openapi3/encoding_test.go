@@ -8,6 +8,8 @@ import (
 )
 
 func TestEncodingJSON(t *testing.T) {
+	t.Parallel()
+
 	t.Log("Marshal *openapi3.Encoding to JSON")
 	data, err := json.Marshal(encoding())
 	require.NoError(t, err)
@@ -57,6 +59,8 @@ func encoding() *Encoding {
 }
 
 func TestEncodingSerializationMethod(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		enc  *Encoding

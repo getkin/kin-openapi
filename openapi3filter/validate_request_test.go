@@ -35,6 +35,8 @@ func setupTestRouter(t *testing.T, spec string) routers.Router {
 }
 
 func TestValidateRequest(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:
@@ -224,6 +226,8 @@ components:
 }
 
 func TestValidateQueryParams(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		name  string
 		param *openapi3.Parameter
@@ -524,6 +528,8 @@ func matchSchemaError(t *testing.T, got, want error) {
 }
 
 func TestValidateRequestExcludeQueryParams(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:
@@ -575,6 +581,8 @@ paths:
 // to nil-pointer-dereference/panic in defaultContentParameterDecoder instead
 // of returning a validation error.
 func TestValidateRequestContentParameterWithoutSchema(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.3
 info: {title: poc, version: "1.0.0"}

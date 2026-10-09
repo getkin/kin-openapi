@@ -28,6 +28,8 @@ func decodeArrayIntSchema() *openapi3.SchemaRef {
 }
 
 func TestDecodeArray_FormNoExplode(t *testing.T) {
+	t.Parallel()
+
 	sm := &openapi3.SerializationMethod{Style: "form", Explode: false}
 	schema := decodeArrayStringSchema()
 
@@ -98,6 +100,8 @@ func TestDecodeArray_FormNoExplode(t *testing.T) {
 }
 
 func TestDecodeArray_SpaceAndPipeNoExplode(t *testing.T) {
+	t.Parallel()
+
 	schema := decodeArrayStringSchema()
 
 	t.Run("spaceDelimited single", func(t *testing.T) {
@@ -138,6 +142,8 @@ func TestDecodeArray_SpaceAndPipeNoExplode(t *testing.T) {
 }
 
 func TestDecodeArray_FormExplode(t *testing.T) {
+	t.Parallel()
+
 	sm := &openapi3.SerializationMethod{Style: "form", Explode: true}
 	schema := decodeArrayStringSchema()
 
@@ -168,6 +174,8 @@ func TestDecodeArray_FormExplode(t *testing.T) {
 }
 
 func TestDecodeArray_IntegerItems(t *testing.T) {
+	t.Parallel()
+
 	sm := &openapi3.SerializationMethod{Style: "form", Explode: false}
 	schema := decodeArrayIntSchema()
 
@@ -199,6 +207,8 @@ func TestDecodeArray_IntegerItems(t *testing.T) {
 }
 
 func TestHeaderDecodeArray_TrimsOptionalWhitespace(t *testing.T) {
+	t.Parallel()
+
 	sm := &openapi3.SerializationMethod{Style: "simple", Explode: false}
 	schema := decodeArrayIntSchema()
 	dec := &headerParamDecoder{header: http.Header{"X-Pages": {"1, 3, 10"}}}
@@ -210,6 +220,8 @@ func TestHeaderDecodeArray_TrimsOptionalWhitespace(t *testing.T) {
 }
 
 func TestHeaderDecodeArray_RepeatedFieldLines(t *testing.T) {
+	t.Parallel()
+
 	sm := &openapi3.SerializationMethod{Style: "simple", Explode: false}
 	schema := decodeArrayIntSchema()
 	dec := &headerParamDecoder{header: http.Header{"X-Pages": {"1", "3, 10"}}}
@@ -221,6 +233,8 @@ func TestHeaderDecodeArray_RepeatedFieldLines(t *testing.T) {
 }
 
 func TestDecodeArray_DeepObjectRejected(t *testing.T) {
+	t.Parallel()
+
 	sm := &openapi3.SerializationMethod{Style: "deepObject", Explode: true}
 	dec := &urlValuesDecoder{values: url.Values{"param": {"x"}}}
 	_, _, err := dec.DecodeArray("param", sm, decodeArrayStringSchema())

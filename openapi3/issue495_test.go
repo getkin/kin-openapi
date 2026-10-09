@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue495(t *testing.T) {
+	t.Parallel()
+
 	{
 		spec := []byte(`
 openapi: 3.0.1
@@ -88,6 +90,8 @@ paths:
 }
 
 func TestIssue495WithDraft04(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.1
 servers:
@@ -131,6 +135,8 @@ paths:
 }
 
 func TestIssue495WithDraft04Bis(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.1
 servers:

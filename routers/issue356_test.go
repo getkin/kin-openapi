@@ -17,6 +17,8 @@ import (
 )
 
 func TestIssue356(t *testing.T) {
+	t.Parallel()
+
 	spec := func(servers string) []byte {
 		return []byte(`
 openapi: 3.0.0

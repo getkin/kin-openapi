@@ -13,6 +13,7 @@ import (
 )
 
 func TestIssue641(t *testing.T) {
+	t.Parallel()
 
 	anyOfSpec := `
 openapi: 3.0.0

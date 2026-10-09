@@ -1130,6 +1130,8 @@ type schemaTypeExample struct {
 }
 
 func TestTypes(t *testing.T) {
+	t.Parallel()
+
 	for _, example := range typeExamples {
 		t.Run(example.Title, testType(example))
 	}
@@ -1199,6 +1201,8 @@ var typeExamples = []schemaTypeExample{
 }
 
 func TestSchemaErrors(t *testing.T) {
+	t.Parallel()
+
 	for _, example := range schemaErrorExamples {
 		t.Run(example.Title, testSchemaError(example))
 	}
@@ -1251,6 +1255,8 @@ type schemaMultiErrorExample struct {
 }
 
 func TestSchemasMultiError(t *testing.T) {
+	t.Parallel()
+
 	for _, example := range schemaMultiErrorExamples {
 		t.Run(example.Title, testSchemaMultiError(example))
 	}
@@ -1394,6 +1400,8 @@ var schemaMultiErrorExamples = []schemaMultiErrorExample{
 }
 
 func TestIssue283(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: "3.0.1"
 paths: {}
@@ -1430,6 +1438,8 @@ components:
 }
 
 func TestValidationFailsOnInvalidPattern(t *testing.T) {
+	t.Parallel()
+
 	schema := Schema{
 		Pattern: "[",
 		Type:    &Types{"string"},
@@ -1440,6 +1450,8 @@ func TestValidationFailsOnInvalidPattern(t *testing.T) {
 }
 
 func TestIssue646(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`
 enum:
 - 42
@@ -1482,6 +1494,8 @@ enum:
 }
 
 func TestIssue751(t *testing.T) {
+	t.Parallel()
+
 	schema := &Schema{
 		Type:        &Types{"array"},
 		UniqueItems: true,
@@ -1494,6 +1508,8 @@ func TestIssue751(t *testing.T) {
 }
 
 func TestIssue817(t *testing.T) {
+	t.Parallel()
+
 	max := 999999999.99
 	min := -999999999.99
 	mulOf := 0.01
@@ -1543,6 +1559,8 @@ func computedFloat(a, b float64) float64 { return a + b }
 func scaledFloat(a, b float64) float64 { return a * b }
 
 func TestSchemaMultipleOfAcrossMagnitudes(t *testing.T) {
+	t.Parallel()
+
 	numberSchema := func(multipleOf float64) *Schema {
 		return &Schema{Type: &Types{"number"}, MultipleOf: &multipleOf}
 	}

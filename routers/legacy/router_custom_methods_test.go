@@ -52,6 +52,8 @@ paths:
 `
 
 func TestRouterCustomMethods(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(customMethodsSpec))
 	require.NoError(t, err)

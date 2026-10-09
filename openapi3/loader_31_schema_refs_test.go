@@ -96,6 +96,8 @@ components:
 }
 
 func TestResolveSchemaRefsIn31Fields(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/schema31refs.yml")
 	require.NoError(t, err)

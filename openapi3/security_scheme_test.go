@@ -13,6 +13,8 @@ type securitySchemeExample struct {
 }
 
 func TestSecuritySchemaExample(t *testing.T) {
+	t.Parallel()
+
 	for _, example := range securitySchemeExamples {
 		t.Run(example.title, func(t *testing.T) {
 			ss := &SecurityScheme{}

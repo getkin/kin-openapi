@@ -165,6 +165,8 @@ func (h *validatorTestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func TestValidator(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(validatorSpec))
 	require.NoError(t, err, "failed to load test fixture spec")

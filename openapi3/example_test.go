@@ -8,6 +8,8 @@ import (
 )
 
 func TestExampleJSON(t *testing.T) {
+	t.Parallel()
+
 	t.Log("Marshal *openapi3.Example to JSON")
 	data, err := json.Marshal(example())
 	require.NoError(t, err)

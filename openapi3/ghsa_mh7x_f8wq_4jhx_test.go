@@ -9,6 +9,8 @@ import (
 )
 
 func TestGHS_mh7x_f8wq_4jhx(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: 3.0.3
 info: {title: t, version: "1.0.0"}

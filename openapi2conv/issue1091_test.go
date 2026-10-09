@@ -11,6 +11,8 @@ import (
 )
 
 func TestIssue1091_PropertyExtensions(t *testing.T) {
+	t.Parallel()
+
 	// Create a v2 schema with x-order extensions on properties
 	v2SchemaJSON := `{
 		"type": "object",
@@ -76,6 +78,8 @@ func TestIssue1091_PropertyExtensions(t *testing.T) {
 }
 
 func TestIssue1091_SchemaLevelExtensions(t *testing.T) {
+	t.Parallel()
+
 	// Create a v2 schema with schema-level extensions
 	v2SchemaJSON := `{
 		"type": "object",
@@ -113,6 +117,8 @@ func TestIssue1091_SchemaLevelExtensions(t *testing.T) {
 }
 
 func TestIssue1091_CompleteV2ToV3Conversion(t *testing.T) {
+	t.Parallel()
+
 	// Create a complete v2 spec with extensions in definitions
 	v2SpecJSON := `{
 		"swagger": "2.0",

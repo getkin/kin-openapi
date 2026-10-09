@@ -364,6 +364,8 @@ func TestPerValidationFormatValidators(t *testing.T) {
 }
 
 func TestPerValidationFormatValidators_AllTypes(t *testing.T) {
+	t.Parallel()
+
 	// Test string format validator
 	stringValidator := NewCallbackValidator(func(value string) error {
 		if len(value) < 5 {
@@ -529,6 +531,8 @@ func TestDocumentScopedFormatValidators(t *testing.T) {
 }
 
 func TestDocumentScopedFormatValidators_AllTypes(t *testing.T) {
+	t.Parallel()
+
 	doc := &T{
 		OpenAPI: "3.0.0",
 		Info:    &Info{Title: "Test", Version: "1.0.0"},
@@ -582,6 +586,8 @@ func TestDocumentScopedFormatValidators_AllTypes(t *testing.T) {
 }
 
 func TestDocumentScopedFormatValidators_BatchSet(t *testing.T) {
+	t.Parallel()
+
 	doc := &T{
 		OpenAPI: "3.0.0",
 		Info:    &Info{Title: "Test", Version: "1.0.0"},

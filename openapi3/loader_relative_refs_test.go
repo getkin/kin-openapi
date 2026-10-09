@@ -195,6 +195,8 @@ var refTestDataEntriesResponseError = []refTestDataEntryWithErrorMessage{
 }
 
 func TestLoadFromDataWithExternalRef(t *testing.T) {
+	t.Parallel()
+
 	for _, td := range refTestDataEntries {
 		t.Logf("testcase %q", td.name)
 
@@ -208,6 +210,8 @@ func TestLoadFromDataWithExternalRef(t *testing.T) {
 }
 
 func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
+	t.Parallel()
+
 	for _, td := range refTestDataEntriesResponseError {
 		t.Logf("testcase %q", td.name)
 
@@ -221,6 +225,8 @@ func TestLoadFromDataWithExternalRefResponseError(t *testing.T) {
 }
 
 func TestLoadFromDataWithExternalNestedRef(t *testing.T) {
+	t.Parallel()
+
 	for _, td := range refTestDataEntries {
 		t.Logf("testcase %q", td.name)
 
@@ -800,6 +806,8 @@ var relativeDocRefsTestDataEntries = []refTestDataEntry{
 }
 
 func TestLoadSpecWithRelativeDocumentRefs(t *testing.T) {
+	t.Parallel()
+
 	for _, td := range relativeDocRefsTestDataEntries {
 		t.Run(td.name, func(t *testing.T) {
 			spec := []byte(td.contentTemplate)
@@ -906,6 +914,8 @@ paths:
 `
 
 func TestLoadSpecWithRelativeDocumentRefs2(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/relativeDocsUseDocumentPath/openapi/openapi.yml")

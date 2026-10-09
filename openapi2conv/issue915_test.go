@@ -11,6 +11,8 @@ import (
 )
 
 func TestIssue915(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 {
   "swagger": "2.0",

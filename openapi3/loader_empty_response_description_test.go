@@ -9,6 +9,8 @@ import (
 )
 
 func TestJSONSpecResponseDescriptionEmptiness(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 {
   "info": {
