@@ -76,8 +76,7 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
     RegisterBodyDecoder registers a request body's decoder for a content type.
 
     If a decoder for the specified content type already exists, the function
-    replaces it with the specified decoder. This call is not thread-safe:
-    body decoders should not be created/destroyed by multiple goroutines.
+    replaces it with the specified decoder.
 
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
     RegisterBodyEncoder enables package-wide decoding of contentType values
@@ -88,9 +87,7 @@ func TrimJSONPrefix(data []byte) []byte
 func UnregisterBodyDecoder(contentType string)
     UnregisterBodyDecoder dissociates a body decoder from a content type.
 
-    Decoding this content type will result in an error. This call is not
-    thread-safe: body decoders should not be created/destroyed by multiple
-    goroutines.
+    Decoding this content type will result in an error.
 
 func UnregisterBodyEncoder(contentType string)
     UnregisterBodyEncoder disables package-wide decoding of contentType values
@@ -167,8 +164,6 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder
     content type.
 
     If no decoder was registered for the given content type, nil is returned.
-    This call is not thread-safe: body decoders should not be created/destroyed
-    by multiple goroutines.
 
 type BodyEncoder func(body any) ([]byte, error)
     BodyEncoder really is an (encoding/json).Marshaler

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -2042,6 +2043,33 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 		Kind:   KindUnsupportedFormat,
 		Reason: prefixUnsupportedCT + ` "application/csv"`,
 	}, err)
+}
+
+func TestRegisterBodyDecoderConcurrently(t *testing.T) {
+	const contentType = "application/x-concurrent-test"
+	t.Cleanup(func() { UnregisterBodyDecoder(contentType) })
+
+	h := make(http.Header)
+	h.Set(headerCT, "application/json")
+	schema := openapi3.NewStringSchema().NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+
+	var wg sync.WaitGroup
+	for range 10 {
+		wg.Go(func() {
+			for range 100 {
+				RegisterBodyDecoder(contentType, PlainBodyDecoder)
+				UnregisterBodyDecoder(contentType)
+			}
+		})
+		wg.Go(func() {
+			for range 100 {
+				_, _, err := decodeBody(strings.NewReader(`"foo"`), h, schema, encFn)
+				assert.NoError(t, err)
+			}
+		})
+	}
+	wg.Wait()
 }
 
 func matchParseError(t *testing.T, got, want error) {

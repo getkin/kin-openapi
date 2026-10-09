@@ -18,6 +18,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	yaml "github.com/oasdiff/yaml3"
 
@@ -1265,23 +1266,23 @@ type EncodingFn func(partName string) *openapi3.Encoding
 // An implementation must return a value that is a primitive, []any, or map[string]any.
 type BodyDecoder func(io.Reader, http.Header, *openapi3.SchemaRef, EncodingFn) (any, error)
 
-// bodyDecoders contains decoders for supported content types of a body.
-// By default, there is content type "application/json" is supported only.
+var bodyDecodersLock sync.RWMutex
 var bodyDecoders = make(map[string]BodyDecoder)
 
 // RegisteredBodyDecoder returns the registered body decoder for the given content type.
 //
 // If no decoder was registered for the given content type, nil is returned.
-// This call is not thread-safe: body decoders should not be created/destroyed by multiple goroutines.
 func RegisteredBodyDecoder(contentType string) BodyDecoder {
-	return bodyDecoders[contentType]
+	bodyDecodersLock.RLock()
+	decoder := bodyDecoders[contentType]
+	bodyDecodersLock.RUnlock()
+	return decoder
 }
 
 // RegisterBodyDecoder registers a request body's decoder for a content type.
 //
 // If a decoder for the specified content type already exists, the function replaces
 // it with the specified decoder.
-// This call is not thread-safe: body decoders should not be created/destroyed by multiple goroutines.
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 	if contentType == "" {
 		panic("contentType is empty")
@@ -1289,18 +1290,21 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 	if decoder == nil {
 		panic("decoder is not defined")
 	}
+	bodyDecodersLock.Lock()
 	bodyDecoders[contentType] = decoder
+	bodyDecodersLock.Unlock()
 }
 
 // UnregisterBodyDecoder dissociates a body decoder from a content type.
 //
 // Decoding this content type will result in an error.
-// This call is not thread-safe: body decoders should not be created/destroyed by multiple goroutines.
 func UnregisterBodyDecoder(contentType string) {
 	if contentType == "" {
 		panic("contentType is empty")
 	}
+	bodyDecodersLock.Lock()
 	delete(bodyDecoders, contentType)
+	bodyDecodersLock.Unlock()
 }
 
 var headerCT = http.CanonicalHeaderKey("Content-Type")
@@ -1398,8 +1402,8 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 		}
 	}
 
-	decoder, ok := bodyDecoders[mediaType]
-	if !ok {
+	decoder := RegisteredBodyDecoder(mediaType)
+	if decoder == nil {
 		// A binary part with no registered decoder (e.g. image/png) is read as
 		// raw bytes: encoding.contentType restricts the accepted media types but
 		// does not require a registered decoder.
