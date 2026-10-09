@@ -36,7 +36,9 @@ var encodingJSON = []byte(`
 {
   "contentType": "application/json",
   "headers": {
-    "someHeader": {}
+    "someHeader": {
+      "schema": {"type": "string"}
+    }
   },
   "style": "form",
   "explode": true,
@@ -49,7 +51,7 @@ func encoding() *Encoding {
 		ContentType: "application/json",
 		Headers: map[string]*HeaderRef{
 			"someHeader": {
-				Value: &Header{},
+				Value: &Header{Parameter: Parameter{Schema: NewStringSchema().NewRef()}},
 			},
 		},
 		Style:         "form",
@@ -97,4 +99,23 @@ func TestEncodingSerializationMethod(t *testing.T) {
 			require.EqualValues(t, tc.want, got, "got %#v, want %#v", got, tc.want)
 		})
 	}
+}
+
+func TestEncodingValidateHeaders(t *testing.T) {
+	t.Parallel()
+
+	t.Run("invalid header name", func(t *testing.T) {
+		enc := &Encoding{Headers: Headers{"bad header": {Value: &Header{}}}}
+		err := enc.Validate(t.Context())
+		require.ErrorContains(t, err, `identifier "bad header" is not supported`)
+	})
+
+	t.Run("invalid header", func(t *testing.T) {
+		enc := &Encoding{Headers: Headers{"X-Rate": {Value: &Header{Parameter: Parameter{
+			Schema:  NewStringSchema().NewRef(),
+			Content: NewContentWithJSONSchema(NewStringSchema()),
+		}}}}}
+		err := enc.Validate(t.Context())
+		require.Error(t, err)
+	})
 }
