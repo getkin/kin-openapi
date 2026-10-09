@@ -120,6 +120,8 @@ components:
 }
 
 func TestVisitJSON_OneOf_MissingDescriptorProperty(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name": "snoopy",
@@ -128,6 +130,8 @@ func TestVisitJSON_OneOf_MissingDescriptorProperty(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_MissingDescriptorValue(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name":  "snoopy",
@@ -137,6 +141,8 @@ func TestVisitJSON_OneOf_MissingDescriptorValue(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_MissingField(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name":  "snoopy",
@@ -146,6 +152,8 @@ func TestVisitJSON_OneOf_MissingField(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofNoDiscriminatorSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name": "snoopy",
@@ -154,6 +162,8 @@ func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_BadDiscriminatorType(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name":      "snoopy",
@@ -171,6 +181,8 @@ func TestVisitJSON_OneOf_BadDiscriminatorType(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_Path(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 paths: {}

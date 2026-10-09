@@ -580,6 +580,8 @@ func getValidationTests(t *testing.T) []*validationTest {
 }
 
 func TestValidationHandler_validateRequest(t *testing.T) {
+	t.Parallel()
+
 	tests := getValidationTests(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -663,6 +665,8 @@ func TestValidationHandler_validateRequest(t *testing.T) {
 }
 
 func TestValidationErrorEncoder(t *testing.T) {
+	t.Parallel()
+
 	tests := getValidationTests(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -758,6 +762,8 @@ func runTest_Middleware(t *testing.T, handler http.Handler, encoder ErrorEncoder
 }
 
 func TestValidationHandler_ServeHTTP(t *testing.T) {
+	t.Parallel()
+
 	t.Run("errors on invalid requests", func(t *testing.T) {
 		type pig struct{}
 		httpCtx := context.WithValue(t.Context(), pig{}, "tails")
@@ -801,6 +807,8 @@ func TestValidationHandler_ServeHTTP(t *testing.T) {
 }
 
 func TestValidationHandler_Middleware(t *testing.T) {
+	t.Parallel()
+
 	t.Run("errors on invalid requests", func(t *testing.T) {
 		type pig struct{}
 		httpCtx := context.WithValue(t.Context(), pig{}, "tails")

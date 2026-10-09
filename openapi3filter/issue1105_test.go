@@ -12,6 +12,8 @@ import (
 )
 
 func TestIssue1105(t *testing.T) {
+	t.Parallel()
+
 	testSchema := `
 openapi: 3.0.0
 info:

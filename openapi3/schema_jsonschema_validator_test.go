@@ -9,6 +9,8 @@ import (
 )
 
 func TestJSONSchema2020Validator_Basic(t *testing.T) {
+	t.Parallel()
+
 	t.Run("string validation", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"string"},
@@ -79,6 +81,8 @@ func TestJSONSchema2020Validator_Basic(t *testing.T) {
 }
 
 func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
+	t.Parallel()
+
 	t.Run("type array with null", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"string", "null"},
@@ -139,6 +143,8 @@ func TestJSONSchema2020Validator_OpenAPI31Features(t *testing.T) {
 }
 
 func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
+	t.Parallel()
+
 	t.Run("exclusive minimum as boolean (OpenAPI 3.0 style)", func(t *testing.T) {
 		min := 0.0
 		boolTrue := true
@@ -173,6 +179,8 @@ func TestJSONSchema2020Validator_ExclusiveMinMax(t *testing.T) {
 }
 
 func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
+	t.Parallel()
+
 	t.Run("oneOf", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			OneOf: openapi3.SchemaRefs{
@@ -241,6 +249,8 @@ func TestJSONSchema2020Validator_ComplexSchemas(t *testing.T) {
 }
 
 func TestJSONSchema2020Validator_CompilationError(t *testing.T) {
+	t.Parallel()
+
 	schema := &openapi3.Schema{
 		AllOf:                 openapi3.SchemaRefs{{Ref: "#/components/schemas/Base"}},
 		UnevaluatedProperties: openapi3.BoolSchema{Has: new(bool)},
@@ -253,6 +263,8 @@ func TestJSONSchema2020Validator_CompilationError(t *testing.T) {
 }
 
 func TestJSONSchema2020Validator_PatternPropertiesWithComponentRef(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.1.0
 info: {title: t, version: "1"}
@@ -282,6 +294,8 @@ components:
 }
 
 func TestBuiltInValidatorStillWorks(t *testing.T) {
+	t.Parallel()
+
 	t.Run("string validation with built-in", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"string"},

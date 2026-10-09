@@ -13,6 +13,8 @@ import (
 )
 
 func TestIssue440(t *testing.T) {
+	t.Parallel()
+
 	doc2file, err := os.Open("testdata/swagger.json")
 	require.NoError(t, err)
 	defer doc2file.Close()

@@ -38,6 +38,8 @@ type ExampleSecurityScheme struct {
 }
 
 func TestFilter(t *testing.T) {
+	t.Parallel()
+
 	// Declare a schema for an object with name and id properties
 	complexArgSchema := openapi3.NewObjectSchema().
 		WithProperty("name", openapi3.NewStringSchema()).
@@ -370,6 +372,8 @@ func marshalReader(value any) io.ReadCloser {
 }
 
 func TestValidateRequestBody(t *testing.T) {
+	t.Parallel()
+
 	requiredReqBody := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchema(openapi3.NewStringSchema())).
 		WithRequired(true)
@@ -475,6 +479,8 @@ func toJSON(v any) io.Reader {
 }
 
 func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *testing.T) {
+	t.Parallel()
+
 	// Create the security schemes
 	securitySchemes := []ExampleSecurityScheme{
 		{
@@ -620,6 +626,8 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 
 // TestAlternateRequirementMet asserts that ValidateSecurityRequirements succeeds if any SecurityRequirement is met and otherwise doesn't.
 func TestAnySecurityRequirementMet(t *testing.T) {
+	t.Parallel()
+
 	// Create of a map of scheme names and whether they are valid
 	schemes := map[string]bool{
 		"a": true,
@@ -726,6 +734,8 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 // TestAllSchemesMet asserts that ValidateSecurityRequirement succeeds if all the SecuritySchemes of a SecurityRequirement are met and otherwise doesn't.
 func TestAllSchemesMet(t *testing.T) {
+	t.Parallel()
+
 	// Create of a map of scheme names and whether they are met
 	schemes := map[string]bool{
 		"a": true,

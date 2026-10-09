@@ -11,6 +11,8 @@ import (
 // const is OpenAPI 3.1 only, so it is validated by the JSON Schema 2020-12
 // validator; the built-in one ignores it.
 func TestSchemaConst_BuiltInValidatorIgnoresIt(t *testing.T) {
+	t.Parallel()
+
 	schema := &openapi3.Schema{Const: "production"}
 	err := schema.VisitJSON("development")
 	require.NoError(t, err)
@@ -19,6 +21,8 @@ func TestSchemaConst_BuiltInValidatorIgnoresIt(t *testing.T) {
 }
 
 func TestSchemaConst_JSONSchema2020(t *testing.T) {
+	t.Parallel()
+
 	opt := openapi3.EnableJSONSchema2020()
 
 	t.Run("string const", func(t *testing.T) {

@@ -37,6 +37,8 @@ func issue1112Decode(t *testing.T, paramName, rawQuery string, schema *openapi3.
 }
 
 func TestIssue1112FreeFormDeepObject(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(
@@ -57,6 +59,8 @@ func TestIssue1112FreeFormDeepObject(t *testing.T) {
 }
 
 func TestIssue1112SingleFreeFormProperty(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(t, "properties", "properties[color]=black", schema)
@@ -67,6 +71,8 @@ func TestIssue1112SingleFreeFormProperty(t *testing.T) {
 }
 
 func TestIssue1112NestedFreeFormProperty(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(t, "properties", "properties[meta][color]=black", schema)
@@ -79,6 +85,8 @@ func TestIssue1112NestedFreeFormProperty(t *testing.T) {
 }
 
 func TestIssue1112URLDecodedFreeFormValue(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(t, "properties", "properties[color]=blue%20green", schema)
@@ -89,6 +97,8 @@ func TestIssue1112URLDecodedFreeFormValue(t *testing.T) {
 }
 
 func TestIssue1112EmptyFreeFormValue(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(t, "properties", "properties[color]=", schema)
@@ -99,6 +109,8 @@ func TestIssue1112EmptyFreeFormValue(t *testing.T) {
 }
 
 func TestIssue1112KnownPropertyKeepsTypedValue(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 	schema.Value.Properties["limit"] = &openapi3.SchemaRef{
 		Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}},
@@ -115,6 +127,8 @@ func TestIssue1112KnownPropertyKeepsTypedValue(t *testing.T) {
 }
 
 func TestIssue1112AdditionalPropertiesFalseDoesNotBecomeFreeForm(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(false)})
 
 	value, found, err := issue1112Decode(t, "properties", "properties[color]=black", schema)
@@ -125,6 +139,8 @@ func TestIssue1112AdditionalPropertiesFalseDoesNotBecomeFreeForm(t *testing.T) {
 }
 
 func TestIssue1112UnspecifiedAdditionalPropertiesRemainUnchanged(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{})
 
 	value, found, err := issue1112Decode(t, "properties", "properties[color]=black", schema)
@@ -135,6 +151,8 @@ func TestIssue1112UnspecifiedAdditionalPropertiesRemainUnchanged(t *testing.T) {
 }
 
 func TestIssue1112SchemaValuedAdditionalPropertiesStayTyped(t *testing.T) {
+	t.Parallel()
+
 	integerSchema := &openapi3.SchemaRef{
 		Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}},
 	}
@@ -148,6 +166,8 @@ func TestIssue1112SchemaValuedAdditionalPropertiesStayTyped(t *testing.T) {
 }
 
 func TestIssue1112IgnoresUnrelatedQueryKeys(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(t, "properties", "other[color]=black", schema)
@@ -158,6 +178,8 @@ func TestIssue1112IgnoresUnrelatedQueryKeys(t *testing.T) {
 }
 
 func TestIssue1112ParameterNameWithRegexpCharacters(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	value, found, err := issue1112Decode(t, "properties.v1", "properties.v1[color]=black", schema)
@@ -168,6 +190,8 @@ func TestIssue1112ParameterNameWithRegexpCharacters(t *testing.T) {
 }
 
 func TestIssue1112RepeatedFreeFormValueStillRequiresIndexes(t *testing.T) {
+	t.Parallel()
+
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 
 	_, found, err := issue1112Decode(t, "properties", "properties[tag]=one&properties[tag]=two", schema)
@@ -178,6 +202,8 @@ func TestIssue1112RepeatedFreeFormValueStillRequiresIndexes(t *testing.T) {
 }
 
 func TestIssue1112NestedKnownFreeFormObject(t *testing.T) {
+	t.Parallel()
+
 	metaSchema := issue1112ObjectSchema(openapi3.AdditionalProperties{Has: openapi3.Ptr(true)})
 	schema := issue1112ObjectSchema(openapi3.AdditionalProperties{})
 	schema.Value.Properties["meta"] = metaSchema
@@ -192,6 +218,8 @@ func TestIssue1112NestedKnownFreeFormObject(t *testing.T) {
 }
 
 func TestIssue1112SchemaValuedNestedExtraneousPropertyRemainsIgnored(t *testing.T) {
+	t.Parallel()
+
 	childSchema := &openapi3.SchemaRef{
 		Value: &openapi3.Schema{
 			Type: &openapi3.Types{"object"},

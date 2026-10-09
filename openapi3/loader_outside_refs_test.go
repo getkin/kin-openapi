@@ -9,6 +9,8 @@ import (
 )
 
 func TestLoadOutsideRefs(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/303bis/service.yaml")
@@ -31,6 +33,8 @@ func TestLoadOutsideRefs(t *testing.T) {
 }
 
 func TestIssue423(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 info:
   description: test

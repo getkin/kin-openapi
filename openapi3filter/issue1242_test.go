@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue1242ResponseRejectsUnevaluatedProperties(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.1.0
 info: {title: repro, version: "1"}

@@ -13,6 +13,8 @@ import (
 )
 
 func TestRouter(t *testing.T) {
+	t.Parallel()
+
 	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
@@ -213,6 +215,8 @@ func TestRouter(t *testing.T) {
 }
 
 func TestPermuteScheme(t *testing.T) {
+	t.Parallel()
+
 	scheme0 := "{sche}{me}"
 	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
 		"d0":   {Default: "www"},
@@ -227,6 +231,8 @@ func TestPermuteScheme(t *testing.T) {
 }
 
 func TestServerPath(t *testing.T) {
+	t.Parallel()
+
 	server := &openapi3.Server{URL: "http://example.com"}
 	err := server.Validate(t.Context())
 	require.NoError(t, err)
@@ -266,6 +272,8 @@ func TestServerPath(t *testing.T) {
 }
 
 func TestServerOverrideAtPathLevel(t *testing.T) {
+	t.Parallel()
+
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
@@ -308,6 +316,8 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 }
 
 func TestServerOverrideAtPathLevelDoesNotLeak(t *testing.T) {
+	t.Parallel()
+
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
@@ -359,6 +369,8 @@ func TestServerOverrideAtPathLevelDoesNotLeak(t *testing.T) {
 }
 
 func TestRelativeURL(t *testing.T) {
+	t.Parallel()
+
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
@@ -389,6 +401,8 @@ func TestRelativeURL(t *testing.T) {
 }
 
 func Test_makeServers(t *testing.T) {
+	t.Parallel()
+
 	type testStruct struct {
 		name    string
 		servers openapi3.Servers

@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue697(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/issue697.yml")
 	require.NoError(t, err)

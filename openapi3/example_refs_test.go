@@ -9,6 +9,8 @@ import (
 )
 
 func TestParameterExampleRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/example_refs.yml")
 	require.NoError(t, err)
@@ -21,6 +23,8 @@ func TestParameterExampleRef(t *testing.T) {
 }
 
 func TestParameterExampleWithContentRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/example_refs.yml")
 	require.NoError(t, err)
@@ -33,6 +37,8 @@ func TestParameterExampleWithContentRef(t *testing.T) {
 }
 
 func TestRequestBodyExampleRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/example_refs.yml")
 	require.NoError(t, err)
@@ -45,6 +51,8 @@ func TestRequestBodyExampleRef(t *testing.T) {
 }
 
 func TestResponseExampleRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/example_refs.yml")
 	require.NoError(t, err)
@@ -57,6 +65,8 @@ func TestResponseExampleRef(t *testing.T) {
 }
 
 func TestHeaderExampleRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/example_refs.yml")
 	require.NoError(t, err)
@@ -70,6 +80,8 @@ func TestHeaderExampleRef(t *testing.T) {
 }
 
 func TestComponentExampleRef(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile("testdata/example_refs.yml")
 	require.NoError(t, err)

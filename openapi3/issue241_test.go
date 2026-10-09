@@ -12,6 +12,8 @@ import (
 )
 
 func TestIssue241(t *testing.T) {
+	t.Parallel()
+
 	data, err := os.ReadFile("testdata/issue241.yml")
 	require.NoError(t, err)
 

@@ -9,6 +9,8 @@ import (
 )
 
 func TestExampleRefNil(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 info:

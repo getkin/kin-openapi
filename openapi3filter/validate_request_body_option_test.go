@@ -9,6 +9,8 @@ import (
 )
 
 func TestRejectWhenRequestBodyNotSpecified(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.3
 info:

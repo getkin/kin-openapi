@@ -7,6 +7,8 @@ import (
 )
 
 func TestIssue601(t *testing.T) {
+	t.Parallel()
+
 	// Document is invalid: first validation error returned is because
 	//     schema:
 	//       example: {key: value}

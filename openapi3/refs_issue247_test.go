@@ -11,6 +11,8 @@ import (
 )
 
 func TestIssue247(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.2
 info:

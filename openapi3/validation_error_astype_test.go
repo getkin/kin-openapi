@@ -21,6 +21,8 @@ import (
 // hierarchy at all three layers (cluster, leaf, base) confirms the
 // design is idiomatic under Go 1.26's improved errors API.
 func TestValidationError_AsTypeWalksAllLayers(t *testing.T) {
+	t.Parallel()
+
 	err := (&openapi3.Info{Title: "x"}).Validate(t.Context())
 
 	// Cluster.

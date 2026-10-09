@@ -81,6 +81,8 @@ func catchPanicValue(fn func()) (panicValue any) {
 // The 3.1 schema without items must still be accepted by Validate (spec-legal
 // under JSON Schema 2020-12), leaving Items == nil.
 func TestArrayItemsNil_OpenAPI31Accepts(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(urlencodedArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -92,6 +94,8 @@ func TestArrayItemsNil_OpenAPI31Accepts(t *testing.T) {
 }
 
 func TestArrayItemsNil_UrlencodedNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(urlencodedArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -118,6 +122,8 @@ func TestArrayItemsNil_UrlencodedNoPanic(t *testing.T) {
 }
 
 func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(multipartArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -148,6 +154,8 @@ func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {
 }
 
 func TestArrayItemsNil_ResponseHeaderNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(responseHeaderArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -193,6 +201,8 @@ paths:
 `
 
 func TestArrayItemsNil_QueryNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(queryArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -235,6 +245,8 @@ paths:
 `
 
 func TestArrayItemsNil_DeepObjectNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(deepObjectArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -277,6 +289,8 @@ paths:
 `
 
 func TestArrayItemsNil_UrlencodedAllOfNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(urlencodedAllOfArrayNoItemsSpec31))
 	require.NoError(t, err)

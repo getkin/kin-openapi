@@ -110,6 +110,8 @@ var (
 )
 
 func TestDeepGet(t *testing.T) {
+	t.Parallel()
+
 	iarray := map[string]any{
 		"0": map[string]any{
 			"foo": 111,
@@ -227,6 +229,8 @@ func TestDeepGet(t *testing.T) {
 }
 
 func TestDeepSet(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		inputMap map[string]any
@@ -279,6 +283,8 @@ func TestDeepSet(t *testing.T) {
 }
 
 func TestDecodeParameter(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		name   string
 		param  *openapi3.Parameter
@@ -1615,6 +1621,8 @@ func TestDecodeParameter(t *testing.T) {
 }
 
 func TestHeaderDecodeObject_RepeatedFieldLines(t *testing.T) {
+	t.Parallel()
+
 	schema := objectOf("id", stringSchema, "name", stringSchema)
 	for _, tc := range []struct {
 		name  string
@@ -1635,6 +1643,8 @@ func TestHeaderDecodeObject_RepeatedFieldLines(t *testing.T) {
 }
 
 func TestDecodeBody(t *testing.T) {
+	t.Parallel()
+
 	urlencodedForm := make(url.Values)
 	urlencodedForm.Set("a", "a1")
 	urlencodedForm.Set("b", "10")
@@ -1947,6 +1957,8 @@ func TestDecodeBody(t *testing.T) {
 }
 
 func TestContentTypeAllowedByEncoding(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name                string
 		mediaType           string

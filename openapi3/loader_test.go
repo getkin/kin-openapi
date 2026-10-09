@@ -16,6 +16,8 @@ import (
 const addr = "localhost:7965"
 
 func TestLoadYAML(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 info:
@@ -69,6 +71,8 @@ paths:
 }
 
 func TestIssue731(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 info:
@@ -128,6 +132,8 @@ info:
 }
 
 func TestResolveSchemaRef(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(`{"openapi":"3.0.0","info":{"title":"MyAPI","version":"0.1","description":"An API"},"paths":{},"components":{"schemas":{"B":{"type":"string"},"A":{"allOf":[{"$ref":"#/components/schemas/B"}]}}}}`)
 	loader := NewLoader()
 	doc, err := loader.LoadFromData(source)
@@ -141,6 +147,8 @@ func TestResolveSchemaRef(t *testing.T) {
 }
 
 func TestResolveResponseExampleRef(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(`
 openapi: 3.0.1
 info:
@@ -298,6 +306,8 @@ components:
 }
 
 func TestLoadErrorOnRefMisuse(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: '3.0.0'
 servers: [{url: /}]
@@ -329,6 +339,8 @@ paths:
 }
 
 func TestLoadPathParamRef(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: '3.0.0'
 info:
@@ -359,6 +371,8 @@ paths:
 }
 
 func TestLoadRequestExampleRef(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: '3.0.0'
 info:
@@ -417,6 +431,8 @@ func TestLoadFromRemoteURL(t *testing.T) {
 }
 
 func TestLoadWithReferenceInReference(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/refInRef/openapi.json")
@@ -428,6 +444,8 @@ func TestLoadWithReferenceInReference(t *testing.T) {
 }
 
 func TestLoadWithRecursiveReferenceInLocalReferenceInParentSubdir(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/refInLocalRefInParentsSubdir/spec/openapi.json")
@@ -439,6 +457,8 @@ func TestLoadWithRecursiveReferenceInLocalReferenceInParentSubdir(t *testing.T) 
 }
 
 func TestLoadWithRecursiveReferenceInReferenceInLocalReference(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/refInLocalRef/openapi.json")
@@ -451,6 +471,8 @@ func TestLoadWithRecursiveReferenceInReferenceInLocalReference(t *testing.T) {
 }
 
 func TestLoadWithReferenceInReferenceInProperty(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/refInRefInProperty/openapi.yaml")
@@ -462,6 +484,8 @@ func TestLoadWithReferenceInReferenceInProperty(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRef(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/testref.openapi.json")
@@ -470,6 +494,8 @@ func TestLoadFileWithExternalSchemaRef(t *testing.T) {
 }
 
 func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/testrefsinglecomponent.openapi.json")
@@ -481,6 +507,8 @@ func TestLoadFileWithExternalSchemaRefSingleComponent(t *testing.T) {
 }
 
 func TestLoadRequestResponseHeaderRef(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 {
     "openapi": "3.0.0",
@@ -562,6 +590,8 @@ func TestLoadFromDataWithExternalRequestResponseHeaderRemoteRef(t *testing.T) {
 }
 
 func TestLoadYamlFile(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/test.openapi.yml")
@@ -571,6 +601,8 @@ func TestLoadYamlFile(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/testref.openapi.yml")
@@ -580,6 +612,8 @@ func TestLoadYamlFileWithExternalSchemaRef(t *testing.T) {
 }
 
 func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/pathref.openapi.yml")
@@ -590,6 +624,8 @@ func TestLoadYamlFileWithExternalPathRef(t *testing.T) {
 }
 
 func TestResolveResponseLinkRef(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(`
 openapi: 3.0.1
 info:
@@ -636,6 +672,8 @@ paths:
 }
 
 func TestLinksFromOAISpec(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromFile("testdata/link-example.yaml")
 	require.NoError(t, err)
@@ -650,6 +688,8 @@ func TestLinksFromOAISpec(t *testing.T) {
 }
 
 func TestResolveNonComponentsRef(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 info:
@@ -712,6 +752,8 @@ paths:
 }
 
 func TestServersVariables(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.1
 info:
@@ -747,6 +789,8 @@ servers:
 }
 
 func TestReadFromIoReader(t *testing.T) {
+	t.Parallel()
+
 	buffer := bytes.NewReader([]byte(`openapi: 3.0.0
 info:
   title: An API
@@ -791,12 +835,16 @@ paths:
 }
 
 func TestReadFromIoReader_Nil(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	_, err := loader.LoadFromIoReader(nil)
 	require.EqualError(t, err, "invalid reader: <nil>")
 }
 
 func TestDefaultJoin(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		base     string

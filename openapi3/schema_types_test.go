@@ -10,6 +10,8 @@ import (
 )
 
 func TestTypes_HelperMethods(t *testing.T) {
+	t.Parallel()
+
 	t.Run("IncludesNull", func(t *testing.T) {
 		// Single type without null
 		types := &openapi3.Types{"string"}
@@ -87,6 +89,8 @@ func TestTypes_HelperMethods(t *testing.T) {
 }
 
 func TestTypes_ArraySerialization(t *testing.T) {
+	t.Parallel()
+
 	t.Run("single type serializes as string", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"string"},
@@ -139,6 +143,8 @@ func TestTypes_ArraySerialization(t *testing.T) {
 }
 
 func TestTypes_OpenAPI31Features(t *testing.T) {
+	t.Parallel()
+
 	t.Run("type array with null", func(t *testing.T) {
 		types := &openapi3.Types{"string", "null"}
 
@@ -175,6 +181,8 @@ func TestTypes_OpenAPI31Features(t *testing.T) {
 }
 
 func TestTypes_EdgeCases(t *testing.T) {
+	t.Parallel()
+
 	t.Run("nil types permits everything", func(t *testing.T) {
 		var types *openapi3.Types
 
@@ -207,6 +215,8 @@ func TestTypes_EdgeCases(t *testing.T) {
 }
 
 func TestTypes_BackwardCompatibility(t *testing.T) {
+	t.Parallel()
+
 	t.Run("existing Is method still works", func(t *testing.T) {
 		// Single type
 		types := &openapi3.Types{"string"}
@@ -243,6 +253,8 @@ func TestTypes_BackwardCompatibility(t *testing.T) {
 }
 
 func TestTypes_CloneWithWithout(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Clone", func(t *testing.T) {
 		var nilTypes *openapi3.Types
 		require.Nil(t, nilTypes.Clone())
@@ -310,6 +322,8 @@ func TestTypes_CloneWithWithout(t *testing.T) {
 }
 
 func TestSchema_WithTypes(t *testing.T) {
+	t.Parallel()
+
 	schema := &openapi3.Schema{}
 	require.Same(t, schema, schema.WithTypes("string", "null", "string"))
 	require.Equal(t, &openapi3.Types{"string", "null"}, schema.Type)

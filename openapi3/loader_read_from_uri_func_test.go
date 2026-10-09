@@ -21,6 +21,8 @@ import (
 // for custom loaders (e.g. loading specs from git revisions) that don't want to
 // allow arbitrary HTTP refs but do need to resolve relative file refs.
 func TestReadFromURIFunc_CalledEvenWhenExternalRefsDisallowed(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	// IsExternalRefsAllowed is false by default — do NOT set it to true.
 
@@ -37,6 +39,8 @@ func TestReadFromURIFunc_CalledEvenWhenExternalRefsDisallowed(t *testing.T) {
 }
 
 func TestLoaderReadFromURIFunc(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *Loader, url *url.URL) ([]byte, error) {
@@ -79,6 +83,8 @@ func (l *multipleSourceLoaderExample) resolveSourceFromURI(location fmt.Stringer
 }
 
 func TestResolveSchemaExternalRef(t *testing.T) {
+	t.Parallel()
+
 	rootLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "spec.json"}
 	externalLocation := &url.URL{Scheme: "http", Host: "example.com", Path: "external.json"}
 	rootSpec := fmt.Appendf(nil,

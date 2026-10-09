@@ -11,6 +11,8 @@ import (
 
 // TestBackwardCompatibility_OpenAPI30 ensures that existing OpenAPI 3.0 functionality is not broken
 func TestBackwardCompatibility_OpenAPI30(t *testing.T) {
+	t.Parallel()
+
 	t.Run("load and validate OpenAPI 3.0 document", func(t *testing.T) {
 		spec := `
 openapi: 3.0.3
@@ -137,6 +139,8 @@ paths:
 
 // TestOpenAPI31_NewFeatures tests all new OpenAPI 3.1 features
 func TestOpenAPI31_NewFeatures(t *testing.T) {
+	t.Parallel()
+
 	t.Run("load and validate OpenAPI 3.1 document with webhooks", func(t *testing.T) {
 		spec := `
 openapi: 3.1.0
@@ -328,6 +332,7 @@ webhooks:
 
 // TestJSONSchema2020Validator_RealWorld tests the validator with realistic schemas
 func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
+	t.Parallel()
 
 	t.Run("complex nested object with nullable", func(t *testing.T) {
 		min := 0.0
@@ -469,6 +474,8 @@ func TestJSONSchema2020Validator_RealWorld(t *testing.T) {
 
 // TestMigrationScenarios tests realistic migration paths
 func TestMigrationScenarios(t *testing.T) {
+	t.Parallel()
+
 	t.Run("migrate nullable to type array", func(t *testing.T) {
 		// Old 3.0 style
 		schema30 := &openapi3.Schema{
@@ -522,6 +529,8 @@ func TestMigrationScenarios(t *testing.T) {
 
 // TestEdgeCases tests edge cases and error conditions
 func TestEdgeCases(t *testing.T) {
+	t.Parallel()
+
 	t.Run("empty types array", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{},
@@ -582,6 +591,8 @@ func TestEdgeCases(t *testing.T) {
 
 // TestPerformance checks for obvious performance issues
 func TestPerformance(t *testing.T) {
+	t.Parallel()
+
 	t.Run("large schema compilation", func(t *testing.T) {
 
 		// Create a large schema

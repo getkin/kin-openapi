@@ -10,6 +10,8 @@ import (
 // break loading of any spec in the testdata directory. It catches regressions
 // where __origin__ leaks into fields and causes unmarshal failures or panics.
 func TestOrigin_LoadAllTestdata(t *testing.T) {
+	t.Parallel()
+
 	specs := []struct {
 		name         string
 		file         string

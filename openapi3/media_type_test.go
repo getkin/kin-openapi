@@ -9,6 +9,8 @@ import (
 )
 
 func TestMediaTypeJSON(t *testing.T) {
+	t.Parallel()
+
 	t.Log("Marshal *openapi3.MediaType to JSON")
 	data, err := json.Marshal(mediaType())
 	require.NoError(t, err)
@@ -73,6 +75,8 @@ func mediaType() *MediaType {
 }
 
 func TestMediaTypeItemSchemaJSON(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`
 {
    "itemSchema": {

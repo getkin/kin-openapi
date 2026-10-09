@@ -11,6 +11,8 @@ import (
 )
 
 func TestIssue883(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: '3.0.0'
 info:

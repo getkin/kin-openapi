@@ -26,6 +26,8 @@ func jsonSchemaErrorSubject() *openapi3.Schema {
 // keyword and the failing value. Callers tell a malformed body from a broken
 // field by that structure, and it must not depend on the validator in use.
 func TestJSONSchema2020_SchemaErrorCarriesItsStructure(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		value   any
@@ -60,6 +62,8 @@ func TestJSONSchema2020_SchemaErrorCarriesItsStructure(t *testing.T) {
 // The error of the JSON Schema 2020-12 validator stays reachable, so a caller
 // can read its typed kind.
 func TestJSONSchema2020_SchemaErrorUnwrapsToTheValidatorError(t *testing.T) {
+	t.Parallel()
+
 	err := jsonSchemaErrorSubject().VisitJSON(map[string]any{"n": "x"}, openapi3.EnableJSONSchema2020())
 	require.Error(t, err)
 
@@ -75,6 +79,8 @@ func TestJSONSchema2020_SchemaErrorUnwrapsToTheValidatorError(t *testing.T) {
 // The message of a converted error is the one it had before it carried its
 // structure: the path is named once.
 func TestJSONSchema2020_SchemaErrorMessageNamesThePathOnce(t *testing.T) {
+	t.Parallel()
+
 	err := jsonSchemaErrorSubject().VisitJSON(map[string]any{"n": "x"}, openapi3.EnableJSONSchema2020())
 	require.Error(t, err)
 	require.ErrorContains(t, err, `error at "/n"`)

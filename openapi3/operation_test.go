@@ -18,6 +18,8 @@ func initOperation() *openapi3.Operation {
 }
 
 func TestAddParameter(t *testing.T) {
+	t.Parallel()
+
 	operation := initOperation()
 	operation.AddParameter(openapi3.NewQueryParameter("param1"))
 	operation.AddParameter(openapi3.NewCookieParameter("param2"))
@@ -26,6 +28,8 @@ func TestAddParameter(t *testing.T) {
 }
 
 func TestAddResponse(t *testing.T) {
+	t.Parallel()
+
 	operation := initOperation()
 	operation.AddResponse(200, openapi3.NewResponse())
 	operation.AddResponse(400, openapi3.NewResponse())
@@ -57,6 +61,8 @@ func loadOperationDocument(t *testing.T, operationJSON string) *openapi3.T {
 }
 
 func TestOperationValidation(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		input            *openapi3.Operation
@@ -89,6 +95,8 @@ func TestOperationValidation(t *testing.T) {
 }
 
 func TestOperationResponsesValidationByOpenAPIVersion(t *testing.T) {
+	t.Parallel()
+
 	newDocument := func(version string, responses *openapi3.Responses) *openapi3.T {
 		return &openapi3.T{
 			OpenAPI: version,
@@ -123,6 +131,8 @@ func TestOperationResponsesValidationByOpenAPIVersion(t *testing.T) {
 }
 
 func TestOperationResponsesParsedStates(t *testing.T) {
+	t.Parallel()
+
 	t.Run("omitted", func(t *testing.T) {
 		doc := loadOperationDocument(t, `{}`)
 		require.NoError(t, doc.Validate(t.Context()))
@@ -149,6 +159,8 @@ func TestOperationResponsesParsedStates(t *testing.T) {
 }
 
 func TestOperationResponsesCanBeOmittedAfterParsing(t *testing.T) {
+	t.Parallel()
+
 	for _, operationJSON := range []string{
 		`{"responses": {"200": {"description": "ok"}}}`,
 		`{"responses": null}`,
@@ -160,6 +172,8 @@ func TestOperationResponsesCanBeOmittedAfterParsing(t *testing.T) {
 }
 
 func TestOperationMarshalResponses(t *testing.T) {
+	t.Parallel()
+
 	t.Run("omitted", func(t *testing.T) {
 		data, err := json.Marshal(openapi3.NewOperation())
 		require.NoError(t, err)
@@ -180,6 +194,8 @@ func TestOperationMarshalResponses(t *testing.T) {
 }
 
 func TestOperationResponsesCanBeRepairedAfterParsingNull(t *testing.T) {
+	t.Parallel()
+
 	doc := loadOperationDocument(t, `{"responses": null}`)
 	operation := doc.Paths.Value("/test").Get
 	operation.AddResponse(200, openapi3.NewResponse().WithDescription("ok"))
@@ -191,6 +207,8 @@ func TestOperationResponsesCanBeRepairedAfterParsingNull(t *testing.T) {
 }
 
 func TestOperationMissingResponsesWithMultiError(t *testing.T) {
+	t.Parallel()
+
 	err := openapi3.NewOperation().Validate(t.Context(), openapi3.EnableMultiError())
 	var target *openapi3.OperationResponsesRequired
 	require.ErrorAs(t, err, &target)

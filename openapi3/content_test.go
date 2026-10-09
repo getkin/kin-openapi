@@ -7,6 +7,8 @@ import (
 )
 
 func TestContent_Get(t *testing.T) {
+	t.Parallel()
+
 	fallback := NewMediaType()
 	wildcard := NewMediaType()
 	stripped := NewMediaType()

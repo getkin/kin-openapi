@@ -14,6 +14,8 @@ import (
 const issue1044Pattern = `^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$`
 
 func TestIssue1044(t *testing.T) {
+	t.Parallel()
+
 	schema := openapi3.NewStringSchema().WithPattern(issue1044Pattern)
 
 	err := schema.VisitJSON("example.com", openapi3.MultiErrors())

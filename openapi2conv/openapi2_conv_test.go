@@ -12,6 +12,8 @@ import (
 )
 
 func TestConvOpenAPIV3ToV2(t *testing.T) {
+	t.Parallel()
+
 	var doc3 openapi3.T
 	err := json.Unmarshal([]byte(exampleV3), &doc3)
 	require.NoError(t, err)
@@ -32,6 +34,8 @@ func TestConvOpenAPIV3ToV2(t *testing.T) {
 }
 
 func TestConvOpenAPIV3ToV2WithReqBody(t *testing.T) {
+	t.Parallel()
+
 	var doc3 openapi3.T
 	err := json.Unmarshal([]byte(exampleRequestBodyV3), &doc3)
 	require.NoError(t, err)
@@ -52,6 +56,8 @@ func TestConvOpenAPIV3ToV2WithReqBody(t *testing.T) {
 }
 
 func TestConvOpenAPIV2ToV3(t *testing.T) {
+	t.Parallel()
+
 	var doc2 openapi2.T
 	err := json.Unmarshal([]byte(exampleV2), &doc2)
 	require.NoError(t, err)
@@ -66,6 +72,8 @@ func TestConvOpenAPIV2ToV3(t *testing.T) {
 }
 
 func TestConvOpenAPIV2ToV3WithAdditionalPropertiesSchemaRef(t *testing.T) {
+	t.Parallel()
+
 	v2 := []byte(`
 {
     "basePath": "/v2",
@@ -128,6 +136,8 @@ func TestConvOpenAPIV2ToV3WithAdditionalPropertiesSchemaRef(t *testing.T) {
 }
 
 func TestConvOpenAPIV2ToV3WithNestedAdditionalPropertiesSchemaRef(t *testing.T) {
+	t.Parallel()
+
 	v2 := []byte(`
 {
     "basePath": "/v2",
@@ -194,6 +204,8 @@ func TestConvOpenAPIV2ToV3WithNestedAdditionalPropertiesSchemaRef(t *testing.T) 
 }
 
 func TestConvOpenAPIV2ToV3WithAllOfInsideAdditionalProperties(t *testing.T) {
+	t.Parallel()
+
 	v2 := []byte(`
 {
 	"basePath": "/v2",

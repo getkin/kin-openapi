@@ -35,6 +35,8 @@ const issue1284HostlessSpec = `{
 }`
 
 func TestIssue1284_ToV3KeepsBasePathWithoutHost(t *testing.T) {
+	t.Parallel()
+
 	var doc2 openapi2.T
 	require.NoError(t, json.Unmarshal([]byte(issue1284HostlessSpec), &doc2))
 
@@ -57,6 +59,8 @@ func TestIssue1284_ToV3KeepsBasePathWithoutHost(t *testing.T) {
 // report describes: FromV3 already takes the base path off a relative
 // server, so converting back has to hand the basePath over again.
 func TestIssue1284_ToV3BasePathWithoutHostRoundTrips(t *testing.T) {
+	t.Parallel()
+
 	var doc2 openapi2.T
 	require.NoError(t, json.Unmarshal([]byte(issue1284HostlessSpec), &doc2))
 

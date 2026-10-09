@@ -10,6 +10,8 @@ import (
 )
 
 func TestReferencesComponentInRootDocument(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 

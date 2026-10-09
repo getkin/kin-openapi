@@ -17,6 +17,8 @@ import (
 // the n bytes actually read, padding the result with NUL bytes and leaking
 // bytes of previously read files into later ones. See #1246.
 func TestIssue1246(t *testing.T) {
+	t.Parallel()
+
 	buildZip := func(t *testing.T, files [][2]string) []byte {
 		t.Helper()
 		var buf bytes.Buffer

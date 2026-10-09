@@ -22,6 +22,8 @@ import (
 // with a clean error instead.
 
 func TestCircularAllOf_VisitJSONNoCrash(t *testing.T) {
+	t.Parallel()
+
 	recursive := &openapi3.Schema{
 		Type: &openapi3.Types{"object"},
 		Properties: openapi3.Schemas{
@@ -56,6 +58,8 @@ components:
 `
 
 func TestCircularAllOf_DecodeValueNoCrash(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(circularAllOfSpec))
 	require.NoError(t, err)

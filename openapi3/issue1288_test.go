@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue1288(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.3
 info: {title: t, version: "1"}

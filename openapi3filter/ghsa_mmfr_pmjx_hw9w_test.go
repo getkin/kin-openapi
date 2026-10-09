@@ -28,6 +28,8 @@ import (
 // must not panic; it must return a 400 with a meaningful message. The
 // application/json control cases confirm the JSON body path is unaffected.
 func TestGHSA_mmfr_pmjx_hw9w_ConvertErrors_NoPanic(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: '3.0.3'
 info:

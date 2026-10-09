@@ -55,6 +55,8 @@ func loadBooleanSchemas(t *testing.T) *openapi3.T {
 // Every position that holds a SchemaRef accepts a boolean, since they all
 // decode through Schema.UnmarshalJSON.
 func TestBooleanSchema_Positions(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	for _, test := range []struct {
@@ -78,6 +80,8 @@ func TestBooleanSchema_Positions(t *testing.T) {
 // `true` accepts anything, including null; `false` accepts nothing, including
 // null. A boolean schema constrains the instance and nothing else.
 func TestBooleanSchema_VisitJSON(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	trueSchema := schemas["OpenPosition"].Value.PrefixItems[0].Value
@@ -93,6 +97,8 @@ func TestBooleanSchema_VisitJSON(t *testing.T) {
 // prefix of the tuple is valid, and any element past the prefix is rejected,
 // since no prefixItems entry covers that position and items forbids it.
 func TestBooleanSchema_FalseItemsClosesTuple(t *testing.T) {
+	t.Parallel()
+
 	closed := loadBooleanSchemas(t).Components.Schemas["ClosedTuple"].Value
 
 	require.NoError(t, closed.VisitJSON([]any{}))
@@ -107,6 +113,8 @@ func TestBooleanSchema_FalseItemsClosesTuple(t *testing.T) {
 // A boolean schema marshals back to the bare boolean it was written as, not to
 // the object it is equivalent to.
 func TestBooleanSchema_RoundTrip(t *testing.T) {
+	t.Parallel()
+
 	const spec = `{"openapi":"3.1.0","info":{"title":"t","version":"1.0"},"paths":{},"components":{"schemas":{"Tuple":{"items":false,"prefixItems":[{"type":"string"}],"type":"array"},"Any":{"not":true}}}}`
 
 	loader := openapi3.NewLoader()
@@ -122,6 +130,8 @@ func TestBooleanSchema_RoundTrip(t *testing.T) {
 // accepted by visitJSON explicitly rather than by skipping validation, which is
 // what leaves `not: true` free to reject.
 func TestBooleanSchema_IsEmpty(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	require.False(t, schemas["OpenPosition"].Value.PrefixItems[0].Value.IsEmpty())
@@ -130,6 +140,8 @@ func TestBooleanSchema_IsEmpty(t *testing.T) {
 
 // An ordinary schema is unaffected: Boolean stays nil so nothing short-circuits.
 func TestBooleanSchema_ObjectSchemaUnaffected(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	name := schemas["NoExtraProps"].Value.Properties["name"].Value
@@ -142,6 +154,8 @@ func TestBooleanSchema_ObjectSchemaUnaffected(t *testing.T) {
 // the decoded value: `not: true` matches nothing and `not: false` matches
 // everything.
 func TestBooleanSchema_UnderNot(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	anything := schemas["Anything"].Value
@@ -160,6 +174,8 @@ func TestBooleanSchema_UnderNot(t *testing.T) {
 // marshal back as the bare boolean and drop them, so Validate rejects it rather
 // than let the next serialization lose content.
 func TestBooleanSchema_RejectsOtherKeywords(t *testing.T) {
+	t.Parallel()
+
 	boolean := true
 
 	// A boolean schema is 3.1, so say so; without it the version gate fires
@@ -186,6 +202,8 @@ func TestBooleanSchema_RejectsOtherKeywords(t *testing.T) {
 // schema, and a boolean schema exists only in 3.1, so the option's path has to
 // agree with the built-in one.
 func TestBooleanSchema_JSONSchema2020(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 	opt := openapi3.EnableJSONSchema2020()
 
@@ -204,6 +222,8 @@ func TestBooleanSchema_JSONSchema2020(t *testing.T) {
 // The 2020-12 validator has to agree with the built-in one about where a closed
 // tuple ends, and it also checks the prefixItems positions.
 func TestBooleanSchema_ClosesTupleUnder2020(t *testing.T) {
+	t.Parallel()
+
 	closed := loadBooleanSchemas(t).Components.Schemas["ClosedTuple"].Value
 	opt := openapi3.EnableJSONSchema2020()
 
@@ -217,6 +237,8 @@ func TestBooleanSchema_ClosesTupleUnder2020(t *testing.T) {
 // A boolean schema is JSON Schema 2020-12, so it does not exist in 3.0, where a
 // schema MUST be a Schema Object. Validate says so rather than accepting it.
 func TestBooleanSchema_RejectedBefore31(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:

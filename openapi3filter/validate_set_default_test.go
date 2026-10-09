@@ -15,6 +15,8 @@ import (
 )
 
 func TestValidatingRequestParameterAndSetDefault(t *testing.T) {
+	t.Parallel()
+
 	const spec = `{
   "openapi": "3.0.3",
   "info": {
@@ -166,6 +168,8 @@ func TestValidatingRequestParameterAndSetDefault(t *testing.T) {
 }
 
 func TestValidateRequestBodyAndSetDefault(t *testing.T) {
+	t.Parallel()
+
 	const spec = `{
   "openapi": "3.0.3",
   "info": {

@@ -7,6 +7,8 @@ import (
 )
 
 func TestServerParamNames(t *testing.T) {
+	t.Parallel()
+
 	server := &Server{
 		URL: "http://{x}.{y}.example.com",
 	}
@@ -16,6 +18,8 @@ func TestServerParamNames(t *testing.T) {
 }
 
 func TestServerParamValuesWithPath(t *testing.T) {
+	t.Parallel()
+
 	server := &Server{
 		URL: "http://{arg0}.{arg1}.example.com/a/{arg3}-version/{arg4}c{arg5}",
 	}
@@ -38,6 +42,8 @@ func TestServerParamValuesWithPath(t *testing.T) {
 }
 
 func TestServerParamValuesNoPath(t *testing.T) {
+	t.Parallel()
+
 	server := &Server{
 		URL: "https://{arg0}.{arg1}.example.com/",
 	}
@@ -59,6 +65,8 @@ func invalidServer() *Server {
 }
 
 func TestServerValidation(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		input            *Server
@@ -94,6 +102,8 @@ func TestServerValidation(t *testing.T) {
 // is unused, not undeclared: the two defects call for opposite edits, so
 // mislabelling one sends the reader to fix the wrong half of the spec.
 func TestServerValidationUnusedVariables(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		input            *Server
@@ -197,6 +207,8 @@ func newServerMatch(remaining string, args ...string) *serverMatch {
 }
 
 func TestServersBasePath(t *testing.T) {
+	t.Parallel()
+
 	for _, testcase := range []struct {
 		title    string
 		servers  Servers

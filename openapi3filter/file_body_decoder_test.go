@@ -42,6 +42,8 @@ func (r fileBodyWriterTo) Read(p []byte) (int, error) {
 }
 
 func TestFileBodyDecoderBytes(t *testing.T) {
+	t.Parallel()
+
 	for _, data := range [][]byte{nil, {}, []byte("hello"), {0, 0xff, 0xfe, '\r', '\n', 0x80}} {
 		for _, kind := range []string{"bytes", "reader-only", "one-byte", "data-and-eof", "writer-to"} {
 			t.Run(fmt.Sprintf("%x/%s", data, kind), func(t *testing.T) {
@@ -71,6 +73,8 @@ func TestFileBodyDecoderBytes(t *testing.T) {
 }
 
 func TestFileBodyDecoderReaderPosition(t *testing.T) {
+	t.Parallel()
+
 	data := []byte("prefix\x00\xffsuffix")
 	for _, offset := range []int64{0, 6, int64(len(data)), int64(len(data) + 10)} {
 		t.Run(fmt.Sprint(offset), func(t *testing.T) {
@@ -92,6 +96,8 @@ func TestFileBodyDecoderReaderPosition(t *testing.T) {
 }
 
 func TestFileBodyDecoderExhaustedRune(t *testing.T) {
+	t.Parallel()
+
 	body := bytes.NewReader([]byte("x"))
 	_, _, err := body.ReadRune()
 	require.NoError(t, err)
@@ -102,6 +108,8 @@ func TestFileBodyDecoderExhaustedRune(t *testing.T) {
 }
 
 func TestFileBodyDecoderReadError(t *testing.T) {
+	t.Parallel()
+
 	readErr := errors.New("read failed")
 	for _, kind := range []string{"before-data", "after-data", "writer-to"} {
 		t.Run(kind, func(t *testing.T) {
@@ -119,6 +127,8 @@ func TestFileBodyDecoderReadError(t *testing.T) {
 }
 
 func TestFileBodyValidationAndReplay(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name   string
 		body   []byte

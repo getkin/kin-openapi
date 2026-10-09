@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue594(t *testing.T) {
+	t.Parallel()
+
 	uri, err := url.Parse("https://raw.githubusercontent.com/sendgrid/sendgrid-oai/c3aaa432b769faa47285166aca17c7ed2ea71787/oai_v3_stoplight.json")
 	require.NoError(t, err)
 

@@ -8,6 +8,8 @@ import (
 )
 
 func TestLoadCircular(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/circularRef2/circular2.yaml")
