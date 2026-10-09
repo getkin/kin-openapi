@@ -1543,7 +1543,9 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		return stack, nil
 	}
 
-	if schema.ReadOnly && schema.WriteOnly {
+	// OpenAPI 3.0 forbids both. 3.1 takes readOnly and writeOnly from JSON
+	// Schema 2020-12, which does not.
+	if schema.ReadOnly && schema.WriteOnly && !validationOpts.isOpenAPI31OrLater {
 		return stack, newSchemaReadOnlyWriteOnlyExclusive(schema.Origin)
 	}
 
