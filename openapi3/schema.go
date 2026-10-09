@@ -2349,8 +2349,11 @@ func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
 			SchemaField: "discriminator",
 			Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
 		}
+	} else if ref := discriminatorRef.Ref; ref != "" && !strings.Contains(ref, "/") {
+		// Mapping values can also be plain schema names like "Dog"
+		return "#/components/schemas/" + ref, nil
 	} else {
-		return discriminatorRef.Ref, nil
+		return ref, nil
 	}
 }
 
