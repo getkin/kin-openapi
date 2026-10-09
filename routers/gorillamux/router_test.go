@@ -307,6 +307,57 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestServerOverrideAtPathLevelDoesNotLeak(t *testing.T) {
+	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "rel",
+			Version: "1",
+		},
+		Servers: openapi3.Servers{
+			&openapi3.Server{
+				URL: "https://example.com/v1",
+			},
+		},
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/b", &openapi3.PathItem{
+				Servers: openapi3.Servers{
+					&openapi3.Server{
+						URL: "https://example.com/v2",
+					},
+				},
+				Get: helloGET,
+			}),
+			openapi3.WithPath("/a", &openapi3.PathItem{
+				Get: helloGET,
+			}),
+		),
+	}
+	err := doc.Validate(t.Context())
+	require.NoError(t, err)
+	router, err := NewRouter(doc)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodGet, "https://example.com/v2/b", nil)
+	require.NoError(t, err)
+	route, _, err := router.FindRoute(req)
+	require.NoError(t, err)
+	require.Equal(t, "/b", route.Path)
+
+	req, err = http.NewRequest(http.MethodGet, "https://example.com/v1/a", nil)
+	require.NoError(t, err)
+	route, _, err = router.FindRoute(req)
+	require.NoError(t, err)
+	require.Equal(t, "/a", route.Path)
+
+	req, err = http.NewRequest(http.MethodGet, "https://example.com/v2/a", nil)
+	require.NoError(t, err)
+	route, _, err = router.FindRoute(req)
+	require.Nil(t, route)
+	require.Error(t, err)
+}
+
 func TestRelativeURL(t *testing.T) {
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
