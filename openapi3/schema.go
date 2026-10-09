@@ -410,6 +410,24 @@ func (types *Types) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalYAML accepts a single type as well as a sequence of types, mirroring
+// UnmarshalJSON. Swagger 2 and OpenAPI 3.0 documents always write `type` as a
+// scalar, so decoding such a document into openapi2.T or openapi3.T straight
+// from YAML would otherwise fail with "cannot unmarshal !!str into Types".
+func (types *Types) UnmarshalYAML(unmarshal func(any) error) error {
+	var single string
+	if err := unmarshal(&single); err == nil {
+		*types = Types{single}
+		return nil
+	}
+	var multiple []string
+	if err := unmarshal(&multiple); err != nil {
+		return err
+	}
+	*types = Types(multiple)
+	return nil
+}
+
 // BoolSchema represents a JSON Schema keyword that can be either a boolean or a schema object.
 // Used for additionalProperties, unevaluatedProperties, and unevaluatedItems.
 type BoolSchema struct {
