@@ -120,10 +120,10 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 	for _, k := range componentNames(encoding.Headers) {
 		v := encoding.Headers[k]
 		if err := ValidateIdentifier(k); err != nil {
-			return nil
+			return err
 		}
 		if err := v.Validate(ctx); err != nil {
-			return nil
+			return err
 		}
 	}
 
