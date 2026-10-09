@@ -22,6 +22,8 @@ type schemaExample struct {
 }
 
 func TestSchemas(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	DefineStringFormatValidator("uuid", NewRegexpFormatValidator(FormatOfStringForUUIDOfRFC4122))
 	for _, example := range schemaExamples {
 		t.Run(example.Title, testSchema(example))

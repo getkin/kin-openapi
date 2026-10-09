@@ -22,8 +22,8 @@ func TestIssue1243FormatValidatorsReachJSONSchema2020(t *testing.T) {
 	})
 
 	t.Run("global validator asserts", func(t *testing.T) {
+		openapi3.KeepGlobalFormats(t)
 		openapi3.DefineStringFormatValidator("uuid", openapi3.NewRegexpFormatValidator(openapi3.FormatOfStringForUUIDOfRFC4122))
-		defer delete(openapi3.SchemaStringFormats, "uuid")
 
 		require.NoError(t, schema.VisitJSON("9d1c8f74-4e5b-41f9-a2f5-6b1f0b6dbb9e", openapi3.EnableJSONSchema2020()))
 		require.ErrorContains(t, schema.VisitJSON("not-a-uuid", openapi3.EnableJSONSchema2020()), "uuid")
