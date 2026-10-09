@@ -3086,12 +3086,25 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				}
 			}
 
-			if value[propName] != nil {
-				if reqRO {
-					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
-				} else if repWO {
-					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
+			if v := value[propName]; v != nil && (reqRO || repWO) {
+				if settings.failfast {
+					return errSchema
 				}
+				field, direction := "readOnly", "request"
+				if repWO {
+					field, direction = "writeOnly", "response"
+				}
+				err := markSchemaErrorKey(&SchemaError{
+					Value:                 v,
+					Schema:                propSchema.Value,
+					SchemaField:           field,
+					Reason:                fmt.Sprintf("%s property %q in %s", field, propName, direction),
+					customizeMessageError: settings.customizeMessageError,
+				}, propName)
+				if !settings.multiError {
+					return err
+				}
+				me = append(me, err)
 			}
 		}
 	}
