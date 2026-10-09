@@ -3,4 +3,7 @@ Schema:
   null
 
 Value:
-  null
+  [
+    "MEMBER",
+    "VIEWER"
+  ]

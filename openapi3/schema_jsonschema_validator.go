@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/santhosh-tekuri/jsonschema/v6/kind"
 )
 
 // jsonSchemaValidator wraps the santhosh-tekuri/jsonschema validator
@@ -238,25 +240,30 @@ func validateNumberFormat(format string, settings *schemaValidationSettings, val
 func (v *jsonSchemaValidator) validate(value any) error {
 	if err := v.schema.Validate(value); err != nil {
 		// Convert jsonschema error to SchemaError
-		return convertJSONSchemaError(err)
+		return convertJSONSchemaError(err, value)
 	}
 	return nil
 }
 
-// convertJSONSchemaError converts a jsonschema validation error to OpenAPI SchemaError format
-func convertJSONSchemaError(err error) error {
+// convertJSONSchemaError converts a jsonschema validation error to OpenAPI SchemaError format.
+// root is the validated value, from which the failing value is looked up.
+func convertJSONSchemaError(err error, root any) error {
 	// TODO: Go 1.26
 	// if err, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
 	// 	return formatValidationError(err, "")
 	var validationErr *jsonschema.ValidationError
 	if errors.As(err, &validationErr) {
-		return formatValidationError(validationErr, "")
+		return formatValidationError(validationErr, "", root)
 	}
 	return err
 }
 
-// formatValidationError recursively formats validation errors
-func formatValidationError(verr *jsonschema.ValidationError, parentPath string) error {
+// formatValidationError recursively formats validation errors into SchemaErrors
+// that carry the same structure as the ones of the built-in validator: the path
+// of the failing value (JSONPointer), the failing keyword (SchemaField) and the
+// failing value (Value). The jsonschema error itself stays reachable with
+// errors.As.
+func formatValidationError(verr *jsonschema.ValidationError, parentPath string, root any) error {
 	// Build the path from InstanceLocation slice
 	path := "/" + strings.Join(verr.InstanceLocation, "/")
 	if parentPath != "" && path != "/" {
@@ -272,25 +279,84 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string) 
 	}
 	msg.WriteString(verr.Error())
 
+	// A wrapper with a single chain of causes (the schema itself, a $ref) is
+	// about the value its innermost cause is about.
+	failing := verr
+	for len(failing.Causes) == 1 && isWrapperErrorKind(failing.ErrorKind) {
+		failing = failing.Causes[0]
+	}
+
+	schemaErr := &SchemaError{
+		Reason:      msg.String(),
+		reversePath: reversedPath(failing.InstanceLocation),
+		cause:       verr,
+	}
+	if keywords := failing.ErrorKind.KeywordPath(); len(keywords) > 0 {
+		schemaErr.SchemaField = keywords[len(keywords)-1]
+	}
+	if value, ok := valueAt(root, failing.InstanceLocation); ok {
+		schemaErr.Value = value
+	}
+
 	// If there are sub-errors, format them too
 	if len(verr.Causes) > 0 {
 		var subErrors MultiError
 		for _, cause := range verr.Causes {
-			if subErr := formatValidationError(cause, path); subErr != nil {
+			if subErr := formatValidationError(cause, path, root); subErr != nil {
 				subErrors = append(subErrors, subErr)
 			}
 		}
 		if len(subErrors) > 0 {
-			return &SchemaError{
-				Reason: msg.String(),
-				Origin: fmt.Errorf("validation failed due to: %w", subErrors),
-			}
+			schemaErr.Origin = fmt.Errorf("validation failed due to: %w", subErrors)
 		}
 	}
 
-	return &SchemaError{
-		Reason: msg.String(),
+	return schemaErr
+}
+
+// isWrapperErrorKind reports whether k only groups the errors of its causes.
+func isWrapperErrorKind(k jsonschema.ErrorKind) bool {
+	switch k.(type) {
+	case *kind.Schema, *kind.Group, *kind.Reference:
+		return true
 	}
+	return false
+}
+
+// reversedPath is location in the reversed order SchemaError keeps its path in.
+func reversedPath(location []string) []string {
+	if len(location) == 0 {
+		return nil
+	}
+	reversed := make([]string, len(location))
+	for i, token := range location {
+		reversed[len(location)-1-i] = token
+	}
+	return reversed
+}
+
+// valueAt is the value at location (unescaped JSON pointer tokens) inside root.
+func valueAt(root any, location []string) (any, bool) {
+	value := root
+	for _, token := range location {
+		switch v := value.(type) {
+		case map[string]any:
+			next, ok := v[token]
+			if !ok {
+				return nil, false
+			}
+			value = next
+		case []any:
+			i, err := strconv.Atoi(token)
+			if err != nil || i < 0 || i >= len(v) {
+				return nil, false
+			}
+			value = v[i]
+		default:
+			return nil, false
+		}
+	}
+	return value, true
 }
 
 // useJSONSchema2020 validates using the JSON Schema 2020-12 validator
