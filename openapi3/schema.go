@@ -1512,19 +1512,20 @@ func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) er
 	ctx = WithValidationOptions(ctx, opts...)
 
 	// Perform schema validation with the options in context
-	_, err := schema.validate(ctx, []*Schema{})
+	_, err := schema.validate(ctx, make(map[*Schema]struct{}))
 	return err
 }
 
-// returns the updated stack and an error if Schema does not comply with the OpenAPI spec.
-func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema, error) {
-	if slices.Contains(stack, schema) {
-		return stack, nil
+// returns the updated set of visited schemas and an error if Schema does not comply with the OpenAPI spec.
+// Cycles and memoization is achieved with `visited`.
+func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}) (map[*Schema]struct{}, error) {
+	if _, ok := visited[schema]; ok {
+		return visited, nil
 	}
 
 	validationOpts := getValidationOptions(ctx)
 
-	stack = append(stack, schema)
+	visited[schema] = struct{}{}
 
 	// A boolean schema carries no other keyword. One that does would marshal
 	// back as the bare boolean and silently drop the rest, so reject it rather
@@ -1533,20 +1534,20 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		// A boolean schema is JSON Schema 2020-12, so 3.0 has no such thing:
 		// there a schema MUST be a Schema Object.
 		if !validationOpts.isOpenAPI31OrLater {
-			return stack, newBooleanSchemaFor31Plus(schema.Origin)
+			return visited, newBooleanSchemaFor31Plus(schema.Origin)
 		}
 		rest := *schema
 		rest.Always = nil
 		if !rest.IsEmpty() || len(schema.Extensions) != 0 {
-			return stack, newSchemaBooleanFieldsExclusive(schema.Origin)
+			return visited, newSchemaBooleanFieldsExclusive(schema.Origin)
 		}
-		return stack, nil
+		return visited, nil
 	}
 
 	// OpenAPI 3.0 forbids both. 3.1 takes readOnly and writeOnly from JSON
 	// Schema 2020-12, which does not.
 	if schema.ReadOnly && schema.WriteOnly && !validationOpts.isOpenAPI31OrLater {
-		return stack, newSchemaReadOnlyWriteOnlyExclusive(schema.Origin)
+		return visited, newSchemaReadOnlyWriteOnlyExclusive(schema.Origin)
 	}
 
 	// The elements of `required` MUST be unique (JSON Schema 2020-12 §6.5.3
@@ -1555,7 +1556,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 		seen := make(map[string]struct{}, len(schema.Required))
 		for _, name := range schema.Required {
 			if _, dup := seen[name]; dup {
-				return stack, &DuplicateRequiredFieldError{Field: name, Origin: schema.Origin}
+				return visited, &DuplicateRequiredFieldError{Field: name, Origin: schema.Origin}
 			}
 			seen[name] = struct{}{}
 		}
@@ -1575,137 +1576,137 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 			return errFieldFor31Plus(field, schema.Origin)
 		}
 		if schema.Type.IsMultiple() { // In 3.0 but only as a single string
-			return stack, newTypeArrayFor31Plus(schema.Origin)
+			return visited, newTypeArrayFor31Plus(schema.Origin)
 		}
 		if schema.ExclusiveMin.Value != nil { // In 3.0 but only as bool
-			return stack, newExclusiveBoundNumberFor31Plus("exclusiveMinimum", schema.Origin)
+			return visited, newExclusiveBoundNumberFor31Plus("exclusiveMinimum", schema.Origin)
 		}
 		if schema.ExclusiveMax.Value != nil { // In 3.0 but only as bool
-			return stack, newExclusiveBoundNumberFor31Plus("exclusiveMaximum", schema.Origin)
+			return visited, newExclusiveBoundNumberFor31Plus("exclusiveMaximum", schema.Origin)
 		}
 		if schema.Const != nil {
 			if err := reject("const"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if len(schema.Examples) != 0 {
 			if err := reject("examples"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if len(schema.PrefixItems) != 0 {
 			if err := reject("prefixItems"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.Contains != nil {
 			if err := reject("contains"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.MinContains != nil {
 			if err := reject("minContains"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.MaxContains != nil {
 			if err := reject("maxContains"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if len(schema.PatternProperties) != 0 {
 			if err := reject("patternProperties"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if len(schema.DependentSchemas) != 0 {
 			if err := reject("dependentSchemas"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.PropertyNames != nil {
 			if err := reject("propertyNames"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.UnevaluatedItems.Has != nil || schema.UnevaluatedItems.Schema != nil {
 			if err := reject("unevaluatedItems"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.UnevaluatedProperties.Has != nil || schema.UnevaluatedProperties.Schema != nil {
 			if err := reject("unevaluatedProperties"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.If != nil {
 			if err := reject("if"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.Then != nil {
 			if err := reject("then"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.Else != nil {
 			if err := reject("else"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if len(schema.DependentRequired) != 0 {
 			if err := reject("dependentRequired"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if len(schema.Defs) != 0 {
 			if err := reject("$defs"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.SchemaDialect != "" {
 			if err := reject("$schema"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.Comment != "" {
 			if err := reject("$comment"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.SchemaID != "" {
 			if err := reject("$id"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.Anchor != "" {
 			if err := reject("$anchor"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.DynamicRef != "" {
 			if err := reject("$dynamicRef"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.DynamicAnchor != "" {
 			if err := reject("$dynamicAnchor"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.ContentMediaType != "" {
 			if err := reject("contentMediaType"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.ContentEncoding != "" {
 			if err := reject("contentEncoding"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 		if schema.ContentSchema != nil {
 			if err := reject("contentSchema"); err != nil {
-				return stack, err
+				return visited, err
 			}
 		}
 	}
@@ -1714,89 +1715,89 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	// is not rejected: since 3.1 it is an unknown keyword, which JSON Schema ignores.)
 	if validationOpts.isOpenAPI31OrLater {
 		if schema.ExclusiveMin.Bool != nil {
-			return stack, newExclusiveBoundBooleanBefore31("exclusiveMinimum", schema.Origin)
+			return visited, newExclusiveBoundBooleanBefore31("exclusiveMinimum", schema.Origin)
 		}
 		if schema.ExclusiveMax.Bool != nil {
-			return stack, newExclusiveBoundBooleanBefore31("exclusiveMaximum", schema.Origin)
+			return visited, newExclusiveBoundBooleanBefore31("exclusiveMaximum", schema.Origin)
 		}
 	}
 
 	for _, item := range schema.OneOf {
 		v := item.Value
 		if v == nil {
-			return stack, newUnresolvedRef(item.Ref, item.Origin)
+			return visited, newUnresolvedRef(item.Ref, item.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, &SchemaCombinatorElementValidationError{Combinator: "oneOf", Cause: err}
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, &SchemaCombinatorElementValidationError{Combinator: "oneOf", Cause: err}
 		}
 	}
 
 	for _, item := range schema.AnyOf {
 		v := item.Value
 		if v == nil {
-			return stack, newUnresolvedRef(item.Ref, item.Origin)
+			return visited, newUnresolvedRef(item.Ref, item.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, &SchemaCombinatorElementValidationError{Combinator: "anyOf", Cause: err}
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, &SchemaCombinatorElementValidationError{Combinator: "anyOf", Cause: err}
 		}
 	}
 
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
-			return stack, newUnresolvedRef(item.Ref, item.Origin)
+			return visited, newUnresolvedRef(item.Ref, item.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, &SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: err}
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, &SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: err}
 		}
 	}
 
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 
 	if ref := schema.If; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if ref := schema.Then; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if ref := schema.Else; ref != nil {
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 
@@ -1809,7 +1810,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				case "float", "double":
 				default:
 					if _, ok := SchemaNumberFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-						return stack, unsupportedFormat(format)
+						return visited, unsupportedFormat(format)
 					}
 				}
 			}
@@ -1819,7 +1820,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				case "int32", "int64":
 				default:
 					if _, ok := SchemaIntegerFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-						return stack, unsupportedFormat(format)
+						return visited, unsupportedFormat(format)
 					}
 				}
 			}
@@ -1840,234 +1841,234 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 				case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
 				default:
 					if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-						return stack, unsupportedFormat(format)
+						return visited, unsupportedFormat(format)
 					}
 				}
 			}
 			if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" {
 				if _, err := schema.compilePattern(validationOpts.regexCompilerFunc); err != nil {
-					return stack, err
+					return visited, err
 				}
 			}
 		case TypeArray:
 			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
-				return stack, newSchemaItemsRequired(schema.Origin)
+				return visited, newSchemaItemsRequired(schema.Origin)
 			}
 		case TypeObject:
 		case TypeNull:
 			if !validationOpts.jsonSchema2020ValidationEnabled {
-				return stack, newSchemaTypeError(schemaType, schema.Origin)
+				return visited, newSchemaTypeError(schemaType, schema.Origin)
 			}
 		default:
-			return stack, newSchemaTypeError(schemaType, schema.Origin)
+			return visited, newSchemaTypeError(schemaType, schema.Origin)
 		}
 	}
 
 	if ref := schema.Items; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 
 	for _, name := range componentNames(schema.Properties) {
 		ref := schema.Properties[name]
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 
 	if schema.AdditionalProperties.Has != nil && schema.AdditionalProperties.Schema != nil {
-		return stack, newSchemaAdditionalPropertiesBothForms(schema.Origin)
+		return visited, newSchemaAdditionalPropertiesBothForms(schema.Origin)
 	}
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 
 	// OpenAPI 3.1 / JSON Schema 2020-12 sub-schemas
 	for _, ref := range schema.PrefixItems {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if ref := schema.Contains; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	for _, name := range componentNames(schema.PatternProperties) {
 		ref := schema.PatternProperties[name]
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	for _, name := range componentNames(schema.DependentSchemas) {
 		ref := schema.DependentSchemas[name]
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	for _, name := range componentNames(schema.Defs) {
 		ref := schema.Defs[name]
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if ref := schema.PropertyNames; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if schema.UnevaluatedItems.Has != nil && schema.UnevaluatedItems.Schema != nil {
-		return stack, newSchemaUnevaluatedItemsBothForms(schema.Origin)
+		return visited, newSchemaUnevaluatedItemsBothForms(schema.Origin)
 	}
 	if ref := schema.UnevaluatedItems.Schema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if schema.UnevaluatedProperties.Has != nil && schema.UnevaluatedProperties.Schema != nil {
-		return stack, newSchemaUnevaluatedPropertiesBothForms(schema.Origin)
+		return visited, newSchemaUnevaluatedPropertiesBothForms(schema.Origin)
 	}
 	if ref := schema.UnevaluatedProperties.Schema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 	if ref := schema.ContentSchema; ref != nil {
 		if err := ref.validateExtras(ctx); err != nil {
-			return stack, err
+			return visited, err
 		}
 		v := ref.Value
 		if v == nil {
-			return stack, newUnresolvedRef(ref.Ref, ref.Origin)
+			return visited, newUnresolvedRef(ref.Ref, ref.Origin)
 		}
 
 		var err error
-		if stack, err = v.validate(ctx, stack); err != nil {
-			return stack, err
+		if visited, err = v.validate(ctx, visited); err != nil {
+			return visited, err
 		}
 	}
 
 	if v := schema.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
-			return stack, &SectionValidationError{Section: "external docs", Cause: err}
+			return visited, &SectionValidationError{Section: "external docs", Cause: err}
 		}
 	}
 
 	if v := schema.Default; v != nil && !validationOpts.schemaDefaultsValidationDisabled {
 		if err := validateExampleValue(ctx, v, schema); err != nil {
-			return stack, newSchemaValueError("default", err, schema.Origin)
+			return visited, newSchemaValueError("default", err, schema.Origin)
 		}
 	}
 
 	if x := schema.Example; x != nil && !validationOpts.examplesValidationDisabled {
 		if err := validateExampleValue(ctx, x, schema); err != nil {
-			return stack, newSchemaValueError("example", err, schema.Origin)
+			return visited, newSchemaValueError("example", err, schema.Origin)
 		}
 	}
 
-	return stack, validateExtensions(ctx, schema.Extensions, schema.Origin)
+	return visited, validateExtensions(ctx, schema.Extensions, schema.Origin)
 }
 
 func (schema *Schema) IsMatching(value any) bool {
