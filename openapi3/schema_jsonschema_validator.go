@@ -328,7 +328,7 @@ func reversedPath(location []string) []string {
 	if len(location) == 0 {
 		return nil
 	}
-	reversed := make([]string, len(location))
+	reversed := make([]string /*,*/, len(location))
 	for i, token := range location {
 		reversed[len(location)-1-i] = token
 	}

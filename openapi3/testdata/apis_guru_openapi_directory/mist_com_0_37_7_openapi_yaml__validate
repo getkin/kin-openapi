@@ -1,1 +1,19 @@
-invalid paths: invalid path /api/v1/installer/orgs/{org_id}/devices/{device_mac}: invalid operation PUT: invalid example: example example-1: readOnly property "for_site" in request | readOnly property "site_id" in request
+invalid paths: invalid path /api/v1/installer/orgs/{org_id}/devices/{device_mac}: invalid operation PUT: invalid example: example example-1: Error at "/for_site": readOnly property "for_site" in request
+Schema:
+  {
+    "readOnly": true,
+    "type": "boolean"
+  }
+
+Value:
+  true
+ | Error at "/site_id": readOnly property "site_id" in request
+Schema:
+  {
+    "format": "uuid",
+    "readOnly": true,
+    "type": "string"
+  }
+
+Value:
+  "72771e6a-6f5e-4de4-a5b9-1266c4197811"
