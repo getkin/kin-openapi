@@ -58,8 +58,9 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	r := &Router{}
 	for _, path := range doc.Paths.InMatchingOrder() {
 		pathItem := doc.Paths.Value(path)
+		pathServers := servers
 		if len(pathItem.Servers) > 0 {
-			if servers, err = makeServers(pathItem.Servers); err != nil {
+			if pathServers, err = makeServers(pathItem.Servers); err != nil {
 				return nil, err
 			}
 		}
@@ -71,7 +72,7 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 		}
 		slices.Sort(methods)
 
-		for _, s := range servers {
+		for _, s := range pathServers {
 			muxRoute := muxRouter.Path(s.base + path).Methods(methods...)
 			if schemes := s.schemes; len(schemes) != 0 {
 				muxRoute.Schemes(schemes...)
