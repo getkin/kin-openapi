@@ -1846,8 +1846,12 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 				}
 			}
 			if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" {
-				if _, err := schema.compilePattern(validationOpts.regexCompilerFunc); err != nil {
-					return visited, err
+				// Only successfully compiled patterns are cached.
+				// The cache does not record which compiler was used, so a custom one always compiles.
+				if _, ok := compiledPatterns.Load(schema.Pattern); !ok || validationOpts.regexCompilerFunc != nil {
+					if _, err := schema.compilePattern(validationOpts.regexCompilerFunc); err != nil {
+						return visited, err
+					}
 				}
 			}
 		case TypeArray:
