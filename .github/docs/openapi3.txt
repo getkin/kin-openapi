@@ -3977,6 +3977,13 @@ func (types *Types) Slice() []string
 
 func (types *Types) UnmarshalJSON(data []byte) error
 
+func (types *Types) UnmarshalYAML(unmarshal func(any) error) error
+    UnmarshalYAML accepts a single type as well as a sequence of types,
+    mirroring UnmarshalJSON. Swagger 2 and OpenAPI 3.0 documents always
+    write `type` as a scalar, so decoding such a document into openapi2.T or
+    openapi3.T straight from YAML would otherwise fail with "cannot unmarshal
+    !!str into Types".
+
 func (types *Types) With(typs ...string)
     With adds the given types to the receiver, skipping those already present.
     Duplicates are removed, keeping the first occurrence. types must not be nil.
