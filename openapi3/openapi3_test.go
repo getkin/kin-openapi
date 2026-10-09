@@ -492,19 +492,60 @@ func TestOpenAPIMajorMinor(t *testing.T) {
 	require.False(t, doc.IsOpenAPI31OrLater())
 	require.False(t, doc.IsOpenAPI32OrLater())
 
-	semvers := []string{"3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.1", "3.1.0", "3.1.1", "3.1.2", "3.2", "3.2.0"}
-	mms := []string{"3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.1", "3.1", "3.1", "3.1", "3.2", "3.2"}
-	three0s := []bool{true, true, true, true, true, true, true, false, false, false, false, false, false}
-	three1plusses := []bool{false, false, false, false, false, false, false, true, true, true, true, true, true}
-	three2plusses := []bool{false, false, false, false, false, false, false, false, false, false, false, true, true}
-	for i := range len(semvers) {
-		t.Run(fmt.Sprintf("openapi:%s", semvers[i]), func(t *testing.T) {
+	for _, tc := range []struct {
+		semver     string
+		mm         string
+		three0     bool
+		three1plus bool
+		three2plus bool
+	}{
+		// Released 3.0.x patch levels, plus one this library predates.
+		{semver: "3", mm: "3.0", three0: true},
+		{semver: "3.0", mm: "3.0", three0: true},
+		{semver: "3.0.0", mm: "3.0", three0: true},
+		{semver: "3.0.1", mm: "3.0", three0: true},
+		{semver: "3.0.2", mm: "3.0", three0: true},
+		{semver: "3.0.3", mm: "3.0", three0: true},
+		{semver: "3.0.4", mm: "3.0", three0: true},
+		{semver: "3.0.99", mm: "3.0", three0: true},
+		// 3.1.x, including an unreleased patch level.
+		{semver: "3.1", mm: "3.1", three1plus: true},
+		{semver: "3.1.0", mm: "3.1", three1plus: true},
+		{semver: "3.1.1", mm: "3.1", three1plus: true},
+		{semver: "3.1.2", mm: "3.1", three1plus: true},
+		{semver: "3.1.99", mm: "3.1", three1plus: true},
+		// 3.2.x.
+		{semver: "3.2", mm: "3.2", three1plus: true, three2plus: true},
+		{semver: "3.2.0", mm: "3.2", three1plus: true, three2plus: true},
+		{semver: "3.2.1", mm: "3.2", three1plus: true, three2plus: true},
+		// Future 3.x minors: recognized, and compared numerically so
+		// minor 10 sorts after minor 2 (not lexicographically before it).
+		{semver: "3.3.0", mm: "3.3", three1plus: true, three2plus: true},
+		{semver: "3.10.0", mm: "3.10", three1plus: true, three2plus: true},
+		{semver: "3.99", mm: "3.99", three1plus: true, three2plus: true},
+		// A major this package does not implement still parses: the
+		// predicates report it as ">= 3.1"/">= 3.2" and T.Validate is
+		// what rejects it.
+		{semver: "4.0.0", mm: "4.0", three1plus: true, three2plus: true},
+		// Unparseable: every predicate is false and the major.minor is empty.
+		{semver: "garbage"},
+		{semver: "v3.1"},
+		{semver: "3."},
+		{semver: "3.x"},
+		{semver: "3.1.0.2"},
+		{semver: " 3.1.0"},
+		{semver: "3.1.0 "},
+		{semver: "3.1-rc"},
+		{semver: "3.1.0-rc.1"},
+		{semver: "3.1.0+build.5"},
+	} {
+		t.Run(fmt.Sprintf("openapi:%s", tc.semver), func(t *testing.T) {
 			t.Parallel()
-			doc := &openapi3.T{OpenAPI: semvers[i]}
-			require.Equal(t, mms[i], doc.OpenAPIMajorMinor())
-			require.Equal(t, three0s[i], doc.IsOpenAPI30())
-			require.Equal(t, three1plusses[i], doc.IsOpenAPI31OrLater())
-			require.Equal(t, three2plusses[i], doc.IsOpenAPI32OrLater())
+			doc := &openapi3.T{OpenAPI: tc.semver}
+			require.Equal(t, tc.mm, doc.OpenAPIMajorMinor())
+			require.Equal(t, tc.three0, doc.IsOpenAPI30())
+			require.Equal(t, tc.three1plus, doc.IsOpenAPI31OrLater())
+			require.Equal(t, tc.three2plus, doc.IsOpenAPI32OrLater())
 		})
 	}
 }
