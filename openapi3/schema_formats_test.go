@@ -11,6 +11,8 @@ import (
 )
 
 func TestIssue430(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	schema := NewOneOfSchema(
 		NewStringSchema().WithFormat("ipv4"),
 		NewStringSchema().WithFormat("ipv6"),
@@ -67,6 +69,8 @@ func TestIssue430(t *testing.T) {
 }
 
 func TestFormatCallback_WrapError(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	var errSomething = errors.New("something error")
 
 	DefineStringFormatValidator("foobar", NewCallbackValidator(func(value string) error {
@@ -77,11 +81,11 @@ func TestFormatCallback_WrapError(t *testing.T) {
 	err := s.VisitJSONString("blablabla")
 
 	assert.ErrorIs(t, err, errSomething)
-
-	delete(SchemaStringFormats, "foobar")
 }
 
 func TestReversePathInMessageSchemaError(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	DefineIPv4Format()
 
 	SchemaErrorDetailsDisabled = true
@@ -107,11 +111,11 @@ components:
 
 	require.EqualError(t, err, `Error at "/ip": string doesn't match the format "ipv4": Not an IP address`)
 
-	delete(SchemaStringFormats, "ipv4")
 	SchemaErrorDetailsDisabled = false
 }
 
 func TestUuidFormat(t *testing.T) {
+	KeepGlobalFormats(t)
 
 	type testCase struct {
 		name    string
@@ -160,6 +164,8 @@ func TestUuidFormat(t *testing.T) {
 }
 
 func TestNumberFormats(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	type testCase struct {
 		name    string
 		typ     string
@@ -238,6 +244,8 @@ func TestNumberFormats(t *testing.T) {
 }
 
 func TestIntegerFormatOutOfInt64Range(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	type testCase struct {
 		name    string
 		format  string
@@ -415,6 +423,8 @@ func TestPerValidationFormatValidators_AllTypes(t *testing.T) {
 }
 
 func TestPerValidationFormatValidators_FallbackToGlobal(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	// Register a global validator
 	DefineStringFormatValidator("global-format", NewCallbackValidator(func(value string) error {
 		if value != "global" {
@@ -422,7 +432,6 @@ func TestPerValidationFormatValidators_FallbackToGlobal(t *testing.T) {
 		}
 		return nil
 	}))
-	defer delete(SchemaStringFormats, "global-format")
 
 	schema := &Schema{
 		Type:   &Types{"string"},

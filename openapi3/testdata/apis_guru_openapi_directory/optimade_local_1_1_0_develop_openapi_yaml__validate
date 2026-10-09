@@ -1,1 +1,0 @@
-invalid paths: invalid path /links: invalid operation GET: parameter "email_address" schema is invalid: invalid default: string doesn't match the format "email": string doesn't match pattern "^[^@]+@[^@<>",\s]+$"
