@@ -2127,3 +2127,19 @@ func matchParseError(t *testing.T, got, want error) {
 		matchParseError(t, gErr.Cause, wErr.Cause)
 	}
 }
+
+func BenchmarkJSONBodyDecoder(b *testing.B) {
+	const user = `{"id":42,"name":"Jane Doe","email":"jane@example.com","active":true,"score":4.5,"tags":["a","b"],"address":{"city":"Springfield","zip":"12345"},"note":null}`
+	for _, n := range []int{1, 50, 5000} {
+		data := []byte(`{"users":[` + strings.Repeat(user+`,`, n-1) + user + `]}`)
+		b.Run(fmt.Sprint(len(data)), func(b *testing.B) {
+			b.ReportAllocs()
+			b.SetBytes(int64(len(data)))
+			for b.Loop() {
+				if _, err := JSONBodyDecoder(bytes.NewReader(data), nil, nil, nil); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}
