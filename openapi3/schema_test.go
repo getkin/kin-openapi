@@ -1651,3 +1651,16 @@ func TestSchemaMultipleOfAcrossMagnitudes(t *testing.T) {
 		require.Equal(t, "number must be a multiple of 0.01", schemaErr.Reason)
 	})
 }
+
+func TestIssue1307NullableStillAppliesConstraints(t *testing.T) {
+	t.Parallel()
+
+	enumSchema := NewStringSchema().WithNullable().WithEnum("ON")
+	require.Error(t, enumSchema.VisitJSON(nil))
+	enumSchema.Enum = append(enumSchema.Enum, nil)
+	require.NoError(t, enumSchema.VisitJSON(nil))
+
+	notSchema := NewStringSchema().WithNullable()
+	notSchema.Not = &SchemaRef{Value: NewStringSchema().WithNullable()}
+	require.Error(t, notSchema.VisitJSON(nil))
+}

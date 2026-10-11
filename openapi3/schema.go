@@ -2157,11 +2157,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 
 	switch value := value.(type) {
 	case nil:
-		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
-		// those could allow for a nullable value even though this one doesn't
-		if schema.permitsNull(settings) {
-			return
-		}
+		// Continue through schema constraints before checking nullability below.
 	case float64:
 		if math.IsNaN(value) {
 			return ErrSchemaInputNaN
