@@ -295,7 +295,9 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 		if style == "" {
 			style = SerializationForm
 		}
-		explode := true
+		// explode defaults to false for spaceDelimited and pipeDelimited.
+		// deepObject is only defined with explode=true.
+		explode := style != SerializationSpaceDelimited && style != SerializationPipeDelimited
 		if parameter.Explode != nil {
 			explode = *parameter.Explode
 		}
