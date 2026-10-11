@@ -23,7 +23,8 @@
 //     top-level scopes of the document.
 //   - Narrow-scope wrappers — ComponentValidationError,
 //     ExternalDocsURLValidationError, HeaderFieldValidationError,
-//     MediaTypeExampleValidationError, WebhookValidationError,
+//     MediaTypeExampleValidationError, MediaTypeEncodingValidationError,
+//     WebhookValidationError,
 //     ParameterFieldValidationError, ParameterExampleValidationError,
 //     SecuritySchemeFlowValidationError, OAuthFlowValidationError,
 //     OAuthFlowFieldValidationError, SchemaCombinatorElementValidationError,
@@ -164,6 +165,20 @@ func (e *MediaTypeExampleValidationError) Error() string {
 }
 
 func (e *MediaTypeExampleValidationError) Unwrap() error { return e.Cause }
+
+// MediaTypeEncodingValidationError wraps validation errors on a named
+// encoding inside a MediaType.encoding map.
+type MediaTypeEncodingValidationError struct {
+	// EncodingName is the encoding map key.
+	EncodingName string
+	Cause        error
+}
+
+func (e *MediaTypeEncodingValidationError) Error() string {
+	return fmt.Sprintf("encoding %s: %v", e.EncodingName, e.Cause)
+}
+
+func (e *MediaTypeEncodingValidationError) Unwrap() error { return e.Cause }
 
 // WebhookValidationError wraps validation errors on a named webhook
 // at the document root (OpenAPI 3.1+).

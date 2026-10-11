@@ -1343,6 +1343,22 @@ func (e *InfoVersionRequired) Code() string
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
 
+type InvalidEncodingContentTypeError struct {
+	// ContentType is the rejected contentType value (e.g. "png", "*/png").
+	ContentType string
+	// Origin is the source location of the offending encoding when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidEncodingContentTypeError clusters "encoding has invalid 'contentType'
+    value X" failures. An encoding's contentType must be a media type (e.g.
+    "image/png"), a wildcard ("image/*" or "*/*"), or a comma-separated list of
+    those.
+
+func (e *InvalidEncodingContentTypeError) Code() string
+
+func (e *InvalidEncodingContentTypeError) Error() string
+
 type InvalidHTTPSchemeError struct {
 	// Scheme is the rejected scheme value (e.g. "", "not valid").
 	Scheme string
@@ -1696,6 +1712,18 @@ func (mediaType *MediaType) WithExample(name string, value any) *MediaType
 func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType
 
 func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType
+
+type MediaTypeEncodingValidationError struct {
+	// EncodingName is the encoding map key.
+	EncodingName string
+	Cause        error
+}
+    MediaTypeEncodingValidationError wraps validation errors on a named encoding
+    inside a MediaType.encoding map.
+
+func (e *MediaTypeEncodingValidationError) Error() string
+
+func (e *MediaTypeEncodingValidationError) Unwrap() error
 
 type MediaTypeExampleExamplesExclusive struct{ ValidationError }
 

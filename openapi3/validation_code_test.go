@@ -57,6 +57,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.InfoSummaryFieldFor31Plus{},
 		&openapi3.InfoTitleRequired{},
 		&openapi3.InfoVersionRequired{},
+		&openapi3.InvalidEncodingContentTypeError{},
 		&openapi3.InvalidHTTPSchemeError{},
 		&openapi3.InvalidParameterInError{},
 		&openapi3.InvalidSecuritySchemeTypeError{},

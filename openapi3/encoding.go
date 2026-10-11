@@ -119,6 +119,10 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 		return nil
 	}
 
+	if ct := encoding.ContentType; ct != "" && !isValidMediaTypePattern(ct) {
+		return newInvalidEncodingContentType(ct, encoding.Origin)
+	}
+
 	for _, k := range componentNames(encoding.Headers) {
 		v := encoding.Headers[k]
 		if err := ValidateIdentifier(k); err != nil {
@@ -167,4 +171,23 @@ func (encoding *Encoding) AllowsContentType(mediaType string) bool {
 		}
 	}
 	return false
+}
+
+// isValidMediaTypePattern reports whether s is a comma-separated list of
+// media types or wildcards (e.g. "image/png, image/*"). Media type
+// parameters (e.g. "; charset=utf-8") are allowed and not checked.
+func isValidMediaTypePattern(s string) bool {
+	const nopes = " \t/;"
+	for token := range strings.SplitSeq(s, ",") {
+		mediaType, _, _ := strings.Cut(token, ";")
+		mediaType = strings.TrimSpace(mediaType)
+		typePart, subtype, ok := strings.Cut(mediaType, "/")
+		if !ok || typePart == "" || subtype == "" || strings.ContainsAny(typePart, nopes) || strings.ContainsAny(subtype, nopes) {
+			return false
+		}
+		if typePart == "*" && subtype != "*" {
+			return false
+		}
+	}
+	return true
 }

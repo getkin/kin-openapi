@@ -160,6 +160,11 @@ func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOpti
 			}
 		}
 	}
+	for _, k := range componentNames(mediaType.Encoding) {
+		if err := mediaType.Encoding[k].Validate(ctx); err != nil {
+			return &MediaTypeEncodingValidationError{EncodingName: k, Cause: err}
+		}
+	}
 	if itemSchema := mediaType.ItemSchema; itemSchema != nil {
 		if !getValidationOptions(ctx).isOpenAPI32OrLater {
 			return errFieldFor32Plus("itemSchema", mediaType.Origin)
