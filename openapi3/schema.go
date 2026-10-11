@@ -3107,7 +3107,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 			if f := settings.defaultsSet; f != nil && value[propName] == nil {
 				if dflt := propSchema.Value.Default; dflt != nil && !reqRO && !repWO {
-					value[propName] = dflt
+					value[propName] = deepCopyJSONValue(dflt)
 					settings.onceSettingDefaults.Do(f)
 				}
 			}
