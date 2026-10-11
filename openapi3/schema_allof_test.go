@@ -10,9 +10,6 @@ import (
 
 func TestAllOfErrorPreserved(t *testing.T) {
 
-	SchemaErrorDetailsDisabled = true
-	defer func() { SchemaErrorDetailsDisabled = false }()
-
 	// language=json
 	raw := `
 {
@@ -62,7 +59,7 @@ func TestAllOfErrorPreserved(t *testing.T) {
 	err = json.Unmarshal([]byte(raw), &obj)
 	require.NoError(t, err)
 
-	err = s.VisitJSON(obj, MultiErrors())
+	err = s.VisitJSON(obj, MultiErrors(), DisableSchemaErrorDetails())
 	require.Error(t, err)
 
 	var multiError MultiError

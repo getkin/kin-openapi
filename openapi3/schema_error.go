@@ -27,6 +27,8 @@ type SchemaError struct {
 	cause error
 	// customizeMessageError is a function that can be used to customize the error message.
 	customizeMessageError func(err *SchemaError) string
+	// detailsDisabled leaves the schema and the value out of the error message.
+	detailsDisabled bool
 }
 
 func markSchemaErrorKey(err error, key string) error {
@@ -102,7 +104,7 @@ func (err *SchemaError) Error() string {
 		buf.WriteString(reason)
 	}
 
-	if !SchemaErrorDetailsDisabled {
+	if !err.detailsDisabled {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("  ", "  ")
@@ -134,11 +136,24 @@ func newSchemaError(schema *Schema, value any) *SchemaError {
 }
 
 // newSchemaError starts building a SchemaError about value failing schema,
-// carrying over the message customizer of settings, which may be nil.
+// carrying over the error message settings of settings, which may be nil.
 func (settings *schemaValidationSettings) newSchemaError(schema *Schema, value any) *SchemaError {
 	err := newSchemaError(schema, value)
 	if settings != nil {
 		err.customizeMessageError = settings.customizeMessageError
+		err.detailsDisabled = settings.schemaErrorDetailsDisabled
+	}
+	return err
+}
+
+// formatError applies settings to a SchemaError returned by a format validator,
+// which is built without them.
+func (settings *schemaValidationSettings) formatError(err error) error {
+	if schemaErr, ok := err.(*SchemaError); ok && settings.schemaErrorDetailsDisabled && !schemaErr.detailsDisabled {
+		// The validator may return a shared error: work on a copy.
+		cp := *schemaErr
+		cp.detailsDisabled = true
+		return &cp
 	}
 	return err
 }

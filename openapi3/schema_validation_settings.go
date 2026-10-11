@@ -28,7 +28,8 @@ type schemaValidationSettings struct {
 	onceSettingDefaults sync.Once
 	defaultsSet         func()
 
-	customizeMessageError func(err *SchemaError) string
+	customizeMessageError      func(err *SchemaError) string
+	schemaErrorDetailsDisabled bool
 
 	// Per-validation format validators (checked before global ones)
 	stringFormats  map[string]StringFormatValidator
@@ -88,6 +89,12 @@ func DefaultsSet(f func()) SchemaValidationOption {
 // If the passed function returns an empty string, it returns to the previous Error() implementation.
 func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.customizeMessageError = f }
+}
+
+// DisableSchemaErrorDetails leaves the schema and the value out of the message of schema errors,
+// so that it presents only the reason. Values may hold sensitive inputs, such as secrets.
+func DisableSchemaErrorDetails() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.schemaErrorDetailsDisabled = true }
 }
 
 // SetSchemaRegexCompiler allows to override the regex implementation used to validate field "pattern".

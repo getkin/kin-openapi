@@ -88,8 +88,6 @@ func TestReversePathInMessageSchemaError(t *testing.T) {
 
 	DefineIPv4Format()
 
-	SchemaErrorDetailsDisabled = true
-
 	const spc = `
 components:
   schemas:
@@ -107,11 +105,9 @@ components:
 
 	err = doc.Components.Schemas["Something"].Value.VisitJSON(map[string]any{
 		`ip`: `123.0.0.11111`,
-	})
+	}, DisableSchemaErrorDetails())
 
 	require.EqualError(t, err, `Error at "/ip": string doesn't match the format "ipv4": Not an IP address`)
-
-	SchemaErrorDetailsDisabled = false
 }
 
 func TestUuidFormat(t *testing.T) {

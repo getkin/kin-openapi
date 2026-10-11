@@ -30,9 +30,6 @@ const (
 )
 
 var (
-	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
-	SchemaErrorDetailsDisabled = false
-
 	errSchema = errors.New("input does not match the schema")
 
 	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
@@ -2618,6 +2615,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			}
 			if ok {
 				if err := validateIntegerFormat(f, value); err != nil {
+					err = settings.formatError(err)
 					var reason string
 					schemaErr := &SchemaError{}
 					if errors.As(err, &schemaErr) {
@@ -2637,6 +2635,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			}
 			if ok {
 				if err := f.Validate(value); err != nil {
+					err = settings.formatError(err)
 					var reason string
 					schemaErr := &SchemaError{}
 					if errors.As(err, &schemaErr) {
@@ -2864,6 +2863,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 		}
 		if ok {
 			if err := f.Validate(value); err != nil {
+				err = settings.formatError(err)
 				var reason string
 				schemaErr := &SchemaError{}
 				if errors.As(err, &schemaErr) {
