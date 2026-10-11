@@ -77,10 +77,13 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
 
     If a decoder for the specified content type already exists, the function
     replaces it with the specified decoder. A decoder registered for "*/*" is
-    used if none match.
+    used if none match. Content types are matched case-insensitively (RFC 9110,
+    section 8.3.1).
 
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
-    RegisterBodyEncoder enables package-wide decoding of contentType values
+    RegisterBodyEncoder enables package-wide decoding of contentType values.
+
+    Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 
 func TrimJSONPrefix(data []byte) []byte
     TrimJSONPrefix trims one of the possible prefixes
@@ -165,6 +168,7 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder
     content type.
 
     If no decoder was registered for the given content type, nil is returned.
+    Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 
 type BodyEncoder func(body any) ([]byte, error)
     BodyEncoder really is an (encoding/json).Marshaler

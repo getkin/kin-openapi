@@ -27,6 +27,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.ConflictingPathsError{},
 		&openapi3.ConstFieldFor31Plus{},
 		&openapi3.ContainsFieldFor31Plus{},
+		&openapi3.ContentKeysOverlapError{},
 		&openapi3.ContentEncodingFieldFor31Plus{},
 		&openapi3.ContentMediaTypeFieldFor31Plus{},
 		&openapi3.ContentSchemaFieldFor31Plus{},

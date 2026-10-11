@@ -101,11 +101,71 @@ func TestContent_Get(t *testing.T) {
 			mime:    "",
 			want:    fallback,
 		},
+		{
+			name:    "case insensitive full match",
+			content: content,
+			mime:    "Application/JSON;Encoding=UTF-8",
+			want:    fullMatch,
+		},
+		{
+			name:    "case insensitive stripped match",
+			content: content,
+			mime:    "APPLICATION/JSON",
+			want:    stripped,
+		},
+		{
+			name:    "case insensitive wildcard match",
+			content: content,
+			mime:    "Application/YAML",
+			want:    wildcard,
+		},
+		{
+			name:    "case insensitive key",
+			content: Content{"Application/JSON": stripped},
+			mime:    "application/json",
+			want:    stripped,
+		},
+		{
+			name:    "key listing several media ranges",
+			content: Content{"text/csv, Application/JSON": stripped, "*/*": fallback},
+			mime:    "application/json",
+			want:    stripped,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.content.Get(tt.mime)
 			require.Same(t, tt.want, got)
+		})
+	}
+}
+
+func TestContent_ValidateKeysOverlap(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		keys    []string
+		overlap string
+	}{
+		{name: "distinct", keys: []string{"application/json", "application/*", "*/*", "application/json;charset=utf-8"}},
+		{name: "case folded duplicate", keys: []string{"application/json", "Application/JSON"}, overlap: "application/json"},
+		{name: "case folded wildcard duplicate", keys: []string{"image/*", "IMAGE/*"}, overlap: "image/*"},
+		{name: "listed in another key", keys: []string{"a/b", "c/d, A/B"}, overlap: "a/b"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			content := make(Content, len(tc.keys))
+			for _, k := range tc.keys {
+				content[k] = NewMediaType()
+			}
+			err := content.Validate(t.Context())
+			if tc.overlap == "" {
+				require.NoError(t, err)
+				return
+			}
+			var e *ContentKeysOverlapError
+			require.ErrorAs(t, err, &e)
+			require.Equal(t, tc.overlap, e.MediaRange)
+			require.ElementsMatch(t, tc.keys, []string{e.Key, e.OtherKey})
+			require.Equal(t, "content-keys-overlap", e.Code())
 		})
 	}
 }
