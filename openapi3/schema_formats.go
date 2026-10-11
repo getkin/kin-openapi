@@ -168,22 +168,13 @@ func NewIPValidator(isIPv4 bool) FormatValidator[string] {
 	return callbackValidator[string]{fn: func(ip string) error {
 		addr, err := netip.ParseAddr(ip)
 		if err != nil {
-			return &SchemaError{
-				Value:  ip,
-				Reason: "Not an IP address",
-			}
+			return newSchemaError(nil, ip).withReason("Not an IP address")
 		}
 		if isIPv4 && !addr.Is4() {
-			return &SchemaError{
-				Value:  ip,
-				Reason: "Not an IPv4 address (it's IPv6)",
-			}
+			return newSchemaError(nil, ip).withReason("Not an IPv4 address (it's IPv6)")
 		}
 		if !isIPv4 && !addr.Is6() {
-			return &SchemaError{
-				Value:  ip,
-				Reason: "Not an IPv6 address (it's IPv4)",
-			}
+			return newSchemaError(nil, ip).withReason("Not an IPv6 address (it's IPv4)")
 		}
 		return nil
 	}}

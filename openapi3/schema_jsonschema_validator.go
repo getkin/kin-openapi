@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -237,23 +238,23 @@ func validateNumberFormat(format string, settings *schemaValidationSettings, val
 }
 
 // validate validates a value against the compiled JSON Schema
-func (v *jsonSchemaValidator) validate(value any) error {
+func (v *jsonSchemaValidator) validate(settings *schemaValidationSettings, value any) error {
 	if err := v.schema.Validate(value); err != nil {
 		// Convert jsonschema error to SchemaError
-		return convertJSONSchemaError(err, value)
+		return convertJSONSchemaError(settings, err, value)
 	}
 	return nil
 }
 
 // convertJSONSchemaError converts a jsonschema validation error to OpenAPI SchemaError format.
 // root is the validated value, from which the failing value is looked up.
-func convertJSONSchemaError(err error, root any) error {
+func convertJSONSchemaError(settings *schemaValidationSettings, err error, root any) error {
 	// TODO: Go 1.26
 	// if err, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
-	// 	return formatValidationError(err, "")
+	// 	return formatValidationError(settings, err, "", root)
 	var validationErr *jsonschema.ValidationError
 	if errors.As(err, &validationErr) {
-		return formatValidationError(validationErr, "", root)
+		return formatValidationError(settings, validationErr, "", root)
 	}
 	return err
 }
@@ -263,7 +264,7 @@ func convertJSONSchemaError(err error, root any) error {
 // of the failing value (JSONPointer), the failing keyword (SchemaField) and the
 // failing value (Value). The jsonschema error itself stays reachable with
 // errors.As.
-func formatValidationError(verr *jsonschema.ValidationError, parentPath string, root any) error {
+func formatValidationError(settings *schemaValidationSettings, verr *jsonschema.ValidationError, parentPath string, root any) error {
 	// Build the path from InstanceLocation slice
 	path := "/" + strings.Join(verr.InstanceLocation, "/")
 	if parentPath != "" && path != "/" {
@@ -286,28 +287,27 @@ func formatValidationError(verr *jsonschema.ValidationError, parentPath string, 
 		failing = failing.Causes[0]
 	}
 
-	schemaErr := &SchemaError{
-		Reason:      msg.String(),
-		reversePath: reversedPath(failing.InstanceLocation),
-		cause:       verr,
+	value, _ := valueAt(root, failing.InstanceLocation)
+	schemaErr := settings.newSchemaError(nil, value).
+		withReason(msg.String()).
+		withCause(verr)
+	for _, key := range slices.Backward(failing.InstanceLocation) {
+		schemaErr.withPathKey(key)
 	}
 	if keywords := failing.ErrorKind.KeywordPath(); len(keywords) > 0 {
-		schemaErr.SchemaField = keywords[len(keywords)-1]
-	}
-	if value, ok := valueAt(root, failing.InstanceLocation); ok {
-		schemaErr.Value = value
+		schemaErr.withField(keywords[len(keywords)-1])
 	}
 
 	// If there are sub-errors, format them too
 	if len(verr.Causes) > 0 {
 		var subErrors MultiError
 		for _, cause := range verr.Causes {
-			if subErr := formatValidationError(cause, path, root); subErr != nil {
+			if subErr := formatValidationError(settings, cause, path, root); subErr != nil {
 				subErrors = append(subErrors, subErr)
 			}
 		}
 		if len(subErrors) > 0 {
-			schemaErr.Origin = fmt.Errorf("validation failed due to: %w", subErrors)
+			schemaErr.withOrigin(fmt.Errorf("validation failed due to: %w", subErrors))
 		}
 	}
 
@@ -321,18 +321,6 @@ func isWrapperErrorKind(k jsonschema.ErrorKind) bool {
 		return true
 	}
 	return false
-}
-
-// reversedPath is location in the reversed order SchemaError keeps its path in.
-func reversedPath(location []string) []string {
-	if len(location) == 0 {
-		return nil
-	}
-	reversed := make([]string /*,*/, len(location))
-	for i, token := range location {
-		reversed[len(location)-1-i] = token
-	}
-	return reversed
 }
 
 // valueAt is the value at location (unescaped JSON pointer tokens) inside root.
@@ -380,7 +368,7 @@ func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, valu
 		return schema.visitJSON(settings, value)
 	}
 
-	return validator.validate(value)
+	return validator.validate(settings, value)
 }
 
 // schemaUsesJSONSchema2020Features checks the keywords that guard the legacy

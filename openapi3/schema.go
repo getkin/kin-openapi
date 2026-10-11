@@ -1867,7 +1867,7 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 				// Only successfully compiled patterns are cached.
 				// The cache does not record which compiler was used, so a custom one always compiles.
 				if _, ok := compiledPatterns.Load(schema.Pattern); !ok || validationOpts.regexCompilerFunc != nil {
-					if _, err := schema.compilePattern(validationOpts.regexCompilerFunc); err != nil {
+					if _, err := schema.compilePattern(nil, validationOpts.regexCompilerFunc); err != nil {
 						return visited, err
 					}
 				}
@@ -2178,13 +2178,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		if settings.failfast {
 			return errSchema
 		}
-		return &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "boolean",
-			Reason:                "the false schema accepts no value",
-			customizeMessageError: settings.customizeMessageError,
-		}
+		return settings.newSchemaError(schema, value).
+			withField("boolean").
+			withReason("the false schema accepts no value")
 	}
 
 	if schema.IsEmpty() {
@@ -2215,14 +2211,10 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	case json.Number:
 		valueFloat64, err := value.Float64()
 		if err != nil {
-			return &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "type",
-				Reason:                "cannot convert json.Number to float64",
-				customizeMessageError: settings.customizeMessageError,
-				Origin:                err,
-			}
+			return settings.newSchemaError(schema, value).
+				withField("type").
+				withReason("cannot convert json.Number to float64").
+				withOrigin(err)
 		}
 		return schema.visitJSONNumber(settings, valueFloat64)
 	case int:
@@ -2261,13 +2253,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		return schema.visitJSONArray(settings, newValue)
 	}
 
-	return &SchemaError{
-		Value:                 value,
-		Schema:                schema,
-		SchemaField:           "type",
-		Reason:                fmt.Sprintf("unhandled value of type %T", value),
-		customizeMessageError: settings.customizeMessageError,
-	}
+	return settings.newSchemaError(schema, value).
+		withField("type").
+		withReason(fmt.Sprintf("unhandled value of type %T", value))
 }
 
 func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, value any) (err error) {
@@ -2296,13 +2284,9 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 			return errSchema
 		}
 		allowedValues, _ := json.Marshal(enum)
-		return &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "enum",
-			Reason:                "value is not one of the allowed values " + string(allowedValues),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		return settings.newSchemaError(schema, value).
+			withField("enum").
+			withReason("value is not one of the allowed values " + string(allowedValues))
 	}
 	return
 }
@@ -2317,12 +2301,7 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 			if settings.failfast {
 				return errSchema
 			}
-			return &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "not",
-				customizeMessageError: settings.customizeMessageError,
-			}
+			return settings.newSchemaError(schema, value).withField("not")
 		}
 	}
 	return
@@ -2332,7 +2311,7 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 // itself is badly specified
 // resolveDiscriminatorRef resolves the discriminator reference for oneOf/anyOf validation.
 // Returns the discriminator ref string and any error encountered during resolution.
-func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
+func (schema *Schema) resolveDiscriminatorRef(settings *schemaValidationSettings, value any) (string, error) {
 	if schema.Discriminator == nil {
 		return "", nil
 	}
@@ -2343,30 +2322,22 @@ func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
 	}
 	discriminatorVal, okcheck := valuemap[pn]
 	if !okcheck {
-		return "", &SchemaError{
-			Schema:      schema,
-			SchemaField: "discriminator",
-			Reason:      fmt.Sprintf("input does not contain the discriminator property %q", pn),
-		}
+		return "", settings.newSchemaError(schema, nil).
+			withField("discriminator").
+			withReason(fmt.Sprintf("input does not contain the discriminator property %q", pn))
 	}
 
 	discriminatorValString, okcheck := discriminatorVal.(string)
 	if !okcheck {
-		return "", &SchemaError{
-			Value:       discriminatorVal,
-			Schema:      schema,
-			SchemaField: "discriminator",
-			Reason:      fmt.Sprintf("value of discriminator property %q is not a string", pn),
-		}
+		return "", settings.newSchemaError(schema, discriminatorVal).
+			withField("discriminator").
+			withReason(fmt.Sprintf("value of discriminator property %q is not a string", pn))
 	}
 
 	if discriminatorRef, okcheck := schema.Discriminator.Mapping[discriminatorValString]; len(schema.Discriminator.Mapping) > 0 && !okcheck {
-		return "", &SchemaError{
-			Value:       discriminatorVal,
-			Schema:      schema,
-			SchemaField: "discriminator",
-			Reason:      fmt.Sprintf("discriminator property %q has invalid value", pn),
-		}
+		return "", settings.newSchemaError(schema, discriminatorVal).
+			withField("discriminator").
+			withReason(fmt.Sprintf("discriminator property %q has invalid value", pn))
 	} else if ref := discriminatorRef.Ref; ref != "" && !strings.Contains(ref, "/") {
 		// Mapping values can also be plain schema names like "Dog"
 		return "#/components/schemas/" + ref, nil
@@ -2378,7 +2349,7 @@ func (schema *Schema) resolveDiscriminatorRef(value any) (string, error) {
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
-		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
+		discriminatorRef, err := schema.resolveDiscriminatorRef(settings, value)
 		if err != nil {
 			return err, false
 		}
@@ -2417,18 +2388,13 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if settings.failfast {
 				return errSchema, false
 			}
-			e := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "oneOf",
-				customizeMessageError: settings.customizeMessageError,
-			}
+			e := settings.newSchemaError(schema, value).withField("oneOf")
 			if ok > 1 {
-				e.Origin = ErrOneOfConflict
-				e.Reason = fmt.Sprintf(`value matches more than one schema from "oneOf" (matches schemas at indices %v)`, matchedOneOfIndices)
+				e.withReason(fmt.Sprintf(`value matches more than one schema from "oneOf" (matches schemas at indices %v)`, matchedOneOfIndices)).
+					withOrigin(ErrOneOfConflict)
 			} else {
-				e.Origin = fmt.Errorf("doesn't match schema due to: %w", validationErrors)
-				e.Reason = `value doesn't match any schema from "oneOf"`
+				e.withReason(`value doesn't match any schema from "oneOf"`).
+					withOrigin(fmt.Errorf("doesn't match schema due to: %w", validationErrors))
 			}
 
 			return e, false
@@ -2442,7 +2408,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
-		discriminatorRef, err := schema.resolveDiscriminatorRef(value)
+		discriminatorRef, err := schema.resolveDiscriminatorRef(settings, value)
 		if err != nil {
 			return err, false
 		}
@@ -2476,13 +2442,9 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if settings.failfast {
 				return errSchema, false
 			}
-			return &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "anyOf",
-				Reason:                `doesn't match any schema from "anyOf"`,
-				customizeMessageError: settings.customizeMessageError,
-			}, false
+			return settings.newSchemaError(schema, value).
+				withField("anyOf").
+				withReason(`doesn't match any schema from "anyOf"`), false
 		}
 
 		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
@@ -2504,14 +2466,10 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		visitedAllOf = true
 	}
 	if len(validationErrors) > 0 {
-		return &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "allOf",
-			Reason:                `doesn't match all schemas from "allOf"`,
-			Origin:                fmt.Errorf("doesn't match schema due to: %w", validationErrors),
-			customizeMessageError: settings.customizeMessageError,
-		}, false
+		return settings.newSchemaError(schema, value).
+			withField("allOf").
+			withReason(`doesn't match all schemas from "allOf"`).
+			withOrigin(fmt.Errorf("doesn't match schema due to: %w", validationErrors)), false
 	}
 
 	run = !((visitedOneOf || visitedAnyOf || visitedAllOf) && value == nil)
@@ -2529,13 +2487,9 @@ func (schema *Schema) visitJSONNull(settings *schemaValidationSettings) (err err
 	if settings.failfast {
 		return errSchema
 	}
-	return &SchemaError{
-		Value:                 nil,
-		Schema:                schema,
-		SchemaField:           "nullable",
-		Reason:                "Value is not nullable",
-		customizeMessageError: settings.customizeMessageError,
-	}
+	return settings.newSchemaError(schema, nil).
+		withField("nullable").
+		withReason("Value is not nullable")
 }
 
 func (schema *Schema) VisitJSONBoolean(value bool) error {
@@ -2639,13 +2593,9 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "type",
-				Reason:                "value must be an integer",
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("type").
+				withReason("value must be an integer")
 			if !settings.multiError {
 				return err
 			}
@@ -2702,14 +2652,10 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	}
 
 	if formatStrErr != "" || formatErr != nil {
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "format",
-			Reason:                formatStrErr,
-			Origin:                formatErr,
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("format").
+			withReason(formatStrErr).
+			withOrigin(formatErr)
 		if !settings.multiError {
 			return err
 		}
@@ -2737,13 +2683,9 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "exclusiveMinimum",
-				Reason:                fmt.Sprintf("number must be more than %g", exclusiveMinBound),
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("exclusiveMinimum").
+				withReason(fmt.Sprintf("number must be more than %g", exclusiveMinBound))
 			if !settings.multiError {
 				return err
 			}
@@ -2772,13 +2714,9 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "exclusiveMaximum",
-				Reason:                fmt.Sprintf("number must be less than %g", exclusiveMaxBound),
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("exclusiveMaximum").
+				withReason(fmt.Sprintf("number must be less than %g", exclusiveMaxBound))
 			if !settings.multiError {
 				return err
 			}
@@ -2791,13 +2729,9 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "minimum",
-			Reason:                fmt.Sprintf("number must be at least %g", *v),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("minimum").
+			withReason(fmt.Sprintf("number must be at least %g", *v))
 		if !settings.multiError {
 			return err
 		}
@@ -2809,13 +2743,9 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "maximum",
-			Reason:                fmt.Sprintf("number must be at most %g", *v),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("maximum").
+			withReason(fmt.Sprintf("number must be at most %g", *v))
 		if !settings.multiError {
 			return err
 		}
@@ -2831,13 +2761,9 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "multipleOf",
-				Reason:                reason,
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("multipleOf").
+				withReason(reason)
 			if !settings.multiError {
 				return err
 			}
@@ -2881,13 +2807,9 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "minLength",
-				Reason:                fmt.Sprintf("minimum string length is %d", minLength),
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("minLength").
+				withReason(fmt.Sprintf("minimum string length is %d", minLength))
 			if !settings.multiError {
 				return err
 			}
@@ -2897,13 +2819,9 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "maxLength",
-				Reason:                fmt.Sprintf("maximum string length is %d", *maxLength),
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("maxLength").
+				withReason(fmt.Sprintf("maximum string length is %d", *maxLength))
 			if !settings.multiError {
 				return err
 			}
@@ -2917,7 +2835,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 		cp, _ := cpiface.(RegexMatcher)
 		if cp == nil {
 			var err error
-			if cp, err = schema.compilePattern(settings.regexCompiler); err != nil {
+			if cp, err = schema.compilePattern(settings, settings.regexCompiler); err != nil {
 				if !settings.multiError {
 					return err
 				}
@@ -2925,13 +2843,9 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 			}
 		}
 		if cp != nil && !cp.MatchString(value) {
-			err := &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "pattern",
-				Reason:                fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern),
-				customizeMessageError: settings.customizeMessageError,
-			}
+			err := settings.newSchemaError(schema, value).
+				withField("pattern").
+				withReason(fmt.Sprintf(`string doesn't match the regular expression "%s"`, schema.Pattern))
 			if !settings.multiError {
 				return err
 			}
@@ -2963,14 +2877,10 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 		}
 	}
 	if formatStrErr != "" || formatErr != nil {
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "format",
-			Reason:                formatStrErr,
-			Origin:                formatErr,
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("format").
+			withReason(formatStrErr).
+			withOrigin(formatErr)
 		if !settings.multiError {
 			return err
 		}
@@ -3004,13 +2914,9 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "minItems",
-			Reason:                fmt.Sprintf("minimum number of items is %d", v),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("minItems").
+			withReason(fmt.Sprintf("minimum number of items is %d", v))
 		if !settings.multiError {
 			return err
 		}
@@ -3022,13 +2928,9 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "maxItems",
-			Reason:                fmt.Sprintf("maximum number of items is %d", *v),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("maxItems").
+			withReason(fmt.Sprintf("maximum number of items is %d", *v))
 		if !settings.multiError {
 			return err
 		}
@@ -3043,13 +2945,9 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "uniqueItems",
-			Reason:                "duplicate items found",
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("uniqueItems").
+			withReason("duplicate items found")
 		if !settings.multiError {
 			return err
 		}
@@ -3120,13 +3018,10 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 				if repWO {
 					field, direction = "writeOnly", "response"
 				}
-				err := markSchemaErrorKey(&SchemaError{
-					Value:                 v,
-					Schema:                propSchema.Value,
-					SchemaField:           field,
-					Reason:                fmt.Sprintf("%s property %q in %s", field, propName, direction),
-					customizeMessageError: settings.customizeMessageError,
-				}, propName)
+				err := settings.newSchemaError(propSchema.Value, v).
+					withPathKey(propName).
+					withField(field).
+					withReason(fmt.Sprintf("%s property %q in %s", field, propName, direction))
 				if !settings.multiError {
 					return err
 				}
@@ -3144,13 +3039,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "minProperties",
-			Reason:                fmt.Sprintf("there must be at least %d properties", v),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("minProperties").
+			withReason(fmt.Sprintf("there must be at least %d properties", v))
 		if !settings.multiError {
 			return err
 		}
@@ -3162,13 +3053,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "maxProperties",
-			Reason:                fmt.Sprintf("there must be at most %d properties", *v),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("maxProperties").
+			withReason(fmt.Sprintf("there must be at most %d properties", *v))
 		if !settings.multiError {
 			return err
 		}
@@ -3228,13 +3115,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		if settings.failfast {
 			return errSchema
 		}
-		err := &SchemaError{
-			Value:                 value,
-			Schema:                schema,
-			SchemaField:           "properties",
-			Reason:                fmt.Sprintf("property %q is unsupported", k),
-			customizeMessageError: settings.customizeMessageError,
-		}
+		err := settings.newSchemaError(schema, value).
+			withField("properties").
+			withReason(fmt.Sprintf("property %q is unsupported", k))
 		if !settings.multiError {
 			return err
 		}
@@ -3253,13 +3136,10 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			if settings.failfast {
 				return errSchema
 			}
-			err := markSchemaErrorKey(&SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "required",
-				Reason:                fmt.Sprintf("property %q is missing", k),
-				customizeMessageError: settings.customizeMessageError,
-			}, k)
+			err := settings.newSchemaError(schema, value).
+				withPathKey(k).
+				withField("required").
+				withReason(fmt.Sprintf("property %q is missing", k))
 			if !settings.multiError {
 				return err
 			}
@@ -3292,13 +3172,9 @@ func (schema *Schema) expectedType(settings *schemaValidationSettings, value any
 		a = "one of"
 		x = strings.Join(schemaTypes, ", ")
 	}
-	return &SchemaError{
-		Value:                 value,
-		Schema:                schema,
-		SchemaField:           "type",
-		Reason:                fmt.Sprintf("value must be %s %s", a, x),
-		customizeMessageError: settings.customizeMessageError,
-	}
+	return settings.newSchemaError(schema, value).
+		withField("type").
+		withReason(fmt.Sprintf("value must be %s %s", a, x))
 }
 
 // SchemaError is an error that occurs during schema validation.
@@ -3325,8 +3201,8 @@ type SchemaError struct {
 var _ interface{ Unwrap() error } = SchemaError{}
 
 func markSchemaErrorKey(err error, key string) error {
-
-	if v, ok := err.(*SchemaError); ok {
+	switch v := err.(type) {
+	case *SchemaError:
 		v.reversePath = append(v.reversePath, key)
 		if v.Origin != nil {
 			if unwrapped := errors.Unwrap(v.Origin); unwrapped != nil {
@@ -3339,8 +3215,7 @@ func markSchemaErrorKey(err error, key string) error {
 			}
 		}
 		return v
-	}
-	if v, ok := err.(MultiError); ok {
+	case MultiError:
 		for _, e := range v {
 			_ = markSchemaErrorKey(e, key)
 		}
