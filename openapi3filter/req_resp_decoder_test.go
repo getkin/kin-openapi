@@ -1806,6 +1806,32 @@ func TestDecodeBody(t *testing.T) {
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
 		{
+			name: "urlencoded space delimited without explode",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader(urlencodedSpaceDelim.Encode()),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("b", openapi3.NewIntegerSchema()).
+				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"c": {Style: openapi3.SerializationSpaceDelimited},
+			},
+			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
+		},
+		{
+			name: "urlencoded pipe delimited without explode",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader(urlencodedPipeDelim.Encode()),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("b", openapi3.NewIntegerSchema()).
+				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"c": {Style: openapi3.SerializationPipeDelimited},
+			},
+			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
+		},
+		{
 			name: "multipart",
 			mime: multipartFormMime,
 			body: multipartForm,
