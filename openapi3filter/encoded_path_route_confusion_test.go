@@ -53,7 +53,7 @@ func TestEncodedPathAuthorizationBypass(t *testing.T) {
 
 	request := func(path string) int {
 		t.Helper()
-		response, err := http.Get(server.URL + path)
+		response, err := server.Client().Get(server.URL + path)
 		require.NoError(t, err)
 		defer response.Body.Close()
 		return response.StatusCode
@@ -117,7 +117,7 @@ func TestEncodedPathAuthorizationBypass(t *testing.T) {
 
 		useServer := httptest.NewServer(useRouter)
 		defer useServer.Close()
-		response, err := http.Get(useServer.URL + "/public%2Fstatus")
+		response, err := useServer.Client().Get(useServer.URL + "/public%2Fstatus")
 		require.NoError(t, err)
 		defer response.Body.Close()
 

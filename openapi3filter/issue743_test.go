@@ -204,7 +204,7 @@ security:
 
 	req.Header.Set("Content-Type", "text/plain")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := ts.Client().Do(req)
 	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
