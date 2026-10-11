@@ -1963,24 +1963,26 @@ func TestContentTypeAllowedByEncoding(t *testing.T) {
 		name                string
 		mediaType           string
 		encodingContentType string
-		want                bool
+		match               bool
 	}{
-		{name: "exact match", mediaType: "application/json", encodingContentType: "application/json", want: true},
-		{name: "exact mismatch", mediaType: "application/json", encodingContentType: "application/xml", want: false},
-		{name: "comma list first", mediaType: "image/jpeg", encodingContentType: "image/jpeg, image/png", want: true},
-		{name: "comma list second", mediaType: "image/png", encodingContentType: "image/jpeg, image/png", want: true},
-		{name: "comma list miss", mediaType: "image/gif", encodingContentType: "image/jpeg, image/png", want: false},
-		{name: "comma list no spaces", mediaType: "image/png", encodingContentType: "image/jpeg,image/png", want: true},
-		{name: "subtype wildcard match", mediaType: "image/png", encodingContentType: "image/*", want: true},
-		{name: "subtype wildcard miss", mediaType: "application/pdf", encodingContentType: "image/*", want: false},
-		{name: "full wildcard", mediaType: "application/octet-stream", encodingContentType: "*/*", want: true},
-		{name: "case insensitive", mediaType: "Image/PNG", encodingContentType: "image/png", want: true},
-		{name: "entry with parameters base match", mediaType: "application/xml", encodingContentType: "application/xml; charset=utf-8", want: true},
-		{name: "empty entries ignored", mediaType: "image/png", encodingContentType: " , image/png , ", want: true},
+		{name: "exact match", mediaType: "application/json", encodingContentType: "application/json", match: true},
+		{name: "exact mismatch", mediaType: "application/json", encodingContentType: "application/xml"},
+		{name: "comma list first", mediaType: "image/jpeg", encodingContentType: "image/jpeg, image/png", match: true},
+		{name: "comma list second", mediaType: "image/png", encodingContentType: "image/jpeg, image/png", match: true},
+		{name: "comma list miss", mediaType: "image/gif", encodingContentType: "image/jpeg, image/png"},
+		{name: "comma list no spaces", mediaType: "image/png", encodingContentType: "image/jpeg,image/png", match: true},
+		{name: "subtype wildcard match", mediaType: "image/png", encodingContentType: "image/*", match: true},
+		{name: "subtype wildcard miss", mediaType: "application/pdf", encodingContentType: "image/*"},
+		{name: "full wildcard", mediaType: "application/octet-stream", encodingContentType: "*/*", match: true},
+		{name: "case insensitive", mediaType: "Image/PNG", encodingContentType: "image/png", match: true},
+		{name: "entry with parameters base match", mediaType: "application/xml", encodingContentType: "application/xml; charset=utf-8", match: true},
+		{name: "empty entries ignored", mediaType: "image/png", encodingContentType: " , image/png , ", match: true},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, contentTypeAllowedByEncoding(tc.mediaType, tc.encodingContentType))
+			encoding := openapi3.Encoding{ContentType: tc.encodingContentType}
+			matches := encoding.AllowsContentType(tc.mediaType)
+			assert.Equal(t, tc.match, matches, "%s matches? %q", tc.mediaType, tc.encodingContentType)
 		})
 	}
 }

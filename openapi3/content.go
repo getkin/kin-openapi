@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"iter"
 	"strings"
 )
 
@@ -102,6 +103,21 @@ func (content Content) Get(mime string) *MediaType {
 	// Finally, the most generic match of */* is returned
 	// as a catch-all.
 	return content["*/*"]
+}
+
+// mediaRanges yields the non-empty entries of a comma-separated list of media
+// ranges, trimmed and lowercased: "Image/PNG, image/*" yields "image/png" then "image/*".
+func mediaRanges(s string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for entry := range strings.SplitSeq(s, ",") {
+			if entry = strings.ToLower(strings.TrimSpace(entry)); entry == "" {
+				continue
+			}
+			if !yield(entry) {
+				return
+			}
+		}
+	}
 }
 
 // Validate returns an error if Content does not comply with the OpenAPI spec.

@@ -817,10 +817,20 @@ type Encoding struct {
 	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
 	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 }
-    Encoding is specified by OpenAPI/Swagger 3.0 standard. See
+    Encoding is specified by OpenAPI/Swagger 3 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encoding-object
+    and
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.2.md#encoding-object
 
 func NewEncoding() *Encoding
+
+func (encoding *Encoding) AllowsContentType(mediaType string) bool
+    AllowsContentType reports whether a part of the given media type (e.g. the
+    value of its Content-Type header) is allowed by encoding.ContentType, which
+    is a media type, a wildcard ("image/*" or "*/*") or a comma-separated list
+    of those. Media types are compared case-insensitively (RFC 9110, section
+    8.3.1) and parameters (e.g. "; charset=utf-8") on either side are ignored.
+    An empty ContentType declares no restriction: any media type is allowed.
 
 func (encoding Encoding) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Encoding.
