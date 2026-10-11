@@ -247,6 +247,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
+	opts = append(opts, options.SchemaValidationOptions...)
 	if input.Route != nil && input.Route.Spec.IsOpenAPI31OrLater() {
 		opts = append(opts, openapi3.EnableJSONSchema2020())
 	}

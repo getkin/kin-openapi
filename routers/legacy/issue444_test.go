@@ -45,7 +45,6 @@ foo: bar
 `)))
 	r.Header.Set("Content-Type", "application/x-yaml")
 
-	openapi3.SchemaErrorDetailsDisabled = true
 	route, pathParams, err := router.FindRoute(r)
 	require.NoError(t, err)
 	reqValidationInput := &openapi3filter.RequestValidationInput{

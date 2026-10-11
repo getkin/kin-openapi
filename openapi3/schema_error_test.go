@@ -45,3 +45,15 @@ func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
 		requireCustomized(t, err, "type")
 	})
 }
+
+func TestDisableSchemaErrorDetails(t *testing.T) {
+	schema := NewStringSchema()
+	schema.Pattern = "[A-Z]"
+
+	err := schema.VisitJSON("secret")
+	require.ErrorContains(t, err, "Value:")
+	require.ErrorContains(t, err, "secret")
+
+	err = schema.VisitJSON("secret", DisableSchemaErrorDetails())
+	require.EqualError(t, err, `string doesn't match the regular expression "[A-Z]"`)
+}
