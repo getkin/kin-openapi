@@ -62,47 +62,59 @@ func NewContentWithFormDataSchemaRef(schema *SchemaRef) Content {
 	}
 }
 
+// Get returns the MediaType whose key matches mime, or nil.
+//
+// Keys and mime are compared case-insensitively (RFC 9110, section 8.3.1).
+// A key may be a comma-separated list of media ranges, any of which matches.
+// The most specific match wins, tried in this order:
+//
+//  1. mime in full, parameters included (e.g. "application/json;charset=utf-8")
+//  2. mime without its parameters (e.g. "application/json")
+//  3. its type wildcard (e.g. "application/*")
+//  4. the full wildcard "*/*"
+//
+// An empty mime matches only "*/*". A mime without a subtype matches nothing.
+// Content.Validate rejects keys that would make a match ambiguous.
 func (content Content) Get(mime string) *MediaType {
-	// If the mime is empty then short-circuit to the wildcard.
-	// We do this here so that we catch only the specific case of
-	// and empty mime rather than a present, but invalid, mime type.
 	if mime == "" {
-		return content["*/*"]
+		return content.lookup("*/*")
 	}
-	// Start by making the most specific match possible
-	// by using the mime type in full.
-	if v := content[mime]; v != nil {
+	mime = strings.ToLower(strings.TrimSpace(mime))
+	if v := content.lookup(mime); v != nil {
 		return v
 	}
-	// If an exact match is not found then we strip all
-	// metadata from the mime type and only use the x/y
-	// portion.
-	i := strings.IndexByte(mime, ';')
-	if i < 0 {
-		// If there is no metadata then preserve the full mime type
-		// string for later wildcard searches.
-		i = len(mime)
-	}
-	mime = mime[:i]
-	if v := content[mime]; v != nil {
+	base, _, _ := strings.Cut(mime, ";")
+	base = strings.TrimSpace(base)
+	if v := content.lookup(base); v != nil {
 		return v
 	}
-	// If the x/y pattern has no specific match then we
-	// try the x/* pattern.
-	i = strings.IndexByte(mime, '/')
-	if i < 0 {
-		// In the case that the given mime type is not valid because it is
-		// missing the subtype we return nil so that this does not accidentally
-		// resolve with the wildcard.
+	typ, _, ok := strings.Cut(base, "/")
+	if !ok {
+		// Not a valid media type: do not let it resolve to a wildcard.
 		return nil
 	}
-	mime = mime[:i] + "/*"
-	if v := content[mime]; v != nil {
+	if v := content.lookup(typ + "/*"); v != nil {
 		return v
 	}
-	// Finally, the most generic match of */* is returned
-	// as a catch-all.
-	return content["*/*"]
+	return content.lookup("*/*")
+}
+
+// lookup returns the MediaType whose key lists the lowercased media range want.
+func (content Content) lookup(want string) *MediaType {
+	if v := content[want]; v != nil {
+		return v
+	}
+	// Map iteration order does not matter here: Content.Validate rejects keys
+	// that overlap, so at most one key lists want. On a Content that does not
+	// validate, which of the overlapping keys is returned is unspecified.
+	for k, v := range content {
+		for entry := range mediaRanges(k) {
+			if entry == want {
+				return v
+			}
+		}
+	}
+	return nil
 }
 
 // mediaRanges yields the non-empty entries of a comma-separated list of media
@@ -123,6 +135,22 @@ func mediaRanges(s string) iter.Seq[string] {
 // Validate returns an error if Content does not comply with the OpenAPI spec.
 func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+
+	// No two keys may list the same media range (compared case-insensitively),
+	// otherwise Get could not tell which one a media type matches.
+	seen := make(map[string]string, len(content))
+	for _, k := range componentNames(content) {
+		for entry := range mediaRanges(k) {
+			if other, ok := seen[entry]; ok && other != k {
+				var origin *Origin
+				if mt := content[k]; mt != nil {
+					origin = mt.Origin
+				}
+				return newContentKeysOverlap(other, k, entry, origin)
+			}
+			seen[entry] = k
+		}
+	}
 
 	for _, k := range componentNames(content) {
 		if err := content[k].Validate(ctx); err != nil {

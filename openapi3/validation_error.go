@@ -470,6 +470,24 @@ func (e *InvalidHTTPSchemeError) Error() string {
 	return fmt.Sprintf("security scheme of type 'http' has invalid 'scheme' value %q", e.Scheme)
 }
 
+// ContentKeysOverlapError clusters "content keys X and Y both match Z"
+// failures. Keys of a content map are compared case-insensitively and may
+// each list several media ranges, so two distinct keys (e.g.
+// "application/json" and "Application/JSON") can match the same media type.
+type ContentKeysOverlapError struct {
+	// Key and OtherKey are the overlapping content map keys.
+	Key, OtherKey string
+	// MediaRange is the lowercased media range both keys list.
+	MediaRange string
+	// Origin is the source location of the media type under Key when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *ContentKeysOverlapError) Error() string {
+	return fmt.Sprintf("content keys %q and %q both match %q", e.OtherKey, e.Key, e.MediaRange)
+}
+
 // InvalidEncodingContentTypeError clusters "encoding has invalid
 // 'contentType' value X" failures. An encoding's contentType must be a
 // media type (e.g. "image/png"), a wildcard ("image/*" or "*/*"), or a
@@ -1747,6 +1765,10 @@ func newInvalidSecuritySchemeType(typ string, origin *Origin) error {
 
 func newInvalidHTTPScheme(scheme string, origin *Origin) error {
 	return &InvalidHTTPSchemeError{Scheme: scheme, Origin: origin}
+}
+
+func newContentKeysOverlap(otherKey, key, mediaRange string, origin *Origin) error {
+	return &ContentKeysOverlapError{Key: key, OtherKey: otherKey, MediaRange: mediaRange, Origin: origin}
 }
 
 func newInvalidEncodingContentType(contentType string, origin *Origin) error {

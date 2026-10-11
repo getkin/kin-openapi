@@ -636,6 +636,20 @@ func NewContentWithSchema(schema *Schema, consumes []string) Content
 func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
 
 func (content Content) Get(mime string) *MediaType
+    Get returns the MediaType whose key matches mime, or nil.
+
+    Keys and mime are compared case-insensitively (RFC 9110, section 8.3.1).
+    A key may be a comma-separated list of media ranges, any of which matches.
+    The most specific match wins, tried in this order:
+
+     1. mime in full, parameters included (e.g.
+        "application/json;charset=utf-8")
+     2. mime without its parameters (e.g. "application/json")
+     3. its type wildcard (e.g. "application/*")
+     4. the full wildcard "*/*"
+
+    An empty mime matches only "*/*". A mime without a subtype matches nothing.
+    Content.Validate rejects keys that would make a match ambiguous.
 
 func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Content does not comply with the OpenAPI spec.
@@ -645,6 +659,24 @@ type ContentEncodingFieldFor31Plus struct{ ValidationError }
 func (e *ContentEncodingFieldFor31Plus) As(target any) bool
 
 func (e *ContentEncodingFieldFor31Plus) Code() string
+
+type ContentKeysOverlapError struct {
+	// Key and OtherKey are the overlapping content map keys.
+	Key, OtherKey string
+	// MediaRange is the lowercased media range both keys list.
+	MediaRange string
+	// Origin is the source location of the media type under Key when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ContentKeysOverlapError clusters "content keys X and Y both match Z"
+    failures. Keys of a content map are compared case-insensitively and may each
+    list several media ranges, so two distinct keys (e.g. "application/json" and
+    "Application/JSON") can match the same media type.
+
+func (e *ContentKeysOverlapError) Code() string
+
+func (e *ContentKeysOverlapError) Error() string
 
 type ContentMediaTypeFieldFor31Plus struct{ ValidationError }
 

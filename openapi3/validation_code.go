@@ -45,6 +45,7 @@ func (e *ConflictingPathsError) Code() string            { return "conflicting-p
 func (e *BooleanSchemaFor31Plus) Code() string           { return "boolean-schema-for-3-1-plus" }
 func (e *ConstFieldFor31Plus) Code() string              { return "const-field-for-3-1-plus" }
 func (e *ContainsFieldFor31Plus) Code() string           { return "contains-field-for-3-1-plus" }
+func (e *ContentKeysOverlapError) Code() string          { return "content-keys-overlap" }
 func (e *ContentEncodingFieldFor31Plus) Code() string    { return "content-encoding-field-for-3-1-plus" }
 func (e *ContentMediaTypeFieldFor31Plus) Code() string {
 	return "content-media-type-field-for-3-1-plus"
@@ -202,6 +203,7 @@ var validationErrorCodes = []string{
 	"const-field-for-3-1-plus",
 	"contains-field-for-3-1-plus",
 	"content-encoding-field-for-3-1-plus",
+	"content-keys-overlap",
 	"content-media-type-field-for-3-1-plus",
 	"content-or-schema-exactly-one",
 	"content-schema-field-for-3-1-plus",

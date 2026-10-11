@@ -1272,9 +1272,10 @@ var bodyDecoders = make(map[string]BodyDecoder)
 // RegisteredBodyDecoder returns the registered body decoder for the given content type.
 //
 // If no decoder was registered for the given content type, nil is returned.
+// Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 func RegisteredBodyDecoder(contentType string) BodyDecoder {
 	bodyDecodersLock.RLock()
-	decoder := bodyDecoders[contentType]
+	decoder := bodyDecoders[strings.ToLower(contentType)]
 	bodyDecodersLock.RUnlock()
 	return decoder
 }
@@ -1284,6 +1285,7 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder {
 // If a decoder for the specified content type already exists, the function replaces
 // it with the specified decoder.
 // A decoder registered for "*/*" is used if none match.
+// Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 	if contentType == "" {
 		panic("contentType is empty")
@@ -1292,7 +1294,7 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 		panic("decoder is not defined")
 	}
 	bodyDecodersLock.Lock()
-	bodyDecoders[contentType] = decoder
+	bodyDecoders[strings.ToLower(contentType)] = decoder
 	bodyDecodersLock.Unlock()
 }
 
@@ -1304,7 +1306,7 @@ func UnregisterBodyDecoder(contentType string) {
 		panic("contentType is empty")
 	}
 	bodyDecodersLock.Lock()
-	delete(bodyDecoders, contentType)
+	delete(bodyDecoders, strings.ToLower(contentType))
 	bodyDecodersLock.Unlock()
 }
 
@@ -1345,6 +1347,8 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	mediaType, _, _ := strings.Cut(contentType, ";")
 	mediaType = strings.TrimSpace(mediaType)
 
+	// Media types are case-insensitive (RFC 9110, section 8.3.1).
+	mediaType = strings.ToLower(mediaType)
 	enc := getEncoding(encFn)
 
 	if isBinary(schema) && (enc == nil || enc.ContentType == "") {

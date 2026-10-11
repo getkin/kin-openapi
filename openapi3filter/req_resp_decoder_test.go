@@ -2088,6 +2088,21 @@ func TestRegisterBodyDecoderConcurrently(t *testing.T) {
 	wg.Wait()
 }
 
+func TestBodyDecoderContentTypeIsCaseInsensitive(t *testing.T) {
+	RegisterBodyDecoder("Application/X-Foo", PlainBodyDecoder)
+	defer UnregisterBodyDecoder("APPLICATION/X-FOO")
+	require.NotNil(t, RegisteredBodyDecoder("application/x-foo"))
+
+	h := make(http.Header)
+	h.Set(headerCT, "application/X-FOO; charset=utf-8")
+	schema := openapi3.NewStringSchema().NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+	mediaType, got, err := decodeBody(strings.NewReader("foo"), h, schema, encFn)
+	require.NoError(t, err)
+	require.Equal(t, "application/x-foo", mediaType)
+	require.Equal(t, "foo", got)
+}
+
 func matchParseError(t *testing.T, got, want error) {
 	t.Helper()
 

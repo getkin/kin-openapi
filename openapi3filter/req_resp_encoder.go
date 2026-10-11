@@ -3,6 +3,7 @@ package openapi3filter
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -24,7 +25,9 @@ var bodyEncoders = map[string]BodyEncoder{
 	"application/json": json.Marshal,
 }
 
-// RegisterBodyEncoder enables package-wide decoding of contentType values
+// RegisterBodyEncoder enables package-wide decoding of contentType values.
+//
+// Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder) {
 	if contentType == "" {
 		panic("contentType is empty")
@@ -33,7 +36,7 @@ func RegisterBodyEncoder(contentType string, encoder BodyEncoder) {
 		panic("encoder is not defined")
 	}
 	bodyEncodersM.Lock()
-	bodyEncoders[contentType] = encoder
+	bodyEncoders[strings.ToLower(contentType)] = encoder
 	bodyEncodersM.Unlock()
 }
 
@@ -43,7 +46,7 @@ func UnregisterBodyEncoder(contentType string) {
 		panic("contentType is empty")
 	}
 	bodyEncodersM.Lock()
-	delete(bodyEncoders, contentType)
+	delete(bodyEncoders, strings.ToLower(contentType))
 	bodyEncodersM.Unlock()
 }
 
@@ -52,7 +55,7 @@ func UnregisterBodyEncoder(contentType string) {
 // If no encoder was registered for the given content type, nil is returned.
 func RegisteredBodyEncoder(contentType string) BodyEncoder {
 	bodyEncodersM.RLock()
-	mayBE := bodyEncoders[contentType]
+	mayBE := bodyEncoders[strings.ToLower(contentType)]
 	bodyEncodersM.RUnlock()
 	return mayBE
 }
