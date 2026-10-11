@@ -1283,6 +1283,7 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder {
 //
 // If a decoder for the specified content type already exists, the function replaces
 // it with the specified decoder.
+// A decoder registered for "*/*" is used if none match.
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
 	if contentType == "" {
 		panic("contentType is empty")
@@ -1359,6 +1360,9 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	}
 
 	decoder := RegisteredBodyDecoder(mediaType)
+	if decoder == nil {
+		decoder = RegisteredBodyDecoder("*/*") // fall back to catch-all, if any
+	}
 	if decoder == nil {
 		// A binary part with no registered decoder (e.g. image/png) is read as
 		// raw bytes: encoding.contentType restricts the accepted media types but
