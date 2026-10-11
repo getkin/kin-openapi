@@ -138,14 +138,21 @@ func joinValues(values []any, sep string) string {
 // populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected.
 // Existing values for the parameter (for example an empty/unparseable query value) are replaced so defaults
 // do not create duplicate keys (see #1255).
-func populateDefaultQueryParameters(q url.Values, parameterName string, value any, explode bool) {
+func populateDefaultQueryParameters(q url.Values, parameterName string, value any, sm *openapi3.SerializationMethod) {
 	q.Del(parameterName)
 	switch t := value.(type) {
 	case []any:
-		if explode {
+		if sm.Explode {
 			appendToQueryValues(q, parameterName, t)
 		} else {
-			q.Add(parameterName, joinValues(t, ","))
+			sep := ","
+			switch sm.Style {
+			case openapi3.SerializationSpaceDelimited:
+				sep = " "
+			case openapi3.SerializationPipeDelimited:
+				sep = "|"
+			}
+			q.Add(parameterName, joinValues(t, sep))
 		}
 	default:
 		q.Add(parameterName, fmt.Sprint(value))
@@ -204,9 +211,12 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				// Path parameters are required.
 				// Next check `parameter.Required && !found` will catch this.
 			case openapi3.ParameterInQuery:
+				sm, err := parameter.SerializationMethod()
+				if err != nil {
+					return &RequestError{Input: input, Parameter: parameter, Err: err}
+				}
 				q := req.URL.Query()
-				explode := parameter.Explode != nil && *parameter.Explode
-				populateDefaultQueryParameters(q, parameter.Name, value, explode)
+				populateDefaultQueryParameters(q, parameter.Name, value, sm)
 				req.URL.RawQuery = q.Encode()
 			case openapi3.ParameterInHeader:
 				req.Header.Add(parameter.Name, fmt.Sprint(value))
