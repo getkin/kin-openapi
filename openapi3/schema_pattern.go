@@ -13,7 +13,8 @@ func intoGoRegexp(re string) string {
 }
 
 // NOTE: racey WRT [writes to schema.Pattern] vs [reads schema.Pattern then writes to compiledPatterns]
-func (schema *Schema) compilePattern(c RegexCompilerFunc) (cp RegexMatcher, err error) {
+// settings may be nil, as when validating the schema itself.
+func (schema *Schema) compilePattern(settings *schemaValidationSettings, c RegexCompilerFunc) (cp RegexMatcher, err error) {
 	pattern := schema.Pattern
 	if c != nil {
 		cp, err = c(pattern)
@@ -21,12 +22,10 @@ func (schema *Schema) compilePattern(c RegexCompilerFunc) (cp RegexMatcher, err 
 		cp, err = regexp.Compile(intoGoRegexp(pattern))
 	}
 	if err != nil {
-		schemaErr := &SchemaError{
-			Schema:      schema,
-			SchemaField: "pattern",
-			Origin:      err,
-			Reason:      fmt.Sprintf("cannot compile pattern %q: %v", pattern, err),
-		}
+		schemaErr := settings.newSchemaError(schema, nil).
+			withField("pattern").
+			withReason(fmt.Sprintf("cannot compile pattern %q: %v", pattern, err)).
+			withOrigin(err)
 		// A failed compile can yield a typed nil, which no call site's nil check catches.
 		cp = nil
 		err = newSchemaPatternRegexError(pattern, schemaErr, schema.Origin)
