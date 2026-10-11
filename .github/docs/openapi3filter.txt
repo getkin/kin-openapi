@@ -76,7 +76,8 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
     RegisterBodyDecoder registers a request body's decoder for a content type.
 
     If a decoder for the specified content type already exists, the function
-    replaces it with the specified decoder.
+    replaces it with the specified decoder. A decoder registered for "*/*" is
+    used if none match.
 
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
     RegisterBodyEncoder enables package-wide decoding of contentType values
