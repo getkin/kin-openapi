@@ -154,12 +154,9 @@ func TestRouter(t *testing.T) {
 	expect(r, http.MethodGet, "/books/War.and.Peace", paramsGET, map[string]string{
 		"bookid": "War.and.Peace",
 	})
-	{
-		req, err := http.NewRequest(http.MethodPost, "/books/War.and.Peace.json", nil)
-		require.NoError(t, err)
-		_, _, err = r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrPathNotFound.Error())
-	}
+	expect(r, http.MethodPost, "/books/War.and.Peace.json", booksPOST, map[string]string{
+		"bookid2": "War.and.Peace",
+	})
 	expect(r, http.MethodPost, "/partial", nil, nil)
 
 	doc.Servers = []*openapi3.Server{

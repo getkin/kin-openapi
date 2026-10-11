@@ -288,6 +288,13 @@ func (currentNode *Node) matchRemaining(remaining string, paramValues []string) 
 			newParamValues := append(paramValues, remaining[:i])
 			newRemaining := remaining[i:]
 			resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, newParamValues)
+			// The variable may be followed by more of the same segment
+			// (e.g. "/files/{id}:undelete"), so also try shorter values.
+			for i--; resultNode == nil && i > 0; i-- {
+				newParamValues = append(paramValues, remaining[:i])
+				newRemaining = remaining[i:]
+				resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, newParamValues)
+			}
 		case SuffixKindEverything:
 			newParamValues := append(paramValues, remaining)
 			resultNode, resultValues = suffix.Node, newParamValues
