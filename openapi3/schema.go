@@ -2157,9 +2157,15 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 
 	switch value := value.(type) {
 	case nil:
-		// Don't use VisitJSONNull, as we still want to reach 'visitXOFOperations', since
-		// those could allow for a nullable value even though this one doesn't
+		// Nullable only adds null to the type. enum and not can still reject it.
+		// oneOf, anyOf, and allOf still accept null on a nullable parent.
 		if schema.permitsNull(settings) {
+			if err = schema.visitNotOperation(settings, value); err != nil {
+				return
+			}
+			if err = schema.visitEnumOperation(settings, value); err != nil {
+				return
+			}
 			return
 		}
 	case float64:
