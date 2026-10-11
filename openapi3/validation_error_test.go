@@ -1437,6 +1437,43 @@ components:
 	require.Greater(t, ihse.Origin.Key.Line, 0)
 }
 
+// An encoding whose contentType is not a media type, a wildcard or a
+// comma-separated list of those triggers InvalidEncodingContentTypeError.
+func TestValidationError_InvalidEncodingContentType(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /upload:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+            encoding:
+              file:
+                contentType: "*/png"
+      responses:
+        "200": { description: OK }
+`))
+	require.NoError(t, err)
+
+	err = doc.Validate(t.Context())
+	require.ErrorContains(t, err, `encoding has invalid 'contentType' value "*/png"`)
+
+	var e *openapi3.InvalidEncodingContentTypeError
+	require.True(t, errors.As(err, &e))
+	require.Equal(t, "*/png", e.ContentType)
+	require.NotNil(t, e.Origin)
+	require.NotNil(t, e.Origin.Key)
+	require.Greater(t, e.Origin.Key.Line, 0)
+}
+
 // A $ref left with a non-nil Ref string but nil Value at Validate time
 // triggers UnresolvedRefError. Constructed programmatically because
 // the YAML loader is strict about ref resolution at load time; this

@@ -119,3 +119,41 @@ func TestEncodingValidateHeaders(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestEncodingValidateContentType(t *testing.T) {
+	for _, tc := range []struct {
+		contentType string
+		valid       bool
+	}{
+		{contentType: "", valid: true},
+		{contentType: "image/png", valid: true},
+		{contentType: "image/*", valid: true},
+		{contentType: "*/*", valid: true},
+		{contentType: "application/xml; charset=utf-8", valid: true},
+		{contentType: "image/png, image/jpeg", valid: true},
+		{contentType: "application/xml,application/json,application/*", valid: true},
+		{contentType: "png"},
+		{contentType: "image/"},
+		{contentType: "/png"},
+		{contentType: "*/png"},
+		{contentType: "image/png/x"},
+		{contentType: "image /png"},
+		{contentType: "image/png,"},
+		{contentType: ",image/png"},
+		{contentType: ",image/png,"},
+		{contentType: "image/png,,image/jpeg"},
+	} {
+		t.Run(tc.contentType, func(t *testing.T) {
+			encoding := Encoding{ContentType: tc.contentType}
+			err := encoding.Validate(t.Context())
+			if tc.valid {
+				require.NoError(t, err)
+				return
+			}
+			var e *InvalidEncodingContentTypeError
+			require.ErrorAs(t, err, &e)
+			require.Equal(t, tc.contentType, e.ContentType)
+			require.Equal(t, "encoding-content-type-invalid", e.Code())
+		})
+	}
+}

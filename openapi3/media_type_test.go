@@ -40,7 +40,7 @@ var mediaTypeJSON = []byte(`
    },
    "encoding": {
       "someEncoding": {
-         "contentType": "application/xml; charset=utf-8"
+         "contentType": "application/xml,application/json,application/*; charset=utf-8"
       }
    },
    "examples": {
@@ -63,7 +63,7 @@ func mediaType() *MediaType {
 		},
 		Encoding: map[string]*Encoding{
 			"someEncoding": {
-				ContentType: "application/xml; charset=utf-8",
+				ContentType: "application/xml,application/json,application/*; charset=utf-8",
 			},
 		},
 		Examples: map[string]*ExampleRef{

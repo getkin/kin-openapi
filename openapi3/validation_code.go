@@ -89,6 +89,7 @@ func (e *InfoRequired) Code() string                         { return "info-requ
 func (e *InfoSummaryFieldFor31Plus) Code() string            { return "summary-field-for-3-1-plus" }
 func (e *InfoTitleRequired) Code() string                    { return "info-title-required" }
 func (e *InfoVersionRequired) Code() string                  { return "info-version-required" }
+func (e *InvalidEncodingContentTypeError) Code() string      { return "encoding-content-type-invalid" }
 func (e *InvalidHTTPSchemeError) Code() string               { return "security-scheme-http-scheme-invalid" }
 func (e *InvalidParameterInError) Code() string              { return "parameter-in-invalid" }
 func (e *InvalidSecuritySchemeTypeError) Code() string       { return "security-scheme-type-invalid" }
@@ -216,6 +217,7 @@ var validationErrorCodes = []string{
 	"dynamic-anchor-field-for-3-1-plus",
 	"dynamic-ref-field-for-3-1-plus",
 	"else-field-for-3-1-plus",
+	"encoding-content-type-invalid",
 	"example-examples-mutually-exclusive",
 	"example-violates-schema",
 	"examples-field-for-3-1-plus",

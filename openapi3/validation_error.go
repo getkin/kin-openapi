@@ -470,6 +470,22 @@ func (e *InvalidHTTPSchemeError) Error() string {
 	return fmt.Sprintf("security scheme of type 'http' has invalid 'scheme' value %q", e.Scheme)
 }
 
+// InvalidEncodingContentTypeError clusters "encoding has invalid
+// 'contentType' value X" failures. An encoding's contentType must be a
+// media type (e.g. "image/png"), a wildcard ("image/*" or "*/*"), or a
+// comma-separated list of those.
+type InvalidEncodingContentTypeError struct {
+	// ContentType is the rejected contentType value (e.g. "png", "*/png").
+	ContentType string
+	// Origin is the source location of the offending encoding when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *InvalidEncodingContentTypeError) Error() string {
+	return fmt.Sprintf("encoding has invalid 'contentType' value %q", e.ContentType)
+}
+
 // UnresolvedRefError clusters "found unresolved ref: X" failures fired
 // by the loader when a $ref cannot be resolved against the loaded
 // document. Carries the offending ref string so callers can surface
@@ -1731,6 +1747,10 @@ func newInvalidSecuritySchemeType(typ string, origin *Origin) error {
 
 func newInvalidHTTPScheme(scheme string, origin *Origin) error {
 	return &InvalidHTTPSchemeError{Scheme: scheme, Origin: origin}
+}
+
+func newInvalidEncodingContentType(contentType string, origin *Origin) error {
+	return &InvalidEncodingContentTypeError{ContentType: contentType, Origin: origin}
 }
 
 func newUnresolvedRef(ref string, origin *Origin) error {
