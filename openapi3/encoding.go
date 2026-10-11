@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"maps"
+	"strings"
 )
 
-// Encoding is specified by OpenAPI/Swagger 3.0 standard.
+// Encoding is specified by OpenAPI/Swagger 3 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encoding-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.2.md#encoding-object
 type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -142,4 +144,27 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 	}
 
 	return validateExtensions(ctx, encoding.Extensions, encoding.Origin)
+}
+
+// AllowsContentType reports whether a part of the given media type (e.g. the
+// value of its Content-Type header) is allowed by encoding.ContentType, which is
+// a media type, a wildcard ("image/*" or "*/*") or a comma-separated list of those.
+// Media types are compared case-insensitively (RFC 9110, section 8.3.1) and
+// parameters (e.g. "; charset=utf-8") on either side are ignored.
+// An empty ContentType declares no restriction: any media type is allowed.
+func (encoding *Encoding) AllowsContentType(mediaType string) bool {
+	if encoding == nil || encoding.ContentType == "" {
+		return true
+	}
+	mediaType, _, _ = strings.Cut(mediaType, ";")
+	mediaType = strings.ToLower(strings.TrimSpace(mediaType))
+	typ, _, _ := strings.Cut(mediaType, "/")
+	typeWildcard := typ + "/*"
+	for want := range mediaRanges(encoding.ContentType) {
+		want, _, _ = strings.Cut(want, ";")
+		if want = strings.TrimSpace(want); want == "*/*" || want == mediaType || want == typeWildcard {
+			return true
+		}
+	}
+	return false
 }

@@ -1321,60 +1321,18 @@ func isBinary(schema *openapi3.SchemaRef) bool {
 	return schema.Value.Type.Is("string") && schema.Value.Format == "binary"
 }
 
-func getEncodingContentType(encFn EncodingFn) string {
-	var enc *openapi3.Encoding
-	if encFn != nil {
-		// encFn is passed to decodeBody only in form body decoders as a subEncFn, so key can be ""
-		// func(string) *openapi3.Encoding { return enc }
-		enc = encFn("")
+func getEncoding(encFn EncodingFn) *openapi3.Encoding {
+	if encFn == nil {
+		return nil
 	}
-	if enc == nil {
-		return ""
-	}
-
-	return enc.ContentType
-}
-
-// contentTypeAllowedByEncoding reports whether mediaType satisfies the
-// encoding.contentType, which per OAS 3.0 may be a single media type, a wildcard
-// (e.g. image/*), or a comma-separated list of those. mediaType must be a base
-// type; parameters on encoding entries (e.g. "; charset=utf-8") are ignored.
-func contentTypeAllowedByEncoding(mediaType, encodingContentType string) bool {
-	for raw := range strings.SplitSeq(encodingContentType, ",") {
-		want := strings.TrimSpace(raw)
-		if want == "" {
-			continue
-		}
-		if base, _, err := mime.ParseMediaType(want); err == nil {
-			want = base
-		}
-		if mediaTypeMatches(mediaType, want) {
-			return true
-		}
-	}
-	return false
-}
-
-// mediaTypeMatches reports whether got matches want (exact, type/* or */* wildcard,
-// case-insensitive). Both must be base media types without parameters.
-func mediaTypeMatches(got, want string) bool {
-	if want == "*/*" || strings.EqualFold(want, got) {
-		return true
-	}
-	if prefix, ok := strings.CutSuffix(want, "/*"); ok {
-		gotType, _, found := strings.Cut(got, "/")
-		return found && strings.EqualFold(gotType, prefix)
-	}
-	return false
+	// encFn is passed to decodeBody only in form body decoders as a subEncFn, so key can be ""
+	// func(string) *openapi3.Encoding { return enc }
+	return encFn("")
 }
 
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
-func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (
-	string,
-	any,
-	error,
-) {
+func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (string, any, error) {
 	contentType := header.Get(headerCT)
 	if contentType == "" {
 		if _, ok := body.(*multipart.Part); ok {
@@ -1382,23 +1340,21 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 		}
 	}
 
-	mediaType := parseMediaType(contentType)
-	encodingContentType := getEncodingContentType(encFn)
-	if isBinary(schema) && encodingContentType == "" {
+	// Ignore parameters on encoding entries (e.g. "; charset=utf-8")
+	mediaType, _, _ := strings.Cut(contentType, ";")
+	mediaType = strings.TrimSpace(mediaType)
+
+	enc := getEncoding(encFn)
+
+	if isBinary(schema) && (enc == nil || enc.ContentType == "") {
 		value, err := FileBodyDecoder(body, header, schema, encFn)
 		return mediaType, value, err
 	}
 
-	if encodingContentType != "" &&
-		!contentTypeAllowedByEncoding(mediaType, encodingContentType) {
+	if !enc.AllowsContentType(mediaType) {
 		return "", nil, &ParseError{
-			Kind: KindOther,
-			Reason: fmt.Sprintf(
-				"%s: header %q, encoding %q",
-				prefixNotMatchingCT,
-				mediaType,
-				encodingContentType,
-			),
+			Kind:   KindOther,
+			Reason: fmt.Sprintf("%s: header %q, encoding %q", prefixNotMatchingCT, mediaType, enc.ContentType),
 		}
 	}
 

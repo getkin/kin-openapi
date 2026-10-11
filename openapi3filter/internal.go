@@ -2,16 +2,7 @@ package openapi3filter
 
 import (
 	"reflect"
-	"strings"
 )
-
-func parseMediaType(contentType string) string {
-	before, _, ok := strings.Cut(contentType, ";")
-	if !ok {
-		return contentType
-	}
-	return before
-}
 
 func isNilValue(value any) bool {
 	if value == nil {
