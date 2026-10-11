@@ -76,7 +76,7 @@ func Example() {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := ts.Client().Do(req)
 	if err != nil {
 		panic(err)
 	}
