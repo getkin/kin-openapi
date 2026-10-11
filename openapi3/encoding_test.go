@@ -75,7 +75,17 @@ func TestEncodingSerializationMethod(t *testing.T) {
 		{
 			name: "encoding with style",
 			enc:  &Encoding{Style: SerializationSpaceDelimited},
-			want: &SerializationMethod{Style: SerializationSpaceDelimited, Explode: true},
+			want: &SerializationMethod{Style: SerializationSpaceDelimited, Explode: false},
+		},
+		{
+			name: "encoding with pipeDelimited style",
+			enc:  &Encoding{Style: SerializationPipeDelimited},
+			want: &SerializationMethod{Style: SerializationPipeDelimited, Explode: false},
+		},
+		{
+			name: "encoding with deepObject style",
+			enc:  &Encoding{Style: SerializationDeepObject},
+			want: &SerializationMethod{Style: SerializationDeepObject, Explode: true},
 		},
 		{
 			name: "encoding with explode",

@@ -103,6 +103,9 @@ func (encoding *Encoding) SerializationMethod() *SerializationMethod {
 	if encoding != nil {
 		if encoding.Style != "" {
 			sm.Style = encoding.Style
+			// explode defaults to false for spaceDelimited and pipeDelimited.
+			// deepObject is only defined with explode=true.
+			sm.Explode = sm.Style != SerializationSpaceDelimited && sm.Style != SerializationPipeDelimited
 		}
 		if encoding.Explode != nil {
 			sm.Explode = *encoding.Explode
