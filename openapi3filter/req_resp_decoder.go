@@ -1415,10 +1415,8 @@ func PlainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schem
 // JSONBodyDecoder decodes a JSON formatted body. It is public so that is easy
 // to register additional JSON based formats.
 func JSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error) {
-	var value any
-	dec := json.NewDecoder(body)
-	dec.UseNumber()
-	if err := dec.Decode(&value); err != nil {
+	value, err := decodeJSON(body)
+	if err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
 	return value, nil
