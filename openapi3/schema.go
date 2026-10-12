@@ -76,72 +76,72 @@ type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
-	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
-	AllOf        SchemaRefs    `json:"allOf,omitempty" yaml:"allOf,omitempty"`
-	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
-	Type         *Types        `json:"type,omitempty" yaml:"type,omitempty"`
-	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
-	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enum         []any         `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default      any           `json:"default,omitempty" yaml:"default,omitempty"`
-	Example      any           `json:"example,omitempty" yaml:"example,omitempty"`
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	OneOf        SchemaRefs    `json:"oneOf,omitempty,case:strict" yaml:"oneOf,omitempty"`
+	AnyOf        SchemaRefs    `json:"anyOf,omitempty,case:strict" yaml:"anyOf,omitempty"`
+	AllOf        SchemaRefs    `json:"allOf,omitempty,case:strict" yaml:"allOf,omitempty"`
+	Not          *SchemaRef    `json:"not,omitempty,case:strict" yaml:"not,omitempty"`
+	Type         *Types        `json:"type,omitempty,case:strict" yaml:"type,omitempty"`
+	Title        string        `json:"title,omitempty,case:strict" yaml:"title,omitempty"`
+	Format       string        `json:"format,omitempty,case:strict" yaml:"format,omitempty"`
+	Description  string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Enum         []any         `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
+	Default      any           `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Example      any           `json:"example,omitempty,case:strict" yaml:"example,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 
 	// Array-related, here for struct compactness
-	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	UniqueItems bool `json:"uniqueItems,omitempty,case:strict" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
-	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"` // Number for v3.1+ otherwise boolean
-	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"` // Number for v3.1+ otherwise boolean
+	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty,case:strict" yaml:"exclusiveMinimum,omitempty"` // Number for v3.1+ otherwise boolean
+	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty,case:strict" yaml:"exclusiveMaximum,omitempty"` // Number for v3.1+ otherwise boolean
 	// Properties
-	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	WriteOnly       bool `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
+	Nullable        bool `json:"nullable,omitempty,case:strict" yaml:"nullable,omitempty"`
+	ReadOnly        bool `json:"readOnly,omitempty,case:strict" yaml:"readOnly,omitempty"`
+	WriteOnly       bool `json:"writeOnly,omitempty,case:strict" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty,case:strict" yaml:"allowEmptyValue,omitempty"`
+	Deprecated      bool `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
+	XML             *XML `json:"xml,omitempty,case:strict" yaml:"xml,omitempty"`
 
 	// Number
-	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Max        *float64 `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	MultipleOf *float64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Min        *float64 `json:"minimum,omitempty,case:strict" yaml:"minimum,omitempty"`
+	Max        *float64 `json:"maximum,omitempty,case:strict" yaml:"maximum,omitempty"`
+	MultipleOf *float64 `json:"multipleOf,omitempty,case:strict" yaml:"multipleOf,omitempty"`
 
 	// String
-	MinLength uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MaxLength *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	Pattern   string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	MinLength uint64  `json:"minLength,omitempty,case:strict" yaml:"minLength,omitempty"`
+	MaxLength *uint64 `json:"maxLength,omitempty,case:strict" yaml:"maxLength,omitempty"`
+	Pattern   string  `json:"pattern,omitempty,case:strict" yaml:"pattern,omitempty"`
 
 	// Array
-	MinItems uint64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	MaxItems *uint64    `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
+	MinItems uint64     `json:"minItems,omitempty,case:strict" yaml:"minItems,omitempty"`
+	MaxItems *uint64    `json:"maxItems,omitempty,case:strict" yaml:"maxItems,omitempty"`
+	Items    *SchemaRef `json:"items,omitempty,case:strict" yaml:"items,omitempty"`
 
 	// Object
-	Required             []string             `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties           Schemas              `json:"properties,omitempty" yaml:"properties,omitempty"`
-	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Required             []string             `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Properties           Schemas              `json:"properties,omitempty,case:strict" yaml:"properties,omitempty"`
+	MinProps             uint64               `json:"minProperties,omitempty,case:strict" yaml:"minProperties,omitempty"`
+	MaxProps             *uint64              `json:"maxProperties,omitempty,case:strict" yaml:"maxProperties,omitempty"`
+	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty,case:strict" yaml:"additionalProperties,omitempty"`
+	Discriminator        *Discriminator       `json:"discriminator,omitempty,case:strict" yaml:"discriminator,omitempty"`
 
-	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`                                 // OpenAPI >=3.1
-	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`                           // OpenAPI >=3.1
-	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`                     // OpenAPI >=3.1
-	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`                           // OpenAPI >=3.1
-	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`                     // OpenAPI >=3.1
-	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`                     // OpenAPI >=3.1
-	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`         // OpenAPI >=3.1
-	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`           // OpenAPI >=3.1
-	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`                 // OpenAPI >=3.1
-	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`           // OpenAPI >=3.1
-	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"` // OpenAPI >=3.1
+	Const                 any        `json:"const,omitempty,case:strict" yaml:"const,omitempty"`                                 // OpenAPI >=3.1
+	Examples              []any      `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`                           // OpenAPI >=3.1
+	PrefixItems           SchemaRefs `json:"prefixItems,omitempty,case:strict" yaml:"prefixItems,omitempty"`                     // OpenAPI >=3.1
+	Contains              *SchemaRef `json:"contains,omitempty,case:strict" yaml:"contains,omitempty"`                           // OpenAPI >=3.1
+	MinContains           *uint64    `json:"minContains,omitempty,case:strict" yaml:"minContains,omitempty"`                     // OpenAPI >=3.1
+	MaxContains           *uint64    `json:"maxContains,omitempty,case:strict" yaml:"maxContains,omitempty"`                     // OpenAPI >=3.1
+	PatternProperties     Schemas    `json:"patternProperties,omitempty,case:strict" yaml:"patternProperties,omitempty"`         // OpenAPI >=3.1
+	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty,case:strict" yaml:"dependentSchemas,omitempty"`           // OpenAPI >=3.1
+	PropertyNames         *SchemaRef `json:"propertyNames,omitempty,case:strict" yaml:"propertyNames,omitempty"`                 // OpenAPI >=3.1
+	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty,case:strict" yaml:"unevaluatedItems,omitempty"`           // OpenAPI >=3.1
+	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty,case:strict" yaml:"unevaluatedProperties,omitempty"` // OpenAPI >=3.1
 
-	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`     // OpenAPI >=3.1
-	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"` // OpenAPI >=3.1
-	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"` // OpenAPI >=3.1
+	If   *SchemaRef `json:"if,omitempty,case:strict" yaml:"if,omitempty"`     // OpenAPI >=3.1
+	Then *SchemaRef `json:"then,omitempty,case:strict" yaml:"then,omitempty"` // OpenAPI >=3.1
+	Else *SchemaRef `json:"else,omitempty,case:strict" yaml:"else,omitempty"` // OpenAPI >=3.1
 
-	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
+	DependentRequired map[string][]string `json:"dependentRequired,omitempty,case:strict" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
 
 	// Always is set when the schema was written as a JSON Schema boolean
 	// schema rather than an object, and says what that schema always does:
@@ -154,18 +154,18 @@ type Schema struct {
 	// MarshalYAML emits it again ahead of the field map. OpenAPI >=3.1.
 	Always *bool `json:"-" yaml:"-"`
 
-	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
-	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
-	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"` // OpenAPI >=3.1
+	Defs          Schemas `json:"$defs,omitempty,case:strict" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
+	SchemaDialect string  `json:"$schema,omitempty,case:strict" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
+	Comment       string  `json:"$comment,omitempty,case:strict" yaml:"$comment,omitempty"` // OpenAPI >=3.1
 
-	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`                       // OpenAPI >=3.1
-	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`               // OpenAPI >=3.1
-	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`       // OpenAPI >=3.1
-	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"` // OpenAPI >=3.1
+	SchemaID      string `json:"$id,omitempty,case:strict" yaml:"$id,omitempty"`                       // OpenAPI >=3.1
+	Anchor        string `json:"$anchor,omitempty,case:strict" yaml:"$anchor,omitempty"`               // OpenAPI >=3.1
+	DynamicRef    string `json:"$dynamicRef,omitempty,case:strict" yaml:"$dynamicRef,omitempty"`       // OpenAPI >=3.1
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty,case:strict" yaml:"$dynamicAnchor,omitempty"` // OpenAPI >=3.1
 
-	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"` // OpenAPI >=3.1
-	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`   // OpenAPI >=3.1
-	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`       // OpenAPI >=3.1
+	ContentMediaType string     `json:"contentMediaType,omitempty,case:strict" yaml:"contentMediaType,omitempty"` // OpenAPI >=3.1
+	ContentEncoding  string     `json:"contentEncoding,omitempty,case:strict" yaml:"contentEncoding,omitempty"`   // OpenAPI >=3.1
+	ContentSchema    *SchemaRef `json:"contentSchema,omitempty,case:strict" yaml:"contentSchema,omitempty"`       // OpenAPI >=3.1
 }
 
 // Types represents the type(s) of a schema.

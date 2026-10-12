@@ -10,18 +10,18 @@ import (
 type Operation struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Summary      string                 `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Deprecated   bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Tags         []string               `json:"tags,omitempty" yaml:"tags,omitempty"`
-	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Parameters   Parameters             `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses    *Responses             `json:"responses" yaml:"responses"`
-	Consumes     []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
-	Produces     []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
-	Schemes      []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
-	Security     *SecurityRequirements  `json:"security,omitempty" yaml:"security,omitempty"`
+	Summary      string                 `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description  string                 `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Deprecated   bool                   `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
+	ExternalDocs *openapi3.ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
+	Tags         []string               `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
+	OperationID  string                 `json:"operationId,omitempty,case:strict" yaml:"operationId,omitempty"`
+	Parameters   Parameters             `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
+	Responses    *Responses             `json:"responses,case:strict" yaml:"responses"`
+	Consumes     []string               `json:"consumes,omitempty,case:strict" yaml:"consumes,omitempty"`
+	Produces     []string               `json:"produces,omitempty,case:strict" yaml:"produces,omitempty"`
+	Schemes      []string               `json:"schemes,omitempty,case:strict" yaml:"schemes,omitempty"`
+	Security     *SecurityRequirements  `json:"security,omitempty,case:strict" yaml:"security,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Operation.

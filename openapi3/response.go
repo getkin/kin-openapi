@@ -107,10 +107,10 @@ type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
-	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
-	Links       Links   `json:"links,omitempty" yaml:"links,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Headers     Headers `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	Content     Content `json:"content,omitempty,case:strict" yaml:"content,omitempty"`
+	Links       Links   `json:"links,omitempty,case:strict" yaml:"links,omitempty"`
 }
 
 func NewResponse() *Response {

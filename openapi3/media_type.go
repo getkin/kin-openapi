@@ -14,11 +14,11 @@ type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Schema     *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	ItemSchema *SchemaRef `json:"itemSchema,omitempty" yaml:"itemSchema,omitempty"` // OpenAPI >=3.2
-	Example    any        `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples   Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding   Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	Schema     *SchemaRef `json:"schema,omitempty,case:strict" yaml:"schema,omitempty"`
+	ItemSchema *SchemaRef `json:"itemSchema,omitempty,case:strict" yaml:"itemSchema,omitempty"` // OpenAPI >=3.2
+	Example    any        `json:"example,omitempty,case:strict" yaml:"example,omitempty"`
+	Examples   Examples   `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
+	Encoding   Encodings  `json:"encoding,omitempty,case:strict" yaml:"encoding,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*MediaType)(nil)

@@ -12,8 +12,8 @@ type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      map[string]MappingRef `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string                `json:"propertyName,case:strict" yaml:"propertyName"` // required
+	Mapping      map[string]MappingRef `json:"mapping,omitempty,case:strict" yaml:"mapping,omitempty"`
 }
 
 // MappingRef is a ref to a Schema objects. Unlike SchemaRefs it is serialised

@@ -12,12 +12,12 @@ import (
 type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Ref string `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
 
-	Description string             `json:"description,omitempty" yaml:"description,omitempty"`
-	Schema      *SchemaRef         `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Headers     map[string]*Header `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Examples    map[string]any     `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Description string             `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Schema      *SchemaRef         `json:"schema,omitempty,case:strict" yaml:"schema,omitempty"`
+	Headers     map[string]*Header `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	Examples    map[string]any     `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Response.

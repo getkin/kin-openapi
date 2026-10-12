@@ -18,16 +18,16 @@ type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
-	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
-	Info              *Info                `json:"info" yaml:"info"`   // Required
-	Paths             *Paths               `json:"paths" yaml:"paths"` // Required in 3.0, optional in 3.1
-	Security          SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Servers           Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Tags              Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
-	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Webhooks          map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
-	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
+	OpenAPI           string               `json:"openapi,case:strict" yaml:"openapi"` // Required
+	Components        *Components          `json:"components,omitempty,case:strict" yaml:"components,omitempty"`
+	Info              *Info                `json:"info,case:strict" yaml:"info"`   // Required
+	Paths             *Paths               `json:"paths,case:strict" yaml:"paths"` // Required in 3.0, optional in 3.1
+	Security          SecurityRequirements `json:"security,omitempty,case:strict" yaml:"security,omitempty"`
+	Servers           Servers              `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
+	Tags              Tags                 `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
+	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
+	Webhooks          map[string]*PathItem `json:"webhooks,omitempty,case:strict" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
+	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty,case:strict" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
 
 	visited visitedComponent
 	url     *url.URL

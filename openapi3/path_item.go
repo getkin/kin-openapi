@@ -15,26 +15,26 @@ type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
-	Connect     *Operation `json:"connect,omitempty" yaml:"connect,omitempty"`
-	Delete      *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
-	Get         *Operation `json:"get,omitempty" yaml:"get,omitempty"`
-	Head        *Operation `json:"head,omitempty" yaml:"head,omitempty"`
-	Options     *Operation `json:"options,omitempty" yaml:"options,omitempty"`
-	Patch       *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
-	Post        *Operation `json:"post,omitempty" yaml:"post,omitempty"`
-	Put         *Operation `json:"put,omitempty" yaml:"put,omitempty"`
-	Trace       *Operation `json:"trace,omitempty" yaml:"trace,omitempty"`
-	Query       *Operation `json:"query,omitempty" yaml:"query,omitempty"` // OpenAPI >=3.2
-	Servers     Servers    `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Ref         string     `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
+	Summary     string     `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description string     `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Connect     *Operation `json:"connect,omitempty,case:strict" yaml:"connect,omitempty"`
+	Delete      *Operation `json:"delete,omitempty,case:strict" yaml:"delete,omitempty"`
+	Get         *Operation `json:"get,omitempty,case:strict" yaml:"get,omitempty"`
+	Head        *Operation `json:"head,omitempty,case:strict" yaml:"head,omitempty"`
+	Options     *Operation `json:"options,omitempty,case:strict" yaml:"options,omitempty"`
+	Patch       *Operation `json:"patch,omitempty,case:strict" yaml:"patch,omitempty"`
+	Post        *Operation `json:"post,omitempty,case:strict" yaml:"post,omitempty"`
+	Put         *Operation `json:"put,omitempty,case:strict" yaml:"put,omitempty"`
+	Trace       *Operation `json:"trace,omitempty,case:strict" yaml:"trace,omitempty"`
+	Query       *Operation `json:"query,omitempty,case:strict" yaml:"query,omitempty"` // OpenAPI >=3.2
+	Servers     Servers    `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
+	Parameters  Parameters `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
 
 	// AdditionalOperations maps custom HTTP method names to operations.
 	// Keys are case-sensitive HTTP method tokens and must not duplicate
 	// the methods covered by the fixed fields above.
-	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
+	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty,case:strict" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
 }
 
 // MethodQuery is the HTTP QUERY method, introduced as a fixed Path Item

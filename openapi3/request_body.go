@@ -12,9 +12,9 @@ type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
-	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
-	Content     Content `json:"content" yaml:"content"`
+	Description string  `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Required    bool    `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Content     Content `json:"content,case:strict" yaml:"content"`
 }
 
 func NewRequestBody() *RequestBody {

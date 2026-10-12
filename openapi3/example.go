@@ -12,10 +12,10 @@ type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
-	Value         any    `json:"value,omitempty" yaml:"value,omitempty"`
-	ExternalValue string `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
+	Summary       string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description   string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Value         any    `json:"value,omitempty,case:strict" yaml:"value,omitempty"`
+	ExternalValue string `json:"externalValue,omitempty,case:strict" yaml:"externalValue,omitempty"`
 }
 
 func NewExample(value any) *Example {
