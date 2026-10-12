@@ -85,7 +85,6 @@ func Example_jsonSchema2020Validator() {
 
 // Example demonstrates type arrays with null support
 func Example_typeArrayWithNull() {
-
 	schema := &openapi3.Schema{
 		Type: &openapi3.Types{"string", "null"},
 	}
@@ -111,7 +110,6 @@ func Example_typeArrayWithNull() {
 
 // Example demonstrates the const keyword
 func Example_constKeyword() {
-
 	schema := &openapi3.Schema{
 		Const: "production",
 	}
@@ -131,7 +129,6 @@ func Example_constKeyword() {
 
 // Example demonstrates the examples field
 func Example_examplesField() {
-
 	schema := &openapi3.Schema{
 		Type: &openapi3.Types{"string"},
 		// Examples array - OpenAPI 3.1 feature
@@ -153,7 +150,6 @@ func Example_examplesField() {
 
 // Example demonstrates backward compatibility with nullable
 func Example_nullableBackwardCompatibility() {
-
 	// OpenAPI 3.0 style nullable
 	schema := &openapi3.Schema{
 		Type:     &openapi3.Types{"string"},
@@ -184,7 +180,6 @@ func Example_nullableBackwardCompatibility() {
 
 // Example demonstrates complex nested schemas
 func Example_complexNestedSchema() {
-
 	min := 0.0
 	max := 100.0
 

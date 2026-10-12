@@ -9,7 +9,6 @@ import (
 )
 
 func TestOneOfErrorPreserved(t *testing.T) {
-
 	// language=json
 	raw := `
 {
