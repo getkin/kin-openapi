@@ -284,6 +284,8 @@ This will shorten the error message to present only the reason:
 string doesn't match the regular expression "[A-Z]"
 ```
 
+This option cannot be used with `openapi3.EnableJSONSchema2020()`, which `openapi3filter` enables for OpenAPI 3.1+ documents: the JSON Schema 2020-12 validator includes values in its error messages, so validation then fails with `openapi3.ErrSchemaErrorDetailsWithJSONSchema2020`.
+
 For more fine-grained control over the error message, you can pass a custom `openapi3filter.Options` object to `openapi3filter.RequestValidationInput` that includes a `openapi3filter.CustomSchemaErrorFunc`.
 
 ```go
@@ -340,7 +342,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `(*openapi3.Schema).VisitJSON(..)` with `openapi3.EnableJSONSchema2020()` no longer rewrites OpenAPI 3.0 forms (boolean `exclusiveMinimum`/`exclusiveMaximum`) or strips OpenAPI-only keywords before handing the schema to the JSON Schema 2020-12 validator. A schema must pass `Validate` before being used with `VisitJSON`.
 * `openapi3filter.JSONBodyDecoder` (hence request and response body validation) now rejects objects with duplicate member names, such as `{"a":1,"a":2}`, on Go 1.27+ unless built with `GOEXPERIMENT=nojsonv2`. To keep accepting them, register your own decoder with `openapi3filter.RegisterBodyDecoder`.
 * `(*openapi3.Parameter).SerializationMethod()` now defaults `explode` to `false` for query parameters with `style: spaceDelimited` or `style: pipeDelimited`, as the spec says, so `openapi3filter` splits `?ids=1|2|3` instead of expecting `?ids=1&ids=2&ids=3`. Set `explode: true` to keep the previous behavior.
-* Removed the package-global `openapi3.SchemaErrorDetailsDisabled` variable. Pass the new `openapi3.DisableSchemaErrorDetails()` option to `(*openapi3.Schema).VisitJSON(..)` instead, or add it to `openapi3filter.Options.SchemaValidationOptions`, which `openapi3filter` now also applies when validating parameters.
+* Removed the package-global `openapi3.SchemaErrorDetailsDisabled` variable. Pass the new `openapi3.DisableSchemaErrorDetails()` option to `(*openapi3.Schema).VisitJSON(..)` instead, or add it to `openapi3filter.Options.SchemaValidationOptions`, which `openapi3filter` now also applies when validating parameters. Combined with `openapi3.EnableJSONSchema2020()` (hence with `openapi3filter` on OpenAPI 3.1+ documents), validation fails with `openapi3.ErrSchemaErrorDetailsWithJSONSchema2020`, as that validator's error messages include values.
 * The message customizer set with `openapi3.SetSchemaErrorMessageCustomizer(..)` (hence `(*openapi3filter.Options).WithCustomSchemaErrorFunc(..)`) now also applies to discriminator errors, to errors of patterns that fail to compile and to errors of the JSON Schema 2020-12 validator (`openapi3.EnableJSONSchema2020()`).
 
 ### v0.147.0

@@ -4,9 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 )
+
+// ErrSchemaErrorDetailsWithJSONSchema2020 is returned when validating with both
+// DisableSchemaErrorDetails and EnableJSONSchema2020, the latter being used for
+// OpenAPI 3.1+ documents: the JSON Schema 2020-12 validator includes values in
+// the reason of its errors, so disabling details would not keep them out of messages.
+var ErrSchemaErrorDetailsWithJSONSchema2020 = errors.New("the setting DisableSchemaErrorDetails() is ineffective together with EnableJSONSchema2020() (used for OpenAPI 3.1+ documents): the latter's error messages are opaque")
 
 // SchemaError is an error that occurs during schema validation.
 type SchemaError struct {
@@ -146,17 +154,52 @@ func (settings *schemaValidationSettings) newSchemaError(schema *Schema, value a
 	return err
 }
 
-// formatError applies settings to a SchemaError returned by a format validator,
-// which is built without them.
-func (settings *schemaValidationSettings) formatError(err error) error {
-	if schemaErr, ok := err.(*SchemaError); ok && settings.schemaErrorDetailsDisabled && !schemaErr.detailsDisabled {
-		// The validator may return a shared error: work on a copy.
-		cp := *schemaErr
-		cp.detailsDisabled = true
-		return &cp
+// formatError describes err, as returned by a validator of format for a value of kind.
+func (settings *schemaValidationSettings) formatError(kind, format string, err error) (reason string, origin error) {
+	prefix := fmt.Sprintf("%s doesn't match the format %q", kind, format)
+	reasons := schemaErrorReasons(nil, err)
+	if len(reasons) == 0 {
+		return fmt.Sprintf("%s (%v)", prefix, err), fmt.Errorf("%s: %w", prefix, err)
 	}
-	return err
+	joined := strings.Join(reasons, " | ")
+	reason = fmt.Sprintf("%s (%s)", prefix, joined)
+	if settings.schemaErrorDetailsDisabled {
+		// The SchemaErrors of format validators are built without settings,
+		// and the messages of the errors wrapping them were rendered with their details.
+		return reason, &messageError{msg: prefix + ": " + joined, err: err}
+	}
+	return reason, fmt.Errorf("%s: %w", prefix, err)
 }
+
+// schemaErrorReasons appends to reasons those of the outermost SchemaErrors within err.
+func schemaErrorReasons(reasons []string, err error) []string {
+	switch e := err.(type) {
+	case nil:
+	case *SchemaError:
+		reasons = append(reasons, e.Reason)
+	case MultiError:
+		for _, err := range e {
+			reasons = schemaErrorReasons(reasons, err)
+		}
+	case interface{ Unwrap() error }:
+		reasons = schemaErrorReasons(reasons, e.Unwrap())
+	case interface{ Unwrap() []error }:
+		for _, err := range e.Unwrap() {
+			reasons = schemaErrorReasons(reasons, err)
+		}
+	}
+	return reasons
+}
+
+// messageError replaces the message of the error it wraps.
+type messageError struct {
+	msg string
+	err error
+}
+
+func (e *messageError) Error() string { return e.msg }
+
+func (e *messageError) Unwrap() error { return e.err }
 
 // withPathKey appends key to the path of the value that failed validation.
 func (err *SchemaError) withPathKey(key string) *SchemaError {

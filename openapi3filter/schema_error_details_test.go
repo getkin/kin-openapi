@@ -10,9 +10,9 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func TestDisableSchemaErrorDetails(t *testing.T) {
-	router := setupTestRouter(t, `
-openapi: 3.0.3
+func schemaErrorDetailsSpec(version string) string {
+	return `
+openapi: ` + version + `
 info:
   title: repro
   version: "1"
@@ -33,7 +33,11 @@ paths:
       responses:
         "200":
           description: ok
-`)
+`
+}
+
+func TestDisableSchemaErrorDetails(t *testing.T) {
+	router := setupTestRouter(t, schemaErrorDetailsSpec("3.0.3"))
 
 	validate := func(query, body string, options *Options) error {
 		req, err := http.NewRequest(http.MethodPost, "/probe?"+query, strings.NewReader(body))
@@ -67,4 +71,25 @@ paths:
 		require.Error(t, e)
 		require.NotContains(t, e.Error(), "secret")
 	})
+}
+
+func TestDisableSchemaErrorDetailsOnOpenAPI31(t *testing.T) {
+	router := setupTestRouter(t, schemaErrorDetailsSpec("3.1.0"))
+
+	req, err := http.NewRequest(http.MethodPost, "/probe?token=VALID", strings.NewReader(`{"token":"VALID"}`))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+	input := &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			SchemaValidationOptions: []openapi3.SchemaValidationOption{openapi3.DisableSchemaErrorDetails()},
+		},
+	}
+
+	err = ValidateRequest(t.Context(), input)
+	require.ErrorIs(t, err, openapi3.ErrSchemaErrorDetailsWithJSONSchema2020)
 }

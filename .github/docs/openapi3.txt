@@ -125,6 +125,13 @@ var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClien
     DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
     HTTP URIs and local file URIs.
 
+var ErrSchemaErrorDetailsWithJSONSchema2020 = errors.New("the setting DisableSchemaErrorDetails() is ineffective together with EnableJSONSchema2020() (used for OpenAPI 3.1+ documents): the latter's error messages are opaque")
+    ErrSchemaErrorDetailsWithJSONSchema2020 is returned when validating with
+    both DisableSchemaErrorDetails and EnableJSONSchema2020, the latter being
+    used for OpenAPI 3.1+ documents: the JSON Schema 2020-12 validator includes
+    values in the reason of its errors, so disabling details would not keep them
+    out of messages.
+
 var ErrURINotSupported = errors.New("unsupported URI")
     ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle
     a given URI.
@@ -3264,6 +3271,13 @@ func DisableSchemaErrorDetails() SchemaValidationOption
     DisableSchemaErrorDetails leaves the schema and the value out of the message
     of schema errors, so that it presents only the reason. Values may hold
     sensitive inputs, such as secrets.
+
+    It also applies to the SchemaErrors that format validators return, wrapped
+    or not.
+
+    It cannot be used together with EnableJSONSchema2020 (hence with
+    openapi3filter on OpenAPI 3.1+ documents): validation then fails with
+    ErrSchemaErrorDetailsWithJSONSchema2020.
 
 func DisableWriteOnlyValidation() SchemaValidationOption
     DisableWriteOnlyValidation setting makes Validate not return an error when
