@@ -2128,6 +2128,9 @@ func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
 	settings := newSchemaValidationSettings(opts...)
 
 	if settings.useJSONSchema2020 {
+		if settings.schemaErrorDetailsDisabled {
+			return ErrSchemaErrorDetailsWithJSONSchema2020
+		}
 		return schema.useJSONSchema2020(settings, value)
 	}
 	return schema.visitJSON(settings, value)
@@ -2615,16 +2618,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			}
 			if ok {
 				if err := validateIntegerFormat(f, value); err != nil {
-					err = settings.formatError(err)
-					var reason string
-					schemaErr := &SchemaError{}
-					if errors.As(err, &schemaErr) {
-						reason = schemaErr.Reason
-					} else {
-						reason = err.Error()
-					}
-					formatStrErr = fmt.Sprintf(`integer doesn't match the format %q (%v)`, format, reason)
-					formatErr = fmt.Errorf("integer doesn't match the format %q: %w", format, err)
+					formatStrErr, formatErr = settings.formatError("integer", format, err)
 				}
 			}
 		} else {
@@ -2635,16 +2629,7 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 			}
 			if ok {
 				if err := f.Validate(value); err != nil {
-					err = settings.formatError(err)
-					var reason string
-					schemaErr := &SchemaError{}
-					if errors.As(err, &schemaErr) {
-						reason = schemaErr.Reason
-					} else {
-						reason = err.Error()
-					}
-					formatStrErr = fmt.Sprintf(`number doesn't match the format %q (%v)`, format, reason)
-					formatErr = fmt.Errorf("number doesn't match the format %q: %w", format, err)
+					formatStrErr, formatErr = settings.formatError("number", format, err)
 				}
 			}
 		}
@@ -2863,16 +2848,7 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 		}
 		if ok {
 			if err := f.Validate(value); err != nil {
-				err = settings.formatError(err)
-				var reason string
-				schemaErr := &SchemaError{}
-				if errors.As(err, &schemaErr) {
-					reason = schemaErr.Reason
-				} else {
-					reason = err.Error()
-				}
-				formatStrErr = fmt.Sprintf(`string doesn't match the format %q (%v)`, format, reason)
-				formatErr = fmt.Errorf("string doesn't match the format %q: %w", format, err)
+				formatStrErr, formatErr = settings.formatError("string", format, err)
 			}
 		}
 	}

@@ -93,6 +93,11 @@ func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaVali
 
 // DisableSchemaErrorDetails leaves the schema and the value out of the message of schema errors,
 // so that it presents only the reason. Values may hold sensitive inputs, such as secrets.
+//
+// It also applies to the SchemaErrors that format validators return, wrapped or not.
+//
+// It cannot be used together with EnableJSONSchema2020 (hence with openapi3filter on
+// OpenAPI 3.1+ documents): validation then fails with ErrSchemaErrorDetailsWithJSONSchema2020.
 func DisableSchemaErrorDetails() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.schemaErrorDetailsDisabled = true }
 }

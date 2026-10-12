@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,4 +57,67 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 
 	err = schema.VisitJSON("secret", DisableSchemaErrorDetails())
 	require.EqualError(t, err, `string doesn't match the regular expression "[A-Z]"`)
+}
+
+func TestDisableSchemaErrorDetailsOfFormatValidators(t *testing.T) {
+	for name, tc := range map[string]struct {
+		validate func(string) error
+		message  string
+	}{
+		"direct": {
+			validate: func(s string) error {
+				return newSchemaError(nil, s).withReason("bad")
+			},
+			message: `string doesn't match the format "custom": bad`,
+		},
+		"wrapped": {
+			validate: func(s string) error {
+				return fmt.Errorf("wrapped: %w", newSchemaError(nil, s).withReason("bad"))
+			},
+			message: `string doesn't match the format "custom": bad`,
+		},
+		"joined": {
+			validate: func(s string) error {
+				return errors.Join(errors.New("other"), fmt.Errorf("wrapped: %w", newSchemaError(nil, s).withReason("bad")))
+			},
+			message: `string doesn't match the format "custom": bad`,
+		},
+		"multi": {
+			validate: func(s string) error {
+				return fmt.Errorf("wrapped: %w", MultiError{newSchemaError(nil, s).withReason("bad")})
+			},
+			message: `string doesn't match the format "custom": bad`,
+		},
+		"several": {
+			validate: func(s string) error {
+				return errors.Join(fmt.Errorf("wrapped: %w", newSchemaError(nil, s).withReason("bad")),
+					MultiError{newSchemaError(nil, s).withReason("worse")},
+				)
+			},
+			message: `string doesn't match the format "custom": bad | worse`,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			schema := NewStringSchema().WithFormat("custom")
+			formats := WithStringFormatValidators(map[string]StringFormatValidator{
+				"custom": NewCallbackValidator(tc.validate),
+			})
+
+			err := schema.VisitJSON("secret", formats)
+			require.ErrorContains(t, err, "secret")
+
+			err = schema.VisitJSON("secret", formats, DisableSchemaErrorDetails())
+			require.EqualError(t, err, tc.message)
+		})
+	}
+}
+
+func TestDisableSchemaErrorDetailsWithJSONSchema2020(t *testing.T) {
+	schema := NewStringSchema()
+
+	err := schema.VisitJSON("valid", DisableSchemaErrorDetails(), EnableJSONSchema2020())
+	require.ErrorIs(t, err, ErrSchemaErrorDetailsWithJSONSchema2020)
+
+	err = schema.VisitJSON("valid", DisableSchemaErrorDetails())
+	require.NoError(t, err)
 }
