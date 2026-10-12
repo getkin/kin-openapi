@@ -284,8 +284,8 @@ paths:
 	require.Equal(t, 2, mismatches)
 	require.NotNil(t, query)
 	require.NotNil(t, additional)
-	require.Equal(t, "field query is for OpenAPI >=3.2", query.Error())
-	require.Equal(t, "field additionalOperations is for OpenAPI >=3.2", additional.Error())
+	require.EqualError(t, query, "field query is for OpenAPI >=3.2")
+	require.EqualError(t, additional, "field additionalOperations is for OpenAPI >=3.2")
 }
 
 // A lowercase key is a valid RFC 9110 token, so it must not be rejected even

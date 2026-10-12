@@ -137,7 +137,7 @@ paths:
 
 				if expectError {
 					require.Equal(t, 500, rep.StatusCode)
-					require.Equal(t, routers.ErrPathNotFound.Error(), string(body))
+					require.EqualError(t, routers.ErrPathNotFound, string(body))
 					return
 				}
 				require.Equal(t, 200, rep.StatusCode)

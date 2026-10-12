@@ -118,7 +118,7 @@ func TestArrayItemsNil_UrlencodedNoPanic(t *testing.T) {
 	})
 	require.Nil(t, panicVal, "must not panic")
 	require.Error(t, reqErr, "must return a clean error")
-	require.Contains(t, reqErr.Error(), "array items required")
+	require.ErrorContains(t, reqErr, "array items required")
 }
 
 func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {

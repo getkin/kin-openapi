@@ -475,7 +475,7 @@ paths:
 
 	// Error() prefixes the cluster's ValueKind to keep the historical
 	// "invalid example: ..." message format byte-identical.
-	require.Contains(t, sve.Error(), "invalid example: ")
+	require.ErrorContains(t, sve, "invalid example: ")
 }
 
 // Pin RequiredFieldError cluster + leaf reachability for required-field
@@ -1883,7 +1883,7 @@ webhooks:
 	// inner validators' state, but the type itself is what we want to
 	// pin).
 	wve := &openapi3.WebhookValidationError{Name: "myhook", Cause: errors.New("boom")}
-	require.Contains(t, wve.Error(), `webhook "myhook"`)
+	require.ErrorContains(t, wve, `webhook "myhook"`)
 	var got *openapi3.WebhookValidationError
 	require.True(t, errors.As(wve, &got))
 	require.Equal(t, "myhook", got.Name)
@@ -2337,7 +2337,7 @@ components:
 			var scve *openapi3.SchemaCombinatorElementValidationError
 			require.True(t, errors.As(err, &scve))
 			require.Equal(t, tc.combinator, scve.Combinator)
-			require.Contains(t, scve.Error(), "invalid "+tc.combinator+" element")
+			require.ErrorContains(t, scve, "invalid "+tc.combinator+" element")
 			// Unwrap reaches the typed inner leaf.
 			var ste *openapi3.SchemaTypeError
 			require.True(t, errors.As(err, &ste))
@@ -2356,7 +2356,7 @@ func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *tes
 	for i := 0; i < 5; i++ {
 		nested = &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: nested}
 	}
-	require.Equal(t, "invalid allOf element: boom", nested.Error())
+	require.EqualError(t, nested, "invalid allOf element: boom")
 
 	// The typed chain is untouched: every wrapper level is still walkable.
 	levels := 0
@@ -2372,7 +2372,7 @@ func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *tes
 		Combinator: "oneOf",
 		Cause:      &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: leaf},
 	}
-	require.Equal(t, "invalid oneOf element: invalid allOf element: boom", mixed.Error())
+	require.EqualError(t, mixed, "invalid oneOf element: invalid allOf element: boom")
 }
 
 func TestValidationError_DuplicateRequiredFieldError(t *testing.T) {
@@ -2396,7 +2396,7 @@ components:
 	var dup *openapi3.DuplicateRequiredFieldError
 	require.True(t, errors.As(err, &dup))
 	require.Equal(t, "id", dup.Field)
-	require.Contains(t, dup.Error(), `duplicate field "id" in required`)
+	require.ErrorContains(t, dup, `duplicate field "id" in required`)
 }
 
 func TestValidationError_DuplicateTagError(t *testing.T) {
@@ -2416,7 +2416,7 @@ tags:
 	var dup *openapi3.DuplicateTagError
 	require.True(t, errors.As(err, &dup))
 	require.Equal(t, "pet", dup.Name)
-	require.Contains(t, dup.Error(), `more than one tag has name "pet"`)
+	require.ErrorContains(t, dup, `more than one tag has name "pet"`)
 }
 
 func TestValidationError_TagValidationError(t *testing.T) {
@@ -2437,7 +2437,7 @@ tags:
 	var tve *openapi3.TagValidationError
 	require.True(t, errors.As(err, &tve))
 	require.Equal(t, "pet", tve.Name)
-	require.Contains(t, tve.Error(), `tag "pet"`)
+	require.ErrorContains(t, tve, `tag "pet"`)
 	// Unwrap reaches the typed inner leaf.
 	var edr *openapi3.ExternalDocsURLRequired
 	require.True(t, errors.As(err, &edr))

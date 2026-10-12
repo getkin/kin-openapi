@@ -61,7 +61,8 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 		require.ErrorContains(t, err, "secret")
 		e := validate("token=secret", `{}`, disabled)
 		require.Error(t, e)
-		require.NotContains(t, e.Error(), "secret")
+		msg := e.Error()
+		require.NotContains(t, msg, "secret")
 	})
 
 	t.Run("body", func(t *testing.T) {
@@ -69,7 +70,8 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 		require.ErrorContains(t, err, "secret")
 		e := validate("", `{"token":"secret"}`, disabled)
 		require.Error(t, e)
-		require.NotContains(t, e.Error(), "secret")
+		msg := e.Error()
+		require.NotContains(t, msg, "secret")
 	})
 }
 

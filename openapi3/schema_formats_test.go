@@ -46,7 +46,7 @@ func TestIssue430(t *testing.T) {
 
 	for datum := range data {
 		err = schema.VisitJSON(datum)
-		require.Error(t, err, ErrOneOfConflict.Error())
+		require.ErrorIs(t, err, ErrOneOfConflict)
 	}
 
 	DefineIPv4Format()

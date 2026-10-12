@@ -208,7 +208,7 @@ func TestRouter(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		route, pathParams, err := r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrMethodNotAllowed.Error())
+		require.ErrorIs(t, err, routers.ErrMethodNotAllowed)
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}
