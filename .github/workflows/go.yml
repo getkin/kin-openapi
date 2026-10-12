@@ -29,6 +29,15 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
+    # Memory corruption seen only on Windows: check whether async preemption is to blame
+    - if: runner.os == 'Windows'
+      name: Disable async preemption for the rest of the job on go <= 1.27
+      run: |
+        minor=$(go env GOVERSION | sed -E 's/^go1[.]([0-9]+).*/\1/')
+        if [[ "$minor" -le 27 ]]; then
+          echo GODEBUG=asyncpreemptoff=1 >>"$GITHUB_ENV"
+        fi
+
     - name: Test suite fixtures cache
       uses: actions/cache@v3
       with:
@@ -67,13 +76,7 @@ jobs:
       run: go test -count=10 -short ./...
       env:
         GOARCH: '386'
-    - if: runner.os != 'Windows'
-      run: go test -count=10 -short ./...
-    - if: runner.os == 'Windows'
-      run: go test -count=10 -short ./...
-      env:
-        # Memory corruption seen only on Windows: check whether async preemption is to blame
-        GODEBUG: asyncpreemptoff=1
+    - run: go test -count=10 -short ./...
     - run: go test -count=2 -short -covermode=atomic ./...
     - run: go test -v -count=10 -run TestRaceyPatternSchemaValidateHindersIt -race ./...
       env:
