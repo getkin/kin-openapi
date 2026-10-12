@@ -71,8 +71,8 @@ jobs:
     - if: runner.os == 'Windows'
       run: go test -count=10 -short ./...
       env:
-        # Help catch memory corruption seen only on Windows: fill freed memory with junk
-        GODEBUG: clobberfree=1
+        # Memory corruption seen only on Windows: check whether async preemption is to blame
+        GODEBUG: asyncpreemptoff=1
     - run: go test -count=2 -short -covermode=atomic ./...
     - run: go test -v -count=10 -run TestRaceyPatternSchemaValidateHindersIt -race ./...
       env:
