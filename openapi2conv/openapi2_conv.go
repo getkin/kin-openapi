@@ -335,8 +335,27 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 				Ref: schemaRefRef,
 			}),
 		}
+		if parameter.In == openapi3.ParameterInQuery && parameter.Type.Is("array") {
+			result.Style, result.Explode = toV3QueryStyle(parameter.CollectionFormat)
+		}
 		return &openapi3.ParameterRef{Value: result}, nil, nil, nil
 	}
+}
+
+// toV3QueryStyle maps a query parameter's collectionFormat to the equivalent style and explode.
+// tsv has no OpenAPI 3 equivalent.
+func toV3QueryStyle(collectionFormat string) (string, *bool) {
+	switch collectionFormat {
+	case "csv":
+		return openapi3.SerializationForm, openapi3.Ptr(false)
+	case "ssv":
+		return openapi3.SerializationSpaceDelimited, openapi3.Ptr(false)
+	case "pipes":
+		return openapi3.SerializationPipeDelimited, openapi3.Ptr(false)
+	case "multi":
+		return openapi3.SerializationForm, openapi3.Ptr(true)
+	}
+	return "", nil
 }
 
 func formDataBody(bodies map[string]*openapi3.SchemaRef, reqs map[string]bool, consumes []string) *openapi3.RequestBodyRef {
@@ -1231,11 +1250,35 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		result.MinItems = schema.MinItems
 		result.MaxItems = schema.MaxItems
 		result.AllowEmptyValue = schema.AllowEmptyValue
-		// result.CollectionFormat = schema.CollectionFormat
 		result.UniqueItems = schema.UniqueItems
 		result.MultipleOf = schema.MultipleOf
+		if parameter.In == openapi3.ParameterInQuery && result.Type.Is("array") {
+			result.CollectionFormat = fromV3QueryStyle(parameter)
+		}
 	}
 	return result, nil
+}
+
+// fromV3QueryStyle maps a query parameter's explicit style and explode to the equivalent collectionFormat.
+func fromV3QueryStyle(parameter *openapi3.Parameter) string {
+	if parameter.Style == "" && parameter.Explode == nil {
+		return ""
+	}
+	sm, err := parameter.SerializationMethod()
+	if err != nil {
+		return ""
+	}
+	switch {
+	case sm.Style == openapi3.SerializationForm && sm.Explode:
+		return "multi"
+	case sm.Style == openapi3.SerializationForm:
+		return "csv"
+	case sm.Style == openapi3.SerializationSpaceDelimited && !sm.Explode:
+		return "ssv"
+	case sm.Style == openapi3.SerializationPipeDelimited && !sm.Explode:
+		return "pipes"
+	}
+	return ""
 }
 
 func FromV3Responses(responses map[string]*openapi3.ResponseRef, components *openapi3.Components) (map[string]*openapi2.Response, error) {
