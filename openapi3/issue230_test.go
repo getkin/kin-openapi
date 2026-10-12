@@ -221,7 +221,6 @@ webhooks:
 	})
 
 	t.Run("const keyword validation", func(t *testing.T) {
-
 		schema := &openapi3.Schema{
 			Const: "production",
 		}
@@ -594,7 +593,6 @@ func TestPerformance(t *testing.T) {
 	t.Parallel()
 
 	t.Run("large schema compilation", func(t *testing.T) {
-
 		// Create a large schema
 		properties := make(openapi3.Schemas)
 		for i := range 100 {
