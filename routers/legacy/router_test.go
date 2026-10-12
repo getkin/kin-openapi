@@ -158,7 +158,7 @@ func TestRouter(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/books/War.and.Peace.json", nil)
 		require.NoError(t, err)
 		_, _, err = r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrPathNotFound.Error())
+		require.Equal(t, routers.ErrPathNotFound, err)
 	}
 	expect(r, http.MethodPost, "/partial", nil, nil)
 
@@ -191,7 +191,7 @@ func TestRouter(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		route, pathParams, err := r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrMethodNotAllowed.Error())
+		require.Equal(t, routers.ErrMethodNotAllowed, err)
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}

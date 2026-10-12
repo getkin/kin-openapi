@@ -15,7 +15,7 @@ func TestSectionValidationError_Error(t *testing.T) {
 
 	inner := errors.New("value of version must be a non-empty string")
 	e := &SectionValidationError{Section: "info", Cause: inner}
-	require.Equal(t, "invalid info: value of version must be a non-empty string", e.Error())
+	require.EqualError(t, e, "invalid info: value of version must be a non-empty string")
 }
 
 // Unwrap returns the inner error so errors.Is / errors.As walk the chain.
@@ -32,7 +32,7 @@ func TestPathValidationError_Error(t *testing.T) {
 
 	inner := errors.New("bad path item")
 	e := &PathValidationError{Path: "/users/{id}", Cause: inner}
-	require.Equal(t, "invalid path /users/{id}: bad path item", e.Error())
+	require.EqualError(t, e, "invalid path /users/{id}: bad path item")
 }
 
 func TestPathValidationError_Unwrap(t *testing.T) {
@@ -48,7 +48,7 @@ func TestOperationValidationError_Error(t *testing.T) {
 
 	inner := errors.New("bad operation")
 	e := &OperationValidationError{Method: "GET", Cause: inner}
-	require.Equal(t, "invalid operation GET: bad operation", e.Error())
+	require.EqualError(t, e, "invalid operation GET: bad operation")
 }
 
 func TestOperationValidationError_Unwrap(t *testing.T) {
@@ -110,5 +110,5 @@ func TestSectionValidationError_WrappingArbitrary(t *testing.T) {
 
 	inner := fmt.Errorf("third-party error: %w", errors.New("x"))
 	e := &SectionValidationError{Section: "webhooks", Cause: inner}
-	require.Equal(t, "invalid webhooks: third-party error: x", e.Error())
+	require.EqualError(t, e, "invalid webhooks: third-party error: x")
 }

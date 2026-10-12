@@ -127,7 +127,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Use require.ErrorContains(..)
       run: |
-        ! git grep -InE 'require[.].+err.Error'
+        ! git grep -InE 'require[.].+[.]Error'
 
     - if: runner.os == 'Linux'
       name: Ensure go-run'ing binaries works

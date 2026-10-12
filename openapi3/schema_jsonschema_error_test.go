@@ -71,8 +71,9 @@ func TestJSONSchema2020_SchemaErrorUnwrapsToTheValidatorError(t *testing.T) {
 	require.True(t, errors.As(err, &validationErr))
 	require.Equal(t, []string{"n"}, validationErr.InstanceLocation)
 
-	mistyped, ok := validationErr.ErrorKind.(*kind.Type)
-	require.True(t, ok, "kind %T", validationErr.ErrorKind)
+	errKind := validationErr.ErrorKind
+	mistyped, ok := errKind.(*kind.Type)
+	require.True(t, ok, "kind %T", errKind)
 	require.Equal(t, "string", mistyped.Got)
 }
 

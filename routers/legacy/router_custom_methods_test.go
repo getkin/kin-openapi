@@ -104,7 +104,7 @@ func TestRouterCustomMethods(t *testing.T) {
 			require.NoError(t, err)
 
 			route, pathParams, err := router.FindRoute(req)
-			require.EqualError(t, err, wantErr.Error())
+			require.Equal(t, wantErr, err)
 			require.Nil(t, route)
 			require.Nil(t, pathParams)
 		}

@@ -19,7 +19,7 @@ func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
 		var schemaErr *SchemaError
 		require.True(t, errors.As(err, &schemaErr))
 		require.Equal(t, field, schemaErr.SchemaField)
-		require.Equal(t, "custom "+field, schemaErr.Error())
+		require.EqualError(t, schemaErr, "custom "+field)
 	}
 
 	t.Run("discriminator", func(t *testing.T) {
