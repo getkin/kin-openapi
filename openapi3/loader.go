@@ -1292,7 +1292,7 @@ func (loader *Loader) resolveSchemaChildren(
 	if value == nil {
 		return nil
 	}
-	if err := forEachSchemaRef(value, func(_ string, ref *SchemaRef) error {
+	if err := forEachSchemaRef(value, func(_ string, ref *SchemaRef, _ bool) error {
 		if ref == nil {
 			return nil
 		}

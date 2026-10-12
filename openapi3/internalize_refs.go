@@ -336,8 +336,8 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 		return
 	}
 
-	_ = forEachSchemaRef(s, func(suffix string, ref *SchemaRef) error {
-		if isSchemaApplicatorRef(suffix) {
+	_ = forEachSchemaRef(s, func(_ string, ref *SchemaRef, applicator bool) error {
+		if applicator {
 			doc.derefSchemaRef(ref, refNameResolver, parentIsExternal)
 		}
 		return nil
@@ -362,18 +362,12 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 		}
 	}
 
-	_ = forEachSchemaRef(s, func(suffix string, ref *SchemaRef) error {
-		if !isSchemaApplicatorRef(suffix) {
+	_ = forEachSchemaRef(s, func(_ string, ref *SchemaRef, applicator bool) error {
+		if !applicator {
 			doc.derefSchemaRef(ref, refNameResolver, parentIsExternal)
 		}
 		return nil
 	})
-}
-
-func isSchemaApplicatorRef(pointerSuffix string) bool {
-	return strings.HasPrefix(pointerSuffix, "/allOf/") ||
-		strings.HasPrefix(pointerSuffix, "/anyOf/") ||
-		strings.HasPrefix(pointerSuffix, "/oneOf/")
 }
 
 func (doc *T) derefSchemaRef(s *SchemaRef, refNameResolver RefNameResolver, parentIsExternal bool) bool {
