@@ -25,9 +25,9 @@ var originPtrType = reflect.TypeFor[*Origin]()
 // only a collection with a sequence-valued field allocates one at all, which
 // measured at 5% of collections on a large spec, and a nil map is free.
 type Origin struct {
-	Key       *Location             `json:"key,omitempty" yaml:"key,omitempty"`
-	Fields    FieldLocations        `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Sequences map[string][]Location `json:"sequences,omitempty" yaml:"sequences,omitempty"`
+	Key       *Location             `json:"key,omitempty,case:strict" yaml:"key,omitempty"`
+	Fields    FieldLocations        `json:"fields,omitempty,case:strict" yaml:"fields,omitempty"`
+	Sequences map[string][]Location `json:"sequences,omitempty,case:strict" yaml:"sequences,omitempty"`
 }
 
 // FieldLocations holds the locations of a collection's scalar fields, in the
@@ -95,17 +95,17 @@ func (f *FieldLocations) UnmarshalJSON(data []byte) error {
 
 // Location is a struct that contains the location of a field.
 type Location struct {
-	File   string `json:"file,omitempty" yaml:"file,omitempty"`
-	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
-	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
-	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
+	File   string `json:"file,omitempty,case:strict" yaml:"file,omitempty"`
+	Line   int    `json:"line,omitempty,case:strict" yaml:"line,omitempty"`
+	Column int    `json:"column,omitempty,case:strict" yaml:"column,omitempty"`
+	Name   string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
 
 	// EndLine and EndColumn mark the end of the block this location heads (set
 	// only on Origin.Key). For an operation or schema this spans the whole
 	// block, so a consumer can extract the entire element from its source.
 	// Both are zero when the underlying YAML carried no end information.
-	EndLine   int `json:"endLine,omitempty" yaml:"endLine,omitempty"`
-	EndColumn int `json:"endColumn,omitempty" yaml:"endColumn,omitempty"`
+	EndLine   int `json:"endLine,omitempty,case:strict" yaml:"endLine,omitempty"`
+	EndColumn int `json:"endColumn,omitempty,case:strict" yaml:"endColumn,omitempty"`
 }
 
 // originFromSeq parses the compact []any sequence produced by yaml3's addOrigin.

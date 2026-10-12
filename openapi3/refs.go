@@ -18,8 +18,8 @@ type CallbackRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Callback
@@ -183,8 +183,8 @@ type ExampleRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Example
@@ -348,8 +348,8 @@ type HeaderRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Header
@@ -513,8 +513,8 @@ type LinkRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Link
@@ -678,8 +678,8 @@ type ParameterRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Parameter
@@ -843,8 +843,8 @@ type RequestBodyRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *RequestBody
@@ -1008,8 +1008,8 @@ type ResponseRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Response
@@ -1342,8 +1342,8 @@ type SecuritySchemeRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *SecurityScheme

@@ -17,14 +17,14 @@ type SecurityScheme struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
-	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Name             string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In               string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Scheme           string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
-	BearerFormat     string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
-	Flows            *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
-	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty" yaml:"openIdConnectUrl,omitempty"`
+	Type             string      `json:"type,omitempty,case:strict" yaml:"type,omitempty"`
+	Description      string      `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Name             string      `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	In               string      `json:"in,omitempty,case:strict" yaml:"in,omitempty"`
+	Scheme           string      `json:"scheme,omitempty,case:strict" yaml:"scheme,omitempty"`
+	BearerFormat     string      `json:"bearerFormat,omitempty,case:strict" yaml:"bearerFormat,omitempty"`
+	Flows            *OAuthFlows `json:"flows,omitempty,case:strict" yaml:"flows,omitempty"`
+	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty,case:strict" yaml:"openIdConnectUrl,omitempty"`
 }
 
 func NewSecurityScheme() *SecurityScheme {
@@ -240,10 +240,10 @@ type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
-	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
-	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
-	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty" yaml:"authorizationCode,omitempty"`
+	Implicit          *OAuthFlow `json:"implicit,omitempty,case:strict" yaml:"implicit,omitempty"`
+	Password          *OAuthFlow `json:"password,omitempty,case:strict" yaml:"password,omitempty"`
+	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty,case:strict" yaml:"clientCredentials,omitempty"`
+	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty,case:strict" yaml:"authorizationCode,omitempty"`
 }
 
 type oAuthFlowType int
@@ -339,10 +339,10 @@ type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string            `json:"authorizationUrl,omitempty,case:strict" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty,case:strict" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty,case:strict" yaml:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes,case:strict" yaml:"scopes"` // required
 }
 
 // MarshalJSON returns the JSON encoding of OAuthFlow.

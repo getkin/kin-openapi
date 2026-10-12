@@ -20,8 +20,8 @@ type {{ $type.Name }}Ref struct {
 
 	{{- if ne $type.Name "Schema" }}
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 	{{- end }}
 
 	Ref   string

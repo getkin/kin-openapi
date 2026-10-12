@@ -53,9 +53,9 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	URL         string          `json:"url" yaml:"url"` // Required
-	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string          `json:"url,case:strict" yaml:"url"` // Required
+	Description string          `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Variables   ServerVariables `json:"variables,omitempty,case:strict" yaml:"variables,omitempty"`
 }
 
 // BasePath returns the base path extracted from the default values of variables, if any.
@@ -283,9 +283,9 @@ type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
-	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum        []string `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
+	Default     string   `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Description string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of ServerVariable.

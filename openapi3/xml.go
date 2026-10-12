@@ -12,11 +12,11 @@ type XML struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Prefix    string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
-	Attribute bool   `json:"attribute,omitempty" yaml:"attribute,omitempty"`
-	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
+	Name      string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty,case:strict" yaml:"namespace,omitempty"`
+	Prefix    string `json:"prefix,omitempty,case:strict" yaml:"prefix,omitempty"`
+	Attribute bool   `json:"attribute,omitempty,case:strict" yaml:"attribute,omitempty"`
+	Wrapped   bool   `json:"wrapped,omitempty,case:strict" yaml:"wrapped,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of XML.

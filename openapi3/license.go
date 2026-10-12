@@ -13,12 +13,12 @@ type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name string `json:"name" yaml:"name"` // Required
-	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
+	Name string `json:"name,case:strict" yaml:"name"` // Required
+	URL  string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 
 	// Identifier is an SPDX license expression for the API (OpenAPI 3.1)
 	// Either url or identifier can be specified, not both
-	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // OpenAPI >=3.1
+	Identifier string `json:"identifier,omitempty,case:strict" yaml:"identifier,omitempty"` // OpenAPI >=3.1
 }
 
 // MarshalJSON returns the JSON encoding of License.

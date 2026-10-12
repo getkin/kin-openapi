@@ -14,11 +14,11 @@ type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
-	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	ContentType   string  `json:"contentType,omitempty,case:strict" yaml:"contentType,omitempty"`
+	Headers       Headers `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	Style         string  `json:"style,omitempty,case:strict" yaml:"style,omitempty"`
+	Explode       *bool   `json:"explode,omitempty,case:strict" yaml:"explode,omitempty"`
+	AllowReserved bool    `json:"allowReserved,omitempty,case:strict" yaml:"allowReserved,omitempty"`
 }
 
 func NewEncoding() *Encoding {

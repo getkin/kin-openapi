@@ -13,8 +13,8 @@ type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	Description string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	URL         string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of ExternalDocs.

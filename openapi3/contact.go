@@ -12,9 +12,9 @@ type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
-	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
-	Email string `json:"email,omitempty" yaml:"email,omitempty"`
+	Name  string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	URL   string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
+	Email string `json:"email,omitempty,case:strict" yaml:"email,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Contact.

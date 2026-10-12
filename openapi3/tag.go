@@ -53,9 +53,9 @@ type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Name         string        `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Description  string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Tag.

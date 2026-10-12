@@ -12,12 +12,12 @@ type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
-	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string         `json:"description,omitempty" yaml:"description,omitempty"`
-	Parameters   map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Server       *Server        `json:"server,omitempty" yaml:"server,omitempty"`
-	RequestBody  any            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	OperationRef string         `json:"operationRef,omitempty,case:strict" yaml:"operationRef,omitempty"`
+	OperationID  string         `json:"operationId,omitempty,case:strict" yaml:"operationId,omitempty"`
+	Description  string         `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Parameters   map[string]any `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
+	Server       *Server        `json:"server,omitempty,case:strict" yaml:"server,omitempty"`
+	RequestBody  any            `json:"requestBody,omitempty,case:strict" yaml:"requestBody,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Link.
