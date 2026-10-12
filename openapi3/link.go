@@ -60,10 +60,10 @@ func (link Link) MarshalYAML() (any, error) {
 func (link *Link) UnmarshalJSON(data []byte) error {
 	type LinkBis Link
 	var x LinkBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 
 	delete(x.Extensions, "operationRef")
 	delete(x.Extensions, "operationId")

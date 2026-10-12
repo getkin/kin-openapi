@@ -547,7 +547,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			if err != nil {
 				return err
 			}
-			if err = json.Unmarshal(enc, expect); err != nil {
+			if err = unmarshalJSON(enc, expect); err != nil {
 				return err
 			}
 

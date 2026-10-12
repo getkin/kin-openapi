@@ -10,7 +10,11 @@ import (
 )
 
 func TestResponsesUnmarshalErrorHasKey(t *testing.T) {
-	var responses openapi2.Responses
-	err := json.Unmarshal([]byte(`{"200": {"description": "OK"}, "404": {"description": 42}}`), &responses)
-	require.ErrorContains(t, err, `response "404": `)
+	var doc openapi2.T
+	err := json.Unmarshal([]byte(`{"paths": {"/": {"get": {"responses": {"200": {"description": "OK"}, "404": {"description": 42}}}}}}`), &doc)
+	if openapi2.UsingJSONv2 {
+		require.ErrorContains(t, err, `.responses.404.description `)
+	} else {
+		require.ErrorContains(t, err, `response "404": `)
+	}
 }

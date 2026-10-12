@@ -160,10 +160,10 @@ func (doc *T) MarshalYAML() (any, error) {
 func (doc *T) UnmarshalJSON(data []byte) error {
 	type TBis T
 	var x TBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "openapi")
 	delete(x.Extensions, "components")
 	delete(x.Extensions, "info")

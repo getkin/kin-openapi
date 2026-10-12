@@ -98,10 +98,10 @@ func (ss SecurityScheme) MarshalYAML() (any, error) {
 func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
 	type SecuritySchemeBis SecurityScheme
 	var x SecuritySchemeBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "type")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "name")
@@ -287,10 +287,10 @@ func (flows OAuthFlows) MarshalYAML() (any, error) {
 func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	type OAuthFlowsBis OAuthFlows
 	var x OAuthFlowsBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "implicit")
 	delete(x.Extensions, "password")
 	delete(x.Extensions, "clientCredentials")
@@ -375,10 +375,10 @@ func (flow OAuthFlow) MarshalYAML() (any, error) {
 func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	type OAuthFlowBis OAuthFlow
 	var x OAuthFlowBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 
 	delete(x.Extensions, "authorizationUrl")
 	delete(x.Extensions, "tokenUrl")

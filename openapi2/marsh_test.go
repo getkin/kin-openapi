@@ -33,7 +33,11 @@ paths:
 
 		var doc T
 		err := unmarshal(v2, &doc)
-		require.ErrorContains(t, err, `json: cannot unmarshal object into field Operation.parameters of type openapi2.Parameters`)
+		if UsingJSONv2 {
+			require.ErrorContains(t, err, `json: cannot unmarshal object into Go struct field .paths.~1ping.post.parameters of type openapi2.Parameters`)
+		} else {
+			require.ErrorContains(t, err, `json: cannot unmarshal object into field Operation.parameters of type openapi2.Parameters`)
+		}
 	}
 
 	v2 := []byte(`

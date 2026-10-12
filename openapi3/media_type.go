@@ -98,10 +98,10 @@ func (mediaType MediaType) MarshalYAML() (any, error) {
 func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	type MediaTypeBis MediaType
 	var x MediaTypeBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "schema")
 	delete(x.Extensions, "itemSchema")
 	delete(x.Extensions, "example")

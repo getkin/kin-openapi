@@ -63,10 +63,10 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	type PathItemBis PathItem
 	var x PathItemBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "delete")
 	delete(x.Extensions, "get")

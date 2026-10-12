@@ -76,9 +76,9 @@ func (x CallbackRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets CallbackRef to a copy of data.
 func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -99,7 +99,7 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if CallbackRef has sibling fields
@@ -241,9 +241,9 @@ func (x ExampleRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ExampleRef to a copy of data.
 func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -264,7 +264,7 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if ExampleRef has sibling fields
@@ -406,9 +406,9 @@ func (x HeaderRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets HeaderRef to a copy of data.
 func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -429,7 +429,7 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if HeaderRef has sibling fields
@@ -571,9 +571,9 @@ func (x LinkRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets LinkRef to a copy of data.
 func (x *LinkRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -594,7 +594,7 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if LinkRef has sibling fields
@@ -736,9 +736,9 @@ func (x ParameterRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ParameterRef to a copy of data.
 func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -759,7 +759,7 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if ParameterRef has sibling fields
@@ -901,9 +901,9 @@ func (x RequestBodyRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets RequestBodyRef to a copy of data.
 func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -924,7 +924,7 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if RequestBodyRef has sibling fields
@@ -1066,9 +1066,9 @@ func (x ResponseRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ResponseRef to a copy of data.
 func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -1089,7 +1089,7 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if ResponseRef has sibling fields
@@ -1229,9 +1229,9 @@ func (x SchemaRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets SchemaRef to a copy of data.
 func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -1249,7 +1249,7 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 			}
 			if hasSiblings {
 				var sibling Schema
-				if err := json.Unmarshal(data, &sibling); err == nil {
+				if err := unmarshalJSON(data, &sibling); err == nil {
 					x.sibling = &sibling
 				}
 			}
@@ -1264,7 +1264,7 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if SchemaRef has sibling fields
@@ -1400,9 +1400,9 @@ func (x SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets SecuritySchemeRef to a copy of data.
 func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -1423,7 +1423,7 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if SecuritySchemeRef has sibling fields

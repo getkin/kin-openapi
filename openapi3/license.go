@@ -48,10 +48,10 @@ func (license License) MarshalYAML() (any, error) {
 func (license *License) UnmarshalJSON(data []byte) error {
 	type LicenseBis License
 	var x LicenseBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "identifier")

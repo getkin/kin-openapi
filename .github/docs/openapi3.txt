@@ -443,6 +443,11 @@ func (callback *Callback) Set(key string, value *PathItem)
 func (callback *Callback) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Callback to a copy of data.
 
+func (callback *Callback) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Callback to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
+
 func (callback *Callback) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Callback does not comply with the OpenAPI spec.
 
@@ -2434,6 +2439,11 @@ func (paths *Paths) Set(key string, value *PathItem)
 func (paths *Paths) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Paths to a copy of data.
 
+func (paths *Paths) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Paths to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
+
 func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Paths does not comply with the OpenAPI spec.
 
@@ -2797,6 +2807,11 @@ func (responses *Responses) Status(status int) *ResponseRef
 
 func (responses *Responses) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Responses to a copy of data.
+
+func (responses *Responses) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Responses to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
 
 func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Responses does not comply with the OpenAPI

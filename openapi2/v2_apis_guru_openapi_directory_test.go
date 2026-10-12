@@ -78,6 +78,9 @@ func TestV2ApisGuruOpenapiDirectory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping APIs Guru's large sets of documents")
 	}
+	if !openapi2.UsingJSONv2 {
+		t.Skip("skipping as goldens record errors from encoding/json/v2 (Go 1.27+)")
+	}
 
 	commit := os.Getenv("APISGURU_COMMIT")
 	if commit == "" {

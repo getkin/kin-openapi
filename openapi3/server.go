@@ -109,10 +109,10 @@ func (server Server) MarshalYAML() (any, error) {
 func (server *Server) UnmarshalJSON(data []byte) error {
 	type ServerBis Server
 	var x ServerBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "variables")
@@ -317,10 +317,10 @@ func (serverVariable ServerVariable) MarshalYAML() (any, error) {
 func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	type ServerVariableBis ServerVariable
 	var x ServerVariableBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "enum")
 	delete(x.Extensions, "default")
 	delete(x.Extensions, "description")

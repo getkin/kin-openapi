@@ -54,9 +54,9 @@ func (x SchemaRef) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets SchemaRef to a copy of data.
 func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		if len(extra) != 0 {
@@ -76,7 +76,7 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable

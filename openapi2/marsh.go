@@ -1,7 +1,6 @@
 package openapi2
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -21,7 +20,7 @@ func unmarshal(data []byte, v any) error {
 	var jsonErr, yamlErr error
 
 	// See https://github.com/getkin/kin-openapi/issues/680
-	if jsonErr = json.Unmarshal(data, v); jsonErr == nil {
+	if jsonErr = unmarshalJSON(data, v); jsonErr == nil {
 		return nil
 	}
 
