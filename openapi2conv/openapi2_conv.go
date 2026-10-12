@@ -1284,7 +1284,11 @@ func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) 
 func FromV3Headers(defs openapi3.Headers, components *openapi3.Components) (map[string]*openapi2.Header, error) {
 	headers := make(map[string]*openapi2.Header, len(defs))
 	for name, header := range defs {
-		ref := openapi3.ParameterRef{Ref: header.Ref, Value: &header.Value.Parameter}
+		// Swagger 2.0 has no reusable headers and a Header Object cannot be a $ref, so inline it.
+		if header.Value == nil {
+			return nil, fmt.Errorf("unresolved reference %q for header %q", header.Ref, name)
+		}
+		ref := openapi3.ParameterRef{Value: &header.Value.Parameter}
 		parameter, err := FromV3Parameter(&ref, components)
 		if err != nil {
 			return nil, err
