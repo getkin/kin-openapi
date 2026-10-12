@@ -391,9 +391,9 @@ func (pTypes *Types) MarshalYAML() (any, error) {
 
 func (types *Types) UnmarshalJSON(data []byte) error {
 	var strings []string
-	if err := json.Unmarshal(data, &strings); err != nil {
+	if err := unmarshalJSON(data, &strings); err != nil {
 		var s string
-		if err := json.Unmarshal(data, &s); err != nil {
+		if err := unmarshalJSON(data, &s); err != nil {
 			return unmarshalError(err)
 		}
 		strings = []string{s}
@@ -456,7 +456,7 @@ func (bs BoolSchema) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets BoolSchema to a copy of data.
 func (bs *BoolSchema) UnmarshalJSON(data []byte) error {
 	var x any
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
 	switch y := x.(type) {
@@ -523,7 +523,7 @@ func (eb ExclusiveBound) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ExclusiveBound to a copy of data.
 func (eb *ExclusiveBound) UnmarshalJSON(data []byte) error {
 	var x any
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
 	switch y := x.(type) {
@@ -770,7 +770,7 @@ func (schema Schema) MarshalYAML() (any, error) {
 // string or anything else is an ordinary schema for the caller to decode.
 func unmarshalBooleanSchema(data []byte) (bool, bool) {
 	var boolean bool
-	if err := json.Unmarshal(data, &boolean); err != nil {
+	if err := unmarshalJSON(data, &boolean); err != nil {
 		return false, false
 	}
 	return boolean, true
@@ -789,10 +789,10 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 
 	type SchemaBis Schema
 	var x SchemaBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 
 	delete(x.Extensions, "oneOf")
 	delete(x.Extensions, "anyOf")

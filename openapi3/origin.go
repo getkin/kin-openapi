@@ -78,7 +78,7 @@ func (f FieldLocations) MarshalJSON() ([]byte, error) {
 // sorted by name, since a JSON object carries no order to restore.
 func (f *FieldLocations) UnmarshalJSON(data []byte) error {
 	var m map[string]Location
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := unmarshalJSON(data, &m); err != nil {
 		return err
 	}
 	out := make(FieldLocations, 0, len(m))

@@ -87,10 +87,10 @@ func (components Components) MarshalYAML() (any, error) {
 func (components *Components) UnmarshalJSON(data []byte) error {
 	type ComponentsBis Components
 	var x ComponentsBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "schemas")
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "headers")

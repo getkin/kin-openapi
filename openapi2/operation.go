@@ -69,10 +69,10 @@ func (operation Operation) MarshalJSON() ([]byte, error) {
 func (operation *Operation) UnmarshalJSON(data []byte) error {
 	type OperationBis Operation
 	var x OperationBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "deprecated")

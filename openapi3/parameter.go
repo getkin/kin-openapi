@@ -209,10 +209,10 @@ func (parameter Parameter) MarshalYAML() (any, error) {
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	type ParameterBis Parameter
 	var x ParameterBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "in")

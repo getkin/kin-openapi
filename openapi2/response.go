@@ -47,10 +47,10 @@ func (response Response) MarshalJSON() ([]byte, error) {
 func (response *Response) UnmarshalJSON(data []byte) error {
 	type ResponseBis Response
 	var x ResponseBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "schema")
@@ -131,7 +131,7 @@ func (responses Responses) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets Responses to a copy of data.
 func (responses *Responses) UnmarshalJSON(data []byte) error {
 	var m map[string]json.RawMessage
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := unmarshalJSON(data, &m); err != nil {
 		return unmarshalError(err)
 	}
 	x := Responses{m: make(map[string]*Response, len(m))}
@@ -141,14 +141,14 @@ func (responses *Responses) UnmarshalJSON(data []byte) error {
 				x.Extensions = make(map[string]any)
 			}
 			var ext any
-			if err := json.Unmarshal(v, &ext); err != nil {
+			if err := unmarshalJSON(v, &ext); err != nil {
 				return unmarshalError(err)
 			}
 			x.Extensions[k] = ext
 			continue
 		}
 		var response *Response
-		if err := json.Unmarshal(v, &response); err != nil {
+		if err := unmarshalJSON(v, &response); err != nil {
 			// Decoding the member on its own loses its key from the error: add it back.
 			return fmt.Errorf("response %q: %w", k, err)
 		}

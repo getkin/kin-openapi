@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -25,7 +24,7 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 	var jsonErr, yamlErr error
 
 	// See https://github.com/getkin/kin-openapi/issues/680
-	if jsonErr = json.Unmarshal(data, v); jsonErr == nil {
+	if jsonErr = unmarshalJSON(data, v); jsonErr == nil {
 		return nil, nil
 	}
 

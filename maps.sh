@@ -3,6 +3,7 @@ set -o pipefail
 
 maplike=./openapi3/maplike.go
 maplike_test=./openapi3/maplike_test.go
+maplike_jsonv2=./openapi3/maplike_jsonv2.go
 
 types=()
 types+=('*Responses')
@@ -40,6 +41,25 @@ import (
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
+)
+
+EOF
+}
+
+
+maplike_jsonv2_header() {
+	cat <<EOF >"$maplike_jsonv2"
+//go:build go1.27 && goexperiment.jsonv2
+
+// Requires Go 1.27's v2-backed encoding/json implementation,
+// which calls UnmarshalJSONFrom.
+
+package openapi3
+
+import (
+	"encoding/json/jsontext"
+	jsonv2 "encoding/json/v2"
+	"strings"
 )
 
 EOF
@@ -193,7 +213,7 @@ func (${name} ${type}) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets ${type#'*'} to a copy of data.
 func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 	var m map[string]any
-	if err = json.Unmarshal(data, &m); err != nil {
+	if err = unmarshalJSON(data, &m); err != nil {
 		return
 	}
 
@@ -221,6 +241,59 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 	}
 	*${name} = x
 	return
+}
+EOF
+}
+
+
+maplike_UnmarshalFrom() {
+	cat <<EOF >>"$maplike_jsonv2"
+var _ jsonv2.UnmarshalerFrom = (${type})(nil)
+
+// UnmarshalJSONFrom sets ${type#'*'} to the next JSON value read from dec.
+// Decoding each member from dec (rather than from a copy of its bytes)
+// keeps the member's key in the path of any error.
+func (${name} ${type}) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	x := ${type#'*'}{
+		Extensions: make(map[string]any),
+		m:          make(map[string]${value_type}),
+	}
+	if dec.PeekKind() != jsontext.KindBeginObject {
+		var m map[string]any // Reports non-object values as UnmarshalJSON does
+		if err := jsonv2.UnmarshalDecode(dec, &m); err != nil {
+			return err
+		}
+		*${name} = x
+		return nil
+	}
+	if _, err := dec.ReadToken(); err != nil {
+		return err
+	}
+	for dec.PeekKind() != jsontext.KindEndObject {
+		tok, err := dec.ReadToken()
+		if err != nil {
+			return err
+		}
+		k := tok.String()
+		if strings.HasPrefix(k, "x-") {
+			var v any
+			if err := jsonv2.UnmarshalDecode(dec, &v); err != nil {
+				return err
+			}
+			x.Extensions[k] = v
+			continue
+		}
+		var v ${value_type#'*'}
+		if err := jsonv2.UnmarshalDecode(dec, &v); err != nil {
+			return err
+		}
+		x.m[k] = &v
+	}
+	if _, err := dec.ReadToken(); err != nil {
+		return err
+	}
+	*${name} = x
+	return nil
 }
 EOF
 }
@@ -261,6 +334,7 @@ EOF
 
 
 maplike_header
+maplike_jsonv2_header
 test_header
 
 for i in "${!types[@]}"; do
@@ -273,7 +347,8 @@ for i in "${!types[@]}"; do
 	type="$type" name="$name" value_type="$value_type" maplike_KeysValueSetLenDelete
 	type="$type" name="$name"    deref_v="$deref_v"    maplike_Pointable
 	type="$type" name="$name" value_type="$value_type" maplike_UnMarsh
-	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike"
+	type="$type" name="$name" value_type="$value_type" maplike_UnmarshalFrom
+	[[ $((i+1)) != "${#types[@]}" ]] && echo >>"$maplike" && echo >>"$maplike_jsonv2"
 
 	type="${type/'*'/*openapi3.}" value_type="${value_type/'*'/*openapi3.}" test_body
 

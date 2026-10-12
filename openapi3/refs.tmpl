@@ -86,9 +86,9 @@ func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets {{ $type.Name }}Ref to a copy of data.
 func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -113,7 +113,7 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 			}
 			if hasSiblings {
 				var sibling Schema
-				if err := json.Unmarshal(data, &sibling); err == nil {
+				if err := unmarshalJSON(data, &sibling); err == nil {
 					x.sibling = &sibling
 				}
 			}
@@ -129,7 +129,7 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
 // validateExtras returns an error if {{ $type.Name }}Ref has sibling fields

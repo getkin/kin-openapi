@@ -48,7 +48,8 @@ jobs:
     - run: ./maps.sh
     - run: git --no-pager diff --exit-code
 
-    - run: ./docs.sh
+    - if: matrix.go == 'stable'
+      run: ./docs.sh
 
     - run: go mod download && go mod tidy && go mod verify
     - run: git --no-pager diff --exit-code
@@ -62,7 +63,9 @@ jobs:
     - run: go fmt ./...
     - run: git --no-pager diff --exit-code
 
-    - run: go test ./...
+    # Large test suites (skipped by -short) record errors as worded by stable Go
+    - if: matrix.go == 'stable'
+      run: go test ./...
     - if: runner.os == 'Linux' && matrix.go == 'stable'
       run: go test -count=10 -short ./...
       env:

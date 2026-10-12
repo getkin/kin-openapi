@@ -160,6 +160,11 @@ func (responses *Responses) Set(key string, value *Response)
 func (responses *Responses) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Responses to a copy of data.
 
+func (responses *Responses) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Responses to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
+
 func (responses *Responses) Value(key string) *Response
     Value returns the response for key or nil
 
