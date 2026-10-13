@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
-	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 )
@@ -39,47 +40,84 @@ type T struct {
 	integerFormats map[string]IntegerFormatValidator
 }
 
+// parseOpenAPIVersion parses the value of a document's `openapi` field and
+// returns its major and minor numbers. ok is false when the value doesn't
+// match the accepted grammar: MAJOR[.MINOR[.PATCH]] where each component is
+// a decimal integer, per the specification's "Versions and Deprecation"
+// section. An omitted MINOR (or PATCH) reads as 0, so "3" parses as 3.0.
+func parseOpenAPIVersion(s string) (major, minor int, ok bool) {
+	parts := strings.Split(s, ".")
+	if len(parts) > 3 {
+		return 0, 0, false
+	}
+
+	nums := make([]int, len(parts))
+	for i, part := range parts {
+		n, err := strconv.Atoi(part)
+		if err != nil || n < 0 {
+			return 0, 0, false
+		}
+		nums[i] = n
+	}
+
+	major = nums[0]
+	if len(nums) > 1 {
+		minor = nums[1]
+	}
+	return major, minor, true
+}
+
 // IsOpenAPI30 returns whether doc is an OpenAPI document version 3.0.x.
-// Returns true for 3, 3.0, 3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, ...
-// And false for 3.1.0, 3.2, ... and for invalid strings.
+// Returns true for 3, 3.0, 3.0.0, 3.0.1, ... 3.0.99, ...
+// And false for 3.1.0, 3.2, ... and for unparseable version strings.
 func (doc *T) IsOpenAPI30() bool {
-	return doc.OpenAPIMajorMinor() == "3.0"
+	major, minor, ok := doc.openAPIVersion()
+	return ok && major == 3 && minor == 0
 }
 
 // IsOpenAPI31OrLater returns whether doc is an OpenAPI document version >=3.1.
-// Returns true for 3.1, 3.1.0, 3.1.1, 3.1.2, 3.2.0, ...
-// And false for cases where IsOpenAPI30 returns true and for invalid strings.
+// The comparison is numeric, so this is true for 3.1, 3.1.0, 3.2.0, 3.10.0 and
+// for any future version beyond them (including a hypothetical 4.0.0).
+// Returns false for 3.0.x and for unparseable version strings.
 func (doc *T) IsOpenAPI31OrLater() bool {
-	return slices.Contains([]string{"3.1", "3.2"}, doc.OpenAPIMajorMinor())
+	major, minor, ok := doc.openAPIVersion()
+	return ok && (major > 3 || (major == 3 && minor >= 1))
 }
 
 // IsOpenAPI32OrLater returns whether doc is an OpenAPI document version >=3.2.
-// Returns true for 3.2, 3.2.0, ...
-// And false for cases where IsOpenAPI31OrLater returns true for 3.1.x and for invalid strings.
+// The comparison is numeric, so this is true for 3.2, 3.2.0, 3.10.0 and for
+// any future version beyond them (including a hypothetical 4.0.0).
+// Returns false for 3.0.x and 3.1.x and for unparseable version strings.
 func (doc *T) IsOpenAPI32OrLater() bool {
-	return doc.OpenAPIMajorMinor() == "3.2"
+	major, minor, ok := doc.openAPIVersion()
+	return ok && (major > 3 || (major == 3 && minor >= 2))
+}
+
+// openAPIVersion parses doc's `openapi` field, tolerating a nil doc.
+func (doc *T) openAPIVersion() (major, minor int, ok bool) {
+	if doc == nil {
+		return 0, 0, false
+	}
+	return parseOpenAPIVersion(doc.OpenAPI)
 }
 
 func errValueOfFieldFor31Plus(value any, field string) error {
 	return fmt.Errorf("value %q of field %s is for OpenAPI >=3.1", value, field)
 }
 
-// OpenAPIMajorMinor returns 3.y of the OpenAPI "3.y" or "3.y.z" version of the document.
-// Returns the empty string for invalid OpenAPI version strings.
+// OpenAPIMajorMinor returns the "x.y" major.minor prefix of the document's
+// `openapi` version string: "3.0.4" and "3.0" both yield "3.0", "3" yields
+// "3.0", "3.2.1" yields "3.2" and "3.10.0" yields "3.10". Versions are parsed
+// numerically, so any well-formed version is reported, including ones this
+// library predates (e.g. "4.0.0" yields "4.0" — see T.Validate, which rejects
+// non-3.x documents).
+// Returns the empty string for version strings that don't parse.
 func (doc *T) OpenAPIMajorMinor() string {
-	if doc == nil {
+	major, minor, ok := doc.openAPIVersion()
+	if !ok {
 		return ""
 	}
-	switch doc.OpenAPI {
-	case "3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4":
-		return "3.0"
-	case "3.1", "3.1.0", "3.1.1", "3.1.2":
-		return "3.1"
-	case "3.2", "3.2.0":
-		return "3.2"
-	default:
-		return ""
-	}
+	return fmt.Sprintf("%d.%d", major, minor)
 }
 
 var _ jsonpointer.JSONPointable = (*T)(nil)
@@ -276,6 +314,14 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 
 	if doc.OpenAPI == "" {
 		if err := me.emit(newOpenAPIVersionRequired(doc.Origin)); err != nil {
+			return err
+		}
+	} else if major, _, ok := parseOpenAPIVersion(doc.OpenAPI); !ok || major != 3 {
+		// Anything that isn't a parseable OpenAPI 3.x version is reported
+		// explicitly instead of being validated against arbitrary defaults.
+		// Unknown 3.x minors (3.3, 3.99, ...) are accepted: their gated
+		// features follow the numeric IsOpenAPI3xOrLater predicates.
+		if err := me.emit(newOpenAPIVersionUnsupported(doc.OpenAPI, doc.Origin)); err != nil {
 			return err
 		}
 	}
