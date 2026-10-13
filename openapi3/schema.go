@@ -2261,23 +2261,8 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, value any) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
-			switch c := value.(type) {
-			case json.Number:
-				var f float64
-				if f, err = strconv.ParseFloat(c.String(), 64); err != nil {
-					return err
-				}
-				if v == f {
-					return
-				}
-			case int64:
-				if v == float64(c) {
-					return
-				}
-			default:
-				if reflect.DeepEqual(v, value) {
-					return
-				}
+			if equalJSONValues(v, value) {
+				return
 			}
 		}
 		if settings.failfast {
@@ -2289,6 +2274,56 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 			withReason("value is not one of the allowed values " + string(allowedValues))
 	}
 	return
+}
+
+// Helps with `1 == json.Number("1")`
+func equalJSONValues(a, b any) bool {
+	if x, ok := jsonNumberAsFloat64(a); ok {
+		y, ok := jsonNumberAsFloat64(b)
+		return ok && x == y
+	}
+	switch a := a.(type) {
+	case []any:
+		b, ok := b.([]any)
+		return ok && slices.EqualFunc(a, b, equalJSONValues)
+	case map[string]any:
+		b, ok := b.(map[string]any)
+		return ok && maps.EqualFunc(a, b, equalJSONValues)
+	}
+	return reflect.DeepEqual(a, b)
+}
+
+func jsonNumberAsFloat64(v any) (float64, bool) {
+	switch v := v.(type) {
+	case json.Number:
+		f, err := v.Float64()
+		return f, err == nil
+	case float64:
+		return v, true
+	case float32:
+		return float64(v), true
+	case int:
+		return float64(v), true
+	case int8:
+		return float64(v), true
+	case int16:
+		return float64(v), true
+	case int32:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case uint:
+		return float64(v), true
+	case uint8:
+		return float64(v), true
+	case uint16:
+		return float64(v), true
+	case uint32:
+		return float64(v), true
+	case uint64:
+		return float64(v), true
+	}
+	return 0, false
 }
 
 func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, value any) (err error) {
