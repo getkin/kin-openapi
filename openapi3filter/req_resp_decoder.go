@@ -1284,6 +1284,7 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder {
 //
 // If a decoder for the specified content type already exists, the function replaces
 // it with the specified decoder.
+// A "+json" media type (RFC 6839) falls back to the "application/json" decoder.
 // A decoder registered for "*/*" is used if none match.
 // Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 func RegisterBodyDecoder(contentType string, decoder BodyDecoder) {
@@ -1364,6 +1365,10 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 	}
 
 	decoder := RegisteredBodyDecoder(mediaType)
+	// A binary part is raw bytes: do not decode it as JSON.
+	if decoder == nil && strings.HasSuffix(mediaType, "+json") && !isBinary(schema) {
+		decoder = RegisteredBodyDecoder("application/json")
+	}
 	if decoder == nil {
 		decoder = RegisteredBodyDecoder("*/*") // fall back to catch-all, if any
 	}

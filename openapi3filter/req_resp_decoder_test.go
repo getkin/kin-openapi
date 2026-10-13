@@ -2129,6 +2129,33 @@ func TestBodyDecoderContentTypeIsCaseInsensitive(t *testing.T) {
 	require.Equal(t, "foo", got)
 }
 
+func TestBodyDecoderJSONSuffix(t *testing.T) {
+	RegisterBodyDecoder("*/*", PlainBodyDecoder)
+	defer UnregisterBodyDecoder("*/*")
+
+	const contentType = "application/vnd.org.v1+json"
+	h := make(http.Header)
+	h.Set(headerCT, contentType)
+	schema := openapi3.NewStringSchema().NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+	_, got, err := decodeBody(strings.NewReader(`"foo"`), h, schema, encFn)
+	require.NoError(t, err)
+	require.Equal(t, "foo", got)
+
+	// A binary part is not decoded as JSON.
+	binary := openapi3.NewStringSchema().WithFormat("binary").NewRef()
+	subEncFn := func(string) *openapi3.Encoding { return &openapi3.Encoding{ContentType: contentType} }
+	_, got, err = decodeBody(strings.NewReader(`"foo"`), h, binary, subEncFn)
+	require.NoError(t, err)
+	require.Equal(t, `"foo"`, got)
+
+	RegisterBodyDecoder(contentType, PlainBodyDecoder)
+	defer UnregisterBodyDecoder(contentType)
+	_, got, err = decodeBody(strings.NewReader(`"foo"`), h, schema, encFn)
+	require.NoError(t, err)
+	require.Equal(t, `"foo"`, got)
+}
+
 func matchParseError(t *testing.T, got, want error) {
 	t.Helper()
 

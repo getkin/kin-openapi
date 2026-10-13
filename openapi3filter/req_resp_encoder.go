@@ -11,6 +11,9 @@ func encodeBody(body any, mediaType string) ([]byte, error) {
 	if encoder := RegisteredBodyEncoder(mediaType); encoder != nil {
 		return encoder(body)
 	}
+	if strings.HasSuffix(mediaType, "+json") {
+		return encodeBody(body, "application/json")
+	}
 	return nil, &ParseError{
 		Kind:   KindUnsupportedFormat,
 		Reason: fmt.Sprintf("%s %q", prefixUnsupportedCT, mediaType),
@@ -27,6 +30,7 @@ var bodyEncoders = map[string]BodyEncoder{
 
 // RegisterBodyEncoder enables package-wide decoding of contentType values.
 //
+// A "+json" media type (RFC 6839) falls back to the "application/json" encoder.
 // Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder) {
 	if contentType == "" {
