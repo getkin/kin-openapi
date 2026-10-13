@@ -76,14 +76,17 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
     RegisterBodyDecoder registers a request body's decoder for a content type.
 
     If a decoder for the specified content type already exists, the function
-    replaces it with the specified decoder. A decoder registered for "*/*" is
-    used if none match. Content types are matched case-insensitively (RFC 9110,
-    section 8.3.1).
+    replaces it with the specified decoder. A "+json" media type (RFC 6839)
+    falls back to the "application/json" decoder. A decoder registered for "*/*"
+    is used if none match. Content types are matched case-insensitively (RFC
+    9110, section 8.3.1).
 
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
     RegisterBodyEncoder enables package-wide decoding of contentType values.
 
-    Content types are matched case-insensitively (RFC 9110, section 8.3.1).
+    A "+json" media type (RFC 6839) falls back to the "application/json"
+    encoder. Content types are matched case-insensitively (RFC 9110, section
+    8.3.1).
 
 func TrimJSONPrefix(data []byte) []byte
     TrimJSONPrefix trims one of the possible prefixes
