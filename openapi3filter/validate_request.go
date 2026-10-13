@@ -343,7 +343,8 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	defaultsSet := false
 	var opts []openapi3.SchemaValidationOption
 	opts = append(opts, openapi3.VisitAsRequest())
-	if !options.SkipSettingDefaults {
+	// Defaults are written back into the body, which needs an encoder.
+	if !options.SkipSettingDefaults && (RegisteredBodyEncoder(mediaType) != nil || strings.HasSuffix(mediaType, "+json")) {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
 	}
 	if options.MultiError {
