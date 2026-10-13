@@ -398,8 +398,20 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		req.Body, _ = req.GetBody() // no error return
 	}
 
+	if options.KeepValidatedValue {
+		req.Body = validatedBody{ReadCloser: req.Body, value: value}
+	}
 	return nil
 }
+
+// validatedBody is the request body left by Options.KeepValidatedValue.
+type validatedBody struct {
+	io.ReadCloser
+	value any
+}
+
+// ValidatedValue returns the request body value that was validated.
+func (b validatedBody) ValidatedValue() any { return b.value }
 
 // ValidateSecurityRequirements goes through multiple OpenAPI 3 security
 // requirements in order and returns nil on the first valid requirement.
