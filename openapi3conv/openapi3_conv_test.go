@@ -66,7 +66,7 @@ info: {title: t, version: '1'}
 paths: {}
 `)
 	upgradeAndAssertValid(t, doc)
-	assert.Equal(t, "3.2.0", doc.OpenAPI)
+	assert.Equal(t, "3.2.1", doc.OpenAPI)
 }
 
 // 3.2 is purely additive over 3.1 — no schema-level rewrites between them.
@@ -86,7 +86,7 @@ components:
       nullable: true
 `)
 	upgradeAndAssertValid(t, doc)
-	assert.Equal(t, "3.2.0", doc.OpenAPI)
+	assert.Equal(t, "3.2.1", doc.OpenAPI)
 	assert.Equal(t, openapi3.Types{"string", "null"}, *doc.Components.Schemas["Pet"].Value.Type)
 }
 
@@ -257,7 +257,7 @@ func TestUpgrade_ExclusiveBoundsLeavesNumericIntact(t *testing.T) {
 	t.Parallel()
 
 	// A document already in 3.1 numeric form should round-trip unchanged
-	// (apart from the version bump to 3.2.0).
+	// (apart from the version bump to 3.2.1).
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.1.1
@@ -467,7 +467,7 @@ components:
 	var buf bytes.Buffer
 	upgradeAndAssertValid(t, doc, openapi3conv.WithWriter(&buf))
 	out := buf.String()
-	assert.Contains(t, out, "openapi: 3.0.3 -> 3.2.0")
+	assert.Contains(t, out, "openapi: 3.0.3 -> 3.2.1")
 	assert.Contains(t, out, "nullable")
 	assert.Contains(t, out, "example")
 }
