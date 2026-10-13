@@ -637,12 +637,14 @@ func drillIntoField(cursor any, fieldName string) (any, error) {
 		return elementValue.Interface(), nil
 
 	case reflect.Slice:
-		i, err := strconv.ParseUint(fieldName, 10, 32)
+		if strings.HasPrefix(fieldName, "+") || strings.HasPrefix(fieldName, "-") {
+			return nil, fmt.Errorf("invalid slice index %q", fieldName)
+		}
+		index, err := strconv.Atoi(fieldName)
 		if err != nil {
 			return nil, err
 		}
-		index := int(i)
-		if 0 > index || index >= val.Len() {
+		if index >= val.Len() {
 			return nil, errors.New("slice index out of bounds")
 		}
 		return val.Index(index).Interface(), nil
