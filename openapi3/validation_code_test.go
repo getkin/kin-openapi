@@ -19,6 +19,7 @@ func codedErrorInventory() []openapi3.CodedError {
 	return []openapi3.CodedError{
 		&openapi3.AdditionalOperationsDuplicateMethodError{},
 		&openapi3.AdditionalOperationsFieldFor32Plus{},
+		&openapi3.AdditionalOperationsFixedMethodCaseError{},
 		&openapi3.AdditionalOperationsInvalidMethodError{},
 		&openapi3.AnchorFieldFor31Plus{},
 		&openapi3.APIKeyInInvalidError{},

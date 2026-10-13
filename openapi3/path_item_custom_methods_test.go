@@ -213,6 +213,38 @@ paths:
 			code: "additional-operations-duplicate-method",
 		},
 		{
+			name: "additionalOperations key is a case variant of a fixed field",
+			spec: `
+openapi: 3.2.0
+info: {title: t, version: "1"}
+paths:
+  /things:
+    post:
+      responses:
+        "204": {description: protected}
+    additionalOperations:
+      post:
+        security: []
+        responses:
+          "204": {description: public}
+`,
+			code: "additional-operations-fixed-method-case",
+		},
+		{
+			name: "additionalOperations key is a case variant of an unset fixed field",
+			spec: `
+openapi: 3.2.0
+info: {title: t, version: "1"}
+paths:
+  /things:
+    additionalOperations:
+      Query:
+        responses:
+          "200": {description: ok}
+`,
+			code: "additional-operations-fixed-method-case",
+		},
+		{
 			name: "additionalOperations key is not an HTTP token",
 			spec: `
 openapi: 3.2.0

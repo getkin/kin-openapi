@@ -605,6 +605,25 @@ func (e *AdditionalOperationsDuplicateMethodError) Error() string {
 	return fmt.Sprintf("additionalOperations key %q duplicates a fixed path item field", e.Method)
 }
 
+// AdditionalOperationsFixedMethodCaseError clusters "additionalOperations key
+// differs only by case from a fixed field method" failures. Although HTTP
+// method names are case-sensitive, such a key (e.g. `post`) is easily
+// confused with the method of the matching fixed field (`POST`) and would
+// let operations with different security requirements look alike.
+type AdditionalOperationsFixedMethodCaseError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// FixedMethod is the fixed field method Method differs from only by case.
+	FixedMethod string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *AdditionalOperationsFixedMethodCaseError) Error() string {
+	return fmt.Sprintf("additionalOperations key %q differs only by case from fixed path item method %q", e.Method, e.FixedMethod)
+}
+
 // AdditionalOperationsInvalidMethodError clusters "additionalOperations key
 // is not an HTTP method" failures. Keys must be RFC 9110 tokens.
 type AdditionalOperationsInvalidMethodError struct {
@@ -1724,6 +1743,10 @@ func errFieldFor32Plus(field string, origin *Origin) error {
 
 func newAdditionalOperationsDuplicateMethod(method string, origin *Origin) error {
 	return &AdditionalOperationsDuplicateMethodError{Method: method, Origin: origin}
+}
+
+func newAdditionalOperationsFixedMethodCase(method, fixedMethod string, origin *Origin) error {
+	return &AdditionalOperationsFixedMethodCaseError{Method: method, FixedMethod: fixedMethod, Origin: origin}
 }
 
 func newAdditionalOperationsInvalidMethod(method string, origin *Origin) error {
