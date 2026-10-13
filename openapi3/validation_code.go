@@ -34,6 +34,9 @@ func (e *AdditionalOperationsDuplicateMethodError) Code() string {
 func (e *AdditionalOperationsFieldFor32Plus) Code() string {
 	return "additional-operations-field-for-3-2-plus"
 }
+func (e *AdditionalOperationsFixedMethodCaseError) Code() string {
+	return "additional-operations-fixed-method-case"
+}
 func (e *AdditionalOperationsInvalidMethodError) Code() string {
 	return "additional-operations-invalid-method"
 }
@@ -191,6 +194,7 @@ func ValidationErrorCodes() []string {
 var validationErrorCodes = []string{
 	"additional-operations-duplicate-method",
 	"additional-operations-field-for-3-2-plus",
+	"additional-operations-fixed-method-case",
 	"additional-operations-invalid-method",
 	"additional-properties-both-forms-exclusive",
 	"anchor-field-for-3-1-plus",

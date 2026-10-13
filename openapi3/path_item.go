@@ -346,6 +346,14 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 			}
 			continue
 		}
+		if fixedMethod := strings.ToUpper(method); fixedMethod != method {
+			if _, ok := fixedPathItemMethods[fixedMethod]; ok {
+				if err := me.emit(newAdditionalOperationsFixedMethodCase(method, fixedMethod, pathItem.Origin)); err != nil {
+					return err
+				}
+				continue
+			}
+		}
 		if !httpTokenRe.MatchString(method) {
 			if err := me.emit(newAdditionalOperationsInvalidMethod(method, pathItem.Origin)); err != nil {
 				return err

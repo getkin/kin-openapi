@@ -332,6 +332,25 @@ func (e *AdditionalOperationsFieldFor32Plus) As(target any) bool
 
 func (e *AdditionalOperationsFieldFor32Plus) Code() string
 
+type AdditionalOperationsFixedMethodCaseError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// FixedMethod is the fixed field method Method differs from only by case.
+	FixedMethod string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    AdditionalOperationsFixedMethodCaseError clusters "additionalOperations
+    key differs only by case from a fixed field method" failures. Although
+    HTTP method names are case-sensitive, such a key (e.g. `post`) is easily
+    confused with the method of the matching fixed field (`POST`) and would let
+    operations with different security requirements look alike.
+
+func (e *AdditionalOperationsFixedMethodCaseError) Code() string
+
+func (e *AdditionalOperationsFixedMethodCaseError) Error() string
+
 type AdditionalOperationsInvalidMethodError struct {
 	// Method is the offending additionalOperations key.
 	Method string
