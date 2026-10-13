@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"reflect"
 	"sync"
 )
 
@@ -36,11 +37,25 @@ type schemaValidationSettings struct {
 	numberFormats  map[string]NumberFormatValidator
 	integerFormats map[string]IntegerFormatValidator
 
-	// visitedSchemas provides pointer-identity cycle detection for runtime
-	// validation, matching the stack-based detection in Schema.validate().
-	// Only visitedSchemas[visitedSchemasStart:] were visited for the current value.
-	visitedSchemas []*Schema
-	visitedBase    int
+	// visitedSchemas breaks schema cycles for one logical JSON instance while
+	// still allowing a recursive schema to validate a nested instance.
+	visitedSchemas map[schemaVisit]struct{}
+	instances      map[jsonValueIdentity]*schemaInstance
+	instanceUses   map[*schemaInstance]int
+}
+
+type schemaInstance struct{ _ byte }
+
+type schemaVisit struct {
+	schema   *Schema
+	instance *schemaInstance
+}
+
+type jsonValueIdentity struct {
+	typ      reflect.Type
+	pointer  uintptr
+	length   int
+	capacity int
 }
 
 // FailFast returns schema validation errors quicker.
