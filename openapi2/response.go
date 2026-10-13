@@ -2,6 +2,7 @@ package openapi2
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"strings"
 
@@ -148,7 +149,8 @@ func (responses *Responses) UnmarshalJSON(data []byte) error {
 		}
 		var response *Response
 		if err := json.Unmarshal(v, &response); err != nil {
-			return err
+			// Decoding the member on its own loses its key from the error: add it back.
+			return fmt.Errorf("response %q: %w", k, err)
 		}
 		x.m[k] = response
 	}
