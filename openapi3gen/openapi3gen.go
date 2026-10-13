@@ -414,7 +414,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 	default:
 		// Object has their own schema's implementation, so we'll use those
 		if v := reflect.New(t); v.CanInterface() {
-			if v, ok := v.Interface().(SetSchemar); ok {
+			if v, ok := reflect.TypeAssert[SetSchemar](v); ok {
 				v.SetSchema(schema)
 			}
 		}

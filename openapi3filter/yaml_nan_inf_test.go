@@ -47,7 +47,6 @@ func TestYAMLNaNInfNoPanic(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, body := range []string{".nan", ".inf", "-.inf"} {
-		body := body
 		t.Run(body, func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, "/n", strings.NewReader(body))
 			require.NoError(t, err)

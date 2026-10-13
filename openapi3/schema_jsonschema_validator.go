@@ -78,10 +78,8 @@ func containsInternalSchemaRef(node any) bool {
 			}
 		}
 	case []any:
-		for _, value := range node {
-			if containsInternalSchemaRef(value) {
-				return true
-			}
+		if slices.ContainsFunc(node, containsInternalSchemaRef) {
+			return true
 		}
 	}
 	return false
