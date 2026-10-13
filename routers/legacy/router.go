@@ -65,8 +65,10 @@ func NewRouter(doc *openapi3.T, opts ...openapi3.ValidationOption) (routers.Rout
 	router := &Router{doc: doc}
 	root := router.node()
 	for path, pathItem := range doc.Paths.Map() {
+		// Operations() keys fixed-field methods in uppercase and custom
+		// (additionalOperations) methods with their exact spelling: HTTP method
+		// names are case-sensitive, so they must not be normalized here.
 		for method, operation := range pathItem.Operations() {
-			method = strings.ToUpper(method)
 			if err := root.Add(method+" "+path, &routers.Route{
 				Spec:      doc,
 				Path:      path,

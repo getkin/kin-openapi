@@ -65,15 +65,11 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 			}
 		}
 
-		operations := pathItem.Operations()
-		methods := make([]string, 0, len(operations))
-		for method := range operations {
-			methods = append(methods, method)
-		}
-		slices.Sort(methods)
-
 		for _, s := range pathServers {
-			muxRoute := muxRouter.Path(s.base + path).Methods(methods...)
+			// No mux Methods() matcher: it uppercases methods whereas custom
+			// (additionalOperations) method names are case-sensitive.
+			// FindRoute matches the request method exactly instead.
+			muxRoute := muxRouter.Path(s.base + path)
 			if schemes := s.schemes; len(schemes) != 0 {
 				muxRoute.Schemes(schemes...)
 			}
