@@ -15,11 +15,6 @@ import (
 	"strings"
 )
 
-// IncludeOrigin specifies whether to include the origin of the OpenAPI elements.
-// Deprecated: set Loader.IncludeOrigin instead. This global is read by NewLoader
-// for backward compatibility but is not safe for concurrent use.
-var IncludeOrigin = false
-
 func failedToResolveRefFragmentPart(value, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
 }
@@ -32,8 +27,6 @@ type Loader struct {
 	IsExternalRefsAllowed bool
 
 	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
-	// Prefer this over the package-level IncludeOrigin global, which is not safe for
-	// concurrent use.
 	IncludeOrigin bool
 
 	// ReadFromURIFunc overrides how the loader reads a referenced file or URL.
@@ -79,8 +72,7 @@ type Loader struct {
 // NewLoader returns an empty Loader
 func NewLoader() *Loader {
 	return &Loader{
-		Context:       context.Background(),
-		IncludeOrigin: IncludeOrigin,
+		Context: context.Background(),
 	}
 }
 

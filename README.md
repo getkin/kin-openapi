@@ -329,6 +329,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.151.0
+* Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
+
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
 * `(*openapi3.Schema).VisitJSON(..)` without the `openapi3.EnableJSONSchema2020()` option no longer validates the OpenAPI 3.1 `const` and `prefixItems` keywords. Like the other 3.1-only keywords, they are validated by the JSON Schema 2020-12 validator, which `openapi3filter` enables for 3.1 documents. `items` still applies only past the `prefixItems` positions.

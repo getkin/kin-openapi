@@ -136,11 +136,6 @@ var ErrURINotSupported = errors.New("unsupported URI")
     ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle
     a given URI.
 
-var IncludeOrigin = false
-    IncludeOrigin specifies whether to include the origin of the OpenAPI
-    elements. Deprecated: set Loader.IncludeOrigin instead. This global is read
-    by NewLoader for backward compatibility but is not safe for concurrent use.
-
 var SkipSubtree = errors.New("skip schema subtree")
     SkipSubtree, when returned by a WalkSchemasFunc, tells WalkSchemas not to
     descend into the current schema's sub-schemas. The schema itself has already
@@ -1625,8 +1620,6 @@ type Loader struct {
 	IsExternalRefsAllowed bool
 
 	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
-	// Prefer this over the package-level IncludeOrigin global, which is not safe for
-	// concurrent use.
 	IncludeOrigin bool
 
 	// ReadFromURIFunc overrides how the loader reads a referenced file or URL.
