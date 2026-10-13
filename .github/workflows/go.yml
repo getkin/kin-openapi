@@ -31,8 +31,9 @@ jobs:
 
     # Memory corruption seen only on Windows: check whether async preemption is to blame
     - if: runner.os == 'Windows'
-      name: Disable async preemption for the rest of the job on go <= 1.27
+      name: Disable async preemption for the rest of the job on go <= 1.27, dump all goroutines and threads on crash
       run: |
+        echo GOTRACEBACK=crash >>"$GITHUB_ENV"
         minor=$(go env GOVERSION | sed -E 's/^go1[.]([0-9]+).*/\1/')
         if [[ "$minor" -le 27 ]]; then
           echo GODEBUG=asyncpreemptoff=1 >>"$GITHUB_ENV"
