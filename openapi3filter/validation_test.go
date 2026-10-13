@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -476,6 +477,51 @@ func toJSON(v any) io.Reader {
 		panic(err)
 	}
 	return bytes.NewReader(data)
+}
+
+func TestValidateRequestBodyDefaultsNeedEncoder(t *testing.T) {
+	t.Parallel()
+
+	body := openapi3.NewRequestBody().WithSchema(
+		openapi3.NewObjectSchema().
+			WithProperty("role", openapi3.NewStringSchema().WithDefault("user")).
+			WithProperty("lang", openapi3.NewStringSchema().WithDefault("en")).
+			WithRequired([]string{"role"}),
+		[]string{"application/vnd.org.v1+json", "application/x-www-form-urlencoded", "multipart/form-data"},
+	)
+
+	var multipartData bytes.Buffer
+	mw := multipart.NewWriter(&multipartData)
+	require.NoError(t, mw.WriteField("role", "admin"))
+	require.NoError(t, mw.Close())
+
+	for _, tc := range []struct {
+		name    string
+		mime    string
+		data    string
+		want    string
+		wantErr string
+	}{
+		{name: "json suffix gets defaults", mime: "application/vnd.org.v1+json", data: `{"role":"admin"}`, want: `{"lang":"en","role":"admin"}`},
+		{name: "form kept as sent", mime: "application/x-www-form-urlencoded", data: "role=admin", want: "role=admin"},
+		{name: "multipart kept as sent", mime: mw.FormDataContentType(), data: multipartData.String(), want: multipartData.String()},
+		{name: "form validated as sent", mime: "application/x-www-form-urlencoded", data: "lang=fr", wantErr: `property "role" is missing`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.data))
+			req.Header.Set(headerCT, tc.mime)
+			err := ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			data, err := io.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, string(data))
+		})
+	}
 }
 
 func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *testing.T) {
