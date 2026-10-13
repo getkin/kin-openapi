@@ -2914,9 +2914,6 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 	}
 
 	// "uniqueItems"
-	if sliceUniqueItemsChecker == nil {
-		sliceUniqueItemsChecker = isSliceOfUniqueItems
-	}
 	if v := schema.UniqueItems; v && !sliceUniqueItemsChecker(value) {
 		if settings.failfast {
 			return errSchema
@@ -3176,7 +3173,11 @@ var sliceUniqueItemsChecker SliceUniqueItemsChecker = isSliceOfUniqueItems
 
 // RegisterArrayUniqueItemsChecker is used to register a customized function
 // used to check if JSON array have unique items.
+// Passing nil restores the default checker.
 func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker) {
+	if fn == nil {
+		fn = isSliceOfUniqueItems
+	}
 	sliceUniqueItemsChecker = fn
 }
 

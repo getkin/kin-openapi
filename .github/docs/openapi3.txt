@@ -264,7 +264,8 @@ func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool)
 
 func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
     RegisterArrayUniqueItemsChecker is used to register a customized function
-    used to check if JSON array have unique items.
+    used to check if JSON array have unique items. Passing nil restores the
+    default checker.
 
 func Uint64Ptr(value uint64) *uint64
     Uint64Ptr is a helper for defining OpenAPI schemas.
