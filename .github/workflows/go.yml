@@ -39,18 +39,18 @@ jobs:
           echo GODEBUG=asyncpreemptoff=1 >>"$GITHUB_ENV"
         fi
 
+    - if: runner.os == 'Linux'
+      run: sudo apt install silversearcher-ag
+
+    - uses: actions/checkout@v6
+
     - name: Test suite fixtures cache
       uses: actions/cache@v3
       with:
         path: |
           openapi2/testdata/APIs-guru-openapi-directory-*
           openapi3/testdata/APIs-guru-openapi-directory-*
-        key: suite-\${{ env.APISGURU_COMMIT }}
-
-    - if: runner.os == 'Linux'
-      run: sudo apt install silversearcher-ag
-
-    - uses: actions/checkout@v6
+        key: suite-${{ env.APISGURU_COMMIT }}
 
     - run: go generate ./...
     - run: git --no-pager diff --exit-code
