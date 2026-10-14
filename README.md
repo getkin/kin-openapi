@@ -331,6 +331,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ### v0.151.0
 * Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
+* `openapi3filter` now writes a query parameter's array `default` into the request URL following the parameter's `style` and `explode` (including their defaults), so an array without `explode` set is written as `?ids=1&ids=2` rather than `?ids=1,2`, and `pipeDelimited`/`spaceDelimited` arrays use their own delimiter.
 
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
@@ -347,7 +348,6 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `(*openapi3.Parameter).SerializationMethod()` (for query parameters) and `(*openapi3.Encoding).SerializationMethod()` now default `explode` to `false` for `style: spaceDelimited` and `style: pipeDelimited`, as the spec says, so `openapi3filter` splits `?ids=1|2|3` and `application/x-www-form-urlencoded` body properties such as `ids=1|2|3` instead of expecting `ids=1&ids=2&ids=3`. Set `explode: true` to keep the previous behavior.
 * Removed the package-global `openapi3.SchemaErrorDetailsDisabled` variable. Pass the new `openapi3.DisableSchemaErrorDetails()` option to `(*openapi3.Schema).VisitJSON(..)` instead, or add it to `openapi3filter.Options.SchemaValidationOptions`, which `openapi3filter` now also applies when validating parameters. Combined with `openapi3.EnableJSONSchema2020()` (hence with `openapi3filter` on OpenAPI 3.1+ documents), validation fails with `openapi3.ErrSchemaErrorDetailsWithJSONSchema2020`, as that validator's error messages include values.
 * The message customizer set with `openapi3.SetSchemaErrorMessageCustomizer(..)` (hence `(*openapi3filter.Options).WithCustomSchemaErrorFunc(..)`) now also applies to discriminator errors, to errors of patterns that fail to compile and to errors of the JSON Schema 2020-12 validator (`openapi3.EnableJSONSchema2020()`).
-* `openapi3filter` now writes a query parameter's array `default` into the request URL following the parameter's `style` and `explode` (including their defaults), so an array without `explode` set is written as `?ids=1&ids=2` rather than `?ids=1,2`, and `pipeDelimited`/`spaceDelimited` arrays use their own delimiter.
 
 ### v0.147.0
 * `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).
