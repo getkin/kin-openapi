@@ -524,6 +524,37 @@ func TestValidateRequestBodyDefaultsNeedEncoder(t *testing.T) {
 	}
 }
 
+func TestValidateRequestBodyFormInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	body := openapi3.NewRequestBody().WithSchema(
+		openapi3.NewObjectSchema().
+			WithProperty("n", openapi3.NewIntegerSchema()).
+			WithProperty("ids", openapi3.NewArraySchema().WithItems(openapi3.NewIntegerSchema())),
+		[]string{"application/x-www-form-urlencoded"},
+	)
+
+	for _, tc := range []struct {
+		data    string
+		wantErr string
+	}{
+		{data: "n=1&ids=2&ids=3"},
+		{data: "n=abc", wantErr: "path n: value abc: an invalid integer"},
+		{data: "ids=2&ids=abc", wantErr: "value abc: an invalid integer"},
+	} {
+		t.Run(tc.data, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.data))
+			req.Header.Set(headerCT, "application/x-www-form-urlencoded")
+			err := ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorContains(t, err, tc.wantErr)
+		})
+	}
+}
+
 func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *testing.T) {
 	t.Parallel()
 

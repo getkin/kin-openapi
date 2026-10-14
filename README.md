@@ -331,6 +331,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ### v0.151.0
 * Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
+* `openapi3filter.UrlencodedBodyDecoder` (hence `application/x-www-form-urlencoded` request body validation) now returns a `*openapi3filter.ParseError` for a value that cannot be parsed into its property's schema type, such as `n=abc` for an `integer` property, instead of silently dropping it from the decoded body.
 
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.

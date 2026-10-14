@@ -1477,9 +1477,18 @@ func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	// Make an object value from form values.
 	obj := make(map[string]any)
 	dec := &urlValuesDecoder{values: values}
+	parseErrs := make(map[string]*ParseError)
 
-	if err := decodeSchemaConstructs(dec, []*openapi3.SchemaRef{schema}, obj, encFn); err != nil {
+	if err := decodeSchemaConstructs(dec, []*openapi3.SchemaRef{schema}, obj, parseErrs, encFn); err != nil {
 		return nil, err
+	}
+
+	// Report values that no schema declaring the property could parse,
+	// instead of dropping them from the body to be validated.
+	for _, name := range slices.Sorted(maps.Keys(parseErrs)) {
+		if _, ok := obj[name]; !ok {
+			return nil, &ParseError{path: []any{name}, Cause: parseErrs[name]}
+		}
 	}
 
 	return obj, nil
@@ -1487,17 +1496,17 @@ func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 
 // decodeSchemaConstructs tries to decode properties based on provided schemas.
 // This function is for decoding purposes only and not for validation.
-func decodeSchemaConstructs(dec *urlValuesDecoder, schemas []*openapi3.SchemaRef, obj map[string]any, encFn EncodingFn) error {
+func decodeSchemaConstructs(dec *urlValuesDecoder, schemas []*openapi3.SchemaRef, obj map[string]any, parseErrs map[string]*ParseError, encFn EncodingFn) error {
 	for _, schemaRef := range schemas {
 
 		// Decode schema constructs (allOf, anyOf, oneOf)
-		if err := decodeSchemaConstructs(dec, schemaRef.Value.AllOf, obj, encFn); err != nil {
+		if err := decodeSchemaConstructs(dec, schemaRef.Value.AllOf, obj, parseErrs, encFn); err != nil {
 			return err
 		}
-		if err := decodeSchemaConstructs(dec, schemaRef.Value.AnyOf, obj, encFn); err != nil {
+		if err := decodeSchemaConstructs(dec, schemaRef.Value.AnyOf, obj, parseErrs, encFn); err != nil {
 			return err
 		}
-		if err := decodeSchemaConstructs(dec, schemaRef.Value.OneOf, obj, encFn); err != nil {
+		if err := decodeSchemaConstructs(dec, schemaRef.Value.OneOf, obj, parseErrs, encFn); err != nil {
 			return err
 		}
 
@@ -1509,7 +1518,13 @@ func decodeSchemaConstructs(dec *urlValuesDecoder, schemas []*openapi3.SchemaRef
 		for _, name := range propNames {
 			prop := schemaRef.Value.Properties[name]
 			value, present, err := decodeProperty(dec, name, prop, encFn)
-			if err != nil || !present {
+			if err != nil {
+				if v, ok := err.(*ParseError); ok && parseErrs[name] == nil {
+					parseErrs[name] = v
+				}
+				continue
+			}
+			if !present {
 				continue
 			}
 			if existingValue, exists := obj[name]; exists && !isEqual(existingValue, value) {
