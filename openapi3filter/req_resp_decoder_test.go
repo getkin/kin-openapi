@@ -1832,6 +1832,45 @@ func TestDecodeBody(t *testing.T) {
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
 		{
+			name: "urlencoded invalid integer",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("a=a1&b=abc"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("b", openapi3.NewIntegerSchema()),
+			wantErr: &ParseError{
+				path:  []any{"b"},
+				Cause: &ParseError{Kind: KindInvalidFormat, Value: "abc"},
+			},
+		},
+		{
+			name: "urlencoded invalid array item",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("c=1&c=abc"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewIntegerSchema())),
+			wantErr: &ParseError{
+				path: []any{"c"},
+				Cause: &ParseError{
+					path:  []any{1},
+					Cause: &ParseError{Kind: KindInvalidFormat, Value: "abc"},
+				},
+			},
+		},
+		{
+			name: "urlencoded value parsed by another oneOf schema",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("b=abc"),
+			schema: &openapi3.Schema{
+				Type: &openapi3.Types{openapi3.TypeObject},
+				OneOf: openapi3.SchemaRefs{
+					openapi3.NewObjectSchema().WithProperty("b", openapi3.NewIntegerSchema()).NewRef(),
+					openapi3.NewObjectSchema().WithProperty("b", openapi3.NewStringSchema()).NewRef(),
+				},
+			},
+			want: map[string]any{"b": "abc"},
+		},
+		{
 			name: "multipart",
 			mime: multipartFormMime,
 			body: multipartForm,
