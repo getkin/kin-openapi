@@ -1,28 +1,27 @@
-.DEFAULT_GOAL := prepare
+.DEFAULT_GOAL := all
+.PHONY: help generate format test test-fast all
 
-.PHONY: help generate format test prepare
+## all: Run generation, formatting, and tests in sequence
+all: generate format test
 
-help:
-	@printf '%s\n' \
-		'Usage: make <target>' \
-		'' \
-		'  generate  Regenerate Go code, map helpers, and API documentation.' \
-		'  format    Apply the repository formatters and import cleanup.' \
-		'  test      Run the full Go package test suite.' \
-		'  prepare   Run generation, formatting, and tests in sequence.'
-
+## generate: Regenerate Go code, map helpers, and API documentation
 generate:
 	go generate ./...
 	./maps.sh
 	./docs.sh
 
+## format: Apply the repository formatters and import cleanup
 format:
 	go fmt ./...
 
+## test: Run the full Go package test suite
 test:
 	go test ./...
 
-prepare:
-	$(MAKE) generate
-	$(MAKE) format
-	$(MAKE) test
+## test-fast: Run tests skipping the slow ones
+test-fast:
+	go test -short ./...
+
+## help: list targets
+help:
+	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## /  make /'
