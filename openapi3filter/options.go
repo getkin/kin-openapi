@@ -40,6 +40,10 @@ type Options struct {
 	// request. If true, then they are not set
 	SkipSettingDefaults bool
 
+	// Set KeepValidatedValue so ValidateRequest gives req.Body a ValidatedValue() any
+	// method returning the validated request body value, defaults included
+	KeepValidatedValue bool
+
 	customSchemaErrorFunc CustomSchemaErrorFunc
 
 	// Additional schema validation options to pass through to schema validation.

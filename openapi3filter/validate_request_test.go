@@ -575,6 +575,78 @@ paths:
 	require.Error(t, err)
 }
 
+func TestValidateRequestKeepValidatedValue(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /users:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                role:
+                  type: string
+                  default: member
+      responses:
+        '200':
+          description: Ok
+`
+	router := setupTestRouter(t, spec)
+
+	for _, tc := range []struct {
+		name    string
+		body    string
+		keep    bool
+		read    string
+		want    any
+		wantErr bool
+	}{
+		{name: "kept", body: `{"id":42}`, keep: true, read: `{"id":42,"role":"member"}`, want: map[string]any{"id": json.Number("42"), "role": "member"}},
+		{name: "kept without defaults", body: `{"id":42,"role":"admin"}`, keep: true, read: `{"id":42,"role":"admin"}`, want: map[string]any{"id": json.Number("42"), "role": "admin"}},
+		{name: "not kept", body: `{"id":42}`, read: `{"id":42,"role":"member"}`},
+		{name: "invalid body", body: `{"id":"x"}`, keep: true, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewReader([]byte(tc.body)))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			route, pathParams, err := router.FindRoute(req)
+			require.NoError(t, err)
+
+			err = ValidateRequest(t.Context(), &RequestValidationInput{
+				Request:    req,
+				PathParams: pathParams,
+				Route:      route,
+				Options:    &Options{KeepValidatedValue: tc.keep},
+			})
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				data, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tc.read, string(data))
+			}
+
+			body, ok := req.Body.(interface{ ValidatedValue() any })
+			require.Equal(t, tc.want != nil, ok)
+			if ok {
+				require.Equal(t, tc.want, body.ValidatedValue())
+			}
+		})
+	}
+}
+
 // TestValidateRequestContentParameterWithoutSchema is a regression test for
 // GHSA-jpcw-4wr7-c3vq: a "content" parameter whose media type has no
 // "schema" is legal per the OpenAPI spec (doc.Validate accepts it) but used
