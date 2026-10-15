@@ -1140,3 +1140,86 @@ const exampleRequestBodyV2 = `{
 	"swagger": "2.0"
 }
 `
+
+func TestConvOpenAPIV2ToV3WithPathItemRequestBodyParams(t *testing.T) {
+	t.Parallel()
+
+	// OpenAPI 3 has no path-level request body, so path-level body and formData
+	// parameters get pushed down into every operation of the path item.
+	for _, testcase := range []struct {
+		name        string
+		parameter   string
+		consumes    string
+		contentType string
+		required    bool
+		schema      *openapi3.Types
+		formData    string
+	}{
+		{"body", `{"name":"pet","in":"body","required":true,"schema":{"type":"object"}}`, `"consumes": ["application/json"],`, "application/json", true, &openapi3.Types{"object"}, ""},
+		{"formData", `{"name":"name","in":"formData","required":true,"type":"string"}`, `"consumes": ["application/x-www-form-urlencoded"],`, "application/x-www-form-urlencoded", false, nil, "name"},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+
+			var doc2 openapi2.T
+			err := json.Unmarshal([]byte(`{
+				`+testcase.consumes+`
+				"info": {"title": "Example", "version": "1"},
+				"paths": {"/pets": {
+					"parameters": [`+testcase.parameter+`],
+					"delete": {"responses": {"200": {"description": "OK"}}},
+					"post": {"responses": {"200": {"description": "OK"}}}
+				}},
+				"swagger": "2.0"
+			}`), &doc2)
+			require.NoError(t, err)
+
+			doc3, err := openapi2conv.ToV3(&doc2)
+			require.NoError(t, err)
+			require.Empty(t, doc3.Paths.Value("/pets").Parameters)
+
+			for _, operation := range []*openapi3.Operation{doc3.Paths.Value("/pets").Post, doc3.Paths.Value("/pets").Delete} {
+				requestBody := operation.RequestBody.Value
+				require.NotNil(t, requestBody, testcase.name)
+				require.Equal(t, testcase.required, requestBody.Required)
+
+				mediaType := requestBody.Content[testcase.contentType]
+				require.NotNil(t, mediaType, testcase.contentType)
+				if testcase.formData != "" {
+					require.Contains(t, mediaType.Schema.Value.Properties, testcase.formData)
+					require.Contains(t, mediaType.Schema.Value.Required, testcase.formData)
+				} else {
+					require.Equal(t, testcase.schema, mediaType.Schema.Value.Type)
+				}
+			}
+		})
+	}
+}
+
+func TestConvOpenAPIV2ToV3WithPathItemRequestBodyParamOverriddenByOperation(t *testing.T) {
+	t.Parallel()
+
+	// Swagger 2.0 lets an operation override a path-level parameter, so the
+	// path-level body parameter must not be applied on top of it.
+	var doc2 openapi2.T
+	err := json.Unmarshal([]byte(`{
+		"consumes": ["application/json"],
+		"info": {"title": "Example", "version": "1"},
+		"paths": {"/pets": {
+			"parameters": [{"name":"pet","in":"body","schema":{"type":"object"}}],
+			"post": {
+				"parameters": [{"name":"pet","in":"body","schema":{"type":"string"}}],
+				"responses": {"200": {"description": "OK"}}
+			}
+		}},
+		"swagger": "2.0"
+	}`), &doc2)
+	require.NoError(t, err)
+
+	doc3, err := openapi2conv.ToV3(&doc2)
+	require.NoError(t, err)
+
+	mediaType := doc3.Paths.Value("/pets").Post.RequestBody.Value.Content["application/json"]
+	require.NotNil(t, mediaType)
+	require.Equal(t, &openapi3.Types{"string"}, mediaType.Schema.Value.Type)
+}

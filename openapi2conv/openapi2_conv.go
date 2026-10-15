@@ -142,10 +142,9 @@ func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *o
 		switch {
 		case err != nil:
 			return nil, err
-		case v3RequestBody != nil:
-			return nil, errors.New("pathItem must not have a body parameter")
-		case v3Schema != nil:
-			return nil, errors.New("pathItem must not have a schema parameter")
+		case v3RequestBody != nil, v3Schema != nil:
+			// OpenAPI 3 has no path-level request body: these are applied to
+			// every operation of the path item by ToV3Operation.
 		default:
 			doc3.Parameters = append(doc3.Parameters, v3Parameter)
 		}
@@ -175,8 +174,10 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 		consumes = operation.Consumes
 	}
 
-	var reqBodies []*openapi3.RequestBodyRef
-	formDataSchemas := make(map[string]*openapi3.SchemaRef)
+	reqBodies, formDataSchemas, err := inheritedRequestBodyParams(components, pathItem, operation, consumes)
+	if err != nil {
+		return nil, err
+	}
 	for _, parameter := range operation.Parameters {
 		v3Parameter, v3RequestBody, v3SchemaMap, err := ToV3Parameter(components, parameter, consumes)
 		switch {
@@ -190,7 +191,6 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 			doc3.Parameters = append(doc3.Parameters, v3Parameter)
 		}
 	}
-	var err error
 	if doc3.RequestBody, err = onlyOneReqBodyParam(reqBodies, formDataSchemas, components, consumes); err != nil {
 		return nil, err
 	}
@@ -207,6 +207,49 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 		}
 	}
 	return doc3, nil
+}
+
+// inheritedRequestBodyParams converts the body and formData parameters declared
+// on pathItem so that they can be applied to operation. OpenAPI 3 has no
+// path-level request body, so a Swagger 2.0 path item declaring one has to push
+// it down into each of its operations. Parameters that operation redeclares are
+// skipped: Swagger 2.0 lets operations override path-level parameters.
+func inheritedRequestBodyParams(components *openapi3.Components, pathItem *openapi2.PathItem, operation *openapi2.Operation, consumes []string) ([]*openapi3.RequestBodyRef, map[string]*openapi3.SchemaRef, error) {
+	reqBodies := []*openapi3.RequestBodyRef{}
+	formDataSchemas := map[string]*openapi3.SchemaRef{}
+	if pathItem == nil {
+		return reqBodies, formDataSchemas, nil
+	}
+
+	overridden := make(map[string]bool, len(operation.Parameters))
+	for _, parameter := range operation.Parameters {
+		overridden[parameterIdentity(parameter)] = true
+	}
+
+	for _, parameter := range pathItem.Parameters {
+		if overridden[parameterIdentity(parameter)] {
+			continue
+		}
+		_, v3RequestBody, v3SchemaMap, err := ToV3Parameter(components, parameter, consumes)
+		switch {
+		case err != nil:
+			return nil, nil, err
+		case v3RequestBody != nil:
+			reqBodies = append(reqBodies, v3RequestBody)
+		case v3SchemaMap != nil:
+			maps.Copy(formDataSchemas, v3SchemaMap)
+		}
+	}
+	return reqBodies, formDataSchemas, nil
+}
+
+// parameterIdentity returns the key a parameter is known by inside a path item:
+// a reference keeps its reference, an inline parameter its location and name.
+func parameterIdentity(parameter *openapi2.Parameter) string {
+	if parameter.Ref != "" {
+		return parameter.Ref
+	}
+	return parameter.In + " " + parameter.Name
 }
 
 func getParameterNameFromOldRef(ref string) string {
