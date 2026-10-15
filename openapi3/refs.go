@@ -4,6 +4,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/url"
 	"strings"
 
@@ -24,6 +25,10 @@ type CallbackRef struct {
 	Ref   string
 	Value *Callback
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -54,12 +59,19 @@ func (x *CallbackRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of CallbackRef.
 func (x CallbackRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -88,8 +100,12 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -171,6 +187,10 @@ type ExampleRef struct {
 	Ref   string
 	Value *Example
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -201,12 +221,19 @@ func (x *ExampleRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ExampleRef.
 func (x ExampleRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -235,8 +262,12 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -318,6 +349,10 @@ type HeaderRef struct {
 	Ref   string
 	Value *Header
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -348,12 +383,19 @@ func (x *HeaderRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of HeaderRef.
 func (x HeaderRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -382,8 +424,12 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -465,6 +511,10 @@ type LinkRef struct {
 	Ref   string
 	Value *Link
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -495,12 +545,19 @@ func (x *LinkRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of LinkRef.
 func (x LinkRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -529,8 +586,12 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -612,6 +673,10 @@ type ParameterRef struct {
 	Ref   string
 	Value *Parameter
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -642,12 +707,19 @@ func (x *ParameterRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ParameterRef.
 func (x ParameterRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -676,8 +748,12 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -759,6 +835,10 @@ type RequestBodyRef struct {
 	Ref   string
 	Value *RequestBody
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -789,12 +869,19 @@ func (x *RequestBodyRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of RequestBodyRef.
 func (x RequestBodyRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -823,8 +910,12 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -906,6 +997,10 @@ type ResponseRef struct {
 	Ref   string
 	Value *Response
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -936,12 +1031,19 @@ func (x *ResponseRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of ResponseRef.
 func (x ResponseRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -970,8 +1072,12 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -1050,6 +1156,10 @@ type SchemaRef struct {
 	Ref   string
 	Value *Schema
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 	// sibling holds keyword siblings of a $ref (OAS 3.1 / JSON Schema 2020-12).
 	// It is populated during unmarshal and applied to Value after $ref resolution.
 	sibling *Schema
@@ -1083,10 +1193,17 @@ func (x *SchemaRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:        ref,
 			Extensions: x.Extensions,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1127,8 +1244,12 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 					x.sibling = &sibling
 				}
 			}
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -1210,6 +1331,10 @@ type SecuritySchemeRef struct {
 	Ref   string
 	Value *SecurityScheme
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 
 	refPath *url.URL
 }
@@ -1240,12 +1365,19 @@ func (x *SecuritySchemeRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SecuritySchemeRef.
 func (x SecuritySchemeRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref:         ref,
 			Extensions:  x.Extensions,
 			Summary:     x.Summary,
 			Description: x.Description,
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1274,8 +1406,12 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 		delete(extra, "description")
 		if len(extra) != 0 {
 			x.extra = componentNames(extra)
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
