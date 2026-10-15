@@ -1,5 +1,8 @@
 .DEFAULT_GOAL := all
-.PHONY: help generate format test test-fast all
+.PHONY: help generate format test test-fast fuzz all
+
+# How long to spend on each fuzz target. Override: make fuzz FUZZTIME=10m
+FUZZTIME ?= 60s
 
 ## all: Run generation, formatting, and tests in sequence
 all: generate format test
@@ -21,6 +24,13 @@ test:
 ## test-fast: Run tests skipping the slow ones
 test-fast:
 	go test -short ./...
+
+## fuzz: Fuzz each target for FUZZTIME (default 60s)
+fuzz:
+	go test -run='^$$' -fuzz='^FuzzLoadFromData$$' -fuzztime=$(FUZZTIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzSchemaVisitJSON$$' -fuzztime=$(FUZZTIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzToV3$$' -fuzztime=$(FUZZTIME) ./openapi2conv
+	go test -run='^$$' -fuzz='^FuzzValidateRequest$$' -fuzztime=$(FUZZTIME) ./openapi3filter
 
 ## help: list targets
 help:
