@@ -595,7 +595,7 @@ func (d *urlValuesDecoder) parseArray(raw []string, schemaRef *openapi3.SchemaRe
 	var value []any
 
 	for i, v := range raw {
-		item, err := d.parseValue(v, schemaRef.Value.Items)
+		item, err := parseValue(v, schemaRef.Value.Items)
 		if err != nil {
 			if v, ok := err.(*ParseError); ok {
 				return nil, &ParseError{path: []any{i}, Cause: v}
@@ -619,12 +619,12 @@ func (d *urlValuesDecoder) parseArray(raw []string, schemaRef *openapi3.SchemaRe
 	return value, nil
 }
 
-func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (any, error) {
+func parseValue(v string, schema *openapi3.SchemaRef) (any, error) {
 	if len(schema.Value.AllOf) > 0 {
 		var value any
 		var err error
 		for _, sr := range schema.Value.AllOf {
-			value, err = d.parseValue(v, sr)
+			value, err = parseValue(v, sr)
 			if value == nil || err != nil {
 				break
 			}
@@ -636,7 +636,7 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (any
 		var value any
 		var err error
 		for _, sr := range schema.Value.AnyOf {
-			if value, err = d.parseValue(v, sr); err == nil {
+			if value, err = parseValue(v, sr); err == nil {
 				return value, nil
 			}
 		}
@@ -649,7 +649,7 @@ func (d *urlValuesDecoder) parseValue(v string, schema *openapi3.SchemaRef) (any
 		var value any
 		var err error
 		for _, sr := range schema.Value.OneOf {
-			result, err := d.parseValue(v, sr)
+			result, err := parseValue(v, sr)
 			if err == nil {
 				value = result
 				isMatched++
@@ -1192,7 +1192,7 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 	}
 	var value []any
 	for i, v := range raw {
-		item, err := parsePrimitive(v, schemaRef.Value.Items)
+		item, err := parseValue(v, schemaRef.Value.Items)
 		if err != nil {
 			if v, ok := err.(*ParseError); ok {
 				return nil, &ParseError{path: []any{i}, Cause: v}
