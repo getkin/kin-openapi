@@ -146,6 +146,9 @@ func (x *CallbackRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if CallbackRef does not comply with the OpenAPI spec.
 func (x *CallbackRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -308,6 +311,9 @@ func (x *ExampleRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if ExampleRef does not comply with the OpenAPI spec.
 func (x *ExampleRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -470,6 +476,9 @@ func (x *HeaderRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if HeaderRef does not comply with the OpenAPI spec.
 func (x *HeaderRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -632,6 +641,9 @@ func (x *LinkRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if LinkRef does not comply with the OpenAPI spec.
 func (x *LinkRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -794,6 +806,9 @@ func (x *ParameterRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if ParameterRef does not comply with the OpenAPI spec.
 func (x *ParameterRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -956,6 +971,9 @@ func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if RequestBodyRef does not comply with the OpenAPI spec.
 func (x *RequestBodyRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -1118,6 +1136,9 @@ func (x *ResponseRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if ResponseRef does not comply with the OpenAPI spec.
 func (x *ResponseRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -1284,6 +1305,9 @@ func (x *SchemaRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if SchemaRef does not comply with the OpenAPI spec.
 func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
@@ -1446,6 +1470,9 @@ func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if SecuritySchemeRef does not comply with the OpenAPI spec.
 func (x *SecuritySchemeRef) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err

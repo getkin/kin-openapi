@@ -184,6 +184,9 @@ func (x *{{ $type.Name }}Ref) validateExtras(ctx context.Context) error {
 
 // Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
 func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err
