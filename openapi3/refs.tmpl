@@ -4,6 +4,7 @@ package {{ .Package }}
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/url"
 	"strings"
 
@@ -27,6 +28,10 @@ type {{ $type.Name }}Ref struct {
 	Ref   string
 	Value *{{ $type.Name }}
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 {{- if eq $type.Name "Schema" }}
 	// sibling holds keyword siblings of a $ref (OAS 3.1 / JSON Schema 2020-12).
 	// It is populated during unmarshal and applied to Value after $ref resolution.
@@ -62,14 +67,21 @@ func (x *{{ $type.Name }}Ref) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of {{ $type.Name }}Ref.
 func (x {{ $type.Name }}Ref) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref: ref,
 			Extensions: x.Extensions,
 			{{- if ne $type.Name "Schema" }}
 			Summary:     x.Summary,
 			Description: x.Description,
 			{{- end }}
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -118,8 +130,12 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 				}
 			}
 {{- end }}
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}

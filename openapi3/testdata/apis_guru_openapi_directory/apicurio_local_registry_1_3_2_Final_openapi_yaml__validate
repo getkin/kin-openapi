@@ -56,13 +56,16 @@ Schema:
         "type": "string"
       },
       "properties": {
-        "$ref": "#/components/schemas/Properties"
+        "$ref": "#/components/schemas/Properties",
+        "description": ""
       },
       "state": {
-        "$ref": "#/components/schemas/ArtifactState"
+        "$ref": "#/components/schemas/ArtifactState",
+        "description": ""
       },
       "type": {
-        "$ref": "#/components/schemas/ArtifactType"
+        "$ref": "#/components/schemas/ArtifactType",
+        "description": ""
       },
       "version": {
         "format": "int64",

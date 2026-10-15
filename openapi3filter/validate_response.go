@@ -244,7 +244,7 @@ func decodeContentResponseHeader(headerName string, header *openapi3.Header, inp
 		}
 		schema = mt.Schema.Value
 		_, value, err = decodeBody(strings.NewReader(values[0]), http.Header{headerCT: {mediaType}}, mt.Schema, nil)
-		return
+		return // Only one pass
 	}
 	return
 }
