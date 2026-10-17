@@ -297,6 +297,12 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 				return
 			}
 		}
+		for _, name := range componentNames(components.Links) {
+			component := components.Links[name]
+			if err = loader.resolveLinkRef(doc, component, location); err != nil {
+				return
+			}
+		}
 		for _, name := range componentNames(components.Callbacks) {
 			component := components.Callbacks[name]
 			if err = loader.resolveCallbackRef(doc, component, location); err != nil {
