@@ -72,7 +72,7 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 
 	if (header.Schema == nil) == (len(header.Content) == 0) {
 		return &HeaderFieldValidationError{Field: "schema",
-			Cause: newHeaderContentSchemaExactlyOne(header, header.Origin)}
+			Cause: newHeaderContentSchemaExactlyOne(header.Origin)}
 	}
 	if schema := header.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {

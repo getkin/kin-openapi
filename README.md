@@ -334,6 +334,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `openapi3filter.UrlencodedBodyDecoder` (hence `application/x-www-form-urlencoded` request body validation) now returns a `*openapi3filter.ParseError` for a value that cannot be parsed into its property's schema type, such as `n=abc` for an `integer` property, instead of silently dropping it from the decoded body.
 * `openapi3filter` now writes a query parameter's array `default` into the request URL following the parameter's `style` and `explode` (including their defaults), so an array without `explode` set is written as `?ids=1&ids=2` rather than `?ids=1,2`, and `pipeDelimited`/`spaceDelimited` arrays use their own delimiter.
 * A schema with an empty `type: []` no longer marshals as `"type": null` which did not survive being read back.
+* The error for a header with neither or both of `content` and `schema` reads `header must contain exactly one of content and schema`. It used to say `parameter ...` followed by a `%v` dump of the `Header` struct, which printed heap addresses: the message differed between two runs over the same document, and leaked addresses into anything that logged it.
 
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
