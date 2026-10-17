@@ -989,7 +989,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	t.Run("header content/schema exactly one (neither set)", func(t *testing.T) {
 		h := &openapi3.Header{}
 		err := h.Validate(t.Context())
-		require.ErrorContains(t, err, "parameter must contain exactly one of content and schema")
+		require.EqualError(t, err, "header schema is invalid: header must contain exactly one of content and schema")
 
 		var efe *openapi3.ExactlyOneFieldError
 		require.True(t, errors.As(err, &efe))

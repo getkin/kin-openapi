@@ -1362,11 +1362,8 @@ func newParameterContentSchemaExactlyOne(origin *Origin) error {
 		&ParameterContentSchemaExactlyOne{ValidationError{Message: msg}}, origin)
 }
 
-// newHeaderContentSchemaExactlyOne formats the same way the existing
-// header.go site does, including the historical "%v" dump of the
-// Header struct, so the Error() string remains byte-identical.
-func newHeaderContentSchemaExactlyOne(header any, origin *Origin) error {
-	msg := fmt.Sprintf("parameter must contain exactly one of content and schema: %v", header)
+func newHeaderContentSchemaExactlyOne(origin *Origin) error {
+	const msg = "header must contain exactly one of content and schema"
 	return newExactlyOneField([]string{"content", "schema"},
 		&HeaderContentSchemaExactlyOne{ValidationError{Message: msg}}, origin)
 }
