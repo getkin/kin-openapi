@@ -132,23 +132,36 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
 	return nil
 }
 
+// rewriteInternalSchemaRefs rewrites document-relative component references to
+// local $defs entries, copying every referenced target into defs.
+//
+// A copied target is itself rewritten, so the traversal keeps a worklist of
+// nodes still to visit instead of ranging over defs: defs grows while it is
+// being walked, and Go's map iteration visits the entries added during a range
+// only by chance, which would leave a transitive reference dangling.
 func rewriteInternalSchemaRefs(node any, refs map[string]any, ids map[string]string, defs map[string]any) {
-	switch node := node.(type) {
-	case map[string]any:
-		if ref, ok := node["$ref"].(string); ok {
-			if id, exists := ids[ref]; exists {
-				node["$ref"] = "#/$defs/" + id
-				if _, added := defs[id]; !added {
-					defs[id] = refs[ref]
+	pending := []any{node}
+	for len(pending) > 0 {
+		current := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		switch current := current.(type) {
+		case map[string]any:
+			if ref, ok := current["$ref"].(string); ok {
+				if id, exists := ids[ref]; exists {
+					current["$ref"] = "#/$defs/" + id
+					if _, added := defs[id]; !added {
+						defs[id] = refs[ref]
+						pending = append(pending, refs[ref])
+					}
 				}
 			}
-		}
-		for _, value := range node {
-			rewriteInternalSchemaRefs(value, refs, ids, defs)
-		}
-	case []any:
-		for _, value := range node {
-			rewriteInternalSchemaRefs(value, refs, ids, defs)
+			for _, value := range current {
+				pending = append(pending, value)
+			}
+		case []any:
+			for _, value := range current {
+				pending = append(pending, value)
+			}
 		}
 	}
 }
