@@ -2261,3 +2261,52 @@ func matchParseError(t *testing.T, got, want error) {
 		matchParseError(t, gErr.Cause, wErr.Cause)
 	}
 }
+
+// TestDecodeJSON pins what decodeJSON returns on every build: it has one
+// implementation for encoding/json/v2 builds and one for the others.
+func TestDecodeJSON(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		body    string
+		want    any
+		wantErr bool
+	}{
+		{name: "empty", body: ``, wantErr: true},
+		{name: "null", body: `null`, want: nil},
+		{name: "values", body: `{"a":[1,-2.5e3,"x\n",true,false,null,{}],"b":{"c":[]}}`, want: map[string]any{
+			"a": []any{json.Number("1"), json.Number("-2.5e3"), "x\n", true, false, nil, map[string]any{}},
+			"b": map[string]any{"c": []any{}},
+		}},
+		{name: "trailing data", body: `{} trailing`, want: map[string]any{}},
+		{name: "invalid UTF-8", body: "{\"\xff\":\"\xfe\"}", want: map[string]any{"\ufffd": "\ufffd"}},
+		{name: "too deep", body: strings.Repeat(`[`, 10001), wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := decodeJSON(strings.NewReader(tc.body))
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func BenchmarkJSONBodyDecoder(b *testing.B) {
+	const user = `{"id":42,"name":"Jane Doe","email":"jane@example.com","active":true,"score":4.5,"tags":["a","b"],"address":{"city":"Springfield","zip":"12345"},"note":null}`
+	for _, n := range []int{1, 50, 5000} {
+		data := []byte(`{"users":[` + strings.Repeat(user+`,`, n-1) + user + `]}`)
+		b.Run(fmt.Sprint(len(data)), func(b *testing.B) {
+			b.ReportAllocs()
+			b.SetBytes(int64(len(data)))
+			for b.Loop() {
+				if _, err := JSONBodyDecoder(bytes.NewReader(data), nil, nil, nil); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}
