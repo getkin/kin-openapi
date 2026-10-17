@@ -576,7 +576,7 @@ func (schema Schema) MarshalYAML() (any, error) {
 	if x := schema.Not; x != nil {
 		m["not"] = x
 	}
-	if x := schema.Type; x != nil {
+	if x := schema.Type; !x.IsEmpty() {
 		m["type"] = x
 	}
 	if x := schema.Title; len(x) != 0 {

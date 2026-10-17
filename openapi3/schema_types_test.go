@@ -331,3 +331,15 @@ func TestSchema_WithTypes(t *testing.T) {
 	schema.WithTypes("null", "integer")
 	require.Equal(t, &openapi3.Types{"string", "null", "integer"}, schema.Type)
 }
+
+func TestTypesEmptyMarshalsAsAbsent(t *testing.T) {
+	t.Parallel()
+
+	var schema openapi3.Schema
+	err := json.Unmarshal([]byte(`{"type":[]}`), &schema)
+	require.NoError(t, err)
+
+	data, err := json.Marshal(schema)
+	require.NoError(t, err)
+	require.JSONEq(t, `{}`, string(data))
+}
