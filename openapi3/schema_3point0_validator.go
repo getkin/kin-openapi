@@ -1047,6 +1047,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			if s := schema.Properties[k]; s != nil && s.Value.WriteOnly && settings.asrep {
 				continue
 			}
+			if schema.readOnlyOrWriteOnlyInAllOf(settings, k) {
+				continue
+			}
 			if settings.failfast {
 				return errSchema
 			}
@@ -1066,6 +1069,46 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	}
 
 	return nil
+}
+
+// readOnlyOrWriteOnlyInAllOf reports whether the property named k is declared
+// readOnly (when visiting a request) or writeOnly (when visiting a response)
+// by a schema that applies to the current value along with this one:
+// this schema's "allOf" subschemas, the schemas this one is visited as a
+// subschema of, and their own "allOf" subschemas.
+// Such a property is not required in that direction.
+func (schema *Schema) readOnlyOrWriteOnlyInAllOf(settings *schemaValidationSettings, k string) bool {
+	if !settings.asreq && !settings.asrep {
+		return false
+	}
+	var seen []*Schema
+	if schema.declaresReadOnlyOrWriteOnly(settings, k, &seen) {
+		return true
+	}
+	for _, s := range settings.visitedSchemas[settings.visitedBase:] {
+		if s.declaresReadOnlyOrWriteOnly(settings, k, &seen) {
+			return true
+		}
+	}
+	return false
+}
+
+func (schema *Schema) declaresReadOnlyOrWriteOnly(settings *schemaValidationSettings, k string, seen *[]*Schema) bool {
+	if schema == nil || slices.Contains(*seen, schema) {
+		return false
+	}
+	*seen = append(*seen, schema)
+	if s := schema.Properties[k]; s != nil && s.Value != nil {
+		if (s.Value.ReadOnly && settings.asreq) || (s.Value.WriteOnly && settings.asrep) {
+			return true
+		}
+	}
+	for _, item := range schema.AllOf {
+		if item.Value.declaresReadOnlyOrWriteOnly(settings, k, seen) {
+			return true
+		}
+	}
+	return false
 }
 
 func (schema *Schema) expectedType(settings *schemaValidationSettings, value any) error {
