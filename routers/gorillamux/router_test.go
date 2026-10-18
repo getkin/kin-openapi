@@ -574,3 +574,17 @@ func newServerVariable(defaultValue string) *openapi3.ServerVariable {
 		Description: "",
 	}
 }
+
+func TestNewRouterRejectsCapturingGroupInPathVariable(t *testing.T) {
+	t.Parallel()
+
+	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info:    &openapi3.Info{Title: "t", Version: "1"},
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/{x:(a)}", &openapi3.PathItem{Get: &openapi3.Operation{}}),
+		),
+	}
+	_, err := NewRouter(doc)
+	require.ErrorContains(t, err, "gorillamux: route /{x:(a)} contains capture groups in its regexp. Only non-capturing groups are accepted: e.g. (?:pattern) instead of (pattern)")
+}
