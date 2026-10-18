@@ -493,7 +493,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 				}
 			}
 
-			if cursor == nil {
+			if cursor == nil || isNonNilIfaceHoldingNilPtr(cursor) {
 				return nil, failedToResolveRefFragmentPart(ref, pathPart)
 			}
 		}
@@ -622,6 +622,11 @@ func readableType(x any) string {
 	default:
 		panic(fmt.Sprintf("unreachable %T", x))
 	}
+}
+
+func isNonNilIfaceHoldingNilPtr(cursor any) bool {
+	value := reflect.ValueOf(cursor)
+	return value.Kind() == reflect.Pointer && value.IsNil()
 }
 
 func drillIntoField(cursor any, fieldName string) (any, error) {
