@@ -376,13 +376,6 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 					}
 				}
 
-				// extract the field tag if we have a customizer
-				var fieldTag reflect.StructTag
-				if g.opts.schemaCustomizer != nil {
-					ff := getStructField(t, fieldInfo)
-					fieldTag = ff.Tag
-				}
-
 				if g.opts.fieldNameGenerator != nil {
 					fieldName = g.opts.fieldNameGenerator(ff, fieldName)
 					if fieldName == "" {
@@ -390,7 +383,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 					}
 				}
 
-				ref, err := g.generateSchemaRefFor(parents, fType, fieldName, fieldTag)
+				ref, err := g.generateSchemaRefFor(parents, fType, fieldName, ff.Tag)
 				if err != nil {
 					if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
 						ref = g.generateCycleSchemaRef(fType, schema)
