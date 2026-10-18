@@ -222,6 +222,9 @@ func serverURLTemplateVariables(serverURL string) []string {
 
 // Validate returns an error if Server does not comply with the OpenAPI spec.
 func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if server == nil {
+		server = &Server{} // equivalent + fails soon after
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	me := newErrCollector(ctx)
 
@@ -330,6 +333,9 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if ServerVariable does not comply with the OpenAPI spec.
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if serverVariable == nil {
+		serverVariable = &ServerVariable{} // equivalent + fails soon after
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if serverVariable.Default == "" {

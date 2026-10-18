@@ -28,6 +28,9 @@ func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error {
 	seen := make(map[string]struct{}, len(tags))
 
 	for _, v := range tags {
+		if v == nil {
+			v = &Tag{} // equivalent + fails soon after
+		}
 		if v.Name != "" {
 			if _, dup := seen[v.Name]; dup {
 				if err := me.emit(&DuplicateTagError{Name: v.Name, Origin: v.Origin}); err != nil {
