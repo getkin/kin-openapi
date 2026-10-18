@@ -1272,12 +1272,18 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		Extensions:  stripNonExtensions(parameter.Extensions),
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
-		schemaRefV2, _ := FromV3SchemaRef(schemaRef, components)
+		schemaRefV2, parameterV2 := FromV3SchemaRef(schemaRef, components)
+		if schemaRefV2 == nil {
+			return parameterV2, nil
+		}
 		if ref := schemaRefV2.Ref; ref != "" {
 			result.Schema = &openapi2.SchemaRef{Ref: FromV3Ref(ref)}
 			return result, nil
 		}
 		schema := schemaRefV2.Value
+		if schema == nil {
+			return result, nil
+		}
 		result.Type = schema.Type
 		result.Format = schema.Format
 		result.Enum = schema.Enum
