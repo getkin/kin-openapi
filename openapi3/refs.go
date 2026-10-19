@@ -102,46 +102,24 @@ func (x *CallbackRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if CallbackRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if CallbackRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *CallbackRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -271,46 +249,24 @@ func (x *ExampleRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if ExampleRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if ExampleRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *ExampleRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -440,46 +396,24 @@ func (x *HeaderRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if HeaderRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if HeaderRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *HeaderRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -609,46 +543,24 @@ func (x *LinkRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if LinkRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if LinkRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *LinkRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -778,46 +690,24 @@ func (x *ParameterRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if ParameterRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if ParameterRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *ParameterRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -947,46 +837,24 @@ func (x *RequestBodyRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if RequestBodyRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if RequestBodyRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *RequestBodyRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -1116,46 +984,24 @@ func (x *ResponseRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if ResponseRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if ResponseRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *ResponseRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}
@@ -1295,42 +1141,26 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if SchemaRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if SchemaRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *SchemaRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
-		if !validationOpts.isOpenAPI31OrLater {
-			return newExtraSiblingFields(extras, x.Origin)
-		}
+		return newExtraSiblingFields(extras, x.Origin)
 	}
 	return nil
 }
@@ -1458,46 +1288,24 @@ func (x *SecuritySchemeRef) UnmarshalJSON(data []byte) error {
 	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if SecuritySchemeRef has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if SecuritySchemeRef has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *SecuritySchemeRef) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	if x.Ref == "" && !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	// OpenAPI 3.0 Reference Objects ignore added properties. Keep the
-	// explicit extension policy below and validation of inline objects.
-	if x.Ref == "" || validationOpts.isOpenAPI31OrLater {
-		for _, ex := range x.extra {
-			if _, ok := allowed[ex]; !ok {
-				if _, ok := x.Extensions[ex]; !ok {
-					extras = append(extras, ex)
-				}
-				// extras in the Extensions checked below
-			}
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
 		return newExtraSiblingFields(extras, x.Origin)
 	}

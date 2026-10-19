@@ -4207,7 +4207,10 @@ func AllowExtensionsWithRef() ValidationOption
 
 func AllowExtraSiblingFields(fields ...string) ValidationOption
     AllowExtraSiblingFields called as AllowExtraSiblingFields("description")
-    makes Validate not return an error when said field appears next to a $ref.
+    makes Validate not return an error when said field appears where it is
+    not expected: as an unknown field of an object, as an OpenAPI 3.1 schema
+    keyword in an OpenAPI 3.0 document, or as an extension next to a $ref under
+    ProhibitExtensionsWithRef. Other fields next to a $ref are never an error.
 
 func DisableExamplesValidation() ValidationOption
     DisableExamplesValidation disables all example schema validation.
@@ -4269,8 +4272,8 @@ func IsOpenAPI32OrLater() ValidationOption
 func ProhibitExtensionsWithRef() ValidationOption
     ProhibitExtensionsWithRef causes the validation to return an error if
     extensions (fields starting with 'x-') are found as siblings for $ref
-    fields, even in OpenAPI 3.0. Use AllowExtraSiblingFields to allow specific
-    extensions.
+    fields, in every OpenAPI version. Use AllowExtraSiblingFields to allow
+    specific extensions.
 
 func SetRegexCompiler(c RegexCompilerFunc) ValidationOption
     SetRegexCompiler allows to override the regex implementation used to

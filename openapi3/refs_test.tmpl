@@ -41,14 +41,10 @@ func Test{{ $type.Name }}Ref_Extensions(t *testing.T) {
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
 	require.ErrorContains(t, err, "found unresolved ref")
 
-	// OpenAPI 3.1 Reference Objects still reject unknown siblings; Schema
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
 	// Objects allow sibling keywords under JSON Schema semantics.
 	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
-{{- if eq $type.Name "Schema" }}
 	require.ErrorContains(t, err, "found unresolved ref")
-{{- else }}
-	require.EqualError(t, err, "extra sibling fields: [something]")
-{{- end }}
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different

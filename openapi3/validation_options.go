@@ -23,7 +23,9 @@ type ValidationOptions struct {
 
 type validationOptionsKey struct{}
 
-// AllowExtraSiblingFields called as AllowExtraSiblingFields("description") makes Validate not return an error when said field appears next to a $ref.
+// AllowExtraSiblingFields called as AllowExtraSiblingFields("description") makes Validate not return an error when said field appears
+// where it is not expected: as an unknown field of an object, as an OpenAPI 3.1 schema keyword in an OpenAPI 3.0 document,
+// or as an extension next to a $ref under ProhibitExtensionsWithRef. Other fields next to a $ref are never an error.
 func AllowExtraSiblingFields(fields ...string) ValidationOption {
 	return func(options *ValidationOptions) {
 		if options.extraSiblingFieldsAllowed == nil && len(fields) != 0 {
@@ -126,7 +128,7 @@ func AllowExtensionsWithRef() ValidationOption {
 
 // ProhibitExtensionsWithRef causes the validation to return an
 // error if extensions (fields starting with 'x-') are found as
-// siblings for $ref fields, even in OpenAPI 3.0. Use AllowExtraSiblingFields
+// siblings for $ref fields, in every OpenAPI version. Use AllowExtraSiblingFields
 // to allow specific extensions.
 func ProhibitExtensionsWithRef() ValidationOption {
 	return func(options *ValidationOptions) {
