@@ -435,6 +435,15 @@ func TestValidateQueryParams(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "integer with leading zero is decimal",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query",
+				Schema: openapi3.NewIntegerSchema().WithMax(100).NewRef(),
+			},
+			query: "param=0144",
+			err:   &openapi3.SchemaError{SchemaField: "maximum", Reason: "number must be at most 100"},
+		},
 	}
 
 	for _, tc := range testCases {
