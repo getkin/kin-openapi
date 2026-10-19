@@ -1935,6 +1935,65 @@ func TestDecodeBody(t *testing.T) {
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
 		{
+			name: "urlencoded deepObject property",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("a=a1&d[d1]=d1&d[d2]=10"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("d1", openapi3.NewStringSchema()).
+					WithProperty("d2", openapi3.NewIntegerSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationDeepObject},
+			},
+			want: map[string]any{"a": "a1", "d": map[string]any{"d1": "d1", "d2": int64(10)}},
+		},
+		{
+			name: "urlencoded nested deepObject property",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("d[e][e1]=10"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("e", openapi3.NewObjectSchema().
+						WithProperty("e1", openapi3.NewIntegerSchema()))),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationDeepObject, Explode: openapi3.Ptr(true)},
+			},
+			want: map[string]any{"d": map[string]any{"e": map[string]any{"e1": int64(10)}}},
+		},
+		{
+			name: "urlencoded form property without explode",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("a=a1&d=d1,d1,d2,10"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("d1", openapi3.NewStringSchema()).
+					WithProperty("d2", openapi3.NewIntegerSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationForm, Explode: openapi3.Ptr(false)},
+			},
+			want: map[string]any{"a": "a1", "d": map[string]any{"d1": "d1", "d2": int64(10)}},
+		},
+		{
+			name: "urlencoded invalid deepObject property",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("d[d2]=abc"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("d2", openapi3.NewIntegerSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationDeepObject},
+			},
+			wantErr: &ParseError{
+				path: []any{"d"},
+				Cause: &ParseError{
+					path:  []any{"d2"},
+					Cause: &ParseError{Kind: KindInvalidFormat, Value: "abc"},
+				},
+			},
+		},
+		{
 			name: "urlencoded invalid integer",
 			mime: "application/x-www-form-urlencoded",
 			body: strings.NewReader("a=a1&b=abc"),
@@ -2120,6 +2179,26 @@ func TestDecodeBody(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Truef(t, reflect.DeepEqual(got, tc.want), "got %v, want %v", got, tc.want)
+		})
+	}
+}
+
+func TestUrlencodedBodyObjectPropertyWithExplodedForm(t *testing.T) {
+	t.Parallel()
+
+	// With form and explode (the default), the object's properties would be
+	// read from the whole form, so such an object property is not decoded.
+	schema := openapi3.NewObjectSchema().
+		WithProperty("a", openapi3.NewStringSchema()).
+		WithProperty("d", openapi3.NewObjectSchema().WithProperty("d1", openapi3.NewStringSchema()))
+	for name, encoding := range map[string]*openapi3.Encoding{
+		"no encoding":  nil,
+		"form explode": {Style: openapi3.SerializationForm, Explode: openapi3.Ptr(true)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			encFn := func(string) *openapi3.Encoding { return encoding }
+			_, err := UrlencodedBodyDecoder(strings.NewReader("a=a1&d1=d1"), nil, schema.NewRef(), encFn)
+			require.EqualError(t, err, `unsupported schema of request body's property "d"`)
 		})
 	}
 }

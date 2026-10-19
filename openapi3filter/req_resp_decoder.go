@@ -1453,6 +1453,19 @@ func YamlBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 	return value, nil
 }
 
+// urlencodedObjectEncoded reports whether the encoding of an object property
+// of a urlencoded body keeps the object's properties apart from the rest of
+// the form: deepObject ("d[k]=v") or form without explode ("d=k,v").
+// The default, form with explode, would spread them over the whole form.
+func urlencodedObjectEncoded(encFn EncodingFn, propName string) bool {
+	if encFn == nil {
+		return false
+	}
+	sm := encFn(propName).SerializationMethod()
+	return sm.Style == openapi3.SerializationDeepObject ||
+		(sm.Style == openapi3.SerializationForm && !sm.Explode)
+}
+
 func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error) {
 	// Validate schema of request body.
 	// By the OpenAPI 3 specification request body's schema must have type "object".
@@ -1470,7 +1483,9 @@ func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 		propType := propSchema.Value.Type
 		switch {
 		case propType.Is("object"):
-			return nil, fmt.Errorf("unsupported schema of request body's property %q", propName)
+			if !urlencodedObjectEncoded(encFn, propName) {
+				return nil, fmt.Errorf("unsupported schema of request body's property %q", propName)
+			}
 		case propType.Is("array"):
 			if propSchema.Value.Items == nil || propSchema.Value.Items.Value == nil {
 				return nil, fmt.Errorf("unsupported schema of request body's property %q: array items required", propName)
