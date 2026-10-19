@@ -947,6 +947,32 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "spaceDelimited",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id foo name bar",
+					want:  map[string]any{"id": "foo", "name": "bar"},
+					found: true,
+				},
+				{
+					name:  "spaceDelimited odd number of items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id foo name",
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "id foo name"},
+				},
+				{
+					name:  "pipeDelimited",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id|foo|name|bar",
+					want:  map[string]any{"id": "foo", "name": "bar"},
+					found: true,
+				},
+				{
+					name:  "pipeDelimited odd number of items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id|foo|name",
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "id|foo|name"},
+				},
+				{
 					name:  "deepObject explode",
 					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectSchema},
 					query: "param[id]=foo&param[name]=bar",

@@ -708,6 +708,24 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 			}
 			return propsFromString(values[0], ",", ",")
 		}
+	case "spaceDelimited", "pipeDelimited":
+		// Only explode=false is defined for objects: name and value
+		// pairs are joined by the delimiter, as in "color=R|100|G|200".
+		if sm.Explode {
+			return nil, false, invalidSerializationMethodErr(sm)
+		}
+		delim := " "
+		if sm.Style == "pipeDelimited" {
+			delim = "|"
+		}
+		propsFn = func(params url.Values) (map[string]string, error) {
+			values := params[param]
+			if len(values) == 0 {
+				// HTTP request does not contain a value of the target query parameter.
+				return nil, nil
+			}
+			return propsFromString(values[0], delim, delim)
+		}
 	case "deepObject":
 		// Compile the parameter-name prefix matcher once: it depends only on
 		// param (constant for the whole loop), not on the loop variable. Doing
