@@ -1483,11 +1483,28 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 	}
 
 	if ref := pathItem.Ref; ref != "" {
-		if !pathItem.isEmpty() {
+		if pathItem.refResolved {
 			return
 		}
+		// The fields written next to $ref used to stop it from being resolved.
+		// They are merged with the item it points to instead; see mergeRefSiblings.
+		var siblings *PathItem
+		if !pathItem.isEmpty() || len(pathItem.Extensions) != 0 {
+			local := *pathItem
+			local.Ref = ""
+			siblings = &local
+		}
+		resolvedTo := func(resolved PathItem) {
+			*pathItem = resolved
+			pathItem.Ref = ref
+			pathItem.refResolved = true
+			if siblings != nil {
+				pathItem.mergeRefSiblings(siblings)
+				pathItem.refSiblings = siblings
+			}
+		}
 		if !loader.shouldVisitRef("PathItem", ref, func(value any) {
-			*pathItem = *value.(*PathItem)
+			resolvedTo(*value.(*PathItem))
 		}) {
 			return nil
 		}
@@ -1497,7 +1514,7 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
 				return
 			}
-			*pathItem = p
+			resolvedTo(p)
 		} else {
 			var resolved PathItem
 			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
@@ -1506,9 +1523,8 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 				}
 				return
 			}
-			*pathItem = resolved
+			resolvedTo(resolved)
 		}
-		pathItem.Ref = ref
 		defer loader.unvisitRef("PathItem", ref, pathItem)
 	}
 

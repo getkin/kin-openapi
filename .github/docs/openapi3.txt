@@ -2282,6 +2282,8 @@ type PathItem struct {
 	// Keys are case-sensitive HTTP method tokens and must not duplicate
 	// the methods covered by the fixed fields above.
 	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty,case:strict" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
+
+	// Has unexported fields.
 }
     PathItem is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
