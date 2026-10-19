@@ -1053,6 +1053,14 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		if component.Value != nil {
 			return nil
 		}
+		if doc.IsOpenAPI31OrLater() && component.sibling != nil {
+			// Resolve the $refs within the siblings themselves, such as those of
+			// the properties they add, before applyRefSiblings shares them with
+			// Value: it may run from the callback below, which resolves nothing.
+			if err := loader.resolveSchemaRef(doc, &SchemaRef{Value: component.sibling}, documentPath, visited); err != nil {
+				return err
+			}
+		}
 		if !loader.shouldVisitRef(ref, func(value any) {
 			component.Value = value.(*Schema)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
@@ -1530,15 +1538,63 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 	return
 }
 
-// applyRefSiblings overlays the sibling keywords of an OAS 3.1 $ref onto its
-// resolved value. It works on a copy so a schema shared by other references is
-// not mutated, and does nothing for OAS 3.0, where $ref replaces its object.
+// refSiblingAnnotations are the keywords that, written next to a $ref, replace
+// the referenced schema's own. They describe the instance rather than constrain
+// it, so the one closest to where it is used wins, as summary and description
+// do on a Reference Object.
+var refSiblingAnnotations = map[string]struct{}{
+	"$comment":        {},
+	"allowEmptyValue": {},
+	"default":         {},
+	"deprecated":      {},
+	"description":     {},
+	"discriminator":   {},
+	"example":         {},
+	"examples":        {},
+	"externalDocs":    {},
+	"nullable":        {},
+	"readOnly":        {},
+	"title":           {},
+	"writeOnly":       {},
+	"xml":             {},
+}
+
+// applyRefSiblings applies the sibling keywords of an OAS 3.1 $ref to its
+// resolved value, and does nothing for OAS 3.0, where $ref replaces its object.
+//
+// In JSON Schema 2020-12 the keywords next to a $ref apply alongside it: an
+// instance must satisfy both the referenced schema and its siblings. So the
+// annotations above override the referenced schema's, while every other
+// keyword is added as one more allOf entry rather than replacing the
+// referenced schema's own: a sibling maxLength: 10 next to a $ref to a schema
+// with maxLength: 3 still rejects "abcd". Value thus keeps the shape of the
+// referenced schema, with its properties, type and so on.
+//
+// It works on a copy so a schema shared by other references is not mutated.
 func (component *SchemaRef) applyRefSiblings(doc *T) {
-	if doc.IsOpenAPI31OrLater() && component.sibling != nil && component.Value != nil {
-		schemaCopy := *component.Value
-		applySiblingSchemaFields(&schemaCopy, component.sibling, component.extra)
-		component.Value = &schemaCopy
+	if !doc.IsOpenAPI31OrLater() || component.sibling == nil || component.Value == nil {
+		return
 	}
+	var annotations, assertions []string
+	for _, field := range component.extra {
+		if _, ok := refSiblingAnnotations[field]; ok {
+			annotations = append(annotations, field)
+		} else {
+			assertions = append(assertions, field)
+		}
+	}
+	schemaCopy := *component.Value
+	applySiblingSchemaFields(&schemaCopy, component.sibling, annotations)
+	if len(assertions) != 0 {
+		var conjunct Schema
+		applySiblingSchemaFields(&conjunct, component.sibling, assertions)
+		if !conjunct.IsEmpty() {
+			allOf := make(SchemaRefs, 0, len(schemaCopy.AllOf)+1)
+			allOf = append(allOf, schemaCopy.AllOf...)
+			schemaCopy.AllOf = append(allOf, &SchemaRef{Value: &conjunct})
+		}
+	}
+	component.Value = &schemaCopy
 }
 
 func unescapeRefString(ref string) string {
