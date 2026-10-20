@@ -63,6 +63,8 @@ func golden(t *testing.T, e error, shortName, task string) {
 	expected, _ := os.ReadFile(errf)
 	expectedStr := strings.ReplaceAll(string(expected), "\r\n", "\n")
 	got := strings.ReplaceAll(e.Error(), "\r\n", "\n")
+	// encoding/json/v2 randomly picks "cannot" or "unable to" once per process.
+	got = strings.ReplaceAll(got, "json: unable to ", "json: cannot ")
 	if !strings.HasSuffix(got, "\n") {
 		got += "\n"
 	}
