@@ -1,6 +1,7 @@
 package openapi3_test
 
 import (
+	"net/url"
 	"os"
 	"testing"
 
@@ -119,9 +120,9 @@ paths:
 
 	sl := openapi3.NewLoader()
 	sl.IsExternalRefsAllowed = true
-
-	if os.Getenv("CI") == "true" {
-		t.Skip("Running in CI: skipping so we avoid 403 error from remote schema server")
+	sl.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+		require.Equal(t, "http://json-schema.org/draft-04/schema", location.String())
+		return os.ReadFile("testdata/issue495.draft-04.schema.json")
 	}
 
 	doc, err := sl.LoadFromData(spec)
