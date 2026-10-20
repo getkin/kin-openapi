@@ -1163,6 +1163,12 @@ type SchemaRef struct {
 	// sibling holds keyword siblings of a $ref (OAS 3.1 / JSON Schema 2020-12).
 	// It is populated during unmarshal and applied to Value after $ref resolution.
 	sibling *Schema
+	// siblingErr is why the siblings could not be read as a Schema. OAS 3.1
+	// reports it, while OAS 3.0 ignores the fields next to a $ref anyway.
+	siblingErr error
+	// target is the referenced schema, which Value is a copy of once siblings
+	// are applied to it.
+	target *Schema
 
 	refPath *url.URL
 }
@@ -1202,6 +1208,23 @@ func (x SchemaRef) MarshalYAML() (any, error) {
 		}
 		if m, ok := out.(map[string]any); ok {
 			maps.Copy(m, x.siblingExtras)
+			if x.sibling != nil && len(x.siblingExtras) != 0 {
+				// The $refs within the siblings may have been rewritten since, as
+				// InternalizeRefs does, so write out what the siblings now hold. A
+				// field the Schema leaves out, such as an empty pattern, is still
+				// written as it was.
+				current, err := x.sibling.MarshalYAML()
+				if err != nil {
+					return nil, err
+				}
+				if current, ok := current.(map[string]any); ok {
+					for k := range x.siblingExtras {
+						if v, ok := current[k]; ok {
+							m[k] = v
+						}
+					}
+				}
+			}
 		}
 		return out, nil
 	}
@@ -1242,6 +1265,8 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 				var sibling Schema
 				if err := unmarshalJSON(data, &sibling); err == nil {
 					x.sibling = &sibling
+				} else {
+					x.siblingErr = err
 				}
 			}
 			for k, v := range extra {
