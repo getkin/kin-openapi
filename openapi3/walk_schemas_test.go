@@ -264,3 +264,47 @@ func TestWalkSubtree_VisitsEverySubschemaField(t *testing.T) {
 		require.Truef(t, found, "openapi3.Schema.%s carries subschemas but the walk does not visit it; add it to schemaWalker.schemaRef", field.Name)
 	}
 }
+
+// callbackCycleSpec has a callback whose operation lists the same callback,
+// which the spec allows and the loader resolves to the same *Callback.
+var callbackCycleSpec = []byte(`
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /x:
+    post:
+      responses:
+        "200": {description: ok}
+      callbacks:
+        cb:
+          $ref: '#/components/callbacks/cb'
+components:
+  callbacks:
+    cb:
+      '{$request.body#/u}':
+        post:
+          parameters:
+            - name: attempt
+              in: query
+              schema: {type: integer}
+          responses:
+            "200": {description: ok}
+          callbacks:
+            cb:
+              $ref: '#/components/callbacks/cb'
+`)
+
+func TestWalkSchemas_CallbackCycle(t *testing.T) {
+	t.Parallel()
+
+	doc, err := openapi3.NewLoader().LoadFromData(callbackCycleSpec)
+	require.NoError(t, err)
+
+	var visited []string
+	err = doc.WalkSchemas(func(loc string, sr *openapi3.SchemaRef) error {
+		visited = append(visited, loc)
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"/components/callbacks/cb/{$request.body#~1u}/post/parameters/0/schema"}, visited)
+}
