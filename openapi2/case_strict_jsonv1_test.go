@@ -15,6 +15,8 @@ import (
 // ignores case:strict, matches keys to fields regardless of case: such keys
 // fill the field and are also kept as extensions.
 func TestFieldsIgnoreKeysOfAnotherCase(t *testing.T) {
+	t.Parallel()
+
 	var doc openapi2.T
 	err := json.Unmarshal([]byte(`{"swagger":"2.0","Host":"example.com","info":{"Title":"t"}}`), &doc)
 	require.NoError(t, err)

@@ -9,6 +9,8 @@ import (
 )
 
 func TestAllOfErrorPreserved(t *testing.T) {
+	t.Parallel()
+
 	// language=json
 	raw := `
 {

@@ -448,6 +448,7 @@ func TestValidateQueryParams(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			info := &openapi3.Info{
 				Title:   "MyAPI",
 				Version: "0.1",
@@ -626,6 +627,7 @@ paths:
 		{name: "invalid body", body: `{"id":"x"}`, keep: true, wantErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewReader([]byte(tc.body)))
 			require.NoError(t, err)
 			req.Header.Set("Content-Type", "application/json")

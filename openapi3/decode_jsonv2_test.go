@@ -12,6 +12,8 @@ import (
 )
 
 func TestDuplicateNamesAreRejected(t *testing.T) {
+	t.Parallel()
+
 	var info openapi3.Info
 	err := json.Unmarshal([]byte(`{"title":"a","title":"b","version":"1"}`), &info)
 	require.ErrorContains(t, err, `duplicate object member name`)
@@ -22,6 +24,8 @@ func TestDuplicateNamesAreRejected(t *testing.T) {
 }
 
 func TestErrorsLocateValuesWithinMaps(t *testing.T) {
+	t.Parallel()
+
 	var doc openapi3.T
 	err := json.Unmarshal([]byte(`{"paths":{"/a":{"get":{"responses":{"200":{"description":1}}}}}}`), &doc)
 	require.ErrorContains(t, err, `.paths.~1a.get.responses.200.description`)

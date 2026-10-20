@@ -13,6 +13,8 @@ import (
 // with encoding/json v1 sees another value than the one validated: v1 ignores
 // case:strict and matches keys to fields regardless of case, the last one winning.
 func TestIssue1111Decoding(t *testing.T) {
+	t.Parallel()
+
 	for name, expected := range map[string]string{
 		"good":         "aniki",
 		"bad":          "beniki",

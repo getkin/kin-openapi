@@ -49,6 +49,7 @@ func TestCallbackRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Callback{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -97,6 +98,7 @@ func TestExampleRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Example{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -185,6 +187,7 @@ func TestLinkRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Link{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -233,6 +236,7 @@ func TestParameterRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Parameter{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -281,6 +285,7 @@ func TestRequestBodyRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.RequestBody{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -329,6 +334,7 @@ func TestResponseRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Response{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -377,6 +383,7 @@ func TestSchemaRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Schema{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -425,6 +432,7 @@ func TestSecuritySchemeRef_Extensions(t *testing.T) {
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.SecurityScheme{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 

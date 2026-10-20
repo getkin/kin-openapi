@@ -25,6 +25,8 @@ var issue1111Bodies = map[string]string{
 // case-sensitively, as JSON does: keys that only differ in case from a
 // property are other properties, which only additionalProperties: false rejects.
 func TestIssue1111(t *testing.T) {
+	t.Parallel()
+
 	for _, closed := range []bool{false, true} {
 		spec := `openapi: 3.0.0
 info:

@@ -37,6 +37,8 @@ paths:
 }
 
 func TestDisableSchemaErrorDetails(t *testing.T) {
+	t.Parallel()
+
 	router := setupTestRouter(t, schemaErrorDetailsSpec("3.0.3"))
 
 	validate := func(query, body string, options *Options) error {
@@ -57,6 +59,7 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 	}
 
 	t.Run("parameter", func(t *testing.T) {
+		t.Parallel()
 		err := validate("token=secret", `{}`, &Options{})
 		require.ErrorContains(t, err, "secret")
 		e := validate("token=secret", `{}`, disabled)
@@ -66,6 +69,7 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 	})
 
 	t.Run("body", func(t *testing.T) {
+		t.Parallel()
 		err := validate("", `{"token":"secret"}`, &Options{})
 		require.ErrorContains(t, err, "secret")
 		e := validate("", `{"token":"secret"}`, disabled)
@@ -76,6 +80,8 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 }
 
 func TestDisableSchemaErrorDetailsOnOpenAPI31(t *testing.T) {
+	t.Parallel()
+
 	router := setupTestRouter(t, schemaErrorDetailsSpec("3.1.0"))
 
 	req, err := http.NewRequest(http.MethodPost, "/probe?token=VALID", strings.NewReader(`{"token":"VALID"}`))

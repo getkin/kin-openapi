@@ -955,6 +955,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	t.Parallel()
 
 	t.Run("parameter content/schema exactly one (neither set)", func(t *testing.T) {
+		t.Parallel()
 		p := &openapi3.Parameter{Name: "p", In: "query"}
 		err := p.Validate(t.Context())
 		require.ErrorContains(t, err, "parameter must contain exactly one of content and schema")
@@ -968,6 +969,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	})
 
 	t.Run("parameter content single entry", func(t *testing.T) {
+		t.Parallel()
 		p := &openapi3.Parameter{
 			Name: "p", In: "query",
 			Content: openapi3.Content{
@@ -987,6 +989,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	})
 
 	t.Run("header content/schema exactly one (neither set)", func(t *testing.T) {
+		t.Parallel()
 		h := &openapi3.Header{}
 		err := h.Validate(t.Context())
 		require.EqualError(t, err, "header schema is invalid: header must contain exactly one of content and schema")
@@ -1000,6 +1003,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	})
 
 	t.Run("header content single entry", func(t *testing.T) {
+		t.Parallel()
 		h := &openapi3.Header{
 			Parameter: openapi3.Parameter{
 				Content: openapi3.Content{
@@ -2323,6 +2327,7 @@ func TestValidationError_SchemaCombinatorElementValidationError(t *testing.T) {
 		{"allOf", "      allOf:\n        - type: foobar\n"},
 	} {
 		t.Run(tc.combinator, func(t *testing.T) {
+			t.Parallel()
 			doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }

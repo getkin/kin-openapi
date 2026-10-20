@@ -9,6 +9,8 @@ import (
 )
 
 func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
+	t.Parallel()
+
 	customizer := SetSchemaErrorMessageCustomizer(func(err *SchemaError) string {
 		return "custom " + err.SchemaField
 	})
@@ -23,6 +25,7 @@ func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
 	}
 
 	t.Run("discriminator", func(t *testing.T) {
+		t.Parallel()
 		schema := &Schema{
 			OneOf: SchemaRefs{
 				{Ref: "#/components/schemas/A", Value: NewObjectSchema()},
@@ -34,6 +37,7 @@ func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
 	})
 
 	t.Run("pattern that does not compile", func(t *testing.T) {
+		t.Parallel()
 		schema := NewStringSchema()
 		schema.Pattern = "^[a-"
 		err := schema.VisitJSON("abc", customizer)
@@ -41,6 +45,7 @@ func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
 	})
 
 	t.Run("JSON Schema 2020-12 validator", func(t *testing.T) {
+		t.Parallel()
 		schema := NewStringSchema()
 		err := schema.VisitJSON(42, customizer, EnableJSONSchema2020())
 		requireCustomized(t, err, "type")
@@ -48,6 +53,8 @@ func TestSchemaErrorMessageCustomizerAppliesEverywhere(t *testing.T) {
 }
 
 func TestDisableSchemaErrorDetails(t *testing.T) {
+	t.Parallel()
+
 	schema := NewStringSchema()
 	schema.Pattern = "[A-Z]"
 
@@ -60,6 +67,8 @@ func TestDisableSchemaErrorDetails(t *testing.T) {
 }
 
 func TestDisableSchemaErrorDetailsOfFormatValidators(t *testing.T) {
+	t.Parallel()
+
 	for name, tc := range map[string]struct {
 		validate func(string) error
 		message  string
@@ -98,6 +107,7 @@ func TestDisableSchemaErrorDetailsOfFormatValidators(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			schema := NewStringSchema().WithFormat("custom")
 			formats := WithStringFormatValidators(map[string]StringFormatValidator{
 				"custom": NewCallbackValidator(tc.validate),
@@ -113,6 +123,8 @@ func TestDisableSchemaErrorDetailsOfFormatValidators(t *testing.T) {
 }
 
 func TestDisableSchemaErrorDetailsWithJSONSchema2020(t *testing.T) {
+	t.Parallel()
+
 	schema := NewStringSchema()
 
 	err := schema.VisitJSON("valid", DisableSchemaErrorDetails(), EnableJSONSchema2020())
