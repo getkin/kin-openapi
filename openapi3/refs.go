@@ -4,6 +4,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/url"
 	"strings"
 
@@ -1209,12 +1210,39 @@ func (x *SchemaRef) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of SchemaRef.
 func (x SchemaRef) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
+		if x.sibling != nil {
+			return x.marshalRefWithSiblings()
+		}
 		return &Ref{
 			Ref:        ref,
 			Extensions: x.Extensions,
 		}, nil
 	}
 	return x.Value.MarshalYAML()
+}
+
+// marshalRefWithSiblings returns $ref along with the keyword siblings that were
+// present next to it in the source document (OAS 3.1 / JSON Schema 2020-12).
+func (x SchemaRef) marshalRefWithSiblings() (any, error) {
+	y, err := x.sibling.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	fields, _ := y.(map[string]any)
+	m := make(map[string]any, 1+len(x.extra)+len(x.Extensions))
+	for _, k := range x.extra {
+		// Unknown keys end up in the sibling's Extensions: only x- ones are
+		// kept, and those come from x.Extensions below.
+		if _, unknown := x.sibling.Extensions[k]; unknown {
+			continue
+		}
+		if v, ok := fields[k]; ok {
+			m[k] = v
+		}
+	}
+	maps.Copy(m, x.Extensions)
+	m["$ref"] = x.Ref
+	return m, nil
 }
 
 // MarshalJSON returns the JSON encoding of SchemaRef.
