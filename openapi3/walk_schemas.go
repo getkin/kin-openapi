@@ -51,7 +51,7 @@ func (doc *T) WalkSchemas(fn WalkSchemasFunc) error {
 	if doc == nil {
 		return nil
 	}
-	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{})}
+	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{}), seenCallbacks: make(map[*Callback]struct{})}
 	return w.document(doc)
 }
 
@@ -73,9 +73,12 @@ func (sr *SchemaRef) walkSubtreeRefs(fn WalkSchemasFunc) error {
 }
 
 type schemaWalker struct {
-	fn          WalkSchemasFunc
-	seen        map[*Schema]struct{}
-	revisitRefs bool
+	fn   WalkSchemasFunc
+	seen map[*Schema]struct{}
+	// A callback's operations can list the same callback, so a callback can
+	// reach itself.
+	seenCallbacks map[*Callback]struct{}
+	revisitRefs   bool
 }
 
 // escapeRefString escapes a single JSON Pointer reference token per RFC 6901:
@@ -190,6 +193,10 @@ func (w *schemaWalker) operation(ptr string, op *Operation) error {
 }
 
 func (w *schemaWalker) callback(ptr string, cb *Callback) error {
+	if _, ok := w.seenCallbacks[cb]; ok {
+		return nil
+	}
+	w.seenCallbacks[cb] = struct{}{}
 	items := cb.Map()
 	for _, expr := range slices.Sorted(maps.Keys(items)) {
 		if err := w.pathItem(ptr+"/"+escapeRefString(expr), items[expr]); err != nil {

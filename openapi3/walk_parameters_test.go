@@ -112,3 +112,19 @@ func TestWalkParameters_NilDoc(t *testing.T) {
 		return nil
 	}))
 }
+
+func TestWalkParameters_CallbackCycle(t *testing.T) {
+	t.Parallel()
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(callbackCycleSpec)
+	require.NoError(t, err)
+
+	var visited []string
+	err = doc.WalkParameters(func(loc string, pr *openapi3.ParameterRef) error {
+		visited = append(visited, loc)
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"/components/callbacks/cb/{$request.body#~1u}/post/parameters/0"}, visited)
+}

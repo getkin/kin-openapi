@@ -36,13 +36,16 @@ func (doc *T) WalkParameters(fn WalkParametersFunc) error {
 	if doc == nil {
 		return nil
 	}
-	w := parameterWalker{fn: fn, seen: make(map[*Parameter]struct{})}
+	w := parameterWalker{fn: fn, seen: make(map[*Parameter]struct{}), seenCallbacks: make(map[*Callback]struct{})}
 	return w.document(doc)
 }
 
 type parameterWalker struct {
 	fn   WalkParametersFunc
 	seen map[*Parameter]struct{}
+	// A callback's operations can list the same callback, so a callback can
+	// reach itself.
+	seenCallbacks map[*Callback]struct{}
 }
 
 func (w *parameterWalker) document(doc *T) error {
@@ -105,6 +108,10 @@ func (w *parameterWalker) pathItem(ptr string, item *PathItem) error {
 }
 
 func (w *parameterWalker) callback(ptr string, cb *Callback) error {
+	if _, ok := w.seenCallbacks[cb]; ok {
+		return nil
+	}
+	w.seenCallbacks[cb] = struct{}{}
 	items := cb.Map()
 	for _, expr := range slices.Sorted(maps.Keys(items)) {
 		if err := w.pathItem(ptr+"/"+escapeRefString(expr), items[expr]); err != nil {
