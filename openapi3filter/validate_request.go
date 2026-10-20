@@ -66,6 +66,9 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 				continue
 			}
 		}
+		if options.ExcludeRequestQueryParams && parameter.In == openapi3.ParameterInQuery {
+			continue
+		}
 
 		if err := ValidateParameter(ctx, input, parameter); err != nil {
 			if !options.MultiError {
