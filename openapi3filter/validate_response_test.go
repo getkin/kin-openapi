@@ -232,6 +232,19 @@ func Test_validateResponseHeader(t *testing.T) {
 			wantErr:         true,
 			wantErrMsg:      `unable to decode header "X-Blab" value: header "X-Blab" cannot have multiple values`,
 		},
+		{
+			name: "test content header with multiple media types",
+			args: args{
+				headerName: "X-Blab",
+				headerRef: &openapi3.HeaderRef{Value: &openapi3.Header{Parameter: openapi3.Parameter{
+					Content: openapi3.NewContentWithSchema(openapi3.NewObjectSchema(), []string{"application/json", "text/plain"}),
+				}}},
+			},
+			isHeaderPresent: true,
+			headerVals:      []string{`{}`},
+			wantErr:         true,
+			wantErrMsg:      `unable to decode header "X-Blab" value: header "X-Blab" must have exactly one content entry`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

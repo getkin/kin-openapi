@@ -233,7 +233,10 @@ func decodeContentResponseHeader(headerName string, header *openapi3.Header, inp
 		return
 	}
 
-	// Validation ensures content has exactly one entry.
+	if len(header.Content) != 1 {
+		err = fmt.Errorf("header %q must have exactly one content entry", headerName)
+		return
+	}
 	for mediaType, mt := range header.Content {
 		if mt == nil || mt.Schema == nil {
 			// The header's schema is not defined so skip decoding of its value.
@@ -241,6 +244,7 @@ func decodeContentResponseHeader(headerName string, header *openapi3.Header, inp
 		}
 		schema = mt.Schema.Value
 		_, value, err = decodeBody(strings.NewReader(values[0]), http.Header{headerCT: {mediaType}}, mt.Schema, nil)
+		return
 	}
 	return
 }
