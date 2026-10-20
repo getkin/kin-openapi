@@ -1,1 +1,1 @@
-invalid components: schema "AddDnsZoneResponse": extra sibling fields: [description]
+invalid paths: conflicting paths "/v1beta/{parent}/connections" and "/v1beta/{name}/connections"

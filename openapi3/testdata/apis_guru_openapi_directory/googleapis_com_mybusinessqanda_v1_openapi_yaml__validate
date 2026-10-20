@@ -1,1 +1,1 @@
-invalid components: schema "Answer": extra sibling fields: [description readOnly]
+invalid paths: conflicting paths "/v1/{parent}" and "/v1/{name}"

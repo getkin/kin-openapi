@@ -17,6 +17,7 @@ openapi: '3.0'
 info:
   title: title
   version: 0.0.0
+paths: {}
 components:
   schemas:
     NullableString:
@@ -39,15 +40,11 @@ components:
 			require.NoError(t, err)
 
 			err = doc.Validate(t.Context())
-			if openapi == "3.0" {
-				require.ErrorContains(t, err, `invalid components: schema "NullableRef": extra sibling fields: [nullable]`)
-				t.SkipNow()
-			}
 			require.NoError(t, err)
 
 			require.False(t, doc.Components.Schemas["String"].Value.Nullable)
 			require.True(t, doc.Components.Schemas["NullableString"].Value.Nullable)
-			require.True(t, doc.Components.Schemas["NullableRef"].Value.Nullable)
+			require.Equal(t, openapi != "3.0", doc.Components.Schemas["NullableRef"].Value.Nullable)
 
 			// Since 3.1 nullable is an unknown keyword: it is kept but does not allow null.
 			for _, name := range []string{"NullableString", "NullableRef"} {
