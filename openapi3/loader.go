@@ -67,6 +67,12 @@ type Loader struct {
 	visitedRefs map[string]struct{}
 	visitedPath []string
 	backtrack   map[string][]func(value any)
+
+	// rootDoc is the document whose refs are being resolved, as opposed to
+	// the documents it refers to, and resolvingDepth how deep in these the
+	// loader currently is.
+	rootDoc        *T
+	resolvingDepth int
 }
 
 // NewLoader returns an empty Loader
@@ -249,6 +255,12 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	if loader.Context == nil {
 		loader.Context = context.Background()
 	}
+
+	if loader.resolvingDepth == 0 {
+		loader.rootDoc = doc
+	}
+	loader.resolvingDepth++
+	defer func() { loader.resolvingDepth-- }()
 
 	if loader.visitedPathItemRefs == nil {
 		loader.resetVisitedPathItemRefs()
@@ -1062,7 +1074,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		if component.Value != nil {
 			return nil
 		}
-		if doc.IsOpenAPI31OrLater() && component.sibling != nil {
+		if loader.isOpenAPI31OrLater(doc) && component.siblingErr != nil {
+			return fmt.Errorf("the fields next to $ref %q are not a schema: %w", ref, component.siblingErr)
+		}
+		if loader.isOpenAPI31OrLater(doc) && component.sibling != nil {
 			// Resolve the $refs within the siblings themselves, such as those of
 			// the properties they add, before applyRefSiblings shares them with
 			// Value: it may run from the callback below, which resolves nothing.
@@ -1077,7 +1092,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			// A $ref reached again while its target is still being resolved is
 			// filled in here when the cycle unwinds, which can overwrite a value
 			// that already had its siblings applied, so apply them here as well.
-			component.applyRefSiblings(doc)
+			component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
 		}) {
 			return nil
 		}
@@ -1111,7 +1126,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		// they augment the referenced schema (e.g. deprecated:true alongside $ref).
 		// Only apply for OAS 3.1+ — in 3.0 $ref replaces its entire object and siblings
 		// are (validly) ignored.
-		component.applyRefSiblings(doc)
+		component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
 	}
 	value := component.Value
 	if value == nil {
@@ -1596,10 +1611,11 @@ var refSiblingAnnotations = map[string]struct{}{
 // referenced schema, with its properties, type and so on.
 //
 // It works on a copy so a schema shared by other references is not mutated.
-func (component *SchemaRef) applyRefSiblings(doc *T) {
-	if !doc.IsOpenAPI31OrLater() || component.sibling == nil || component.Value == nil {
+func (component *SchemaRef) applyRefSiblings(isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || component.sibling == nil || component.Value == nil {
 		return
 	}
+	component.target = component.Value
 	var annotations, assertions []string
 	for _, field := range component.extra {
 		if _, ok := refSiblingAnnotations[field]; ok {
@@ -1611,7 +1627,8 @@ func (component *SchemaRef) applyRefSiblings(doc *T) {
 	schemaCopy := *component.Value
 	applySiblingSchemaFields(&schemaCopy, component.sibling, annotations)
 	if len(assertions) != 0 {
-		var conjunct Schema
+		// The siblings sit in the same object as the $ref, so they share its origin.
+		conjunct := Schema{Origin: component.Origin}
 		applySiblingSchemaFields(&conjunct, component.sibling, assertions)
 		if !conjunct.IsEmpty() {
 			allOf := make(SchemaRefs, 0, len(schemaCopy.AllOf)+1)
@@ -1620,6 +1637,16 @@ func (component *SchemaRef) applyRefSiblings(doc *T) {
 		}
 	}
 	component.Value = &schemaCopy
+}
+
+// isOpenAPI31OrLater tells whether doc follows OAS 3.1 or later. A document
+// that does not say, such as a file of bare schemas a $ref points into, follows
+// the version of the document that refers to it.
+func (loader *Loader) isOpenAPI31OrLater(doc *T) bool {
+	if doc.OpenAPI == "" && loader.rootDoc != nil {
+		doc = loader.rootDoc
+	}
+	return doc.IsOpenAPI31OrLater()
 }
 
 func unescapeRefString(ref string) string {

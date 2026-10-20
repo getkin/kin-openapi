@@ -342,6 +342,10 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * Marshaling an `openapi3.*Ref` with a `$ref` now writes back the fields that were written next to it, instead of emitting a lone `{"$ref": ...}`. An OpenAPI 3.1 schema's sibling keywords, which constrain the referenced schema, were lost that way, and so was every other field next to a `$ref`.
 * The loader now resolves a Path Item Object's `$ref` even when fields are written next to it, and merges the two: it used to skip the `$ref` then, silently dropping every operation of the referenced path item and never noticing a `$ref` to nothing. The specification leaves the result undefined only for a field set on both sides, which is then taken from next to the `$ref`. Marshaling writes back the `$ref` with the fields that were next to it, which it used to drop.
 * The loader no longer panics with `interface conversion` when the same `$ref` is written where two kinds of objects are expected, one nested in the other, such as a path item and one of its responses.
+* `InternalizeRefs` now makes a component of the schema an external `$ref` points to, rather than of that schema with the OpenAPI 3.1 keywords next to the `$ref` applied to it, which leaked them into every other use of the component. The external `$ref`s within those keywords are now rewritten in the marshaled document too.
+* The keywords next to a schema's `$ref` in a file of bare schemas, which has no `openapi` field, now follow the version of the document that refers to the file: they were ignored, as in OpenAPI 3.0, even from an OpenAPI 3.1 document.
+* In OpenAPI 3.1+ documents, loading now fails when the keywords next to a schema's `$ref` do not form a schema, such as `allOf: {type: integer}`, instead of silently ignoring them all.
+* The errors raised by the keywords next to an OpenAPI 3.1 schema's `$ref` now carry their `Origin`.
 
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
