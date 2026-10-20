@@ -73,7 +73,7 @@ func TestIssue1359(t *testing.T) {
 			require.NoError(t, err)
 			require.JSONEq(t, string(data), string(ymlData))
 
-			reloaded, err := openapi3.NewLoader().LoadFromData(data)
+			reloaded, err := loader.LoadFromData(data)
 			require.NoError(t, err)
 			id := reloaded.Components.Schemas["Thing"].Value.Properties["id"]
 			require.Equal(t, "#/components/schemas/uuid", id.Ref)
