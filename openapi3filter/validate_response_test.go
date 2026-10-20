@@ -173,7 +173,7 @@ func Test_validateResponseHeader(t *testing.T) {
 		{
 			name: "test required content header with matching value",
 			args: args{
-				headerName: "X-Blab",
+				headerName: "x-blab",
 				headerRef:  newContentHeaderRef(openapi3.NewObjectSchema().WithProperty("id", openapi3.NewIntegerSchema()), true),
 			},
 			isHeaderPresent: true,
@@ -230,7 +230,7 @@ func Test_validateResponseHeader(t *testing.T) {
 			isHeaderPresent: true,
 			headerVals:      []string{`{}`, `{}`},
 			wantErr:         true,
-			wantErrMsg:      `unable to decode header "X-Blab" value: header parameter "X-Blab" cannot have multiple values`,
+			wantErrMsg:      `unable to decode header "X-Blab" value: header "X-Blab" cannot have multiple values`,
 		},
 	}
 	for _, tt := range tests {
@@ -308,37 +308,41 @@ paths:
 	require.ErrorContains(t, err, `response header "X-Quota" missing`)
 }
 
-func TestValidateResponseContentHeaderParamDecoder(t *testing.T) {
+func TestValidateResponseContentHeaderMediaType(t *testing.T) {
 	t.Parallel()
 
-	headerRef := &openapi3.HeaderRef{Value: &openapi3.Header{Parameter: openapi3.Parameter{
-		Content: openapi3.NewContentWithSchema(openapi3.NewStringSchema().WithMaxLength(3), []string{"text/plain"}),
-	}}}
+	newHeaderRef := func(mediaType string) *openapi3.HeaderRef {
+		return &openapi3.HeaderRef{Value: &openapi3.Header{Parameter: openapi3.Parameter{
+			Content:  openapi3.NewContentWithSchema(openapi3.NewStringSchema().WithMaxLength(3), []string{mediaType}),
+			Required: true,
+		}}}
+	}
+	validate := func(mediaType, value string) error {
+		input := newInputDefault()
+		if value != "" {
+			input.Header = http.Header{"X-Blab": {value}}
+		}
+		return validateResponseHeader("X-Blab", newHeaderRef(mediaType), input, nil)
+	}
 
-	input := newInputDefault()
-	input.Header = http.Header{"X-Blab": {"blab"}}
-
-	// The default decoder only handles application/json: the header is only required to be there.
-	err := validateResponseHeader("X-Blab", headerRef, input, nil)
+	err := validate("text/plain", "bla")
 	require.NoError(t, err)
 
-	headerRef.Value.Required = true
-	err = validateResponseHeader("X-Blab", headerRef, input, nil)
-	require.NoError(t, err)
+	err = validate("text/plain", "blab")
+	require.ErrorContains(t, err, `response header "X-Blab" doesn't match schema: maximum string length is 3`)
 
-	input.Header = nil
-	err = validateResponseHeader("X-Blab", headerRef, input, nil)
+	err = validate("text/plain", "")
 	require.ErrorContains(t, err, `response header "X-Blab" missing`)
 
-	input.Header = http.Header{"X-Blab": {"blab"}}
+	// A +json media type without a decoder of its own is decoded as JSON.
+	err = validate("application/vnd.blab+json", `"bla"`)
+	require.NoError(t, err)
 
-	input.RequestValidationInput.ParamDecoder = func(param *openapi3.Parameter, values []string) (any, *openapi3.Schema, error) {
-		require.Equal(t, "X-Blab", param.Name)
-		require.Equal(t, openapi3.ParameterInHeader, param.In)
-		return values[0], param.Content.Get("text/plain").Schema.Value, nil
-	}
-	err = validateResponseHeader("X-Blab", headerRef, input, nil)
-	require.ErrorContains(t, err, `response header "X-Blab" doesn't match schema: maximum string length is 3`)
+	err = validate("application/vnd.blab+json", "bla")
+	require.ErrorContains(t, err, `unable to decode header "X-Blab" value`)
+
+	err = validate("application/xml", "<blab/>")
+	require.ErrorContains(t, err, `unable to decode header "X-Blab" value: unsupported content type "application/xml"`)
 }
 
 func newInputDefault() *ResponseValidationInput {

@@ -217,35 +217,31 @@ func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, in
 }
 
 // decodeContentResponseHeader decodes a response header described with content
-// rather than schema, the same way as a header parameter with content.
+// rather than schema, with the body decoder registered for its media type.
 func decodeContentResponseHeader(headerName string, header *openapi3.Header, input *ResponseValidationInput) (
 	value any,
 	schema *openapi3.Schema,
 	found bool,
 	err error,
 ) {
-	var values []string
-	if values, found = input.Header[http.CanonicalHeaderKey(headerName)]; !found {
+	values := input.Header[http.CanonicalHeaderKey(headerName)]
+	if found = len(values) != 0; !found {
+		return
+	}
+	if len(values) > 1 {
+		err = fmt.Errorf("header %q cannot have multiple values", headerName)
 		return
 	}
 
-	// Header Objects have neither name nor in.
-	param := header.Parameter
-	param.Name, param.In = headerName, openapi3.ParameterInHeader
-
-	var decoder ContentParameterDecoder
-	if input.RequestValidationInput != nil {
-		decoder = input.RequestValidationInput.ParamDecoder
-	}
-	if decoder == nil {
-		if header.Content.Get("application/json") == nil {
-			// The default decoder only handles JSON: just check the header is there.
+	// Validation ensures content has exactly one entry.
+	for mediaType, mt := range header.Content {
+		if mt == nil || mt.Schema == nil {
+			// The header's schema is not defined so skip decoding of its value.
 			return
 		}
-		decoder = defaultContentParameterDecoder
+		schema = mt.Schema.Value
+		_, value, err = decodeBody(strings.NewReader(values[0]), http.Header{headerCT: {mediaType}}, mt.Schema, nil)
 	}
-
-	value, schema, err = decoder(&param, values)
 	return
 }
 
