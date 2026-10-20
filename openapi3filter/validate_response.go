@@ -167,18 +167,27 @@ func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, in
 	var err error
 	var decodedValue any
 	var found bool
-	var sm *openapi3.SerializationMethod
-	dec := &headerParamDecoder{header: input.Header}
+	var schema *openapi3.Schema
 
-	if sm, err = headerRef.Value.SerializationMethod(); err != nil {
-		return &ResponseError{
-			Input:  input,
-			Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
-			Err:    err,
+	if header := headerRef.Value; header.Content != nil {
+		decodedValue, schema, found, err = decodeContentResponseHeader(headerName, header, input)
+	} else {
+		var sm *openapi3.SerializationMethod
+		if sm, err = header.SerializationMethod(); err != nil {
+			return &ResponseError{
+				Input:  input,
+				Reason: fmt.Sprintf("unable to get header %q serialization method", headerName),
+				Err:    err,
+			}
+		}
+
+		dec := &headerParamDecoder{header: input.Header}
+		decodedValue, found, err = decodeValue(dec, headerName, sm, header.Schema, header.Required)
+		if header.Schema != nil {
+			schema = header.Schema.Value
 		}
 	}
-
-	if decodedValue, found, err = decodeValue(dec, headerName, sm, headerRef.Value.Schema, headerRef.Value.Required); err != nil {
+	if err != nil {
 		return &ResponseError{
 			Input:  input,
 			Reason: fmt.Sprintf("unable to decode header %q value", headerName),
@@ -187,7 +196,11 @@ func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, in
 	}
 
 	if found {
-		if err = headerRef.Value.Schema.Value.VisitJSON(decodedValue, opts...); err != nil {
+		if schema == nil {
+			// The header's schema is not defined so skip validation of its value.
+			return nil
+		}
+		if err = schema.VisitJSON(decodedValue, opts...); err != nil {
 			return &ResponseError{
 				Input:  input,
 				Reason: fmt.Sprintf("response header %q doesn't match schema", headerName),
@@ -201,6 +214,39 @@ func validateResponseHeader(headerName string, headerRef *openapi3.HeaderRef, in
 		}
 	}
 	return nil
+}
+
+// decodeContentResponseHeader decodes a response header described with content
+// rather than schema, the same way as a header parameter with content.
+func decodeContentResponseHeader(headerName string, header *openapi3.Header, input *ResponseValidationInput) (
+	value any,
+	schema *openapi3.Schema,
+	found bool,
+	err error,
+) {
+	var values []string
+	if values, found = input.Header[http.CanonicalHeaderKey(headerName)]; !found {
+		return
+	}
+
+	// Header Objects have neither name nor in.
+	param := header.Parameter
+	param.Name, param.In = headerName, openapi3.ParameterInHeader
+
+	var decoder ContentParameterDecoder
+	if input.RequestValidationInput != nil {
+		decoder = input.RequestValidationInput.ParamDecoder
+	}
+	if decoder == nil {
+		if header.Content.Get("application/json") == nil {
+			// The default decoder only handles JSON: just check the header is there.
+			return
+		}
+		decoder = defaultContentParameterDecoder
+	}
+
+	value, schema, err = decoder(&param, values)
+	return
 }
 
 // getSchemaIdentifier gets something by which a schema could be identified.
