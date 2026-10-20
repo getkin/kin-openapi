@@ -1057,6 +1057,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			component.Value = value.(*Schema)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
+			// A $ref reached again while its target is still being resolved is
+			// filled in here when the cycle unwinds, which can overwrite a value
+			// that already had its siblings applied, so apply them here as well.
+			component.applyRefSiblings(doc)
 		}) {
 			return nil
 		}
@@ -1090,12 +1094,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		// they augment the referenced schema (e.g. deprecated:true alongside $ref).
 		// Only apply for OAS 3.1+ — in 3.0 $ref replaces its entire object and siblings
 		// are (validly) ignored.
-		if doc.IsOpenAPI31OrLater() && component.sibling != nil && component.Value != nil {
-			// Work on a copy so we don't mutate a schema shared by other references.
-			schemaCopy := *component.Value
-			applySiblingSchemaFields(&schemaCopy, component.sibling, component.extra)
-			component.Value = &schemaCopy
-		}
+		component.applyRefSiblings(doc)
 	}
 	value := component.Value
 	if value == nil {
@@ -1529,6 +1528,17 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 		}
 	}
 	return
+}
+
+// applyRefSiblings overlays the sibling keywords of an OAS 3.1 $ref onto its
+// resolved value. It works on a copy so a schema shared by other references is
+// not mutated, and does nothing for OAS 3.0, where $ref replaces its object.
+func (component *SchemaRef) applyRefSiblings(doc *T) {
+	if doc.IsOpenAPI31OrLater() && component.sibling != nil && component.Value != nil {
+		schemaCopy := *component.Value
+		applySiblingSchemaFields(&schemaCopy, component.sibling, component.extra)
+		component.Value = &schemaCopy
+	}
 }
 
 func unescapeRefString(ref string) string {
