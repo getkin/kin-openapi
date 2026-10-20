@@ -116,7 +116,8 @@ func TestWalkParameters_NilDoc(t *testing.T) {
 func TestWalkParameters_CallbackCycle(t *testing.T) {
 	t.Parallel()
 
-	doc, err := openapi3.NewLoader().LoadFromData(callbackCycleSpec)
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(callbackCycleSpec)
 	require.NoError(t, err)
 
 	var visited []string
