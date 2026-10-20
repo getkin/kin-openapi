@@ -12,6 +12,8 @@ import (
 )
 
 func TestErrorsLocateValuesWithinMaps(t *testing.T) {
+	t.Parallel()
+
 	var doc openapi2.T
 	err := json.Unmarshal([]byte(`{"paths":{"/a":{"get":{"responses":{"200":{"schema":{"items":[1]}}}}}}}`), &doc)
 	require.ErrorContains(t, err, `.paths.~1a.get.responses.200.schema.items`)

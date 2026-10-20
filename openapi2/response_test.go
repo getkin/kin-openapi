@@ -10,6 +10,8 @@ import (
 )
 
 func TestResponsesUnmarshalErrorHasKey(t *testing.T) {
+	t.Parallel()
+
 	var doc openapi2.T
 	err := json.Unmarshal([]byte(`{"paths": {"/": {"get": {"responses": {"200": {"description": "OK"}, "404": {"description": 42}}}}}}`), &doc)
 	if openapi2.UsingJSONv2 {

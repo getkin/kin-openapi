@@ -15,6 +15,8 @@ import (
 // field only in case: the json:",case:strict" tags make encoding/json keep
 // them as extensions rather than fill the field.
 func TestFieldsIgnoreKeysOfAnotherCase(t *testing.T) {
+	t.Parallel()
+
 	var doc openapi2.T
 	err := json.Unmarshal([]byte(`{"swagger":"2.0","Host":"example.com","info":{"Title":"t"}}`), &doc)
 	require.NoError(t, err)

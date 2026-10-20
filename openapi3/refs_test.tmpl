@@ -49,6 +49,7 @@ func Test{{ $type.Name }}Ref_Extensions(t *testing.T) {
 	assert.Error(t, err)
 {{ if ne $type.Name "Header" }}
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.{{ $type.Name }}{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 

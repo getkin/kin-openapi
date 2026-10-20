@@ -77,6 +77,7 @@ func TestRouterCustomMethods(t *testing.T) {
 		{http.MethodGet, "/pets/fido", petsID.Get, map[string]string{"id": "fido"}},
 	} {
 		t.Run(tc.method+" "+tc.uri, func(t *testing.T) {
+			t.Parallel()
 			req, err := http.NewRequest(tc.method, tc.uri, nil)
 			require.NoError(t, err)
 
@@ -91,6 +92,7 @@ func TestRouterCustomMethods(t *testing.T) {
 	}
 
 	t.Run("unregistered method", func(t *testing.T) {
+		t.Parallel()
 		for _, uri := range []string{"/pets", "/pets/fido"} {
 			req, err := http.NewRequest("PURGE", uri, nil)
 			require.NoError(t, err)
@@ -160,6 +162,7 @@ func TestRouterCustomMethodsCaseSensitive(t *testing.T) {
 		{"COPY", "/files", files.AdditionalOperations["COPY"]},
 	} {
 		t.Run(tc.method+" "+tc.uri, func(t *testing.T) {
+			t.Parallel()
 			req, err := http.NewRequest(tc.method, tc.uri, nil)
 			require.NoError(t, err)
 
@@ -172,6 +175,7 @@ func TestRouterCustomMethodsCaseSensitive(t *testing.T) {
 
 	for _, method := range []string{"COPY", "post"} {
 		t.Run(method+" /objects is not aliased", func(t *testing.T) {
+			t.Parallel()
 			req, err := http.NewRequest(method, "/objects", nil)
 			require.NoError(t, err)
 

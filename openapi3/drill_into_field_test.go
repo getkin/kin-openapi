@@ -7,6 +7,8 @@ import (
 )
 
 func TestDrillIntoFieldSliceIndex(t *testing.T) {
+	t.Parallel()
+
 	slice := []string{"a", "b"}
 
 	for _, idx := range []string{"0", "1"} {

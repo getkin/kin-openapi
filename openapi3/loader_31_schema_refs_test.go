@@ -24,6 +24,8 @@ import (
 //
 // should result in a SchemaRef whose Value has Deprecated==true.
 func TestSchemaRefSiblingKeyword(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: "3.1.0"
 info:

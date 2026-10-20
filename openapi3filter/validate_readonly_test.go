@@ -276,6 +276,7 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			spec := bytes.NewBufferString(`{
 				"openapi": "3.0.3",
 				"info": {

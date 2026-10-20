@@ -13,6 +13,8 @@ import (
 )
 
 func TestQueryCollectionFormat(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		collectionFormat string
 		style            string
@@ -26,6 +28,7 @@ func TestQueryCollectionFormat(t *testing.T) {
 		{collectionFormat: "tsv", style: "", explode: nil},
 	} {
 		t.Run("collectionFormat="+tc.collectionFormat, func(t *testing.T) {
+			t.Parallel()
 			spec := fmt.Sprintf(`{
 	"swagger": "2.0",
 	"info": {"title": "Example", "version": "1"},

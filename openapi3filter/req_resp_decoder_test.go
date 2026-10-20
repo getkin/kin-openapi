@@ -1654,8 +1654,10 @@ func TestDecodeParameter(t *testing.T) {
 
 	for _, tg := range testGroups {
 		t.Run(tg.name, func(t *testing.T) {
+			t.Parallel()
 			for _, tc := range tg.testCases {
 				t.Run(tc.name, func(t *testing.T) {
+					t.Parallel()
 					req, err := http.NewRequest(http.MethodGet, "http://test.org/test"+tc.path, nil)
 					require.NoError(t, err, "failed to create a test request")
 
@@ -2157,6 +2159,7 @@ func TestDecodeBody(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			h := make(http.Header)
 			h.Set(headerCT, tc.mime)
 			var schemaRef *openapi3.SchemaRef
@@ -2196,6 +2199,7 @@ func TestUrlencodedBodyObjectPropertyWithExplodedForm(t *testing.T) {
 		"form explode": {Style: openapi3.SerializationForm, Explode: openapi3.Ptr(true)},
 	} {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			encFn := func(string) *openapi3.Encoding { return encoding }
 			_, err := UrlencodedBodyDecoder(strings.NewReader("a=a1&d1=d1"), nil, schema.NewRef(), encFn)
 			require.EqualError(t, err, `unsupported schema of request body's property "d"`)

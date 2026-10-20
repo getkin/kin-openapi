@@ -15,6 +15,8 @@ import (
 // field only in case: the json:",case:strict" tags make encoding/json keep
 // them as extensions rather than fill the field.
 func TestKeysOnlyMatchFieldsOfTheSameCase(t *testing.T) {
+	t.Parallel()
+
 	const spec = "Components:\n schemas:\n SChemAs:\n  0:"
 
 	loader := openapi3.NewLoader()
@@ -42,6 +44,8 @@ func TestKeysOnlyMatchFieldsOfTheSameCase(t *testing.T) {
 }
 
 func TestFieldsIgnoreKeysOfAnotherCase(t *testing.T) {
+	t.Parallel()
+
 	var info openapi3.Info
 	err := json.Unmarshal([]byte(`{"title":"kept","Title":"other","Version":"1"}`), &info)
 	require.NoError(t, err)

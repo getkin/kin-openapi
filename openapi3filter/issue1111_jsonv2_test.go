@@ -14,6 +14,8 @@ import (
 // which encoding/json honors whenever it is implemented with encoding/json/v2
 // (GOEXPERIMENT=jsonv2, the default from Go 1.27).
 func TestIssue1111Decoding(t *testing.T) {
+	t.Parallel()
+
 	for name, expected := range map[string]string{
 		"good":         "aniki",
 		"bad":          "beniki",

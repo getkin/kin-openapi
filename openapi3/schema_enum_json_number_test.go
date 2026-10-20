@@ -10,6 +10,8 @@ import (
 )
 
 func TestSchemaEnumJSONNumbers(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name  string
 		enum  []any
@@ -23,6 +25,7 @@ func TestSchemaEnumJSONNumbers(t *testing.T) {
 		{"json.Number in value array", []any{[]any{float64(1), "b"}}, []any{json.Number("1"), "b"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			for _, enum := range [][]any{tc.enum, append(tc.enum, "other")} {
 				schema := &openapi3.Schema{Enum: enum}
 				require.NoError(t, schema.VisitJSON(tc.value))
@@ -44,6 +47,7 @@ func TestSchemaEnumJSONNumbers(t *testing.T) {
 		{"invalid json.Number", []any{json.Number("1")}, json.Number("one")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			schema := &openapi3.Schema{Enum: tc.enum}
 			err := schema.VisitJSON(tc.value)
 			var schemaErr *openapi3.SchemaError

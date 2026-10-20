@@ -186,6 +186,8 @@ components:
 }
 
 func TestIssue513ReferenceDescriptionIsVersionAware(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: "3.0.3"
 info:

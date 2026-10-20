@@ -260,6 +260,7 @@ paths:
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			loader := NewLoader()
 			doc, err := loader.LoadFromData([]byte(tc.spec))
 			require.NoError(t, err)

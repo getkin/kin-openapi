@@ -508,6 +508,7 @@ func TestValidateRequestBodyDefaultsNeedEncoder(t *testing.T) {
 		{name: "form validated as sent", mime: "application/x-www-form-urlencoded", data: "lang=fr", wantErr: `property "role" is missing`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.data))
 			req.Header.Set(headerCT, tc.mime)
 			err := ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)
@@ -543,6 +544,7 @@ func TestValidateRequestBodyFormInvalidValues(t *testing.T) {
 		{data: "ids=2&ids=abc", wantErr: "value abc: an invalid integer"},
 	} {
 		t.Run(tc.data, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.data))
 			req.Header.Set(headerCT, "application/x-www-form-urlencoded")
 			err := ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)

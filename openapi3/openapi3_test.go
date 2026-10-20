@@ -488,6 +488,8 @@ func TestAddRemoveServer(t *testing.T) {
 }
 
 func TestOpenAPIMajorMinor(t *testing.T) {
+	t.Parallel()
+
 	var doc *openapi3.T
 	require.Equal(t, "", doc.OpenAPIMajorMinor())
 	require.False(t, doc.IsOpenAPI30())
