@@ -585,6 +585,54 @@ paths:
 	require.Error(t, err)
 }
 
+func TestValidateRequestExcludeQueryParamsOfPathItem(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    parameters:
+      - name: category
+        in: query
+        schema:
+          type: integer
+        required: true
+    post:
+      responses:
+        '200':
+          description: Ok
+`
+	req, err := http.NewRequest(http.MethodPost, "/category?category=foo", nil)
+	require.NoError(t, err)
+	router := setupTestRouter(t, spec)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	err = ValidateRequest(t.Context(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: true,
+		},
+	})
+	require.NoError(t, err)
+
+	err = ValidateRequest(t.Context(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: false,
+		},
+	})
+	require.Error(t, err)
+}
+
 func TestValidateRequestKeepValidatedValue(t *testing.T) {
 	t.Parallel()
 
