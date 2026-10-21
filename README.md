@@ -336,6 +336,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * A schema with an empty `type: []` no longer marshals as `"type": null` which did not survive being read back.
 * The error for a header with neither or both of `content` and `schema` reads `header must contain exactly one of content and schema`. It used to say `parameter ...` followed by a `%v` dump of the `Header` struct, which printed heap addresses: the message differed between two runs over the same document, and leaked addresses into anything that logged it.
 * `openapi3filter` now parses `integer` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as base 10 only, so `010` decodes to `10` rather than `8`, and Go integer literals such as `0x10`, `0b10`, `0o10` or `1_000` are now rejected as invalid integers.
+* `openapi3filter.ValidateResponse` now decodes and validates response headers described with `content` rather than `schema`, with the body decoder registered for the header's media type (see `RegisterBodyDecoder`). Such a header is no longer reported missing when it is required and present, and a value that does not match its schema is now rejected. As with a response body, a media type with no registered decoder fails with `unsupported content type`.
 
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
