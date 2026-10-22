@@ -1,6 +1,10 @@
 invalid paths: invalid path /checkAccountHolder: invalid operation POST: invalid example: example basic: validation failed due to: error at "/tier": at '/tier': got string, want integer
 Schema:
-  null
+  {
+    "description": "The tier required for the account holder.",
+    "format": "int32",
+    "type": "integer"
+  }
 
 Value:
   "2"

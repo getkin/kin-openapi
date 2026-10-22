@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-openapi/jsonpointer"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
 )
@@ -18,6 +19,8 @@ type jsonSchemaValidator struct {
 	compiler        *jsonschema.Compiler
 	schema          *jsonschema.Schema
 	hasInternalRefs bool
+	root            *Schema
+	defs            map[string]*Schema
 }
 
 // newJSONSchemaValidator creates a new validator using JSON Schema 2020-12
@@ -36,7 +39,8 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 	// Boolean schemas are valid JSON Schema resources as well.
 	schemaMap, _ := schemaDocument.(map[string]any)
 	hasInternalRefs := containsInternalSchemaRef(schemaDocument)
-	if err := addInternalSchemaRefs(schemaMap, schema); err != nil {
+	defs, err := addInternalSchemaRefs(schemaMap, schema)
+	if err != nil {
 		return nil, fmt.Errorf("failed to prepare schema references: %w", err)
 	}
 
@@ -63,6 +67,8 @@ func newJSONSchemaValidator(schema *Schema, settings *schemaValidationSettings) 
 		compiler:        compiler,
 		schema:          compiledSchema,
 		hasInternalRefs: hasInternalRefs,
+		root:            schema,
+		defs:            defs,
 	}, nil
 }
 
@@ -89,11 +95,12 @@ func containsInternalSchemaRef(node any) bool {
 // resolved Schema. VisitJSON receives a subtree rather than the containing
 // OpenAPI document, so copy each resolved target into local $defs and rewrite
 // its reference. This also handles references to a nested property or item.
-func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
+func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) (map[string]*Schema, error) {
 	if schemaMap == nil || schema == nil {
-		return nil
+		return nil, nil
 	}
 	refs := make(map[string]any)
+	values := make(map[string]*Schema)
 	// Recursive schemas reference an already-visited target, which WalkSubtree would not report.
 	err := NewSchemaRef("", schema).walkSubtreeRefs(func(_ string, ref *SchemaRef) error {
 		if ref.Ref == "" || !strings.HasPrefix(ref.Ref, "#/components/schemas/") || ref.Value == nil {
@@ -111,25 +118,28 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) error {
 			return err
 		}
 		refs[ref.Ref] = target
+		values[ref.Ref] = ref.Value
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(refs) == 0 {
-		return nil
+		return nil, nil
 	}
 	defs := make(map[string]any, len(refs))
 	ids := make(map[string]string, len(refs))
+	defValues := make(map[string]*Schema, len(refs))
 	for ref := range refs {
 		ids[ref] = fmt.Sprintf("ref%d", len(ids))
+		defValues[ids[ref]] = values[ref]
 	}
 	rewriteInternalSchemaRefs(schemaMap, refs, ids, defs)
 	if len(defs) > 0 {
 		schemaMap["$defs"] = defs
 		rewriteInternalSchemaRefs(defs, refs, ids, defs)
 	}
-	return nil
+	return defValues, nil
 }
 
 // rewriteInternalSchemaRefs rewrites document-relative component references to
@@ -252,30 +262,30 @@ func validateNumberFormat(format string, settings *schemaValidationSettings, val
 func (v *jsonSchemaValidator) validate(settings *schemaValidationSettings, value any) error {
 	if err := v.schema.Validate(value); err != nil {
 		// Convert jsonschema error to SchemaError
-		return convertJSONSchemaError(settings, err, value)
+		return v.convertJSONSchemaError(settings, err, value)
 	}
 	return nil
 }
 
 // convertJSONSchemaError converts a jsonschema validation error to OpenAPI SchemaError format.
 // root is the validated value, from which the failing value is looked up.
-func convertJSONSchemaError(settings *schemaValidationSettings, err error, root any) error {
+func (v *jsonSchemaValidator) convertJSONSchemaError(settings *schemaValidationSettings, err error, root any) error {
 	// TODO: Go 1.26
 	// if err, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
-	// 	return formatValidationError(settings, err, "", root)
+	// 	return v.formatValidationError(settings, err, "", root)
 	var validationErr *jsonschema.ValidationError
 	if errors.As(err, &validationErr) {
-		return formatValidationError(settings, validationErr, "", root)
+		return v.formatValidationError(settings, validationErr, "", root)
 	}
 	return err
 }
 
 // formatValidationError recursively formats validation errors into SchemaErrors
 // that carry the same structure as the ones of the built-in validator: the path
-// of the failing value (JSONPointer), the failing keyword (SchemaField) and the
-// failing value (Value). The jsonschema error itself stays reachable with
-// errors.As.
-func formatValidationError(settings *schemaValidationSettings, verr *jsonschema.ValidationError, parentPath string, root any) error {
+// of the failing value (JSONPointer), the failing keyword (SchemaField), the
+// failing schema (Schema) and the failing value (Value). The jsonschema error
+// itself stays reachable with errors.As.
+func (v *jsonSchemaValidator) formatValidationError(settings *schemaValidationSettings, verr *jsonschema.ValidationError, parentPath string, root any) error {
 	// Build the path from InstanceLocation slice
 	path := "/" + strings.Join(verr.InstanceLocation, "/")
 	if parentPath != "" && path != "/" {
@@ -299,7 +309,7 @@ func formatValidationError(settings *schemaValidationSettings, verr *jsonschema.
 	}
 
 	value, _ := valueAt(root, failing.InstanceLocation)
-	schemaErr := settings.newSchemaError(nil, value).
+	schemaErr := settings.newSchemaError(v.schemaAt(failing.SchemaURL), value).
 		withReason(msg.String()).
 		withCause(verr)
 	for _, key := range slices.Backward(failing.InstanceLocation) {
@@ -313,7 +323,7 @@ func formatValidationError(settings *schemaValidationSettings, verr *jsonschema.
 	if len(verr.Causes) > 0 {
 		var subErrors MultiError
 		for _, cause := range verr.Causes {
-			if subErr := formatValidationError(settings, cause, path, root); subErr != nil {
+			if subErr := v.formatValidationError(settings, cause, path, root); subErr != nil {
 				subErrors = append(subErrors, subErr)
 			}
 		}
@@ -323,6 +333,30 @@ func formatValidationError(settings *schemaValidationSettings, verr *jsonschema.
 	}
 
 	return schemaErr
+}
+
+// schemaAt is the schema at schemaURL, the location of a schema of the
+// compiled document, or nil when it is not one of v's schemas.
+func (v *jsonSchemaValidator) schemaAt(schemaURL string) *Schema {
+	_, fragment, _ := strings.Cut(schemaURL, "#")
+	root := v.root
+	if rest, ok := strings.CutPrefix(fragment, "/$defs/"); ok {
+		id, rest, _ := strings.Cut(rest, "/")
+		if root = v.defs[id]; root == nil {
+			return nil
+		}
+		fragment = strings.TrimSuffix("/"+rest, "/")
+	}
+	ptr, err := jsonpointer.New(fragment)
+	if err != nil {
+		return nil
+	}
+	found, _, err := ptr.Get(root)
+	if err != nil {
+		return nil
+	}
+	schema, _ := found.(*Schema)
+	return schema
 }
 
 // isWrapperErrorKind reports whether k only groups the errors of its causes.
