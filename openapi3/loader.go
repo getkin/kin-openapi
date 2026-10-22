@@ -103,11 +103,26 @@ func (loader *Loader) loadFromURIInternal(location *url.URL) (*T, error) {
 	return loader.loadFromDataWithPathInternal(data, location)
 }
 
-func (loader *Loader) allowsExternalRefs(ref string) (err error) {
+// DisallowedExternalRefError is returned for a $ref to another document
+// encountered while Loader.IsExternalRefsAllowed is false. A caller that tells
+// a refused $ref apart from a document that failed to load for another reason,
+// to report the setting as the remedy or to map it to its own error, matches
+// this type with errors.As rather than the message text.
+type DisallowedExternalRefError struct {
+	// Ref is the $ref value as it appears in the document, e.g.
+	// "other.yaml#/components/schemas/Thing".
+	Ref string
+}
+
+func (e *DisallowedExternalRefError) Error() string {
+	return fmt.Sprintf("encountered disallowed external reference: %q", e.Ref)
+}
+
+func (loader *Loader) allowsExternalRefs(ref string) error {
 	if !loader.IsExternalRefsAllowed {
-		err = fmt.Errorf("encountered disallowed external reference: %q", ref)
+		return &DisallowedExternalRefError{Ref: ref}
 	}
-	return
+	return nil
 }
 
 func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element any) (*url.URL, error) {
