@@ -329,10 +329,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
-### v0.151.0
-* Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
-* `openapi3filter.UrlencodedBodyDecoder` (hence `application/x-www-form-urlencoded` request body validation) now returns a `*openapi3filter.ParseError` for a value that cannot be parsed into its property's schema type, such as `n=abc` for an `integer` property, instead of silently dropping it from the decoded body.
-* `openapi3filter` now writes a query parameter's array `default` into the request URL following the parameter's `style` and `explode` (including their defaults), so an array without `explode` set is written as `?ids=1&ids=2` rather than `?ids=1,2`, and `pipeDelimited`/`spaceDelimited` arrays use their own delimiter.
+### v0.152.0
+* JSON keys of OpenAPI documents only fill the field of the same case (`json:",case:strict"`) when `encoding/json` is implemented with `encoding/json/v2` (by default from Go 1.27, and on Go 1.25 and 1.26 with `GOEXPERIMENT=jsonv2`): a key such as `"Components"` (not `"components"`) is kept as an extension instead of filling `openapi3.T.Components`. Other builds still match keys case-insensitively, as `encoding/json` v1 does.
+* On Go 1.27+, unless built with `GOEXPERIMENT=nojsonv2`, `openapi2` and `openapi3` decode documents with `encoding/json/v2`: objects with duplicate member names and strings with invalid UTF-8 are rejected, and decoding errors are worded differently and locate the faulty value from the root of the document, keys of paths, responses and callbacks included (e.g. `.paths.~1pets.get.responses.200.description`). On these builds `openapi2.Responses`, `openapi3.Callback`, `openapi3.Paths` and `openapi3.Responses` also implement `encoding/json/v2.UnmarshalerFrom`.
 * A schema with an empty `type: []` no longer marshals as `"type": null` which did not survive being read back.
 * The error for a header with neither or both of `content` and `schema` reads `header must contain exactly one of content and schema`. It used to say `parameter ...` followed by a `%v` dump of the `Header` struct, which printed heap addresses: the message differed between two runs over the same document, and leaked addresses into anything that logged it.
 * `openapi3filter` now parses `integer` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as base 10 only, so `010` decodes to `10` rather than `8`, and Go integer literals such as `0x10`, `0b10`, `0o10` or `1_000` are now rejected as invalid integers.
@@ -346,6 +345,11 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * The keywords next to a schema's `$ref` in a file of bare schemas, which has no `openapi` field, now follow the version of the document that refers to the file: they were ignored, as in OpenAPI 3.0, even from an OpenAPI 3.1 document.
 * In OpenAPI 3.1+ documents, loading now fails when the keywords next to a schema's `$ref` do not form a schema, such as `allOf: {type: integer}`, instead of silently ignoring them all.
 * The errors raised by the keywords next to an OpenAPI 3.1 schema's `$ref` now carry their `Origin`.
+
+### v0.151.0
+* Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
+* `openapi3filter.UrlencodedBodyDecoder` (hence `application/x-www-form-urlencoded` request body validation) now returns a `*openapi3filter.ParseError` for a value that cannot be parsed into its property's schema type, such as `n=abc` for an `integer` property, instead of silently dropping it from the decoded body.
+* `openapi3filter` now writes a query parameter's array `default` into the request URL following the parameter's `style` and `explode` (including their defaults), so an array without `explode` set is written as `?ids=1&ids=2` rather than `?ids=1,2`, and `pipeDelimited`/`spaceDelimited` arrays use their own delimiter.
 
 ### v0.150.0
 * `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
@@ -362,8 +366,6 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `(*openapi3.Parameter).SerializationMethod()` (for query parameters) and `(*openapi3.Encoding).SerializationMethod()` now default `explode` to `false` for `style: spaceDelimited` and `style: pipeDelimited`, as the spec says, so `openapi3filter` splits `?ids=1|2|3` and `application/x-www-form-urlencoded` body properties such as `ids=1|2|3` instead of expecting `ids=1&ids=2&ids=3`. Set `explode: true` to keep the previous behavior.
 * Removed the package-global `openapi3.SchemaErrorDetailsDisabled` variable. Pass the new `openapi3.DisableSchemaErrorDetails()` option to `(*openapi3.Schema).VisitJSON(..)` instead, or add it to `openapi3filter.Options.SchemaValidationOptions`, which `openapi3filter` now also applies when validating parameters. Combined with `openapi3.EnableJSONSchema2020()` (hence with `openapi3filter` on OpenAPI 3.1+ documents), validation fails with `openapi3.ErrSchemaErrorDetailsWithJSONSchema2020`, as that validator's error messages include values.
 * The message customizer set with `openapi3.SetSchemaErrorMessageCustomizer(..)` (hence `(*openapi3filter.Options).WithCustomSchemaErrorFunc(..)`) now also applies to discriminator errors, to errors of patterns that fail to compile and to errors of the JSON Schema 2020-12 validator (`openapi3.EnableJSONSchema2020()`).
-* JSON keys of OpenAPI documents only fill the field of the same case (`json:",case:strict"`) when `encoding/json` is implemented with `encoding/json/v2` (by default from Go 1.27, and on Go 1.25 and 1.26 with `GOEXPERIMENT=jsonv2`): a key such as `"Components"` (not `"components"`) is kept as an extension instead of filling `openapi3.T.Components`. Other builds still match keys case-insensitively, as `encoding/json` v1 does.
-* On Go 1.27+, unless built with `GOEXPERIMENT=nojsonv2`, `openapi2` and `openapi3` decode documents with `encoding/json/v2`: objects with duplicate member names and strings with invalid UTF-8 are rejected, and decoding errors are worded differently and locate the faulty value from the root of the document, keys of paths, responses and callbacks included (e.g. `.paths.~1pets.get.responses.200.description`). On these builds `openapi2.Responses`, `openapi3.Callback`, `openapi3.Paths` and `openapi3.Responses` also implement `encoding/json/v2.UnmarshalerFrom`.
 
 ### v0.147.0
 * `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).
