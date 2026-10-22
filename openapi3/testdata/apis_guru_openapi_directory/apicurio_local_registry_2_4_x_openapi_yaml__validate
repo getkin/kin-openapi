@@ -67,10 +67,12 @@ Schema:
         "type": "integer"
       },
       "groupId": {
-        "$ref": "#/components/schemas/GroupId"
+        "$ref": "#/components/schemas/GroupId",
+        "description": ""
       },
       "id": {
-        "$ref": "#/components/schemas/ArtifactId"
+        "$ref": "#/components/schemas/ArtifactId",
+        "description": ""
       },
       "labels": {
         "items": {
@@ -89,7 +91,8 @@ Schema:
         "type": "string"
       },
       "properties": {
-        "$ref": "#/components/schemas/Properties"
+        "$ref": "#/components/schemas/Properties",
+        "description": ""
       },
       "references": {
         "items": {
@@ -98,10 +101,12 @@ Schema:
         "type": "array"
       },
       "state": {
-        "$ref": "#/components/schemas/ArtifactState"
+        "$ref": "#/components/schemas/ArtifactState",
+        "description": ""
       },
       "type": {
-        "$ref": "#/components/schemas/ArtifactType"
+        "$ref": "#/components/schemas/ArtifactType",
+        "description": ""
       },
       "version": {
         "type": "string"
@@ -208,10 +213,12 @@ Schema:
         "type": "integer"
       },
       "groupId": {
-        "$ref": "#/components/schemas/GroupId"
+        "$ref": "#/components/schemas/GroupId",
+        "description": ""
       },
       "id": {
-        "$ref": "#/components/schemas/ArtifactId"
+        "$ref": "#/components/schemas/ArtifactId",
+        "description": ""
       },
       "labels": {
         "items": {
@@ -230,7 +237,8 @@ Schema:
         "type": "string"
       },
       "properties": {
-        "$ref": "#/components/schemas/Properties"
+        "$ref": "#/components/schemas/Properties",
+        "description": ""
       },
       "references": {
         "items": {
@@ -239,10 +247,12 @@ Schema:
         "type": "array"
       },
       "state": {
-        "$ref": "#/components/schemas/ArtifactState"
+        "$ref": "#/components/schemas/ArtifactState",
+        "description": ""
       },
       "type": {
-        "$ref": "#/components/schemas/ArtifactType"
+        "$ref": "#/components/schemas/ArtifactType",
+        "description": ""
       },
       "version": {
         "type": "string"

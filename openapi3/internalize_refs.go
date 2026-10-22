@@ -148,7 +148,13 @@ func (doc *T) addSchemaToSpec(s *SchemaRef, refNameResolver RefNameResolver, par
 	if doc.Components.Schemas == nil {
 		doc.Components.Schemas = make(Schemas)
 	}
-	doc.Components.Schemas[name] = s.Value.NewRef()
+	// A $ref with siblings has a copy of its target as Value, with the siblings
+	// applied: the component is the target itself.
+	value := s.Value
+	if s.target != nil {
+		value = s.target
+	}
+	doc.Components.Schemas[name] = value.NewRef()
 	s.Ref = "#/components/schemas/" + name
 	return true
 }
