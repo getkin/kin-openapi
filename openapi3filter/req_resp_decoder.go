@@ -338,6 +338,14 @@ func decodeValueGuarded(dec valueDecoder, param string, sm *openapi3.Serializati
 		return nil, found, errors.New("not implemented: decoding 'not'")
 	}
 
+	if schema.Value.Type == nil && (schema.Value.Const != nil || len(schema.Value.Enum) > 0) {
+		// A schema without `type` is valid in OpenAPI 3.0 and 3.1; with
+		// only `const`/`enum` the schema types the value on its own (see
+		// #1367). Parameter values are strings, so decode as a primitive
+		// and let schema validation apply the constrained values.
+		return dec.DecodePrimitive(param, sm, schema)
+	}
+
 	if schema.Value.Type != nil {
 		var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (any, bool, error)
 		switch {
@@ -1232,7 +1240,17 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 // that is specified by a schema. The function returns nil when the source string is empty and the type is not "string".
 // The function panics when a schema has a non-primitive type.
 func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
-	for _, typ := range schema.Value.Type.Slice() {
+	typs := schema.Value.Type.Slice()
+	constrainedTypeless := len(typs) == 0 && (schema.Value.Const != nil || len(schema.Value.Enum) > 0)
+	if constrainedTypeless {
+		// A typeless schema constrained by `const`/`enum` types the value
+		// on its own (the raw string must still be parsed so that a
+		// numeric/boolean constant is compared to the same Go type).
+		if t := constraintPrimitiveType(schema); t != "" {
+			typs = []string{t}
+		}
+	}
+	for _, typ := range typs {
 		if raw == "" && typ != openapi3.TypeString {
 			return nil, nil
 		}
@@ -1240,7 +1258,46 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 			return
 		}
 	}
+	if constrainedTypeless {
+		// Values of mixed kinds cannot be parsed to a single primitive
+		// type; keep the raw string and let schema validation decide.
+		return raw, nil
+	}
 	return
+}
+
+// constraintPrimitiveType returns the primitive type implied by the
+// `const`/`enum` values of a typeless schema, or "" when that does not
+// resolve to a single primitive type (mixed kinds, nested values).
+func constraintPrimitiveType(schema *openapi3.SchemaRef) string {
+	var values []any
+	if schema.Value.Const != nil {
+		values = append(values, schema.Value.Const)
+	}
+	values = append(values, schema.Value.Enum...)
+	if len(values) == 0 {
+		return ""
+	}
+	typ := ""
+	for _, value := range values {
+		var t string
+		switch value.(type) {
+		case bool:
+			t = openapi3.TypeBoolean
+		case float64, float32, int, int32, int64:
+			t = openapi3.TypeNumber
+		case string:
+			t = openapi3.TypeString
+		default:
+			return ""
+		}
+		if typ == "" {
+			typ = t
+		} else if typ != t {
+			return ""
+		}
+	}
+	return typ
 }
 
 func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any, error) {
