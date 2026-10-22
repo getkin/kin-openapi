@@ -1245,10 +1245,10 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 	if constrainedTypeless {
 		// A typeless schema constrained by `const`/`enum` types the value
 		// on its own (the raw string must still be parsed so that a
-		// numeric/boolean constant is compared to the same Go type).
-		if t := constraintPrimitiveType(schema); t != "" {
-			typs = []string{t}
-		}
+		// numeric/boolean constant is compared to the same Go type, see
+		// #1367). Its accept set may mix kinds, so decode with a slice of
+		// types, one per present member kind.
+		typs = constraintTypes(schema)
 	}
 	for _, typ := range typs {
 		if raw == "" && typ != openapi3.TypeString {
@@ -1259,45 +1259,57 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 		}
 	}
 	if constrainedTypeless {
-		// Values of mixed kinds cannot be parsed to a single primitive
-		// type; keep the raw string and let schema validation decide.
+		// No member kind parses a raw string (only array/object members
+		// are present); keep the raw string and let schema validation
+		// decide.
 		return raw, nil
 	}
 	return
 }
 
-// constraintPrimitiveType returns the primitive type implied by the
-// `const`/`enum` values of a typeless schema, or "" when that does not
-// resolve to a single primitive type (mixed kinds, nested values).
-func constraintPrimitiveType(schema *openapi3.SchemaRef) string {
+// constraintTypes returns the types implied by the `const`/`enum` values
+// of a typeless schema, in a fixed priority order (boolean before number
+// before string, so that a numeric raw string is not shadowed by the
+// string case, and string last, so that `"42"` in
+// `enum: [42, "42", [42]]` does not hide `42`), or an empty slice when
+// the schema has no such values.
+func constraintTypes(schema *openapi3.SchemaRef) []string {
 	var values []any
 	if schema.Value.Const != nil {
 		values = append(values, schema.Value.Const)
 	}
 	values = append(values, schema.Value.Enum...)
 	if len(values) == 0 {
-		return ""
+		return nil
 	}
-	typ := ""
+	present := make(map[string]bool, len(values))
 	for _, value := range values {
-		var t string
 		switch value.(type) {
 		case bool:
-			t = openapi3.TypeBoolean
+			present[openapi3.TypeBoolean] = true
 		case float64, float32, int, int32, int64:
-			t = openapi3.TypeNumber
+			present[openapi3.TypeNumber] = true
 		case string:
-			t = openapi3.TypeString
-		default:
-			return ""
-		}
-		if typ == "" {
-			typ = t
-		} else if typ != t {
-			return ""
+			present[openapi3.TypeString] = true
+		case []any:
+			present[openapi3.TypeArray] = true
+		case map[string]any:
+			present[openapi3.TypeObject] = true
 		}
 	}
-	return typ
+	typs := make([]string, 0, len(present))
+	for _, typ := range []string{
+		openapi3.TypeBoolean,
+		openapi3.TypeNumber,
+		openapi3.TypeString,
+		openapi3.TypeArray,
+		openapi3.TypeObject,
+	} {
+		if present[typ] {
+			typs = append(typs, typ)
+		}
+	}
+	return typs
 }
 
 func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any, error) {
