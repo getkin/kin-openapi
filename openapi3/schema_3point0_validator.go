@@ -50,7 +50,25 @@ func (schema *Schema) visitChildJSON(settings *schemaValidationSettings, value a
 	var start int
 	start, settings.visitedBase = settings.visitedBase, len(settings.visitedSchemas)
 	defer func() { settings.visitedBase = start }()
-	return schema.visitJSON(settings, value)
+	key, memoize := settings.visitKeyOf(schema, value)
+	if memoize {
+		if fits, seen := settings.visited[key]; seen {
+			if fits {
+				return nil
+			}
+			if settings.failfast {
+				return errSchema
+			}
+		}
+	}
+	err := schema.visitJSON(settings, value)
+	if memoize {
+		if settings.visited == nil {
+			settings.visited = make(map[visitKey]bool)
+		}
+		settings.visited[key] = err == nil
+	}
+	return err
 }
 
 func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (err error) {
@@ -238,6 +256,8 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 		if v == nil {
 			return newUnresolvedRef(ref.Ref, ref.Origin)
 		}
+		settings.inSubschema++
+		defer func() { settings.inSubschema-- }()
 		if err := v.visitJSON(settings, value); err == nil {
 			if settings.failfast {
 				return errSchema
@@ -288,6 +308,10 @@ func (schema *Schema) resolveDiscriminatorRef(settings *schemaValidationSettings
 }
 
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
+	if len(schema.OneOf) > 0 || len(schema.AnyOf) > 0 || len(schema.AllOf) > 0 {
+		settings.inSubschema++
+		defer func() { settings.inSubschema-- }()
+	}
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
 		discriminatorRef, err := schema.resolveDiscriminatorRef(settings, value)
@@ -312,7 +336,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			}
 
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
-			if settings.asreq || settings.asrep {
+			if settings.setsDefaults() {
 				tempValue = deepCopyJSONValue(value)
 			}
 
@@ -342,7 +366,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		}
 
 		// run again to inject default value that defined in matched oneOf schema
-		if settings.asreq || settings.asrep {
+		if settings.setsDefaults() {
 			_ = v[matchedOneOfIndices[0]].Value.visitJSON(settings, value)
 		}
 		visitedOneOf = true
@@ -370,10 +394,10 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			}
 
 			// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
-			if settings.asreq || settings.asrep {
+			if settings.setsDefaults() {
 				tempValue = deepCopyJSONValue(value)
 			}
-			if err := v.visitJSON(settings, tempValue); err == nil {
+			if err := v.visitAnyOfBranch(settings, tempValue); err == nil {
 				ok = true
 				matchedAnyOfIdx = idx
 				break
@@ -388,7 +412,10 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				withReason(`doesn't match any schema from "anyOf"`), false
 		}
 
-		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
+		// run again to inject default value that defined in matched anyOf schema
+		if settings.setsDefaults() {
+			_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
+		}
 		visitedAnyOf = true
 	}
 
@@ -415,6 +442,19 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 
 	run = !((visitedOneOf || visitedAnyOf || visitedAllOf) && value == nil)
 	return
+}
+
+// visitAnyOfBranch reports whether value fits one "anyOf" subschema. The
+// errors of a subschema that does not fit are not reported, so unless
+// defaults are being set, where the subschema runs as it always did, it stops
+// at the first one.
+func (schema *Schema) visitAnyOfBranch(settings *schemaValidationSettings, value any) error {
+	if settings.failfast || settings.setsDefaults() {
+		return schema.visitJSON(settings, value)
+	}
+	settings.failfast = true
+	defer func() { settings.failfast = false }()
+	return schema.visitJSON(settings, value)
 }
 
 // The value is not considered in visitJSONNull because according to the spec
