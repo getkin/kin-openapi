@@ -59,9 +59,9 @@ func TestObjectUnsupportedMemberErrorsInNameOrder(t *testing.T) {
 		var me openapi3.MultiError
 		require.ErrorAs(t, err, &me)
 		require.Len(t, me, 3)
-		require.Contains(t, me[0].Error(), `"a"`)
-		require.Contains(t, me[1].Error(), `"/b"`)
-		require.Contains(t, me[2].Error(), `"c"`)
+		require.ErrorContains(t, me[0], `"a"`)
+		require.ErrorContains(t, me[1], `"/b"`)
+		require.ErrorContains(t, me[2], `"c"`)
 	}
 }
 
