@@ -112,13 +112,7 @@ func (server *Server) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "url")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "variables")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "url", "description", "variables")
 	*server = Server(x)
 	return nil
 }
@@ -320,13 +314,7 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "enum")
-	delete(x.Extensions, "default")
-	delete(x.Extensions, "description")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "enum", "default", "description")
 	*serverVariable = ServerVariable(x)
 	return nil
 }

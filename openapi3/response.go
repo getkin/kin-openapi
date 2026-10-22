@@ -172,14 +172,7 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "headers")
-	delete(x.Extensions, "content")
-	delete(x.Extensions, "links")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "description", "headers", "content", "links")
 	*response = Response(x)
 	return nil
 }

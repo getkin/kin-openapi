@@ -160,26 +160,24 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "$ref")
-	delete(x.Extensions, "summary")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "connect")
-	delete(x.Extensions, "delete")
-	delete(x.Extensions, "get")
-	delete(x.Extensions, "head")
-	delete(x.Extensions, "options")
-	delete(x.Extensions, "patch")
-	delete(x.Extensions, "post")
-	delete(x.Extensions, "put")
-	delete(x.Extensions, "trace")
-	delete(x.Extensions, "query")
-	delete(x.Extensions, "additionalOperations")
-	delete(x.Extensions, "servers")
-	delete(x.Extensions, "parameters")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data,
+		"$ref",
+		"summary",
+		"description",
+		"connect",
+		"delete",
+		"get",
+		"head",
+		"options",
+		"patch",
+		"post",
+		"put",
+		"trace",
+		"query",
+		"additionalOperations",
+		"servers",
+		"parameters",
+	)
 	*pathItem = PathItem(x)
 	return nil
 }

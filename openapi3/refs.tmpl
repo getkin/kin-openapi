@@ -123,7 +123,7 @@ func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets {{ $type.Name }}Ref to a copy of data.
 func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalRef(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
 		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")

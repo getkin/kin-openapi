@@ -212,24 +212,22 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
+	x.Extensions = unmarshalExtensions(data,
 
-	delete(x.Extensions, "name")
-	delete(x.Extensions, "in")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "style")
-	delete(x.Extensions, "explode")
-	delete(x.Extensions, "allowEmptyValue")
-	delete(x.Extensions, "allowReserved")
-	delete(x.Extensions, "deprecated")
-	delete(x.Extensions, "required")
-	delete(x.Extensions, "schema")
-	delete(x.Extensions, "example")
-	delete(x.Extensions, "examples")
-	delete(x.Extensions, "content")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+		"name",
+		"in",
+		"description",
+		"style",
+		"explode",
+		"allowEmptyValue",
+		"allowReserved",
+		"deprecated",
+		"required",
+		"schema",
+		"example",
+		"examples",
+		"content",
+	)
 
 	*parameter = Parameter(x)
 	return nil
