@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"reflect"
 	"sync"
 )
 
@@ -41,6 +42,44 @@ type schemaValidationSettings struct {
 	// Only visitedSchemas[visitedSchemasStart:] were visited for the current value.
 	visitedSchemas []*Schema
 	visitedBase    int
+
+	// visited records whether a nested object or array fits a schema, so
+	// that a value which several "anyOf", "oneOf" or "allOf" subschemas lead
+	// to again is checked once. A recursive schema whose subschemas each
+	// recurse otherwise costs time exponential in the value's depth.
+	visited map[visitKey]bool
+	// inSubschema counts the "allOf", "anyOf", "oneOf" and "not" subschemas
+	// being visited: only through one can a value meet the same schema
+	// twice, so results are recorded only then.
+	inSubschema int
+}
+
+// visitKey is a schema and the identity of an object or array: within one
+// validation the value does not change, unless defaults are being set.
+type visitKey struct {
+	schema *Schema
+	value  uintptr
+	n      int
+}
+
+// visitKeyOf is the key value's result against schema is recorded under,
+// if it is recorded.
+func (s *schemaValidationSettings) visitKeyOf(schema *Schema, value any) (visitKey, bool) {
+	if s.inSubschema == 0 || s.setsDefaults() {
+		return visitKey{}, false
+	}
+	switch v := value.(type) {
+	case map[string]any:
+		return visitKey{schema: schema, value: reflect.ValueOf(v).Pointer()}, true
+	case []any:
+		return visitKey{schema: schema, value: reflect.ValueOf(v).Pointer(), n: len(v)}, true
+	}
+	return visitKey{}, false
+}
+
+// setsDefaults is whether the visit writes defaults into the value.
+func (s *schemaValidationSettings) setsDefaults() bool {
+	return s.defaultsSet != nil && (s.asreq || s.asrep)
 }
 
 // FailFast returns schema validation errors quicker.
