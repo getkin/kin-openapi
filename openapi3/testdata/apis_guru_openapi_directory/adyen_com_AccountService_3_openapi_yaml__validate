@@ -1,6 +1,9 @@
 invalid paths: invalid path /closeAccount: invalid operation POST: invalid example: example generic: validation failed due to: error at "/errorCode": at '/errorCode': got number, want string
 Schema:
-  null
+  {
+    "description": "The error code mapped to the error message.",
+    "type": "string"
+  }
 
 Value:
   10003
