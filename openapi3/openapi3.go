@@ -163,20 +163,18 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "openapi")
-	delete(x.Extensions, "components")
-	delete(x.Extensions, "info")
-	delete(x.Extensions, "paths")
-	delete(x.Extensions, "security")
-	delete(x.Extensions, "servers")
-	delete(x.Extensions, "tags")
-	delete(x.Extensions, "externalDocs")
-	delete(x.Extensions, "webhooks")
-	delete(x.Extensions, "jsonSchemaDialect")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data,
+		"openapi",
+		"components",
+		"info",
+		"paths",
+		"security",
+		"servers",
+		"tags",
+		"externalDocs",
+		"webhooks",
+		"jsonSchemaDialect",
+	)
 	*doc = T(x)
 	return nil
 }

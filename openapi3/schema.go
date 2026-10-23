@@ -769,6 +769,9 @@ func (schema Schema) MarshalYAML() (any, error) {
 // and its value if so. Only a bare `true` or `false` qualifies; an object, a
 // string or anything else is an ordinary schema for the caller to decode.
 func unmarshalBooleanSchema(data []byte) (bool, bool) {
+	if i := skipJSONSpace(data, 0); i >= len(data) || data[i] != 't' && data[i] != 'f' {
+		return false, false
+	}
 	var boolean bool
 	if err := unmarshalJSON(data, &boolean); err != nil {
 		return false, false
@@ -792,87 +795,83 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
+	x.Extensions = unmarshalExtensions(data,
+		"oneOf",
+		"anyOf",
+		"allOf",
+		"not",
+		"type",
+		"title",
+		"format",
+		"description",
+		"enum",
+		"default",
+		"example",
+		"externalDocs",
 
-	delete(x.Extensions, "oneOf")
-	delete(x.Extensions, "anyOf")
-	delete(x.Extensions, "allOf")
-	delete(x.Extensions, "not")
-	delete(x.Extensions, "type")
-	delete(x.Extensions, "title")
-	delete(x.Extensions, "format")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "enum")
-	delete(x.Extensions, "default")
-	delete(x.Extensions, "example")
-	delete(x.Extensions, "externalDocs")
+		// Array-related
+		"uniqueItems",
+		// Number-related
+		"exclusiveMinimum",
+		"exclusiveMaximum",
+		// Properties
+		"nullable",
+		"readOnly",
+		"writeOnly",
+		"allowEmptyValue",
+		"deprecated",
+		"xml",
 
-	// Array-related
-	delete(x.Extensions, "uniqueItems")
-	// Number-related
-	delete(x.Extensions, "exclusiveMinimum")
-	delete(x.Extensions, "exclusiveMaximum")
-	// Properties
-	delete(x.Extensions, "nullable")
-	delete(x.Extensions, "readOnly")
-	delete(x.Extensions, "writeOnly")
-	delete(x.Extensions, "allowEmptyValue")
-	delete(x.Extensions, "deprecated")
-	delete(x.Extensions, "xml")
+		// Number
+		"minimum",
+		"maximum",
+		"multipleOf",
 
-	// Number
-	delete(x.Extensions, "minimum")
-	delete(x.Extensions, "maximum")
-	delete(x.Extensions, "multipleOf")
+		// String
+		"minLength",
+		"maxLength",
+		"pattern",
 
-	// String
-	delete(x.Extensions, "minLength")
-	delete(x.Extensions, "maxLength")
-	delete(x.Extensions, "pattern")
+		// Array
+		"minItems",
+		"maxItems",
+		"items",
 
-	// Array
-	delete(x.Extensions, "minItems")
-	delete(x.Extensions, "maxItems")
-	delete(x.Extensions, "items")
+		// Object
+		"required",
+		"properties",
+		"minProperties",
+		"maxProperties",
+		"additionalProperties",
+		"discriminator",
 
-	// Object
-	delete(x.Extensions, "required")
-	delete(x.Extensions, "properties")
-	delete(x.Extensions, "minProperties")
-	delete(x.Extensions, "maxProperties")
-	delete(x.Extensions, "additionalProperties")
-	delete(x.Extensions, "discriminator")
-
-	// OpenAPI 3.1 / JSON Schema 2020-12 fields
-	delete(x.Extensions, "const")
-	delete(x.Extensions, "examples")
-	delete(x.Extensions, "prefixItems")
-	delete(x.Extensions, "contains")
-	delete(x.Extensions, "minContains")
-	delete(x.Extensions, "maxContains")
-	delete(x.Extensions, "patternProperties")
-	delete(x.Extensions, "dependentSchemas")
-	delete(x.Extensions, "propertyNames")
-	delete(x.Extensions, "unevaluatedItems")
-	delete(x.Extensions, "unevaluatedProperties")
-	delete(x.Extensions, "if")
-	delete(x.Extensions, "then")
-	delete(x.Extensions, "else")
-	delete(x.Extensions, "dependentRequired")
-	delete(x.Extensions, "$defs")
-	delete(x.Extensions, "$schema")
-	delete(x.Extensions, "$comment")
-	delete(x.Extensions, "$id")
-	delete(x.Extensions, "$anchor")
-	delete(x.Extensions, "$dynamicRef")
-	delete(x.Extensions, "$dynamicAnchor")
-	delete(x.Extensions, "contentMediaType")
-	delete(x.Extensions, "contentEncoding")
-	delete(x.Extensions, "contentSchema")
-
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+		// OpenAPI 3.1 / JSON Schema 2020-12 fields
+		"const",
+		"examples",
+		"prefixItems",
+		"contains",
+		"minContains",
+		"maxContains",
+		"patternProperties",
+		"dependentSchemas",
+		"propertyNames",
+		"unevaluatedItems",
+		"unevaluatedProperties",
+		"if",
+		"then",
+		"else",
+		"dependentRequired",
+		"$defs",
+		"$schema",
+		"$comment",
+		"$id",
+		"$anchor",
+		"$dynamicRef",
+		"$dynamicAnchor",
+		"contentMediaType",
+		"contentEncoding",
+		"contentSchema",
+	)
 
 	*schema = Schema(x)
 	return nil
