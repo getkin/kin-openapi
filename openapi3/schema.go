@@ -1572,6 +1572,12 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 		}
 	}
 
+	// The value of `multipleOf` MUST be strictly greater than 0 (JSON Schema
+	// 2020-12 §6.2.1 for OAS 3.1, draft-04 for OAS 3.0).
+	if x := schema.MultipleOf; x != nil && *x <= 0 {
+		return visited, &SchemaMultipleOfNotPositiveError{MultipleOf: *x, Origin: schema.Origin}
+	}
+
 	// Reject fields that only exist in OAS 3.1 / JSON Schema 2020-12 when the
 	// document is OAS 3.0. Fields explicitly allowed via AllowExtraSiblingFields
 	// are skipped (opt-in escape hatch for 3.0 docs that reference external
