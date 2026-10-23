@@ -911,7 +911,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 	var me MultiError
 
-	if settings.asreq || settings.asrep {
+	if (settings.asreq || settings.asrep) && schema.propertiesNeedVisit(settings) {
 		for _, propName := range componentNames(schema.Properties) {
 			propSchema := schema.Properties[propName]
 			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
@@ -981,61 +981,53 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		additionalProperties = ref.Value
 	}
-	for _, k := range componentNames(value) {
-		v := value[k]
-		if properties != nil {
-			propertyRef := properties[k]
-			if propertyRef != nil {
-				p := propertyRef.Value
-				if p == nil {
-					return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
-				}
-				if err := p.visitChildJSON(settings, v); err != nil {
-					if settings.failfast {
-						return errSchema
-					}
-					err = markSchemaErrorKey(err, k)
-					if !settings.multiError {
-						return err
-					}
-					if v, ok := err.(MultiError); ok {
-						me = append(me, v...)
-						continue
-					}
-					me = append(me, err)
-				}
-				continue
+	// Members are checked in map order, which costs no sort, and the errors
+	// they give are put in order of member name afterwards, which is the
+	// order checking in sorted order gave. Only members that fail are sorted.
+	type memberError struct {
+		key string
+		err error
+	}
+	var failed []memberError
+	for k, v := range value {
+		var err error
+		switch propertyRef := properties[k]; {
+		case propertyRef != nil:
+			p := propertyRef.Value
+			if p == nil {
+				return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
 			}
-		}
-		if allowed := schema.AdditionalProperties.Has; allowed == nil || *allowed {
+			err = p.visitChildJSON(settings, v)
+		case schema.AdditionalProperties.Has == nil || *schema.AdditionalProperties.Has:
 			if additionalProperties != nil {
-				if err := additionalProperties.visitChildJSON(settings, v); err != nil {
-					if settings.failfast {
-						return errSchema
-					}
-					err = markSchemaErrorKey(err, k)
-					if !settings.multiError {
-						return err
-					}
-					if v, ok := err.(MultiError); ok {
-						me = append(me, v...)
-						continue
-					}
-					me = append(me, err)
-				}
+				err = additionalProperties.visitChildJSON(settings, v)
 			}
+		default:
+			if settings.failfast {
+				return errSchema
+			}
+			failed = append(failed, memberError{k, settings.newSchemaError(schema, value).
+				withField("properties").
+				withReason(fmt.Sprintf("property %q is unsupported", k))})
 			continue
 		}
-		if settings.failfast {
-			return errSchema
+		if err != nil {
+			if settings.failfast {
+				return errSchema
+			}
+			failed = append(failed, memberError{k, markSchemaErrorKey(err, k)})
 		}
-		err := settings.newSchemaError(schema, value).
-			withField("properties").
-			withReason(fmt.Sprintf("property %q is unsupported", k))
+	}
+	slices.SortFunc(failed, func(a, b memberError) int { return strings.Compare(a.key, b.key) })
+	for _, f := range failed {
 		if !settings.multiError {
-			return err
+			return f.err
 		}
-		me = append(me, err)
+		if v, ok := f.err.(MultiError); ok {
+			me = append(me, v...)
+			continue
+		}
+		me = append(me, f.err)
 	}
 
 	// "required"
@@ -1186,4 +1178,19 @@ func deepCopyJSONValue(v any) any {
 	default:
 		return v // string, float64, bool, nil — all immutable
 	}
+}
+
+// propertiesNeedVisit says whether visitJSONObject's readOnly, writeOnly and
+// default pass has anything to do for schema, without sorting its names.
+func (schema *Schema) propertiesNeedVisit(settings *schemaValidationSettings) bool {
+	for _, ref := range schema.Properties {
+		p := ref.Value
+		if p == nil ||
+			settings.asreq && p.ReadOnly && !settings.readOnlyValidationDisabled ||
+			settings.asrep && p.WriteOnly && !settings.writeOnlyValidationDisabled ||
+			settings.defaultsSet != nil && p.Default != nil {
+			return true
+		}
+	}
+	return false
 }
