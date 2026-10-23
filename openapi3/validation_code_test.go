@@ -101,6 +101,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.SchemaAdditionalPropertiesBothForms{},
 		&openapi3.SchemaFieldFor31Plus{},
 		&openapi3.SchemaItemsRequired{},
+		&openapi3.SchemaMultipleOfNotPositiveError{},
 		&openapi3.SchemaPatternRegexError{},
 		&openapi3.SchemaReadOnlyWriteOnlyExclusive{},
 		&openapi3.SchemaBooleanFieldsExclusive{},

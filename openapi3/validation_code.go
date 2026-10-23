@@ -150,6 +150,9 @@ func (e *SchemaAdditionalPropertiesBothForms) Code() string {
 func (e *SchemaFieldFor31Plus) Code() string    { return "schema-field-for-3-1-plus" }
 func (e *SchemaItemsRequired) Code() string     { return "schema-items-required" }
 func (e *SchemaPatternRegexError) Code() string { return "schema-pattern-regex-invalid" }
+func (e *SchemaMultipleOfNotPositiveError) Code() string {
+	return "schema-multiple-of-not-positive"
+}
 func (e *SchemaReadOnlyWriteOnlyExclusive) Code() string {
 	return "read-only-write-only-mutually-exclusive"
 }
@@ -273,6 +276,7 @@ var validationErrorCodes = []string{
 	"responses-required",
 	"schema-field-for-3-1-plus",
 	"schema-items-required",
+	"schema-multiple-of-not-positive",
 	"schema-pattern-regex-invalid",
 	"schema-type-unsupported",
 	"security-requirement-scheme-undefined",

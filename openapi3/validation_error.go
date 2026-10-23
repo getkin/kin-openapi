@@ -653,6 +653,21 @@ func (e *DuplicateRequiredFieldError) Error() string {
 	return fmt.Sprintf("duplicate field %q in required", e.Field)
 }
 
+// SchemaMultipleOfNotPositiveError clusters "multipleOf must be greater than
+// zero" failures. The value of a schema's `multipleOf` MUST be strictly greater
+// than 0 (JSON Schema 2020-12 §6.2.1 for OpenAPI 3.1, draft-04 for OpenAPI 3.0).
+type SchemaMultipleOfNotPositiveError struct {
+	// MultipleOf is the rejected `multipleOf` value.
+	MultipleOf float64
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+
+func (e *SchemaMultipleOfNotPositiveError) Error() string {
+	return fmt.Sprintf("multipleOf must be greater than zero, got %g", e.MultipleOf)
+}
+
 // DuplicateTagError clusters "more than one tag has name X" failures. Each tag
 // name in the document-root `tags` list MUST be unique (OpenAPI Object).
 type DuplicateTagError struct {
