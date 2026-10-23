@@ -29,7 +29,7 @@ func newUnderscorer() *strings.Replacer {
 	return strings.NewReplacer(chars...)
 }
 
-func isOpenAPIVersion(t *testing.T, path, str string) bool {
+func isOpenAPIVersion(t testing.TB, path, str string) bool {
 	file, err := os.Open(path)
 	require.NoError(t, err)
 	defer file.Close()
@@ -77,6 +77,18 @@ func golden(t *testing.T, e error, shortName, task string) {
 	}
 }
 
+// apisGuruDirectory returns the commit of APIs Guru's documents to use, and
+// the directories they are downloaded to.
+func apisGuruDirectory() (commit, dirName, targetDir string) {
+	commit = os.Getenv("APISGURU_COMMIT")
+	if commit == "" {
+		commit = "f7207cf0a5c56081d275ebae4cf615249323385d" // On 2026-04-19
+	}
+	dirName = "APIs-guru-openapi-directory-" + commit[0:7]
+	targetDir = filepath.Join("testdata", dirName)
+	return
+}
+
 func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping APIs Guru's large sets of documents")
@@ -86,12 +98,7 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 	}
 	t.Parallel()
 
-	commit := os.Getenv("APISGURU_COMMIT")
-	if commit == "" {
-		commit = "f7207cf0a5c56081d275ebae4cf615249323385d" // On 2026-04-19
-	}
-	dirName := "APIs-guru-openapi-directory-" + commit[0:7]
-	targetDir := filepath.Join("testdata", dirName)
+	commit, dirName, targetDir := apisGuruDirectory()
 
 	if _, err := os.Stat(targetDir); errors.Is(err, os.ErrNotExist) {
 		req, err := http.NewRequestWithContext(t.Context(), "GET", "https://github.com/APIs-guru/openapi-directory/tarball/"+commit, nil)
@@ -208,6 +215,34 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 			}
 		})
 	}
+}
+
+// BenchmarkV3ApisGuruOpenapiDirectory loads every OpenAPI 3 document that
+// TestV3ApisGuruOpenapiDirectory downloads, and skips if it has not run.
+func BenchmarkV3ApisGuruOpenapiDirectory(b *testing.B) {
+	_, dirName, targetDir := apisGuruDirectory()
+	root := filepath.Join(targetDir, dirName, "APIs")
+	if _, err := os.Stat(root); err != nil {
+		b.Skip("run TestV3ApisGuruOpenapiDirectory first to download APIs Guru's documents")
+	}
+
+	var paths []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() && isOpenAPIVersion(b, path, "openapi: 3") {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	require.NoError(b, err)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		for _, path := range paths {
+			loader := openapi3.NewLoader()
+			_, _ = loader.LoadFromFile(path)
+		}
+	}
+	b.ReportMetric(float64(len(paths)), "documents")
 }
 
 func disabled(shortName string) bool {

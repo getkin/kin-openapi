@@ -41,6 +41,30 @@ func TestJSONMembersNotAnObject(t *testing.T) {
 	}
 }
 
+func TestRefNameIsCaseSensitive(t *testing.T) {
+	t.Parallel()
+
+	doc, err := NewLoader().LoadFromData([]byte(`{
+		"openapi": "3.0.3",
+		"info": {"title": "t", "version": "1"},
+		"paths": {},
+		"components": {
+			"schemas": {
+				"A": {"$REF": "#/components/schemas/B"},
+				"B": {"type": "string"}
+			},
+			"parameters": {
+				"P": {"$REF": "#/components/parameters/Q", "name": "p", "in": "query"},
+				"Q": {"name": "q", "in": "query"}
+			}
+		}
+	}`))
+	require.NoError(t, err)
+	require.Empty(t, doc.Components.Schemas["A"].Ref)
+	require.Empty(t, doc.Components.Parameters["P"].Ref)
+	require.Equal(t, "p", doc.Components.Parameters["P"].Value.Name)
+}
+
 func BenchmarkLoadFromData(b *testing.B) {
 	data := benchmarkDocument(300)
 	b.ReportAllocs()

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -37,13 +36,13 @@ func unmarshalExtensions(data []byte, known ...string) map[string]any {
 	return extensions
 }
 
-// unmarshalRef decodes data into ref if data has a member that could be
-// "$ref". Every component is checked for being a reference before it is
-// decoded, and decoding one that is not into a Ref still reads all of it.
+// unmarshalRef decodes data into ref if data has a "$ref" member. Every
+// component is checked for being a reference before it is decoded, and
+// decoding one that is not into a Ref still reads all of it.
 func unmarshalRef(data []byte, ref *Ref) error {
 	found := false
 	_ = jsonMembers(data, func(name string, _ []byte) error {
-		if strings.EqualFold(name, "$ref") {
+		if name == "$ref" {
 			found = true
 			return errFound
 		}
