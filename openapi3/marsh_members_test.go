@@ -44,7 +44,8 @@ func TestJSONMembersNotAnObject(t *testing.T) {
 func TestRefNameIsCaseSensitive(t *testing.T) {
 	t.Parallel()
 
-	doc, err := NewLoader().LoadFromData([]byte(`{
+	loader := NewLoader()
+	doc, err := loader.LoadFromData([]byte(`{
 		"openapi": "3.0.3",
 		"info": {"title": "t", "version": "1"},
 		"paths": {},
