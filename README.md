@@ -329,6 +329,9 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ## CHANGELOG: Sub-v1 breaking API changes
 
+### v0.153.0
+* `(*openapi3.Schema).Validate(..)` (hence `(*openapi3.T).Validate(..)`) now rejects a `multipleOf` of zero or less (`openapi3.SchemaMultipleOfNotPositiveError`), as JSON Schema requires it to be strictly greater than 0. Such a schema used to pass validation and then reject every value with `multipleOf must be greater than zero`.
+
 ### v0.152.0
 * JSON keys of OpenAPI documents only fill the field of the same case (`json:",case:strict"`) when `encoding/json` is implemented with `encoding/json/v2` (by default from Go 1.27, and on Go 1.25 and 1.26 with `GOEXPERIMENT=jsonv2`): a key such as `"Components"` (not `"components"`) is kept as an extension instead of filling `openapi3.T.Components`. Other builds still match keys case-insensitively, as `encoding/json` v1 does.
 * On Go 1.27+, unless built with `GOEXPERIMENT=nojsonv2`, `openapi2` and `openapi3` decode documents with `encoding/json/v2`: objects with duplicate member names and strings with invalid UTF-8 are rejected, and decoding errors are worded differently and locate the faulty value from the root of the document, keys of paths, responses and callbacks included (e.g. `.paths.~1pets.get.responses.200.description`). On these builds `openapi2.Responses`, `openapi3.Callback`, `openapi3.Paths` and `openapi3.Responses` also implement `encoding/json/v2.UnmarshalerFrom`.
@@ -345,7 +348,6 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * The keywords next to a schema's `$ref` in a file of bare schemas, which has no `openapi` field, now follow the version of the document that refers to the file: they were ignored, as in OpenAPI 3.0, even from an OpenAPI 3.1 document.
 * In OpenAPI 3.1+ documents, loading now fails when the keywords next to a schema's `$ref` do not form a schema, such as `allOf: {type: integer}`, instead of silently ignoring them all.
 * The errors raised by the keywords next to an OpenAPI 3.1 schema's `$ref` now carry their `Origin`.
-* `(*openapi3.Schema).Validate(..)` (hence `(*openapi3.T).Validate(..)`) now rejects a `multipleOf` of zero or less (`openapi3.SchemaMultipleOfNotPositiveError`), as JSON Schema requires it to be strictly greater than 0. Such a schema used to pass validation and then reject every value with `multipleOf must be greater than zero`.
 
 ### v0.151.0
 * Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
