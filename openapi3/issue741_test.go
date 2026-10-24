@@ -29,11 +29,14 @@ func TestIssue741(t *testing.T) {
 		ts.URL,
 	)
 
+	readFromURI := openapi3.URIMapCache(openapi3.ReadFromHTTP(ts.Client()))
+
 	var wg sync.WaitGroup
 	for range 10 {
 		wg.Go(func() {
 			loader := openapi3.NewLoader()
 			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = readFromURI
 			doc, err := loader.LoadFromData(rootSpec)
 			require.NoError(t, err)
 			require.NotNil(t, doc)

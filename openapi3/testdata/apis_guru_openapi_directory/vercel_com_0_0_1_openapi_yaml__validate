@@ -1,6 +1,19 @@
 invalid paths: invalid path /v1/teams/{teamId}/members/{uid}: invalid operation PATCH: invalid default: validation failed due to: at '': got array, want string
 Schema:
-  null
+  {
+    "default": [
+      "MEMBER",
+      "VIEWER"
+    ],
+    "description": "The role in the team of the member.",
+    "examples": [
+      [
+        "MEMBER",
+        "VIEWER"
+      ]
+    ],
+    "type": "string"
+  }
 
 Value:
   [
