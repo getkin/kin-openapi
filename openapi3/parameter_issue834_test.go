@@ -9,6 +9,8 @@ import (
 )
 
 func TestPathItemParametersAreValidated(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: "3.0.0"
 info:
@@ -43,6 +45,8 @@ paths:
 }
 
 func TestParameterMultipleContentEntries(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: "3.0.0"
 info:
@@ -82,6 +86,8 @@ paths:
 }
 
 func TestParameterEmptyContent(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: "3.0.0"
 info:

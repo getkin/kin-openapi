@@ -85,7 +85,6 @@ func Example_jsonSchema2020Validator() {
 
 // Example demonstrates type arrays with null support
 func Example_typeArrayWithNull() {
-
 	schema := &openapi3.Schema{
 		Type: &openapi3.Types{"string", "null"},
 	}
@@ -111,7 +110,6 @@ func Example_typeArrayWithNull() {
 
 // Example demonstrates the const keyword
 func Example_constKeyword() {
-
 	schema := &openapi3.Schema{
 		Const: "production",
 	}
@@ -131,7 +129,6 @@ func Example_constKeyword() {
 
 // Example demonstrates the examples field
 func Example_examplesField() {
-
 	schema := &openapi3.Schema{
 		Type: &openapi3.Types{"string"},
 		// Examples array - OpenAPI 3.1 feature
@@ -153,30 +150,36 @@ func Example_examplesField() {
 
 // Example demonstrates backward compatibility with nullable
 func Example_nullableBackwardCompatibility() {
-
 	// OpenAPI 3.0 style nullable
 	schema := &openapi3.Schema{
 		Type:     &openapi3.Types{"string"},
 		Nullable: true,
 	}
 
-	// Automatically converted to type array ["string", "null"]
-	if err := schema.VisitJSON("hello", openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("string accepted")
+	// The built-in (OpenAPI 3.0) validator honours nullable
+	if err := schema.VisitJSON(nil); err == nil {
+		fmt.Println("3.0: null accepted")
 	}
 
+	// Since OpenAPI 3.1 nullable is an unknown keyword, ignored by JSON Schema 2020-12
+	if err := schema.VisitJSON(nil, openapi3.EnableJSONSchema2020()); err != nil {
+		fmt.Println("3.1: null rejected")
+	}
+
+	// The OpenAPI 3.1 way is a type array including "null"
+	schema = &openapi3.Schema{Type: &openapi3.Types{"string", "null"}}
 	if err := schema.VisitJSON(nil, openapi3.EnableJSONSchema2020()); err == nil {
-		fmt.Println("null accepted")
+		fmt.Println("3.1: null accepted by type array")
 	}
 
 	// Output:
-	// string accepted
-	// null accepted
+	// 3.0: null accepted
+	// 3.1: null rejected
+	// 3.1: null accepted by type array
 }
 
 // Example demonstrates complex nested schemas
 func Example_complexNestedSchema() {
-
 	min := 0.0
 	max := 100.0
 

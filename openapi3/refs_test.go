@@ -12,8 +12,14 @@ import (
 )
 
 func TestCallbackRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.CallbackRef{}
 	err := json.Unmarshal(data, &ref)
@@ -28,25 +34,34 @@ func TestCallbackRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Callback{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -58,8 +73,14 @@ func TestCallbackRef_Extensions(t *testing.T) {
 }
 
 func TestExampleRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.ExampleRef{}
 	err := json.Unmarshal(data, &ref)
@@ -74,25 +95,34 @@ func TestExampleRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Example{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -104,8 +134,14 @@ func TestExampleRef_Extensions(t *testing.T) {
 }
 
 func TestHeaderRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.HeaderRef{}
 	err := json.Unmarshal(data, &ref)
@@ -120,19 +156,27 @@ func TestHeaderRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
@@ -142,8 +186,14 @@ func TestHeaderRef_Extensions(t *testing.T) {
 }
 
 func TestLinkRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.LinkRef{}
 	err := json.Unmarshal(data, &ref)
@@ -158,25 +208,34 @@ func TestLinkRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Link{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -188,8 +247,14 @@ func TestLinkRef_Extensions(t *testing.T) {
 }
 
 func TestParameterRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.ParameterRef{}
 	err := json.Unmarshal(data, &ref)
@@ -204,25 +269,34 @@ func TestParameterRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Parameter{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -234,8 +308,14 @@ func TestParameterRef_Extensions(t *testing.T) {
 }
 
 func TestRequestBodyRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.RequestBodyRef{}
 	err := json.Unmarshal(data, &ref)
@@ -250,25 +330,34 @@ func TestRequestBodyRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.RequestBody{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -280,8 +369,14 @@ func TestRequestBodyRef_Extensions(t *testing.T) {
 }
 
 func TestResponseRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.ResponseRef{}
 	err := json.Unmarshal(data, &ref)
@@ -296,25 +391,34 @@ func TestResponseRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Response{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -326,8 +430,14 @@ func TestResponseRef_Extensions(t *testing.T) {
 }
 
 func TestSchemaRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.SchemaRef{}
 	err := json.Unmarshal(data, &ref)
@@ -342,25 +452,34 @@ func TestSchemaRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.Schema{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 
@@ -372,8 +491,14 @@ func TestSchemaRef_Extensions(t *testing.T) {
 }
 
 func TestSecuritySchemeRef_Extensions(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`{"$ref":"#/components/schemas/Pet","something":"integer","x-order":1}`)
-	expectMarshalJson := []byte(`{"$ref":"#/components/schemas/Pet","x-order":1}`)
+	// Marshaling is a round trip. `something` is not an extension and Validate
+	// ignores it below, but it is still written back out: a document that comes
+	// back missing a field it was written with means something different, and
+	// nothing would report the change.
+	expectMarshalJson := data
 
 	ref := openapi3.SecuritySchemeRef{}
 	err := json.Unmarshal(data, &ref)
@@ -388,25 +513,34 @@ func TestSecuritySchemeRef_Extensions(t *testing.T) {
 
 	// validation
 	err = ref.Validate(t.Context())
-	require.EqualError(t, err, "extra sibling fields: [something]")
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
-	require.EqualError(t, err, "extra sibling fields: [something x-order]")
+	require.EqualError(t, err, "extra sibling fields: [x-order]")
 
 	err = ref.Validate(t.Context(), openapi3.AllowExtraSiblingFields("something"))
 	assert.ErrorContains(t, err, "found unresolved ref") // expected since value not defined
+
+	err = ref.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef(), openapi3.AllowExtraSiblingFields("x-order"))
+	require.ErrorContains(t, err, "found unresolved ref")
+
+	// OpenAPI 3.1 Reference Objects ignore unknown siblings too; Schema
+	// Objects allow sibling keywords under JSON Schema semantics.
+	err = ref.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
+	require.ErrorContains(t, err, "found unresolved ref")
 
 	// Verify round trip JSON
 	// Compare as string to make error message more readable if different
 	outJson, err := ref.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, string(outJson), string(expectMarshalJson), "MarshalJSON output is not the same as input data")
+	assert.Equal(t, string(expectMarshalJson), string(outJson), "MarshalJSON output is not the same as input data")
 
 	// non-extension not json lookable
 	_, err = ref.JSONLookup("something")
 	assert.Error(t, err)
 
 	t.Run("extentions in value", func(t *testing.T) {
+		t.Parallel()
 		ref.Value = &openapi3.SecurityScheme{Extensions: map[string]any{}}
 		ref.Value.Extensions["x-order"] = 2.0
 

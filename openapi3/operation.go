@@ -16,38 +16,38 @@ type Operation struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
-	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
 
 	// Optional short summary.
-	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Summary string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
 
 	// Optional description. Should use CommonMark syntax.
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Description string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	// Optional operation ID.
-	OperationID string `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	OperationID string `json:"operationId,omitempty,case:strict" yaml:"operationId,omitempty"`
 
 	// Optional parameters.
-	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Parameters Parameters `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
 
 	// Optional body parameter.
-	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	RequestBody *RequestBodyRef `json:"requestBody,omitempty,case:strict" yaml:"requestBody,omitempty"`
 
 	// Responses are required in OpenAPI 3.0 and optional in OpenAPI 3.1 and later.
-	Responses *Responses `json:"responses" yaml:"responses"`
+	Responses *Responses `json:"responses,case:strict" yaml:"responses"`
 
 	// Optional callbacks
-	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Callbacks Callbacks `json:"callbacks,omitempty,case:strict" yaml:"callbacks,omitempty"`
 
-	Deprecated bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Deprecated bool `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
 
 	// Optional security requirements that overrides top-level security.
-	Security *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Security *SecurityRequirements `json:"security,omitempty,case:strict" yaml:"security,omitempty"`
 
 	// Optional servers that overrides top-level servers.
-	Servers *Servers `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Servers *Servers `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
 
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Operation)(nil)
@@ -112,11 +112,11 @@ func (operation Operation) MarshalYAML() (any, error) {
 func (operation *Operation) UnmarshalJSON(data []byte) error {
 	type OperationBis Operation
 	var x OperationBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
 
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	if value, present := x.Extensions["responses"]; present && value == nil {
 		x.Responses = &Responses{explicitlyNull: true}
 	}

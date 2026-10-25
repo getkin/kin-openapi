@@ -8,6 +8,7 @@ import (
 )
 
 func TestSecurityRequirementsEncoding(t *testing.T) {
+	t.Parallel()
 
 	tests := []struct {
 		requirements *SecurityRequirements
@@ -32,6 +33,7 @@ func TestSecurityRequirementsEncoding(t *testing.T) {
 }
 
 func TestSecurityRequirementEncoding(t *testing.T) {
+	t.Parallel()
 
 	tests := []struct {
 		requirement SecurityRequirement

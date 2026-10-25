@@ -13,13 +13,13 @@ type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Title          string   `json:"title" yaml:"title"`                         // Required
-	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"` // OpenAPI >=3.1
-	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
-	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
-	Contact        *Contact `json:"contact,omitempty" yaml:"contact,omitempty"`
-	License        *License `json:"license,omitempty" yaml:"license,omitempty"`
-	Version        string   `json:"version" yaml:"version"` // Required
+	Title          string   `json:"title,case:strict" yaml:"title"`                         // Required
+	Summary        string   `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"` // OpenAPI >=3.1
+	Description    string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	TermsOfService string   `json:"termsOfService,omitempty,case:strict" yaml:"termsOfService,omitempty"`
+	Contact        *Contact `json:"contact,omitempty,case:strict" yaml:"contact,omitempty"`
+	License        *License `json:"license,omitempty,case:strict" yaml:"license,omitempty"`
+	Version        string   `json:"version,case:strict" yaml:"version"` // Required
 }
 
 // MarshalJSON returns the JSON encoding of Info.
@@ -62,10 +62,10 @@ func (info *Info) MarshalYAML() (any, error) {
 func (info *Info) UnmarshalJSON(data []byte) error {
 	type InfoBis Info
 	var x InfoBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "title")
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")

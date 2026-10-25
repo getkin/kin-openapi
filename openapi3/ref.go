@@ -12,9 +12,9 @@ import (
 // Summary and Description are supported by OpenAPI 3.1 and later.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.2.md#reference-object
 type Ref struct {
-	Ref         string         `json:"$ref" yaml:"$ref"`
-	Summary     *string        `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Ref         string         `json:"$ref,case:strict" yaml:"$ref"`
+	Summary     *string        `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 	Extensions  map[string]any `json:"-" yaml:"-"`
 	Origin      *Origin        `json:"-" yaml:"-"`
 }

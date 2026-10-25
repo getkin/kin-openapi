@@ -7,6 +7,7 @@
 package gorillamux
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -58,28 +59,16 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 	r := &Router{}
 	for _, path := range doc.Paths.InMatchingOrder() {
 		pathItem := doc.Paths.Value(path)
+		pathServers := servers
 		if len(pathItem.Servers) > 0 {
-			if servers, err = makeServers(pathItem.Servers); err != nil {
+			if pathServers, err = makeServers(pathItem.Servers); err != nil {
 				return nil, err
 			}
 		}
 
-		operations := pathItem.Operations()
-		methods := make([]string, 0, len(operations))
-		for method := range operations {
-			methods = append(methods, method)
-		}
-		slices.Sort(methods)
-
-		for _, s := range servers {
-			muxRoute := muxRouter.Path(s.base + path).Methods(methods...)
-			if schemes := s.schemes; len(schemes) != 0 {
-				muxRoute.Schemes(schemes...)
-			}
-			if host := s.host; host != "" {
-				muxRoute.Host(host)
-			}
-			if err := muxRoute.GetError(); err != nil {
+		for _, s := range pathServers {
+			muxRoute, err := newMuxRoute(muxRouter, s.base+path, s.host, s.schemes)
+			if err != nil {
 				return nil, err
 			}
 			r.muxes = append(r.muxes, routeMux{
@@ -97,6 +86,30 @@ func NewRouter(doc *openapi3.T) (routers.Router, error) {
 		}
 	}
 	return r, nil
+}
+
+// newMuxRoute registers one route on muxRouter.
+//
+// gorilla/mux reports most malformed templates through (*mux.Route).GetError()
+// but a few it raises as a panic instead. This recovers and returns such errors.
+func newMuxRoute(muxRouter *mux.Router, path, host string, schemes []string) (muxRoute *mux.Route, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			muxRoute, err = nil, fmt.Errorf("gorillamux: %v", r)
+		}
+	}()
+
+	// No mux Methods() matcher: it uppercases methods whereas custom
+	// (additionalOperations) method names are case-sensitive.
+	// FindRoute matches the request method exactly instead.
+	muxRoute = muxRouter.Path(path)
+	if len(schemes) != 0 {
+		muxRoute.Schemes(schemes...)
+	}
+	if host != "" {
+		muxRoute.Host(host)
+	}
+	return muxRoute, muxRoute.GetError()
 }
 
 // FindRoute extracts the route and parameters of an http.Request

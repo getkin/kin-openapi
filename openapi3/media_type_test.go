@@ -9,6 +9,8 @@ import (
 )
 
 func TestMediaTypeJSON(t *testing.T) {
+	t.Parallel()
+
 	t.Log("Marshal *openapi3.MediaType to JSON")
 	data, err := json.Marshal(mediaType())
 	require.NoError(t, err)
@@ -38,7 +40,7 @@ var mediaTypeJSON = []byte(`
    },
    "encoding": {
       "someEncoding": {
-         "contentType": "application/xml; charset=utf-8"
+         "contentType": "application/xml,application/json,application/*; charset=utf-8"
       }
    },
    "examples": {
@@ -61,7 +63,7 @@ func mediaType() *MediaType {
 		},
 		Encoding: map[string]*Encoding{
 			"someEncoding": {
-				ContentType: "application/xml; charset=utf-8",
+				ContentType: "application/xml,application/json,application/*; charset=utf-8",
 			},
 		},
 		Examples: map[string]*ExampleRef{
@@ -73,6 +75,8 @@ func mediaType() *MediaType {
 }
 
 func TestMediaTypeItemSchemaJSON(t *testing.T) {
+	t.Parallel()
+
 	data := []byte(`
 {
    "itemSchema": {

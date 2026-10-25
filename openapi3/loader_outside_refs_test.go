@@ -1,6 +1,8 @@
 package openapi3_test
 
 import (
+	"net/url"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,6 +11,8 @@ import (
 )
 
 func TestLoadOutsideRefs(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/303bis/service.yaml")
@@ -31,6 +35,8 @@ func TestLoadOutsideRefs(t *testing.T) {
 }
 
 func TestIssue423(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 info:
   description: test
@@ -58,6 +64,11 @@ components:
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+		require.Equal(t, "https://raw.githubusercontent.com/kubernetes/kubernetes/132f29769dfecfc808adc58f756be43171054094/api/openapi-spec/swagger.json", location.String())
+		// Trimmed down to io.k8s.api.rbac.v1.RoleList and the definitions it references
+		return os.ReadFile("testdata/issue423.k8s.swagger.json")
+	}
 	doc, err := loader.LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	require.NotNil(t, doc)

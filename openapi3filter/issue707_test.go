@@ -13,6 +13,8 @@ import (
 )
 
 func TestIssue707(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	ctx := loader.Context
 	spec := `

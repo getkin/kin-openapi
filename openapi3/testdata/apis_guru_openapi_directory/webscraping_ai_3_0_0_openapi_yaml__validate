@@ -1,6 +1,11 @@
 invalid components: parameter "headers": invalid example: validation failed due to: at '': got string, want object
 Schema:
-  null
+  {
+    "additionalProperties": {
+      "type": "string"
+    },
+    "type": "object"
+  }
 
 Value:
-  null
+  "{\"Cookie\":\"session=some_id\"}"

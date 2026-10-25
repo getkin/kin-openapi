@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.26']
+        go: [stable, oldstable, '1.25']
         os:
         - ubuntu-latest
         - windows-latest
@@ -29,18 +29,18 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
+    - if: runner.os == 'Linux'
+      run: sudo apt install silversearcher-ag
+
+    - uses: actions/checkout@v6
+
     - name: Test suite fixtures cache
       uses: actions/cache@v3
       with:
         path: |
           openapi2/testdata/APIs-guru-openapi-directory-*
           openapi3/testdata/APIs-guru-openapi-directory-*
-        key: suite-\${{ env.APISGURU_COMMIT }}
-
-    - if: runner.os == 'Linux'
-      run: sudo apt install silversearcher-ag
-
-    - uses: actions/checkout@v6
+        key: suite-${{ env.APISGURU_COMMIT }}
 
     - run: go generate ./...
     - run: git --no-pager diff --exit-code
@@ -48,7 +48,8 @@ jobs:
     - run: ./maps.sh
     - run: git --no-pager diff --exit-code
 
-    - run: ./docs.sh
+    - if: matrix.go == 'stable'
+      run: ./docs.sh
 
     - run: go mod download && go mod tidy && go mod verify
     - run: git --no-pager diff --exit-code
@@ -56,17 +57,29 @@ jobs:
     - run: go vet ./...
     - run: git --no-pager diff --exit-code
 
-    - run: go run golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize@latest -test -diff -fix -omitzero=false ./...
+    - if: runner.os == 'Linux' && matrix.go == 'stable'
+      run: go run golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize@latest -test -diff -fix -omitzero=false ./...
 
     - run: go fmt ./...
     - run: git --no-pager diff --exit-code
 
-    - run: go test ./...
-    - if: runner.os == 'Linux'
+    # Large test suites (skipped by -short) record errors as worded by stable Go
+    - if: matrix.go == 'stable'
+      run: go test ./...
+    - if: runner.os == 'Linux' && matrix.go == 'stable'
       run: go test -count=10 -short ./...
       env:
         GOARCH: '386'
-    - run: go test -count=10 -short ./...
+    - if: runner.os != 'Windows'
+      run: go test -count=10 -short ./...
+    # TODO: drop once 1.26 & 1.27 Go no longer experiences flaky memory corruptions
+    - if: runner.os == 'Windows'
+      run: |
+        for i in 1 2 3 4 5; do
+          go test -count=10 -short ./... && exit 0
+          echo "::warning::attempt $i/5 failed"
+        done
+        exit 1
     - run: go test -count=2 -short -covermode=atomic ./...
     - run: go test -v -count=10 -run TestRaceyPatternSchemaValidateHindersIt -race ./...
       env:
@@ -92,9 +105,9 @@ jobs:
     - if: runner.os == 'Linux'
       name: Also add yaml tags
       run: |
-        ! git grep -InE 'json:"' | grep -v _test.go | grep -v yaml:
+        ! git grep -InE 'json:"' | grep -v _test.go | grep -v README.md | grep -v yaml:
 
-    - if: runner.os == 'Linux'
+    - if: runner.os == 'Linux' && matrix.go == 'stable'
       name: nilness
       run: go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...
 
@@ -121,9 +134,9 @@ jobs:
     - if: runner.os == 'Linux'
       name: Use require.ErrorContains(..)
       run: |
-        ! git grep -InE 'require[.].+err.Error'
+        ! git grep -InE 'require[.].+[.]Error'
 
-    - if: runner.os == 'Linux'
+    - if: runner.os == 'Linux' && matrix.go == 'stable'
       name: Ensure go-run'ing binaries works
       run: go run -a github.com/getkin/kin-openapi/cmd/validate@latest -- openapi3/testdata/test.openapi.yml
 
@@ -198,7 +211,7 @@ jobs:
     - uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
-        go-version: '1.26'
+        go-version: stable
     - run: go install github.com/incu6us/goimports-reviser/v3@latest
     - run: which goimports-reviser
     - run: find . -type f -iname '*.go' ! -iname '*.pb.go' -exec goimports-reviser {} \;

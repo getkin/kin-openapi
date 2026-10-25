@@ -74,19 +74,19 @@ type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
-	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
-	Description     string     `json:"description,omitempty" yaml:"description,omitempty"`
-	Style           string     `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode         *bool      `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowEmptyValue bool       `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	AllowReserved   bool       `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
-	Deprecated      bool       `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required        bool       `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema          *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         any        `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples        Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content         Content    `json:"content,omitempty" yaml:"content,omitempty"`
+	Name            string     `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	In              string     `json:"in,omitempty,case:strict" yaml:"in,omitempty"`
+	Description     string     `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Style           string     `json:"style,omitempty,case:strict" yaml:"style,omitempty"`
+	Explode         *bool      `json:"explode,omitempty,case:strict" yaml:"explode,omitempty"`
+	AllowEmptyValue bool       `json:"allowEmptyValue,omitempty,case:strict" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool       `json:"allowReserved,omitempty,case:strict" yaml:"allowReserved,omitempty"`
+	Deprecated      bool       `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
+	Required        bool       `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Schema          *SchemaRef `json:"schema,omitempty,case:strict" yaml:"schema,omitempty"`
+	Example         any        `json:"example,omitempty,case:strict" yaml:"example,omitempty"`
+	Examples        Examples   `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
+	Content         Content    `json:"content,omitempty,case:strict" yaml:"content,omitempty"`
 }
 
 var _ jsonpointer.JSONPointable = (*Parameter)(nil)
@@ -209,10 +209,10 @@ func (parameter Parameter) MarshalYAML() (any, error) {
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	type ParameterBis Parameter
 	var x ParameterBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "in")
@@ -295,7 +295,9 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 		if style == "" {
 			style = SerializationForm
 		}
-		explode := true
+		// explode defaults to false for spaceDelimited and pipeDelimited.
+		// deepObject is only defined with explode=true.
+		explode := style != SerializationSpaceDelimited && style != SerializationPipeDelimited
 		if parameter.Explode != nil {
 			explode = *parameter.Explode
 		}

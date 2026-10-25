@@ -9,6 +9,7 @@ import (
 )
 
 func TestMapping(t *testing.T) {
+	t.Parallel()
 
 	schema := `
 openapi: 3.0.0

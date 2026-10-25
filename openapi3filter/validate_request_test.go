@@ -35,6 +35,8 @@ func setupTestRouter(t *testing.T, spec string) routers.Router {
 }
 
 func TestValidateRequest(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:
@@ -224,6 +226,8 @@ components:
 }
 
 func TestValidateQueryParams(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		name  string
 		param *openapi3.Parameter
@@ -431,10 +435,20 @@ func TestValidateQueryParams(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "integer with leading zero is decimal",
+			param: &openapi3.Parameter{
+				Name: "param", In: "query",
+				Schema: openapi3.NewIntegerSchema().WithMax(100).NewRef(),
+			},
+			query: "param=0144",
+			err:   &openapi3.SchemaError{SchemaField: "maximum", Reason: "number must be at most 100"},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			info := &openapi3.Info{
 				Title:   "MyAPI",
 				Version: "0.1",
@@ -524,6 +538,8 @@ func matchSchemaError(t *testing.T, got, want error) {
 }
 
 func TestValidateRequestExcludeQueryParams(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:
@@ -569,12 +585,135 @@ paths:
 	require.Error(t, err)
 }
 
+func TestValidateRequestExcludeQueryParamsOfPathItem(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    parameters:
+      - name: category
+        in: query
+        schema:
+          type: integer
+        required: true
+    post:
+      responses:
+        '200':
+          description: Ok
+`
+	req, err := http.NewRequest(http.MethodPost, "/category?category=foo", nil)
+	require.NoError(t, err)
+	router := setupTestRouter(t, spec)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	err = ValidateRequest(t.Context(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: true,
+		},
+	})
+	require.NoError(t, err)
+
+	err = ValidateRequest(t.Context(), &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+		Options: &Options{
+			ExcludeRequestQueryParams: false,
+		},
+	})
+	require.Error(t, err)
+}
+
+func TestValidateRequestKeepValidatedValue(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /users:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                role:
+                  type: string
+                  default: member
+      responses:
+        '200':
+          description: Ok
+`
+	router := setupTestRouter(t, spec)
+
+	for _, tc := range []struct {
+		name    string
+		body    string
+		keep    bool
+		read    string
+		want    any
+		wantErr bool
+	}{
+		{name: "kept", body: `{"id":42}`, keep: true, read: `{"id":42,"role":"member"}`, want: map[string]any{"id": json.Number("42"), "role": "member"}},
+		{name: "kept without defaults", body: `{"id":42,"role":"admin"}`, keep: true, read: `{"id":42,"role":"admin"}`, want: map[string]any{"id": json.Number("42"), "role": "admin"}},
+		{name: "not kept", body: `{"id":42}`, read: `{"id":42,"role":"member"}`},
+		{name: "invalid body", body: `{"id":"x"}`, keep: true, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewReader([]byte(tc.body)))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			route, pathParams, err := router.FindRoute(req)
+			require.NoError(t, err)
+
+			err = ValidateRequest(t.Context(), &RequestValidationInput{
+				Request:    req,
+				PathParams: pathParams,
+				Route:      route,
+				Options:    &Options{KeepValidatedValue: tc.keep},
+			})
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				data, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tc.read, string(data))
+			}
+
+			body, ok := req.Body.(interface{ ValidatedValue() any })
+			require.Equal(t, tc.want != nil, ok)
+			if ok {
+				require.Equal(t, tc.want, body.ValidatedValue())
+			}
+		})
+	}
+}
+
 // TestValidateRequestContentParameterWithoutSchema is a regression test for
 // GHSA-jpcw-4wr7-c3vq: a "content" parameter whose media type has no
 // "schema" is legal per the OpenAPI spec (doc.Validate accepts it) but used
 // to nil-pointer-dereference/panic in defaultContentParameterDecoder instead
 // of returning a validation error.
 func TestValidateRequestContentParameterWithoutSchema(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.3
 info: {title: poc, version: "1.0.0"}

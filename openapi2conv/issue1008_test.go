@@ -8,6 +8,8 @@ import (
 )
 
 func TestIssue1008(t *testing.T) {
+	t.Parallel()
+
 	v2 := []byte(`
 swagger: '2.0'
 info:

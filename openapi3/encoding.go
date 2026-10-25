@@ -4,19 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"maps"
+	"strings"
 )
 
-// Encoding is specified by OpenAPI/Swagger 3.0 standard.
+// Encoding is specified by OpenAPI/Swagger 3 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encoding-object
+// and https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.2.md#encoding-object
 type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
-	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	ContentType   string  `json:"contentType,omitempty,case:strict" yaml:"contentType,omitempty"`
+	Headers       Headers `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	Style         string  `json:"style,omitempty,case:strict" yaml:"style,omitempty"`
+	Explode       *bool   `json:"explode,omitempty,case:strict" yaml:"explode,omitempty"`
+	AllowReserved bool    `json:"allowReserved,omitempty,case:strict" yaml:"allowReserved,omitempty"`
 }
 
 func NewEncoding() *Encoding {
@@ -77,10 +79,10 @@ func (encoding Encoding) MarshalYAML() (any, error) {
 func (encoding *Encoding) UnmarshalJSON(data []byte) error {
 	type EncodingBis Encoding
 	var x EncodingBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 
 	delete(x.Extensions, "contentType")
 	delete(x.Extensions, "headers")
@@ -101,6 +103,9 @@ func (encoding *Encoding) SerializationMethod() *SerializationMethod {
 	if encoding != nil {
 		if encoding.Style != "" {
 			sm.Style = encoding.Style
+			// explode defaults to false for spaceDelimited and pipeDelimited.
+			// deepObject is only defined with explode=true.
+			sm.Explode = sm.Style != SerializationSpaceDelimited && sm.Style != SerializationPipeDelimited
 		}
 		if encoding.Explode != nil {
 			sm.Explode = *encoding.Explode
@@ -117,13 +122,17 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 		return nil
 	}
 
+	if ct := encoding.ContentType; ct != "" && !isValidMediaTypePattern(ct) {
+		return newInvalidEncodingContentType(ct, encoding.Origin)
+	}
+
 	for _, k := range componentNames(encoding.Headers) {
 		v := encoding.Headers[k]
 		if err := ValidateIdentifier(k); err != nil {
-			return nil
+			return err
 		}
 		if err := v.Validate(ctx); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -142,4 +151,46 @@ func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption
 	}
 
 	return validateExtensions(ctx, encoding.Extensions, encoding.Origin)
+}
+
+// AllowsContentType reports whether a part of the given media type (e.g. the
+// value of its Content-Type header) is allowed by encoding.ContentType, which is
+// a media type, a wildcard ("image/*" or "*/*") or a comma-separated list of those.
+// Media types are compared case-insensitively (RFC 9110, section 8.3.1) and
+// parameters (e.g. "; charset=utf-8") on either side are ignored.
+// An empty ContentType declares no restriction: any media type is allowed.
+func (encoding *Encoding) AllowsContentType(mediaType string) bool {
+	if encoding == nil || encoding.ContentType == "" {
+		return true
+	}
+	mediaType, _, _ = strings.Cut(mediaType, ";")
+	mediaType = strings.ToLower(strings.TrimSpace(mediaType))
+	typ, _, _ := strings.Cut(mediaType, "/")
+	typeWildcard := typ + "/*"
+	for want := range mediaRanges(encoding.ContentType) {
+		want, _, _ = strings.Cut(want, ";")
+		if want = strings.TrimSpace(want); want == "*/*" || want == mediaType || want == typeWildcard {
+			return true
+		}
+	}
+	return false
+}
+
+// isValidMediaTypePattern reports whether s is a comma-separated list of
+// media types or wildcards (e.g. "image/png, image/*"). Media type
+// parameters (e.g. "; charset=utf-8") are allowed and not checked.
+func isValidMediaTypePattern(s string) bool {
+	const nopes = " \t/;"
+	for token := range strings.SplitSeq(s, ",") {
+		mediaType, _, _ := strings.Cut(token, ";")
+		mediaType = strings.TrimSpace(mediaType)
+		typePart, subtype, ok := strings.Cut(mediaType, "/")
+		if !ok || typePart == "" || subtype == "" || strings.ContainsAny(typePart, nopes) || strings.ContainsAny(subtype, nopes) {
+			return false
+		}
+		if typePart == "*" && subtype != "*" {
+			return false
+		}
+	}
+	return true
 }

@@ -7,6 +7,8 @@ import (
 )
 
 func TestLoaderSupportsRecursiveReference(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/recursiveRef/openapi.yml")
@@ -34,6 +36,8 @@ func TestLoaderSupportsRecursiveReference(t *testing.T) {
 }
 
 func TestIssue447(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.0.1

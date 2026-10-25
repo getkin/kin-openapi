@@ -1,6 +1,128 @@
 invalid paths: invalid path /avm/rent/long-term: invalid operation GET: invalid example: example Response: validation failed due to: at '': got string, want object
 Schema:
-  null
+  {
+    "properties": {
+      "comparables": {
+        "items": {
+          "properties": {
+            "addressLine1": {
+              "example": "7410 Adaja Riv",
+              "type": "string"
+            },
+            "bathrooms": {
+              "default": 0,
+              "example": 2,
+              "type": "integer"
+            },
+            "bedrooms": {
+              "default": 0,
+              "example": 4,
+              "type": "integer"
+            },
+            "city": {
+              "example": "San Antonio",
+              "type": "string"
+            },
+            "correlation": {
+              "default": 0,
+              "example": 0.988,
+              "type": "number"
+            },
+            "county": {
+              "example": "Bexar",
+              "type": "string"
+            },
+            "daysOld": {
+              "default": 0,
+              "example": 11,
+              "type": "integer"
+            },
+            "distance": {
+              "default": 0,
+              "example": 0.5282,
+              "type": "number"
+            },
+            "formattedAddress": {
+              "example": "7410 Adaja Riv, San Antonio, TX 78244",
+              "type": "string"
+            },
+            "id": {
+              "example": "7410-Adaja-Riv,-San-Antonio,-TX-78244",
+              "type": "string"
+            },
+            "lastSeenDate": {
+              "example": "2023-02-17T00:00:00.000Z",
+              "type": "string"
+            },
+            "latitude": {
+              "default": 0,
+              "example": 29.481005,
+              "type": "number"
+            },
+            "listedDate": {
+              "example": "2023-01-22T00:00:00.000Z",
+              "type": "string"
+            },
+            "longitude": {
+              "default": 0,
+              "example": -98.344856,
+              "type": "number"
+            },
+            "price": {
+              "default": 0,
+              "example": 1850,
+              "type": "integer"
+            },
+            "propertyType": {
+              "example": "Single Family",
+              "type": "string"
+            },
+            "squareFootage": {
+              "default": 0,
+              "example": 1627,
+              "type": "integer"
+            },
+            "state": {
+              "example": "TX",
+              "type": "string"
+            },
+            "zipCode": {
+              "example": "78244",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "latitude": {
+        "default": 0,
+        "example": 29.475962,
+        "type": "number"
+      },
+      "longitude": {
+        "default": 0,
+        "example": -98.351442,
+        "type": "number"
+      },
+      "rent": {
+        "default": 0,
+        "example": 1800,
+        "type": "integer"
+      },
+      "rentRangeHigh": {
+        "default": 0,
+        "example": 1860,
+        "type": "integer"
+      },
+      "rentRangeLow": {
+        "default": 0,
+        "example": 1740,
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  }
 
 Value:
-  null
+  "{\"rent\":1800,\"rentRangeLow\":1740,\"rentRangeHigh\":1860,\"longitude\":-98.351442,\"latitude\":29.475962,\"comparables\":[{\"id\":\"7410-Adaja-Riv,-San-Antonio,-TX-78244\",\"formattedAddress\":\"7410 Adaja Riv, San Antonio, TX 78244\",\"addressLine1\":\"7410 Adaja Riv\",\"city\":\"San Antonio\",\"state\":\"TX\",\"zipCode\":\"78244\",\"county\":\"Bexar\",\"longitude\":-98.344856,\"latitude\":29.481005,\"propertyType\":\"Single Family\",\"bedrooms\":4,\"bathrooms\":2,\"squareFootage\":1627,\"price\":1850,\"listedDate\":\"2023-01-22T00:00:00.000Z\",\"lastSeenDate\":\"2023-02-17T00:00:00.000Z\",\"daysOld\":11,\"distance\":0.5282,\"correlation\":0.988},{\"id\":\"7303-Avila-Vis,-San-Antonio,-TX-78244\",\"formattedAddress\":\"7303 Avila Vis, San Antonio, TX 78244\",\"addressLine1\":\"7303 Avila Vis\",\"city\":\"San Antonio\",\"state\":\"TX\",\"zipCode\":\"78244\",\"county\":\"Bexar\",\"longitude\":-98.34565,\"latitude\":29.483196,\"propertyType\":\"Single Family\",\"bedrooms\":4,\"bathrooms\":2,\"squareFootage\":1627,\"price\":1850,\"listedDate\":\"2023-02-03T00:00:00.000Z\",\"lastSeenDate\":\"2023-02-17T00:00:00.000Z\",\"daysOld\":11,\"distance\":0.6099,\"correlation\":0.9867},{\"id\":\"7331-Avila-Vis,-San-Antonio,-TX-78244\",\"formattedAddress\":\"7331 Avila Vis, San Antonio, TX 78244\",\"addressLine1\":\"7331 Avila Vis\",\"city\":\"San Antonio\",\"state\":\"TX\",\"zipCode\":\"78244\",\"county\":\"Bexar\",\"longitude\":-98.34481,\"latitude\":29.482922,\"propertyType\":\"Single Family\",\"bedrooms\":4,\"bathrooms\":2,\"squareFootage\":1627,\"price\":1810,\"listedDate\":\"2023-02-21T00:00:00.000Z\",\"lastSeenDate\":\"2023-02-27T00:00:00.000Z\",\"daysOld\":1,\"distance\":0.6255,\"correlation\":0.9865},{\"id\":\"7411-Avila-Vis,-San-Antonio,-TX-78244\",\"formattedAddress\":\"7411 Avila Vis, San Antonio, TX 78244\",\"addressLine1\":\"7411 Avila Vis\",\"city\":\"San Antonio\",\"state\":\"TX\",\"zipCode\":\"78244\",\"county\":\"Bexar\",\"longitude\":-98.344398,\"latitude\":29.482676,\"propertyType\":\"Single Family\",\"bedrooms\":4,\"bathrooms\":2,\"squareFootage\":1627,\"price\":1815,\"listedDate\":\"2023-01-16T00:00:00.000Z\",\"lastSeenDate\":\"2023-02-10T00:00:00.000Z\",\"daysOld\":18,\"distance\":0.629,\"correlation\":0.9864},{\"id\":\"7327-Plata-Cir,-San-Antonio,-TX-78244\",\"formattedAddress\":\"7327 Plata Cir, San Antonio, TX 78244\",\"addressLine1\":\"7327 Plata Cir\",\"city\":\"San Antonio\",\"state\":\"TX\",\"zipCode\":\"78244\",\"county\":\"Bexar\",\"longitude\":-98.344406,\"latitude\":29.480621,\"propertyType\":\"Single Family\",\"bedrooms\":4,\"bathrooms\":2,\"squareFootage\":1492,\"price\":1680,\"listedDate\":\"2023-01-12T00:00:00.000Z\",\"lastSeenDate\":\"2023-02-08T00:00:00.000Z\",\"daysOld\":20,\"distance\":0.5323,\"correlation\":0.9758}]}"

@@ -15,26 +15,34 @@ type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
-	Connect     *Operation `json:"connect,omitempty" yaml:"connect,omitempty"`
-	Delete      *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
-	Get         *Operation `json:"get,omitempty" yaml:"get,omitempty"`
-	Head        *Operation `json:"head,omitempty" yaml:"head,omitempty"`
-	Options     *Operation `json:"options,omitempty" yaml:"options,omitempty"`
-	Patch       *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
-	Post        *Operation `json:"post,omitempty" yaml:"post,omitempty"`
-	Put         *Operation `json:"put,omitempty" yaml:"put,omitempty"`
-	Trace       *Operation `json:"trace,omitempty" yaml:"trace,omitempty"`
-	Query       *Operation `json:"query,omitempty" yaml:"query,omitempty"` // OpenAPI >=3.2
-	Servers     Servers    `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Ref         string     `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
+	Summary     string     `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description string     `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Connect     *Operation `json:"connect,omitempty,case:strict" yaml:"connect,omitempty"`
+	Delete      *Operation `json:"delete,omitempty,case:strict" yaml:"delete,omitempty"`
+	Get         *Operation `json:"get,omitempty,case:strict" yaml:"get,omitempty"`
+	Head        *Operation `json:"head,omitempty,case:strict" yaml:"head,omitempty"`
+	Options     *Operation `json:"options,omitempty,case:strict" yaml:"options,omitempty"`
+	Patch       *Operation `json:"patch,omitempty,case:strict" yaml:"patch,omitempty"`
+	Post        *Operation `json:"post,omitempty,case:strict" yaml:"post,omitempty"`
+	Put         *Operation `json:"put,omitempty,case:strict" yaml:"put,omitempty"`
+	Trace       *Operation `json:"trace,omitempty,case:strict" yaml:"trace,omitempty"`
+	Query       *Operation `json:"query,omitempty,case:strict" yaml:"query,omitempty"` // OpenAPI >=3.2
+	Servers     Servers    `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
+	Parameters  Parameters `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
 
 	// AdditionalOperations maps custom HTTP method names to operations.
 	// Keys are case-sensitive HTTP method tokens and must not duplicate
 	// the methods covered by the fixed fields above.
-	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
+	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty,case:strict" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
+
+	// refSiblings holds the fields written next to Ref, as the document had
+	// them: once the loader has merged the referenced path item in, they can no
+	// longer be told apart from it, and marshaling writes back only these.
+	refSiblings *PathItem
+	// refResolved records that the loader has merged the referenced path item
+	// in, so that it does not do it twice.
+	refResolved bool
 }
 
 // MethodQuery is the HTTP QUERY method, introduced as a fixed Path Item
@@ -80,7 +88,19 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of PathItem.
 func (pathItem PathItem) MarshalYAML() (any, error) {
 	if ref := pathItem.Ref; ref != "" {
-		return Ref{Ref: ref}, nil
+		if pathItem.refResolved {
+			if pathItem.refSiblings == nil {
+				return Ref{Ref: ref}, nil
+			}
+			pathItem = *pathItem.refSiblings
+		}
+		pathItem.Ref = ""
+		m, err := pathItem.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		m.(map[string]any)["$ref"] = ref
+		return m, nil
 	}
 
 	m := make(map[string]any, 15+len(pathItem.Extensions))
@@ -137,10 +157,10 @@ func (pathItem PathItem) MarshalYAML() (any, error) {
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	type PathItemBis PathItem
 	var x PathItemBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "summary")
 	delete(x.Extensions, "description")
@@ -346,6 +366,14 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 			}
 			continue
 		}
+		if fixedMethod := strings.ToUpper(method); fixedMethod != method {
+			if _, ok := fixedPathItemMethods[fixedMethod]; ok {
+				if err := me.emit(newAdditionalOperationsFixedMethodCase(method, fixedMethod, pathItem.Origin)); err != nil {
+					return err
+				}
+				continue
+			}
+		}
 		if !httpTokenRe.MatchString(method) {
 			if err := me.emit(newAdditionalOperationsInvalidMethod(method, pathItem.Origin)); err != nil {
 				return err
@@ -373,6 +401,70 @@ func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption
 }
 
 // isEmpty's introduced in 546590b1
+// mergeRefSiblings sets on pathItem, a copy of the item its $ref points to,
+// the fields that siblings, the item holding that $ref, sets.
+//
+// The specification only defines the result when no field is set on both: "In
+// case a Path Item Object field appears both in the defined object and the
+// referenced object, the behavior is undefined". The sibling then wins, like
+// the summary and description of a Reference Object do over those of the
+// object it points to, which is what OpenAPI 3.1 says this $ref is likely to
+// be aligned with. It never modifies the maps of the referenced item, which
+// other path items may share.
+func (pathItem *PathItem) mergeRefSiblings(siblings *PathItem) {
+	if len(siblings.Extensions) != 0 {
+		extensions := make(map[string]any, len(pathItem.Extensions)+len(siblings.Extensions))
+		maps.Copy(extensions, pathItem.Extensions)
+		maps.Copy(extensions, siblings.Extensions)
+		pathItem.Extensions = extensions
+	}
+	if x := siblings.Summary; x != "" {
+		pathItem.Summary = x
+	}
+	if x := siblings.Description; x != "" {
+		pathItem.Description = x
+	}
+	if x := siblings.Connect; x != nil {
+		pathItem.Connect = x
+	}
+	if x := siblings.Delete; x != nil {
+		pathItem.Delete = x
+	}
+	if x := siblings.Get; x != nil {
+		pathItem.Get = x
+	}
+	if x := siblings.Head; x != nil {
+		pathItem.Head = x
+	}
+	if x := siblings.Options; x != nil {
+		pathItem.Options = x
+	}
+	if x := siblings.Patch; x != nil {
+		pathItem.Patch = x
+	}
+	if x := siblings.Post; x != nil {
+		pathItem.Post = x
+	}
+	if x := siblings.Put; x != nil {
+		pathItem.Put = x
+	}
+	if x := siblings.Trace; x != nil {
+		pathItem.Trace = x
+	}
+	if x := siblings.Query; x != nil {
+		pathItem.Query = x
+	}
+	if x := siblings.AdditionalOperations; len(x) != 0 {
+		pathItem.AdditionalOperations = x
+	}
+	if x := siblings.Servers; len(x) != 0 {
+		pathItem.Servers = x
+	}
+	if x := siblings.Parameters; len(x) != 0 {
+		pathItem.Parameters = x
+	}
+}
+
 func (pathItem *PathItem) isEmpty() bool {
 	// NOTE: ignores pathItem.Extensions
 	// NOTE: ignores pathItem.Ref

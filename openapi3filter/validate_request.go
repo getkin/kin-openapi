@@ -66,6 +66,9 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 				continue
 			}
 		}
+		if options.ExcludeRequestQueryParams && parameter.In == openapi3.ParameterInQuery {
+			continue
+		}
 
 		if err := ValidateParameter(ctx, input, parameter); err != nil {
 			if !options.MultiError {
@@ -102,7 +105,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 		}
 
 		// Reject if specification request body if not present (not wanted) but is present in the HTTP request
-		if options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
+		if requestBody == nil && options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
 			err := &RequestError{
 				Input: input,
 				Err:   errors.New("request body not allowed for this request"),
@@ -135,14 +138,24 @@ func joinValues(values []any, sep string) string {
 	return strings.Join(strValues, sep)
 }
 
-// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected
-func populateDefaultQueryParameters(q url.Values, parameterName string, value any, explode bool) {
+// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected.
+// Existing values for the parameter (for example an empty/unparseable query value) are replaced so defaults
+// do not create duplicate keys (see #1255).
+func populateDefaultQueryParameters(q url.Values, parameterName string, value any, sm *openapi3.SerializationMethod) {
+	q.Del(parameterName)
 	switch t := value.(type) {
 	case []any:
-		if explode {
+		if sm.Explode {
 			appendToQueryValues(q, parameterName, t)
 		} else {
-			q.Add(parameterName, joinValues(t, ","))
+			sep := ","
+			switch sm.Style {
+			case openapi3.SerializationSpaceDelimited:
+				sep = " "
+			case openapi3.SerializationPipeDelimited:
+				sep = "|"
+			}
+			q.Add(parameterName, joinValues(t, sep))
 		}
 	default:
 		q.Add(parameterName, fmt.Sprint(value))
@@ -201,9 +214,12 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				// Path parameters are required.
 				// Next check `parameter.Required && !found` will catch this.
 			case openapi3.ParameterInQuery:
+				sm, err := parameter.SerializationMethod()
+				if err != nil {
+					return &RequestError{Input: input, Parameter: parameter, Err: err}
+				}
 				q := req.URL.Query()
-				explode := parameter.Explode != nil && *parameter.Explode
-				populateDefaultQueryParameters(q, parameter.Name, value, explode)
+				populateDefaultQueryParameters(q, parameter.Name, value, sm)
 				req.URL.RawQuery = q.Encode()
 			case openapi3.ParameterInHeader:
 				req.Header.Add(parameter.Name, fmt.Sprint(value))
@@ -244,6 +260,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
+	opts = append(opts, options.SchemaValidationOptions...)
 	if input.Route != nil && input.Route.Spec.IsOpenAPI31OrLater() {
 		opts = append(opts, openapi3.EnableJSONSchema2020())
 	}
@@ -339,7 +356,8 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	defaultsSet := false
 	var opts []openapi3.SchemaValidationOption
 	opts = append(opts, openapi3.VisitAsRequest())
-	if !options.SkipSettingDefaults {
+	// Defaults are written back into the body, which needs an encoder.
+	if !options.SkipSettingDefaults && (RegisteredBodyEncoder(mediaType) != nil || strings.HasSuffix(mediaType, "+json")) {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
 	}
 	if options.MultiError {
@@ -393,8 +411,20 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		req.Body, _ = req.GetBody() // no error return
 	}
 
+	if options.KeepValidatedValue {
+		req.Body = validatedBody{ReadCloser: req.Body, value: value}
+	}
 	return nil
 }
+
+// validatedBody is the request body left by Options.KeepValidatedValue.
+type validatedBody struct {
+	io.ReadCloser
+	value any
+}
+
+// ValidatedValue returns the request body value that was validated.
+func (b validatedBody) ValidatedValue() any { return b.value }
 
 // ValidateSecurityRequirements goes through multiple OpenAPI 3 security
 // requirements in order and returns nil on the first valid requirement.

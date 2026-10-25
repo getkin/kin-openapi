@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue289(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 components:
   schemas:

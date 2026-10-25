@@ -2,7 +2,6 @@ package openapi3conv_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -27,7 +26,7 @@ func loadV30(t *testing.T, raw string) *openapi3.T {
 // 3.0 must remain valid after canonicalization to the latest 3.x.
 func requireValidate(t *testing.T, doc *openapi3.T, when string) {
 	t.Helper()
-	require.NoError(t, doc.Validate(context.Background()),
+	require.NoError(t, doc.Validate(t.Context()),
 		"document must validate %s Upgrade", when)
 }
 
@@ -59,19 +58,23 @@ func marshalJSON(t *testing.T, doc *openapi3.T) map[string]any {
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_BumpsVersion(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
 paths: {}
 `)
 	upgradeAndAssertValid(t, doc)
-	assert.Equal(t, "3.2.0", doc.OpenAPI)
+	assert.Equal(t, "3.2.1", doc.OpenAPI)
 }
 
 // 3.2 is purely additive over 3.1 — no schema-level rewrites between them.
 // Upgrade applies the 3.0 → 3.1 rewrites (still required) and writes the
 // 3.2 version string. The result is canonical and version-correct.
 func TestUpgrade_RewritesAppliedAlongsideVersionBump(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -83,7 +86,7 @@ components:
       nullable: true
 `)
 	upgradeAndAssertValid(t, doc)
-	assert.Equal(t, "3.2.0", doc.OpenAPI)
+	assert.Equal(t, "3.2.1", doc.OpenAPI)
 	assert.Equal(t, openapi3.Types{"string", "null"}, *doc.Components.Schemas["Pet"].Value.Type)
 }
 
@@ -92,6 +95,8 @@ components:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_NullableWithType(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -110,6 +115,8 @@ components:
 }
 
 func TestUpgrade_NullableAlreadyHasNullInTypeArray(t *testing.T) {
+	t.Parallel()
+
 	// Input intentionally mixes a 3.0 version stamp with a 3.1-only
 	// type array containing "null" — it doesn't validate as 3.0, so
 	// skip the before-Upgrade validate invariant here.
@@ -130,6 +137,8 @@ components:
 }
 
 func TestUpgrade_NullableNoType(t *testing.T) {
+	t.Parallel()
+
 	// nullable without an accompanying type is ambiguous in 3.0 (the spec is
 	// silent on whether nullable applies). Drop nullable; the schema then
 	// accepts any type, which subsumes null.
@@ -149,6 +158,8 @@ components:
 }
 
 func TestUpgrade_NullableInsideProperties(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -176,6 +187,8 @@ components:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_ExclusiveMinTrueWithMinimum(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -196,6 +209,8 @@ components:
 }
 
 func TestUpgrade_ExclusiveMaxTrueWithMaximum(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -216,6 +231,8 @@ components:
 }
 
 func TestUpgrade_ExclusiveMinFalseDropped(t *testing.T) {
+	t.Parallel()
+
 	// `exclusiveMinimum: false` is the default — it carries no information.
 	// The merged 3.1 form drops it.
 	doc := loadV30(t, `
@@ -237,8 +254,10 @@ components:
 }
 
 func TestUpgrade_ExclusiveBoundsLeavesNumericIntact(t *testing.T) {
+	t.Parallel()
+
 	// A document already in 3.1 numeric form should round-trip unchanged
-	// (apart from the version bump to 3.2.0).
+	// (apart from the version bump to 3.2.1).
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.1.1
@@ -264,6 +283,8 @@ components:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_ExampleToExamples(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -282,6 +303,8 @@ components:
 }
 
 func TestUpgrade_ExampleAppendsToExistingExamples(t *testing.T) {
+	t.Parallel()
+
 	// Input intentionally mixes a 3.0 version stamp with the 3.1-only
 	// schema-level examples array — it doesn't validate as 3.0, so
 	// skip the before-Upgrade validate invariant here.
@@ -309,6 +332,8 @@ components:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_Idempotent(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -341,6 +366,8 @@ components:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_WalksOperationSchemas(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -384,6 +411,8 @@ paths:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_CycleSafe(t *testing.T) {
+	t.Parallel()
+
 	// Hand-build a cycle without going through YAML — the loader resolves
 	// $ref into shared *Schema pointers, so a self-referential schema
 	// becomes a true graph cycle. The walker must terminate.
@@ -422,6 +451,8 @@ func TestUpgrade_CycleSafe(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_VerboseLogsRewrites(t *testing.T) {
+	t.Parallel()
+
 	doc := loadV30(t, `
 openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -436,7 +467,7 @@ components:
 	var buf bytes.Buffer
 	upgradeAndAssertValid(t, doc, openapi3conv.WithWriter(&buf))
 	out := buf.String()
-	assert.Contains(t, out, "openapi: 3.0.3 -> 3.2.0")
+	assert.Contains(t, out, "openapi: 3.0.3 -> 3.2.1")
 	assert.Contains(t, out, "nullable")
 	assert.Contains(t, out, "example")
 }
@@ -446,6 +477,8 @@ components:
 // ---------------------------------------------------------------------------
 
 func TestUpgrade_NilDocDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
 	// Per Pierre's guidance, Upgrade no longer validates input — doc
 	// must be Validate()'d first. Nil is the one case we still defend
 	// against, returning silently rather than panicking.
@@ -453,11 +486,15 @@ func TestUpgrade_NilDocDoesNotPanic(t *testing.T) {
 }
 
 func TestUpgradeSchema_NilSchema(t *testing.T) {
+	t.Parallel()
+
 	// Should not panic.
 	openapi3conv.UpgradeSchema(nil)
 }
 
 func TestUpgradeSchema_OperatesOnSubtree(t *testing.T) {
+	t.Parallel()
+
 	s := &openapi3.Schema{
 		Type: &openapi3.Types{"object"},
 		Properties: openapi3.Schemas{

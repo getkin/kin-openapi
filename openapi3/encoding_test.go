@@ -8,6 +8,8 @@ import (
 )
 
 func TestEncodingJSON(t *testing.T) {
+	t.Parallel()
+
 	t.Log("Marshal *openapi3.Encoding to JSON")
 	data, err := json.Marshal(encoding())
 	require.NoError(t, err)
@@ -34,7 +36,9 @@ var encodingJSON = []byte(`
 {
   "contentType": "application/json",
   "headers": {
-    "someHeader": {}
+    "someHeader": {
+      "schema": {"type": "string"}
+    }
   },
   "style": "form",
   "explode": true,
@@ -47,7 +51,7 @@ func encoding() *Encoding {
 		ContentType: "application/json",
 		Headers: map[string]*HeaderRef{
 			"someHeader": {
-				Value: &Header{},
+				Value: &Header{Parameter: Parameter{Schema: NewStringSchema().NewRef()}},
 			},
 		},
 		Style:         "form",
@@ -57,6 +61,8 @@ func encoding() *Encoding {
 }
 
 func TestEncodingSerializationMethod(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		enc  *Encoding
@@ -69,7 +75,17 @@ func TestEncodingSerializationMethod(t *testing.T) {
 		{
 			name: "encoding with style",
 			enc:  &Encoding{Style: SerializationSpaceDelimited},
-			want: &SerializationMethod{Style: SerializationSpaceDelimited, Explode: true},
+			want: &SerializationMethod{Style: SerializationSpaceDelimited, Explode: false},
+		},
+		{
+			name: "encoding with pipeDelimited style",
+			enc:  &Encoding{Style: SerializationPipeDelimited},
+			want: &SerializationMethod{Style: SerializationPipeDelimited, Explode: false},
+		},
+		{
+			name: "encoding with deepObject style",
+			enc:  &Encoding{Style: SerializationDeepObject},
+			want: &SerializationMethod{Style: SerializationDeepObject, Explode: true},
 		},
 		{
 			name: "encoding with explode",
@@ -89,8 +105,66 @@ func TestEncodingSerializationMethod(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			got := tc.enc.SerializationMethod()
 			require.EqualValues(t, tc.want, got, "got %#v, want %#v", got, tc.want)
+		})
+	}
+}
+
+func TestEncodingValidateHeaders(t *testing.T) {
+	t.Parallel()
+
+	t.Run("invalid header name", func(t *testing.T) {
+		enc := &Encoding{Headers: Headers{"bad header": {Value: &Header{}}}}
+		err := enc.Validate(t.Context())
+		require.ErrorContains(t, err, `identifier "bad header" is not supported`)
+	})
+
+	t.Run("invalid header", func(t *testing.T) {
+		enc := &Encoding{Headers: Headers{"X-Rate": {Value: &Header{Parameter: Parameter{
+			Schema:  NewStringSchema().NewRef(),
+			Content: NewContentWithJSONSchema(NewStringSchema()),
+		}}}}}
+		err := enc.Validate(t.Context())
+		require.Error(t, err)
+	})
+}
+
+func TestEncodingValidateContentType(t *testing.T) {
+	for _, tc := range []struct {
+		contentType string
+		valid       bool
+	}{
+		{contentType: "", valid: true},
+		{contentType: "image/png", valid: true},
+		{contentType: "image/*", valid: true},
+		{contentType: "*/*", valid: true},
+		{contentType: "application/xml; charset=utf-8", valid: true},
+		{contentType: "image/png, image/jpeg", valid: true},
+		{contentType: "application/xml,application/json,application/*", valid: true},
+		{contentType: "png"},
+		{contentType: "image/"},
+		{contentType: "/png"},
+		{contentType: "*/png"},
+		{contentType: "image/png/x"},
+		{contentType: "image /png"},
+		{contentType: "image/png,"},
+		{contentType: ",image/png"},
+		{contentType: ",image/png,"},
+		{contentType: "image/png,,image/jpeg"},
+	} {
+		t.Run(tc.contentType, func(t *testing.T) {
+			encoding := Encoding{ContentType: tc.contentType}
+			err := encoding.Validate(t.Context())
+			if tc.valid {
+				require.NoError(t, err)
+				return
+			}
+			var e *InvalidEncodingContentTypeError
+			require.ErrorAs(t, err, &e)
+			require.Equal(t, tc.contentType, e.ContentType)
+			require.Equal(t, "encoding-content-type-invalid", e.Code())
 		})
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -38,6 +39,8 @@ type ExampleSecurityScheme struct {
 }
 
 func TestFilter(t *testing.T) {
+	t.Parallel()
+
 	// Declare a schema for an object with name and id properties
 	complexArgSchema := openapi3.NewObjectSchema().
 		WithProperty("name", openapi3.NewStringSchema()).
@@ -370,6 +373,8 @@ func marshalReader(value any) io.ReadCloser {
 }
 
 func TestValidateRequestBody(t *testing.T) {
+	t.Parallel()
+
 	requiredReqBody := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchema(openapi3.NewStringSchema())).
 		WithRequired(true)
@@ -474,7 +479,87 @@ func toJSON(v any) io.Reader {
 	return bytes.NewReader(data)
 }
 
+func TestValidateRequestBodyDefaultsNeedEncoder(t *testing.T) {
+	t.Parallel()
+
+	body := openapi3.NewRequestBody().WithSchema(
+		openapi3.NewObjectSchema().
+			WithProperty("role", openapi3.NewStringSchema().WithDefault("user")).
+			WithProperty("lang", openapi3.NewStringSchema().WithDefault("en")).
+			WithRequired([]string{"role"}),
+		[]string{"application/vnd.org.v1+json", "application/x-www-form-urlencoded", "multipart/form-data"},
+	)
+
+	var multipartData bytes.Buffer
+	mw := multipart.NewWriter(&multipartData)
+	require.NoError(t, mw.WriteField("role", "admin"))
+	require.NoError(t, mw.Close())
+
+	for _, tc := range []struct {
+		name    string
+		mime    string
+		data    string
+		want    string
+		wantErr string
+	}{
+		{name: "json suffix gets defaults", mime: "application/vnd.org.v1+json", data: `{"role":"admin"}`, want: `{"lang":"en","role":"admin"}`},
+		{name: "form kept as sent", mime: "application/x-www-form-urlencoded", data: "role=admin", want: "role=admin"},
+		{name: "multipart kept as sent", mime: mw.FormDataContentType(), data: multipartData.String(), want: multipartData.String()},
+		{name: "form validated as sent", mime: "application/x-www-form-urlencoded", data: "lang=fr", wantErr: `property "role" is missing`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.data))
+			req.Header.Set(headerCT, tc.mime)
+			err := ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			data, err := io.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, string(data))
+		})
+	}
+}
+
+func TestValidateRequestBodyFormInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	body := openapi3.NewRequestBody().WithSchema(
+		openapi3.NewObjectSchema().
+			WithProperty("n", openapi3.NewIntegerSchema()).
+			WithProperty("ids", openapi3.NewArraySchema().WithItems(openapi3.NewIntegerSchema())),
+		[]string{"application/x-www-form-urlencoded"},
+	)
+
+	for _, tc := range []struct {
+		data    string
+		wantErr string
+	}{
+		{data: "n=1&ids=2&ids=3"},
+		{data: "n=abc", wantErr: "path n: value abc: an invalid integer"},
+		{data: "ids=2&ids=abc", wantErr: "value abc: an invalid integer"},
+	} {
+		t.Run(tc.data, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.data))
+			req.Header.Set(headerCT, "application/x-www-form-urlencoded")
+			err := ValidateRequestBody(t.Context(), &RequestValidationInput{Request: req}, body)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorContains(t, err, tc.wantErr)
+		})
+	}
+}
+
 func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *testing.T) {
+	t.Parallel()
+
 	// Create the security schemes
 	securitySchemes := []ExampleSecurityScheme{
 		{
@@ -620,6 +705,8 @@ func TestRootSecurityRequirementsAreUsedIfNotProvidedAtTheOperationLevel(t *test
 
 // TestAlternateRequirementMet asserts that ValidateSecurityRequirements succeeds if any SecurityRequirement is met and otherwise doesn't.
 func TestAnySecurityRequirementMet(t *testing.T) {
+	t.Parallel()
+
 	// Create of a map of scheme names and whether they are valid
 	schemes := map[string]bool{
 		"a": true,
@@ -726,6 +813,8 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 // TestAllSchemesMet asserts that ValidateSecurityRequirement succeeds if all the SecuritySchemes of a SecurityRequirement are met and otherwise doesn't.
 func TestAllSchemesMet(t *testing.T) {
+	t.Parallel()
+
 	// Create of a map of scheme names and whether they are met
 	schemes := map[string]bool{
 		"a": true,

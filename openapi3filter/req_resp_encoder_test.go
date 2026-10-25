@@ -37,3 +37,16 @@ func TestRegisterAndUnregisterBodyEncoder(t *testing.T) {
 		Reason: prefixUnsupportedCT + ` "text/csv"`,
 	}, err)
 }
+
+func TestBodyEncoderJSONSuffix(t *testing.T) {
+	const contentType = "application/vnd.org.v1+json"
+	got, err := encodeBody("foo", contentType)
+	require.NoError(t, err)
+	require.Equal(t, []byte(`"foo"`), got)
+
+	RegisterBodyEncoder(contentType, func(body any) ([]byte, error) { return []byte(body.(string)), nil })
+	defer UnregisterBodyEncoder(contentType)
+	got, err = encodeBody("foo", contentType)
+	require.NoError(t, err)
+	require.Equal(t, []byte("foo"), got)
+}

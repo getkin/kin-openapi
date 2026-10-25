@@ -14,6 +14,8 @@ import (
 // to the HTTP method: the OpenAPI 3.2 `query` operation and custom methods held
 // in `additionalOperations` get their request body validated like any other.
 func TestValidateRequestCustomMethods(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.2.0
 info:

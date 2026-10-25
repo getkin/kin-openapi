@@ -103,7 +103,7 @@ func (responses *Responses) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets Responses to a copy of data.
 func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
 	var m map[string]any
-	if err = json.Unmarshal(data, &m); err != nil {
+	if err = unmarshalJSON(data, &m); err != nil {
 		return
 	}
 
@@ -228,7 +228,7 @@ func (callback *Callback) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets Callback to a copy of data.
 func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
 	var m map[string]any
-	if err = json.Unmarshal(data, &m); err != nil {
+	if err = unmarshalJSON(data, &m); err != nil {
 		return
 	}
 
@@ -353,7 +353,7 @@ func (paths *Paths) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON sets Paths to a copy of data.
 func (paths *Paths) UnmarshalJSON(data []byte) (err error) {
 	var m map[string]any
-	if err = json.Unmarshal(data, &m); err != nil {
+	if err = unmarshalJSON(data, &m); err != nil {
 		return
 	}
 

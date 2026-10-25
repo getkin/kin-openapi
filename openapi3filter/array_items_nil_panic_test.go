@@ -2,7 +2,6 @@ package openapi3filter_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -82,6 +81,8 @@ func catchPanicValue(fn func()) (panicValue any) {
 // The 3.1 schema without items must still be accepted by Validate (spec-legal
 // under JSON Schema 2020-12), leaving Items == nil.
 func TestArrayItemsNil_OpenAPI31Accepts(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(urlencodedArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -93,6 +94,8 @@ func TestArrayItemsNil_OpenAPI31Accepts(t *testing.T) {
 }
 
 func TestArrayItemsNil_UrlencodedNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(urlencodedArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -108,17 +111,19 @@ func TestArrayItemsNil_UrlencodedNoPanic(t *testing.T) {
 
 	var reqErr error
 	panicVal := catchPanicValue(func() {
-		reqErr = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		reqErr = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
 	})
 	require.Nil(t, panicVal, "must not panic")
 	require.Error(t, reqErr, "must return a clean error")
-	require.Contains(t, reqErr.Error(), "array items required")
+	require.ErrorContains(t, reqErr, "array items required")
 }
 
 func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(multipartArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -139,7 +144,7 @@ func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {
 
 	var reqErr error
 	panicVal := catchPanicValue(func() {
-		reqErr = openapi3filter.ValidateRequest(context.Background(), &openapi3filter.RequestValidationInput{
+		reqErr = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
 			Request: req, PathParams: pathParams, Route: route,
 			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		})
@@ -149,6 +154,8 @@ func TestArrayItemsNil_MultipartNoPanic(t *testing.T) {
 }
 
 func TestArrayItemsNil_ResponseHeaderNoPanic(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(responseHeaderArrayNoItemsSpec31))
 	require.NoError(t, err)
@@ -163,7 +170,7 @@ func TestArrayItemsNil_ResponseHeaderNoPanic(t *testing.T) {
 
 	var respErr error
 	panicVal := catchPanicValue(func() {
-		respErr = openapi3filter.ValidateResponse(context.Background(), &openapi3filter.ResponseValidationInput{
+		respErr = openapi3filter.ValidateResponse(t.Context(), &openapi3filter.ResponseValidationInput{
 			RequestValidationInput: &openapi3filter.RequestValidationInput{
 				Request: req, PathParams: pathParams, Route: route,
 				Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
@@ -175,4 +182,134 @@ func TestArrayItemsNil_ResponseHeaderNoPanic(t *testing.T) {
 	})
 	require.Nil(t, panicVal, "must not panic")
 	require.Error(t, respErr, "must return a clean error")
+}
+
+// Additional coverage: three paths that previously reached
+// urlValuesDecoder.parseArray or buildResObj with a nil Items.
+
+const queryArrayNoItemsSpec31 = `
+openapi: 3.1.0
+info: {title: t, version: 1.0.0}
+paths:
+  /q:
+    get:
+      parameters:
+        - name: ids
+          in: query
+          schema: {type: array}
+      responses: {"200": {description: ok}}
+`
+
+func TestArrayItemsNil_QueryNoPanic(t *testing.T) {
+	t.Parallel()
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(queryArrayNoItemsSpec31))
+	require.NoError(t, err)
+	require.NoError(t, doc.Validate(loader.Context))
+	router, err := gorillamux.NewRouter(doc)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodGet, "/q?ids=1&ids=2", nil)
+	require.NoError(t, err)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	var got error
+	panicVal := catchPanicValue(func() {
+		got = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
+			Request: req, PathParams: pathParams, Route: route,
+			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
+		})
+	})
+	require.Nil(t, panicVal, "must not panic")
+	require.Error(t, got, "must return a clean error")
+}
+
+const deepObjectArrayNoItemsSpec31 = `
+openapi: 3.1.0
+info: {title: t, version: 1.0.0}
+paths:
+  /o:
+    get:
+      parameters:
+        - name: filter
+          in: query
+          style: deepObject
+          explode: true
+          schema:
+            type: object
+            properties:
+              tags: {type: array}
+      responses: {"200": {description: ok}}
+`
+
+func TestArrayItemsNil_DeepObjectNoPanic(t *testing.T) {
+	t.Parallel()
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(deepObjectArrayNoItemsSpec31))
+	require.NoError(t, err)
+	require.NoError(t, doc.Validate(loader.Context))
+	router, err := gorillamux.NewRouter(doc)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodGet, "/o?filter[tags][0]=a", nil)
+	require.NoError(t, err)
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	var got error
+	panicVal := catchPanicValue(func() {
+		got = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
+			Request: req, PathParams: pathParams, Route: route,
+			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
+		})
+	})
+	require.Nil(t, panicVal, "must not panic")
+	require.Error(t, got, "must return a clean error")
+}
+
+const urlencodedAllOfArrayNoItemsSpec31 = `
+openapi: 3.1.0
+info: {title: t, version: 1.0.0}
+paths:
+  /f:
+    post:
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              allOf:
+                - type: object
+                  properties:
+                    tags: {type: array}
+      responses: {"200": {description: ok}}
+`
+
+func TestArrayItemsNil_UrlencodedAllOfNoPanic(t *testing.T) {
+	t.Parallel()
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(urlencodedAllOfArrayNoItemsSpec31))
+	require.NoError(t, err)
+	require.NoError(t, doc.Validate(loader.Context))
+	router, err := gorillamux.NewRouter(doc)
+	require.NoError(t, err)
+
+	body := strings.NewReader("tags=a&tags=b")
+	req, err := http.NewRequest(http.MethodPost, "/f", body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	panicVal := catchPanicValue(func() {
+		_ = openapi3filter.ValidateRequest(t.Context(), &openapi3filter.RequestValidationInput{
+			Request: req, PathParams: pathParams, Route: route,
+			Options: &openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
+		})
+	})
+	require.Nil(t, panicVal, "must not panic")
 }

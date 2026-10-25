@@ -4,6 +4,7 @@ package {{ .Package }}
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/url"
 	"strings"
 
@@ -21,17 +22,27 @@ type {{ $type.Name }}Ref struct {
 
 	{{- if ne $type.Name "Schema" }}
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 	{{- end }}
 
 	Ref   string
 	Value *{{ $type.Name }}
 	extra []string
+	// siblingExtras holds, verbatim, the non-`x-` fields written next to $ref.
+	// Marshaling writes them back out, so a document survives a round trip:
+	// an OpenAPI 3.1 schema's sibling keywords constrain the referenced one.
+	siblingExtras map[string]any
 {{- if eq $type.Name "Schema" }}
 	// sibling holds keyword siblings of a $ref (OAS 3.1 / JSON Schema 2020-12).
 	// It is populated during unmarshal and applied to Value after $ref resolution.
 	sibling *Schema
+	// siblingErr is why the siblings could not be read as a Schema. OAS 3.1
+	// reports it, while OAS 3.0 ignores the fields next to a $ref anyway.
+	siblingErr error
+	// target is the referenced schema, which Value is a copy of once siblings
+	// are applied to it.
+	target *Schema
 {{- end }}
 
 	refPath *url.URL
@@ -63,14 +74,40 @@ func (x *{{ $type.Name }}Ref) setRefPath(u *url.URL) {
 // MarshalYAML returns the YAML encoding of {{ $type.Name }}Ref.
 func (x {{ $type.Name }}Ref) MarshalYAML() (any, error) {
 	if ref := x.Ref; ref != "" {
-		return &Ref{
+		out, err := Ref{
 			Ref: ref,
 			Extensions: x.Extensions,
 			{{- if ne $type.Name "Schema" }}
 			Summary:     x.Summary,
 			Description: x.Description,
 			{{- end }}
-		}, nil
+		}.MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		if m, ok := out.(map[string]any); ok {
+			maps.Copy(m, x.siblingExtras)
+			{{- if eq $type.Name "Schema" }}
+			if x.sibling != nil && len(x.siblingExtras) != 0 {
+				// The $refs within the siblings may have been rewritten since, as
+				// InternalizeRefs does, so write out what the siblings now hold. A
+				// field the Schema leaves out, such as an empty pattern, is still
+				// written as it was.
+				current, err := x.sibling.MarshalYAML()
+				if err != nil {
+					return nil, err
+				}
+				if current, ok := current.(map[string]any); ok {
+					for k := range x.siblingExtras {
+						if v, ok := current[k]; ok {
+							m[k] = v
+						}
+					}
+				}
+			}
+			{{- end }}
+		}
+		return out, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -87,7 +124,7 @@ func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 // UnmarshalYAML sets {{ $type.Name }}Ref from node.
 func (x *{{ $type.Name }}Ref) UnmarshalYAML(node *yaml.Node) error {
 	x.Origin = originFromNode(node, nativeOriginFile())
-	if !unmarshalRefYAML(node, &x.Ref{{ if ne $type.Name "Schema" }}, &x.Summary, &x.Description{{ else }}, nil, nil{{ end }}, &x.Extensions, &x.extra) {
+	if !unmarshalRefYAML(node, &x.Ref{{ if ne $type.Name "Schema" }}, &x.Summary, &x.Description{{ else }}, nil, nil{{ end }}, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
 {{- if eq $type.Name "Schema" }}
@@ -105,6 +142,8 @@ func (x *{{ $type.Name }}Ref) UnmarshalYAML(node *yaml.Node) error {
 		var sibling Schema
 		if err := node.Decode(&sibling); err == nil {
 			x.sibling = &sibling
+		} else {
+			x.siblingErr = err
 		}
 	}
 {{- end }}
@@ -114,9 +153,9 @@ func (x *{{ $type.Name }}Ref) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalJSON sets {{ $type.Name }}Ref to a copy of data.
 func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
-	if err := json.Unmarshal(data, &refOnly); err == nil && refOnly.Ref != "" {
+	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = json.Unmarshal(data, &extra)
+		_ = unmarshalJSON(data, &extra)
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		x.Origin = refOnly.Origin
@@ -141,13 +180,19 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 			}
 			if hasSiblings {
 				var sibling Schema
-				if err := json.Unmarshal(data, &sibling); err == nil {
+				if err := unmarshalJSON(data, &sibling); err == nil {
 					x.sibling = &sibling
+				} else {
+					x.siblingErr = err
 				}
 			}
 {{- end }}
-			for k := range extra {
+			for k, v := range extra {
 				if !strings.HasPrefix(k, "x-") {
+					if x.siblingExtras == nil {
+						x.siblingExtras = make(map[string]any, len(extra))
+					}
+					x.siblingExtras[k] = v
 					delete(extra, k)
 				}
 			}
@@ -157,61 +202,38 @@ func (x *{{ $type.Name }}Ref) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	return json.Unmarshal(data, &x.Value)
+	return unmarshalJSON(data, &x.Value)
 }
 
-// validateExtras returns an error if {{ $type.Name }}Ref has sibling fields
-// alongside $ref that are not allowed by the validation options.
+// validateExtras returns an error if {{ $type.Name }}Ref has `x-` extensions
+// next to its $ref while ProhibitExtensionsWithRef is set. Every other field
+// next to a $ref is not an error: every version's Reference Object says "any
+// properties added SHALL be ignored", from 3.1 on summary and description
+// override the referenced component's, and an OpenAPI 3.1 schema applies its
+// sibling keywords alongside the referenced schema.
 func (x *{{ $type.Name }}Ref) validateExtras(ctx context.Context) error {
 	validationOpts := getValidationOptions(ctx)
+	if x.Ref == "" || !validationOpts.schemaExtensionsInRefProhibited {
+		return nil
+	}
+
 	var extras []string
-
-	allowed := validationOpts.extraSiblingFieldsAllowed
-	if allowed == nil {
-		allowed = make(map[string]struct{})
-	}
-	{{- if ne $type.Name "Schema" }}
-	if !validationOpts.isOpenAPI31OrLater {
-		if _, ok := allowed["description"]; x.Description != nil && !ok {
-			extras = append(extras, "description")
-		}
-		if _, ok := allowed["summary"]; x.Summary != nil && !ok {
-			extras = append(extras, "summary")
+	for _, ex := range componentNames(x.Extensions) {
+		if _, ok := validationOpts.extraSiblingFieldsAllowed[ex]; !ok {
+			extras = append(extras, ex)
 		}
 	}
-	{{- end }}
-	for _, ex := range x.extra {
-		if _, ok := allowed[ex]; !ok {
-			if _, ok := x.Extensions[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
-	if validationOpts.schemaExtensionsInRefProhibited {
-		for _, ex := range componentNames(x.Extensions) {
-			if _, ok := allowed[ex]; !ok {
-				extras = append(extras, ex)
-			}
-			// extras in the Extensions checked below
-		}
-	}
-
 	if len(extras) != 0 {
-{{- if eq $type.Name "Schema" }}
-		if !validationOpts.isOpenAPI31OrLater {
-			return newExtraSiblingFields(extras, x.Origin)
-		}
-{{- else }}
 		return newExtraSiblingFields(extras, x.Origin)
-{{- end }}
 	}
 	return nil
 }
 
 // Validate returns an error if {{ $type.Name }}Ref does not comply with the OpenAPI spec.
 func (x *{{ $type.Name }}Ref) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if x == nil {
+		return newUnresolvedRef("", nil)
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	if err := x.validateExtras(ctx); err != nil {
 		return err

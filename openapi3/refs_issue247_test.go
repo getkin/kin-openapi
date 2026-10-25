@@ -11,6 +11,8 @@ import (
 )
 
 func TestIssue247(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.2
 info:
@@ -76,6 +78,15 @@ paths:
         - write:pets
         - read:pets
 components:
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
   schemas:
     Pet:
       type: object

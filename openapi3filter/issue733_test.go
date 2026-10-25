@@ -17,6 +17,8 @@ import (
 )
 
 func TestIntMax(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: 3.0.0
 info:

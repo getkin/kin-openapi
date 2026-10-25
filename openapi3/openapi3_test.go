@@ -14,6 +14,8 @@ import (
 )
 
 func TestRefsJSON(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 
 	t.Log("Marshal *T to JSON")
@@ -52,6 +54,8 @@ func TestRefsJSON(t *testing.T) {
 }
 
 func TestRefsYAML(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 
 	t.Log("Marshal *T to YAML")
@@ -330,6 +334,8 @@ func spec() *openapi3.T {
 }
 
 func TestValidation(t *testing.T) {
+	t.Parallel()
+
 	version := `
 openapi: 3.0.2
 `
@@ -446,6 +452,8 @@ components:
 }
 
 func TestAddRemoveServer(t *testing.T) {
+	t.Parallel()
+
 	testServerLines := []*openapi3.Server{{URL: "test0.com"}, {URL: "test1.com"}, {URL: "test3.com"}}
 
 	doc3 := &openapi3.T{
@@ -480,6 +488,8 @@ func TestAddRemoveServer(t *testing.T) {
 }
 
 func TestOpenAPIMajorMinor(t *testing.T) {
+	t.Parallel()
+
 	var doc *openapi3.T
 	require.Equal(t, "", doc.OpenAPIMajorMinor())
 	require.False(t, doc.IsOpenAPI30())
@@ -492,11 +502,11 @@ func TestOpenAPIMajorMinor(t *testing.T) {
 	require.False(t, doc.IsOpenAPI31OrLater())
 	require.False(t, doc.IsOpenAPI32OrLater())
 
-	semvers := []string{"3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.1", "3.1.0", "3.1.1", "3.1.2", "3.2", "3.2.0"}
-	mms := []string{"3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.1", "3.1", "3.1", "3.1", "3.2", "3.2"}
-	three0s := []bool{true, true, true, true, true, true, true, false, false, false, false, false, false}
-	three1plusses := []bool{false, false, false, false, false, false, false, true, true, true, true, true, true}
-	three2plusses := []bool{false, false, false, false, false, false, false, false, false, false, false, true, true}
+	semvers := []string{"3", "3.0", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.1", "3.1.0", "3.1.1", "3.1.2", "3.2", "3.2.0", "3.2.1"}
+	mms := []string{"3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.0", "3.1", "3.1", "3.1", "3.1", "3.2", "3.2", "3.2"}
+	three0s := []bool{true, true, true, true, true, true, true, false, false, false, false, false, false, false}
+	three1plusses := []bool{false, false, false, false, false, false, false, true, true, true, true, true, true, true}
+	three2plusses := []bool{false, false, false, false, false, false, false, false, false, false, false, true, true, true}
 	for i := range len(semvers) {
 		t.Run(fmt.Sprintf("openapi:%s", semvers[i]), func(t *testing.T) {
 			t.Parallel()

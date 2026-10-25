@@ -10,6 +10,8 @@ import (
 )
 
 func TestPR558(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 swagger: '2.0'
 info:

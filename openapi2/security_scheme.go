@@ -12,17 +12,17 @@ type SecurityRequirements []map[string][]string
 type SecurityScheme struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Ref string `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
 
-	Description      string            `json:"description,omitempty" yaml:"description,omitempty"`
-	Type             string            `json:"type,omitempty" yaml:"type,omitempty"`
-	In               string            `json:"in,omitempty" yaml:"in,omitempty"`
-	Name             string            `json:"name,omitempty" yaml:"name,omitempty"`
-	Flow             string            `json:"flow,omitempty" yaml:"flow,omitempty"`
-	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes,omitempty" yaml:"scopes,omitempty"`
-	Tags             openapi3.Tags     `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Description      string            `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Type             string            `json:"type,omitempty,case:strict" yaml:"type,omitempty"`
+	In               string            `json:"in,omitempty,case:strict" yaml:"in,omitempty"`
+	Name             string            `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Flow             string            `json:"flow,omitempty,case:strict" yaml:"flow,omitempty"`
+	AuthorizationURL string            `json:"authorizationUrl,omitempty,case:strict" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty,case:strict" yaml:"tokenUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes,omitempty,case:strict" yaml:"scopes,omitempty"`
+	Tags             openapi3.Tags     `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of SecurityScheme.
@@ -67,10 +67,10 @@ func (securityScheme SecurityScheme) MarshalJSON() ([]byte, error) {
 func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error {
 	type SecuritySchemeBis SecurityScheme
 	var x SecuritySchemeBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "type")

@@ -15,7 +15,7 @@ import (
 
 // unmarshalRefYAML fills the reference half of a wrapper and reports whether
 // the node was a reference. When false the caller decodes the value.
-func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **string, extensions *map[string]any, extra *[]string) bool {
+func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **string, extensions *map[string]any, extra *[]string, siblingExtras *map[string]any) bool {
 	refNode := mappingValue(node, "$ref")
 	if refNode == nil || refNode.Value == "" {
 		return false
@@ -45,9 +45,10 @@ func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **strin
 		}
 	}
 
-	// Every undeclared sibling is recorded, not only the x- ones. Dropping the
-	// rest here is what let a $ref carrying an unknown key validate: Validate
-	// reads these names, and a name it never sees is a name it cannot report.
+	// Every undeclared sibling is recorded, not only the x- ones: Validate reads
+	// these names, and a name it never sees is a name it cannot report. The x-
+	// ones are extensions, the rest are siblings of the $ref, which 3.1 lets a
+	// schema apply alongside the resolved reference.
 	siblings, names, err := collectExtensions(node, known)
 	if err != nil {
 		return true
@@ -55,6 +56,10 @@ func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **strin
 	*extra = names
 	for k, v := range siblings {
 		if !strings.HasPrefix(k, "x-") {
+			if *siblingExtras == nil {
+				*siblingExtras = make(map[string]any, len(siblings))
+			}
+			(*siblingExtras)[k] = v
 			continue
 		}
 		if *extensions == nil {

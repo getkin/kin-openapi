@@ -186,6 +186,8 @@ components:
 }
 
 func TestIssue513ReferenceDescriptionIsVersionAware(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: "3.0.3"
 info:
@@ -227,7 +229,8 @@ components:
 			require.NoError(t, err)
 			err = doc.Validate(sl.Context)
 			if majmin == "3.0" {
-				require.ErrorContains(t, err, `extra sibling fields: [description]`)
+				require.NoError(t, err)
+				require.Equal(t, "Success", *doc.Paths.Value("/v1/operation").Delete.Responses.Status(200).Value.Description)
 				return
 			}
 			require.NoError(t, err)

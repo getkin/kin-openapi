@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -18,6 +19,7 @@ import (
 // The normalizations:
 //
 //	siblings - an undeclared non-x- key is recorded, so Validate can report it
+//	           wherever the object it sits on rejects extra fields
 //	numbers  - an integer behind an any is a float64, whatever the notation
 //	keys     - a non-string mapping key becomes a string, so the document marshals
 //	merge    - a << key is applied, neither ignored nor treated as content
@@ -146,7 +148,13 @@ components:
   responses:
     R: {description: ok}
 `,
-		assert: func(t *testing.T, doc *T) { requireValidateFails(t, doc, "bogus") },
+		// A Reference Object ignores the siblings it does not define, so this
+		// document validates; the name still has to be recorded, which is what
+		// lets Validate report one where the object does reject it.
+		assert: func(t *testing.T, doc *T) {
+			requireRecorded(t, responsesOf(doc).Value("200").extra, "bogus")
+			requireValidates(t, doc)
+		},
 	},
 	{
 		path: "ref", property: "numbers",
@@ -257,6 +265,13 @@ func requireValidates(t *testing.T, doc *T) {
 	t.Helper()
 	if err := doc.Validate(context.Background()); err != nil {
 		t.Errorf("validate: %v", err)
+	}
+}
+
+func requireRecorded(t *testing.T, extra []string, name string) {
+	t.Helper()
+	if !slices.Contains(extra, name) {
+		t.Errorf("sibling %q was not recorded, got %v", name, extra)
 	}
 }
 

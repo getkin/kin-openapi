@@ -14,6 +14,8 @@ import (
 )
 
 func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		name                string
 		requestSchema       string
@@ -137,10 +139,144 @@ func TestReadOnlyWriteOnlyPropertiesValidation(t *testing.T) {
 			responseErrContains: `writeOnly property "access_token" in response`,
 			requestErrContains:  `readOnly property "_id" in request`,
 		},
+		{
+			name: "readonly_and_writeonly_required_by_another_allof_schema",
+			requestSchema: `
+			"schema":{
+				"allOf": [
+					{
+						"type": "object",
+						"properties": {
+							"_id": {
+								"type": "string",
+								"readOnly": true
+							},
+							"name": {
+								"type": "string"
+							}
+						}
+					},
+					{
+						"required": ["_id", "name"]
+					}
+				]
+			}`,
+			responseSchema: `
+			"schema":{
+				"allOf": [
+					{
+						"type": "object",
+						"properties": {
+							"password": {
+								"type": "string",
+								"writeOnly": true
+							},
+							"name": {
+								"type": "string"
+							}
+						}
+					},
+					{
+						"required": ["password", "name"]
+					}
+				]
+			}`,
+			requestBody:  `{"name": "n"}`,
+			responseBody: `{"name": "n"}`,
+		},
+		{
+			name: "readonly_and_writeonly_from_allof_required_by_parent_schema",
+			requestSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["_id", "name"],
+				"allOf": [
+					{
+						"properties": {
+							"_id": {
+								"type": "string",
+								"readOnly": true
+							},
+							"name": {
+								"type": "string"
+							}
+						}
+					}
+				]
+			}`,
+			responseSchema: `
+			"schema":{
+				"type": "object",
+				"required": ["password", "name"],
+				"allOf": [
+					{
+						"properties": {
+							"password": {
+								"type": "string",
+								"writeOnly": true
+							},
+							"name": {
+								"type": "string"
+							}
+						}
+					}
+				]
+			}`,
+			requestBody:  `{"name": "n"}`,
+			responseBody: `{"name": "n"}`,
+		},
+		{
+			name: "missing_property_required_by_another_allof_schema",
+			requestSchema: `
+			"schema":{
+				"allOf": [
+					{
+						"type": "object",
+						"properties": {
+							"_id": {
+								"type": "string",
+								"readOnly": true
+							},
+							"name": {
+								"type": "string"
+							}
+						}
+					},
+					{
+						"required": ["_id", "name"]
+					}
+				]
+			}`,
+			responseSchema: `
+			"schema":{
+				"allOf": [
+					{
+						"type": "object",
+						"properties": {
+							"password": {
+								"type": "string",
+								"writeOnly": true
+							},
+							"name": {
+								"type": "string"
+							}
+						}
+					},
+					{
+						"required": ["password", "name"]
+					}
+				]
+			}`,
+			requestBody:         `{}`,
+			responseBody:        `{}`,
+			requestErrContains:  `property "name" is missing`,
+			responseErrContains: `property "name" is missing`,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			spec := bytes.NewBufferString(`{
 				"openapi": "3.0.3",
 				"info": {

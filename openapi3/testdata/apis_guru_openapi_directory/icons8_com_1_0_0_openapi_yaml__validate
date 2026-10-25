@@ -1,0 +1,1 @@
+invalid paths: operation GET /api/iconsets/v3/latest?term={term}&amount={amount}&offset={offset}&platform={platform}&language={language} must define exactly all path parameters (missing: [term])

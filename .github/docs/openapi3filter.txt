@@ -76,11 +76,17 @@ func RegisterBodyDecoder(contentType string, decoder BodyDecoder)
     RegisterBodyDecoder registers a request body's decoder for a content type.
 
     If a decoder for the specified content type already exists, the function
-    replaces it with the specified decoder. This call is not thread-safe:
-    body decoders should not be created/destroyed by multiple goroutines.
+    replaces it with the specified decoder. A "+json" media type (RFC 6839)
+    falls back to the "application/json" decoder. A decoder registered for "*/*"
+    is used if none match. Content types are matched case-insensitively (RFC
+    9110, section 8.3.1).
 
 func RegisterBodyEncoder(contentType string, encoder BodyEncoder)
-    RegisterBodyEncoder enables package-wide decoding of contentType values
+    RegisterBodyEncoder enables package-wide decoding of contentType values.
+
+    A "+json" media type (RFC 6839) falls back to the "application/json"
+    encoder. Content types are matched case-insensitively (RFC 9110, section
+    8.3.1).
 
 func TrimJSONPrefix(data []byte) []byte
     TrimJSONPrefix trims one of the possible prefixes
@@ -88,9 +94,7 @@ func TrimJSONPrefix(data []byte) []byte
 func UnregisterBodyDecoder(contentType string)
     UnregisterBodyDecoder dissociates a body decoder from a content type.
 
-    Decoding this content type will result in an error. This call is not
-    thread-safe: body decoders should not be created/destroyed by multiple
-    goroutines.
+    Decoding this content type will result in an error.
 
 func UnregisterBodyEncoder(contentType string)
     UnregisterBodyEncoder disables package-wide decoding of contentType values
@@ -167,8 +171,7 @@ func RegisteredBodyDecoder(contentType string) BodyDecoder
     content type.
 
     If no decoder was registered for the given content type, nil is returned.
-    This call is not thread-safe: body decoders should not be created/destroyed
-    by multiple goroutines.
+    Content types are matched case-insensitively (RFC 9110, section 8.3.1).
 
 type BodyEncoder func(body any) ([]byte, error)
     BodyEncoder really is an (encoding/json).Marshaler
@@ -255,6 +258,10 @@ type Options struct {
 	// Indicates whether default values are set in the
 	// request. If true, then they are not set
 	SkipSettingDefaults bool
+
+	// Set KeepValidatedValue so ValidateRequest gives req.Body a ValidatedValue() any
+	// method returning the validated request body value, defaults included
+	KeepValidatedValue bool
 
 	// Additional schema validation options to pass through to schema validation.
 	// Use this to pass document-scoped format validators or other per-validation options.

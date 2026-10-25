@@ -16,6 +16,8 @@ type testCase struct {
 }
 
 func TestIssue735(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	DefineStringFormatValidator("uuid", NewRegexpFormatValidator(FormatOfStringForUUIDOfRFC4122))
 	DefineStringFormatValidator("email", NewRegexpFormatValidator(FormatOfStringForEmail))
 	DefineIPv4Format()
@@ -155,25 +157,24 @@ func TestIssue735(t *testing.T) {
 			value:            map[string]any{"foo": 42},
 			extraNotContains: []any{42},
 		},
-		// TODO: uncomment when https://github.com/getkin/kin-openapi/issues/502 is fixed
-		//{
-		//	name: "read only properties",
-		//	schema: NewSchema().WithProperties(map[string]*Schema{
-		//		"foo": {ReadOnly: true},
-		//	}).WithoutAdditionalProperties(),
-		//	value:            map[string]any{"foo": 42},
-		//	extraNotContains: []any{42},
-		//	options:          []SchemaValidationOption{VisitAsRequest()},
-		//},
-		//{
-		//	name: "write only properties",
-		//	schema: NewSchema().WithProperties(map[string]*Schema{
-		//		"foo": {WriteOnly: true},
-		//	}).WithoutAdditionalProperties(),
-		//	value:            map[string]any{"foo": 42},
-		//	extraNotContains: []any{42},
-		//	options:          []SchemaValidationOption{VisitAsResponse()},
-		//},
+		{
+			name: "read only properties",
+			schema: NewSchema().WithProperties(map[string]*Schema{
+				"foo": {ReadOnly: true},
+			}).WithoutAdditionalProperties(),
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
+			options:          []SchemaValidationOption{VisitAsRequest()},
+		},
+		{
+			name: "write only properties",
+			schema: NewSchema().WithProperties(map[string]*Schema{
+				"foo": {WriteOnly: true},
+			}).WithoutAdditionalProperties(),
+			value:            map[string]any{"foo": 42},
+			extraNotContains: []any{42},
+			options:          []SchemaValidationOption{VisitAsResponse()},
+		},
 		{
 			name: "required properties",
 			schema: &Schema{

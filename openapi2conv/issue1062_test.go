@@ -24,6 +24,8 @@ import (
 // `documents` field is an array of $ref-ed component schemas. This must
 // convert cleanly without a panic.
 func TestIssue1062_FormDataArrayOfRefDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
 	const v3Spec = `
 openapi: 3.0.3
 info:

@@ -3,6 +3,7 @@ package openapi3
 import (
 	"errors"
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,8 @@ import (
 )
 
 func TestIssue430(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	schema := NewOneOfSchema(
 		NewStringSchema().WithFormat("ipv4"),
 		NewStringSchema().WithFormat("ipv6"),
@@ -43,7 +46,7 @@ func TestIssue430(t *testing.T) {
 
 	for datum := range data {
 		err = schema.VisitJSON(datum)
-		require.Error(t, err, ErrOneOfConflict.Error())
+		require.ErrorIs(t, err, ErrOneOfConflict)
 	}
 
 	DefineIPv4Format()
@@ -66,6 +69,8 @@ func TestIssue430(t *testing.T) {
 }
 
 func TestFormatCallback_WrapError(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	var errSomething = errors.New("something error")
 
 	DefineStringFormatValidator("foobar", NewCallbackValidator(func(value string) error {
@@ -76,14 +81,12 @@ func TestFormatCallback_WrapError(t *testing.T) {
 	err := s.VisitJSONString("blablabla")
 
 	assert.ErrorIs(t, err, errSomething)
-
-	delete(SchemaStringFormats, "foobar")
 }
 
 func TestReversePathInMessageSchemaError(t *testing.T) {
-	DefineIPv4Format()
+	KeepGlobalFormats(t)
 
-	SchemaErrorDetailsDisabled = true
+	DefineIPv4Format()
 
 	const spc = `
 components:
@@ -102,15 +105,13 @@ components:
 
 	err = doc.Components.Schemas["Something"].Value.VisitJSON(map[string]any{
 		`ip`: `123.0.0.11111`,
-	})
+	}, DisableSchemaErrorDetails())
 
 	require.EqualError(t, err, `Error at "/ip": string doesn't match the format "ipv4": Not an IP address`)
-
-	delete(SchemaStringFormats, "ipv4")
-	SchemaErrorDetailsDisabled = false
 }
 
 func TestUuidFormat(t *testing.T) {
+	KeepGlobalFormats(t)
 
 	type testCase struct {
 		name    string
@@ -159,6 +160,8 @@ func TestUuidFormat(t *testing.T) {
 }
 
 func TestNumberFormats(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	type testCase struct {
 		name    string
 		typ     string
@@ -236,6 +239,81 @@ func TestNumberFormats(t *testing.T) {
 	}
 }
 
+func TestIntegerFormatOutOfInt64Range(t *testing.T) {
+	KeepGlobalFormats(t)
+
+	type testCase struct {
+		name    string
+		format  string
+		value   float64
+		wantErr bool
+	}
+	DefineIntegerFormatValidator("anyInt64", NewCallbackValidator(func(value int64) error {
+		return nil
+	}))
+	testCases := []testCase{
+		{
+			name:    "int64 accepts the largest representable value",
+			format:  "int64",
+			value:   float64(math.MaxInt64),
+			wantErr: false,
+		},
+		{
+			name:    "int64 accepts the smallest representable value",
+			format:  "int64",
+			value:   float64(math.MinInt64),
+			wantErr: false,
+		},
+		{
+			name:    "int64 rejects 1e19",
+			format:  "int64",
+			value:   1e19,
+			wantErr: true,
+		},
+		{
+			name:    "int64 rejects -1e19",
+			format:  "int64",
+			value:   -1e19,
+			wantErr: true,
+		},
+		{
+			name:    "int64 rejects 1e30",
+			format:  "int64",
+			value:   1e30,
+			wantErr: true,
+		},
+		{
+			name:    "int32 rejects 1e19",
+			format:  "int32",
+			value:   1e19,
+			wantErr: true,
+		},
+		{
+			name:    "custom integer format rejects 1e19",
+			format:  "anyInt64",
+			value:   1e19,
+			wantErr: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := &Schema{
+				Type:   &Types{"integer"},
+				Format: tc.format,
+			}
+			err := schema.VisitJSON(tc.value)
+			if !tc.wantErr {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			var schemaError = &SchemaError{}
+			require.ErrorAs(t, err, &schemaError)
+			require.NotZero(t, schemaError.Reason)
+		})
+	}
+}
+
 func TestPerValidationFormatValidators(t *testing.T) {
 	// This test demonstrates per-validation format validators that don't pollute global state
 	// and allow different validators for the same format name across different specs
@@ -282,6 +360,8 @@ func TestPerValidationFormatValidators(t *testing.T) {
 }
 
 func TestPerValidationFormatValidators_AllTypes(t *testing.T) {
+	t.Parallel()
+
 	// Test string format validator
 	stringValidator := NewCallbackValidator(func(value string) error {
 		if len(value) < 5 {
@@ -341,6 +421,8 @@ func TestPerValidationFormatValidators_AllTypes(t *testing.T) {
 }
 
 func TestPerValidationFormatValidators_FallbackToGlobal(t *testing.T) {
+	KeepGlobalFormats(t)
+
 	// Register a global validator
 	DefineStringFormatValidator("global-format", NewCallbackValidator(func(value string) error {
 		if value != "global" {
@@ -348,7 +430,6 @@ func TestPerValidationFormatValidators_FallbackToGlobal(t *testing.T) {
 		}
 		return nil
 	}))
-	defer delete(SchemaStringFormats, "global-format")
 
 	schema := &Schema{
 		Type:   &Types{"string"},
@@ -446,6 +527,8 @@ func TestDocumentScopedFormatValidators(t *testing.T) {
 }
 
 func TestDocumentScopedFormatValidators_AllTypes(t *testing.T) {
+	t.Parallel()
+
 	doc := &T{
 		OpenAPI: "3.0.0",
 		Info:    &Info{Title: "Test", Version: "1.0.0"},
@@ -499,6 +582,8 @@ func TestDocumentScopedFormatValidators_AllTypes(t *testing.T) {
 }
 
 func TestDocumentScopedFormatValidators_BatchSet(t *testing.T) {
+	t.Parallel()
+
 	doc := &T{
 		OpenAPI: "3.0.0",
 		Info:    &Info{Title: "Test", Version: "1.0.0"},

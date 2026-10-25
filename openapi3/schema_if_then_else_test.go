@@ -9,6 +9,8 @@ import (
 )
 
 func TestSchemaIfThenElse_BuiltInValidator(t *testing.T) {
+	t.Parallel()
+
 	t.Run("schema with if/then/else is not empty", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			If:   &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
@@ -29,6 +31,8 @@ func TestSchemaIfThenElse_BuiltInValidator(t *testing.T) {
 }
 
 func TestSchemaIfThenElse_JSONSchema2020(t *testing.T) {
+	t.Parallel()
+
 	t.Run("if/then/else conditional validation", func(t *testing.T) {
 		// If type is string, then minLength=3; else must be number
 		schema := &openapi3.Schema{
@@ -111,6 +115,8 @@ func TestSchemaIfThenElse_JSONSchema2020(t *testing.T) {
 }
 
 func TestSchemaIfThenElse_MarshalRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	t.Run("if/then/else round-trip", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			If:   &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
@@ -172,6 +178,8 @@ func TestSchemaIfThenElse_MarshalRoundTrip(t *testing.T) {
 }
 
 func TestSchemaIfThenElse_Validate(t *testing.T) {
+	t.Parallel()
+
 	t.Run("unresolved if ref fails validation", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			If: &openapi3.SchemaRef{Ref: "#/components/schemas/Missing"},

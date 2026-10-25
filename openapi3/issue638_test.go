@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue638(t *testing.T) {
+	t.Parallel()
+
 	for range 50 {
 		loader := openapi3.NewLoader()
 		loader.IsExternalRefsAllowed = true

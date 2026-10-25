@@ -50,6 +50,8 @@ components:
 }
 
 func TestValidateRequestDefault(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		url      string
 		expected []string
@@ -114,7 +116,6 @@ func TestValidateRequestDefault(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			req, err := http.NewRequest(http.MethodGet, tc.args.url, nil)
 			require.NoError(t, err)
 
@@ -135,5 +136,75 @@ func TestValidateRequestDefault(t *testing.T) {
 
 			assert.Equal(t, tc.args.expected, req.URL.Query()["type"], "ValidateRequest(): query parameter type values do not match expected")
 		})
+	}
+}
+
+func TestValidateRequestDefaultSerializationMethod(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /category:
+    get:
+      parameters:
+        - in: query
+          name: form
+          schema:
+            type: array
+            default: [A, B, C]
+            items:
+              type: string
+        - in: query
+          name: spaces
+          style: spaceDelimited
+          schema:
+            type: array
+            default: [A, B, C]
+            items:
+              type: string
+        - in: query
+          name: pipes
+          style: pipeDelimited
+          schema:
+            type: array
+            default: [A, B, C]
+            items:
+              type: string
+      responses:
+        '200':
+          description: Ok
+`
+
+	router := setupTestRouter(t, spec)
+
+	req, err := http.NewRequest(http.MethodGet, "/category", nil)
+	require.NoError(t, err)
+
+	route, pathParams, err := router.FindRoute(req)
+	require.NoError(t, err)
+
+	validationInput := &RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+	}
+	err = ValidateRequest(t.Context(), validationInput)
+	require.NoError(t, err)
+
+	query := req.URL.Query()
+	require.Equal(t, []string{"A", "B", "C"}, query["form"])
+	require.Equal(t, []string{"A B C"}, query["spaces"])
+	require.Equal(t, []string{"A|B|C"}, query["pipes"])
+
+	// The populated query must decode back to the default values.
+	for _, name := range []string{"form", "spaces", "pipes"} {
+		param := route.Operation.Parameters.GetByInAndName("query", name)
+		value, _, err := decodeStyledParameter(param, &RequestValidationInput{Request: req})
+		require.NoError(t, err)
+		require.Equal(t, []any{"A", "B", "C"}, value, name)
 	}
 }

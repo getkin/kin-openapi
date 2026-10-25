@@ -19,6 +19,7 @@ func codedErrorInventory() []openapi3.CodedError {
 	return []openapi3.CodedError{
 		&openapi3.AdditionalOperationsDuplicateMethodError{},
 		&openapi3.AdditionalOperationsFieldFor32Plus{},
+		&openapi3.AdditionalOperationsFixedMethodCaseError{},
 		&openapi3.AdditionalOperationsInvalidMethodError{},
 		&openapi3.AnchorFieldFor31Plus{},
 		&openapi3.APIKeyInInvalidError{},
@@ -27,6 +28,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.ConflictingPathsError{},
 		&openapi3.ConstFieldFor31Plus{},
 		&openapi3.ContainsFieldFor31Plus{},
+		&openapi3.ContentKeysOverlapError{},
 		&openapi3.ContentEncodingFieldFor31Plus{},
 		&openapi3.ContentMediaTypeFieldFor31Plus{},
 		&openapi3.ContentSchemaFieldFor31Plus{},
@@ -57,6 +59,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.InfoSummaryFieldFor31Plus{},
 		&openapi3.InfoTitleRequired{},
 		&openapi3.InfoVersionRequired{},
+		&openapi3.InvalidEncodingContentTypeError{},
 		&openapi3.InvalidHTTPSchemeError{},
 		&openapi3.InvalidParameterInError{},
 		&openapi3.InvalidSecuritySchemeTypeError{},
@@ -100,9 +103,14 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.SchemaItemsRequired{},
 		&openapi3.SchemaPatternRegexError{},
 		&openapi3.SchemaReadOnlyWriteOnlyExclusive{},
+		&openapi3.SchemaBooleanFieldsExclusive{},
+		&openapi3.BooleanSchemaFor31Plus{},
+		&openapi3.ExclusiveBoundNumberFor31Plus{},
+		&openapi3.ExclusiveBoundBooleanBefore31{},
 		&openapi3.SchemaTypeError{},
 		&openapi3.SchemaUnevaluatedItemsBothForms{},
 		&openapi3.SchemaUnevaluatedPropertiesBothForms{},
+		&openapi3.SecurityRequirementSchemeUndefinedError{},
 		&openapi3.SecuritySchemeBearerFormatForbidden{},
 		&openapi3.SecuritySchemeFlowsForbidden{},
 		&openapi3.SecuritySchemeFlowsRequired{},
@@ -112,6 +120,7 @@ func codedErrorInventory() []openapi3.CodedError {
 		&openapi3.ServerURLTemplateError{},
 		&openapi3.ServerVariableDefaultRequired{},
 		&openapi3.ThenFieldFor31Plus{},
+		&openapi3.TypeArrayFor31Plus{},
 		&openapi3.UnevaluatedItemsFieldFor31Plus{},
 		&openapi3.UnevaluatedPropertiesFieldFor31Plus{},
 		&openapi3.UnresolvedRefError{},
@@ -124,6 +133,8 @@ func codedErrorInventory() []openapi3.CodedError {
 // code from the exported catalog, every catalog entry is yielded by some
 // type, and the catalog is sorted, unique, kebab-case.
 func TestValidationErrorCodes(t *testing.T) {
+	t.Parallel()
+
 	catalog := openapi3.ValidationErrorCodes()
 	require.True(t, slices.IsSorted(catalog), "catalog must be sorted")
 	require.Equal(t, len(slices.Compact(slices.Clone(catalog))), len(catalog), "catalog must be unique")
@@ -150,6 +161,8 @@ func TestValidationErrorCodes(t *testing.T) {
 // which codes exist; this covers that a consumer can get to them. One row per
 // unwrap path, not per code.
 func TestValidationErrorCodes_EndToEnd(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name    string // the wrapper chain under test
 		spec    string

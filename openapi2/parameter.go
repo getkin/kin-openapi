@@ -12,31 +12,31 @@ type Parameters []*Parameter
 type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Ref string `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
 
-	In               string          `json:"in,omitempty" yaml:"in,omitempty"`
-	Name             string          `json:"name,omitempty" yaml:"name,omitempty"`
-	Description      string          `json:"description,omitempty" yaml:"description,omitempty"`
-	CollectionFormat string          `json:"collectionFormat,omitempty" yaml:"collectionFormat,omitempty"`
-	Type             *openapi3.Types `json:"type,omitempty" yaml:"type,omitempty"`
-	Format           string          `json:"format,omitempty" yaml:"format,omitempty"`
-	Pattern          string          `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	AllowEmptyValue  bool            `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	Required         bool            `json:"required,omitempty" yaml:"required,omitempty"`
-	UniqueItems      bool            `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	ExclusiveMin     bool            `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax     bool            `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	Schema           *SchemaRef      `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Items            *SchemaRef      `json:"items,omitempty" yaml:"items,omitempty"`
-	Enum             []any           `json:"enum,omitempty" yaml:"enum,omitempty"`
-	MultipleOf       *float64        `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
-	Minimum          *float64        `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Maximum          *float64        `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	MaxLength        *uint64         `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MaxItems         *uint64         `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	MinLength        uint64          `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MinItems         uint64          `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	Default          any             `json:"default,omitempty" yaml:"default,omitempty"`
+	In               string          `json:"in,omitempty,case:strict" yaml:"in,omitempty"`
+	Name             string          `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Description      string          `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	CollectionFormat string          `json:"collectionFormat,omitempty,case:strict" yaml:"collectionFormat,omitempty"`
+	Type             *openapi3.Types `json:"type,omitempty,case:strict" yaml:"type,omitempty"`
+	Format           string          `json:"format,omitempty,case:strict" yaml:"format,omitempty"`
+	Pattern          string          `json:"pattern,omitempty,case:strict" yaml:"pattern,omitempty"`
+	AllowEmptyValue  bool            `json:"allowEmptyValue,omitempty,case:strict" yaml:"allowEmptyValue,omitempty"`
+	Required         bool            `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	UniqueItems      bool            `json:"uniqueItems,omitempty,case:strict" yaml:"uniqueItems,omitempty"`
+	ExclusiveMin     bool            `json:"exclusiveMinimum,omitempty,case:strict" yaml:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool            `json:"exclusiveMaximum,omitempty,case:strict" yaml:"exclusiveMaximum,omitempty"`
+	Schema           *SchemaRef      `json:"schema,omitempty,case:strict" yaml:"schema,omitempty"`
+	Items            *SchemaRef      `json:"items,omitempty,case:strict" yaml:"items,omitempty"`
+	Enum             []any           `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
+	MultipleOf       *float64        `json:"multipleOf,omitempty,case:strict" yaml:"multipleOf,omitempty"`
+	Minimum          *float64        `json:"minimum,omitempty,case:strict" yaml:"minimum,omitempty"`
+	Maximum          *float64        `json:"maximum,omitempty,case:strict" yaml:"maximum,omitempty"`
+	MaxLength        *uint64         `json:"maxLength,omitempty,case:strict" yaml:"maxLength,omitempty"`
+	MaxItems         *uint64         `json:"maxItems,omitempty,case:strict" yaml:"maxItems,omitempty"`
+	MinLength        uint64          `json:"minLength,omitempty,case:strict" yaml:"minLength,omitempty"`
+	MinItems         uint64          `json:"minItems,omitempty,case:strict" yaml:"minItems,omitempty"`
+	Default          any             `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Parameter.
@@ -125,10 +125,10 @@ func (parameter Parameter) MarshalJSON() ([]byte, error) {
 func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	type ParameterBis Parameter
 	var x ParameterBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
 
 	delete(x.Extensions, "in")

@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue376(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 components:
@@ -45,6 +47,8 @@ info:
 }
 
 func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
+	t.Parallel()
+
 	schema := &openapi3.Schema{
 		AdditionalProperties: openapi3.AdditionalProperties{
 			Has:    openapi3.Ptr(false),
@@ -72,6 +76,8 @@ func TestExclusiveValuesOfValuesAdditionalProperties(t *testing.T) {
 }
 
 func TestMultijsonTagSerialization(t *testing.T) {
+	t.Parallel()
+
 	specYAML := []byte(`
 openapi: 3.0.0
 components:

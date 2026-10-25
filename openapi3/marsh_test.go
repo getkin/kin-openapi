@@ -9,6 +9,8 @@ import (
 )
 
 func TestUnmarshalError(t *testing.T) {
+	t.Parallel()
+
 	{
 		spec := []byte(`
 openapi: 3.0.1

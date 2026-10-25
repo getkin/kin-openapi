@@ -18,16 +18,16 @@ type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
-	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
-	Info              *Info                `json:"info" yaml:"info"`   // Required
-	Paths             *Paths               `json:"paths" yaml:"paths"` // Required in 3.0, optional in 3.1
-	Security          SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Servers           Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Tags              Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
-	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Webhooks          map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
-	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
+	OpenAPI           string               `json:"openapi,case:strict" yaml:"openapi"` // Required
+	Components        *Components          `json:"components,omitempty,case:strict" yaml:"components,omitempty"`
+	Info              *Info                `json:"info,case:strict" yaml:"info"`   // Required
+	Paths             *Paths               `json:"paths,case:strict" yaml:"paths"` // Required in 3.0, optional in 3.1
+	Security          SecurityRequirements `json:"security,omitempty,case:strict" yaml:"security,omitempty"`
+	Servers           Servers              `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
+	Tags              Tags                 `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
+	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
+	Webhooks          map[string]*PathItem `json:"webhooks,omitempty,case:strict" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
+	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty,case:strict" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
 
 	visited visitedComponent
 	url     *url.URL
@@ -75,7 +75,7 @@ func (doc *T) OpenAPIMajorMinor() string {
 		return "3.0"
 	case "3.1", "3.1.0", "3.1.1", "3.1.2":
 		return "3.1"
-	case "3.2", "3.2.0":
+	case "3.2", "3.2.0", "3.2.1":
 		return "3.2"
 	default:
 		return ""
@@ -160,10 +160,10 @@ func (doc *T) MarshalYAML() (any, error) {
 func (doc *T) UnmarshalJSON(data []byte) error {
 	type TBis T
 	var x TBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "openapi")
 	delete(x.Extensions, "components")
 	delete(x.Extensions, "info")
@@ -384,6 +384,9 @@ func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
 		}
 	}
 
+	if err := me.emit(doc.validateSecurityRequirements(ctx)); err != nil {
+		return err
+	}
 	return me.finalize(validateExtensions(ctx, doc.Extensions, doc.Origin))
 }
 

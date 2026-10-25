@@ -12,6 +12,8 @@ import (
 )
 
 func TestMarshalAdditionalProperties(t *testing.T) {
+	t.Parallel()
+
 	data, err := os.ReadFile("testdata/test.openapi.additionalproperties.yml")
 	require.NoError(t, err)
 

@@ -109,6 +109,8 @@ func TestDateTimeZeroDay(t *testing.T) {
 }
 
 func TestDateTimeLeapSecond(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(DateTimeSpec)
 	require.NoError(t, err)

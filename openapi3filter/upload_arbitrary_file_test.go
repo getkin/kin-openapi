@@ -16,6 +16,8 @@ import (
 )
 
 func TestValidateUploadArbitraryBinaryFile(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info:

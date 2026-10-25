@@ -57,6 +57,8 @@ type count struct {
 }
 
 func TestIssue949(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(testSchema))
 	require.NoError(t, err)

@@ -40,7 +40,8 @@ type WalkSchemasFunc func(jsonPointer string, schema *SchemaRef) error
 // request bodies, responses, headers, callbacks), and webhooks, then recurses
 // through every sub-schema keyword: properties, items, itemSchema,
 // allOf/anyOf/oneOf, not, additionalProperties, prefixItems, contains, patternProperties,
-// dependentSchemas, propertyNames, if/then/else, and $defs.
+// dependentSchemas, propertyNames, if/then/else, unevaluatedItems,
+// unevaluatedProperties, contentSchema, and $defs.
 //
 // It is useful for validation, code generation, schema transformation,
 // $ref/dependency analysis, and documentation: any consumer that needs to act
@@ -50,13 +51,34 @@ func (doc *T) WalkSchemas(fn WalkSchemasFunc) error {
 	if doc == nil {
 		return nil
 	}
-	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{})}
+	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{}), seenCallbacks: make(map[*Callback]struct{})}
 	return w.document(doc)
+}
+
+// WalkSubtree visits sr and every schema reachable from it through sub-schema
+// keywords, invoking fn for each. It is WalkSchemas scoped to a single schema:
+// the same descent, cycle guard, and SkipSubtree semantics, with jsonPointer
+// relative to sr, whose own pointer is the empty string.
+func (sr *SchemaRef) WalkSubtree(fn WalkSchemasFunc) error {
+	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{})}
+	return w.schemaRef("", sr)
+}
+
+// walkSubtreeRefs is WalkSubtree, but it also invokes fn, without descending,
+// for each $ref to a schema already visited, so that every reference of a
+// shared or cyclic subtree is reported.
+func (sr *SchemaRef) walkSubtreeRefs(fn WalkSchemasFunc) error {
+	w := schemaWalker{fn: fn, seen: make(map[*Schema]struct{}), revisitRefs: true}
+	return w.schemaRef("", sr)
 }
 
 type schemaWalker struct {
 	fn   WalkSchemasFunc
 	seen map[*Schema]struct{}
+	// A callback's operations can list the same callback, so a callback can
+	// reach itself.
+	seenCallbacks map[*Callback]struct{}
+	revisitRefs   bool
 }
 
 // escapeRefString escapes a single JSON Pointer reference token per RFC 6901:
@@ -171,6 +193,10 @@ func (w *schemaWalker) operation(ptr string, op *Operation) error {
 }
 
 func (w *schemaWalker) callback(ptr string, cb *Callback) error {
+	if _, ok := w.seenCallbacks[cb]; ok {
+		return nil
+	}
+	w.seenCallbacks[cb] = struct{}{}
 	items := cb.Map()
 	for _, expr := range slices.Sorted(maps.Keys(items)) {
 		if err := w.pathItem(ptr+"/"+escapeRefString(expr), items[expr]); err != nil {
@@ -244,6 +270,11 @@ func (w *schemaWalker) schemaRef(ptr string, sr *SchemaRef) error {
 	s := sr.Value
 	if _, ok := w.seen[s]; ok {
 		// Already visited (shared $ref target or reference cycle).
+		if w.revisitRefs && sr.Ref != "" {
+			if err := w.fn(ptr, sr); err != nil && !errors.Is(err, SkipSubtree) {
+				return err
+			}
+		}
 		return nil
 	}
 	w.seen[s] = struct{}{}
@@ -306,6 +337,19 @@ func (w *schemaWalker) schemaRef(ptr string, sr *SchemaRef) error {
 		return err
 	}
 	if err := w.schemaRef(ptr+"/else", s.Else); err != nil {
+		return err
+	}
+	if s.UnevaluatedItems.Schema != nil {
+		if err := w.schemaRef(ptr+"/unevaluatedItems", s.UnevaluatedItems.Schema); err != nil {
+			return err
+		}
+	}
+	if s.UnevaluatedProperties.Schema != nil {
+		if err := w.schemaRef(ptr+"/unevaluatedProperties", s.UnevaluatedProperties.Schema); err != nil {
+			return err
+		}
+	}
+	if err := w.schemaRef(ptr+"/contentSchema", s.ContentSchema); err != nil {
 		return err
 	}
 	for _, name := range slices.Sorted(maps.Keys(s.Defs)) {

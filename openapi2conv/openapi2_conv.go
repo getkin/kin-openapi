@@ -50,6 +50,14 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 			}
 			doc3.AddServer(&openapi3.Server{URL: u.String()})
 		}
+	} else if basePath := doc2.BasePath; basePath != "" {
+		// Swagger 2.0 makes `host` optional, in which case the host serving
+		// the documentation is to be used. There is then no host to build an
+		// absolute URL from, but `basePath` still applies, and OpenAPI 3
+		// allows a relative server URL. Emit the base path on its own rather
+		// than dropping it: with no servers the default server URL of "/" is
+		// assumed, so `/v1` used to disappear (issue #1284).
+		doc3.AddServer(&openapi3.Server{URL: basePath})
 	}
 
 	doc3.Components.Schemas = make(map[string]*openapi3.SchemaRef)
@@ -134,10 +142,9 @@ func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *o
 		switch {
 		case err != nil:
 			return nil, err
-		case v3RequestBody != nil:
-			return nil, errors.New("pathItem must not have a body parameter")
-		case v3Schema != nil:
-			return nil, errors.New("pathItem must not have a schema parameter")
+		case v3RequestBody != nil, v3Schema != nil:
+			// OpenAPI 3 has no path-level request body: these are applied to
+			// every operation of the path item by ToV3Operation.
 		default:
 			doc3.Parameters = append(doc3.Parameters, v3Parameter)
 		}
@@ -167,8 +174,10 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 		consumes = operation.Consumes
 	}
 
-	var reqBodies []*openapi3.RequestBodyRef
-	formDataSchemas := make(map[string]*openapi3.SchemaRef)
+	reqBodies, formDataSchemas, err := inheritedRequestBodyParams(components, pathItem, operation, consumes)
+	if err != nil {
+		return nil, err
+	}
 	for _, parameter := range operation.Parameters {
 		v3Parameter, v3RequestBody, v3SchemaMap, err := ToV3Parameter(components, parameter, consumes)
 		switch {
@@ -182,14 +191,14 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 			doc3.Parameters = append(doc3.Parameters, v3Parameter)
 		}
 	}
-	var err error
 	if doc3.RequestBody, err = onlyOneReqBodyParam(reqBodies, formDataSchemas, components, consumes); err != nil {
 		return nil, err
 	}
 
 	if responses := operation.Responses; responses != nil {
-		doc3.Responses = openapi3.NewResponsesWithCapacity(len(responses))
-		for k, response := range responses {
+		doc3.Responses = openapi3.NewResponsesWithCapacity(responses.Len())
+		doc3.Responses.Extensions = stripNonExtensions(responses.Extensions)
+		for k, response := range responses.Map() {
 			responseRef3, err := ToV3Response(response, operation.Produces)
 			if err != nil {
 				return nil, err
@@ -198,6 +207,49 @@ func ToV3Operation(components *openapi3.Components, pathItem *openapi2.PathItem,
 		}
 	}
 	return doc3, nil
+}
+
+// inheritedRequestBodyParams converts the body and formData parameters declared
+// on pathItem so that they can be applied to operation. OpenAPI 3 has no
+// path-level request body, so a Swagger 2.0 path item declaring one has to push
+// it down into each of its operations. Parameters that operation redeclares are
+// skipped: Swagger 2.0 lets operations override path-level parameters.
+func inheritedRequestBodyParams(components *openapi3.Components, pathItem *openapi2.PathItem, operation *openapi2.Operation, consumes []string) ([]*openapi3.RequestBodyRef, map[string]*openapi3.SchemaRef, error) {
+	reqBodies := []*openapi3.RequestBodyRef{}
+	formDataSchemas := map[string]*openapi3.SchemaRef{}
+	if pathItem == nil {
+		return reqBodies, formDataSchemas, nil
+	}
+
+	overridden := make(map[string]bool, len(operation.Parameters))
+	for _, parameter := range operation.Parameters {
+		overridden[parameterIdentity(parameter)] = true
+	}
+
+	for _, parameter := range pathItem.Parameters {
+		if overridden[parameterIdentity(parameter)] {
+			continue
+		}
+		_, v3RequestBody, v3SchemaMap, err := ToV3Parameter(components, parameter, consumes)
+		switch {
+		case err != nil:
+			return nil, nil, err
+		case v3RequestBody != nil:
+			reqBodies = append(reqBodies, v3RequestBody)
+		case v3SchemaMap != nil:
+			maps.Copy(formDataSchemas, v3SchemaMap)
+		}
+	}
+	return reqBodies, formDataSchemas, nil
+}
+
+// parameterIdentity returns the key a parameter is known by inside a path item:
+// a reference keeps its reference, an inline parameter its location and name.
+func parameterIdentity(parameter *openapi2.Parameter) string {
+	if parameter.Ref != "" {
+		return parameter.Ref
+	}
+	return parameter.In + " " + parameter.Name
 }
 
 func getParameterNameFromOldRef(ref string) string {
@@ -326,8 +378,27 @@ func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Paramete
 				Ref: schemaRefRef,
 			}),
 		}
+		if parameter.In == openapi3.ParameterInQuery && parameter.Type.Is("array") {
+			result.Style, result.Explode = toV3QueryStyle(parameter.CollectionFormat)
+		}
 		return &openapi3.ParameterRef{Value: result}, nil, nil, nil
 	}
+}
+
+// toV3QueryStyle maps a query parameter's collectionFormat to the equivalent style and explode.
+// tsv has no OpenAPI 3 equivalent.
+func toV3QueryStyle(collectionFormat string) (string, *bool) {
+	switch collectionFormat {
+	case "csv":
+		return openapi3.SerializationForm, openapi3.Ptr(false)
+	case "ssv":
+		return openapi3.SerializationSpaceDelimited, openapi3.Ptr(false)
+	case "pipes":
+		return openapi3.SerializationPipeDelimited, openapi3.Ptr(false)
+	case "multi":
+		return openapi3.SerializationForm, openapi3.Ptr(true)
+	}
+	return "", nil
 }
 
 func formDataBody(bodies map[string]*openapi3.SchemaRef, reqs map[string]bool, consumes []string) *openapi3.RequestBodyRef {
@@ -434,6 +505,17 @@ func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.Res
 		result.Content = make(openapi3.Content, len(produces))
 		for _, mime := range produces {
 			result.Content[mime] = openapi3.NewMediaType().WithSchemaRef(schema)
+		}
+	}
+	if examples := response.Examples; len(examples) > 0 {
+		if result.Content == nil {
+			result.Content = make(openapi3.Content, len(examples))
+		}
+		for mime, example := range examples {
+			if result.Content[mime] == nil {
+				result.Content[mime] = openapi3.NewMediaType()
+			}
+			result.Content[mime].Example = example
 		}
 	}
 	if headers := response.Headers; len(headers) > 0 {
@@ -1148,7 +1230,11 @@ func FromV3Operation(doc3 *openapi3.T, operation *openapi3.Operation) (*openapi2
 		if err != nil {
 			return nil, err
 		}
-		result.Responses = resultResponses
+		result.Responses = openapi2.NewResponsesWithCapacity(len(resultResponses))
+		result.Responses.Extensions = stripNonExtensions(responses.Extensions)
+		for k, response := range resultResponses {
+			result.Responses.Set(k, response)
+		}
 	}
 	return result, nil
 }
@@ -1186,12 +1272,18 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		Extensions:  stripNonExtensions(parameter.Extensions),
 	}
 	if schemaRef := parameter.Schema; schemaRef != nil {
-		schemaRefV2, _ := FromV3SchemaRef(schemaRef, components)
+		schemaRefV2, parameterV2 := FromV3SchemaRef(schemaRef, components)
+		if schemaRefV2 == nil {
+			return parameterV2, nil
+		}
 		if ref := schemaRefV2.Ref; ref != "" {
 			result.Schema = &openapi2.SchemaRef{Ref: FromV3Ref(ref)}
 			return result, nil
 		}
 		schema := schemaRefV2.Value
+		if schema == nil {
+			return result, nil
+		}
 		result.Type = schema.Type
 		result.Format = schema.Format
 		result.Enum = schema.Enum
@@ -1207,11 +1299,35 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		result.MinItems = schema.MinItems
 		result.MaxItems = schema.MaxItems
 		result.AllowEmptyValue = schema.AllowEmptyValue
-		// result.CollectionFormat = schema.CollectionFormat
 		result.UniqueItems = schema.UniqueItems
 		result.MultipleOf = schema.MultipleOf
+		if parameter.In == openapi3.ParameterInQuery && result.Type.Is("array") {
+			result.CollectionFormat = fromV3QueryStyle(parameter)
+		}
 	}
 	return result, nil
+}
+
+// fromV3QueryStyle maps a query parameter's explicit style and explode to the equivalent collectionFormat.
+func fromV3QueryStyle(parameter *openapi3.Parameter) string {
+	if parameter.Style == "" && parameter.Explode == nil {
+		return ""
+	}
+	sm, err := parameter.SerializationMethod()
+	if err != nil {
+		return ""
+	}
+	switch {
+	case sm.Style == openapi3.SerializationForm && sm.Explode:
+		return "multi"
+	case sm.Style == openapi3.SerializationForm:
+		return "csv"
+	case sm.Style == openapi3.SerializationSpaceDelimited && !sm.Explode:
+		return "ssv"
+	case sm.Style == openapi3.SerializationPipeDelimited && !sm.Explode:
+		return "pipes"
+	}
+	return ""
 }
 
 func FromV3Responses(responses map[string]*openapi3.ResponseRef, components *openapi3.Components) (map[string]*openapi2.Response, error) {
@@ -1260,7 +1376,11 @@ func FromV3Response(ref *openapi3.ResponseRef, components *openapi3.Components) 
 func FromV3Headers(defs openapi3.Headers, components *openapi3.Components) (map[string]*openapi2.Header, error) {
 	headers := make(map[string]*openapi2.Header, len(defs))
 	for name, header := range defs {
-		ref := openapi3.ParameterRef{Ref: header.Ref, Value: &header.Value.Parameter}
+		// Swagger 2.0 has no reusable headers and a Header Object cannot be a $ref, so inline it.
+		if header.Value == nil {
+			return nil, fmt.Errorf("unresolved reference %q for header %q", header.Ref, name)
+		}
+		ref := openapi3.ParameterRef{Value: &header.Value.Parameter}
 		parameter, err := FromV3Parameter(&ref, components)
 		if err != nil {
 			return nil, err

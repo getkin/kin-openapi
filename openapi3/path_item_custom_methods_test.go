@@ -64,6 +64,8 @@ components:
 `
 
 func TestOpenAPI32PathItemCustomMethods(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(customMethodsSpec))
 	require.NoError(t, err)
@@ -95,6 +97,8 @@ func TestOpenAPI32PathItemCustomMethods(t *testing.T) {
 }
 
 func TestPathItemSetOperationCustomMethod(t *testing.T) {
+	t.Parallel()
+
 	pathItem := &PathItem{}
 	op := &Operation{Responses: NewResponses()}
 
@@ -118,6 +122,8 @@ func TestPathItemSetOperationCustomMethod(t *testing.T) {
 }
 
 func TestPathItemCustomMethodsRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(customMethodsSpec))
 	require.NoError(t, err)
@@ -144,6 +150,8 @@ func TestPathItemCustomMethodsRoundTrip(t *testing.T) {
 }
 
 func TestPathItemCustomMethodsValidationErrors(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name string
 		spec string
@@ -205,6 +213,38 @@ paths:
 			code: "additional-operations-duplicate-method",
 		},
 		{
+			name: "additionalOperations key is a case variant of a fixed field",
+			spec: `
+openapi: 3.2.0
+info: {title: t, version: "1"}
+paths:
+  /things:
+    post:
+      responses:
+        "204": {description: protected}
+    additionalOperations:
+      post:
+        security: []
+        responses:
+          "204": {description: public}
+`,
+			code: "additional-operations-fixed-method-case",
+		},
+		{
+			name: "additionalOperations key is a case variant of an unset fixed field",
+			spec: `
+openapi: 3.2.0
+info: {title: t, version: "1"}
+paths:
+  /things:
+    additionalOperations:
+      Query:
+        responses:
+          "200": {description: ok}
+`,
+			code: "additional-operations-fixed-method-case",
+		},
+		{
 			name: "additionalOperations key is not an HTTP token",
 			spec: `
 openapi: 3.2.0
@@ -220,6 +260,7 @@ paths:
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			loader := NewLoader()
 			doc, err := loader.LoadFromData([]byte(tc.spec))
 			require.NoError(t, err)
@@ -234,6 +275,8 @@ paths:
 }
 
 func TestPathItemCustomMethodsVersionSentinels(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.1.0
@@ -274,13 +317,15 @@ paths:
 	require.Equal(t, 2, mismatches)
 	require.NotNil(t, query)
 	require.NotNil(t, additional)
-	require.Equal(t, "field query is for OpenAPI >=3.2", query.Error())
-	require.Equal(t, "field additionalOperations is for OpenAPI >=3.2", additional.Error())
+	require.EqualError(t, query, "field query is for OpenAPI >=3.2")
+	require.EqualError(t, additional, "field additionalOperations is for OpenAPI >=3.2")
 }
 
 // A lowercase key is a valid RFC 9110 token, so it must not be rejected even
 // though the convention is uppercase.
 func TestPathItemCustomMethodsLowercaseKeyIsValid(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.2.0
@@ -297,6 +342,8 @@ paths:
 }
 
 func TestPathItemIsEmptyWithCustomMethods(t *testing.T) {
+	t.Parallel()
+
 	require.True(t, (&PathItem{}).isEmpty())
 	require.False(t, (&PathItem{Query: &Operation{}}).isEmpty())
 	require.False(t, (&PathItem{AdditionalOperations: map[string]*Operation{
@@ -305,6 +352,8 @@ func TestPathItemIsEmptyWithCustomMethods(t *testing.T) {
 }
 
 func TestWalkersVisitCustomMethodOperations(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	doc, err := loader.LoadFromData([]byte(customMethodsSpec))
 	require.NoError(t, err)
@@ -329,6 +378,8 @@ func TestWalkersVisitCustomMethodOperations(t *testing.T) {
 }
 
 func TestPathItemMethods_MatchTheFixedFields(t *testing.T) {
+	t.Parallel()
+
 	methods := PathItemMethods()
 	require.True(t, slices.IsSorted(methods))
 

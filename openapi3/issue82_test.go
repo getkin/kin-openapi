@@ -8,6 +8,8 @@ import (
 )
 
 func TestIssue82(t *testing.T) {
+	t.Parallel()
+
 	payload := map[string]any{
 		"prop1": "val",
 		"prop3": "val",

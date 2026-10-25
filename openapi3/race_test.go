@@ -9,6 +9,8 @@ import (
 )
 
 func TestRaceyPatternSchemaValidateHindersIt(t *testing.T) {
+	t.Parallel()
+
 	schema := openapi3.NewStringSchema().WithPattern("^test|for|race|condition$")
 
 	err := schema.Validate(t.Context())
@@ -24,6 +26,8 @@ func TestRaceyPatternSchemaValidateHindersIt(t *testing.T) {
 }
 
 func TestRaceyPatternSchemaForIssue775(t *testing.T) {
+	t.Parallel()
+
 	schema := openapi3.NewStringSchema().WithPattern("^test|for|race|condition$")
 
 	// err := schema.Validate(t.Context())

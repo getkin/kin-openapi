@@ -15,6 +15,8 @@ import (
 // schema checks. After #1096 they stay "", so format:date was applied even when
 // allowEmptyValue is true. See #1134.
 func TestIssue1134(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: 3.0.3
 info:

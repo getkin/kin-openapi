@@ -70,7 +70,7 @@ components:
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err = doc.Components.Schemas["Something"].Value.Properties["field"].Value.VisitJSON(test.value)
+			err := doc.Components.Schemas["Something"].Value.Properties["field"].Value.VisitJSON(test.value)
 
 			test.checkErr(t, err)
 		})

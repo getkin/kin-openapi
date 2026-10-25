@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue235OK(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile("testdata/issue235.spec0.yml")
@@ -18,6 +20,8 @@ func TestIssue235OK(t *testing.T) {
 }
 
 func TestIssue235CircularDep(t *testing.T) {
+	t.Parallel()
+
 	t.Skip("TODO: return an error on circular dependencies between external files of a spec")
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true

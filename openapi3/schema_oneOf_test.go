@@ -120,6 +120,8 @@ components:
 }
 
 func TestVisitJSON_OneOf_MissingDescriptorProperty(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name": "snoopy",
@@ -128,6 +130,8 @@ func TestVisitJSON_OneOf_MissingDescriptorProperty(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_MissingDescriptorValue(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name":  "snoopy",
@@ -137,6 +141,8 @@ func TestVisitJSON_OneOf_MissingDescriptorValue(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_MissingField(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name":  "snoopy",
@@ -146,6 +152,8 @@ func TestVisitJSON_OneOf_MissingField(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofNoDiscriminatorSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name": "snoopy",
@@ -154,6 +162,8 @@ func TestVisitJSON_OneOf_NoDescriptor_MissingField(t *testing.T) {
 }
 
 func TestVisitJSON_OneOf_BadDiscriminatorType(t *testing.T) {
+	t.Parallel()
+
 	doc := oneofSpec(t)
 	err := doc.Components.Schemas["Animal"].Value.VisitJSON(map[string]any{
 		"name":      "snoopy",
@@ -170,7 +180,83 @@ func TestVisitJSON_OneOf_BadDiscriminatorType(t *testing.T) {
 	require.ErrorContains(t, err, `value of discriminator property "$type" is not a string`)
 }
 
+func TestVisitJSON_XOf_DiscriminatorMappingSchemaNames(t *testing.T) {
+	t.Parallel()
+
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        scratches:
+          type: boolean
+        $type:
+          type: string
+      required:
+        - scratches
+        - $type
+    Dog:
+      type: object
+      properties:
+        barks:
+          type: boolean
+        $type:
+          type: string
+      required:
+        - barks
+        - $type
+    OneOfAnimal:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/Cat"
+        - $ref: "#/components/schemas/Dog"
+      discriminator:
+        propertyName: $type
+        mapping:
+          cat: Cat
+          dog: "#/components/schemas/Dog"
+    AnyOfAnimal:
+      type: object
+      anyOf:
+        - $ref: "#/components/schemas/Cat"
+        - $ref: "#/components/schemas/Dog"
+      discriminator:
+        propertyName: $type
+        mapping:
+          cat: Cat
+          dog: Dog
+`[1:])
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	for _, name := range []string{"OneOfAnimal", "AnyOfAnimal"} {
+		schema := doc.Components.Schemas[name].Value
+
+		err = schema.VisitJSON(map[string]any{"$type": "cat", "scratches": true})
+		require.NoError(t, err, name)
+
+		err = schema.VisitJSON(map[string]any{"$type": "dog", "barks": true})
+		require.NoError(t, err, name)
+
+		err = schema.VisitJSON(map[string]any{"$type": "cat", "barks": true})
+		require.Error(t, err, name)
+	}
+}
+
 func TestVisitJSON_OneOf_Path(t *testing.T) {
+	t.Parallel()
+
 	spec := []byte(`
 openapi: 3.0.0
 paths: {}

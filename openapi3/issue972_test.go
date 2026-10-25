@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue972(t *testing.T) {
+	t.Parallel()
+
 	type testcase struct {
 		spec                    string
 		validationErrorContains string

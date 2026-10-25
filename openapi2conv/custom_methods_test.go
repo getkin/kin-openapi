@@ -13,6 +13,8 @@ import (
 // methods Swagger 2.0 cannot express returns an error instead of panic-ing in
 // openapi2's SetOperation.
 func TestFromV3CustomMethods(t *testing.T) {
+	t.Parallel()
+
 	const specFmt = `
 openapi: 3.2.0
 info:

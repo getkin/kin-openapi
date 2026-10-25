@@ -17,6 +17,8 @@ import (
 var circularResSpecs embed.FS
 
 func TestLoadCircularRefFromFile(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, uri *url.URL) ([]byte, error) {

@@ -12,16 +12,16 @@ import (
 type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 
-	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
+	Ref string `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
 
-	Delete     *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
-	Get        *Operation `json:"get,omitempty" yaml:"get,omitempty"`
-	Head       *Operation `json:"head,omitempty" yaml:"head,omitempty"`
-	Options    *Operation `json:"options,omitempty" yaml:"options,omitempty"`
-	Patch      *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
-	Post       *Operation `json:"post,omitempty" yaml:"post,omitempty"`
-	Put        *Operation `json:"put,omitempty" yaml:"put,omitempty"`
-	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Delete     *Operation `json:"delete,omitempty,case:strict" yaml:"delete,omitempty"`
+	Get        *Operation `json:"get,omitempty,case:strict" yaml:"get,omitempty"`
+	Head       *Operation `json:"head,omitempty,case:strict" yaml:"head,omitempty"`
+	Options    *Operation `json:"options,omitempty,case:strict" yaml:"options,omitempty"`
+	Patch      *Operation `json:"patch,omitempty,case:strict" yaml:"patch,omitempty"`
+	Post       *Operation `json:"post,omitempty,case:strict" yaml:"post,omitempty"`
+	Put        *Operation `json:"put,omitempty,case:strict" yaml:"put,omitempty"`
+	Parameters Parameters `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of PathItem.
@@ -63,10 +63,10 @@ func (pathItem PathItem) MarshalJSON() ([]byte, error) {
 func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	type PathItemBis PathItem
 	var x PathItemBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "delete")
 	delete(x.Extensions, "get")

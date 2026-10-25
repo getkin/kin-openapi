@@ -72,7 +72,9 @@ func (header *Header) UnmarshalYAML(node *yaml.Node) error {
 	return header.Parameter.UnmarshalYAML(node)
 }
 
-// Types is a string or a list of strings.
+// Types is a string or a list of strings. Swagger 2 and OpenAPI 3.0 documents
+// always write `type` as a scalar, so the single-string case is what decoding
+// such a document into openapi2.T or openapi3.T relies on.
 func (types *Types) UnmarshalYAML(node *yaml.Node) error {
 	var list []string
 	if err := node.Decode(&list); err != nil {
@@ -117,7 +119,7 @@ func (schema *Schema) UnmarshalYAML(node *yaml.Node) error {
 		if err := node.Decode(&b); err != nil {
 			return err
 		}
-		schema.Boolean, schema.Origin = &b, originFromNode(node, nativeOriginFile())
+		schema.Always, schema.Origin = &b, originFromNode(node, nativeOriginFile())
 		return nil
 	}
 

@@ -1,7 +1,6 @@
 package legacy_test
 
 import (
-	"context"
 	"net/http"
 	"sort"
 	"testing"
@@ -14,6 +13,8 @@ import (
 )
 
 func TestRouter(t *testing.T) {
+	t.Parallel()
+
 	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
@@ -47,7 +48,7 @@ func TestRouter(t *testing.T) {
 			openapi3.WithPath("/onlyGET", &openapi3.PathItem{
 				Get: helloGET,
 			}),
-			openapi3.WithPath("/params/{x}/{y}/{z.*}", &openapi3.PathItem{
+			openapi3.WithPath("/params/{x}/{y}/{z*}", &openapi3.PathItem{
 				Get: paramsGET,
 				Parameters: openapi3.Parameters{
 					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("x").WithSchema(openapi3.NewStringSchema())},
@@ -128,7 +129,7 @@ func TestRouter(t *testing.T) {
 		}
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err := legacy.NewRouter(doc)
 	require.NoError(t, err)
@@ -157,7 +158,7 @@ func TestRouter(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/books/War.and.Peace.json", nil)
 		require.NoError(t, err)
 		_, _, err = r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrPathNotFound.Error())
+		require.Equal(t, routers.ErrPathNotFound, err)
 	}
 	expect(r, http.MethodPost, "/partial", nil, nil)
 
@@ -168,7 +169,7 @@ func TestRouter(t *testing.T) {
 			"d1": {Default: "example", Enum: []string{"example"}},
 		}},
 	}
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err = legacy.NewRouter(doc)
 	require.NoError(t, err)
@@ -190,7 +191,7 @@ func TestRouter(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		route, pathParams, err := r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrMethodNotAllowed.Error())
+		require.Equal(t, routers.ErrMethodNotAllowed, err)
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}
@@ -208,7 +209,7 @@ func TestRouter(t *testing.T) {
 	doc.Paths.Set("/withExamples", &openapi3.PathItem{
 		Get: &openapi3.Operation{Responses: responses},
 	})
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.Error(t, err)
 	r, err = legacy.NewRouter(doc)
 	require.Error(t, err)

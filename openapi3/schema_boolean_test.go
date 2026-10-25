@@ -30,9 +30,9 @@ components:
         - true
         - type: string
     Anything:
-      not: true
-    Nothing:
       not: false
+    Nothing:
+      not: true
     NoExtraProps:
       type: object
       properties:
@@ -55,6 +55,8 @@ func loadBooleanSchemas(t *testing.T) *openapi3.T {
 // Every position that holds a SchemaRef accepts a boolean, since they all
 // decode through Schema.UnmarshalJSON.
 func TestBooleanSchema_Positions(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	for _, test := range []struct {
@@ -64,13 +66,13 @@ func TestBooleanSchema_Positions(t *testing.T) {
 	}{
 		{"items", schemas["ClosedTuple"].Value.Items.Value, false},
 		{"prefixItems", schemas["OpenPosition"].Value.PrefixItems[0].Value, true},
-		{"not true", schemas["Anything"].Value.Not.Value, true},
-		{"not false", schemas["Nothing"].Value.Not.Value, false},
+		{"not false", schemas["Anything"].Value.Not.Value, false},
+		{"not true", schemas["Nothing"].Value.Not.Value, true},
 		{"properties", schemas["NoExtraProps"].Value.Properties["anything"].Value, true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			require.NotNil(t, test.schema.Boolean, "should have decoded as a boolean schema")
-			require.Equal(t, test.want, *test.schema.Boolean)
+			require.NotNil(t, test.schema.Always, "should have decoded as a boolean schema")
+			require.Equal(t, test.want, *test.schema.Always)
 		})
 	}
 }
@@ -78,6 +80,8 @@ func TestBooleanSchema_Positions(t *testing.T) {
 // `true` accepts anything, including null; `false` accepts nothing, including
 // null. A boolean schema constrains the instance and nothing else.
 func TestBooleanSchema_VisitJSON(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	trueSchema := schemas["OpenPosition"].Value.PrefixItems[0].Value
@@ -89,23 +93,28 @@ func TestBooleanSchema_VisitJSON(t *testing.T) {
 	}
 }
 
-// An `items: false` schema is reached and rejects, so an array carrying any
-// element fails while an empty one passes.
-//
-// Instance validation applies `items` to every element rather than only to
-// those past `prefixItems`, so this does not yet express 2020-12 tuple
-// semantics. That is a separate gap in visitJSONArray, which does not consult
-// PrefixItems at all.
-func TestBooleanSchema_FalseItemsRejectsElements(t *testing.T) {
+// `items: false` closes a tuple at the prefixItems length: an array that is a
+// prefix of the tuple is valid, and any element past the prefix is rejected,
+// since no prefixItems entry covers that position and items forbids it.
+func TestBooleanSchema_FalseItemsClosesTuple(t *testing.T) {
+	t.Parallel()
+
 	closed := loadBooleanSchemas(t).Components.Schemas["ClosedTuple"].Value
 
 	require.NoError(t, closed.VisitJSON([]any{}))
-	require.Error(t, closed.VisitJSON([]any{"a"}))
+	require.NoError(t, closed.VisitJSON([]any{"a"}))
+	require.NoError(t, closed.VisitJSON([]any{"a", float64(1)}))
+
+	require.Error(t, closed.VisitJSON([]any{"a", float64(1), "extra"}), "items: false forbids a third element")
+	// The built-in validator leaves prefixItems to the 2020-12 validator, see TestBooleanSchema_ClosesTupleUnder2020.
+	require.NoError(t, closed.VisitJSON([]any{float64(1), "a"}), "items: false does not apply to the prefix")
 }
 
 // A boolean schema marshals back to the bare boolean it was written as, not to
 // the object it is equivalent to.
 func TestBooleanSchema_RoundTrip(t *testing.T) {
+	t.Parallel()
+
 	const spec = `{"openapi":"3.1.0","info":{"title":"t","version":"1.0"},"paths":{},"components":{"schemas":{"Tuple":{"items":false,"prefixItems":[{"type":"string"}],"type":"array"},"Any":{"not":true}}}}`
 
 	loader := openapi3.NewLoader()
@@ -117,21 +126,139 @@ func TestBooleanSchema_RoundTrip(t *testing.T) {
 	require.JSONEq(t, spec, string(data))
 }
 
-// A boolean carries no other keyword, so nothing else is populated and the
-// schema is empty only when it accepts everything.
+// Neither boolean is empty. `false` rejects every instance, and `true` is
+// accepted by visitJSON explicitly rather than by skipping validation, which is
+// what leaves `not: true` free to reject.
 func TestBooleanSchema_IsEmpty(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
-	require.True(t, schemas["OpenPosition"].Value.PrefixItems[0].Value.IsEmpty(), "true constrains nothing")
-	require.False(t, schemas["ClosedTuple"].Value.Items.Value.IsEmpty(), "false rejects everything")
+	require.False(t, schemas["OpenPosition"].Value.PrefixItems[0].Value.IsEmpty())
+	require.False(t, schemas["ClosedTuple"].Value.Items.Value.IsEmpty())
 }
 
 // An ordinary schema is unaffected: Boolean stays nil so nothing short-circuits.
 func TestBooleanSchema_ObjectSchemaUnaffected(t *testing.T) {
+	t.Parallel()
+
 	schemas := loadBooleanSchemas(t).Components.Schemas
 
 	name := schemas["NoExtraProps"].Value.Properties["name"].Value
-	require.Nil(t, name.Boolean)
+	require.Nil(t, name.Always)
 	require.NoError(t, name.VisitJSON("a string"))
 	require.Error(t, name.VisitJSON(float64(1)))
+}
+
+// `not` inverts the boolean, so the composition is what matters and not just
+// the decoded value: `not: true` matches nothing and `not: false` matches
+// everything.
+func TestBooleanSchema_UnderNot(t *testing.T) {
+	t.Parallel()
+
+	schemas := loadBooleanSchemas(t).Components.Schemas
+
+	anything := schemas["Anything"].Value
+	nothing := schemas["Nothing"].Value
+
+	// Null is left out: whether a schema admits it is decided by kin's
+	// nullability rules before `not` is reached, and a boolean does not change
+	// that either way.
+	for _, value := range []any{"a string", float64(1), []any{}, map[string]any{}} {
+		require.NoError(t, anything.VisitJSON(value), "not: false matches everything")
+		require.Error(t, nothing.VisitJSON(value), "not: true matches nothing")
+	}
+}
+
+// A Schema built in code can carry a boolean alongside other keywords. It would
+// marshal back as the bare boolean and drop them, so Validate rejects it rather
+// than let the next serialization lose content.
+func TestBooleanSchema_RejectsOtherKeywords(t *testing.T) {
+	t.Parallel()
+
+	boolean := true
+
+	// A boolean schema is 3.1, so say so; without it the version gate fires
+	// first, as it does for every other 2020-12 construct.
+	as31 := openapi3.IsOpenAPI31OrLater()
+
+	require.NoError(t, (&openapi3.Schema{Always: &boolean}).Validate(t.Context(), as31))
+
+	for name, schema := range map[string]*openapi3.Schema{
+		"type":       {Always: &boolean, Type: &openapi3.Types{"string"}},
+		"properties": {Always: &boolean, Properties: openapi3.Schemas{"a": {Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}}}},
+		"extensions": {Always: &boolean, Extensions: map[string]any{"x-a": 1}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := schema.Validate(t.Context(), as31)
+			require.Error(t, err)
+			var exclusive *openapi3.MutuallyExclusiveFieldsError
+			require.ErrorAs(t, err, &exclusive)
+		})
+	}
+}
+
+// VisitJSON documents EnableJSONSchema2020 as the way to validate a 3.1
+// schema, and a boolean schema exists only in 3.1, so the option's path has to
+// agree with the built-in one.
+func TestBooleanSchema_JSONSchema2020(t *testing.T) {
+	t.Parallel()
+
+	schemas := loadBooleanSchemas(t).Components.Schemas
+	opt := openapi3.EnableJSONSchema2020()
+
+	trueSchema := schemas["OpenPosition"].Value.PrefixItems[0].Value
+	falseSchema := schemas["ClosedTuple"].Value.Items.Value
+
+	for _, value := range []any{"a string", float64(1), []any{}, map[string]any{}} {
+		require.NoError(t, trueSchema.VisitJSON(value, opt))
+		require.Error(t, falseSchema.VisitJSON(value, opt))
+	}
+
+	require.NoError(t, schemas["Anything"].Value.VisitJSON(float64(1), opt), "not: false matches everything")
+	require.Error(t, schemas["Nothing"].Value.VisitJSON(float64(1), opt), "not: true matches nothing")
+}
+
+// The 2020-12 validator has to agree with the built-in one about where a closed
+// tuple ends, and it also checks the prefixItems positions.
+func TestBooleanSchema_ClosesTupleUnder2020(t *testing.T) {
+	t.Parallel()
+
+	closed := loadBooleanSchemas(t).Components.Schemas["ClosedTuple"].Value
+	opt := openapi3.EnableJSONSchema2020()
+
+	require.NoError(t, closed.VisitJSON([]any{"a", float64(1)}, opt))
+	require.Error(t, closed.VisitJSON([]any{"a", float64(1), "extra"}, opt),
+		"items: false must reject a position past prefixItems")
+	require.Error(t, closed.VisitJSON([]any{float64(1), "a"}, opt),
+		"prefixItems is positional")
+}
+
+// A boolean schema is JSON Schema 2020-12, so it does not exist in 3.0, where a
+// schema MUST be a Schema Object. Validate says so rather than accepting it.
+func TestBooleanSchema_RejectedBefore31(t *testing.T) {
+	t.Parallel()
+
+	const spec = `
+openapi: 3.0.0
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Closed:
+      type: array
+      items: false
+`
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err, "it still parses; the version is a validation matter")
+
+	err = doc.Validate(loader.Context)
+	require.Error(t, err)
+
+	var mismatch *openapi3.FieldVersionMismatchError
+	require.ErrorAs(t, err, &mismatch)
+	require.Equal(t, "3.1", mismatch.MinVersion)
 }

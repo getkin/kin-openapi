@@ -28,6 +28,9 @@ func (tags Tags) Validate(ctx context.Context, opts ...ValidationOption) error {
 	seen := make(map[string]struct{}, len(tags))
 
 	for _, v := range tags {
+		if v == nil {
+			v = &Tag{} // equivalent + fails soon after
+		}
 		if v.Name != "" {
 			if _, dup := seen[v.Name]; dup {
 				if err := me.emit(&DuplicateTagError{Name: v.Name, Origin: v.Origin}); err != nil {
@@ -50,9 +53,9 @@ type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Name         string        `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Description  string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Tag.
@@ -84,10 +87,10 @@ func (t Tag) MarshalYAML() (any, error) {
 func (t *Tag) UnmarshalJSON(data []byte) error {
 	type TagBis Tag
 	var x TagBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "externalDocs")

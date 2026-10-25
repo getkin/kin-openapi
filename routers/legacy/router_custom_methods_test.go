@@ -52,6 +52,8 @@ paths:
 `
 
 func TestRouterCustomMethods(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(customMethodsSpec))
 	require.NoError(t, err)
@@ -77,6 +79,7 @@ func TestRouterCustomMethods(t *testing.T) {
 		{http.MethodGet, "/pets/fido", petsID.Get, map[string]string{"id": "fido"}},
 	} {
 		t.Run(tc.method+" "+tc.uri, func(t *testing.T) {
+			t.Parallel()
 			req, err := http.NewRequest(tc.method, tc.uri, nil)
 			require.NoError(t, err)
 
@@ -91,6 +94,7 @@ func TestRouterCustomMethods(t *testing.T) {
 	}
 
 	t.Run("unregistered method", func(t *testing.T) {
+		t.Parallel()
 		for uri, wantErr := range map[string]error{
 			"/pets": routers.ErrMethodNotAllowed,
 			// The legacy router can only report "method not allowed" for paths
@@ -102,9 +106,90 @@ func TestRouterCustomMethods(t *testing.T) {
 			require.NoError(t, err)
 
 			route, pathParams, err := router.FindRoute(req)
-			require.EqualError(t, err, wantErr.Error())
+			require.Equal(t, wantErr, err)
 			require.Nil(t, route)
 			require.Nil(t, pathParams)
 		}
 	})
+}
+
+// customMethodsCaseSpec declares custom methods whose names differ only by
+// case: HTTP method names are case-sensitive and an additionalOperations key
+// is the method exactly as sent in the request.
+const customMethodsCaseSpec = `
+openapi: 3.2.0
+info:
+  title: MyAPI
+  version: "0.1"
+paths:
+  /objects:
+    post:
+      responses:
+        "204":
+          description: protected
+    additionalOperations:
+      copy:
+        security: []
+        responses:
+          "204":
+            description: public lowercase custom method
+  /files:
+    additionalOperations:
+      copy:
+        responses:
+          "204":
+            description: lowercase
+      COPY:
+        responses:
+          "204":
+            description: uppercase
+`
+
+func TestRouterCustomMethodsCaseSensitive(t *testing.T) {
+	t.Parallel()
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(customMethodsCaseSpec))
+	require.NoError(t, err)
+
+	router, err := legacy.NewRouter(doc)
+	require.NoError(t, err)
+
+	objects := doc.Paths.Value("/objects")
+	files := doc.Paths.Value("/files")
+
+	for _, tc := range []struct {
+		method    string
+		uri       string
+		operation *openapi3.Operation
+	}{
+		{"copy", "/objects", objects.AdditionalOperations["copy"]},
+		{http.MethodPost, "/objects", objects.Post},
+		{"copy", "/files", files.AdditionalOperations["copy"]},
+		{"COPY", "/files", files.AdditionalOperations["COPY"]},
+	} {
+		t.Run(tc.method+" "+tc.uri, func(t *testing.T) {
+			t.Parallel()
+			req, err := http.NewRequest(tc.method, tc.uri, nil)
+			require.NoError(t, err)
+
+			route, _, err := router.FindRoute(req)
+			require.NoError(t, err)
+			require.Same(t, tc.operation, route.Operation)
+			require.Equal(t, tc.method, route.Method)
+		})
+	}
+
+	for _, method := range []string{"COPY", "post"} {
+		t.Run(method+" /objects is not aliased", func(t *testing.T) {
+			t.Parallel()
+			req, err := http.NewRequest(method, "/objects", nil)
+			require.NoError(t, err)
+
+			route, pathParams, err := router.FindRoute(req)
+			require.Equal(t, routers.ErrMethodNotAllowed, err)
+			require.Nil(t, route)
+			require.Nil(t, pathParams)
+		})
+	}
 }

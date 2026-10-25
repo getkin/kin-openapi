@@ -25,15 +25,15 @@ type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
-	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`
-	RequestBodies   RequestBodies   `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
-	Responses       ResponseBodies  `json:"responses,omitempty" yaml:"responses,omitempty"`
-	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
-	Examples        Examples        `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Links           Links           `json:"links,omitempty" yaml:"links,omitempty"`
-	Callbacks       Callbacks       `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Schemas         Schemas         `json:"schemas,omitempty,case:strict" yaml:"schemas,omitempty"`
+	Parameters      ParametersMap   `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
+	Headers         Headers         `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	RequestBodies   RequestBodies   `json:"requestBodies,omitempty,case:strict" yaml:"requestBodies,omitempty"`
+	Responses       ResponseBodies  `json:"responses,omitempty,case:strict" yaml:"responses,omitempty"`
+	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty,case:strict" yaml:"securitySchemes,omitempty"`
+	Examples        Examples        `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
+	Links           Links           `json:"links,omitempty,case:strict" yaml:"links,omitempty"`
+	Callbacks       Callbacks       `json:"callbacks,omitempty,case:strict" yaml:"callbacks,omitempty"`
 }
 
 func NewComponents() Components {
@@ -87,10 +87,10 @@ func (components Components) MarshalYAML() (any, error) {
 func (components *Components) UnmarshalJSON(data []byte) error {
 	type ComponentsBis Components
 	var x ComponentsBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "schemas")
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "headers")

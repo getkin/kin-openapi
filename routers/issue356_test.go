@@ -17,6 +17,8 @@ import (
 )
 
 func TestIssue356(t *testing.T) {
+	t.Parallel()
+
 	spec := func(servers string) []byte {
 		return []byte(`
 openapi: 3.0.0
@@ -127,7 +129,7 @@ paths:
 				require.NoError(t, err)
 				req.Header.Set("Content-Type", "application/json")
 
-				rep, err := http.DefaultClient.Do(req)
+				rep, err := ts.Client().Do(req)
 				require.NoError(t, err)
 				defer rep.Body.Close()
 				body, err := io.ReadAll(rep.Body)
@@ -135,7 +137,7 @@ paths:
 
 				if expectError {
 					require.Equal(t, 500, rep.StatusCode)
-					require.Equal(t, routers.ErrPathNotFound.Error(), string(body))
+					require.EqualError(t, routers.ErrPathNotFound, string(body))
 					return
 				}
 				require.Equal(t, 200, rep.StatusCode)

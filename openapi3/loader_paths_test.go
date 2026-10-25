@@ -10,6 +10,8 @@ import (
 )
 
 func TestPathsMustStartWithSlash(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: "3.0"
 info:

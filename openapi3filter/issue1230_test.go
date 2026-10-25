@@ -14,6 +14,8 @@ import (
 // Repeated scalar query params: an empty first value must not hide a later
 // invalid value from schema validation. See #1230.
 func TestIssue1230(t *testing.T) {
+	t.Parallel()
+
 	spec := `
 openapi: 3.0.3
 info:

@@ -53,9 +53,9 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	URL         string          `json:"url" yaml:"url"` // Required
-	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string          `json:"url,case:strict" yaml:"url"` // Required
+	Description string          `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Variables   ServerVariables `json:"variables,omitempty,case:strict" yaml:"variables,omitempty"`
 }
 
 // BasePath returns the base path extracted from the default values of variables, if any.
@@ -109,10 +109,10 @@ func (server Server) MarshalYAML() (any, error) {
 func (server *Server) UnmarshalJSON(data []byte) error {
 	type ServerBis Server
 	var x ServerBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "variables")
@@ -194,8 +194,37 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 	return params, input, true
 }
 
+// serverURLTemplateVariables returns the names of the variables that
+// serverURL's template references, deduplicated and in order of first
+// appearance. A trailing "{" without a closing "}" yields no name: the URL is
+// already reported as having mismatched braces by the caller.
+func serverURLTemplateVariables(serverURL string) []string {
+	var names []string
+	seen := make(map[string]struct{})
+	for {
+		i := strings.IndexByte(serverURL, '{')
+		if i < 0 {
+			return names
+		}
+		serverURL = serverURL[i+1:]
+		j := strings.IndexByte(serverURL, '}')
+		if j < 0 {
+			return names
+		}
+		name := serverURL[:j]
+		serverURL = serverURL[j+1:]
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			names = append(names, name)
+		}
+	}
+}
+
 // Validate returns an error if Server does not comply with the OpenAPI spec.
 func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if server == nil {
+		server = &Server{} // equivalent + fails soon after
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 	me := newErrCollector(ctx)
 
@@ -212,16 +241,23 @@ func (server *Server) Validate(ctx context.Context, opts ...ValidationOption) er
 		}
 	}
 
-	if opening != len(server.Variables) {
-		if err := me.emit(newServerURLUndeclaredVariables(server.URL, server.Origin)); err != nil {
-			return err
+	// Compare the names the URL template references against the declared
+	// variables, rather than comparing counts: a variable the URL never
+	// references is declared but unused, which is a different defect from a
+	// reference the URL never declared, and the two need not cancel out.
+	for _, name := range serverURLTemplateVariables(server.URL) {
+		if _, ok := server.Variables[name]; !ok {
+			if err := me.emit(newServerURLUndeclaredVariables(server.URL, server.Origin)); err != nil {
+				return err
+			}
+			break
 		}
 	}
 
 	for _, name := range componentNames(server.Variables) {
 		v := server.Variables[name]
 		if !strings.Contains(server.URL, "{"+name+"}") {
-			if err := me.emit(newServerURLUndeclaredVariables(server.URL, server.Origin)); err != nil {
+			if err := me.emit(newServerURLUnusedVariables(server.URL, name, server.Origin)); err != nil {
 				return err
 			}
 			// Variable name doesn't appear in the URL template; descending
@@ -247,9 +283,9 @@ type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
-	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum        []string `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
+	Default     string   `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Description string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of ServerVariable.
@@ -281,10 +317,10 @@ func (serverVariable ServerVariable) MarshalYAML() (any, error) {
 func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 	type ServerVariableBis ServerVariable
 	var x ServerVariableBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "enum")
 	delete(x.Extensions, "default")
 	delete(x.Extensions, "description")
@@ -297,6 +333,9 @@ func (serverVariable *ServerVariable) UnmarshalJSON(data []byte) error {
 
 // Validate returns an error if ServerVariable does not comply with the OpenAPI spec.
 func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...ValidationOption) error {
+	if serverVariable == nil {
+		serverVariable = &ServerVariable{} // equivalent + fails soon after
+	}
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if serverVariable.Default == "" {

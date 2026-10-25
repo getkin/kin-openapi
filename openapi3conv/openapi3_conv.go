@@ -3,7 +3,6 @@ package openapi3conv
 import (
 	"fmt"
 	"io"
-	"slices"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -13,7 +12,7 @@ import (
 // knows about; bump when a new minor lands. The OAI guarantees strict
 // compatibility for 3.x going forward (3.2.x, 3.3.x, ...), so a tool that
 // handles 3.1 correctly handles later 3.x versions correctly too.
-const latestTargetVersion = "3.2.0"
+const latestTargetVersion = "3.2.1"
 
 // Option configures an Upgrade pass. See WithWriter.
 type Option func(*upgradeOptions)
@@ -260,11 +259,11 @@ func (w *walker) rewriteNullable(s *openapi3.Schema) {
 	if !s.Nullable {
 		return
 	}
-	if s.Type != nil && len(*s.Type) > 0 {
-		if !slices.Contains(*s.Type, openapi3.TypeNull) {
-			newTypes := append(*s.Type, openapi3.TypeNull)
-			s.Type = &newTypes
-		}
+	if !s.Type.IsEmpty() {
+		// s.Type may be shared with other schemas: copy it before adding null.
+		types := s.Type.Clone()
+		types.With(openapi3.TypeNull)
+		s.Type = &types
 	}
 	w.logf("nullable: true -> dropped (Types=%v)", s.Type)
 	s.Nullable = false

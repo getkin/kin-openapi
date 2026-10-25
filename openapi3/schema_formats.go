@@ -106,6 +106,19 @@ func NewRangeFormatValidator[T int64 | float64](min, max T) FormatValidator[T] {
 	return rangeFormat[T]{min: min, max: max}
 }
 
+// validateIntegerFormat converts a JSON number for an integer format validator. A float64
+// outside the int64 range wraps back into it on conversion, so it is rejected here instead.
+func validateIntegerFormat(validator IntegerFormatValidator, value float64) error {
+	switch {
+	case value == float64(math.MaxInt64): // math.MaxInt64 has no float64 representation: it rounds up to 2^63
+		return validator.Validate(math.MaxInt64)
+	case value >= float64(math.MinInt64) && value < float64(math.MaxInt64):
+		return validator.Validate(int64(value))
+	default:
+		return fmt.Errorf("value should be between %v and %v", int64(math.MinInt64), int64(math.MaxInt64))
+	}
+}
+
 // NewRegexpFormatValidator creates a new FormatValidator that uses a regular expression to validate the value.
 func NewRegexpFormatValidator(pattern string) StringFormatValidator {
 	re, err := regexp.Compile(pattern)
@@ -155,22 +168,13 @@ func NewIPValidator(isIPv4 bool) FormatValidator[string] {
 	return callbackValidator[string]{fn: func(ip string) error {
 		addr, err := netip.ParseAddr(ip)
 		if err != nil {
-			return &SchemaError{
-				Value:  ip,
-				Reason: "Not an IP address",
-			}
+			return newSchemaError(nil, ip).withReason("Not an IP address")
 		}
 		if isIPv4 && !addr.Is4() {
-			return &SchemaError{
-				Value:  ip,
-				Reason: "Not an IPv4 address (it's IPv6)",
-			}
+			return newSchemaError(nil, ip).withReason("Not an IPv4 address (it's IPv6)")
 		}
 		if !isIPv4 && !addr.Is6() {
-			return &SchemaError{
-				Value:  ip,
-				Reason: "Not an IPv6 address (it's IPv4)",
-			}
+			return newSchemaError(nil, ip).withReason("Not an IPv6 address (it's IPv4)")
 		}
 		return nil
 	}}

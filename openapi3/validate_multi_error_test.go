@@ -1,7 +1,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -68,10 +67,12 @@ func countLeaves(err error) int {
 }
 
 func TestValidate_MultiError_Off_PreservesFailFast(t *testing.T) {
+	t.Parallel()
+
 	// Without EnableMultiError, Validate returns the first error and stops.
 	// The returned error is a single typed error, not a MultiError.
 	doc := loadDoc(t, twoBadPathsSpec)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -79,12 +80,14 @@ func TestValidate_MultiError_Off_PreservesFailFast(t *testing.T) {
 }
 
 func TestValidate_MultiError_On_AggregatesAcrossPaths(t *testing.T) {
+	t.Parallel()
+
 	// With EnableMultiError, Validate aggregates problems across paths.
 	// The result is a tree: T-level MultiError -> SectionValidationError("paths")
 	// -> Paths-level MultiError -> PathValidationError per bad path. Walking
 	// the tree must yield one leaf per independent problem.
 	doc := loadDoc(t, twoBadPathsSpec)
-	err := doc.Validate(context.Background(), openapi3.EnableMultiError())
+	err := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -103,9 +106,11 @@ func TestValidate_MultiError_On_AggregatesAcrossPaths(t *testing.T) {
 }
 
 func TestValidate_MultiError_On_AggregatesAcrossSections(t *testing.T) {
+	t.Parallel()
+
 	// Problems in different document sections are also aggregated.
 	doc := loadDoc(t, twoBadSectionsSpec)
-	err := doc.Validate(context.Background(), openapi3.EnableMultiError())
+	err := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -131,6 +136,8 @@ func TestValidate_MultiError_On_AggregatesAcrossSections(t *testing.T) {
 }
 
 func TestValidate_MultiError_On_SingleError_StillReturnsMultiError(t *testing.T) {
+	t.Parallel()
+
 	// With EnableMultiError, even a single-defect spec returns a MultiError
 	// (containing one element). MultiError.Error() of a single element is
 	// byte-identical to the contained error's Error(), so the string output
@@ -143,7 +150,7 @@ paths:
     get: {}
 `
 	doc := loadDoc(t, oneBadPathSpec)
-	err := doc.Validate(context.Background(), openapi3.EnableMultiError())
+	err := doc.Validate(t.Context(), openapi3.EnableMultiError())
 	require.Error(t, err)
 
 	var me openapi3.MultiError
@@ -157,6 +164,8 @@ paths:
 }
 
 func TestValidate_MultiError_On_NoErrors_ReturnsNil(t *testing.T) {
+	t.Parallel()
+
 	// A well-formed document still returns nil, regardless of the option.
 	const goodSpec = `
 openapi: 3.0.0
@@ -169,7 +178,7 @@ paths:
           description: ok
 `
 	doc := loadDoc(t, goodSpec)
-	require.NoError(t, doc.Validate(context.Background(), openapi3.EnableMultiError()))
+	require.NoError(t, doc.Validate(t.Context(), openapi3.EnableMultiError()))
 }
 
 // TestResponses_Validate_EmptyAndExtensionAggregate pins a regression caught
@@ -179,13 +188,15 @@ paths:
 // multi-error mode, an empty Responses with a non-x- sibling key on its
 // Extensions map must surface BOTH findings, not just the first one.
 func TestResponses_Validate_EmptyAndExtensionAggregate(t *testing.T) {
+	t.Parallel()
+
 	responses := openapi3.NewResponses()
 	require.Equal(t, 0, responses.Len(), "fixture: Responses must be empty for this test")
 	// Non-x- key in Extensions triggers validateExtensions's
 	// "extra sibling fields" error.
 	responses.Extensions = map[string]any{"bogus-sibling": "anything"}
 
-	ctx := openapi3.WithValidationOptions(context.Background(), openapi3.EnableMultiError())
+	ctx := openapi3.WithValidationOptions(t.Context(), openapi3.EnableMultiError())
 	err := responses.Validate(ctx)
 	require.Error(t, err)
 

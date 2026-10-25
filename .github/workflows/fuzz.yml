@@ -1,0 +1,89 @@
+name: fuzz
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+  schedule:
+  # Nightly, so a long run has a chance to reach code a 90s PR run never does.
+  - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      fuzztime:
+        description: 'How long to fuzz each target (go test -fuzztime syntax)'
+        required: false
+        default: 30m
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    # A budget of 15m plus corpus minimization has to fit, and a hung target
+    # must not hold a runner forever.
+    timeout-minutes: 45
+    env:
+      GO111MODULE: 'on'
+      CGO_ENABLED: '0'
+    strategy:
+      # Every target reports independently: one crasher must not hide the rest.
+      fail-fast: false
+      matrix:
+        include:
+        - {package: ./openapi3, target: FuzzLoadFromData}
+        - {package: ./openapi3, target: FuzzSchemaVisitJSON}
+        - {package: ./openapi2conv, target: FuzzToV3}
+        - {package: ./openapi3filter, target: FuzzValidateRequest}
+    steps:
+
+    - uses: actions/setup-go@v6
+      with:
+        go-version: stable
+
+    - uses: actions/checkout@v6
+
+    # The generated corpus lives under $GOCACHE/fuzz and is what makes fuzzing
+    # cumulative: without it every run restarts from the seed corpus. The key
+    # carries the run id so each run writes a fresh entry, and restore-keys
+    # falls back to the most recent one for this target.
+    - name: Fuzzing corpus cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/go-build/fuzz
+        key: fuzz-${{ matrix.target }}-${{ github.run_id }}
+        restore-keys: fuzz-${{ matrix.target }}-
+
+    - name: Pick a budget
+      id: budget
+      run: |
+        if [[ -n '${{ inputs.fuzztime }}' ]]; then
+          fuzztime='${{ inputs.fuzztime }}'
+        elif [[ '${{ github.event_name }}' = schedule ]]; then
+          fuzztime=15m
+        else
+          fuzztime=90s
+        fi
+        echo "fuzztime=$fuzztime" >>"$GITHUB_OUTPUT"
+
+    # -run='^$' skips the ordinary tests: the seed corpus is already replayed by
+    # `go test ./...` in the go workflow, so this job only spends time fuzzing.
+    - name: Fuzz ${{ matrix.target }}
+      run: |
+        go test \
+          -run='^$' \
+          -fuzz='^${{ matrix.target }}$' \
+          -fuzztime='${{ steps.budget.outputs.fuzztime }}' \
+          -fuzzminimizetime=60s \
+          ${{ matrix.package }}
+
+    # A failing input is written next to the package it broke. Upload it so the
+    # crasher can be committed to the seed corpus, where it becomes a permanent
+    # regression test replayed by `go test ./...`.
+    - if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: crashers-${{ matrix.target }}
+        path: '**/testdata/fuzz/**'
+        if-no-files-found: ignore

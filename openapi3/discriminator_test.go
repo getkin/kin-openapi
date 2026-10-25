@@ -9,6 +9,8 @@ import (
 )
 
 func TestParsingDiscriminator(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 {
 	"openapi": "3.0.0",

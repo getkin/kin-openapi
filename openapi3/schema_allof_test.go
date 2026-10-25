@@ -9,9 +9,7 @@ import (
 )
 
 func TestAllOfErrorPreserved(t *testing.T) {
-
-	SchemaErrorDetailsDisabled = true
-	defer func() { SchemaErrorDetailsDisabled = false }()
+	t.Parallel()
 
 	// language=json
 	raw := `
@@ -62,7 +60,7 @@ func TestAllOfErrorPreserved(t *testing.T) {
 	err = json.Unmarshal([]byte(raw), &obj)
 	require.NoError(t, err)
 
-	err = s.VisitJSON(obj, MultiErrors())
+	err = s.VisitJSON(obj, MultiErrors(), DisableSchemaErrorDetails())
 	require.Error(t, err)
 
 	var multiError MultiError
@@ -74,11 +72,11 @@ func TestAllOfErrorPreserved(t *testing.T) {
 
 	require.Equal(t, "allOf", schemaErr.SchemaField)
 	require.Equal(t, `doesn't match all schemas from "allOf"`, schemaErr.Reason)
-	require.Equal(t, `Error at "/foo": doesn't match schema due to: Error at "/key1": value must be a number And Error at "/key2": value must be a string`, schemaErr.Error())
+	require.EqualError(t, schemaErr, `Error at "/foo": doesn't match schema due to: Error at "/key1": value must be a number And Error at "/key2": value must be a string`)
 
 	var me multiErrorForAllOf
 	ok = errors.As(err, &me)
 	require.True(t, ok)
-	require.Equal(t, `Error at "/foo/key1": value must be a number`, me[0].Error())
-	require.Equal(t, `Error at "/foo/key2": value must be a string`, me[1].Error())
+	require.EqualError(t, me[0], `Error at "/foo/key1": value must be a number`)
+	require.EqualError(t, me[1], `Error at "/foo/key2": value must be a string`)
 }

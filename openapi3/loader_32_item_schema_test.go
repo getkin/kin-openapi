@@ -9,6 +9,8 @@ import (
 )
 
 func TestOpenAPI32MediaTypeItemSchema(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData([]byte(`
 openapi: 3.2.0
@@ -56,6 +58,8 @@ components:
 }
 
 func TestWalkSchemasVisitsMediaTypeItemSchema(t *testing.T) {
+	t.Parallel()
+
 	itemSchema := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{openapi3.TypeObject}}}
 	doc := &openapi3.T{
 		OpenAPI: "3.2.0",

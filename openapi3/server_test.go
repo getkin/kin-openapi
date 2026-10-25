@@ -7,6 +7,8 @@ import (
 )
 
 func TestServerParamNames(t *testing.T) {
+	t.Parallel()
+
 	server := &Server{
 		URL: "http://{x}.{y}.example.com",
 	}
@@ -16,6 +18,8 @@ func TestServerParamNames(t *testing.T) {
 }
 
 func TestServerParamValuesWithPath(t *testing.T) {
+	t.Parallel()
+
 	server := &Server{
 		URL: "http://{arg0}.{arg1}.example.com/a/{arg3}-version/{arg4}c{arg5}",
 	}
@@ -38,6 +42,8 @@ func TestServerParamValuesWithPath(t *testing.T) {
 }
 
 func TestServerParamValuesNoPath(t *testing.T) {
+	t.Parallel()
+
 	server := &Server{
 		URL: "https://{arg0}.{arg1}.example.com/",
 	}
@@ -59,6 +65,8 @@ func invalidServer() *Server {
 }
 
 func TestServerValidation(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		input            *Server
@@ -85,6 +93,85 @@ func TestServerValidation(t *testing.T) {
 				require.NoError(t, validationErr)
 			} else {
 				require.EqualError(t, validationErr, test.expectedErrorMsg)
+			}
+		})
+	}
+}
+
+// A variable that Server.Variables declares but Server.URL never references
+// is unused, not undeclared: the two defects call for opposite edits, so
+// mislabelling one sends the reader to fix the wrong half of the spec.
+func TestServerValidationUnusedVariables(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		input            *Server
+		expectedErrorMsg string // empty = expect no error
+	}{
+		{
+			"when a declared variable is missing from the URL",
+			&Server{
+				URL: "https://api.example.com/v1",
+				Variables: ServerVariables{
+					"region": &ServerVariable{Default: "us-east"},
+				},
+			},
+			"server has unused variable region",
+		},
+		{
+			"when the URL references no variables at all",
+			&Server{
+				URL: "https://{x}.example.com",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+					"y": &ServerVariable{Default: "com"},
+				},
+			},
+			"server has unused variable y",
+		},
+		{
+			"when only surplus variables are declared",
+			&Server{
+				URL: "https://api.example.com/{x}",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+					"y": &ServerVariable{Default: "com"},
+					"z": &ServerVariable{Default: "net"},
+				},
+			},
+			"server has unused variable y",
+		},
+		{
+			"an undeclared reference outranks an unused variable",
+			&Server{
+				URL: "https://{y}.example.com",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+				},
+			},
+			"server has undeclared variables",
+		},
+		{
+			"a repeated reference is declared once",
+			&Server{
+				URL: "https://{x}.example.com/{x}",
+				Variables: ServerVariables{
+					"x": &ServerVariable{Default: "www"},
+				},
+			},
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.input.Validate(t.Context())
+
+			if test.expectedErrorMsg == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, test.expectedErrorMsg)
 			}
 		})
 	}
@@ -120,6 +207,8 @@ func newServerMatch(remaining string, args ...string) *serverMatch {
 }
 
 func TestServersBasePath(t *testing.T) {
+	t.Parallel()
+
 	for _, testcase := range []struct {
 		title    string
 		servers  Servers

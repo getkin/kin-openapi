@@ -11,10 +11,8 @@ import (
 // replaces it, and does so for every caller whether or not rememberOriginTree
 // kept the tree. On a 25 MB spec that tree is most of what a load holds.
 func TestUnmarshalReleasesPerDecodeState(t *testing.T) {
-	IncludeOrigin = true
-	defer func() { IncludeOrigin = false }()
-
 	loader := NewLoader()
+	loader.IncludeOrigin = true
 	_, err := loader.LoadFromData([]byte("openapi: 3.0.0\ninfo: {title: t, version: \"1\"}\npaths: {}\n"))
 	require.NoError(t, err)
 

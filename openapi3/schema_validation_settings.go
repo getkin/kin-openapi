@@ -28,12 +28,19 @@ type schemaValidationSettings struct {
 	onceSettingDefaults sync.Once
 	defaultsSet         func()
 
-	customizeMessageError func(err *SchemaError) string
+	customizeMessageError      func(err *SchemaError) string
+	schemaErrorDetailsDisabled bool
 
 	// Per-validation format validators (checked before global ones)
 	stringFormats  map[string]StringFormatValidator
 	numberFormats  map[string]NumberFormatValidator
 	integerFormats map[string]IntegerFormatValidator
+
+	// visitedSchemas provides pointer-identity cycle detection for runtime
+	// validation, matching the stack-based detection in Schema.validate().
+	// Only visitedSchemas[visitedSchemasStart:] were visited for the current value.
+	visitedSchemas []*Schema
+	visitedBase    int
 }
 
 // FailFast returns schema validation errors quicker.
@@ -82,6 +89,17 @@ func DefaultsSet(f func()) SchemaValidationOption {
 // If the passed function returns an empty string, it returns to the previous Error() implementation.
 func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.customizeMessageError = f }
+}
+
+// DisableSchemaErrorDetails leaves the schema and the value out of the message of schema errors,
+// so that it presents only the reason. Values may hold sensitive inputs, such as secrets.
+//
+// It also applies to the SchemaErrors that format validators return, wrapped or not.
+//
+// It cannot be used together with EnableJSONSchema2020 (hence with openapi3filter on
+// OpenAPI 3.1+ documents): validation then fails with ErrSchemaErrorDetailsWithJSONSchema2020.
+func DisableSchemaErrorDetails() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.schemaErrorDetailsDisabled = true }
 }
 
 // SetSchemaRegexCompiler allows to override the regex implementation used to validate field "pattern".
@@ -155,6 +173,9 @@ func WithIntegerFormatValidator(name string, validator IntegerFormatValidator) S
 // EnableJSONSchema2020 enables JSON Schema 2020-12 compliant validation.
 // This enables support for OpenAPI 3.1 and JSON Schema 2020-12 features.
 // When enabled, validation uses the jsonschema library instead of the built-in validator.
+// When JSON Schema 2020-12 keywords are used, unresolved schema references are
+// returned to the caller instead of being silently ignored by falling back to
+// the built-in validator.
 func EnableJSONSchema2020() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.useJSONSchema2020 = true }
 }

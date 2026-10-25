@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue1010(t *testing.T) {
+	t.Parallel()
+
 	v2 := []byte(`
 {
     "basePath": "/v2",

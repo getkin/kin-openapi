@@ -1,6 +1,8 @@
 invalid paths: invalid path /documents: invalid operation POST: invalid example: validation failed due to: at '': got number, want string
 Schema:
-  null
+  {
+    "type": "string"
+  }
 
 Value:
-  null
+  13008

@@ -13,6 +13,8 @@ type securitySchemeExample struct {
 }
 
 func TestSecuritySchemaExample(t *testing.T) {
+	t.Parallel()
+
 	for _, example := range securitySchemeExamples {
 		t.Run(example.title, func(t *testing.T) {
 			ss := &SecurityScheme{}
@@ -50,10 +52,27 @@ var securitySchemeExamples = []securitySchemeExample{
 	},
 
 	{
-		title: "Unknown http Authentication Sample",
+		title: "Unregistered http Authentication Sample",
 		raw: []byte(`{
   "type": "http",
-  "scheme": "notvalid"
+  "scheme": "payone-hmac-sha256"
+}`),
+		valid: true,
+	},
+
+	{
+		title: "Invalid http Authentication Sample",
+		raw: []byte(`{
+  "type": "http",
+  "scheme": "not valid"
+}`),
+		valid: false,
+	},
+
+	{
+		title: "Missing http Authentication Sample",
+		raw: []byte(`{
+  "type": "http"
 }`),
 		valid: false,
 	},
@@ -87,6 +106,26 @@ var securitySchemeExamples = []securitySchemeExample{
   "bearerFormat": "Arbitrary text"
 }`),
 		valid: true,
+	},
+
+	{
+		title: "Bearer Sample is case-insensitive",
+		raw: []byte(`{
+  "type": "http",
+  "scheme": "Bearer",
+  "bearerFormat": "JWT"
+}`),
+		valid: true,
+	},
+
+	{
+		title: "Basic Sample with bearerFormat",
+		raw: []byte(`{
+  "type": "http",
+  "scheme": "basic",
+  "bearerFormat": "JWT"
+}`),
+		valid: false,
 	},
 
 	{

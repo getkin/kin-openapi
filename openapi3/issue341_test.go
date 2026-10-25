@@ -9,6 +9,8 @@ import (
 )
 
 func TestIssue341(t *testing.T) {
+	t.Parallel()
+
 	sl := openapi3.NewLoader()
 	sl.IsExternalRefsAllowed = true
 	doc, err := sl.LoadFromFile("testdata/main.yaml")

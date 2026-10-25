@@ -10,6 +10,8 @@ import (
 )
 
 func TestIssue220(t *testing.T) {
+	t.Parallel()
+
 	for _, specPath := range []string{
 		"testdata/my-openapi.json",
 		filepath.FromSlash("testdata/my-openapi.json"),

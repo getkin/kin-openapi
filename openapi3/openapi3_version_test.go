@@ -10,6 +10,8 @@ import (
 )
 
 func TestWebhooksField(t *testing.T) {
+	t.Parallel()
+
 	t.Run("serialize webhooks in OpenAPI 3.1", func(t *testing.T) {
 		doc := &openapi3.T{
 			OpenAPI: "3.1.0",
@@ -142,6 +144,8 @@ func TestWebhooksField(t *testing.T) {
 }
 
 func TestJSONLookupWithWebhooks(t *testing.T) {
+	t.Parallel()
+
 	doc := &openapi3.T{
 		OpenAPI: "3.1.0",
 		Info: &openapi3.Info{
@@ -168,6 +172,8 @@ func TestJSONLookupWithWebhooks(t *testing.T) {
 }
 
 func TestVersionBasedBehavior(t *testing.T) {
+	t.Parallel()
+
 	t.Run("detect and handle OpenAPI 3.0", func(t *testing.T) {
 		doc := &openapi3.T{
 			OpenAPI: "3.0.3",
@@ -217,6 +223,8 @@ func TestVersionBasedBehavior(t *testing.T) {
 }
 
 func TestMigrationScenario(t *testing.T) {
+	t.Parallel()
+
 	t.Run("upgrade document from 3.0 to 3.1", func(t *testing.T) {
 		// Start with 3.0 document
 		doc := &openapi3.T{

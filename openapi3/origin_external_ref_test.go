@@ -14,6 +14,8 @@ import (
 // The key is not a typed field of T, so the loader reaches it through T.Extensions
 // (a generic map); the origin must survive that path.
 func TestOrigin_ExternalRefToArbitraryTopLevelKey(t *testing.T) {
+	t.Parallel()
+
 	loader := NewLoader()
 	loader.IncludeOrigin = true
 	loader.IsExternalRefsAllowed = true
@@ -72,6 +74,8 @@ func TestOrigin_ExternalRefToArbitraryTopLevelKey_NoRereads(t *testing.T) {
 // memory (no location): a $ref to an arbitrary top-level key in the same
 // document gets its origin attached too.
 func TestOrigin_InternalRefToArbitraryTopLevelKey_FromData(t *testing.T) {
+	t.Parallel()
+
 	const spec = `
 openapi: 3.0.0
 info: { title: t, version: "1" }

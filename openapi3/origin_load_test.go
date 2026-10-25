@@ -8,6 +8,8 @@ import (
 
 // Enabling origin tracking must not break loading any spec in testdata.
 func TestOrigin_LoadAllTestdata(t *testing.T) {
+	t.Parallel()
+
 	specs := []struct {
 		name         string
 		file         string

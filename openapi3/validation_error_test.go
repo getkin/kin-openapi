@@ -1,10 +1,10 @@
 package openapi3_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -14,12 +14,14 @@ import (
 // The leaf-typed sites in Info.Validate must produce the exact same
 // Error() strings they used to produce as plain errors.New(...) values.
 func TestValidationError_BackwardCompatibleErrorString(t *testing.T) {
+	t.Parallel()
+
 	missingVersion := &openapi3.Info{Title: "x"}
-	require.EqualError(t, missingVersion.Validate(context.Background()),
+	require.EqualError(t, missingVersion.Validate(t.Context()),
 		"value of version must be a non-empty string")
 
 	missingTitle := &openapi3.Info{Version: "1.0.0"}
-	require.EqualError(t, missingTitle.Validate(context.Background()),
+	require.EqualError(t, missingTitle.Validate(t.Context()),
 		"value of title must be a non-empty string")
 }
 
@@ -27,7 +29,9 @@ func TestValidationError_BackwardCompatibleErrorString(t *testing.T) {
 // error: base ValidationError, cluster RequiredFieldError, and the
 // per-site leaf type (e.g. *InfoVersionRequired).
 func TestValidationError_ThreeLayers_RequiredField(t *testing.T) {
-	err := (&openapi3.Info{Title: "x"}).Validate(context.Background())
+	t.Parallel()
+
+	err := (&openapi3.Info{Title: "x"}).Validate(t.Context())
 
 	// Layer 1: cluster — carries field-level metadata.
 	var rfe *openapi3.RequiredFieldError
@@ -45,8 +49,10 @@ func TestValidationError_ThreeLayers_RequiredField(t *testing.T) {
 }
 
 func TestValidationError_LeafDifferentiation(t *testing.T) {
-	verErr := (&openapi3.Info{Title: "x"}).Validate(context.Background())
-	titleErr := (&openapi3.Info{Version: "1.0.0"}).Validate(context.Background())
+	t.Parallel()
+
+	verErr := (&openapi3.Info{Title: "x"}).Validate(t.Context())
+	titleErr := (&openapi3.Info{Version: "1.0.0"}).Validate(t.Context())
 
 	// Title's leaf type does NOT match the version's leaf type, even
 	// though both flow through the same RequiredFieldError cluster.
@@ -69,6 +75,8 @@ func TestValidationError_LeafDifferentiation(t *testing.T) {
 // FieldVersionMismatchError cluster, exercised by the existing
 // errFieldFor31Plus helper (license.identifier in a 3.0 doc).
 func TestValidationError_ThreeLayers_FieldVersionMismatch(t *testing.T) {
+	t.Parallel()
+
 	doc := &openapi3.T{
 		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
@@ -81,7 +89,7 @@ func TestValidationError_ThreeLayers_FieldVersionMismatch(t *testing.T) {
 		},
 		Paths: openapi3.NewPaths(),
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var fvm *openapi3.FieldVersionMismatchError
@@ -102,6 +110,8 @@ func TestValidationError_ThreeLayers_FieldVersionMismatch(t *testing.T) {
 // the same discrimination layers as their typed cousins. Only the
 // per-leaf type isn't there to assert against.
 func TestValidationError_FieldVersionMismatch_UntypedFallback(t *testing.T) {
+	t.Parallel()
+
 	// "webhooks" is an existing untyped 3.1+-only field — see
 	// openapi3.go's errFieldFor31Plus("webhooks") site.
 	doc := &openapi3.T{
@@ -110,7 +120,7 @@ func TestValidationError_FieldVersionMismatch_UntypedFallback(t *testing.T) {
 		Paths:    openapi3.NewPaths(),
 		Webhooks: map[string]*openapi3.PathItem{},
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var fvm *openapi3.FieldVersionMismatchError
@@ -126,6 +136,8 @@ func TestValidationError_FieldVersionMismatch_UntypedFallback(t *testing.T) {
 // 3.1+-only schema field produces its own leaf type plus the shared
 // cluster.
 func TestValidationError_AllRequiredFieldLeaves(t *testing.T) {
+	t.Parallel()
+
 	type tc struct {
 		name      string
 		doc       *openapi3.T
@@ -195,7 +207,7 @@ func TestValidationError_AllRequiredFieldLeaves(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.doc.Validate(context.Background())
+			err := c.doc.Validate(t.Context())
 			require.Error(t, err)
 
 			var rfe *openapi3.RequiredFieldError
@@ -215,6 +227,8 @@ func TestValidationError_AllRequiredFieldLeaves(t *testing.T) {
 // errFieldFor31Plus (used by schema.go's reject() helper). Full
 // per-field coverage is left to the package's existing schema_test.go.
 func TestValidationError_SchemaFieldFor31PlusLeaves(t *testing.T) {
+	t.Parallel()
+
 	type tc struct {
 		name      string
 		schema    *openapi3.Schema
@@ -242,10 +256,37 @@ func TestValidationError_SchemaFieldFor31PlusLeaves(t *testing.T) {
 			},
 			field: "patternProperties",
 		},
+		{
+			name:   "type array",
+			schema: &openapi3.Schema{Type: &openapi3.Types{"string", "integer"}},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.TypeArrayFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "type",
+		},
+		{
+			name:   "numeric exclusiveMinimum",
+			schema: &openapi3.Schema{Type: &openapi3.Types{"number"}, ExclusiveMin: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(0)}},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ExclusiveBoundNumberFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "exclusiveMinimum",
+		},
+		{
+			name:   "numeric exclusiveMaximum",
+			schema: &openapi3.Schema{Type: &openapi3.Types{"number"}, ExclusiveMax: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(10)}},
+			leafCheck: func(t *testing.T, err error) {
+				var l *openapi3.ExclusiveBoundNumberFor31Plus
+				require.True(t, errors.As(err, &l))
+			},
+			field: "exclusiveMaximum",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.schema.Validate(context.Background())
+			err := c.schema.Validate(t.Context())
 			require.Error(t, err)
 
 			var fvm *openapi3.FieldVersionMismatchError
@@ -268,8 +309,10 @@ func TestValidationError_SchemaFieldFor31PlusLeaves(t *testing.T) {
 // any consumer that walks the error tree by hand instead of asking for
 // a specific type.
 func TestValidationError_UnwrapWalksClusterToLeaf(t *testing.T) {
+	t.Parallel()
+
 	// RequiredFieldError cluster wrapping an InfoVersionRequired leaf.
-	verErr := (&openapi3.Info{Title: "x"}).Validate(context.Background())
+	verErr := (&openapi3.Info{Title: "x"}).Validate(t.Context())
 
 	// The returned error IS the cluster, not the leaf.
 	rfe, ok := verErr.(*openapi3.RequiredFieldError)
@@ -295,7 +338,7 @@ func TestValidationError_UnwrapWalksClusterToLeaf(t *testing.T) {
 		},
 		Paths: openapi3.NewPaths(),
 	}
-	docErr := doc.Validate(context.Background())
+	docErr := doc.Validate(t.Context())
 
 	// doc.Validate wraps the License error in MultiError variants. Walk
 	// to the FieldVersionMismatchError cluster via errors.As (since
@@ -317,6 +360,8 @@ func TestValidationError_UnwrapWalksClusterToLeaf(t *testing.T) {
 // element's Origin (info, license, server, schema, ...) so consumers
 // can attach file/line/column to a finding without re-walking the doc.
 func TestValidationError_OriginPopulatedOnLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -328,7 +373,7 @@ paths: {}
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var rfe *openapi3.RequiredFieldError
 	require.True(t, errors.As(verr, &rfe))
 	require.Equal(t, "info.version", rfe.Field)
@@ -353,7 +398,7 @@ paths: {}
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var rfe *openapi3.RequiredFieldError
 	require.True(t, errors.As(verr, &rfe))
 	require.Nil(t, rfe.Origin, "Origin should be nil when loader didn't track origins")
@@ -365,6 +410,8 @@ paths: {}
 // document's Origin: scalar root fields resolve precisely via
 // Origin.Fields; object/missing root fields fall back to Origin.Key.
 func TestValidationError_OriginForDocumentRootFields(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -376,7 +423,7 @@ paths: {}
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var rfe *openapi3.RequiredFieldError
 	require.True(t, errors.As(verr, &rfe))
 	require.Equal(t, "openapi", rfe.Field)
@@ -391,6 +438,8 @@ paths: {}
 // cluster via errors.As, the underlying *SchemaError via Unwrap (or
 // nested errors.As), and the cluster's metadata via cluster.ValueKind.
 func TestValidationError_SchemaValueErrorOnInvalidExample(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -411,7 +460,7 @@ paths:
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	require.Error(t, verr)
 
 	// Cluster is reachable.
@@ -426,12 +475,14 @@ paths:
 
 	// Error() prefixes the cluster's ValueKind to keep the historical
 	// "invalid example: ..." message format byte-identical.
-	require.Contains(t, sve.Error(), "invalid example: ")
+	require.ErrorContains(t, sve, "invalid example: ")
 }
 
 // Pin RequiredFieldError cluster + leaf reachability for required-field
 // validation on operations and external docs.
 func TestValidationError_FollowupRequiredFieldLeaves(t *testing.T) {
+	t.Parallel()
+
 	type tc struct {
 		name      string
 		doc       *openapi3.T
@@ -474,7 +525,7 @@ func TestValidationError_FollowupRequiredFieldLeaves(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.doc.Validate(context.Background())
+			err := c.doc.Validate(t.Context())
 			require.Error(t, err)
 
 			var rfe *openapi3.RequiredFieldError
@@ -495,6 +546,8 @@ func TestValidationError_FollowupRequiredFieldLeaves(t *testing.T) {
 // reachable. This pins that no special wiring is needed for the typed
 // errors to flow through the MultiError tree.
 func TestValidationError_FlowsThroughMultiError(t *testing.T) {
+	t.Parallel()
+
 	leaf := &openapi3.InfoVersionRequired{
 		ValidationError: openapi3.ValidationError{Message: "x"},
 	}
@@ -514,9 +567,11 @@ func TestValidationError_FlowsThroughMultiError(t *testing.T) {
 // Pin MutuallyExclusiveFieldsError cluster + leaf reachability for the
 // four sites where two fields are forbidden from being set together.
 func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("example value vs externalValue", func(t *testing.T) {
 		ex := &openapi3.Example{Value: "v", ExternalValue: "https://x"}
-		err := ex.Validate(context.Background())
+		err := ex.Validate(t.Context())
 		require.EqualError(t, err, "value and externalValue are mutually exclusive")
 
 		var mef *openapi3.MutuallyExclusiveFieldsError
@@ -535,7 +590,7 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 		// identifier is a 3.1+ field; opt in so the URL/identifier check
 		// is the one that fires.
 		lic := &openapi3.License{Name: "MIT", URL: "https://x", Identifier: "MIT"}
-		err := lic.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		err := lic.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
 		require.EqualError(t, err, "license must not specify both 'url' and 'identifier'")
 
 		var mef *openapi3.MutuallyExclusiveFieldsError
@@ -549,7 +604,7 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 
 	t.Run("link operationId vs operationRef", func(t *testing.T) {
 		link := &openapi3.Link{OperationID: "getX", OperationRef: "#/x"}
-		err := link.Validate(context.Background())
+		err := link.Validate(t.Context())
 		require.EqualError(t, err, `operationId "getX" and operationRef "#/x" are mutually exclusive`)
 
 		var mef *openapi3.MutuallyExclusiveFieldsError
@@ -563,7 +618,7 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 
 	t.Run("schema readOnly vs writeOnly", func(t *testing.T) {
 		schema := &openapi3.Schema{ReadOnly: true, WriteOnly: true}
-		err := schema.Validate(context.Background())
+		err := schema.Validate(t.Context())
 		require.EqualError(t, err, "a property MUST NOT be marked as both readOnly and writeOnly being true")
 
 		var mef *openapi3.MutuallyExclusiveFieldsError
@@ -574,14 +629,23 @@ func TestValidationError_MutuallyExclusiveFieldsLeaves(t *testing.T) {
 		var leaf *openapi3.SchemaReadOnlyWriteOnlyExclusive
 		require.True(t, errors.As(err, &leaf))
 	})
+
+	// 3.1 takes readOnly and writeOnly from JSON Schema 2020-12, which does
+	// not forbid both.
+	t.Run("schema readOnly and writeOnly in 3.1", func(t *testing.T) {
+		schema := &openapi3.Schema{ReadOnly: true, WriteOnly: true}
+		require.NoError(t, schema.Validate(t.Context(), openapi3.IsOpenAPI31OrLater()))
+	})
 }
 
 // Pin ForbiddenFieldError cluster + leaf reachability for the four
 // sites where a field is set but the spec forbids it in that context.
 func TestValidationError_ForbiddenFieldLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("header.name forbidden", func(t *testing.T) {
 		h := &openapi3.Header{Parameter: openapi3.Parameter{Name: "X-Trace"}}
-		err := h.Validate(context.Background())
+		err := h.Validate(t.Context())
 		require.EqualError(t, err,
 			"header 'name' MUST NOT be specified, it is given in the corresponding headers map")
 
@@ -598,7 +662,7 @@ func TestValidationError_ForbiddenFieldLeaves(t *testing.T) {
 
 	t.Run("header.in forbidden", func(t *testing.T) {
 		h := &openapi3.Header{Parameter: openapi3.Parameter{In: "header"}}
-		err := h.Validate(context.Background())
+		err := h.Validate(t.Context())
 		require.EqualError(t, err,
 			"header 'in' MUST NOT be specified, it is implicitly in header")
 
@@ -615,8 +679,10 @@ func TestValidationError_ForbiddenFieldLeaves(t *testing.T) {
 // these check Validate on a single component (without wiring a full
 // document around it).
 func TestValidationError_ParameterAndAPIKeyNameLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("parameter name required", func(t *testing.T) {
-		err := (&openapi3.Parameter{}).Validate(context.Background())
+		err := (&openapi3.Parameter{}).Validate(t.Context())
 		require.EqualError(t, err, "parameter name can't be blank")
 
 		var rfe *openapi3.RequiredFieldError
@@ -629,7 +695,7 @@ func TestValidationError_ParameterAndAPIKeyNameLeaves(t *testing.T) {
 
 	t.Run("apiKey securityScheme name required", func(t *testing.T) {
 		ss := &openapi3.SecurityScheme{Type: "apiKey", In: "header"}
-		err := ss.Validate(context.Background())
+		err := ss.Validate(t.Context())
 		require.EqualError(t, err, "security scheme of type 'apiKey' should have 'name'")
 
 		var rfe *openapi3.RequiredFieldError
@@ -643,11 +709,13 @@ func TestValidationError_ParameterAndAPIKeyNameLeaves(t *testing.T) {
 
 // Pin ServerURLTemplateError cluster + leaf reachability for the three
 // server URL template sites (mismatched braces, undeclared variables
-// in two flavours).
+// in two flavours, unused variables).
 func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("mismatched braces", func(t *testing.T) {
 		s := &openapi3.Server{URL: "https://example.com/{x"}
-		err := s.Validate(context.Background())
+		err := s.Validate(t.Context())
 		require.EqualError(t, err, "server URL has mismatched { and }")
 
 		var sue *openapi3.ServerURLTemplateError
@@ -663,7 +731,7 @@ func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
 
 	t.Run("undeclared variables (count mismatch)", func(t *testing.T) {
 		s := &openapi3.Server{URL: "https://example.com/{x}"} // no Variables declared
-		err := s.Validate(context.Background())
+		err := s.Validate(t.Context())
 		require.EqualError(t, err, "server has undeclared variables")
 
 		var sue *openapi3.ServerURLTemplateError
@@ -678,20 +746,41 @@ func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
 			URL:       "https://example.com/{x}",
 			Variables: map[string]*openapi3.ServerVariable{"y": {Default: "z"}},
 		}
-		err := s.Validate(context.Background())
+		err := s.Validate(t.Context())
 		require.EqualError(t, err, "server has undeclared variables")
 
 		var leaf *openapi3.ServerURLUndeclaredVariables
 		require.True(t, errors.As(err, &leaf))
+	})
+
+	t.Run("unused variables", func(t *testing.T) {
+		s := &openapi3.Server{
+			URL:       "https://api.example.com/v1",
+			Variables: map[string]*openapi3.ServerVariable{"region": {Default: "us-east"}},
+		}
+		err := s.Validate(t.Context())
+		require.EqualError(t, err, "server has unused variable region")
+
+		var sue *openapi3.ServerURLTemplateError
+		require.True(t, errors.As(err, &sue))
+		require.Equal(t, "https://api.example.com/v1", sue.URL)
+
+		var leaf *openapi3.ServerURLUnusedVariables
+		require.True(t, errors.As(err, &leaf))
+
+		var ve *openapi3.ValidationError
+		require.True(t, errors.As(err, &ve))
 	})
 }
 
 // Pin EitherFieldRequiredError cluster + leaf reachability for the
 // two "at least one of these fields must be set" sites.
 func TestValidationError_EitherFieldRequiredLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("example value or externalValue", func(t *testing.T) {
 		ex := &openapi3.Example{}
-		err := ex.Validate(context.Background())
+		err := ex.Validate(t.Context())
 		require.EqualError(t, err, "no value or externalValue field")
 
 		var efr *openapi3.EitherFieldRequiredError
@@ -707,7 +796,7 @@ func TestValidationError_EitherFieldRequiredLeaves(t *testing.T) {
 
 	t.Run("link operationId or operationRef", func(t *testing.T) {
 		link := &openapi3.Link{}
-		err := link.Validate(context.Background())
+		err := link.Validate(t.Context())
 		require.EqualError(t, err, "missing operationId or operationRef on link")
 
 		var efr *openapi3.EitherFieldRequiredError
@@ -722,8 +811,10 @@ func TestValidationError_EitherFieldRequiredLeaves(t *testing.T) {
 // Pin SchemaItemsRequired leaf reachability via the existing
 // RequiredFieldError cluster.
 func TestValidationError_SchemaItemsRequiredLeaf(t *testing.T) {
+	t.Parallel()
+
 	schema := &openapi3.Schema{Type: &openapi3.Types{"array"}}
-	err := schema.Validate(context.Background())
+	err := schema.Validate(t.Context())
 	require.EqualError(t, err, "when schema type is 'array', schema 'items' must be non-null")
 
 	var rfe *openapi3.RequiredFieldError
@@ -737,10 +828,12 @@ func TestValidationError_SchemaItemsRequiredLeaf(t *testing.T) {
 // Pin doc-root RequiredFieldError leaves: info, paths,
 // jsonSchemaDialect-must-be-absolute-URI.
 func TestValidationError_DocRootRequiredLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("info required", func(t *testing.T) {
 		// doc with no Info — fails with the wrap "invalid info: must be an object".
 		doc := &openapi3.T{OpenAPI: "3.0.3", Paths: openapi3.NewPaths()}
-		err := doc.Validate(context.Background())
+		err := doc.Validate(t.Context())
 		require.EqualError(t, err, "invalid info: must be an object")
 
 		var rfe *openapi3.RequiredFieldError
@@ -757,7 +850,7 @@ func TestValidationError_DocRootRequiredLeaves(t *testing.T) {
 			OpenAPI: "3.0.3",
 			Info:    &openapi3.Info{Title: "x", Version: "1.0.0"},
 		}
-		err := doc.Validate(context.Background())
+		err := doc.Validate(t.Context())
 		require.EqualError(t, err, "invalid paths: must be an object")
 
 		var rfe *openapi3.RequiredFieldError
@@ -775,7 +868,7 @@ func TestValidationError_DocRootRequiredLeaves(t *testing.T) {
 			Paths:             openapi3.NewPaths(),
 			JSONSchemaDialect: "no-scheme/relative",
 		}
-		err := doc.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		err := doc.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
 		require.EqualError(t, err, "invalid jsonSchemaDialect: must be an absolute URI with a scheme")
 
 		var rfe *openapi3.RequiredFieldError
@@ -790,6 +883,8 @@ func TestValidationError_DocRootRequiredLeaves(t *testing.T) {
 // Pin SchemaBothFormsExclusive cluster + leaf reachability for the
 // three union-typed schema fields set to both boolean and schema forms.
 func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("additionalProperties both forms", func(t *testing.T) {
 		yes := true
 		schema := &openapi3.Schema{
@@ -799,7 +894,7 @@ func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
 				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{}},
 			},
 		}
-		err := schema.Validate(context.Background())
+		err := schema.Validate(t.Context())
 		require.EqualError(t, err, "additionalProperties are set to both boolean and schema")
 
 		var sbf *openapi3.SchemaBothFormsExclusive
@@ -822,7 +917,7 @@ func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
 				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{}},
 			},
 		}
-		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		err := schema.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
 		require.EqualError(t, err, "unevaluatedItems is set to both boolean and schema")
 
 		var sbf *openapi3.SchemaBothFormsExclusive
@@ -842,7 +937,7 @@ func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
 				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{}},
 			},
 		}
-		err := schema.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+		err := schema.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
 		require.EqualError(t, err, "unevaluatedProperties is set to both boolean and schema")
 
 		var sbf *openapi3.SchemaBothFormsExclusive
@@ -857,9 +952,12 @@ func TestValidationError_SchemaBothFormsLeaves(t *testing.T) {
 // Pin ExactlyOneFieldError and SingleEntryContentError clusters for
 // the four parameter/header content+schema sites.
 func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
+	t.Parallel()
+
 	t.Run("parameter content/schema exactly one (neither set)", func(t *testing.T) {
+		t.Parallel()
 		p := &openapi3.Parameter{Name: "p", In: "query"}
-		err := p.Validate(context.Background())
+		err := p.Validate(t.Context())
 		require.ErrorContains(t, err, "parameter must contain exactly one of content and schema")
 
 		var efe *openapi3.ExactlyOneFieldError
@@ -871,6 +969,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	})
 
 	t.Run("parameter content single entry", func(t *testing.T) {
+		t.Parallel()
 		p := &openapi3.Parameter{
 			Name: "p", In: "query",
 			Content: openapi3.Content{
@@ -878,7 +977,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 				"application/xml":  &openapi3.MediaType{},
 			},
 		}
-		err := p.Validate(context.Background())
+		err := p.Validate(t.Context())
 		require.ErrorContains(t, err, "parameter content must only contain one entry")
 
 		var sec *openapi3.SingleEntryContentError
@@ -890,9 +989,10 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	})
 
 	t.Run("header content/schema exactly one (neither set)", func(t *testing.T) {
+		t.Parallel()
 		h := &openapi3.Header{}
-		err := h.Validate(context.Background())
-		require.ErrorContains(t, err, "parameter must contain exactly one of content and schema")
+		err := h.Validate(t.Context())
+		require.EqualError(t, err, "header schema is invalid: header must contain exactly one of content and schema")
 
 		var efe *openapi3.ExactlyOneFieldError
 		require.True(t, errors.As(err, &efe))
@@ -903,6 +1003,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 	})
 
 	t.Run("header content single entry", func(t *testing.T) {
+		t.Parallel()
 		h := &openapi3.Header{
 			Parameter: openapi3.Parameter{
 				Content: openapi3.Content{
@@ -911,7 +1012,7 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 				},
 			},
 		}
-		err := h.Validate(context.Background())
+		err := h.Validate(t.Context())
 		require.ErrorContains(t, err, "parameter content must only contain one entry")
 
 		var sec *openapi3.SingleEntryContentError
@@ -926,13 +1027,15 @@ func TestValidationError_ParameterHeaderContentSchemaLeaves(t *testing.T) {
 // Pin WebhookNilError cluster + leaf reachability for the
 // nil-pathitem webhook check in T.Validate.
 func TestValidationError_WebhookNilLeaf(t *testing.T) {
+	t.Parallel()
+
 	doc := &openapi3.T{
 		OpenAPI:  "3.1.0",
 		Info:     &openapi3.Info{Title: "x", Version: "1.0.0"},
 		Paths:    openapi3.NewPaths(),
 		Webhooks: map[string]*openapi3.PathItem{"onEvent": nil},
 	}
-	err := doc.Validate(context.Background(), openapi3.IsOpenAPI31OrLater())
+	err := doc.Validate(t.Context(), openapi3.IsOpenAPI31OrLater())
 	require.EqualError(t, err, `invalid webhooks: webhook "onEvent" is nil`)
 
 	var wne *openapi3.WebhookNilError
@@ -947,6 +1050,8 @@ func TestValidationError_WebhookNilLeaf(t *testing.T) {
 }
 
 func TestValidationError_PathParameterRequired(t *testing.T) {
+	t.Parallel()
+
 	// Path parameters must be declared required: true. A parameter with
 	// in: path and required: false (or omitted) triggers the cluster.
 	doc := loadDocFromYAML(t, `
@@ -959,7 +1064,7 @@ paths:
         - { name: id, in: path }
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `path parameter "id" must be required`)
 
 	var ppr *openapi3.PathParameterRequiredError
@@ -968,6 +1073,8 @@ paths:
 }
 
 func TestValidationError_DuplicateOperationID(t *testing.T) {
+	t.Parallel()
+
 	// Two operations sharing the same operationId across paths must
 	// surface a DuplicateOperationIDError carrying both endpoints.
 	doc := loadDocFromYAML(t, `
@@ -983,7 +1090,7 @@ paths:
       operationId: shared
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `operations "GET /a" and "GET /b" have the same operation id "shared"`)
 
 	var doe *openapi3.DuplicateOperationIDError
@@ -994,6 +1101,8 @@ paths:
 }
 
 func TestValidationError_ExtraSiblingFields(t *testing.T) {
+	t.Parallel()
+
 	// A non-x- key in Extensions triggers validateExtensions's
 	// "extra sibling fields" error, now typed as ExtraSiblingFieldsError.
 	// Construct a non-empty Responses so the empty-responses guard
@@ -1004,7 +1113,7 @@ func TestValidationError_ExtraSiblingFields(t *testing.T) {
 		}),
 	)
 	responses.Extensions = map[string]any{"bogus": "value"}
-	err := responses.Validate(context.Background())
+	err := responses.Validate(t.Context())
 	require.ErrorContains(t, err, "extra sibling fields: [bogus]")
 
 	var esf *openapi3.ExtraSiblingFieldsError
@@ -1013,6 +1122,8 @@ func TestValidationError_ExtraSiblingFields(t *testing.T) {
 }
 
 func TestValidationError_SchemaTypeError(t *testing.T) {
+	t.Parallel()
+
 	// Unsupported 'type' value on a schema (e.g., "bool" instead of
 	// "boolean") triggers SchemaTypeError carrying the bad value.
 	doc := loadDocFromYAML(t, `
@@ -1023,7 +1134,7 @@ components:
   schemas:
     Bad: { type: bool }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `unsupported 'type' value "bool"`)
 
 	var ste *openapi3.SchemaTypeError
@@ -1036,6 +1147,8 @@ components:
 // consumers can pin the finding at the duplicate operationId rather
 // than at the document root.
 func TestValidationError_DuplicateOperationID_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -1053,7 +1166,7 @@ paths:
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var doe *openapi3.DuplicateOperationIDError
 	require.True(t, errors.As(verr, &doe))
 	require.NotNil(t, doe.Origin, "cluster should carry the offending operation's Origin when loader tracks origins")
@@ -1064,6 +1177,8 @@ paths:
 // Without IncludeOrigin, DuplicateOperationIDError.Origin is nil — no
 // fabrication of location info that wasn't tracked.
 func TestValidationError_DuplicateOperationID_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1077,7 +1192,7 @@ paths:
       operationId: shared
       responses: { "200": { description: ok } }
 `)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var doe *openapi3.DuplicateOperationIDError
 	require.True(t, errors.As(verr, &doe))
 	require.Nil(t, doe.Origin, "Origin should be nil when loader didn't track origins")
@@ -1088,6 +1203,8 @@ paths:
 // container holding the unexpected sibling fields. Exercised here via
 // a $ref with a disallowed sibling, which is the most common surface.
 func TestValidationError_ExtraSiblingFields_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -1103,14 +1220,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/T"
-                description: should-not-be-here
+                x-prohibited: should-not-be-here
 components:
   schemas:
     T: { type: string }
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context(), openapi3.ProhibitExtensionsWithRef())
 	var esf *openapi3.ExtraSiblingFieldsError
 	require.True(t, errors.As(verr, &esf))
 	require.NotNil(t, esf.Origin, "cluster should carry the parent object's Origin when loader tracks origins")
@@ -1123,6 +1240,8 @@ components:
 // value. Most common offender is `in: body` from Swagger 2.0 specs
 // that didn't fully migrate to 3.x.
 func TestValidationError_InvalidParameterIn(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1133,7 +1252,7 @@ paths:
         - { name: payload, in: body, schema: { type: object } }
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `parameter can't have 'in' value "body"`)
 
 	var ipe *openapi3.InvalidParameterInError
@@ -1143,6 +1262,8 @@ paths:
 
 // Origin tracking for InvalidParameterInError.
 func TestValidationError_InvalidParameterIn_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -1157,7 +1278,7 @@ paths:
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ipe *openapi3.InvalidParameterInError
 	require.True(t, errors.As(verr, &ipe))
 	require.NotNil(t, ipe.Origin)
@@ -1171,6 +1292,8 @@ paths:
 // AND chains through to the original *SchemaError via Unwrap so
 // callers using errors.As against the legacy *SchemaError still match.
 func TestValidationError_SchemaPatternRegex(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1181,7 +1304,7 @@ components:
       type: string
       pattern: "(?!foo)bar"
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var spre *openapi3.SchemaPatternRegexError
@@ -1196,6 +1319,8 @@ components:
 
 // Origin tracking for SchemaPatternRegexError.
 func TestValidationError_SchemaPatternRegex_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -1210,7 +1335,7 @@ components:
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var spre *openapi3.SchemaPatternRegexError
 	require.True(t, errors.As(verr, &spre))
 	require.NotNil(t, spre.Origin)
@@ -1222,6 +1347,8 @@ components:
 // {apiKey, http, oauth2, openIdConnect, mutualTLS} triggers
 // InvalidSecuritySchemeTypeError carrying the rejected value.
 func TestValidationError_InvalidSecuritySchemeType(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1231,7 +1358,7 @@ components:
     Bad:
       type: cookie
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `security scheme 'type' can't be "cookie"`)
 
 	var iste *openapi3.InvalidSecuritySchemeTypeError
@@ -1241,6 +1368,8 @@ components:
 
 // Origin tracking for InvalidSecuritySchemeTypeError.
 func TestValidationError_InvalidSecuritySchemeType_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -1254,7 +1383,7 @@ components:
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var iste *openapi3.InvalidSecuritySchemeTypeError
 	require.True(t, errors.As(verr, &iste))
 	require.NotNil(t, iste.Origin)
@@ -1262,10 +1391,12 @@ components:
 	require.Greater(t, iste.Origin.Key.Line, 0)
 }
 
-// HTTP security scheme with a `scheme:` outside {bearer, basic,
-// negotiate, digest} triggers InvalidHTTPSchemeError carrying the
-// rejected value.
+// HTTP security scheme with a `scheme:` that is not a valid HTTP
+// authentication scheme name triggers InvalidHTTPSchemeError carrying
+// the rejected value.
 func TestValidationError_InvalidHTTPScheme(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1274,18 +1405,20 @@ components:
   securitySchemes:
     Bad:
       type: http
-      scheme: mutual
+      scheme: not valid
 `)
-	err := doc.Validate(context.Background())
-	require.ErrorContains(t, err, `security scheme of type 'http' has invalid 'scheme' value "mutual"`)
+	err := doc.Validate(t.Context())
+	require.ErrorContains(t, err, `security scheme of type 'http' has invalid 'scheme' value "not valid"`)
 
 	var ihse *openapi3.InvalidHTTPSchemeError
 	require.True(t, errors.As(err, &ihse))
-	require.Equal(t, "mutual", ihse.Scheme)
+	require.Equal(t, "not valid", ihse.Scheme)
 }
 
 // Origin tracking for InvalidHTTPSchemeError.
 func TestValidationError_InvalidHTTPScheme_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	doc, err := loader.LoadFromData([]byte(`
@@ -1296,16 +1429,53 @@ components:
   securitySchemes:
     Bad:
       type: http
-      scheme: mutual
+      scheme: not valid
 `))
 	require.NoError(t, err)
 
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ihse *openapi3.InvalidHTTPSchemeError
 	require.True(t, errors.As(verr, &ihse))
 	require.NotNil(t, ihse.Origin)
 	require.NotNil(t, ihse.Origin.Key)
 	require.Greater(t, ihse.Origin.Key.Line, 0)
+}
+
+// An encoding whose contentType is not a media type, a wildcard or a
+// comma-separated list of those triggers InvalidEncodingContentTypeError.
+func TestValidationError_InvalidEncodingContentType(t *testing.T) {
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths:
+  /upload:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+            encoding:
+              file:
+                contentType: "*/png"
+      responses:
+        "200": { description: OK }
+`))
+	require.NoError(t, err)
+
+	err = doc.Validate(t.Context())
+	require.ErrorContains(t, err, `encoding has invalid 'contentType' value "*/png"`)
+
+	var e *openapi3.InvalidEncodingContentTypeError
+	require.True(t, errors.As(err, &e))
+	require.Equal(t, "*/png", e.ContentType)
+	require.NotNil(t, e.Origin)
+	require.NotNil(t, e.Origin.Key)
+	require.Greater(t, e.Origin.Key.Line, 0)
 }
 
 // A $ref left with a non-nil Ref string but nil Value at Validate time
@@ -1315,6 +1485,8 @@ components:
 // $ref that wasn't fetched (testdata/apis_guru_openapi_directory has
 // real examples).
 func TestValidationError_UnresolvedRef(t *testing.T) {
+	t.Parallel()
+
 	doc := &openapi3.T{
 		OpenAPI: "3.0.3",
 		Info:    &openapi3.Info{Title: "t", Version: "1"},
@@ -1328,7 +1500,7 @@ func TestValidationError_UnresolvedRef(t *testing.T) {
 			},
 		},
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `found unresolved ref: "external.yaml#/T"`)
 
 	var ure *openapi3.UnresolvedRefError
@@ -1339,6 +1511,8 @@ func TestValidationError_UnresolvedRef(t *testing.T) {
 // openIdConnect security scheme without an openIdConnectUrl triggers
 // RequiredFieldError wrapping *OpenIDConnectURLRequired.
 func TestValidationError_OpenIDConnectURLRequired(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1348,7 +1522,7 @@ components:
     Bad:
       type: openIdConnect
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `no OIDC URL found for openIdConnect security scheme`)
 
 	var rfe *openapi3.RequiredFieldError
@@ -1362,6 +1536,8 @@ components:
 // {query, header, cookie} triggers APIKeyInInvalidError carrying the
 // rejected value.
 func TestValidationError_APIKeyInInvalid(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1373,7 +1549,7 @@ components:
       in: body
       name: payload
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `should have 'in'. It can be 'query', 'header' or 'cookie', not "body"`)
 
 	var akie *openapi3.APIKeyInInvalidError
@@ -1384,6 +1560,8 @@ components:
 // A non-apiKey scheme that nevertheless declares `in:` triggers
 // ForbiddenFieldError wrapping *SecuritySchemeInForbidden.
 func TestValidationError_SecuritySchemeInForbidden(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1395,7 +1573,7 @@ components:
       scheme: basic
       in: query
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `security scheme of type "http" can't have 'in'`)
 
 	var ffe *openapi3.ForbiddenFieldError
@@ -1408,6 +1586,8 @@ components:
 // A non-apiKey scheme that declares `name:` triggers
 // ForbiddenFieldError wrapping *SecuritySchemeNameForbidden.
 func TestValidationError_SecuritySchemeNameForbidden(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1419,7 +1599,7 @@ components:
       scheme: basic
       name: something
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `security scheme of type "http" can't have 'name'`)
 
 	var ffe *openapi3.ForbiddenFieldError
@@ -1432,6 +1612,8 @@ components:
 // A non-http scheme declaring `bearerFormat:` triggers
 // ForbiddenFieldError wrapping *SecuritySchemeBearerFormatForbidden.
 func TestValidationError_SecuritySchemeBearerFormatForbidden(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1444,7 +1626,7 @@ components:
       name: x
       bearerFormat: JWT
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `security scheme of type "apiKey" can't have 'bearerFormat'`)
 
 	var ffe *openapi3.ForbiddenFieldError
@@ -1457,6 +1639,8 @@ components:
 // oauth2 scheme missing `flows:` triggers RequiredFieldError
 // wrapping *SecuritySchemeFlowsRequired.
 func TestValidationError_SecuritySchemeFlowsRequired(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1466,7 +1650,7 @@ components:
     Bad:
       type: oauth2
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `security scheme of type "oauth2" should have 'flows'`)
 
 	var rfe *openapi3.RequiredFieldError
@@ -1479,6 +1663,8 @@ components:
 // A non-oauth2 scheme declaring `flows:` triggers ForbiddenFieldError
 // wrapping *SecuritySchemeFlowsForbidden.
 func TestValidationError_SecuritySchemeFlowsForbidden(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1493,7 +1679,7 @@ components:
           tokenUrl: https://example.com/token
           scopes: {}
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `security scheme of type "http" can't have 'flows'`)
 
 	var ffe *openapi3.ForbiddenFieldError
@@ -1506,8 +1692,10 @@ components:
 // A path key that doesn't start with '/' triggers
 // PathMustStartWithSlashError carrying the offending path.
 func TestValidationError_PathMustStartWithSlash(t *testing.T) {
+	t.Parallel()
+
 	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
-	err := paths.Validate(context.Background())
+	err := paths.Validate(t.Context())
 	require.ErrorContains(t, err, `path "users/{id}" does not start with a forward slash (/)`)
 
 	var pmss *openapi3.PathMustStartWithSlashError
@@ -1518,6 +1706,8 @@ func TestValidationError_PathMustStartWithSlash(t *testing.T) {
 // Two path keys normalizing to the same template trigger
 // ConflictingPathsError carrying both paths.
 func TestValidationError_ConflictingPaths(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1533,7 +1723,7 @@ paths:
         - { name: b, in: path, required: true, schema: { type: string } }
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var cpe *openapi3.ConflictingPathsError
@@ -1545,6 +1735,8 @@ paths:
 // Two parameters with the same (In, Name) combination on a single
 // operation trigger DuplicateParameterError carrying both.
 func TestValidationError_DuplicateParameter(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1556,7 +1748,7 @@ paths:
         - { name: id, in: query, schema: { type: string } }
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `more than one "query" parameter has name "id"`)
 
 	var dpe *openapi3.DuplicateParameterError
@@ -1569,9 +1761,11 @@ paths:
 // triggers InvalidSerializationMethodError carrying Subject "media
 // type".
 func TestValidationError_InvalidSerializationMethod_MediaType(t *testing.T) {
+	t.Parallel()
+
 	explode := true
 	enc := &openapi3.Encoding{Style: "matrix", Explode: &explode}
-	err := enc.Validate(context.Background())
+	err := enc.Validate(t.Context())
 	require.ErrorContains(t, err, `serialization method with style="matrix" and explode=true is not supported by media type`)
 
 	var isme *openapi3.InvalidSerializationMethodError
@@ -1584,6 +1778,8 @@ func TestValidationError_InvalidSerializationMethod_MediaType(t *testing.T) {
 // MutuallyExclusiveFieldsError wrapping
 // *ParameterExampleAndExamplesExclusive.
 func TestValidationError_ParameterExampleAndExamplesExclusive(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1599,7 +1795,7 @@ paths:
             a: { value: bar }
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.ErrorContains(t, err, `example and examples are mutually exclusive`)
 
 	var mef *openapi3.MutuallyExclusiveFieldsError
@@ -1613,8 +1809,10 @@ paths:
 // A server variable without `default` triggers RequiredFieldError
 // wrapping *ServerVariableDefaultRequired.
 func TestValidationError_ServerVariableDefaultRequired(t *testing.T) {
+	t.Parallel()
+
 	sv := &openapi3.ServerVariable{Enum: []string{"a", "b"}}
-	err := sv.Validate(context.Background())
+	err := sv.Validate(t.Context())
 	require.ErrorContains(t, err, `field default is required in`)
 
 	var rfe *openapi3.RequiredFieldError
@@ -1629,6 +1827,8 @@ func TestValidationError_ServerVariableDefaultRequired(t *testing.T) {
 // The Unwrap chain still reaches the inner typed leaf.
 
 func TestValidationError_ComponentValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1638,7 +1838,7 @@ components:
     Bad:
       type: foobar
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var cve *openapi3.ComponentValidationError
@@ -1652,6 +1852,8 @@ components:
 }
 
 func TestValidationError_ExternalDocsURLValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1659,13 +1861,15 @@ paths: {}
 externalDocs:
   url: "://not a url"
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 	var euve *openapi3.ExternalDocsURLValidationError
 	require.True(t, errors.As(err, &euve))
 }
 
 func TestValidationError_WebhookValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.1.0
 info: { title: t, version: "1" }
@@ -1677,19 +1881,21 @@ webhooks:
 `)
 	// Validate may surface various findings; the webhook wrap should
 	// be discoverable via errors.As regardless of which inner leaf fires.
-	_ = doc.Validate(context.Background())
+	_ = doc.Validate(t.Context())
 	// Construct directly to verify the wrapper shape (the failure path
 	// above may or may not produce a webhook error depending on the
 	// inner validators' state, but the type itself is what we want to
 	// pin).
 	wve := &openapi3.WebhookValidationError{Name: "myhook", Cause: errors.New("boom")}
-	require.Contains(t, wve.Error(), `webhook "myhook"`)
+	require.ErrorContains(t, wve, `webhook "myhook"`)
 	var got *openapi3.WebhookValidationError
 	require.True(t, errors.As(wve, &got))
 	require.Equal(t, "myhook", got.Name)
 }
 
 func TestValidationError_ParameterFieldValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1702,7 +1908,7 @@ paths:
           schema: { type: foobar }
       responses: { "200": { description: ok } }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var pfve *openapi3.ParameterFieldValidationError
@@ -1714,6 +1920,8 @@ paths:
 }
 
 func TestValidationError_OAuthFlowValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1727,7 +1935,7 @@ components:
           tokenUrl: "://not a url"
           scopes: {}
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var ofve *openapi3.OAuthFlowValidationError
@@ -1738,6 +1946,8 @@ components:
 }
 
 func TestValidationError_OAuthFlowFieldValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -1752,7 +1962,7 @@ components:
           refreshUrl: "://not a url"
           scopes: {}
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var offve *openapi3.OAuthFlowFieldValidationError
@@ -1762,13 +1972,15 @@ components:
 
 // Without IncludeOrigin, ExtraSiblingFieldsError.Origin is nil.
 func TestValidationError_ExtraSiblingFields_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	responses := openapi3.NewResponses(
 		openapi3.WithStatus(200, &openapi3.ResponseRef{
 			Value: openapi3.NewResponse().WithDescription("ok"),
 		}),
 	)
 	responses.Extensions = map[string]any{"bogus": "value"}
-	verr := responses.Validate(context.Background())
+	verr := responses.Validate(t.Context())
 	var esf *openapi3.ExtraSiblingFieldsError
 	require.True(t, errors.As(verr, &esf))
 	require.Nil(t, esf.Origin, "Origin should be nil when the parent object's Origin is unset")
@@ -1803,8 +2015,10 @@ paths:
 `
 
 func TestValidationError_PathParameterRequired_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAMLWithOrigin(t, specPathParamNotRequired)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ppr *openapi3.PathParameterRequiredError
 	require.True(t, errors.As(verr, &ppr))
 	require.NotNil(t, ppr.Origin)
@@ -1813,8 +2027,10 @@ func TestValidationError_PathParameterRequired_CarriesOrigin(t *testing.T) {
 }
 
 func TestValidationError_PathParameterRequired_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specPathParamNotRequired)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ppr *openapi3.PathParameterRequiredError
 	require.True(t, errors.As(verr, &ppr))
 	require.Nil(t, ppr.Origin)
@@ -1830,8 +2046,10 @@ components:
 `
 
 func TestValidationError_SchemaType_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAMLWithOrigin(t, specSchemaTypeBad)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ste *openapi3.SchemaTypeError
 	require.True(t, errors.As(verr, &ste))
 	require.NotNil(t, ste.Origin)
@@ -1840,8 +2058,10 @@ func TestValidationError_SchemaType_CarriesOrigin(t *testing.T) {
 }
 
 func TestValidationError_SchemaType_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specSchemaTypeBad)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ste *openapi3.SchemaTypeError
 	require.True(t, errors.As(verr, &ste))
 	require.Nil(t, ste.Origin)
@@ -1859,8 +2079,10 @@ paths:
 `
 
 func TestValidationError_InvalidParameterIn_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specInvalidParameterIn)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ipe *openapi3.InvalidParameterInError
 	require.True(t, errors.As(verr, &ipe))
 	require.Nil(t, ipe.Origin)
@@ -1878,8 +2100,10 @@ components:
 `
 
 func TestValidationError_SchemaPatternRegex_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specSchemaPatternRegex)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var spre *openapi3.SchemaPatternRegexError
 	require.True(t, errors.As(verr, &spre))
 	require.Nil(t, spre.Origin)
@@ -1896,8 +2120,10 @@ components:
 `
 
 func TestValidationError_InvalidSecuritySchemeType_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specInvalidSecuritySchemeType)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var iste *openapi3.InvalidSecuritySchemeTypeError
 	require.True(t, errors.As(verr, &iste))
 	require.Nil(t, iste.Origin)
@@ -1911,12 +2137,14 @@ components:
   securitySchemes:
     Bad:
       type: http
-      scheme: mutual
+      scheme: not valid
 `
 
 func TestValidationError_InvalidHTTPScheme_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specInvalidHTTPScheme)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var ihse *openapi3.InvalidHTTPSchemeError
 	require.True(t, errors.As(verr, &ihse))
 	require.Nil(t, ihse.Origin)
@@ -1935,8 +2163,10 @@ components:
 `
 
 func TestValidationError_APIKeyInInvalid_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAMLWithOrigin(t, specAPIKeyInInvalid)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var akie *openapi3.APIKeyInInvalidError
 	require.True(t, errors.As(verr, &akie))
 	require.NotNil(t, akie.Origin)
@@ -1945,21 +2175,25 @@ func TestValidationError_APIKeyInInvalid_CarriesOrigin(t *testing.T) {
 }
 
 func TestValidationError_APIKeyInInvalid_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specAPIKeyInInvalid)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var akie *openapi3.APIKeyInInvalidError
 	require.True(t, errors.As(verr, &akie))
 	require.Nil(t, akie.Origin)
 }
 
 func TestValidationError_PathMustStartWithSlash_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 	// Programmatic because loadDocFromYAML rejects malformed path keys
 	// during the load phase before Validate gets the chance.
 	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
 	paths.Origin = &openapi3.Origin{Key: &openapi3.Location{Line: 1, Column: 1}}
-	verr := paths.Validate(context.Background())
+	verr := paths.Validate(t.Context())
 	var pmss *openapi3.PathMustStartWithSlashError
 	require.True(t, errors.As(verr, &pmss))
 	require.NotNil(t, pmss.Origin)
@@ -1968,8 +2202,10 @@ func TestValidationError_PathMustStartWithSlash_CarriesOrigin(t *testing.T) {
 }
 
 func TestValidationError_PathMustStartWithSlash_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	paths := openapi3.NewPaths(openapi3.WithPath("users/{id}", &openapi3.PathItem{}))
-	verr := paths.Validate(context.Background())
+	verr := paths.Validate(t.Context())
 	var pmss *openapi3.PathMustStartWithSlashError
 	require.True(t, errors.As(verr, &pmss))
 	require.Nil(t, pmss.Origin)
@@ -1992,8 +2228,10 @@ paths:
 `
 
 func TestValidationError_ConflictingPaths_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAMLWithOrigin(t, specConflictingPaths)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var cpe *openapi3.ConflictingPathsError
 	require.True(t, errors.As(verr, &cpe))
 	require.NotNil(t, cpe.Origin)
@@ -2002,8 +2240,10 @@ func TestValidationError_ConflictingPaths_CarriesOrigin(t *testing.T) {
 }
 
 func TestValidationError_ConflictingPaths_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specConflictingPaths)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var cpe *openapi3.ConflictingPathsError
 	require.True(t, errors.As(verr, &cpe))
 	require.Nil(t, cpe.Origin)
@@ -2022,8 +2262,10 @@ paths:
 `
 
 func TestValidationError_DuplicateParameter_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAMLWithOrigin(t, specDuplicateParameter)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var dpe *openapi3.DuplicateParameterError
 	require.True(t, errors.As(verr, &dpe))
 	require.NotNil(t, dpe.Origin)
@@ -2032,14 +2274,18 @@ func TestValidationError_DuplicateParameter_CarriesOrigin(t *testing.T) {
 }
 
 func TestValidationError_DuplicateParameter_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, specDuplicateParameter)
-	verr := doc.Validate(context.Background())
+	verr := doc.Validate(t.Context())
 	var dpe *openapi3.DuplicateParameterError
 	require.True(t, errors.As(verr, &dpe))
 	require.Nil(t, dpe.Origin)
 }
 
 func TestValidationError_InvalidSerializationMethod_MediaType_CarriesOrigin(t *testing.T) {
+	t.Parallel()
+
 	// Encoding.Validate isn't reached from T.Validate (MediaType.Validate
 	// skips it); exercise it directly with a populated Origin so the
 	// Carries-Origin assertion is meaningful.
@@ -2049,7 +2295,7 @@ func TestValidationError_InvalidSerializationMethod_MediaType_CarriesOrigin(t *t
 		Explode: &explode,
 		Origin:  &openapi3.Origin{Key: &openapi3.Location{Line: 5, Column: 3}},
 	}
-	err := enc.Validate(context.Background())
+	err := enc.Validate(t.Context())
 	var isme *openapi3.InvalidSerializationMethodError
 	require.True(t, errors.As(err, &isme))
 	require.Equal(t, "media type", isme.Subject)
@@ -2059,15 +2305,19 @@ func TestValidationError_InvalidSerializationMethod_MediaType_CarriesOrigin(t *t
 }
 
 func TestValidationError_InvalidSerializationMethod_MediaType_OriginNilWithoutLoaderTracking(t *testing.T) {
+	t.Parallel()
+
 	explode := true
 	enc := &openapi3.Encoding{Style: "matrix", Explode: &explode}
-	err := enc.Validate(context.Background())
+	err := enc.Validate(t.Context())
 	var isme *openapi3.InvalidSerializationMethodError
 	require.True(t, errors.As(err, &isme))
 	require.Nil(t, isme.Origin)
 }
 
 func TestValidationError_SchemaCombinatorElementValidationError(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		combinator string
 		yaml       string
@@ -2077,6 +2327,7 @@ func TestValidationError_SchemaCombinatorElementValidationError(t *testing.T) {
 		{"allOf", "      allOf:\n        - type: foobar\n"},
 	} {
 		t.Run(tc.combinator, func(t *testing.T) {
+			t.Parallel()
 			doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -2085,13 +2336,13 @@ components:
   schemas:
     Bad:
 `+tc.yaml)
-			err := doc.Validate(context.Background())
+			err := doc.Validate(t.Context())
 			require.Error(t, err)
 
 			var scve *openapi3.SchemaCombinatorElementValidationError
 			require.True(t, errors.As(err, &scve))
 			require.Equal(t, tc.combinator, scve.Combinator)
-			require.Contains(t, scve.Error(), "invalid "+tc.combinator+" element")
+			require.ErrorContains(t, scve, "invalid "+tc.combinator+" element")
 			// Unwrap reaches the typed inner leaf.
 			var ste *openapi3.SchemaTypeError
 			require.True(t, errors.As(err, &ste))
@@ -2101,6 +2352,8 @@ components:
 }
 
 func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *testing.T) {
+	t.Parallel()
+
 	leaf := errors.New("boom")
 
 	// A run of same-combinator wrappers renders the prefix once, not per level.
@@ -2108,7 +2361,7 @@ func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *tes
 	for range 5 {
 		nested = &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: nested}
 	}
-	require.Equal(t, "invalid allOf element: boom", nested.Error())
+	require.EqualError(t, nested, "invalid allOf element: boom")
 
 	// The typed chain is untouched: every wrapper level is still walkable.
 	levels := 0
@@ -2124,10 +2377,12 @@ func TestValidationError_SchemaCombinatorElementValidationError_NoStutter(t *tes
 		Combinator: "oneOf",
 		Cause:      &openapi3.SchemaCombinatorElementValidationError{Combinator: "allOf", Cause: leaf},
 	}
-	require.Equal(t, "invalid oneOf element: invalid allOf element: boom", mixed.Error())
+	require.EqualError(t, mixed, "invalid oneOf element: invalid allOf element: boom")
 }
 
 func TestValidationError_DuplicateRequiredFieldError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -2140,16 +2395,18 @@ components:
       properties:
         id: { type: string }
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var dup *openapi3.DuplicateRequiredFieldError
 	require.True(t, errors.As(err, &dup))
 	require.Equal(t, "id", dup.Field)
-	require.Contains(t, dup.Error(), `duplicate field "id" in required`)
+	require.ErrorContains(t, dup, `duplicate field "id" in required`)
 }
 
 func TestValidationError_DuplicateTagError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -2158,16 +2415,18 @@ tags:
   - name: pet
   - name: pet
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var dup *openapi3.DuplicateTagError
 	require.True(t, errors.As(err, &dup))
 	require.Equal(t, "pet", dup.Name)
-	require.Contains(t, dup.Error(), `more than one tag has name "pet"`)
+	require.ErrorContains(t, dup, `more than one tag has name "pet"`)
 }
 
 func TestValidationError_TagValidationError(t *testing.T) {
+	t.Parallel()
+
 	doc := loadDocFromYAML(t, `
 openapi: 3.0.3
 info: { title: t, version: "1" }
@@ -2177,13 +2436,13 @@ tags:
     externalDocs:
       url: ""
 `)
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.Error(t, err)
 
 	var tve *openapi3.TagValidationError
 	require.True(t, errors.As(err, &tve))
 	require.Equal(t, "pet", tve.Name)
-	require.Contains(t, tve.Error(), `tag "pet"`)
+	require.ErrorContains(t, tve, `tag "pet"`)
 	// Unwrap reaches the typed inner leaf.
 	var edr *openapi3.ExternalDocsURLRequired
 	require.True(t, errors.As(err, &edr))
@@ -2195,4 +2454,67 @@ func loadDocFromYAML(t *testing.T, src string) *openapi3.T {
 	doc, err := loader.LoadFromData([]byte(src))
 	require.NoError(t, err)
 	return doc
+}
+
+// The 3.0 forms of type and of the exclusive bounds stay valid in 3.0, and the
+// 3.1 forms stay valid in 3.1.
+func TestValidationError_TypeAndExclusiveBoundForms(t *testing.T) {
+	t.Parallel()
+
+	ctx31 := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
+
+	for _, schema := range []*openapi3.Schema{
+		{Type: &openapi3.Types{"string"}},
+		{Type: &openapi3.Types{"number"}, Min: openapi3.Float64Ptr(0), ExclusiveMin: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
+		{Type: &openapi3.Types{"number"}, Max: openapi3.Float64Ptr(10), ExclusiveMax: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
+	} {
+		assert.NoError(t, schema.Validate(t.Context()))
+		if schema.Type.Is("string") {
+			assert.NoError(t, schema.Validate(ctx31)) // We're missing differentiation of "string" and ["string"]
+		} else {
+			assert.Error(t, schema.Validate(ctx31))
+		}
+	}
+
+	for _, schema := range []*openapi3.Schema{
+		{Type: &openapi3.Types{"string", "null"}},
+		{Type: &openapi3.Types{"number"}, ExclusiveMin: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(0)}},
+		{Type: &openapi3.Types{"number"}, ExclusiveMax: openapi3.ExclusiveBound{Value: openapi3.Float64Ptr(10)}},
+	} {
+		assert.Error(t, schema.Validate(t.Context()))
+		assert.NoError(t, schema.Validate(ctx31))
+	}
+}
+
+// JSON Schema 2020-12 (OpenAPI 3.1) requires the exclusive bounds to be numbers,
+// so the OpenAPI 3.0 boolean form is rejected there.
+func TestValidationError_ExclusiveBoundBooleanBefore31(t *testing.T) {
+	t.Parallel()
+
+	ctx31 := openapi3.WithValidationOptions(t.Context(), openapi3.IsOpenAPI31OrLater())
+
+	for field, schema := range map[string]*openapi3.Schema{
+		"exclusiveMinimum": {Type: &openapi3.Types{"number"}, Min: openapi3.Float64Ptr(0), ExclusiveMin: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(true)}},
+		"exclusiveMaximum": {Type: &openapi3.Types{"number"}, Max: openapi3.Float64Ptr(10), ExclusiveMax: openapi3.ExclusiveBound{Bool: openapi3.BoolPtr(false)}},
+	} {
+		t.Run(field, func(t *testing.T) {
+			err := schema.Validate(ctx31)
+			require.Error(t, err)
+
+			var fvm *openapi3.FieldVersionMismatchError
+			require.True(t, errors.As(err, &fvm))
+			require.Equal(t, field, fvm.Field)
+			require.Equal(t, "3.1", fvm.RemovedIn)
+			require.Empty(t, fvm.MinVersion)
+
+			var l *openapi3.ExclusiveBoundBooleanBefore31
+			require.True(t, errors.As(err, &l))
+			require.Equal(t, "exclusive-bound-boolean-before-3-1", l.Code())
+		})
+	}
+
+	// nullable is not rejected: since 3.1 it is an unknown keyword.
+	actuallyJustStringSchema := openapi3.Schema{Type: &openapi3.Types{"string"}, Nullable: true}
+	err := actuallyJustStringSchema.Validate(ctx31)
+	require.NoError(t, err)
 }

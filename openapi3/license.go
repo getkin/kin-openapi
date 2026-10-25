@@ -13,12 +13,12 @@ type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name string `json:"name" yaml:"name"` // Required
-	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
+	Name string `json:"name,case:strict" yaml:"name"` // Required
+	URL  string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 
 	// Identifier is an SPDX license expression for the API (OpenAPI 3.1)
 	// Either url or identifier can be specified, not both
-	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // OpenAPI >=3.1
+	Identifier string `json:"identifier,omitempty,case:strict" yaml:"identifier,omitempty"` // OpenAPI >=3.1
 }
 
 // MarshalJSON returns the JSON encoding of License.
@@ -48,10 +48,10 @@ func (license License) MarshalYAML() (any, error) {
 func (license *License) UnmarshalJSON(data []byte) error {
 	type LicenseBis License
 	var x LicenseBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "identifier")

@@ -107,8 +107,6 @@ var (
     pattern in order not to fail converted v2-v3 validation
 
 var (
-	// SchemaErrorDetailsDisabled disables printing of details about schema errors.
-	SchemaErrorDetailsDisabled = false
 
 	// ErrOneOfConflict is the SchemaError Origin when data matches more than one oneOf schema
 	ErrOneOfConflict = errors.New("input matches more than one oneOf schemas")
@@ -130,14 +128,16 @@ var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClien
     DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
     HTTP URIs and local file URIs.
 
+var ErrSchemaErrorDetailsWithJSONSchema2020 = errors.New("the setting DisableSchemaErrorDetails() is ineffective together with EnableJSONSchema2020() (used for OpenAPI 3.1+ documents): the latter's error messages are opaque")
+    ErrSchemaErrorDetailsWithJSONSchema2020 is returned when validating with
+    both DisableSchemaErrorDetails and EnableJSONSchema2020, the latter being
+    used for OpenAPI 3.1+ documents: the JSON Schema 2020-12 validator includes
+    values in the reason of its errors, so disabling details would not keep them
+    out of messages.
+
 var ErrURINotSupported = errors.New("unsupported URI")
     ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle
     a given URI.
-
-var IncludeOrigin = false
-    IncludeOrigin specifies whether to include the origin of the OpenAPI
-    elements. Deprecated: set Loader.IncludeOrigin instead. This global is read
-    by NewLoader for backward compatibility but is not safe for concurrent use.
 
 var SkipSubtree = errors.New("skip schema subtree")
     SkipSubtree, when returned by a WalkSchemasFunc, tells WalkSchemas not to
@@ -267,7 +267,8 @@ func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool)
 
 func RegisterArrayUniqueItemsChecker(fn SliceUniqueItemsChecker)
     RegisterArrayUniqueItemsChecker is used to register a customized function
-    used to check if JSON array have unique items.
+    used to check if JSON array have unique items. Passing nil restores the
+    default checker.
 
 func Uint64Ptr(value uint64) *uint64
     Uint64Ptr is a helper for defining OpenAPI schemas.
@@ -335,6 +336,25 @@ func (e *AdditionalOperationsFieldFor32Plus) As(target any) bool
 
 func (e *AdditionalOperationsFieldFor32Plus) Code() string
 
+type AdditionalOperationsFixedMethodCaseError struct {
+	// Method is the offending additionalOperations key.
+	Method string
+	// FixedMethod is the fixed field method Method differs from only by case.
+	FixedMethod string
+	// Origin is the source location of the offending path item when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    AdditionalOperationsFixedMethodCaseError clusters "additionalOperations
+    key differs only by case from a fixed field method" failures. Although
+    HTTP method names are case-sensitive, such a key (e.g. `post`) is easily
+    confused with the method of the matching fixed field (`POST`) and would let
+    operations with different security requirements look alike.
+
+func (e *AdditionalOperationsFixedMethodCaseError) Code() string
+
+func (e *AdditionalOperationsFixedMethodCaseError) Error() string
+
 type AdditionalOperationsInvalidMethodError struct {
 	// Method is the offending additionalOperations key.
 	Method string
@@ -378,6 +398,12 @@ func (bs *BoolSchema) UnmarshalJSON(data []byte) error
 
 func (bs *BoolSchema) UnmarshalYAML(node *yaml.Node) error
     BoolSchema is `true`/`false` or a schema.
+
+type BooleanSchemaFor31Plus struct{ ValidationError }
+
+func (e *BooleanSchemaFor31Plus) As(target any) bool
+
+func (e *BooleanSchemaFor31Plus) Code() string
 
 type Callback struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
@@ -423,6 +449,11 @@ func (callback *Callback) Set(key string, value *PathItem)
 func (callback *Callback) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Callback to a copy of data.
 
+func (callback *Callback) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Callback to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
+
 func (callback *Callback) UnmarshalYAML(node *yaml.Node) error
 
 func (callback *Callback) Validate(ctx context.Context, opts ...ValidationOption) error
@@ -437,8 +468,8 @@ type CallbackRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Callback
@@ -543,15 +574,15 @@ type Components struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
-	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`
-	RequestBodies   RequestBodies   `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
-	Responses       ResponseBodies  `json:"responses,omitempty" yaml:"responses,omitempty"`
-	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
-	Examples        Examples        `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Links           Links           `json:"links,omitempty" yaml:"links,omitempty"`
-	Callbacks       Callbacks       `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Schemas         Schemas         `json:"schemas,omitempty,case:strict" yaml:"schemas,omitempty"`
+	Parameters      ParametersMap   `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
+	Headers         Headers         `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	RequestBodies   RequestBodies   `json:"requestBodies,omitempty,case:strict" yaml:"requestBodies,omitempty"`
+	Responses       ResponseBodies  `json:"responses,omitempty,case:strict" yaml:"responses,omitempty"`
+	SecuritySchemes SecuritySchemes `json:"securitySchemes,omitempty,case:strict" yaml:"securitySchemes,omitempty"`
+	Examples        Examples        `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
+	Links           Links           `json:"links,omitempty,case:strict" yaml:"links,omitempty"`
+	Callbacks       Callbacks       `json:"callbacks,omitempty,case:strict" yaml:"callbacks,omitempty"`
 }
     Components is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#components-object
@@ -601,9 +632,9 @@ type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
-	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
-	Email string `json:"email,omitempty" yaml:"email,omitempty"`
+	Name  string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	URL   string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
+	Email string `json:"email,omitempty,case:strict" yaml:"email,omitempty"`
 }
     Contact is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contact-object
@@ -647,6 +678,20 @@ func NewContentWithSchema(schema *Schema, consumes []string) Content
 func NewContentWithSchemaRef(schema *SchemaRef, consumes []string) Content
 
 func (content Content) Get(mime string) *MediaType
+    Get returns the MediaType whose key matches mime, or nil.
+
+    Keys and mime are compared case-insensitively (RFC 9110, section 8.3.1).
+    A key may be a comma-separated list of media ranges, any of which matches.
+    The most specific match wins, tried in this order:
+
+     1. mime in full, parameters included (e.g.
+        "application/json;charset=utf-8")
+     2. mime without its parameters (e.g. "application/json")
+     3. its type wildcard (e.g. "application/*")
+     4. the full wildcard "*/*"
+
+    An empty mime matches only "*/*". A mime without a subtype matches nothing.
+    Content.Validate rejects keys that would make a match ambiguous.
 
 func (content Content) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if Content does not comply with the OpenAPI spec.
@@ -656,6 +701,24 @@ type ContentEncodingFieldFor31Plus struct{ ValidationError }
 func (e *ContentEncodingFieldFor31Plus) As(target any) bool
 
 func (e *ContentEncodingFieldFor31Plus) Code() string
+
+type ContentKeysOverlapError struct {
+	// Key and OtherKey are the overlapping content map keys.
+	Key, OtherKey string
+	// MediaRange is the lowercased media range both keys list.
+	MediaRange string
+	// Origin is the source location of the media type under Key when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    ContentKeysOverlapError clusters "content keys X and Y both match Z"
+    failures. Keys of a content map are compared case-insensitively and may each
+    list several media ranges, so two distinct keys (e.g. "application/json" and
+    "Application/JSON") can match the same media type.
+
+func (e *ContentKeysOverlapError) Code() string
+
+func (e *ContentKeysOverlapError) Error() string
 
 type ContentMediaTypeFieldFor31Plus struct{ ValidationError }
 
@@ -697,8 +760,8 @@ type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	PropertyName string                `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      map[string]MappingRef `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string                `json:"propertyName,case:strict" yaml:"propertyName"` // required
+	Mapping      map[string]MappingRef `json:"mapping,omitempty,case:strict" yaml:"mapping,omitempty"`
 }
     Discriminator is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
@@ -825,16 +888,26 @@ type Encoding struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
-	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	ContentType   string  `json:"contentType,omitempty,case:strict" yaml:"contentType,omitempty"`
+	Headers       Headers `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	Style         string  `json:"style,omitempty,case:strict" yaml:"style,omitempty"`
+	Explode       *bool   `json:"explode,omitempty,case:strict" yaml:"explode,omitempty"`
+	AllowReserved bool    `json:"allowReserved,omitempty,case:strict" yaml:"allowReserved,omitempty"`
 }
-    Encoding is specified by OpenAPI/Swagger 3.0 standard. See
+    Encoding is specified by OpenAPI/Swagger 3 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encoding-object
+    and
+    https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.2.md#encoding-object
 
 func NewEncoding() *Encoding
+
+func (encoding *Encoding) AllowsContentType(mediaType string) bool
+    AllowsContentType reports whether a part of the given media type (e.g. the
+    value of its Content-Type header) is allowed by encoding.ContentType, which
+    is a media type, a wildcard ("image/*" or "*/*") or a comma-separated list
+    of those. Media types are compared case-insensitively (RFC 9110, section
+    8.3.1) and parameters (e.g. "; charset=utf-8") on either side are ignored.
+    An empty ContentType declares no restriction: any media type is allowed.
 
 func (encoding Encoding) MarshalJSON() ([]byte, error)
     MarshalJSON returns the JSON encoding of Encoding.
@@ -885,10 +958,10 @@ type Example struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
-	Value         any    `json:"value,omitempty" yaml:"value,omitempty"`
-	ExternalValue string `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
+	Summary       string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description   string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Value         any    `json:"value,omitempty,case:strict" yaml:"value,omitempty"`
+	ExternalValue string `json:"externalValue,omitempty,case:strict" yaml:"externalValue,omitempty"`
 }
     Example is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#example-object
@@ -916,8 +989,8 @@ type ExampleRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Example
@@ -1019,12 +1092,24 @@ func (eb *ExclusiveBound) UnmarshalYAML(node *yaml.Node) error
     ExclusiveBound is a bool in OAS 3.0, where it modifies minimum/maximum,
     or a number in 3.1, where it is the bound itself.
 
+type ExclusiveBoundBooleanBefore31 struct{ ValidationError }
+
+func (e *ExclusiveBoundBooleanBefore31) As(target any) bool
+
+func (e *ExclusiveBoundBooleanBefore31) Code() string
+
+type ExclusiveBoundNumberFor31Plus struct{ ValidationError }
+
+func (e *ExclusiveBoundNumberFor31Plus) As(target any) bool
+
+func (e *ExclusiveBoundNumberFor31Plus) Code() string
+
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	Description string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	URL         string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 }
     ExternalDocs is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#external-documentation-object
@@ -1116,8 +1201,11 @@ type FieldVersionMismatchError struct {
 	// "$defs", "prefixItems", "contains", ...).
 	Field string
 	// MinVersion is the minimum OpenAPI version that allows the field
-	// (e.g. "3.1").
+	// (e.g. "3.1"). Empty when the field is flagged for RemovedIn instead.
 	MinVersion string
+	// RemovedIn is the OpenAPI version that no longer allows the field
+	// (e.g. "3.1" for a boolean exclusiveMinimum). Empty when the field is flagged for MinVersion instead.
+	RemovedIn string
 	// Cause is the underlying leaf error. Walked by errors.Unwrap.
 	Cause error
 	// Origin is the source location of the offending element when the
@@ -1239,8 +1327,8 @@ type HeaderRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Header
@@ -1302,13 +1390,13 @@ type Info struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Title          string   `json:"title" yaml:"title"`                         // Required
-	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"` // OpenAPI >=3.1
-	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
-	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
-	Contact        *Contact `json:"contact,omitempty" yaml:"contact,omitempty"`
-	License        *License `json:"license,omitempty" yaml:"license,omitempty"`
-	Version        string   `json:"version" yaml:"version"` // Required
+	Title          string   `json:"title,case:strict" yaml:"title"`                         // Required
+	Summary        string   `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"` // OpenAPI >=3.1
+	Description    string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	TermsOfService string   `json:"termsOfService,omitempty,case:strict" yaml:"termsOfService,omitempty"`
+	Contact        *Contact `json:"contact,omitempty,case:strict" yaml:"contact,omitempty"`
+	License        *License `json:"license,omitempty,case:strict" yaml:"license,omitempty"`
+	Version        string   `json:"version,case:strict" yaml:"version"` // Required
 }
     Info is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#info-object
@@ -1357,17 +1445,32 @@ func (e *InfoVersionRequired) Code() string
 type IntegerFormatValidator = FormatValidator[int64]
     IntegerFormatValidator is a type alias for FormatValidator[int64]
 
+type InvalidEncodingContentTypeError struct {
+	// ContentType is the rejected contentType value (e.g. "png", "*/png").
+	ContentType string
+	// Origin is the source location of the offending encoding when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    InvalidEncodingContentTypeError clusters "encoding has invalid 'contentType'
+    value X" failures. An encoding's contentType must be a media type (e.g.
+    "image/png"), a wildcard ("image/*" or "*/*"), or a comma-separated list of
+    those.
+
+func (e *InvalidEncodingContentTypeError) Code() string
+
+func (e *InvalidEncodingContentTypeError) Error() string
+
 type InvalidHTTPSchemeError struct {
-	// Scheme is the rejected scheme value (e.g. "mutual", "oauth").
+	// Scheme is the rejected scheme value (e.g. "", "not valid").
 	Scheme string
 	// Origin is the source location of the offending security scheme
 	// when the document was loaded with Loader.IncludeOrigin = true.
 	Origin *Origin
 }
     InvalidHTTPSchemeError clusters "security scheme of type 'http' has invalid
-    'scheme' value X" failures. The OpenAPI/HTTP-auth registry accepts only
-    `bearer`, `basic`, `negotiate`, `digest`; this fires when an http scheme
-    declares anything else.
+    'scheme' value X" failures. This fires when an http scheme is empty or is
+    not a valid HTTP authentication scheme name.
 
 func (e *InvalidHTTPSchemeError) Code() string
 
@@ -1451,12 +1554,12 @@ type License struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name string `json:"name" yaml:"name"` // Required
-	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
+	Name string `json:"name,case:strict" yaml:"name"` // Required
+	URL  string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 
 	// Identifier is an SPDX license expression for the API (OpenAPI 3.1)
 	// Either url or identifier can be specified, not both
-	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // OpenAPI >=3.1
+	Identifier string `json:"identifier,omitempty,case:strict" yaml:"identifier,omitempty"` // OpenAPI >=3.1
 }
     License is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#license-object
@@ -1500,12 +1603,12 @@ type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
-	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string         `json:"description,omitempty" yaml:"description,omitempty"`
-	Parameters   map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Server       *Server        `json:"server,omitempty" yaml:"server,omitempty"`
-	RequestBody  any            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	OperationRef string         `json:"operationRef,omitempty,case:strict" yaml:"operationRef,omitempty"`
+	OperationID  string         `json:"operationId,omitempty,case:strict" yaml:"operationId,omitempty"`
+	Description  string         `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Parameters   map[string]any `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
+	Server       *Server        `json:"server,omitempty,case:strict" yaml:"server,omitempty"`
+	RequestBody  any            `json:"requestBody,omitempty,case:strict" yaml:"requestBody,omitempty"`
 }
     Link is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#link-object
@@ -1543,8 +1646,8 @@ type LinkRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Link
@@ -1596,8 +1699,6 @@ type Loader struct {
 	IsExternalRefsAllowed bool
 
 	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
-	// Prefer this over the package-level IncludeOrigin global, which is not safe for
-	// concurrent use.
 	IncludeOrigin bool
 
 	// ReadFromURIFunc overrides how the loader reads a referenced file or URL.
@@ -1652,17 +1753,17 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error)
     ResolveRefsIn expands references if for instance spec was just unmarshaled
 
 type Location struct {
-	File   string `json:"file,omitempty" yaml:"file,omitempty"`
-	Line   int    `json:"line,omitempty" yaml:"line,omitempty"`
-	Column int    `json:"column,omitempty" yaml:"column,omitempty"`
-	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
+	File   string `json:"file,omitempty,case:strict" yaml:"file,omitempty"`
+	Line   int    `json:"line,omitempty,case:strict" yaml:"line,omitempty"`
+	Column int    `json:"column,omitempty,case:strict" yaml:"column,omitempty"`
+	Name   string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
 
 	// EndLine and EndColumn mark the end of the block this location heads (set
 	// only on Origin.Key). For an operation or schema this spans the whole
 	// block, so a consumer can extract the entire element from its source.
 	// Both are zero when the underlying YAML carried no end information.
-	EndLine   int `json:"endLine,omitempty" yaml:"endLine,omitempty"`
-	EndColumn int `json:"endColumn,omitempty" yaml:"endColumn,omitempty"`
+	EndLine   int `json:"endLine,omitempty,case:strict" yaml:"endLine,omitempty"`
+	EndColumn int `json:"endColumn,omitempty,case:strict" yaml:"endColumn,omitempty"`
 }
     Location is a struct that contains the location of a field.
 
@@ -1685,11 +1786,11 @@ type MediaType struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Schema     *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	ItemSchema *SchemaRef `json:"itemSchema,omitempty" yaml:"itemSchema,omitempty"` // OpenAPI >=3.2
-	Example    any        `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples   Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding   Encodings  `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	Schema     *SchemaRef `json:"schema,omitempty,case:strict" yaml:"schema,omitempty"`
+	ItemSchema *SchemaRef `json:"itemSchema,omitempty,case:strict" yaml:"itemSchema,omitempty"` // OpenAPI >=3.2
+	Example    any        `json:"example,omitempty,case:strict" yaml:"example,omitempty"`
+	Examples   Examples   `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
+	Encoding   Encodings  `json:"encoding,omitempty,case:strict" yaml:"encoding,omitempty"`
 }
     MediaType is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
@@ -1723,6 +1824,18 @@ func (mediaType *MediaType) WithExample(name string, value any) *MediaType
 func (mediaType *MediaType) WithSchema(schema *Schema) *MediaType
 
 func (mediaType *MediaType) WithSchemaRef(schema *SchemaRef) *MediaType
+
+type MediaTypeEncodingValidationError struct {
+	// EncodingName is the encoding map key.
+	EncodingName string
+	Cause        error
+}
+    MediaTypeEncodingValidationError wraps validation errors on a named encoding
+    inside a MediaType.encoding map.
+
+func (e *MediaTypeEncodingValidationError) Error() string
+
+func (e *MediaTypeEncodingValidationError) Unwrap() error
 
 type MediaTypeExampleExamplesExclusive struct{ ValidationError }
 
@@ -1811,10 +1924,10 @@ type OAuthFlow struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
-	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
-	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
-	Scopes           map[string]string `json:"scopes" yaml:"scopes"` // required
+	AuthorizationURL string            `json:"authorizationUrl,omitempty,case:strict" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty,case:strict" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty,case:strict" yaml:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes,case:strict" yaml:"scopes"` // required
 }
     OAuthFlow is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flow-object
@@ -1895,10 +2008,10 @@ type OAuthFlows struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
-	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
-	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
-	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty" yaml:"authorizationCode,omitempty"`
+	Implicit          *OAuthFlow `json:"implicit,omitempty,case:strict" yaml:"implicit,omitempty"`
+	Password          *OAuthFlow `json:"password,omitempty,case:strict" yaml:"password,omitempty"`
+	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty,case:strict" yaml:"clientCredentials,omitempty"`
+	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty,case:strict" yaml:"authorizationCode,omitempty"`
 }
     OAuthFlows is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
@@ -1936,38 +2049,38 @@ type Operation struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
-	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
 
 	// Optional short summary.
-	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Summary string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
 
 	// Optional description. Should use CommonMark syntax.
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Description string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	// Optional operation ID.
-	OperationID string `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	OperationID string `json:"operationId,omitempty,case:strict" yaml:"operationId,omitempty"`
 
 	// Optional parameters.
-	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Parameters Parameters `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
 
 	// Optional body parameter.
-	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	RequestBody *RequestBodyRef `json:"requestBody,omitempty,case:strict" yaml:"requestBody,omitempty"`
 
 	// Responses are required in OpenAPI 3.0 and optional in OpenAPI 3.1 and later.
-	Responses *Responses `json:"responses" yaml:"responses"`
+	Responses *Responses `json:"responses,case:strict" yaml:"responses"`
 
 	// Optional callbacks
-	Callbacks Callbacks `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Callbacks Callbacks `json:"callbacks,omitempty,case:strict" yaml:"callbacks,omitempty"`
 
-	Deprecated bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Deprecated bool `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
 
 	// Optional security requirements that overrides top-level security.
-	Security *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Security *SecurityRequirements `json:"security,omitempty,case:strict" yaml:"security,omitempty"`
 
 	// Optional servers that overrides top-level servers.
-	Servers *Servers `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Servers *Servers `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
 
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 }
     Operation represents "operation" specified
     by" OpenAPI/Swagger 3.0 standard. See
@@ -2024,9 +2137,9 @@ func (e *OperationValidationError) Error() string
 func (e *OperationValidationError) Unwrap() error
 
 type Origin struct {
-	Key       *Location             `json:"key,omitempty" yaml:"key,omitempty"`
-	Fields    FieldLocations        `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Sequences map[string][]Location `json:"sequences,omitempty" yaml:"sequences,omitempty"`
+	Key       *Location             `json:"key,omitempty,case:strict" yaml:"key,omitempty"`
+	Fields    FieldLocations        `json:"fields,omitempty,case:strict" yaml:"fields,omitempty"`
+	Sequences map[string][]Location `json:"sequences,omitempty,case:strict" yaml:"sequences,omitempty"`
 }
     Origin contains the origin of a collection. Key is the location of
     the collection itself. Fields holds the location of each scalar field
@@ -2046,19 +2159,19 @@ type Parameter struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name            string     `json:"name,omitempty" yaml:"name,omitempty"`
-	In              string     `json:"in,omitempty" yaml:"in,omitempty"`
-	Description     string     `json:"description,omitempty" yaml:"description,omitempty"`
-	Style           string     `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode         *bool      `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowEmptyValue bool       `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	AllowReserved   bool       `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
-	Deprecated      bool       `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Required        bool       `json:"required,omitempty" yaml:"required,omitempty"`
-	Schema          *SchemaRef `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         any        `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples        Examples   `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Content         Content    `json:"content,omitempty" yaml:"content,omitempty"`
+	Name            string     `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	In              string     `json:"in,omitempty,case:strict" yaml:"in,omitempty"`
+	Description     string     `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Style           string     `json:"style,omitempty,case:strict" yaml:"style,omitempty"`
+	Explode         *bool      `json:"explode,omitempty,case:strict" yaml:"explode,omitempty"`
+	AllowEmptyValue bool       `json:"allowEmptyValue,omitempty,case:strict" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool       `json:"allowReserved,omitempty,case:strict" yaml:"allowReserved,omitempty"`
+	Deprecated      bool       `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
+	Required        bool       `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Schema          *SchemaRef `json:"schema,omitempty,case:strict" yaml:"schema,omitempty"`
+	Example         any        `json:"example,omitempty,case:strict" yaml:"example,omitempty"`
+	Examples        Examples   `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`
+	Content         Content    `json:"content,omitempty,case:strict" yaml:"content,omitempty"`
 }
     Parameter is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameter-object
@@ -2158,8 +2271,8 @@ type ParameterRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Parameter
@@ -2224,26 +2337,28 @@ type PathItem struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
-	Connect     *Operation `json:"connect,omitempty" yaml:"connect,omitempty"`
-	Delete      *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
-	Get         *Operation `json:"get,omitempty" yaml:"get,omitempty"`
-	Head        *Operation `json:"head,omitempty" yaml:"head,omitempty"`
-	Options     *Operation `json:"options,omitempty" yaml:"options,omitempty"`
-	Patch       *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
-	Post        *Operation `json:"post,omitempty" yaml:"post,omitempty"`
-	Put         *Operation `json:"put,omitempty" yaml:"put,omitempty"`
-	Trace       *Operation `json:"trace,omitempty" yaml:"trace,omitempty"`
-	Query       *Operation `json:"query,omitempty" yaml:"query,omitempty"` // OpenAPI >=3.2
-	Servers     Servers    `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Parameters  Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Ref         string     `json:"$ref,omitempty,case:strict" yaml:"$ref,omitempty"`
+	Summary     string     `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description string     `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Connect     *Operation `json:"connect,omitempty,case:strict" yaml:"connect,omitempty"`
+	Delete      *Operation `json:"delete,omitempty,case:strict" yaml:"delete,omitempty"`
+	Get         *Operation `json:"get,omitempty,case:strict" yaml:"get,omitempty"`
+	Head        *Operation `json:"head,omitempty,case:strict" yaml:"head,omitempty"`
+	Options     *Operation `json:"options,omitempty,case:strict" yaml:"options,omitempty"`
+	Patch       *Operation `json:"patch,omitempty,case:strict" yaml:"patch,omitempty"`
+	Post        *Operation `json:"post,omitempty,case:strict" yaml:"post,omitempty"`
+	Put         *Operation `json:"put,omitempty,case:strict" yaml:"put,omitempty"`
+	Trace       *Operation `json:"trace,omitempty,case:strict" yaml:"trace,omitempty"`
+	Query       *Operation `json:"query,omitempty,case:strict" yaml:"query,omitempty"` // OpenAPI >=3.2
+	Servers     Servers    `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
+	Parameters  Parameters `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
 
 	// AdditionalOperations maps custom HTTP method names to operations.
 	// Keys are case-sensitive HTTP method tokens and must not duplicate
 	// the methods covered by the fixed fields above.
-	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
+	AdditionalOperations map[string]*Operation `json:"additionalOperations,omitempty,case:strict" yaml:"additionalOperations,omitempty"` // OpenAPI >=3.2
+
+	// Has unexported fields.
 }
     PathItem is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
@@ -2404,6 +2519,11 @@ func (paths *Paths) Set(key string, value *PathItem)
 func (paths *Paths) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Paths to a copy of data.
 
+func (paths *Paths) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Paths to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
+
 func (paths *Paths) UnmarshalYAML(node *yaml.Node) error
 
 func (paths *Paths) Validate(ctx context.Context, opts ...ValidationOption) error
@@ -2464,9 +2584,9 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc
     documents.
 
 type Ref struct {
-	Ref         string         `json:"$ref" yaml:"$ref"`
-	Summary     *string        `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Ref         string         `json:"$ref,case:strict" yaml:"$ref"`
+	Summary     *string        `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 	Extensions  map[string]any `json:"-" yaml:"-"`
 	Origin      *Origin        `json:"-" yaml:"-"`
 }
@@ -2507,9 +2627,9 @@ type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
-	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
-	Content     Content `json:"content" yaml:"content"`
+	Description string  `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Required    bool    `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Content     Content `json:"content,case:strict" yaml:"content"`
 }
     RequestBody is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#request-body-object
@@ -2564,8 +2684,8 @@ type RequestBodyRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *RequestBody
@@ -2636,10 +2756,10 @@ type Response struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
-	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
-	Links       Links   `json:"links,omitempty" yaml:"links,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Headers     Headers `json:"headers,omitempty,case:strict" yaml:"headers,omitempty"`
+	Content     Content `json:"content,omitempty,case:strict" yaml:"content,omitempty"`
+	Links       Links   `json:"links,omitempty,case:strict" yaml:"links,omitempty"`
 }
     Response is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
@@ -2687,8 +2807,8 @@ type ResponseRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *Response
@@ -2782,6 +2902,11 @@ func (responses *Responses) Status(status int) *ResponseRef
 func (responses *Responses) UnmarshalJSON(data []byte) (err error)
     UnmarshalJSON sets Responses to a copy of data.
 
+func (responses *Responses) UnmarshalJSONFrom(dec *jsontext.Decoder) error
+    UnmarshalJSONFrom sets Responses to the next JSON value read from dec.
+    Decoding each member from dec (rather than from a copy of its bytes) keeps
+    the member's key in the path of any error.
+
 func (responses *Responses) UnmarshalYAML(node *yaml.Node) error
 
 func (responses *Responses) Validate(ctx context.Context, opts ...ValidationOption) error
@@ -2801,94 +2926,96 @@ type Schema struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OneOf        SchemaRefs    `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
-	AnyOf        SchemaRefs    `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
-	AllOf        SchemaRefs    `json:"allOf,omitempty" yaml:"allOf,omitempty"`
-	Not          *SchemaRef    `json:"not,omitempty" yaml:"not,omitempty"`
-	Type         *Types        `json:"type,omitempty" yaml:"type,omitempty"`
-	Title        string        `json:"title,omitempty" yaml:"title,omitempty"`
-	Format       string        `json:"format,omitempty" yaml:"format,omitempty"`
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enum         []any         `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default      any           `json:"default,omitempty" yaml:"default,omitempty"`
-	Example      any           `json:"example,omitempty" yaml:"example,omitempty"`
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	OneOf        SchemaRefs    `json:"oneOf,omitempty,case:strict" yaml:"oneOf,omitempty"`
+	AnyOf        SchemaRefs    `json:"anyOf,omitempty,case:strict" yaml:"anyOf,omitempty"`
+	AllOf        SchemaRefs    `json:"allOf,omitempty,case:strict" yaml:"allOf,omitempty"`
+	Not          *SchemaRef    `json:"not,omitempty,case:strict" yaml:"not,omitempty"`
+	Type         *Types        `json:"type,omitempty,case:strict" yaml:"type,omitempty"`
+	Title        string        `json:"title,omitempty,case:strict" yaml:"title,omitempty"`
+	Format       string        `json:"format,omitempty,case:strict" yaml:"format,omitempty"`
+	Description  string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Enum         []any         `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
+	Default      any           `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Example      any           `json:"example,omitempty,case:strict" yaml:"example,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 
 	// Array-related, here for struct compactness
-	UniqueItems bool `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	UniqueItems bool `json:"uniqueItems,omitempty,case:strict" yaml:"uniqueItems,omitempty"`
 	// Number-related, here for struct compactness
-	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"` // Number for v3.1+ otherwise boolean
-	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"` // Number for v3.1+ otherwise boolean
+	ExclusiveMin ExclusiveBound `json:"exclusiveMinimum,omitempty,case:strict" yaml:"exclusiveMinimum,omitempty"` // Number for v3.1+ otherwise boolean
+	ExclusiveMax ExclusiveBound `json:"exclusiveMaximum,omitempty,case:strict" yaml:"exclusiveMaximum,omitempty"` // Number for v3.1+ otherwise boolean
 	// Properties
-	Nullable        bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	ReadOnly        bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	WriteOnly       bool `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	AllowEmptyValue bool `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	Deprecated      bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	XML             *XML `json:"xml,omitempty" yaml:"xml,omitempty"`
+	Nullable        bool `json:"nullable,omitempty,case:strict" yaml:"nullable,omitempty"`
+	ReadOnly        bool `json:"readOnly,omitempty,case:strict" yaml:"readOnly,omitempty"`
+	WriteOnly       bool `json:"writeOnly,omitempty,case:strict" yaml:"writeOnly,omitempty"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty,case:strict" yaml:"allowEmptyValue,omitempty"`
+	Deprecated      bool `json:"deprecated,omitempty,case:strict" yaml:"deprecated,omitempty"`
+	XML             *XML `json:"xml,omitempty,case:strict" yaml:"xml,omitempty"`
 
 	// Number
-	Min        *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Max        *float64 `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	MultipleOf *float64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Min        *float64 `json:"minimum,omitempty,case:strict" yaml:"minimum,omitempty"`
+	Max        *float64 `json:"maximum,omitempty,case:strict" yaml:"maximum,omitempty"`
+	MultipleOf *float64 `json:"multipleOf,omitempty,case:strict" yaml:"multipleOf,omitempty"`
 
 	// String
-	MinLength uint64  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MaxLength *uint64 `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	Pattern   string  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	MinLength uint64  `json:"minLength,omitempty,case:strict" yaml:"minLength,omitempty"`
+	MaxLength *uint64 `json:"maxLength,omitempty,case:strict" yaml:"maxLength,omitempty"`
+	Pattern   string  `json:"pattern,omitempty,case:strict" yaml:"pattern,omitempty"`
 
 	// Array
-	MinItems uint64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	MaxItems *uint64    `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	Items    *SchemaRef `json:"items,omitempty" yaml:"items,omitempty"`
+	MinItems uint64     `json:"minItems,omitempty,case:strict" yaml:"minItems,omitempty"`
+	MaxItems *uint64    `json:"maxItems,omitempty,case:strict" yaml:"maxItems,omitempty"`
+	Items    *SchemaRef `json:"items,omitempty,case:strict" yaml:"items,omitempty"`
 
 	// Object
-	Required             []string             `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties           Schemas              `json:"properties,omitempty" yaml:"properties,omitempty"`
-	MinProps             uint64               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProps             *uint64              `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Discriminator        *Discriminator       `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	Required             []string             `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Properties           Schemas              `json:"properties,omitempty,case:strict" yaml:"properties,omitempty"`
+	MinProps             uint64               `json:"minProperties,omitempty,case:strict" yaml:"minProperties,omitempty"`
+	MaxProps             *uint64              `json:"maxProperties,omitempty,case:strict" yaml:"maxProperties,omitempty"`
+	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty,case:strict" yaml:"additionalProperties,omitempty"`
+	Discriminator        *Discriminator       `json:"discriminator,omitempty,case:strict" yaml:"discriminator,omitempty"`
 
-	Const                 any        `json:"const,omitempty" yaml:"const,omitempty"`                                 // OpenAPI >=3.1
-	Examples              []any      `json:"examples,omitempty" yaml:"examples,omitempty"`                           // OpenAPI >=3.1
-	PrefixItems           SchemaRefs `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`                     // OpenAPI >=3.1
-	Contains              *SchemaRef `json:"contains,omitempty" yaml:"contains,omitempty"`                           // OpenAPI >=3.1
-	MinContains           *uint64    `json:"minContains,omitempty" yaml:"minContains,omitempty"`                     // OpenAPI >=3.1
-	MaxContains           *uint64    `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`                     // OpenAPI >=3.1
-	PatternProperties     Schemas    `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`         // OpenAPI >=3.1
-	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`           // OpenAPI >=3.1
-	PropertyNames         *SchemaRef `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`                 // OpenAPI >=3.1
-	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`           // OpenAPI >=3.1
-	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"` // OpenAPI >=3.1
+	Const                 any        `json:"const,omitempty,case:strict" yaml:"const,omitempty"`                                 // OpenAPI >=3.1
+	Examples              []any      `json:"examples,omitempty,case:strict" yaml:"examples,omitempty"`                           // OpenAPI >=3.1
+	PrefixItems           SchemaRefs `json:"prefixItems,omitempty,case:strict" yaml:"prefixItems,omitempty"`                     // OpenAPI >=3.1
+	Contains              *SchemaRef `json:"contains,omitempty,case:strict" yaml:"contains,omitempty"`                           // OpenAPI >=3.1
+	MinContains           *uint64    `json:"minContains,omitempty,case:strict" yaml:"minContains,omitempty"`                     // OpenAPI >=3.1
+	MaxContains           *uint64    `json:"maxContains,omitempty,case:strict" yaml:"maxContains,omitempty"`                     // OpenAPI >=3.1
+	PatternProperties     Schemas    `json:"patternProperties,omitempty,case:strict" yaml:"patternProperties,omitempty"`         // OpenAPI >=3.1
+	DependentSchemas      Schemas    `json:"dependentSchemas,omitempty,case:strict" yaml:"dependentSchemas,omitempty"`           // OpenAPI >=3.1
+	PropertyNames         *SchemaRef `json:"propertyNames,omitempty,case:strict" yaml:"propertyNames,omitempty"`                 // OpenAPI >=3.1
+	UnevaluatedItems      BoolSchema `json:"unevaluatedItems,omitempty,case:strict" yaml:"unevaluatedItems,omitempty"`           // OpenAPI >=3.1
+	UnevaluatedProperties BoolSchema `json:"unevaluatedProperties,omitempty,case:strict" yaml:"unevaluatedProperties,omitempty"` // OpenAPI >=3.1
 
-	If   *SchemaRef `json:"if,omitempty" yaml:"if,omitempty"`     // OpenAPI >=3.1
-	Then *SchemaRef `json:"then,omitempty" yaml:"then,omitempty"` // OpenAPI >=3.1
-	Else *SchemaRef `json:"else,omitempty" yaml:"else,omitempty"` // OpenAPI >=3.1
+	If   *SchemaRef `json:"if,omitempty,case:strict" yaml:"if,omitempty"`     // OpenAPI >=3.1
+	Then *SchemaRef `json:"then,omitempty,case:strict" yaml:"then,omitempty"` // OpenAPI >=3.1
+	Else *SchemaRef `json:"else,omitempty,case:strict" yaml:"else,omitempty"` // OpenAPI >=3.1
 
-	DependentRequired map[string][]string `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
+	DependentRequired map[string][]string `json:"dependentRequired,omitempty,case:strict" yaml:"dependentRequired,omitempty"` // OpenAPI >=3.1
 
-	// Boolean is set when the schema was written as a JSON Schema boolean
-	// schema rather than an object: `true` accepts every instance, `false`
-	// accepts none. It is nil for an ordinary object schema, and no other
-	// field is populated when it is set.
+	// Always is set when the schema was written as a JSON Schema boolean
+	// schema rather than an object, and says what that schema always does:
+	// `true` accepts every instance, `false` accepts none. It is nil for an
+	// ordinary object schema, and Validate rejects one that carries any other
+	// keyword.
 	//
-	// Marshalling is handled by MarshalYAML, which emits the bare boolean, so
-	// this carries no struct tag of its own. OpenAPI >=3.1.
-	Boolean *bool `json:"-" yaml:"-"`
+	// Neither direction goes through a struct tag, hence the "-" on both:
+	// UnmarshalJSON takes the bare boolean before the field decode, and
+	// MarshalYAML emits it again ahead of the field map. OpenAPI >=3.1.
+	Always *bool `json:"-" yaml:"-"`
 
-	Defs          Schemas `json:"$defs,omitempty" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
-	SchemaDialect string  `json:"$schema,omitempty" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
-	Comment       string  `json:"$comment,omitempty" yaml:"$comment,omitempty"` // OpenAPI >=3.1
+	Defs          Schemas `json:"$defs,omitempty,case:strict" yaml:"$defs,omitempty"`       // OpenAPI >=3.1
+	SchemaDialect string  `json:"$schema,omitempty,case:strict" yaml:"$schema,omitempty"`   // OpenAPI >=3.1
+	Comment       string  `json:"$comment,omitempty,case:strict" yaml:"$comment,omitempty"` // OpenAPI >=3.1
 
-	SchemaID      string `json:"$id,omitempty" yaml:"$id,omitempty"`                       // OpenAPI >=3.1
-	Anchor        string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`               // OpenAPI >=3.1
-	DynamicRef    string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`       // OpenAPI >=3.1
-	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"` // OpenAPI >=3.1
+	SchemaID      string `json:"$id,omitempty,case:strict" yaml:"$id,omitempty"`                       // OpenAPI >=3.1
+	Anchor        string `json:"$anchor,omitempty,case:strict" yaml:"$anchor,omitempty"`               // OpenAPI >=3.1
+	DynamicRef    string `json:"$dynamicRef,omitempty,case:strict" yaml:"$dynamicRef,omitempty"`       // OpenAPI >=3.1
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty,case:strict" yaml:"$dynamicAnchor,omitempty"` // OpenAPI >=3.1
 
-	ContentMediaType string     `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"` // OpenAPI >=3.1
-	ContentEncoding  string     `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`   // OpenAPI >=3.1
-	ContentSchema    *SchemaRef `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`       // OpenAPI >=3.1
+	ContentMediaType string     `json:"contentMediaType,omitempty,case:strict" yaml:"contentMediaType,omitempty"` // OpenAPI >=3.1
+	ContentEncoding  string     `json:"contentEncoding,omitempty,case:strict" yaml:"contentEncoding,omitempty"`   // OpenAPI >=3.1
+	ContentSchema    *SchemaRef `json:"contentSchema,omitempty,case:strict" yaml:"contentSchema,omitempty"`       // OpenAPI >=3.1
 }
     Schema is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
@@ -2952,7 +3079,12 @@ func (schema Schema) MarshalYAML() (any, error)
 
 func (schema *Schema) NewRef() *SchemaRef
 
-func (schema *Schema) PermitsNull() bool
+func (schema *Schema) PermitsNull(opts ...SchemaValidationOption) bool
+    PermitsNull returns true when a schema is Nullable (only in OpenAPI 3.0)
+    or when "null" is among the allowed types. In OpenAPI 3.1+, nullable is an
+    unknown keyword.
+
+    Usage: schema.PermitsNull(EnableJSONSchema2020()) for 3.1+
 
 func (schema *Schema) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets Schema to a copy of data.
@@ -2970,7 +3102,9 @@ func (schema *Schema) Validate(ctx context.Context, opts ...ValidationOption) er
 func (schema *Schema) VisitJSON(value any, opts ...SchemaValidationOption) error
     VisitJSON applies a Schema to the given data, considering opts.
     To validate data against an OpenAPIv3.1+ schema, be sure to pass the
-    EnableJSONSchema2020() option.
+    EnableJSONSchema2020() option. The schema must have passed Validate (for
+    the document's OpenAPI version) first: VisitJSON's behaviour on an invalid
+    schema is undefined.
 
 func (schema *Schema) VisitJSONArray(value []any) error
 
@@ -3031,6 +3165,7 @@ func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema
 func (schema *Schema) WithMinProperties(i int64) *Schema
 
 func (schema *Schema) WithNullable() *Schema
+    WithNullable set Nullable (OpenAPI 3.0) For 3.1+ append TypeNull to Types.
 
 func (schema *Schema) WithPattern(pattern string) *Schema
 
@@ -3042,6 +3177,10 @@ func (schema *Schema) WithPropertyRef(name string, ref *SchemaRef) *Schema
 
 func (schema *Schema) WithRequired(required []string) *Schema
 
+func (schema *Schema) WithTypes(typs ...string) *Schema
+    WithTypes adds the given types to the schema's Type, initializing it if nil.
+    See Types.With.
+
 func (schema *Schema) WithUniqueItems(unique bool) *Schema
 
 func (schema *Schema) WithoutAdditionalProperties() *Schema
@@ -3051,6 +3190,12 @@ type SchemaAdditionalPropertiesBothForms struct{ ValidationError }
 func (e *SchemaAdditionalPropertiesBothForms) As(target any) bool
 
 func (e *SchemaAdditionalPropertiesBothForms) Code() string
+
+type SchemaBooleanFieldsExclusive struct{ ValidationError }
+
+func (e *SchemaBooleanFieldsExclusive) As(target any) bool
+
+func (e *SchemaBooleanFieldsExclusive) Code() string
 
 type SchemaBothFormsExclusive struct {
 	// Field is the name of the union-typed schema property
@@ -3201,6 +3346,12 @@ func (x *SchemaRef) Validate(ctx context.Context, opts ...ValidationOption) erro
     Validate returns an error if SchemaRef does not comply with the OpenAPI
     spec.
 
+func (sr *SchemaRef) WalkSubtree(fn WalkSchemasFunc) error
+    WalkSubtree visits sr and every schema reachable from it through sub-schema
+    keywords, invoking fn for each. It is WalkSchemas scoped to a single schema:
+    the same descent, cycle guard, and SkipSubtree semantics, with jsonPointer
+    relative to sr, whose own pointer is the empty string.
+
 type SchemaRefs []*SchemaRef
 
 func (s SchemaRefs) JSONLookup(token string) (any, error)
@@ -3250,6 +3401,18 @@ func DisableReadOnlyValidation() SchemaValidationOption
     DisableReadOnlyValidation setting makes Validate not return an error when
     validating properties marked as read-only
 
+func DisableSchemaErrorDetails() SchemaValidationOption
+    DisableSchemaErrorDetails leaves the schema and the value out of the message
+    of schema errors, so that it presents only the reason. Values may hold
+    sensitive inputs, such as secrets.
+
+    It also applies to the SchemaErrors that format validators return, wrapped
+    or not.
+
+    It cannot be used together with EnableJSONSchema2020 (hence with
+    openapi3filter on OpenAPI 3.1+ documents): validation then fails with
+    ErrSchemaErrorDetailsWithJSONSchema2020.
+
 func DisableWriteOnlyValidation() SchemaValidationOption
     DisableWriteOnlyValidation setting makes Validate not return an error when
     validating properties marked as write-only
@@ -3263,7 +3426,9 @@ func EnableJSONSchema2020() SchemaValidationOption
     EnableJSONSchema2020 enables JSON Schema 2020-12 compliant validation.
     This enables support for OpenAPI 3.1 and JSON Schema 2020-12 features.
     When enabled, validation uses the jsonschema library instead of the built-in
-    validator.
+    validator. When JSON Schema 2020-12 keywords are used, unresolved schema
+    references are returned to the caller instead of being silently ignored by
+    falling back to the built-in validator.
 
 func FailFast() SchemaValidationOption
     FailFast returns schema validation errors quicker.
@@ -3382,6 +3547,23 @@ func (security *SecurityRequirement) Validate(ctx context.Context, opts ...Valid
     Validate returns an error if SecurityRequirement does not comply with the
     OpenAPI spec.
 
+type SecurityRequirementSchemeUndefinedError struct {
+	ValidationError
+	Scheme string
+	// JSONPointer locates the offending name in a Security Requirement Object.
+	// Shared objects are reported at their first location in document order.
+	JSONPointer string
+	// Origin is the containing document or operation's source location.
+	Origin *Origin
+}
+    SecurityRequirementSchemeUndefinedError reports an implicit security scheme
+    name that is absent from the entry document's components.securitySchemes.
+    It is emitted by T.Validate for OpenAPI 3.0 and 3.1 documents.
+
+func (e *SecurityRequirementSchemeUndefinedError) As(target any) bool
+
+func (e *SecurityRequirementSchemeUndefinedError) Code() string
+
 type SecurityRequirements []SecurityRequirement
 
 func NewSecurityRequirements() *SecurityRequirements
@@ -3396,14 +3578,14 @@ type SecurityScheme struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
-	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Name             string      `json:"name,omitempty" yaml:"name,omitempty"`
-	In               string      `json:"in,omitempty" yaml:"in,omitempty"`
-	Scheme           string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
-	BearerFormat     string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
-	Flows            *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
-	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty" yaml:"openIdConnectUrl,omitempty"`
+	Type             string      `json:"type,omitempty,case:strict" yaml:"type,omitempty"`
+	Description      string      `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Name             string      `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	In               string      `json:"in,omitempty,case:strict" yaml:"in,omitempty"`
+	Scheme           string      `json:"scheme,omitempty,case:strict" yaml:"scheme,omitempty"`
+	BearerFormat     string      `json:"bearerFormat,omitempty,case:strict" yaml:"bearerFormat,omitempty"`
+	Flows            *OAuthFlows `json:"flows,omitempty,case:strict" yaml:"flows,omitempty"`
+	OpenIdConnectUrl string      `json:"openIdConnectUrl,omitempty,case:strict" yaml:"openIdConnectUrl,omitempty"`
 }
     SecurityScheme is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#security-scheme-object
@@ -3492,8 +3674,8 @@ type SecuritySchemeRef struct {
 	Extensions map[string]any
 	Origin     *Origin `json:"-" yaml:"-"`
 	// Reference Object summary and description are supported in OpenAPI 3.1+.
-	Summary     *string `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
+	Summary     *string `json:"summary,omitempty,case:strict" yaml:"summary,omitempty"`
+	Description *string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 
 	Ref   string
 	Value *SecurityScheme
@@ -3551,9 +3733,9 @@ type Server struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	URL         string          `json:"url" yaml:"url"` // Required
-	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   ServerVariables `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string          `json:"url,case:strict" yaml:"url"` // Required
+	Description string          `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Variables   ServerVariables `json:"variables,omitempty,case:strict" yaml:"variables,omitempty"`
 }
     Server is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#server-object
@@ -3601,8 +3783,9 @@ type ServerURLTemplateError struct {
 	Origin *Origin
 }
     ServerURLTemplateError clusters server URL template failures — mismatched
-    braces and undeclared variables (template variables not matched by
-    Server.Variables, or vice versa).
+    braces, undeclared variables (template variables not matched by
+    Server.Variables) and unused variables (Server.Variables entries the URL
+    template never references).
 
 func (e *ServerURLTemplateError) Code() string
 
@@ -3614,13 +3797,17 @@ type ServerURLUndeclaredVariables struct{ ValidationError }
 
 func (e *ServerURLUndeclaredVariables) As(target any) bool
 
+type ServerURLUnusedVariables struct{ ValidationError }
+
+func (e *ServerURLUnusedVariables) As(target any) bool
+
 type ServerVariable struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`
-	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum        []string `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
+	Default     string   `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Description string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 }
 
 func (serverVariable ServerVariable) MarshalJSON() ([]byte, error)
@@ -3693,16 +3880,16 @@ type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OpenAPI           string               `json:"openapi" yaml:"openapi"` // Required
-	Components        *Components          `json:"components,omitempty" yaml:"components,omitempty"`
-	Info              *Info                `json:"info" yaml:"info"`   // Required
-	Paths             *Paths               `json:"paths" yaml:"paths"` // Required in 3.0, optional in 3.1
-	Security          SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
-	Servers           Servers              `json:"servers,omitempty" yaml:"servers,omitempty"`
-	Tags              Tags                 `json:"tags,omitempty" yaml:"tags,omitempty"`
-	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Webhooks          map[string]*PathItem `json:"webhooks,omitempty" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
-	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
+	OpenAPI           string               `json:"openapi,case:strict" yaml:"openapi"` // Required
+	Components        *Components          `json:"components,omitempty,case:strict" yaml:"components,omitempty"`
+	Info              *Info                `json:"info,case:strict" yaml:"info"`   // Required
+	Paths             *Paths               `json:"paths,case:strict" yaml:"paths"` // Required in 3.0, optional in 3.1
+	Security          SecurityRequirements `json:"security,omitempty,case:strict" yaml:"security,omitempty"`
+	Servers           Servers              `json:"servers,omitempty,case:strict" yaml:"servers,omitempty"`
+	Tags              Tags                 `json:"tags,omitempty,case:strict" yaml:"tags,omitempty"`
+	ExternalDocs      *ExternalDocs        `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
+	Webhooks          map[string]*PathItem `json:"webhooks,omitempty,case:strict" yaml:"webhooks,omitempty"`                   // OpenAPI >=3.1
+	JSONSchemaDialect string               `json:"jsonSchemaDialect,omitempty,case:strict" yaml:"jsonSchemaDialect,omitempty"` // OpenAPI >=3.1
 
 	// Has unexported fields.
 }
@@ -3826,12 +4013,13 @@ func (doc *T) WalkSchemas(fn WalkSchemasFunc) error
     single time regardless of how many references point at it. Maps are visited
     in sorted key order, so the traversal is deterministic.
 
-    It covers schemas under components (schemas, parameters, headers, request
-    bodies, responses, callbacks), the paths and their operations (parameters,
-    request bodies, responses, headers, callbacks), and webhooks, then
-    recurses through every sub-schema keyword: properties, items, itemSchema,
-    allOf/anyOf/oneOf, not, additionalProperties, prefixItems, contains,
-    patternProperties, dependentSchemas, propertyNames, if/then/else, and $defs.
+    It covers schemas under components (schemas, parameters, headers,
+    request bodies, responses, callbacks), the paths and their operations
+    (parameters, request bodies, responses, headers, callbacks), and webhooks,
+    then recurses through every sub-schema keyword: properties, items,
+    itemSchema, allOf/anyOf/oneOf, not, additionalProperties, prefixItems,
+    contains, patternProperties, dependentSchemas, propertyNames, if/then/else,
+    unevaluatedItems, unevaluatedProperties, contentSchema, and $defs.
 
     It is useful for validation, code generation, schema transformation,
     $ref/dependency analysis, and documentation: any consumer that needs to act
@@ -3842,9 +4030,9 @@ type Tag struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name         string        `json:"name,omitempty" yaml:"name,omitempty"`
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Name         string        `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Description  string        `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty,case:strict" yaml:"externalDocs,omitempty"`
 }
     Tag is specified by OpenAPI/Swagger 3.0 standard. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#tag-object
@@ -3891,6 +4079,12 @@ func (e *ThenFieldFor31Plus) As(target any) bool
 
 func (e *ThenFieldFor31Plus) Code() string
 
+type TypeArrayFor31Plus struct{ ValidationError }
+
+func (e *TypeArrayFor31Plus) As(target any) bool
+
+func (e *TypeArrayFor31Plus) Code() string
+
 type Types []string
     Types represents the type(s) of a schema.
 
@@ -3911,6 +4105,16 @@ type Types []string
 
         schema := &Schema{Type: &Types{"string", "null"}}
         // JSON: {"type": ["string", "null"]}
+
+func (types *Types) Clone() Types
+    Clone returns a copy of the types that shares no memory with the receiver.
+    Returns nil if types is nil.
+
+    Example:
+
+        types := &Types{"string"}
+        clone := types.Clone()
+        clone.With("null")  // types is still {"string"}
 
 func (pTypes *Types) Includes(typ string) bool
     Includes returns true if the given type is included in the type array.
@@ -4014,7 +4218,27 @@ func (types *Types) Slice() []string
 func (types *Types) UnmarshalJSON(data []byte) error
 
 func (types *Types) UnmarshalYAML(node *yaml.Node) error
-    Types is a string or a list of strings.
+    Types is a string or a list of strings. Swagger 2 and OpenAPI 3.0 documents
+    always write `type` as a scalar, so the single-string case is what decoding
+    such a document into openapi2.T or openapi3.T relies on.
+
+func (types *Types) With(typs ...string)
+    With adds the given types to the receiver, skipping those already present.
+    Duplicates are removed, keeping the first occurrence. types must not be nil.
+
+    Example:
+
+        types := &Types{"string"}
+        types.With("null", "string")  // types is now {"string", "null"}
+
+func (types *Types) Without(typs ...string)
+    Without removes the given types from the receiver. Duplicates are removed,
+    keeping the first occurrence. Does nothing if types is nil.
+
+    Example:
+
+        types := &Types{"string", "null"}
+        types.Without("null")  // types is now {"string"}
 
 type UnevaluatedItemsFieldFor31Plus struct{ ValidationError }
 
@@ -4101,13 +4325,15 @@ type ValidationOption func(options *ValidationOptions)
 
 func AllowExtensionsWithRef() ValidationOption
     AllowExtensionsWithRef allows extensions (fields starting with 'x-') as
-    siblings for $ref fields. This is the default. Non-extension fields are
-    prohibited unless allowed explicitly with the AllowExtraSiblingFields
-    option.
+    siblings for $ref fields. This is the default. OpenAPI 3.0 Reference Object
+    siblings are ignored by default.
 
 func AllowExtraSiblingFields(fields ...string) ValidationOption
     AllowExtraSiblingFields called as AllowExtraSiblingFields("description")
-    makes Validate not return an error when said field appears next to a $ref.
+    makes Validate not return an error when said field appears where it is
+    not expected: as an unknown field of an object, as an OpenAPI 3.1 schema
+    keyword in an OpenAPI 3.0 document, or as an extension next to a $ref under
+    ProhibitExtensionsWithRef. Other fields next to a $ref are never an error.
 
 func DisableExamplesValidation() ValidationOption
     DisableExamplesValidation disables all example schema validation.
@@ -4169,8 +4395,8 @@ func IsOpenAPI32OrLater() ValidationOption
 func ProhibitExtensionsWithRef() ValidationOption
     ProhibitExtensionsWithRef causes the validation to return an error if
     extensions (fields starting with 'x-') are found as siblings for $ref
-    fields. Non-extension fields are prohibited unless allowed explicitly with
-    the AllowExtraSiblingFields option.
+    fields, in every OpenAPI version. Use AllowExtraSiblingFields to allow
+    specific extensions.
 
 func SetRegexCompiler(c RegexCompilerFunc) ValidationOption
     SetRegexCompiler allows to override the regex implementation used to
@@ -4251,11 +4477,11 @@ type XML struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Prefix    string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
-	Attribute bool   `json:"attribute,omitempty" yaml:"attribute,omitempty"`
-	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
+	Name      string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty,case:strict" yaml:"namespace,omitempty"`
+	Prefix    string `json:"prefix,omitempty,case:strict" yaml:"prefix,omitempty"`
+	Attribute bool   `json:"attribute,omitempty,case:strict" yaml:"attribute,omitempty"`
+	Wrapped   bool   `json:"wrapped,omitempty,case:strict" yaml:"wrapped,omitempty"`
 }
     XML is specified by OpenAPI/Swagger standard version 3. See
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object

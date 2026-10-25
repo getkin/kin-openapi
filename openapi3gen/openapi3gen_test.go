@@ -213,6 +213,8 @@ func ExampleThrowErrorOnCycle() {
 }
 
 func TestExportedNonTagged(t *testing.T) {
+	t.Parallel()
+
 	type Bla struct {
 		A          string
 		Another    string `json:"another"`
@@ -296,6 +298,8 @@ func ExampleGenerator_GenerateSchemaRef() {
 }
 
 func TestEmbeddedPointerStructs(t *testing.T) {
+	t.Parallel()
+
 	type EmbeddedStruct struct {
 		ID string
 	}
@@ -319,6 +323,8 @@ func TestEmbeddedPointerStructs(t *testing.T) {
 }
 
 func TestEmbeddedStructsWithNamelessJSONTag(t *testing.T) {
+	t.Parallel()
+
 	type NestedStruct struct {
 		Field1 string `json:"field1"`
 		Field2 string `json:"field2"`
@@ -347,6 +353,8 @@ func TestEmbeddedStructsWithNamelessJSONTag(t *testing.T) {
 
 // See: https://github.com/getkin/kin-openapi/issues/500
 func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
+	t.Parallel()
+
 	type EmbeddedStruct struct {
 		ID string
 	}
@@ -375,6 +383,8 @@ func TestEmbeddedPointerStructsWithSchemaCustomizer(t *testing.T) {
 }
 
 func TestCyclicReferences(t *testing.T) {
+	t.Parallel()
+
 	type ObjectDiff struct {
 		FieldCycle *ObjectDiff
 		SliceCycle []*ObjectDiff
@@ -504,6 +514,8 @@ func ExampleSchemaCustomizer() {
 }
 
 func TestSchemaCustomizerError(t *testing.T) {
+	t.Parallel()
+
 	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
 		return errors.New("test error")
 	})
@@ -514,6 +526,8 @@ func TestSchemaCustomizerError(t *testing.T) {
 }
 
 func TestSchemaCustomizerExcludeSchema(t *testing.T) {
+	t.Parallel()
+
 	type Bla struct {
 		Str string
 	}
@@ -646,6 +660,8 @@ func ExampleSetSchemar() {
 }
 
 func TestExportComponentSchemasForTimeProp(t *testing.T) {
+	t.Parallel()
+
 	type Some struct {
 		Name      string
 		CreatedAt time.Time
@@ -676,6 +692,8 @@ func TestExportComponentSchemasForTimeProp(t *testing.T) {
 // body is shared by every reference site, so a nullable component breaks
 // codegen tools (e.g. Orval emits `interface Channel {...} | null`).
 func TestExportComponentSchemasNoNullableOnBody(t *testing.T) {
+	t.Parallel()
+
 	type Channel struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
@@ -706,6 +724,8 @@ func TestExportComponentSchemasNoNullableOnBody(t *testing.T) {
 // as components, so the resulting spec has no "#/components/schemas/" entry
 // or ref (which would violate the OpenAPI component-key pattern).
 func TestExportComponentSchemasSkipsAnonymousType(t *testing.T) {
+	t.Parallel()
+
 	type Outer struct {
 		Inline struct {
 			X int
@@ -735,6 +755,8 @@ func TestExportComponentSchemasSkipsAnonymousType(t *testing.T) {
 }
 
 func TestEmbeddedFieldGeneratedOnce(t *testing.T) {
+	t.Parallel()
+
 	type Embedded struct {
 		Field string
 	}
@@ -760,6 +782,8 @@ func TestEmbeddedFieldGeneratedOnce(t *testing.T) {
 }
 
 func TestFieldNameGenerator(t *testing.T) {
+	t.Parallel()
+
 	type Embedded struct {
 		EmbeddedField string
 	}
@@ -887,5 +911,43 @@ func TestFieldNameGenerator(t *testing.T) {
 				require.True(t, gotGoFields[field], "field name generator was not called for %s", field)
 			}
 		})
+	}
+}
+
+// A type reached via two sibling fields gets regenerated once per field, each with its own
+// SchemaCustomizer-set description. Both share a component name, so whichever one wins used to
+// depend on Go's randomized map iteration order; this checks it's always the same one.
+func TestSchemaCustomizerRecursiveTypeDescriptionIsDeterministic(t *testing.T) {
+	t.Parallel()
+
+	type Node struct {
+		Sub []*Node `json:"sub,omitempty"`
+	}
+	type Wrapper struct {
+		Left  []*Node `json:"left,omitempty" desctag:"left-desc"`
+		Right []*Node `json:"right,omitempty" desctag:"right-desc"`
+	}
+
+	customizer := openapi3gen.SchemaCustomizer(func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		if d := tag.Get("desctag"); d != "" {
+			schema.Description = d
+		}
+		return nil
+	})
+
+	var first string
+	for i := range 200 {
+		schemas := make(openapi3.Schemas)
+		_, err := openapi3gen.NewSchemaRefForValue(&Wrapper{}, schemas, openapi3gen.UseAllExportedFields(), customizer)
+		require.NoError(t, err)
+		require.Contains(t, schemas, "Node")
+
+		desc := schemas["Node"].Value.Description
+		require.Contains(t, []string{"left-desc", "right-desc"}, desc)
+		if i == 0 {
+			first = desc
+		} else {
+			require.Equal(t, first, desc, "Node schema description must be stable across repeated generations, not depend on map iteration order (iteration %d)", i)
+		}
 	}
 }

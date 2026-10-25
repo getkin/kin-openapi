@@ -266,17 +266,16 @@ Value:
 
 Including the original value in the error message can be helpful for debugging, but it may not be appropriate for sensitive information such as secrets.
 
-To disable the extra details in the schema error message, you can set the `openapi3.SchemaErrorDetailsDisabled` option to `true`:
+To disable the extra details in the schema error message, pass the `openapi3.DisableSchemaErrorDetails()` option:
 
 ```go
-func main() {
-	// ...
-
 	// Disable schema error detailed error messages
-	openapi3.SchemaErrorDetailsDisabled = true
+	err := schema.VisitJSON(value, openapi3.DisableSchemaErrorDetails())
 
-	// ... other validate codes
-}
+	// or, with openapi3filter
+	options := &openapi3filter.Options{
+		SchemaValidationOptions: []openapi3.SchemaValidationOption{openapi3.DisableSchemaErrorDetails()},
+	}
 ```
 
 This will shorten the error message to present only the reason:
@@ -284,6 +283,8 @@ This will shorten the error message to present only the reason:
 ```
 string doesn't match the regular expression "[A-Z]"
 ```
+
+This option cannot be used with `openapi3.EnableJSONSchema2020()`, which `openapi3filter` enables for OpenAPI 3.1+ documents: the JSON Schema 2020-12 validator includes values in its error messages, so validation then fails with `openapi3.ErrSchemaErrorDetailsWithJSONSchema2020`.
 
 For more fine-grained control over the error message, you can pass a custom `openapi3filter.Options` object to `openapi3filter.RequestValidationInput` that includes a `openapi3filter.CustomSchemaErrorFunc`.
 
@@ -327,6 +328,47 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ```
 
 ## CHANGELOG: Sub-v1 breaking API changes
+
+### v0.153.0
+* `openapi3filter` now parses `number` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as decimal numbers only, so Go float literals such as `0x1p4`, `1_000`, `Inf`, `-infinity` or `NaN` are now rejected as invalid numbers.
+
+### v0.152.0
+* JSON keys of OpenAPI documents only fill the field of the same case (`json:",case:strict"`) when `encoding/json` is implemented with `encoding/json/v2` (by default from Go 1.27, and on Go 1.25 and 1.26 with `GOEXPERIMENT=jsonv2`): a key such as `"Components"` (not `"components"`) is kept as an extension instead of filling `openapi3.T.Components`. Other builds still match keys case-insensitively, as `encoding/json` v1 does.
+* On Go 1.27+, unless built with `GOEXPERIMENT=nojsonv2`, `openapi2` and `openapi3` decode documents with `encoding/json/v2`: objects with duplicate member names and strings with invalid UTF-8 are rejected, and decoding errors are worded differently and locate the faulty value from the root of the document, keys of paths, responses and callbacks included (e.g. `.paths.~1pets.get.responses.200.description`). On these builds `openapi2.Responses`, `openapi3.Callback`, `openapi3.Paths` and `openapi3.Responses` also implement `encoding/json/v2.UnmarshalerFrom`.
+* A schema with an empty `type: []` no longer marshals as `"type": null` which did not survive being read back.
+* The error for a header with neither or both of `content` and `schema` reads `header must contain exactly one of content and schema`. It used to say `parameter ...` followed by a `%v` dump of the `Header` struct, which printed heap addresses: the message differed between two runs over the same document, and leaked addresses into anything that logged it.
+* `openapi3filter` now parses `integer` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as base 10 only, so `010` decodes to `10` rather than `8`, and Go integer literals such as `0x10`, `0b10`, `0o10` or `1_000` are now rejected as invalid integers.
+* `openapi3filter.ValidateResponse` now decodes and validates response headers described with `content` rather than `schema`, with the body decoder registered for the header's media type (see `RegisterBodyDecoder`). Such a header is no longer reported missing when it is required and present, and a value that does not match its schema is now rejected. As with a response body, a media type with no registered decoder fails with `unsupported content type`.
+* `Validate` no longer reports `extra sibling fields` for fields written next to a `$ref`: every version's Reference Object says they "SHALL be ignored". From OpenAPI 3.1 on, `summary` and `description` still override the referenced component's. `ExtraSiblingFieldsError` is still returned for unknown fields of inline objects, and for `x-` extensions next to a `$ref` under `ProhibitExtensionsWithRef`, which now applies to OpenAPI 3.1+ schemas too. It is no longer returned after `InternalizeRefs` for the fields that were next to a component's `$ref` it replaced, and which it leaves out.
+* In OpenAPI 3.1+ documents, the keywords next to a schema's `$ref` now apply alongside the referenced schema, as JSON Schema 2020-12 has it, instead of replacing its keywords of the same name: `{"$ref": ..., "maxLength": 10}` next to a referenced `maxLength: 3` still rejects `"abcd"`, and sibling `required` or `properties` add to the referenced ones. The resolved `SchemaRef.Value` keeps the referenced schema's shape: annotations such as `description`, `readOnly` or `default` replace the referenced ones there, and the other sibling keywords are appended to its `AllOf`.
+* Marshaling an `openapi3.*Ref` with a `$ref` now writes back the fields that were written next to it, instead of emitting a lone `{"$ref": ...}`. An OpenAPI 3.1 schema's sibling keywords, which constrain the referenced schema, were lost that way, and so was every other field next to a `$ref`.
+* The loader now resolves a Path Item Object's `$ref` even when fields are written next to it, and merges the two: it used to skip the `$ref` then, silently dropping every operation of the referenced path item and never noticing a `$ref` to nothing. The specification leaves the result undefined only for a field set on both sides, which is then taken from next to the `$ref`. Marshaling writes back the `$ref` with the fields that were next to it, which it used to drop.
+* The loader no longer panics with `interface conversion` when the same `$ref` is written where two kinds of objects are expected, one nested in the other, such as a path item and one of its responses.
+* `InternalizeRefs` now makes a component of the schema an external `$ref` points to, rather than of that schema with the OpenAPI 3.1 keywords next to the `$ref` applied to it, which leaked them into every other use of the component. The external `$ref`s within those keywords are now rewritten in the marshaled document too.
+* The keywords next to a schema's `$ref` in a file of bare schemas, which has no `openapi` field, now follow the version of the document that refers to the file: they were ignored, as in OpenAPI 3.0, even from an OpenAPI 3.1 document.
+* In OpenAPI 3.1+ documents, loading now fails when the keywords next to a schema's `$ref` do not form a schema, such as `allOf: {type: integer}`, instead of silently ignoring them all.
+* The errors raised by the keywords next to an OpenAPI 3.1 schema's `$ref` now carry their `Origin`.
+
+### v0.151.0
+* Removed the deprecated package-global `openapi3.IncludeOrigin` variable. Set the `IncludeOrigin` field of `openapi3.Loader` instead.
+* `openapi3filter.UrlencodedBodyDecoder` (hence `application/x-www-form-urlencoded` request body validation) now returns a `*openapi3filter.ParseError` for a value that cannot be parsed into its property's schema type, such as `n=abc` for an `integer` property, instead of silently dropping it from the decoded body.
+* `openapi3filter` now writes a query parameter's array `default` into the request URL following the parameter's `style` and `explode` (including their defaults), so an array without `explode` set is written as `?ids=1&ids=2` rather than `?ids=1,2`, and `pipeDelimited`/`spaceDelimited` arrays use their own delimiter.
+
+### v0.150.0
+* `openapi2.Operation.Responses` field type changed from `map[string]*Response` to `*Responses`, which keeps the Responses Object's `x-` extensions in `Responses.Extensions` instead of failing to decode them as responses.
+* `(*openapi3.Schema).VisitJSON(..)` without the `openapi3.EnableJSONSchema2020()` option no longer validates the OpenAPI 3.1 `const` and `prefixItems` keywords. Like the other 3.1-only keywords, they are validated by the JSON Schema 2020-12 validator, which `openapi3filter` enables for 3.1 documents. `items` still applies only past the `prefixItems` positions.
+* OpenAPI 3.0 validation (`(*openapi3.T).Validate(..)`, `(*openapi3.Schema).Validate(..)` without `openapi3.IsOpenAPI31OrLater()`) now rejects a `type` with more than one entry (`openapi3.TypeArrayFor31Plus`) and a numeric `exclusiveMinimum`/`exclusiveMaximum` (`openapi3.ExclusiveBoundNumberFor31Plus`), as those forms only exist since OpenAPI 3.1.
+* OpenAPI 3.1+ validation now rejects a boolean `exclusiveMinimum`/`exclusiveMaximum` (`openapi3.ExclusiveBoundBooleanBefore31`), as JSON Schema 2020-12 requires a number. `openapi3.FieldVersionMismatchError` gained a `RemovedIn` field, set instead of `MinVersion` for such forms.
+* Since OpenAPI 3.1 `nullable` is an unknown keyword: it is still accepted by `Validate` and still decoded into `openapi3.Schema.Nullable`, but `(*openapi3.Schema).VisitJSON(..)` with `openapi3.EnableJSONSchema2020()` (hence `openapi3filter` on 3.1+ documents) no longer lets it allow `null`. Use a `type` array including `"null"` instead. Without that option `nullable` keeps its OpenAPI 3.0 meaning.
+* `(*openapi3.MediaType).Validate(..)` now validates its `encoding` entries, so `(*openapi3.T).Validate(..)` now rejects an Encoding Object with an invalid `style`/`explode` combination, or whose `contentType` is not a comma-separated list of media ranges (`openapi3.InvalidEncodingContentTypeError`). Errors are wrapped in `openapi3.MediaTypeEncodingValidationError`.
+* `(openapi3.Content).Validate(..)` now rejects keys that match the same media type, compared case-insensitively (RFC 9110, section 8.3.1): e.g. `application/json` and `Application/JSON`, or `a/b` and `c/d, a/b` (`openapi3.ContentKeysOverlapError`). Keys that differ only by specificity (`application/json;charset=utf-8`, `application/json`, `application/*`, `*/*`) are still allowed.
+* `(openapi3.Content).Get(..)` now matches media types case-insensitively and matches any entry of a key that is a comma-separated list.
+* `openapi3filter` matches `Content-Type` headers against registered body decoders/encoders and `encoding.contentType` case-insensitively, so e.g. `Application/JSON` bodies are now decoded. The media type it returns or reports in errors is lowercased.
+* `(*openapi3.Schema).VisitJSON(..)` with `openapi3.EnableJSONSchema2020()` no longer rewrites OpenAPI 3.0 forms (boolean `exclusiveMinimum`/`exclusiveMaximum`) or strips OpenAPI-only keywords before handing the schema to the JSON Schema 2020-12 validator. A schema must pass `Validate` before being used with `VisitJSON`.
+* `openapi3filter.JSONBodyDecoder` (hence request and response body validation) now rejects objects with duplicate member names, such as `{"a":1,"a":2}`, on Go 1.27+ unless built with `GOEXPERIMENT=nojsonv2`. To keep accepting them, register your own decoder with `openapi3filter.RegisterBodyDecoder`.
+* `(*openapi3.Parameter).SerializationMethod()` (for query parameters) and `(*openapi3.Encoding).SerializationMethod()` now default `explode` to `false` for `style: spaceDelimited` and `style: pipeDelimited`, as the spec says, so `openapi3filter` splits `?ids=1|2|3` and `application/x-www-form-urlencoded` body properties such as `ids=1|2|3` instead of expecting `ids=1&ids=2&ids=3`. Set `explode: true` to keep the previous behavior.
+* Removed the package-global `openapi3.SchemaErrorDetailsDisabled` variable. Pass the new `openapi3.DisableSchemaErrorDetails()` option to `(*openapi3.Schema).VisitJSON(..)` instead, or add it to `openapi3filter.Options.SchemaValidationOptions`, which `openapi3filter` now also applies when validating parameters. Combined with `openapi3.EnableJSONSchema2020()` (hence with `openapi3filter` on OpenAPI 3.1+ documents), validation fails with `openapi3.ErrSchemaErrorDetailsWithJSONSchema2020`, as that validator's error messages include values.
+* The message customizer set with `openapi3.SetSchemaErrorMessageCustomizer(..)` (hence `(*openapi3filter.Options).WithCustomSchemaErrorFunc(..)`) now also applies to discriminator errors, to errors of patterns that fail to compile and to errors of the JSON Schema 2020-12 validator (`openapi3.EnableJSONSchema2020()`).
 
 ### v0.147.0
 * `(*openapi3.PathItem).SetOperation(string, *Operation)` no longer panics on unhandled HTTP methods: these are now stored in the new `openapi3.PathItem.AdditionalOperations` field (passing a nil operation deletes the entry).

@@ -1,7 +1,6 @@
 package gorillamux
 
 import (
-	"context"
 	"net/http"
 	"sort"
 	"testing"
@@ -14,6 +13,8 @@ import (
 )
 
 func TestRouter(t *testing.T) {
+	t.Parallel()
+
 	helloCONNECT := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	helloDELETE := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
@@ -64,7 +65,7 @@ func TestRouter(t *testing.T) {
 			openapi3.WithPath("/books/{bookid}.json", &openapi3.PathItem{
 				Post: booksPOST,
 				Parameters: openapi3.Parameters{
-					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid2").WithSchema(openapi3.NewStringSchema())},
+					&openapi3.ParameterRef{Value: openapi3.NewPathParameter("bookid").WithSchema(openapi3.NewStringSchema())},
 				},
 			}),
 			openapi3.WithPath("/partial", &openapi3.PathItem{
@@ -129,7 +130,7 @@ func TestRouter(t *testing.T) {
 		}
 	}
 
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err := NewRouter(doc)
 	require.NoError(t, err)
@@ -170,7 +171,7 @@ func TestRouter(t *testing.T) {
 			"port": {Default: "8000"},
 		}},
 	}
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)
@@ -194,7 +195,7 @@ func TestRouter(t *testing.T) {
 			"server": {Default: "/api/v1"},
 		}},
 	}
-	err = doc.Validate(context.Background())
+	err = doc.Validate(t.Context())
 	require.NoError(t, err)
 	r, err = NewRouter(doc)
 	require.NoError(t, err)
@@ -207,13 +208,15 @@ func TestRouter(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		route, pathParams, err := r.FindRoute(req)
-		require.EqualError(t, err, routers.ErrMethodNotAllowed.Error())
+		require.ErrorIs(t, err, routers.ErrMethodNotAllowed)
 		require.Nil(t, route)
 		require.Nil(t, pathParams)
 	}
 }
 
 func TestPermuteScheme(t *testing.T) {
+	t.Parallel()
+
 	scheme0 := "{sche}{me}"
 	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
 		"d0":   {Default: "www"},
@@ -221,15 +224,17 @@ func TestPermuteScheme(t *testing.T) {
 		"sche": {Default: "http"},
 		"me":   {Default: "s", Enum: []string{"", "s"}},
 	}}
-	err := server.Validate(context.Background())
+	err := server.Validate(t.Context())
 	require.NoError(t, err)
 	perms := permutePart(scheme0, server)
 	require.Equal(t, []string{"http", "https"}, perms)
 }
 
 func TestServerPath(t *testing.T) {
+	t.Parallel()
+
 	server := &openapi3.Server{URL: "http://example.com"}
-	err := server.Validate(context.Background())
+	err := server.Validate(t.Context())
 	require.NoError(t, err)
 
 	_, err = NewRouter(&openapi3.T{Servers: openapi3.Servers{
@@ -267,6 +272,8 @@ func TestServerPath(t *testing.T) {
 }
 
 func TestServerOverrideAtPathLevel(t *testing.T) {
+	t.Parallel()
+
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
@@ -290,7 +297,7 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 			}),
 		),
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := NewRouter(doc)
 	require.NoError(t, err)
@@ -308,7 +315,62 @@ func TestServerOverrideAtPathLevel(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestServerOverrideAtPathLevelDoesNotLeak(t *testing.T) {
+	t.Parallel()
+
+	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
+	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info: &openapi3.Info{
+			Title:   "rel",
+			Version: "1",
+		},
+		Servers: openapi3.Servers{
+			&openapi3.Server{
+				URL: "https://example.com/v1",
+			},
+		},
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/b", &openapi3.PathItem{
+				Servers: openapi3.Servers{
+					&openapi3.Server{
+						URL: "https://example.com/v2",
+					},
+				},
+				Get: helloGET,
+			}),
+			openapi3.WithPath("/a", &openapi3.PathItem{
+				Get: helloGET,
+			}),
+		),
+	}
+	err := doc.Validate(t.Context())
+	require.NoError(t, err)
+	router, err := NewRouter(doc)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodGet, "https://example.com/v2/b", nil)
+	require.NoError(t, err)
+	route, _, err := router.FindRoute(req)
+	require.NoError(t, err)
+	require.Equal(t, "/b", route.Path)
+
+	req, err = http.NewRequest(http.MethodGet, "https://example.com/v1/a", nil)
+	require.NoError(t, err)
+	route, _, err = router.FindRoute(req)
+	require.NoError(t, err)
+	require.Equal(t, "/a", route.Path)
+
+	req, err = http.NewRequest(http.MethodGet, "https://example.com/v2/a", nil)
+	require.NoError(t, err)
+	route, _, err = router.FindRoute(req)
+	require.Nil(t, route)
+	require.Error(t, err)
+}
+
 func TestRelativeURL(t *testing.T) {
+	t.Parallel()
+
 	helloGET := &openapi3.Operation{Responses: openapi3.NewResponses(openapi3.WithStatus(200, &openapi3.ResponseRef{Value: openapi3.NewResponse().WithDescription("OK")}))}
 	doc := &openapi3.T{
 		OpenAPI: "3.0.0",
@@ -327,7 +389,7 @@ func TestRelativeURL(t *testing.T) {
 			}),
 		),
 	}
-	err := doc.Validate(context.Background())
+	err := doc.Validate(t.Context())
 	require.NoError(t, err)
 	router, err := NewRouter(doc)
 	require.NoError(t, err)
@@ -339,6 +401,8 @@ func TestRelativeURL(t *testing.T) {
 }
 
 func Test_makeServers(t *testing.T) {
+	t.Parallel()
+
 	type testStruct struct {
 		name    string
 		servers openapi3.Servers
@@ -509,4 +573,18 @@ func newServerVariable(defaultValue string) *openapi3.ServerVariable {
 		Default:     defaultValue,
 		Description: "",
 	}
+}
+
+func TestNewRouterRejectsCapturingGroupInPathVariable(t *testing.T) {
+	t.Parallel()
+
+	doc := &openapi3.T{
+		OpenAPI: "3.0.0",
+		Info:    &openapi3.Info{Title: "t", Version: "1"},
+		Paths: openapi3.NewPaths(
+			openapi3.WithPath("/{x:(a)}", &openapi3.PathItem{Get: &openapi3.Operation{}}),
+		),
+	}
+	_, err := NewRouter(doc)
+	require.ErrorContains(t, err, "gorillamux: route /{x:(a)} contains capture groups in its regexp. Only non-capturing groups are accepted: e.g. (?:pattern) instead of (pattern)")
 }

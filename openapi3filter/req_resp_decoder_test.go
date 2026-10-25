@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,6 +110,8 @@ var (
 )
 
 func TestDeepGet(t *testing.T) {
+	t.Parallel()
+
 	iarray := map[string]any{
 		"0": map[string]any{
 			"foo": 111,
@@ -226,6 +229,8 @@ func TestDeepGet(t *testing.T) {
 }
 
 func TestDeepSet(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		inputMap map[string]any
@@ -278,6 +283,8 @@ func TestDeepSet(t *testing.T) {
 }
 
 func TestDecodeParameter(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		name   string
 		param  *openapi3.Parameter
@@ -526,6 +533,20 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 					err:   &ParseError{path: []any{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
+				{
+					name:  "anyOf items",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(anyofSchema)},
+					path:  "/1,foo",
+					want:  []any{int64(1), "foo"},
+					found: true,
+				},
+				{
+					name:  "oneOf items",
+					param: &openapi3.Parameter{Name: "param", In: "path", Schema: arrayOf(oneofSchema)},
+					path:  "/true,3",
+					want:  []any{true, int64(3)},
+					found: true,
+				},
 			},
 		},
 		{
@@ -691,6 +712,41 @@ func TestDecodeParameter(t *testing.T) {
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
 				},
 				{
+					name:  "integer leading zero",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=010",
+					want:  int64(10),
+					found: true,
+				},
+				{
+					name:  "integer int32 leading zero",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: openapi3.NewInt32Schema().NewRef()},
+					query: "param=010",
+					want:  int32(10),
+					found: true,
+				},
+				{
+					name:  "integer hexadecimal",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=0x10",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "0x10"},
+				},
+				{
+					name:  "integer binary",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=0b10",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "0b10"},
+				},
+				{
+					name:  "integer underscores",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: integerSchema},
+					query: "param=1_000",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "1_000"},
+				},
+				{
 					name:  "number",
 					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
 					query: "param=1.1",
@@ -710,6 +766,41 @@ func TestDecodeParameter(t *testing.T) {
 					query: "param=foo",
 					found: true,
 					err:   &ParseError{Kind: KindInvalidFormat, Value: "foo"},
+				},
+				{
+					name:  "number exponent",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=-1.5E+3",
+					want:  -1500.0,
+					found: true,
+				},
+				{
+					name:  "number hexadecimal",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=0x1p4",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "0x1p4"},
+				},
+				{
+					name:  "number underscores",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=1_000.5",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "1_000.5"},
+				},
+				{
+					name:  "number infinity",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=-Inf",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "-Inf"},
+				},
+				{
+					name:  "number NaN",
+					param: &openapi3.Parameter{Name: "param", In: "query", Schema: numberSchema},
+					query: "param=NaN",
+					found: true,
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "NaN"},
 				},
 				{
 					name:  "boolean",
@@ -889,6 +980,32 @@ func TestDecodeParameter(t *testing.T) {
 					query: "id=foo&name=bar",
 					want:  map[string]any{"id": "foo", "name": "bar"},
 					found: true,
+				},
+				{
+					name:  "spaceDelimited",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id foo name bar",
+					want:  map[string]any{"id": "foo", "name": "bar"},
+					found: true,
+				},
+				{
+					name:  "spaceDelimited odd number of items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "spaceDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id foo name",
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "id foo name"},
+				},
+				{
+					name:  "pipeDelimited",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id|foo|name|bar",
+					want:  map[string]any{"id": "foo", "name": "bar"},
+					found: true,
+				},
+				{
+					name:  "pipeDelimited odd number of items",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "pipeDelimited", Explode: noExplode, Schema: objectSchema},
+					query: "param=id|foo|name",
+					err:   &ParseError{Kind: KindInvalidFormat, Value: "id|foo|name"},
 				},
 				{
 					name:  "deepObject explode",
@@ -1343,6 +1460,20 @@ func TestDecodeParameter(t *testing.T) {
 					found:  true,
 					err:    &ParseError{path: []any{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
+				{
+					name:   "anyOf items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(anyofSchema)},
+					header: "X-Param:1,foo",
+					want:   []any{int64(1), "foo"},
+					found:  true,
+				},
+				{
+					name:   "oneOf items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "header", Schema: arrayOf(oneofSchema)},
+					header: "X-Param:true,3",
+					want:   []any{true, int64(3)},
+					found:  true,
+				},
 			},
 		},
 		{
@@ -1505,6 +1636,20 @@ func TestDecodeParameter(t *testing.T) {
 					found:  true,
 					err:    &ParseError{path: []any{1}, Cause: &ParseError{Kind: KindInvalidFormat, Value: "foo"}},
 				},
+				{
+					name:   "anyOf items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(anyofSchema)},
+					cookie: "X-Param:1,foo",
+					want:   []any{int64(1), "foo"},
+					found:  true,
+				},
+				{
+					name:   "oneOf items",
+					param:  &openapi3.Parameter{Name: "X-Param", In: "cookie", Style: "form", Explode: noExplode, Schema: arrayOf(oneofSchema)},
+					cookie: "X-Param:true,3",
+					want:   []any{true, int64(3)},
+					found:  true,
+				},
 			},
 		},
 		{
@@ -1544,8 +1689,10 @@ func TestDecodeParameter(t *testing.T) {
 
 	for _, tg := range testGroups {
 		t.Run(tg.name, func(t *testing.T) {
+			t.Parallel()
 			for _, tc := range tg.testCases {
 				t.Run(tc.name, func(t *testing.T) {
+					t.Parallel()
 					req, err := http.NewRequest(http.MethodGet, "http://test.org/test"+tc.path, nil)
 					require.NoError(t, err, "failed to create a test request")
 
@@ -1613,7 +1760,31 @@ func TestDecodeParameter(t *testing.T) {
 	}
 }
 
+func TestHeaderDecodeObject_RepeatedFieldLines(t *testing.T) {
+	t.Parallel()
+
+	schema := objectOf("id", stringSchema, "name", stringSchema)
+	for _, tc := range []struct {
+		name  string
+		sm    *openapi3.SerializationMethod
+		lines []string
+	}{
+		{"simple", &openapi3.SerializationMethod{Style: "simple"}, []string{"id,foo", "name,bar"}},
+		{"simple explode", &openapi3.SerializationMethod{Style: "simple", Explode: true}, []string{"id=foo", "name=bar"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dec := &headerParamDecoder{header: http.Header{"X-Object": tc.lines}}
+			got, found, err := dec.DecodeObject("X-Object", tc.sm, schema)
+			require.NoError(t, err)
+			require.True(t, found)
+			require.Equal(t, map[string]any{"id": "foo", "name": "bar"}, got)
+		})
+	}
+}
+
 func TestDecodeBody(t *testing.T) {
+	t.Parallel()
+
 	urlencodedForm := make(url.Values)
 	urlencodedForm.Set("a", "a1")
 	urlencodedForm.Set("b", "10")
@@ -1775,6 +1946,130 @@ func TestDecodeBody(t *testing.T) {
 			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
 		},
 		{
+			name: "urlencoded space delimited without explode",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader(urlencodedSpaceDelim.Encode()),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("b", openapi3.NewIntegerSchema()).
+				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"c": {Style: openapi3.SerializationSpaceDelimited},
+			},
+			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
+		},
+		{
+			name: "urlencoded pipe delimited without explode",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader(urlencodedPipeDelim.Encode()),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("b", openapi3.NewIntegerSchema()).
+				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"c": {Style: openapi3.SerializationPipeDelimited},
+			},
+			want: map[string]any{"a": "a1", "b": int64(10), "c": []any{"c1", "c2"}},
+		},
+		{
+			name: "urlencoded deepObject property",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("a=a1&d[d1]=d1&d[d2]=10"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("d1", openapi3.NewStringSchema()).
+					WithProperty("d2", openapi3.NewIntegerSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationDeepObject},
+			},
+			want: map[string]any{"a": "a1", "d": map[string]any{"d1": "d1", "d2": int64(10)}},
+		},
+		{
+			name: "urlencoded nested deepObject property",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("d[e][e1]=10"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("e", openapi3.NewObjectSchema().
+						WithProperty("e1", openapi3.NewIntegerSchema()))),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationDeepObject, Explode: openapi3.Ptr(true)},
+			},
+			want: map[string]any{"d": map[string]any{"e": map[string]any{"e1": int64(10)}}},
+		},
+		{
+			name: "urlencoded form property without explode",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("a=a1&d=d1,d1,d2,10"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("d1", openapi3.NewStringSchema()).
+					WithProperty("d2", openapi3.NewIntegerSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationForm, Explode: openapi3.Ptr(false)},
+			},
+			want: map[string]any{"a": "a1", "d": map[string]any{"d1": "d1", "d2": int64(10)}},
+		},
+		{
+			name: "urlencoded invalid deepObject property",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("d[d2]=abc"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("d", openapi3.NewObjectSchema().
+					WithProperty("d2", openapi3.NewIntegerSchema())),
+			encoding: map[string]*openapi3.Encoding{
+				"d": {Style: openapi3.SerializationDeepObject},
+			},
+			wantErr: &ParseError{
+				path: []any{"d"},
+				Cause: &ParseError{
+					path:  []any{"d2"},
+					Cause: &ParseError{Kind: KindInvalidFormat, Value: "abc"},
+				},
+			},
+		},
+		{
+			name: "urlencoded invalid integer",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("a=a1&b=abc"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("a", openapi3.NewStringSchema()).
+				WithProperty("b", openapi3.NewIntegerSchema()),
+			wantErr: &ParseError{
+				path:  []any{"b"},
+				Cause: &ParseError{Kind: KindInvalidFormat, Value: "abc"},
+			},
+		},
+		{
+			name: "urlencoded invalid array item",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("c=1&c=abc"),
+			schema: openapi3.NewObjectSchema().
+				WithProperty("c", openapi3.NewArraySchema().WithItems(openapi3.NewIntegerSchema())),
+			wantErr: &ParseError{
+				path: []any{"c"},
+				Cause: &ParseError{
+					path:  []any{1},
+					Cause: &ParseError{Kind: KindInvalidFormat, Value: "abc"},
+				},
+			},
+		},
+		{
+			name: "urlencoded value parsed by another oneOf schema",
+			mime: "application/x-www-form-urlencoded",
+			body: strings.NewReader("b=abc"),
+			schema: &openapi3.Schema{
+				Type: &openapi3.Types{openapi3.TypeObject},
+				OneOf: openapi3.SchemaRefs{
+					openapi3.NewObjectSchema().WithProperty("b", openapi3.NewIntegerSchema()).NewRef(),
+					openapi3.NewObjectSchema().WithProperty("b", openapi3.NewStringSchema()).NewRef(),
+				},
+			},
+			want: map[string]any{"b": "abc"},
+		},
+		{
 			name: "multipart",
 			mime: multipartFormMime,
 			body: multipartForm,
@@ -1899,6 +2194,7 @@ func TestDecodeBody(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			h := make(http.Header)
 			h.Set(headerCT, tc.mime)
 			var schemaRef *openapi3.SchemaRef
@@ -1925,29 +2221,56 @@ func TestDecodeBody(t *testing.T) {
 	}
 }
 
+func TestUrlencodedBodyObjectPropertyWithExplodedForm(t *testing.T) {
+	t.Parallel()
+
+	// With form and explode (the default), the object's properties would be
+	// read from the whole form, so such an object property is not decoded.
+	schema := openapi3.NewObjectSchema().
+		WithProperty("a", openapi3.NewStringSchema()).
+		WithProperty("d", openapi3.NewObjectSchema().WithProperty("d1", openapi3.NewStringSchema()))
+	for name, encoding := range map[string]*openapi3.Encoding{
+		"no encoding":  nil,
+		"form explode": {Style: openapi3.SerializationForm, Explode: openapi3.Ptr(true)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			encFn := func(string) *openapi3.Encoding { return encoding }
+			_, err := UrlencodedBodyDecoder(strings.NewReader("a=a1&d1=d1"), nil, schema.NewRef(), encFn)
+			require.EqualError(t, err, `unsupported schema of request body's property "d"`)
+		})
+	}
+}
+
 func TestContentTypeAllowedByEncoding(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name                string
 		mediaType           string
 		encodingContentType string
-		want                bool
+		match, valid        bool
 	}{
-		{name: "exact match", mediaType: "application/json", encodingContentType: "application/json", want: true},
-		{name: "exact mismatch", mediaType: "application/json", encodingContentType: "application/xml", want: false},
-		{name: "comma list first", mediaType: "image/jpeg", encodingContentType: "image/jpeg, image/png", want: true},
-		{name: "comma list second", mediaType: "image/png", encodingContentType: "image/jpeg, image/png", want: true},
-		{name: "comma list miss", mediaType: "image/gif", encodingContentType: "image/jpeg, image/png", want: false},
-		{name: "comma list no spaces", mediaType: "image/png", encodingContentType: "image/jpeg,image/png", want: true},
-		{name: "subtype wildcard match", mediaType: "image/png", encodingContentType: "image/*", want: true},
-		{name: "subtype wildcard miss", mediaType: "application/pdf", encodingContentType: "image/*", want: false},
-		{name: "full wildcard", mediaType: "application/octet-stream", encodingContentType: "*/*", want: true},
-		{name: "case insensitive", mediaType: "Image/PNG", encodingContentType: "image/png", want: true},
-		{name: "entry with parameters base match", mediaType: "application/xml", encodingContentType: "application/xml; charset=utf-8", want: true},
-		{name: "empty entries ignored", mediaType: "image/png", encodingContentType: " , image/png , ", want: true},
+		{name: "exact match", mediaType: "application/json", encodingContentType: "application/json", match: true, valid: true},
+		{name: "exact mismatch", mediaType: "application/json", encodingContentType: "application/xml", valid: true},
+		{name: "comma list first", mediaType: "image/jpeg", encodingContentType: "image/jpeg, image/png", match: true, valid: true},
+		{name: "comma list second", mediaType: "image/png", encodingContentType: "image/jpeg, image/png", match: true, valid: true},
+		{name: "comma list miss", mediaType: "image/gif", encodingContentType: "image/jpeg, image/png", valid: true},
+		{name: "comma list no spaces", mediaType: "image/png", encodingContentType: "image/jpeg,image/png", match: true, valid: true},
+		{name: "subtype wildcard match", mediaType: "image/png", encodingContentType: "image/*", match: true, valid: true},
+		{name: "subtype wildcard miss", mediaType: "application/pdf", encodingContentType: "image/*", valid: true},
+		{name: "full wildcard", mediaType: "application/octet-stream", encodingContentType: "*/*", match: true, valid: true},
+		{name: "case insensitive", mediaType: "Image/PNG", encodingContentType: "image/png", match: true, valid: true},
+		{name: "entry with parameters base match", mediaType: "application/xml", encodingContentType: "application/xml; charset=utf-8", match: true, valid: true},
+		{name: "empty entries ignored", mediaType: "image/png", encodingContentType: " , image/png , ", match: true},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, contentTypeAllowedByEncoding(tc.mediaType, tc.encodingContentType))
+			encoding := openapi3.Encoding{ContentType: tc.encodingContentType}
+			err := encoding.Validate(t.Context())
+			assert.Equal(t, tc.valid, err == nil, "%q valid?", tc.encodingContentType)
+			matches := encoding.AllowsContentType(tc.mediaType)
+			assert.Equal(t, tc.match, matches, "%s matches? %q", tc.mediaType, tc.encodingContentType)
 		})
 	}
 }
@@ -2022,6 +2345,75 @@ func TestRegisterAndUnregisterBodyDecoder(t *testing.T) {
 		Kind:   KindUnsupportedFormat,
 		Reason: prefixUnsupportedCT + ` "application/csv"`,
 	}, err)
+}
+
+func TestRegisterBodyDecoderConcurrently(t *testing.T) {
+	const contentType = "application/x-concurrent-test"
+	t.Cleanup(func() { UnregisterBodyDecoder(contentType) })
+
+	h := make(http.Header)
+	h.Set(headerCT, "application/json")
+	schema := openapi3.NewStringSchema().NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+
+	var wg sync.WaitGroup
+	for range 10 {
+		wg.Go(func() {
+			for range 100 {
+				RegisterBodyDecoder(contentType, PlainBodyDecoder)
+				UnregisterBodyDecoder(contentType)
+			}
+		})
+		wg.Go(func() {
+			for range 100 {
+				_, _, err := decodeBody(strings.NewReader(`"foo"`), h, schema, encFn)
+				assert.NoError(t, err)
+			}
+		})
+	}
+	wg.Wait()
+}
+
+func TestBodyDecoderContentTypeIsCaseInsensitive(t *testing.T) {
+	RegisterBodyDecoder("Application/X-Foo", PlainBodyDecoder)
+	defer UnregisterBodyDecoder("APPLICATION/X-FOO")
+	require.NotNil(t, RegisteredBodyDecoder("application/x-foo"))
+
+	h := make(http.Header)
+	h.Set(headerCT, "application/X-FOO; charset=utf-8")
+	schema := openapi3.NewStringSchema().NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+	mediaType, got, err := decodeBody(strings.NewReader("foo"), h, schema, encFn)
+	require.NoError(t, err)
+	require.Equal(t, "application/x-foo", mediaType)
+	require.Equal(t, "foo", got)
+}
+
+func TestBodyDecoderJSONSuffix(t *testing.T) {
+	RegisterBodyDecoder("*/*", PlainBodyDecoder)
+	defer UnregisterBodyDecoder("*/*")
+
+	const contentType = "application/vnd.org.v1+json"
+	h := make(http.Header)
+	h.Set(headerCT, contentType)
+	schema := openapi3.NewStringSchema().NewRef()
+	encFn := func(string) *openapi3.Encoding { return nil }
+	_, got, err := decodeBody(strings.NewReader(`"foo"`), h, schema, encFn)
+	require.NoError(t, err)
+	require.Equal(t, "foo", got)
+
+	// A binary part is not decoded as JSON.
+	binary := openapi3.NewStringSchema().WithFormat("binary").NewRef()
+	subEncFn := func(string) *openapi3.Encoding { return &openapi3.Encoding{ContentType: contentType} }
+	_, got, err = decodeBody(strings.NewReader(`"foo"`), h, binary, subEncFn)
+	require.NoError(t, err)
+	require.Equal(t, `"foo"`, got)
+
+	RegisterBodyDecoder(contentType, PlainBodyDecoder)
+	defer UnregisterBodyDecoder(contentType)
+	_, got, err = decodeBody(strings.NewReader(`"foo"`), h, schema, encFn)
+	require.NoError(t, err)
+	require.Equal(t, `"foo"`, got)
 }
 
 func matchParseError(t *testing.T, got, want error) {

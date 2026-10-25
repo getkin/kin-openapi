@@ -13,8 +13,8 @@ type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	Description string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	URL         string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of ExternalDocs.
@@ -43,10 +43,10 @@ func (e ExternalDocs) MarshalYAML() (any, error) {
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	type ExternalDocsBis ExternalDocs
 	var x ExternalDocsBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	_ = unmarshalJSON(data, &x.Extensions)
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "url")
 	if len(x.Extensions) == 0 {

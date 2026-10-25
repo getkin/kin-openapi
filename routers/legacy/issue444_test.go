@@ -2,7 +2,6 @@ package legacy_test
 
 import (
 	"bytes"
-	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -46,7 +45,6 @@ foo: bar
 `)))
 	r.Header.Set("Content-Type", "application/x-yaml")
 
-	openapi3.SchemaErrorDetailsDisabled = true
 	route, pathParams, err := router.FindRoute(r)
 	require.NoError(t, err)
 	reqValidationInput := &openapi3filter.RequestValidationInput{
@@ -54,6 +52,6 @@ foo: bar
 		PathParams: pathParams,
 		Route:      route,
 	}
-	err = openapi3filter.ValidateRequest(context.Background(), reqValidationInput)
+	err = openapi3filter.ValidateRequest(t.Context(), reqValidationInput)
 	require.NoError(t, err)
 }

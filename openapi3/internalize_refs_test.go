@@ -11,6 +11,8 @@ import (
 )
 
 func TestInternalizeRefs(t *testing.T) {
+	t.Parallel()
+
 	ctx := t.Context()
 
 	regexpRef := regexp.MustCompile(`"\$ref":`)

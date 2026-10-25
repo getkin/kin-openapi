@@ -1,1 +1,1 @@
-json: cannot unmarshal array into field Schema.items of type openapi2.Schema
+json: cannot unmarshal array into Go struct field T.paths.~1servers~1{server_id}~1statistics.get.responses.200.schema.items of type openapi2.Schema: json: cannot unmarshal JSON array into openapi2.Schema

@@ -10,6 +10,8 @@ import (
 )
 
 func TestTypes_HelperMethods(t *testing.T) {
+	t.Parallel()
+
 	t.Run("IncludesNull", func(t *testing.T) {
 		// Single type without null
 		types := &openapi3.Types{"string"}
@@ -87,6 +89,8 @@ func TestTypes_HelperMethods(t *testing.T) {
 }
 
 func TestTypes_ArraySerialization(t *testing.T) {
+	t.Parallel()
+
 	t.Run("single type serializes as string", func(t *testing.T) {
 		schema := &openapi3.Schema{
 			Type: &openapi3.Types{"string"},
@@ -139,6 +143,8 @@ func TestTypes_ArraySerialization(t *testing.T) {
 }
 
 func TestTypes_OpenAPI31Features(t *testing.T) {
+	t.Parallel()
+
 	t.Run("type array with null", func(t *testing.T) {
 		types := &openapi3.Types{"string", "null"}
 
@@ -175,6 +181,8 @@ func TestTypes_OpenAPI31Features(t *testing.T) {
 }
 
 func TestTypes_EdgeCases(t *testing.T) {
+	t.Parallel()
+
 	t.Run("nil types permits everything", func(t *testing.T) {
 		var types *openapi3.Types
 
@@ -207,6 +215,8 @@ func TestTypes_EdgeCases(t *testing.T) {
 }
 
 func TestTypes_BackwardCompatibility(t *testing.T) {
+	t.Parallel()
+
 	t.Run("existing Is method still works", func(t *testing.T) {
 		// Single type
 		types := &openapi3.Types{"string"}
@@ -240,4 +250,96 @@ func TestTypes_BackwardCompatibility(t *testing.T) {
 		require.True(t, types.Permits("string"))
 		require.False(t, types.Permits("number"))
 	})
+}
+
+func TestTypes_CloneWithWithout(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Clone", func(t *testing.T) {
+		var nilTypes *openapi3.Types
+		require.Nil(t, nilTypes.Clone())
+
+		types := &openapi3.Types{"string"}
+		clone := types.Clone()
+		require.Equal(t, openapi3.Types{"string"}, clone)
+		clone[0] = "number"
+		require.Equal(t, &openapi3.Types{"string"}, types)
+	})
+
+	t.Run("With", func(t *testing.T) {
+		nilTypes := &openapi3.Schema{}
+		nilTypes.WithTypes("object")
+		require.Equal(t, &openapi3.Types{"object"}, nilTypes.Type)
+
+		types := &openapi3.Types{"string"}
+		types.With("null", "string", "null")
+		require.Equal(t, &openapi3.Types{"string", "null"}, types)
+
+		types = &openapi3.Types{"null", "string", "null"}
+		types.With("string")
+		require.Equal(t, &openapi3.Types{"null", "string"}, types)
+
+		types = &openapi3.Types{}
+		types.With("integer")
+		require.Equal(t, &openapi3.Types{"integer"}, types)
+
+		// Spare capacity shared with another slice is not written to.
+		backing := make([]string /*,*/, 1, 2)
+		backing[0] = "string"
+		other := openapi3.Types(backing[:2])
+		types = &openapi3.Types{}
+		*types = backing[:1]
+		types.With("null")
+		require.Equal(t, &openapi3.Types{"string", "null"}, types)
+		require.Equal(t, openapi3.Types{"string", ""}, other)
+	})
+
+	t.Run("Without", func(t *testing.T) {
+		var types *openapi3.Types
+		types.Without("object")
+		require.Nil(t, types)
+
+		types = &openapi3.Types{"string", "null", "number", "number"}
+		types.Without("null", "number", "boolean")
+		require.Equal(t, &openapi3.Types{"string"}, types)
+
+		types = &openapi3.Types{"string", "null", "number"}
+		types.Without("null", "number", "boolean", "boolean")
+		require.Equal(t, &openapi3.Types{"string"}, types)
+
+		types = &openapi3.Types{"null", "string", "null", "string"}
+		types.Without("boolean")
+		require.Equal(t, &openapi3.Types{"null", "string"}, types)
+
+		// The backing array of another slice is not modified.
+		other := openapi3.Types{"null", "string"}
+		types = &openapi3.Types{}
+		*types = other
+		types.Without("null")
+		require.Equal(t, &openapi3.Types{"string"}, types)
+		require.Equal(t, openapi3.Types{"null", "string"}, other)
+	})
+}
+
+func TestSchema_WithTypes(t *testing.T) {
+	t.Parallel()
+
+	schema := &openapi3.Schema{}
+	require.Same(t, schema, schema.WithTypes("string", "null", "string"))
+	require.Equal(t, &openapi3.Types{"string", "null"}, schema.Type)
+
+	schema.WithTypes("null", "integer")
+	require.Equal(t, &openapi3.Types{"string", "null", "integer"}, schema.Type)
+}
+
+func TestTypesEmptyMarshalsAsAbsent(t *testing.T) {
+	t.Parallel()
+
+	var schema openapi3.Schema
+	err := json.Unmarshal([]byte(`{"type":[]}`), &schema)
+	require.NoError(t, err)
+
+	data, err := json.Marshal(schema)
+	require.NoError(t, err)
+	require.JSONEq(t, `{}`, string(data))
 }
