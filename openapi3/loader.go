@@ -611,15 +611,15 @@ func (loader *Loader) attachOriginToResolved(resolved any, componentDoc *T, frag
 		return
 	}
 	// Stamp against the file this tree came from, not the document being
-	// loaded, which is what the state in progress still names here.
+	// loaded. The lock is held across the decode below, so nothing that decode
+	// reaches may load a document: that would wait here for a lock this call
+	// holds, and hang rather than fail.
 	originMu.Lock()
 	defer originMu.Unlock()
-	// Set explicitly rather than inherited: a decode releases its state when it
-	// ends, and reaching here at all means the tree was retained, which only
-	// happens with origins on.
-	prev := originState.Load()
+	// Set rather than inherited: resolution runs after the load that produced
+	// the tree, so no decode is in progress and there is nothing to inherit.
 	originState.Store(&originDecode{file: tree.file, ends: tree.ends})
-	defer originState.Store(prev)
+	defer originState.Store(nil)
 
 	node := tree.node
 	// Walk the retained node tree down to the fragment and decode that subtree
