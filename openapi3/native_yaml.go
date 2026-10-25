@@ -256,20 +256,49 @@ func decodeStructWithExtensions(node *yaml.Node, out any) (map[string]any, error
 	return ext, nil
 }
 
-// stripTimestamps retags implicitly-resolved date-shaped scalars as strings.
+// prepareScalars walks the tree once, which is the one place every scalar is
+// seen before the decode reads it.
+func prepareScalars(n *yaml.Node) error {
+	if n == nil {
+		return nil
+	}
+	if n.Kind == yaml.ScalarNode {
+		stripTimestamp(n)
+		if err := checkFinite(n); err != nil {
+			return err
+		}
+	}
+	for _, c := range n.Content {
+		if err := prepareScalars(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// stripTimestamp retags an implicitly-resolved date-shaped scalar as a string.
 //
 // YAML 1.1 resolves an untagged scalar such as 2020-06-11T16:32:50-03:00 to a
 // timestamp, which would make an OpenAPI `example` of that shape decode to a
 // time.Time and fail validation as an unhandled type. An explicit !!timestamp
 // tag is a deliberate request for a time.Time and is left alone.
-func stripTimestamps(n *yaml.Node) {
-	if n == nil {
-		return
-	}
-	if n.Kind == yaml.ScalarNode && n.Tag == "!!timestamp" && n.Style != yaml.TaggedStyle {
+func stripTimestamp(n *yaml.Node) {
+	if n.Tag == "!!timestamp" && n.Style != yaml.TaggedStyle {
 		n.Tag = "!!str"
 	}
-	for _, c := range n.Content {
-		stripTimestamps(c)
+}
+
+// checkFinite rejects infinity and NaN, which YAML has and JSON does not.
+// Such a document decodes, and a float field or an extension then holds a
+// value that cannot be written back: marshaling fails wherever the value sits,
+// naming neither the document nor the line. Refusing it here names both.
+func checkFinite(n *yaml.Node) error {
+	if n.Tag != "!!float" {
+		return nil
 	}
+	switch strings.ToLower(strings.TrimLeft(n.Value, "+-")) {
+	case ".inf", ".nan":
+		return fmt.Errorf("line %d: %s has no JSON representation", n.Line, n.Value)
+	}
+	return nil
 }

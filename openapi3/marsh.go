@@ -42,25 +42,26 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 	var ends *endIndex
 	var root goyaml.Node
 	if err := goyaml.Unmarshal(data, &root); err == nil {
-		stripTimestamps(&root)
-		if includeOrigin {
-			// Ends are derived from the tree, the parser reporting only starts.
-			ends = newEndIndex(&root, data)
-			originState.Store(&originDecode{file: file, ends: ends})
-		}
-		if err = root.Decode(v); err == nil {
-			if !includeOrigin {
-				return nil, nil
+		if err = prepareScalars(&root); err == nil {
+			if includeOrigin {
+				// Ends are derived from the tree, the parser reporting only starts.
+				ends = newEndIndex(&root, data)
+				originState.Store(&originDecode{file: file, ends: ends})
 			}
-			// Retained so a $ref to an arbitrary top-level key can be decoded
-			// from its own node; that path resolves through plain data, which
-			// carries no positions.
-			if root.Kind == goyaml.DocumentNode && len(root.Content) > 0 {
-				stampRootOrigin(v, root.Content[0])
-				return &originTree{node: root.Content[0], file: file, ends: ends}, nil
+			if err = root.Decode(v); err == nil {
+				if !includeOrigin {
+					return nil, nil
+				}
+				// Retained so a $ref to an arbitrary top-level key can be
+				// decoded from its own node; that path resolves through plain
+				// data, which carries no positions.
+				if root.Kind == goyaml.DocumentNode && len(root.Content) > 0 {
+					stampRootOrigin(v, root.Content[0])
+					return &originTree{node: root.Content[0], file: file, ends: ends}, nil
+				}
+				stampRootOrigin(v, &root)
+				return &originTree{node: &root, file: file, ends: ends}, nil
 			}
-			stampRootOrigin(v, &root)
-			return &originTree{node: &root, file: file, ends: ends}, nil
 		}
 		yamlErr = err
 	} else {

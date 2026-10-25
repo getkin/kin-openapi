@@ -24,7 +24,7 @@ default: 0x10
 `
 	var node goyaml.Node
 	require.NoError(t, goyaml.Unmarshal([]byte(src), &node))
-	stripTimestamps(&node)
+	require.NoError(t, prepareScalars(&node))
 
 	var s Schema
 	require.NoError(t, node.Content[0].Decode(&s))
@@ -71,7 +71,7 @@ func TestNativeScalars_Timestamps(t *testing.T) {
 	const src = "example: 2020-06-11T16:32:50Z\n"
 	var node goyaml.Node
 	require.NoError(t, goyaml.Unmarshal([]byte(src), &node))
-	stripTimestamps(&node)
+	require.NoError(t, prepareScalars(&node))
 
 	var s Schema
 	require.NoError(t, node.Content[0].Decode(&s))
