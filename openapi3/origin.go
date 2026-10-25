@@ -18,6 +18,8 @@ import (
 	"sync/atomic"
 
 	yaml "go.yaml.in/yaml/v3"
+
+	"github.com/getkin/kin-openapi/internal/nodeindex"
 )
 
 var originPtrType = reflect.TypeFor[*Origin]()
@@ -126,7 +128,7 @@ type Location struct {
 type originTree struct {
 	node *yaml.Node
 	file string
-	ends *endIndex
+	ends *nodeindex.Index
 }
 
 // originDecode is what a decode has to reach from UnmarshalYAML, which
@@ -138,7 +140,7 @@ type originTree struct {
 // the call, but go-yaml's Node has no field for it.
 type originDecode struct {
 	file string
-	ends *endIndex
+	ends *nodeindex.Index
 }
 
 // originState points at the decode in progress. It is read atomically because
@@ -171,11 +173,10 @@ func nativeOriginFile() string {
 // here indexed, and gets no origins rather than another document's.
 func originsApply(node *yaml.Node) bool {
 	st := originState.Load()
-	if st == nil || st.ends == nil || node == nil {
+	if st == nil {
 		return false
 	}
-	_, ok := st.ends.end[node]
-	return ok
+	return st.ends.Has(node)
 }
 
 // mappingValue returns the value node for key, or nil.
@@ -450,4 +451,29 @@ func recordScalarMapKeys(container, child reflect.Value, keyNode, valNode *yaml.
 		o.Sequences = make(map[string][]Location)
 	}
 	o.Sequences[keyNode.Value] = locs
+}
+
+// withEnd returns loc carrying the extent of the block node heads.
+func withEnd(loc Location, node *yaml.Node) Location {
+	if st := originState.Load(); st != nil {
+		loc.EndLine, loc.EndColumn = st.ends.EndOf(node)
+	}
+	return loc
+}
+
+// resolveAlias follows an alias to the node it points at, together with the key
+// that node was defined under. An aliased schema is the anchored one, so its
+// origin is where that content was written, not where it was referred to.
+func resolveAlias(keyNode, valNode *yaml.Node) (*yaml.Node, *yaml.Node) {
+	if valNode == nil || valNode.Kind != yaml.AliasNode || valNode.Alias == nil {
+		return keyNode, valNode
+	}
+	st := originState.Load()
+	if st == nil {
+		return keyNode, valNode.Alias
+	}
+	if k, ok := st.ends.AnchorKey(valNode.Alias); ok {
+		return k, valNode.Alias
+	}
+	return keyNode, valNode.Alias
 }

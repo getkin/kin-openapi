@@ -1,4 +1,7 @@
-package openapi3
+// Package nodeindex derives, from a YAML node tree and the text it was parsed
+// from, the two things the parser does not report: where the block headed by a
+// node ends, and which key an anchor was defined under.
+package nodeindex
 
 import (
 	"bytes"
@@ -6,7 +9,7 @@ import (
 	yaml "go.yaml.in/yaml/v3"
 )
 
-// endIndex answers where the block headed by a key ends.
+// Index answers where the block headed by a key ends.
 //
 // The parser reports where every node starts and nothing about where it stops,
 // so the end is derived, in two passes over the tree.
@@ -23,7 +26,7 @@ import (
 // agrees on 99.60%, the difference being blocks that end in a `description: |`.
 //
 // Trailing blank and comment lines fall outside.
-type endIndex struct {
+type Index struct {
 	end map[*yaml.Node]int
 	// anchorKey is the key heading each anchored node, so an alias can report
 	// where the content it points at is defined.
@@ -35,25 +38,25 @@ type endIndex struct {
 	indent  []int
 }
 
-// newEndIndex indexes data's node tree. Ends are derived per file: a $ref into
-// another file is decoded separately, against its own text.
-func newEndIndex(root *yaml.Node, data []byte) *endIndex {
+// New indexes data's node tree. Ends are derived per file: a $ref into another
+// document is decoded separately, against its own text.
+func New(root *yaml.Node, data []byte) *Index {
 	if root == nil {
 		return nil
 	}
-	ei := &endIndex{end: map[*yaml.Node]int{}, anchorKey: map[*yaml.Node]*yaml.Node{}}
+	ix := &Index{end: map[*yaml.Node]int{}, anchorKey: map[*yaml.Node]*yaml.Node{}}
 	for line := range bytes.SplitSeq(data, []byte("\n")) {
 		line = bytes.TrimRight(line, "\r")
-		ei.lineLen = append(ei.lineLen, len(line))
+		ix.lineLen = append(ix.lineLen, len(line))
 		if t := bytes.TrimRight(line, " \t"); len(t) == 0 {
-			ei.indent = append(ei.indent, -1)
+			ix.indent = append(ix.indent, -1)
 		} else {
-			ei.indent = append(ei.indent, len(t)-len(bytes.TrimLeft(t, " ")))
+			ix.indent = append(ix.indent, len(t)-len(bytes.TrimLeft(t, " ")))
 		}
 	}
-	ei.measure(root)
-	ei.extend(root)
-	return ei
+	ix.measure(root)
+	ix.extend(root)
+	return ix
 }
 
 // extend grows each node's end over lines that belong to it but hang off no
@@ -66,41 +69,41 @@ func newEndIndex(root *yaml.Node, data []byte) *endIndex {
 //
 // A blank line is included only when the block resumes below it, which is what
 // separates a gap inside a block scalar from the gap after the block.
-func (ei *endIndex) extend(n *yaml.Node) {
+func (ix *Index) extend(n *yaml.Node) {
 	for _, c := range n.Content {
-		ei.extend(c)
+		ix.extend(c)
 	}
-	e := ei.end[n]
+	e := ix.end[n]
 	for {
-		if ind := ei.indentOf(e); ind > n.Column-1 { // line e+1 is index e
+		if ind := ix.indentOf(e); ind > n.Column-1 { // line e+1 is index e
 			e++
 			continue
 		} else if ind == -1 {
 			j := e
-			for j < len(ei.indent) && ei.indentOf(j) == -1 {
+			for j < len(ix.indent) && ix.indentOf(j) == -1 {
 				j++
 			}
-			if ei.indentOf(j) > n.Column-1 {
+			if ix.indentOf(j) > n.Column-1 {
 				e = j + 1
 				continue
 			}
 		}
 		break
 	}
-	ei.end[n] = e
+	ix.end[n] = e
 }
 
 // indentOf returns the indentation of the given 0-based line, or -1 when the
 // line holds nothing or is past the end of the file.
-func (ei *endIndex) indentOf(i int) int {
-	if i < 0 || i >= len(ei.indent) {
+func (ix *Index) indentOf(i int) int {
+	if i < 0 || i >= len(ix.indent) {
 		return -1
 	}
-	return ei.indent[i]
+	return ix.indent[i]
 }
 
 // measure records each node's last line, bottom up, and returns it.
-func (ei *endIndex) measure(n *yaml.Node) int {
+func (ix *Index) measure(n *yaml.Node) int {
 	if n == nil {
 		return 0
 	}
@@ -108,54 +111,47 @@ func (ei *endIndex) measure(n *yaml.Node) int {
 	if n.Kind == yaml.MappingNode {
 		for i := 0; i+1 < len(n.Content); i += 2 {
 			if v := n.Content[i+1]; v.Anchor != "" {
-				ei.anchorKey[v] = n.Content[i]
+				ix.anchorKey[v] = n.Content[i]
 			}
 		}
 	}
 	for _, c := range n.Content {
-		if l := ei.measure(c); l > last {
+		if l := ix.measure(c); l > last {
 			last = l
 		}
 	}
-	ei.end[n] = last
+	ix.end[n] = last
 	return last
 }
 
-// endOf returns the last line and column of the block node occupies.
-func (ei *endIndex) endOf(node *yaml.Node) (int, int) {
-	if ei == nil || node == nil {
+// EndOf returns the last line and column of the block node occupies.
+func (ix *Index) EndOf(node *yaml.Node) (int, int) {
+	if ix == nil || node == nil {
 		return 0, 0
 	}
-	line, ok := ei.end[node]
-	if !ok || line < 1 || line > len(ei.lineLen) {
+	line, ok := ix.end[node]
+	if !ok || line < 1 || line > len(ix.lineLen) {
 		return 0, 0
 	}
 	// The column just past the last character, matching how a parser reports
 	// the position it stopped at.
-	return line, ei.lineLen[line-1] + 1
+	return line, ix.lineLen[line-1] + 1
 }
 
-// withEnd returns loc carrying the extent of the block node heads.
-func withEnd(loc Location, node *yaml.Node) Location {
-	if st := originState.Load(); st != nil {
-		loc.EndLine, loc.EndColumn = st.ends.endOf(node)
+// AnchorKey returns the key the anchored node was defined under.
+func (ix *Index) AnchorKey(anchored *yaml.Node) (*yaml.Node, bool) {
+	if ix == nil {
+		return nil, false
 	}
-	return loc
+	k, ok := ix.anchorKey[anchored]
+	return k, ok
 }
 
-// resolveAlias follows an alias to the node it points at, together with the key
-// that node was defined under. An aliased schema is the anchored one, so its
-// origin is where that content was written, not where it was referred to.
-func resolveAlias(keyNode, valNode *yaml.Node) (*yaml.Node, *yaml.Node) {
-	if valNode == nil || valNode.Kind != yaml.AliasNode || valNode.Alias == nil {
-		return keyNode, valNode
+// Has reports whether node is part of the tree this index was built from.
+func (ix *Index) Has(node *yaml.Node) bool {
+	if ix == nil || node == nil {
+		return false
 	}
-	st := originState.Load()
-	if st == nil || st.ends == nil {
-		return keyNode, valNode.Alias
-	}
-	if k, ok := st.ends.anchorKey[valNode.Alias]; ok {
-		return k, valNode.Alias
-	}
-	return keyNode, valNode.Alias
+	_, ok := ix.end[node]
+	return ok
 }

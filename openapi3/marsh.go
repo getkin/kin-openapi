@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	goyaml "go.yaml.in/yaml/v3"
+
+	"github.com/getkin/kin-openapi/internal/nodeindex"
 )
 
 func unmarshalError(jsonUnmarshalErr error) error {
@@ -39,13 +41,13 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 	// whether or not anything kept the tree. A caller that does need it gets it
 	// on the returned originTree.
 	defer originState.Store(nil)
-	var ends *endIndex
+	var ends *nodeindex.Index
 	var root goyaml.Node
 	if err := goyaml.Unmarshal(data, &root); err == nil {
 		if err = prepareScalars(&root); err == nil {
 			if includeOrigin {
 				// Ends are derived from the tree, the parser reporting only starts.
-				ends = newEndIndex(&root, data)
+				ends = nodeindex.New(&root, data)
 				originState.Store(&originDecode{file: file, ends: ends})
 			}
 			if err = root.Decode(v); err == nil {
