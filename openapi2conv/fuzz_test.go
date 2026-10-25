@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 
+	"github.com/getkin/kin-openapi/internal/fuzzing"
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -25,6 +27,13 @@ func FuzzToV3(f *testing.F) {
 		data, err := os.ReadFile(path)
 		require.NoError(f, err)
 		if len(data) <= maxFuzzInput {
+			f.Add(data)
+		}
+	}
+	// The corpus is YAML, which this target does not decode, so it goes in as
+	// JSON. It is read from openapi3, the one copy the fuzz workflow fetches.
+	for _, seed := range fuzzing.APIsGuru(f, "../openapi3/testdata", "swagger:") {
+		if data, err := yaml.YAMLToJSON(seed); err == nil && len(data) <= maxFuzzInput {
 			f.Add(data)
 		}
 	}
