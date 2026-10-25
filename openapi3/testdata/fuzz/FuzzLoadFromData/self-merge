@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("openapi: 3.0.0\ninfo: {title: t, version: v}\npaths: &a\n  <<: *a\n")
