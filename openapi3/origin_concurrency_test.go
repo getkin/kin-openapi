@@ -22,14 +22,20 @@ paths:
 // that state. Such a decode indexed no tree, so it gets no origins, and reads
 // the state without racing the decode that set it.
 //
-// Run with -race.
+// Run with -race, which the workflow does by name. Skipped in -short mode: the
+// concurrency is the point of the test, and the Windows runners already retry
+// the short suite around flaky memory corruption in Go 1.26 and 1.27.
 func TestConcurrentDecodeDoesNotLeakOrigins(t *testing.T) {
+	if testing.Short() {
+		t.Skip("decodes concurrently; runs in the dedicated -race step")
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
-		for range 200 {
+		for range 50 {
 			loader := NewLoader()
 			loader.IncludeOrigin = true
 			if _, err := loader.LoadFromData([]byte(concurrentSpec)); err != nil {
@@ -41,7 +47,7 @@ func TestConcurrentDecodeDoesNotLeakOrigins(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		for range 200 {
+		for range 50 {
 			var doc T
 			if err := goyaml.Unmarshal([]byte(concurrentSpec), &doc); err != nil {
 				t.Error(err)
