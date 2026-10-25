@@ -635,7 +635,11 @@ func (loader *Loader) attachOriginToResolved(resolved any, componentDoc *T, frag
 			return
 		}
 	}
-	if node.Decode(resolved) != nil {
+	// Defensive: the json round trip in the caller already decoded this data
+	// into this type, so a failure here means the two decode paths disagree,
+	// which nothing is known to trigger. The object is resolved either way, so
+	// a failure costs positions rather than the load.
+	if err := node.Decode(resolved); err != nil {
 		return
 	}
 	// The key location is normally stamped by the mapping above, which does not
