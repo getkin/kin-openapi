@@ -122,7 +122,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Ensure yaml stays inside the decode layer
       run: |
-        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | grep -vE 'openapi3/(origin|marsh|end_positions|refs|loader|native_yaml.*|nativeyaml.*)[.](go|tmpl)' | wc -l)" -eq 0 ]]
+        [[ "$(git grep -F yaml. -- openapi3/ | grep -v _test.go | grep -vE 'openapi3/(origin|marsh|refs|loader|native_yaml.*|nativeyaml.*)[.](go|tmpl)' | wc -l)" -eq 0 ]]
 
     - if: runner.os == 'Linux'
       name: Use `loader := NewLoader(); loader.Load ...`

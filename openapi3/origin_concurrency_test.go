@@ -31,7 +31,7 @@ func TestConcurrentDecodeDoesNotLeakOrigins(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -55,6 +55,24 @@ func TestConcurrentDecodeDoesNotLeakOrigins(t *testing.T) {
 			}
 			if doc.Info != nil && doc.Info.Origin != nil {
 				t.Error("a decode through the yaml package took the origins of a decode running beside it")
+				return
+			}
+		}
+	}()
+
+	// A Loader that asked for no origins holds no lock, so it runs beside the
+	// one above rather than waiting for it, and must still come back bare.
+	go func() {
+		defer wg.Done()
+		for range 50 {
+			loader := NewLoader()
+			doc, err := loader.LoadFromData([]byte(concurrentSpec))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if doc.Info.Origin != nil {
+				t.Error("a load that asked for no origins took the origins of a decode running beside it")
 				return
 			}
 		}

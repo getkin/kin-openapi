@@ -33,14 +33,19 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 	// One parse, straight into the types via UnmarshalYAML, with origins read
 	// off the nodes. A JSON document gets origins too, since JSON parses as
 	// YAML.
-	originMu.Lock()
-	defer originMu.Unlock()
-	// Released when the decode ends. The state exists to reach UnmarshalYAML,
-	// so nothing needs it afterwards, and it holds an index over the whole node
-	// tree: leaving it set pins that tree until the next decode replaces it,
-	// whether or not anything kept the tree. A caller that does need it gets it
-	// on the returned originTree.
-	defer originState.Store(nil)
+	// The state below is the only thing a decode shares with another, so a
+	// decode that produces no origins takes no lock and runs beside them.
+	//
+	// It is released when the decode ends: the state exists to reach
+	// UnmarshalYAML, so nothing needs it afterwards, and it holds an index over
+	// the whole node tree, which leaving it set would pin until the next decode
+	// replaced it, whether or not anything kept the tree. A caller that does
+	// need it gets it on the returned originTree.
+	if includeOrigin {
+		originMu.Lock()
+		defer originMu.Unlock()
+		defer originState.Store(nil)
+	}
 	var ends *nodeindex.Index
 	var root goyaml.Node
 	if err := goyaml.Unmarshal(data, &root); err == nil {
