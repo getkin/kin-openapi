@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	yaml "go.yaml.in/yaml/v3"
 )
@@ -128,28 +129,28 @@ type originTree struct {
 	ends *endIndex
 }
 
-// originMu guards the three package-level variables below for the length of a
-// decode. They exist because UnmarshalYAML receives a node and nothing else,
-// with no way to carry per-decode state through the call, and a lock is what
-// makes them safe to hold that way.
+// originDecode is what a decode has to reach from UnmarshalYAML, which
+// receives a node and nothing else: the file to stamp into origins, and the
+// index of the tree being decoded. A nil state means no decode is in progress
+// and nothing gets an origin.
 //
-// The cost is that decodes serialise even when each has its own Loader, which
-// TestIssue741 does. Correctness first: without this the three race, and the
-// path this replaces passed the file as an argument and did not.
-//
-// A file recorded on the node itself would remove the need, since the callback
-// already receives the node, but go-yaml's Node has no field for it.
+// A file recorded on the node itself would remove the need for state beside
+// the call, but go-yaml's Node has no field for it.
+type originDecode struct {
+	file string
+	ends *endIndex
+}
+
+// originState points at the decode in progress. It is read atomically because
+// a caller that hands openapi3 types to the yaml package decodes in its own
+// goroutine, outside the lock a decode holds, and so reads this while another
+// goroutine is writing it.
+var originState atomic.Pointer[originDecode]
+
+// originMu serialises decodes, since there is one state above for all of them.
+// The cost is that decodes wait on each other even when each has its own
+// Loader, which TestIssue741 does.
 var originMu sync.Mutex
-
-// originFileVar is the file stamped into origins for the decode in progress.
-// UnmarshalYAML receives a node and nothing else, so the file cannot be passed
-// through the call.
-var originFileVar string
-
-// originEnabledVar mirrors the includeOrigin argument unmarshal receives, which
-// comes from the Loader. The package-level IncludeOrigin only seeds NewLoader,
-// so a caller that set it on its Loader alone would be missed.
-var originEnabledVar bool
 
 // Shared machinery for the UnmarshalYAML methods: extension collection, and
 // origins read from the node being decoded.
@@ -158,7 +159,24 @@ var originEnabledVar bool
 // needs the extent of a block derives it from the next key or sequence item at
 // the same or shallower indentation.
 
-func nativeOriginFile() string { return originFileVar }
+func nativeOriginFile() string {
+	if st := originState.Load(); st != nil {
+		return st.file
+	}
+	return ""
+}
+
+// originsApply reports whether node belongs to the decode in progress. A
+// caller handing openapi3 types to the yaml package decodes a tree no decode
+// here indexed, and gets no origins rather than another document's.
+func originsApply(node *yaml.Node) bool {
+	st := originState.Load()
+	if st == nil || st.ends == nil || node == nil {
+		return false
+	}
+	_, ok := st.ends.end[node]
+	return ok
+}
 
 // mappingValue returns the value node for key, or nil.
 func mappingValue(node *yaml.Node, key string) *yaml.Node {
@@ -189,7 +207,7 @@ func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
 // mapping in its parent, which a node does not know. See setChildOriginKeys.
 func originFromNode(node *yaml.Node, file string) *Origin {
 	// Origins are opt-in: without this every decode pays for them.
-	if !originEnabledVar {
+	if !originsApply(node) {
 		return nil
 	}
 	if node == nil || node.Kind != yaml.MappingNode {
@@ -233,7 +251,7 @@ func originFromNode(node *yaml.Node, file string) *Origin {
 // child sets its own children's keys in turn, so one level per call covers the
 // tree.
 func setChildOriginKeys(node *yaml.Node, container any, file string) {
-	if !originEnabledVar {
+	if !originsApply(node) {
 		return
 	}
 	if node == nil || node.Kind != yaml.MappingNode {
@@ -315,7 +333,7 @@ func childByKey(v reflect.Value, key string) reflect.Value {
 // setOriginKey stamps Key on a child carrying an *Origin, from the key's own
 // position. The extent of what the key heads is the consumer's to derive.
 func setOriginKey(child reflect.Value, keyNode, valNode *yaml.Node, file string) {
-	if !originEnabledVar {
+	if !originsApply(keyNode) {
 		return
 	}
 	keyNode, valNode = resolveAlias(keyNode, valNode)
@@ -372,7 +390,7 @@ func descendToWrapped(child reflect.Value, keyNode, valNode *yaml.Node, file str
 // Applied only when nothing has already set Key, so a type that supplies its
 // own keeps it.
 func stampRootOrigin(v any, node *yaml.Node) {
-	if !originEnabledVar || node == nil {
+	if !originsApply(node) {
 		return
 	}
 	rv := reflect.ValueOf(v)

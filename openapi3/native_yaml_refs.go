@@ -17,7 +17,13 @@ import (
 // the node was a reference. When false the caller decodes the value.
 func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **string, extensions *map[string]any, extra *[]string, siblingExtras *map[string]any) bool {
 	refNode := mappingValue(node, "$ref")
-	if refNode == nil || refNode.Value == "" {
+	if refNode != nil && refNode.Kind == yaml.AliasNode && refNode.Alias != nil {
+		refNode = refNode.Alias
+	}
+	// A $ref is a string. A null, a number or a collection is not a reference,
+	// so the object decodes as an ordinary value, which is what the json path
+	// does with a $ref that will not decode into a string.
+	if refNode == nil || refNode.Kind != yaml.ScalarNode || refNode.Tag != "!!str" || refNode.Value == "" {
 		return false
 	}
 	*ref = refNode.Value

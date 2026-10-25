@@ -611,17 +611,15 @@ func (loader *Loader) attachOriginToResolved(resolved any, componentDoc *T, frag
 		return
 	}
 	// Stamp against the file this tree came from, not the document being
-	// loaded, which is what originFileVar still names here.
+	// loaded, which is what the state in progress still names here.
 	originMu.Lock()
 	defer originMu.Unlock()
-	// Origins are enabled explicitly rather than inherited: a decode releases
-	// these when it ends, and reaching here at all means the tree was retained,
-	// which only happens with origins on.
-	prevFile, prevEnds, prevEnabled := originFileVar, originEndsVar, originEnabledVar
-	originFileVar, originEndsVar, originEnabledVar = tree.file, tree.ends, true
-	defer func() {
-		originFileVar, originEndsVar, originEnabledVar = prevFile, prevEnds, prevEnabled
-	}()
+	// Set explicitly rather than inherited: a decode releases its state when it
+	// ends, and reaching here at all means the tree was retained, which only
+	// happens with origins on.
+	prev := originState.Load()
+	originState.Store(&originDecode{file: tree.file, ends: tree.ends})
+	defer originState.Store(prev)
 
 	node := tree.node
 	// Walk the retained node tree down to the fragment and decode that subtree

@@ -51,13 +51,13 @@ func TestNativeE2E_WholeDocument(t *testing.T) {
 
 // Path items and operations must carry an origin naming their own key.
 func TestNativeE2E_OriginsReachOperations(t *testing.T) {
-	defer func(v bool) { originEnabledVar = v }(originEnabledVar)
-	originEnabledVar = true
-
 	data, err := os.ReadFile("testdata/callbacks.yml")
 	require.NoError(t, err)
 	var doc T
-	require.NoError(t, goyaml.Unmarshal(data, &doc))
+	// Through unmarshal rather than the yaml package: origins are stamped only
+	// for the tree a decode indexed.
+	_, err = unmarshal(data, &doc, true, nil)
+	require.NoError(t, err)
 	require.NotNil(t, doc.Paths)
 
 	var checked int

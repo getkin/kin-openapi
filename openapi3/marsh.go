@@ -33,18 +33,21 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 	// YAML.
 	originMu.Lock()
 	defer originMu.Unlock()
-	// Released when the decode ends. They exist to carry state into
-	// UnmarshalYAML, so nothing needs them afterwards, and originEndsVar holds
-	// an index over the whole node tree: leaving it set pins that tree until
-	// the next decode replaces it, whether or not anything kept the tree.
-	// A caller that does need it gets it on the returned originTree.
-	defer func() { originFileVar, originEnabledVar, originEndsVar = "", false, nil }()
-	originFileVar, originEnabledVar = file, includeOrigin
+	// Released when the decode ends. The state exists to reach UnmarshalYAML,
+	// so nothing needs it afterwards, and it holds an index over the whole node
+	// tree: leaving it set pins that tree until the next decode replaces it,
+	// whether or not anything kept the tree. A caller that does need it gets it
+	// on the returned originTree.
+	defer originState.Store(nil)
+	var ends *endIndex
 	var root goyaml.Node
 	if err := goyaml.Unmarshal(data, &root); err == nil {
 		stripTimestamps(&root)
-		// Ends are derived from the tree, the parser reporting only starts.
-		originEndsVar = newEndIndex(&root, data)
+		if includeOrigin {
+			// Ends are derived from the tree, the parser reporting only starts.
+			ends = newEndIndex(&root, data)
+			originState.Store(&originDecode{file: file, ends: ends})
+		}
 		if err = root.Decode(v); err == nil {
 			if !includeOrigin {
 				return nil, nil
@@ -54,10 +57,10 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 			// carries no positions.
 			if root.Kind == goyaml.DocumentNode && len(root.Content) > 0 {
 				stampRootOrigin(v, root.Content[0])
-				return &originTree{node: root.Content[0], file: file, ends: originEndsVar}, nil
+				return &originTree{node: root.Content[0], file: file, ends: ends}, nil
 			}
 			stampRootOrigin(v, &root)
-			return &originTree{node: &root, file: file, ends: originEndsVar}, nil
+			return &originTree{node: &root, file: file, ends: ends}, nil
 		}
 		yamlErr = err
 	} else {

@@ -42,11 +42,11 @@ func TestNativeStock_MatchesJSONPath(t *testing.T) {
 
 // Origins must reach nested collections, not only the top level.
 func TestNativeStock_OriginsAtDepth(t *testing.T) {
-	defer func(v bool) { originEnabledVar = v }(originEnabledVar)
-	originEnabledVar = true
-
 	var r Responses
-	require.NoError(t, goyaml.Unmarshal([]byte(nativeSrc), &r))
+	// Through unmarshal rather than the yaml package: origins are stamped only
+	// for the tree a decode indexed.
+	_, err := unmarshal([]byte(nativeSrc), &r, true, nil)
+	require.NoError(t, err)
 	mt := r.Value("200").Value.Content["application/json"]
 	require.NotNil(t, mt)
 	require.NotNil(t, mt.Origin, "nested media type should carry an origin")

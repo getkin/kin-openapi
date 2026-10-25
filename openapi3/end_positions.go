@@ -35,15 +35,10 @@ type endIndex struct {
 	indent  []int
 }
 
-// originEndsVar is the index for the decode in progress, alongside
-// originFileVar. Ends are derived per file: a $ref into another file is decoded
-// separately, against its own text.
-var originEndsVar *endIndex
-
-// newEndIndex indexes data's node tree. Returns nil when origins are off, in
-// which case no end is ever asked for.
+// newEndIndex indexes data's node tree. Ends are derived per file: a $ref into
+// another file is decoded separately, against its own text.
 func newEndIndex(root *yaml.Node, data []byte) *endIndex {
-	if !originEnabledVar || root == nil {
+	if root == nil {
 		return nil
 	}
 	ei := &endIndex{end: map[*yaml.Node]int{}, anchorKey: map[*yaml.Node]*yaml.Node{}}
@@ -142,7 +137,9 @@ func (ei *endIndex) endOf(node *yaml.Node) (int, int) {
 
 // withEnd returns loc carrying the extent of the block node heads.
 func withEnd(loc Location, node *yaml.Node) Location {
-	loc.EndLine, loc.EndColumn = originEndsVar.endOf(node)
+	if st := originState.Load(); st != nil {
+		loc.EndLine, loc.EndColumn = st.ends.endOf(node)
+	}
 	return loc
 }
 
@@ -153,10 +150,11 @@ func resolveAlias(keyNode, valNode *yaml.Node) (*yaml.Node, *yaml.Node) {
 	if valNode == nil || valNode.Kind != yaml.AliasNode || valNode.Alias == nil {
 		return keyNode, valNode
 	}
-	if originEndsVar == nil {
+	st := originState.Load()
+	if st == nil || st.ends == nil {
 		return keyNode, valNode.Alias
 	}
-	if k, ok := originEndsVar.anchorKey[valNode.Alias]; ok {
+	if k, ok := st.ends.anchorKey[valNode.Alias]; ok {
 		return k, valNode.Alias
 	}
 	return keyNode, valNode.Alias
