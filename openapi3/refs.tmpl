@@ -109,6 +109,9 @@ func (x {{ $type.Name }}Ref) MarshalYAML() (any, error) {
 		}
 		return out, nil
 	}
+	if x.Value == nil {
+		return nil, nil
+	}
 	return x.Value.MarshalYAML()
 }
 

@@ -74,6 +74,9 @@ func (x CallbackRef) MarshalYAML() (any, error) {
 		}
 		return out, nil
 	}
+	if x.Value == nil {
+		return nil, nil
+	}
 	return x.Value.MarshalYAML()
 }
 
@@ -244,6 +247,9 @@ func (x ExampleRef) MarshalYAML() (any, error) {
 			maps.Copy(m, x.siblingExtras)
 		}
 		return out, nil
+	}
+	if x.Value == nil {
+		return nil, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -416,6 +422,9 @@ func (x HeaderRef) MarshalYAML() (any, error) {
 		}
 		return out, nil
 	}
+	if x.Value == nil {
+		return nil, nil
+	}
 	return x.Value.MarshalYAML()
 }
 
@@ -586,6 +595,9 @@ func (x LinkRef) MarshalYAML() (any, error) {
 			maps.Copy(m, x.siblingExtras)
 		}
 		return out, nil
+	}
+	if x.Value == nil {
+		return nil, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -758,6 +770,9 @@ func (x ParameterRef) MarshalYAML() (any, error) {
 		}
 		return out, nil
 	}
+	if x.Value == nil {
+		return nil, nil
+	}
 	return x.Value.MarshalYAML()
 }
 
@@ -929,6 +944,9 @@ func (x RequestBodyRef) MarshalYAML() (any, error) {
 		}
 		return out, nil
 	}
+	if x.Value == nil {
+		return nil, nil
+	}
 	return x.Value.MarshalYAML()
 }
 
@@ -1099,6 +1117,9 @@ func (x ResponseRef) MarshalYAML() (any, error) {
 			maps.Copy(m, x.siblingExtras)
 		}
 		return out, nil
+	}
+	if x.Value == nil {
+		return nil, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1291,6 +1312,9 @@ func (x SchemaRef) MarshalYAML() (any, error) {
 			}
 		}
 		return out, nil
+	}
+	if x.Value == nil {
+		return nil, nil
 	}
 	return x.Value.MarshalYAML()
 }
@@ -1494,6 +1518,9 @@ func (x SecuritySchemeRef) MarshalYAML() (any, error) {
 			maps.Copy(m, x.siblingExtras)
 		}
 		return out, nil
+	}
+	if x.Value == nil {
+		return nil, nil
 	}
 	return x.Value.MarshalYAML()
 }
