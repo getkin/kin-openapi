@@ -28,7 +28,10 @@ test-fast:
 ## fuzz: Fuzz each target for FUZZTIME (default 60s)
 fuzz:
 	go test -run='^$$' -fuzz='^FuzzLoadFromData$$' -fuzztime=$(FUZZTIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzLoadWithOrigins$$' -fuzztime=$(FUZZTIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzYAMLMatchesJSON$$' -fuzztime=$(FUZZTIME) ./openapi3
 	go test -run='^$$' -fuzz='^FuzzSchemaVisitJSON$$' -fuzztime=$(FUZZTIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzUnmarshalFromData$$' -fuzztime=$(FUZZTIME) ./openapi2
 	go test -run='^$$' -fuzz='^FuzzToV3$$' -fuzztime=$(FUZZTIME) ./openapi2conv
 	go test -run='^$$' -fuzz='^FuzzValidateRequest$$' -fuzztime=$(FUZZTIME) ./openapi3filter
 

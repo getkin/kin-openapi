@@ -25,6 +25,8 @@ jobs:
     # must not hold a runner forever.
     timeout-minutes: 45
     env:
+      # Keep in sync with the go workflow, whose cache this restores.
+      APISGURU_COMMIT: f7207cf0a5c56081d275ebae4cf615249323385d
       GO111MODULE: 'on'
       CGO_ENABLED: '0'
     strategy:
@@ -33,7 +35,10 @@ jobs:
       matrix:
         include:
         - {package: ./openapi3, target: FuzzLoadFromData}
+        - {package: ./openapi3, target: FuzzLoadWithOrigins}
+        - {package: ./openapi3, target: FuzzYAMLMatchesJSON}
         - {package: ./openapi3, target: FuzzSchemaVisitJSON}
+        - {package: ./openapi2, target: FuzzUnmarshalFromData}
         - {package: ./openapi2conv, target: FuzzToV3}
         - {package: ./openapi3filter, target: FuzzValidateRequest}
     steps:
@@ -43,6 +48,24 @@ jobs:
         go-version: stable
 
     - uses: actions/checkout@v6
+
+    # The APIs-guru corpus seeds the fuzzers alongside testdata. The go
+    # workflow caches it, so fetch it only when that cache is missing.
+    - name: APIs-guru corpus cache
+      id: apisguru
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          openapi2/testdata/APIs-guru-openapi-directory-*
+          openapi3/testdata/APIs-guru-openapi-directory-*
+        key: suite-${{ env.APISGURU_COMMIT }}
+
+    - name: Fetch APIs-guru corpus
+      if: steps.apisguru.outputs.cache-hit != 'true'
+      run: |
+        dir=openapi3/testdata/APIs-guru-openapi-directory-${APISGURU_COMMIT:0:7}
+        mkdir -p "$dir"
+        curl -fsSL "https://github.com/APIs-guru/openapi-directory/tarball/$APISGURU_COMMIT" | tar -xz -C "$dir"
 
     # The generated corpus lives under $GOCACHE/fuzz and is what makes fuzzing
     # cumulative: without it every run restarts from the seed corpus. The key

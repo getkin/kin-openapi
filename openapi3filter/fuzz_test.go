@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/getkin/kin-openapi/internal/fuzzing"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
@@ -29,14 +28,10 @@ func newFuzzLoader() *openapi3.Loader {
 }
 
 func FuzzValidateRequest(f *testing.F) {
-	paths, err := filepath.Glob("../openapi3/testdata/*.yml")
-	require.NoError(f, err)
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		require.NoError(f, err)
-		if len(data) <= 16<<10 {
-			f.Add(data, "GET", "/", "application/json", []byte(`{}`))
-		}
+	seeds := fuzzing.Testdata(f, "../openapi3/testdata", "testdata")
+	seeds = append(seeds, fuzzing.APIsGuru(f, "../openapi3/testdata", "openapi:")...)
+	for _, seed := range seeds {
+		f.Add(seed, "GET", "/", "application/json", []byte(`{}`))
 	}
 
 	const spec = `
