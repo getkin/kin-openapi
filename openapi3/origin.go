@@ -147,6 +147,15 @@ type originDecode struct {
 // a caller that hands openapi3 types to the yaml package decodes in its own
 // goroutine, outside the lock a decode holds, and so reads this while another
 // goroutine is writing it.
+//
+// One immutable value, published and replaced, is the whole of it: no counter,
+// no compare-and-swap, nothing the atomic package's own warning about
+// hand-rolled synchronisation is about. Guarding it with an RWMutex instead
+// measures the same, single and in parallel, and costs two things: a second
+// primitive beside the mutex that already serialises decodes, and a rule that
+// the write lock must never be held across a decode, since the decode reads
+// this itself and would deadlock. A reader here cannot block or deadlock, and
+// the only rule is not to mutate what was published.
 var originState atomic.Pointer[originDecode]
 
 // originMu serialises decodes, since there is one state above for all of them.
