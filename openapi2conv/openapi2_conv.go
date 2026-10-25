@@ -565,7 +565,7 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 	}
 
 	v3Schema := &openapi3.Schema{
-		Extensions:           schema.Value.Extensions,
+		Extensions:           maps.Clone(schema.Value.Extensions),
 		Type:                 schema.Value.Type,
 		Title:                schema.Value.Title,
 		Format:               schema.Value.Format,
@@ -746,11 +746,16 @@ func ToV3SecurityScheme(securityScheme *openapi2.SecurityScheme) (*openapi3.Secu
 
 // FromV3 converts an OpenAPIv3 spec to an OpenAPIv2 spec
 func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
-	doc2Responses, err := FromV3Responses(doc3.Components.Responses, doc3.Components)
+	// A document need not declare components.
+	components := doc3.Components
+	if components == nil {
+		components = &openapi3.Components{}
+	}
+	doc2Responses, err := FromV3Responses(components.Responses, components)
 	if err != nil {
 		return nil, err
 	}
-	schemas, parameters := FromV3Schemas(doc3.Components.Schemas, doc3.Components)
+	schemas, parameters := FromV3Schemas(components.Schemas, components)
 	doc2 := &openapi2.T{
 		Swagger:      "2.0",
 		Info:         *doc3.Info,
@@ -809,7 +814,7 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		}
 		params := openapi2.Parameters{}
 		for _, param := range pathItem.Parameters {
-			p, err := FromV3Parameter(param, doc3.Components)
+			p, err := FromV3Parameter(param, components)
 			if err != nil {
 				return nil, err
 			}
@@ -819,14 +824,14 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		doc2.Paths[path].Parameters = params
 	}
 
-	for name, param := range doc3.Components.Parameters {
-		if doc2.Parameters[name], err = FromV3Parameter(param, doc3.Components); err != nil {
+	for name, param := range components.Parameters {
+		if doc2.Parameters[name], err = FromV3Parameter(param, components); err != nil {
 			return nil, err
 		}
 	}
 
-	for name, requestBodyRef := range doc3.Components.RequestBodies {
-		bodyOrRefParameters, formDataParameters, consumes, err := fromV3RequestBodies(name, requestBodyRef, doc3.Components)
+	for name, requestBodyRef := range components.RequestBodies {
+		bodyOrRefParameters, formDataParameters, consumes, err := fromV3RequestBodies(name, requestBodyRef, components)
 		if err != nil {
 			return nil, err
 		}
@@ -845,7 +850,7 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		}
 	}
 
-	if m := doc3.Components.SecuritySchemes; m != nil {
+	if m := components.SecuritySchemes; m != nil {
 		doc2SecuritySchemes := make(map[string]*openapi2.SecurityScheme)
 		for id, securityScheme := range m {
 			v, err := FromV3SecurityScheme(securityScheme)
@@ -927,6 +932,10 @@ func FromV3Schemas(schemas map[string]*openapi3.SchemaRef, components *openapi3.
 }
 
 func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components) (*openapi2.SchemaRef, *openapi2.Parameter) {
+	// A media type need not carry a schema.
+	if schema == nil {
+		return nil, nil
+	}
 	if ref := schema.Ref; ref != "" {
 		// FromV3RequestBodyFormData (and other recursive call sites in
 		// this file) pass components=nil when recursing into array
@@ -938,7 +947,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		// schema is not known locally': emit a plain $ref and move on.
 		name := getParameterNameFromNewRef(ref)
 		if components != nil {
-			if val, ok := components.Schemas[name]; ok {
+			if val, ok := components.Schemas[name]; ok && val != nil && val.Value != nil {
 				if val.Value.Format == "binary" {
 					v2Ref := strings.Replace(ref, "#/components/schemas/", "#/parameters/", 1)
 					return nil, &openapi2.Parameter{Ref: v2Ref}
@@ -987,7 +996,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 	}
 
 	v2Schema := &openapi2.Schema{
-		Extensions:           schema.Value.Extensions,
+		Extensions:           maps.Clone(schema.Value.Extensions),
 		Type:                 schema.Value.Type,
 		Title:                schema.Value.Title,
 		Format:               schema.Value.Format,
@@ -1040,8 +1049,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		v2Schema.AllOf[i], _ = FromV3SchemaRef(v, components)
 	}
 	if schema.Value.PermitsNull() {
-		schema.Value.Nullable = false
-		if schema.Value.Extensions == nil {
+		if v2Schema.Extensions == nil {
 			v2Schema.Extensions = make(map[string]any)
 		}
 		v2Schema.Extensions["x-nullable"] = true
