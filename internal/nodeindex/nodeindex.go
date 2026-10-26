@@ -100,6 +100,11 @@ func splitLines(data []byte) [][]byte {
 // A blank line is included only when the block resumes below it, which is what
 // separates a gap inside a block scalar from the gap after the block.
 func (ix *Index) extend(n *yaml.Node) int {
+	if isImplicitNull(n) {
+		// No text, so no extent: growing from nothing would hand it the lines
+		// above the position the parser gave it.
+		return 0
+	}
 	e := ix.end[n]
 	// A child's extended end carries up: measure took the largest line among
 	// descendants, but extend can push a child past it, and a node cannot end
