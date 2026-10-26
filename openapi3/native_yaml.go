@@ -85,6 +85,11 @@ func normalizeDecoded(v any) any {
 //
 // Merge semantics: an explicit key wins over a merged one, and among merged
 // sources an earlier one wins, per the YAML merge key spec.
+//
+// Interim: https://github.com/yaml/go-yaml/issues/451 asks the parser for a
+// mapping's effective pairs, which is this function and the cycle guard below
+// it. Reimplementing the rules here is also what the self-merge crasher came
+// from.
 func mappingPairs(node *yaml.Node) [][2]*yaml.Node {
 	return mappingPairsOf(node, nil)
 }
@@ -297,6 +302,9 @@ func prepareScalars(n *yaml.Node) error {
 // timestamp, which would make an OpenAPI `example` of that shape decode to a
 // time.Time and fail validation as an unhandled type. An explicit !!timestamp
 // tag is a deliberate request for a time.Time and is left alone.
+//
+// Interim: https://github.com/yaml/go-yaml/issues/452 asks for an option to
+// leave such a scalar a string, which removes this.
 func stripTimestamp(n *yaml.Node) {
 	if n.Tag == "!!timestamp" && n.Style != yaml.TaggedStyle {
 		n.Tag = "!!str"

@@ -138,6 +138,10 @@ type originTree struct {
 //
 // A file recorded on the node itself would remove the need for state beside
 // the call, but go-yaml's Node has no field for it.
+//
+// Interim: https://github.com/yaml/go-yaml/pull/392 passes a context through
+// the decode, which carries both of these to the call that needs them and
+// retires this type, the state below and the lock with it.
 type originDecode struct {
 	file string
 	ends *nodeindex.Index
