@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	yaml "github.com/oasdiff/yaml3"
+	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 	"github.com/getkin/kin-openapi/internal/nodeindex"
