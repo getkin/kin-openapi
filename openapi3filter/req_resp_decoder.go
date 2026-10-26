@@ -339,10 +339,7 @@ func decodeValueGuarded(dec valueDecoder, param string, sm *openapi3.Serializati
 	}
 
 	if schema.Value.Type == nil && (schema.Value.Const != nil || len(schema.Value.Enum) > 0) {
-		// A schema without `type` is valid in OpenAPI 3.0 and 3.1; with
-		// only `const`/`enum` the schema types the value on its own (see
-		// #1367). Parameter values are strings, so decode as a primitive
-		// and let schema validation apply the constrained values.
+		// Typeless const/enum schema (#1367): decode as a primitive.
 		return dec.DecodePrimitive(param, sm, schema)
 	}
 
@@ -1243,11 +1240,7 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 	typs := schema.Value.Type.Slice()
 	constrainedTypeless := len(typs) == 0 && (schema.Value.Const != nil || len(schema.Value.Enum) > 0)
 	if constrainedTypeless {
-		// A typeless schema constrained by `const`/`enum` types the value
-		// on its own (the raw string must still be parsed so that a
-		// numeric/boolean constant is compared to the same Go type, see
-		// #1367). Its accept set may mix kinds, so decode with a slice of
-		// types, one per present member kind.
+		// No type: derive the candidate types from the const/enum values (#1367).
 		typs = constraintTypes(schema)
 	}
 	for _, typ := range typs {
@@ -1259,45 +1252,19 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 		}
 	}
 	if constrainedTypeless {
-		// No member kind parses a raw string (only array/object members
-		// are present); keep the raw string and let schema validation
-		// decide.
 		return raw, nil
 	}
 	return
 }
 
-// constraintTypes returns the types implied by the `const`/`enum` values
-// of a typeless schema, in a fixed priority order (boolean before number
-// before string, so that a numeric raw string is not shadowed by the
-// string case, and string last, so that `"42"` in
-// `enum: [42, "42", [42]]` does not hide `42`), or an empty slice when
-// the schema has no such values.
+// constraintTypes returns the types of the const/enum values of a schema,
+// with boolean and number before string so that "42" decodes to 42.
 func constraintTypes(schema *openapi3.SchemaRef) []string {
-	var values []any
+	values := schema.Value.Enum
 	if schema.Value.Const != nil {
-		values = append(values, schema.Value.Const)
+		values = append([]any{schema.Value.Const}, values...)
 	}
-	values = append(values, schema.Value.Enum...)
-	if len(values) == 0 {
-		return nil
-	}
-	present := make(map[string]bool, len(values))
-	for _, value := range values {
-		switch value.(type) {
-		case bool:
-			present[openapi3.TypeBoolean] = true
-		case float64, float32, int, int32, int64:
-			present[openapi3.TypeNumber] = true
-		case string:
-			present[openapi3.TypeString] = true
-		case []any:
-			present[openapi3.TypeArray] = true
-		case map[string]any:
-			present[openapi3.TypeObject] = true
-		}
-	}
-	typs := make([]string, 0, len(present))
+	var typs []string
 	for _, typ := range []string{
 		openapi3.TypeBoolean,
 		openapi3.TypeNumber,
@@ -1305,11 +1272,30 @@ func constraintTypes(schema *openapi3.SchemaRef) []string {
 		openapi3.TypeArray,
 		openapi3.TypeObject,
 	} {
-		if present[typ] {
-			typs = append(typs, typ)
+		for _, value := range values {
+			if valueType(value) == typ {
+				typs = append(typs, typ)
+				break
+			}
 		}
 	}
 	return typs
+}
+
+func valueType(value any) string {
+	switch value.(type) {
+	case bool:
+		return openapi3.TypeBoolean
+	case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
+		return openapi3.TypeNumber
+	case string:
+		return openapi3.TypeString
+	case []any:
+		return openapi3.TypeArray
+	case map[string]any:
+		return openapi3.TypeObject
+	}
+	return ""
 }
 
 func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any, error) {

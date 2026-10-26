@@ -27,7 +27,7 @@ func setupTestRouter(t *testing.T, spec string) routers.Router {
 	return router
 }
 
-func testIssue1367Request(t *testing.T, spec, url string, fail bool) {
+func testIssue1367Request(t *testing.T, spec, url, errContains string) {
 	t.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -42,8 +42,8 @@ func testIssue1367Request(t *testing.T, spec, url string, fail bool) {
 		PathParams: pathParams,
 		Route:      route,
 	})
-	if fail {
-		require.Error(t, err)
+	if errContains != "" {
+		require.ErrorContains(t, err, errContains)
 	} else {
 		require.NoError(t, err)
 	}
@@ -77,25 +77,31 @@ paths:
 	const rootURL = "http://example.com/items"
 
 	testcases := []struct {
-		url  string
-		fail bool
+		name        string
+		url         string
+		errContains string
 	}{{
-		url: "?kind=widget",
+		name: "const matches",
+		url:  "?kind=widget",
 	}, {
-		url: "?kind=widget&withenum=widget",
+		name: "const and enum match",
+		url:  "?kind=widget&withenum=widget",
 	}, {
-		url:  "?kind=widget&withenum=gadget",
-		fail: true,
+		name:        "enum mismatch",
+		url:         "?kind=widget&withenum=gadget",
+		errContains: "parameter \"withenum\" in query has an error: validation failed due to: at '': value must be 'widget'",
 	}, {
-		url:  "?kind=gadget",
-		fail: true,
+		name:        "const mismatch",
+		url:         "?kind=gadget",
+		errContains: "parameter \"kind\" in query has an error: validation failed due to: at '': value must be 'widget'",
 	}, {
-		url:  "?kind=widget&withenum=",
-		fail: true,
+		name:        "empty enum value",
+		url:         "?kind=widget&withenum=",
+		errContains: "parameter \"withenum\" in query has an error: validation failed due to: at '': value must be 'widget'",
 	}}
 	for _, tc := range testcases {
-		t.Run(tc.url, func(t *testing.T) {
-			testIssue1367Request(t, spec, rootURL+tc.url, tc.fail)
+		t.Run(tc.name, func(t *testing.T) {
+			testIssue1367Request(t, spec, rootURL+tc.url, tc.errContains)
 		})
 	}
 }
@@ -128,29 +134,29 @@ paths:
 	const rootURL = "http://example.com/picked"
 
 	testcases := []struct {
-		url  string
-		fail bool
+		name        string
+		url         string
+		errContains string
 	}{{
-		url: "?rank=2&flag=true",
+		name: "number enum and boolean const match",
+		url:  "?rank=2&flag=true",
 	}, {
-		url:  "?rank=2&flag=false",
-		fail: true,
+		name:        "boolean const mismatch",
+		url:         "?rank=2&flag=false",
+		errContains: "parameter \"flag\" in query has an error: validation failed due to: at '': value must be true",
 	}, {
-		url:  "?rank=9&flag=true",
-		fail: true,
+		name:        "number enum mismatch",
+		url:         "?rank=9&flag=true",
+		errContains: "parameter \"rank\" in query has an error: validation failed due to: at '': value must be one of 1, 2, 3",
 	}}
 	for _, tc := range testcases {
-		t.Run(tc.url, func(t *testing.T) {
-			testIssue1367Request(t, spec, rootURL+tc.url, tc.fail)
+		t.Run(tc.name, func(t *testing.T) {
+			testIssue1367Request(t, spec, rootURL+tc.url, tc.errContains)
 		})
 	}
 }
 
-// The accept set of a typeless `enum`/`const` may mix kinds, so the
-// decoder works with a slice of types rather than a single one; a
-// numeric-looking raw string still decodes to the enum's number even
-// when a string member exists, and an array member can never be
-// produced from a parameter value.
+// A typeless enum may mix kinds; a numeric string still decodes to the number.
 func TestIssue1367TypelessEnumMixedKinds(t *testing.T) {
 	t.Parallel()
 
@@ -175,20 +181,24 @@ paths:
 	const rootURL = "http://example.com/mid"
 
 	testcases := []struct {
-		url  string
-		fail bool
+		name        string
+		url         string
+		errContains string
 	}{{
-		url: "?mid=42",
+		name: "numeric string decodes to number",
+		url:  "?mid=42",
 	}, {
-		url:  "?mid=gadget",
-		fail: true,
+		name:        "no member matches",
+		url:         "?mid=gadget",
+		errContains: "parameter \"mid\" in query has an error: validation failed due to: at '': 'enum' failed",
 	}, {
-		url:  "?mid=%5B42%5D",
-		fail: true,
+		name:        "array member never matches",
+		url:         "?mid=%5B42%5D",
+		errContains: "parameter \"mid\" in query has an error: validation failed due to: at '': 'enum' failed",
 	}}
 	for _, tc := range testcases {
-		t.Run(tc.url, func(t *testing.T) {
-			testIssue1367Request(t, spec, rootURL+tc.url, tc.fail)
+		t.Run(tc.name, func(t *testing.T) {
+			testIssue1367Request(t, spec, rootURL+tc.url, tc.errContains)
 		})
 	}
 }
