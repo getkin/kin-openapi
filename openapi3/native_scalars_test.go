@@ -66,7 +66,8 @@ func TestNativeScalars_DeclaredIntegerFieldsKeepPrecision(t *testing.T) {
 	require.Equal(t, uint64(9007199254740993), *s.MaxLength, "must not round-trip through float64")
 }
 
-// Date-shaped scalars stay strings; an explicit tag still asks for a time.
+// Date-shaped scalars stay strings, tagged or not: JSON has no timestamp, and
+// a time.Time would marshal to text that reads back as a string.
 func TestNativeScalars_Timestamps(t *testing.T) {
 	const src = "example: 2020-06-11T16:32:50Z\n"
 	var node goyaml.Node
@@ -76,4 +77,13 @@ func TestNativeScalars_Timestamps(t *testing.T) {
 	var s Schema
 	require.NoError(t, node.Content[0].Decode(&s))
 	require.IsType(t, "", s.Example, "a date-shaped example stays a string")
+
+	const tagged = "example: !!timestamp 2020-06-11T16:32:50Z\n"
+	var taggedNode goyaml.Node
+	require.NoError(t, goyaml.Unmarshal([]byte(tagged), &taggedNode))
+	require.NoError(t, prepareScalars(&taggedNode))
+
+	var ts Schema
+	require.NoError(t, taggedNode.Content[0].Decode(&ts))
+	require.IsType(t, "", ts.Example, "a tagged one too, the json path doing the same")
 }
