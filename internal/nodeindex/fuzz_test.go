@@ -1,7 +1,6 @@
 package nodeindex_test
 
 import (
-	"bytes"
 	"testing"
 
 	yaml "github.com/oasdiff/yaml3"
@@ -11,8 +10,9 @@ import (
 	"github.com/getkin/kin-openapi/internal/nodeindex"
 )
 
-// A block ends no earlier than it starts, no later than the input does, and
-// no earlier than any block it contains.
+// A block ends no earlier than it starts, no later than the input does, no
+// earlier than any block it contains, and, in a block collection, before the
+// next entry starts.
 func FuzzNew(f *testing.F) {
 	f.Add([]byte("a:\n  b: 1\n  c: |\n    x\n\n    y\n\nd: [1,\n  2]\n"))
 	f.Add([]byte("- name: id\n  in: path\n- &a {x: 1}\n- *a\n- <<: *a\n  y: 2\n"))
@@ -36,7 +36,7 @@ func FuzzNew(f *testing.F) {
 			return
 		}
 		ix := nodeindex.New(&root, data)
-		lines := bytes.Count(data, []byte("\n")) + 1
+		lines := countLines(data)
 
 		var walk func(n *yaml.Node) int
 		walk = func(n *yaml.Node) int {
@@ -54,8 +54,38 @@ func FuzzNew(f *testing.F) {
 					require.GreaterOrEqual(t, end, childEnd, "node at %d:%d ends before its child at %d:%d", n.Line, n.Column, c.Line, c.Column)
 				}
 			}
+			if n.Style&yaml.FlowStyle == 0 && (n.Kind == yaml.MappingNode || n.Kind == yaml.SequenceNode) {
+				for i := 0; i+1 < len(n.Content); i++ {
+					if n.Kind == yaml.MappingNode && i%2 == 0 {
+						continue // a key and its own value
+					}
+					cur, next := n.Content[i], n.Content[i+1]
+					if curEnd, _ := ix.EndOf(cur); curEnd != 0 && next.Line > cur.Line {
+						require.Less(t, curEnd, next.Line, "node at %d:%d runs into its sibling at %d:%d", cur.Line, cur.Column, next.Line, next.Column)
+					}
+				}
+			}
 			return end
 		}
 		walk(&root)
 	})
+}
+
+// countLines counts lines the way the parser does: a line feed, a carriage
+// return, or the two together each end one. Counting line feeds alone reads a
+// lone carriage return as ordinary text and comes up short.
+func countLines(data []byte) int {
+	lines := 1
+	for i := 0; i < len(data); i++ {
+		switch data[i] {
+		case '\n':
+			lines++
+		case '\r':
+			if i+1 < len(data) && data[i+1] == '\n' {
+				continue
+			}
+			lines++
+		}
+	}
+	return lines
 }

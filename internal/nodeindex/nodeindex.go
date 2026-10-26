@@ -53,8 +53,7 @@ func New(root *yaml.Node, data []byte) *Index {
 		return nil
 	}
 	ix := &Index{end: map[*yaml.Node]int{}, anchorKey: map[*yaml.Node]*yaml.Node{}}
-	for line := range bytes.SplitSeq(data, []byte("\n")) {
-		line = bytes.TrimRight(line, "\r")
+	for _, line := range splitLines(data) {
 		ix.lineLen = append(ix.lineLen, len(line))
 		if t := bytes.TrimRight(line, " \t"); len(t) == 0 {
 			ix.indent = append(ix.indent, -1)
@@ -65,6 +64,29 @@ func New(root *yaml.Node, data []byte) *Index {
 	ix.measure(root)
 	_ = ix.extend(root)
 	return ix
+}
+
+// splitLines cuts data where the parser does. YAML breaks a line on a line
+// feed, a carriage return, or the two together, so splitting on line feeds
+// alone counts a lone carriage return as ordinary text and every line after it
+// is then numbered one too low.
+func splitLines(data []byte) [][]byte {
+	var lines [][]byte
+	start := 0
+	for i := 0; i < len(data); i++ {
+		switch data[i] {
+		case '\n':
+		case '\r':
+			if i+1 < len(data) && data[i+1] == '\n' {
+				continue // the pair is one break, taken on the line feed
+			}
+		default:
+			continue
+		}
+		lines = append(lines, data[start:i])
+		start = i + 1
+	}
+	return append(lines, data[start:])
 }
 
 // extend grows each node's end over lines that belong to it but hang off no
@@ -124,6 +146,13 @@ func (ix *Index) measure(n *yaml.Node) int {
 		return 0
 	}
 	last := n.Line
+	if isImplicitNull(n) {
+		// The parser gives a value that was never written the position of the
+		// next token, which can be past everything the block contains, and in
+		// a block collection that is where the next entry starts. A node with
+		// no text of its own extends nothing.
+		last = 0
+	}
 	if n.Kind == yaml.MappingNode {
 		for i := 0; i+1 < len(n.Content); i += 2 {
 			if v := n.Content[i+1]; v.Anchor != "" {
@@ -138,6 +167,13 @@ func (ix *Index) measure(n *yaml.Node) int {
 	}
 	ix.end[n] = last
 	return last
+}
+
+// isImplicitNull reports whether n is a value the document never wrote: the
+// parser represents it as an empty null scalar. One written as null or ~ has
+// text, and a position of its own.
+func isImplicitNull(n *yaml.Node) bool {
+	return n.Kind == yaml.ScalarNode && n.Tag == "!!null" && n.Value == ""
 }
 
 // EndOf returns the last line and column of the block node occupies.
