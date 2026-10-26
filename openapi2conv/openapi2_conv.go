@@ -127,6 +127,9 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 }
 
 func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, consumes []string) (*openapi3.PathItem, error) {
+	if pathItem == nil {
+		return nil, nil
+	}
 	doc3 := &openapi3.PathItem{
 		Extensions: stripNonExtensions(pathItem.Extensions),
 	}
@@ -245,7 +248,11 @@ func inheritedRequestBodyParams(components *openapi3.Components, pathItem *opena
 
 // parameterIdentity returns the key a parameter is known by inside a path item:
 // a reference keeps its reference, an inline parameter its location and name.
+// A parameter written as null has no identity and overrides nothing.
 func parameterIdentity(parameter *openapi2.Parameter) string {
+	if parameter == nil {
+		return ""
+	}
 	if parameter.Ref != "" {
 		return parameter.Ref
 	}
@@ -260,6 +267,9 @@ func getParameterNameFromOldRef(ref string) string {
 }
 
 func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Parameter, consumes []string) (*openapi3.ParameterRef, *openapi3.RequestBodyRef, map[string]*openapi3.SchemaRef, error) {
+	if parameter == nil {
+		return nil, nil, nil, nil
+	}
 	if ref := parameter.Ref; ref != "" {
 		if strings.HasPrefix(ref, "#/parameters/") {
 			name := getParameterNameFromOldRef(ref)
@@ -487,6 +497,9 @@ func onlyOneReqBodyParam(bodies []*openapi3.RequestBodyRef, formDataSchemas map[
 }
 
 func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.ResponseRef, error) {
+	if response == nil {
+		return nil, nil
+	}
 	if ref := response.Ref; ref != "" {
 		return &openapi3.ResponseRef{Ref: ToV3Ref(ref)}, nil
 	}
@@ -527,16 +540,27 @@ func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.Res
 func ToV3Headers(defs map[string]*openapi2.Header) openapi3.Headers {
 	headers := make(openapi3.Headers, len(defs))
 	for name, header := range defs {
-		header.In = ""
-		header.Name = ""
-		if ref := header.Ref; ref != "" {
-			headers[name] = &openapi3.HeaderRef{Ref: ToV3Ref(ref)}
-		} else {
-			parameter, _, _, _ := ToV3Parameter(nil, &header.Parameter, nil)
-			headers[name] = &openapi3.HeaderRef{Value: &openapi3.Header{
-				Parameter: *parameter.Value,
-			}}
+		if header == nil {
+			headers[name] = nil
+			continue
 		}
+		// On a copy: a header's in and name are dropped on the way to a
+		// v3 header, and the document being converted keeps its own.
+		h := *header
+		h.In = ""
+		h.Name = ""
+		if ref := h.Ref; ref != "" {
+			headers[name] = &openapi3.HeaderRef{Ref: ToV3Ref(ref)}
+			continue
+		}
+		parameter, _, _, _ := ToV3Parameter(nil, &h.Parameter, nil)
+		if parameter == nil || parameter.Value == nil {
+			headers[name] = nil
+			continue
+		}
+		headers[name] = &openapi3.HeaderRef{Value: &openapi3.Header{
+			Parameter: *parameter.Value,
+		}}
 	}
 	return headers
 }
