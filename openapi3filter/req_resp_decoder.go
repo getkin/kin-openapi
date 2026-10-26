@@ -1259,43 +1259,47 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 
 // constraintTypes returns the types of the const/enum values of a schema,
 // with boolean and number before string so that "42" decodes to 42.
+// It makes a single pass over the values, then keeps the seen types only,
+// reducing the worst case from O(5 x values) hash lookups to O(values).
 func constraintTypes(schema *openapi3.SchemaRef) []string {
-	values := schema.Value.Enum
-	if schema.Value.Const != nil {
-		values = append([]any{schema.Value.Const}, values...)
-	}
-	var typs []string
-	for _, typ := range []string{
-		openapi3.TypeBoolean,
-		openapi3.TypeNumber,
-		openapi3.TypeString,
-		openapi3.TypeArray,
-		openapi3.TypeObject,
-	} {
-		for _, value := range values {
-			if valueType(value) == typ {
-				typs = append(typs, typ)
-				break
-			}
+	seen := make(map[string]struct{}, 5)
+	consider := func(value any) {
+		switch value.(type) {
+		case bool:
+			seen[openapi3.TypeBoolean] = struct{}{}
+		case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
+			seen[openapi3.TypeNumber] = struct{}{}
+		case string:
+			seen[openapi3.TypeString] = struct{}{}
+		case []any:
+			seen[openapi3.TypeArray] = struct{}{}
+		case map[string]any:
+			seen[openapi3.TypeObject] = struct{}{}
 		}
 	}
-	return typs
-}
-
-func valueType(value any) string {
-	switch value.(type) {
-	case bool:
-		return openapi3.TypeBoolean
-	case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
-		return openapi3.TypeNumber
-	case string:
-		return openapi3.TypeString
-	case []any:
-		return openapi3.TypeArray
-	case map[string]any:
-		return openapi3.TypeObject
+	for _, value := range schema.Value.Enum {
+		consider(value)
 	}
-	return ""
+	if schema.Value.Const != nil {
+		consider(schema.Value.Const)
+	}
+	typs := make([]string, 0, 5)
+	if _, ok := seen[openapi3.TypeBoolean]; ok {
+		typs = append(typs, openapi3.TypeBoolean)
+	}
+	if _, ok := seen[openapi3.TypeNumber]; ok {
+		typs = append(typs, openapi3.TypeNumber)
+	}
+	if _, ok := seen[openapi3.TypeString]; ok {
+		typs = append(typs, openapi3.TypeString)
+	}
+	if _, ok := seen[openapi3.TypeArray]; ok {
+		typs = append(typs, openapi3.TypeArray)
+	}
+	if _, ok := seen[openapi3.TypeObject]; ok {
+		typs = append(typs, openapi3.TypeObject)
+	}
+	return typs
 }
 
 func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any, error) {
