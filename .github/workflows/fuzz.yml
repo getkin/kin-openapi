@@ -39,6 +39,7 @@ jobs:
         - {package: ./openapi3, target: FuzzYAMLMatchesJSON}
         - {package: ./openapi3, target: FuzzSchemaVisitJSON}
         - {package: ./openapi2, target: FuzzUnmarshalFromData}
+        - {package: ./internal/nodeindex, target: FuzzNew}
         - {package: ./openapi2conv, target: FuzzToV3}
         - {package: ./openapi3filter, target: FuzzValidateRequest}
     steps:
