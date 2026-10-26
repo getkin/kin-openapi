@@ -116,7 +116,7 @@ func (ix *Index) clamp(n *yaml.Node, line int) {
 // splitLines cuts data where the parser does. YAML breaks a line on a line
 // feed, a carriage return, or the two together, so splitting on line feeds
 // alone counts a lone carriage return as ordinary text and every line after it
-// is then numbered one too low.
+// is then numbered one too low. A break is not part of the line it ends.
 func splitLines(data []byte) [][]byte {
 	var lines [][]byte
 	start := 0
@@ -130,7 +130,11 @@ func splitLines(data []byte) [][]byte {
 		default:
 			continue
 		}
-		lines = append(lines, data[start:i])
+		end := i
+		if data[i] == '\n' && end > start && data[end-1] == '\r' {
+			end-- // the carriage return of a CRLF pair ends the line, it is not on it
+		}
+		lines = append(lines, data[start:end])
 		start = i + 1
 	}
 	return append(lines, data[start:])

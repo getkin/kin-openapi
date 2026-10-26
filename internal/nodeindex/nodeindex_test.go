@@ -1,6 +1,7 @@
 package nodeindex_test
 
 import (
+	"strings"
 	"testing"
 
 	yaml "github.com/oasdiff/yaml3"
@@ -90,4 +91,28 @@ func TestNilIndex(t *testing.T) {
 	_, ok := ix.AnchorKey(parse(t, "a: 1\n"))
 	require.False(t, ok)
 	require.Nil(t, nodeindex.New(nil, nil))
+}
+
+// A line break is not a character on the line it ends, so the same document
+// ends its nodes in the same place with either ending. Git checks files out
+// with CRLF endings on Windows.
+func TestEndOfWithEitherLineEnding(t *testing.T) {
+	t.Parallel()
+
+	const src = "a:\n  c: |\n    text\n\n    more\nb: 2\n"
+	for ending, text := range map[string]string{
+		"lf":   src,
+		"crlf": strings.ReplaceAll(src, "\n", "\r\n"),
+	} {
+		t.Run(ending, func(t *testing.T) {
+			t.Parallel()
+
+			root := parse(t, text)
+			ix := nodeindex.New(root, []byte(text))
+
+			line, column := ix.EndOf(root.Content[0].Content[1])
+			require.Equal(t, 5, line, lastLineOfTheBlockScalar)
+			require.Equal(t, 9, column, pastTheLastCharacter)
+		})
+	}
 }
