@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 )
@@ -149,10 +149,17 @@ components:
 `,
 }
 
-// decodeYAML decodes data the way unmarshal does once JSON has refused it.
+// decodeYAML decodes YAML (or JSON, which parses as YAML) straight into v,
+// the way unmarshal does before falling back to JSON.
 func decodeYAML(data []byte, v any) error {
-	_, err := yaml.Unmarshal(data, v, yaml.DecodeOpts{DisableTimestamps: true})
-	return err
+	var root yaml.Node
+	if err := yaml.Unmarshal(data, &root); err != nil {
+		return err
+	}
+	if err := prepareScalars(&root); err != nil {
+		return err
+	}
+	return root.Decode(v)
 }
 
 func requireSameDoc(t *testing.T, expected, actual *T, msgAndArgs ...any) {
@@ -205,7 +212,7 @@ func FuzzYAMLMatchesJSON(f *testing.F) {
 		if fuzzing.LosesInYAML(generic) {
 			return
 		}
-		y, err := yaml.JSONToYAML(j)
+		y, err := yaml.Marshal(generic)
 		require.NoError(t, err)
 
 		var back T

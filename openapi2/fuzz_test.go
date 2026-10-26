@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
+	"github.com/getkin/kin-openapi/internal/yamlconv"
 )
 
 // maxFuzzInput bounds fuzzer inputs so the fuzzer spends its budget on
@@ -67,7 +67,7 @@ definitions:
 		if fuzzing.LosesInYAML(generic) {
 			return
 		}
-		y, err := yaml.Marshal(&doc)
+		y, err := yamlconv.Marshal(&doc)
 		require.NoError(t, err)
 		var fromYAML T
 		require.NoError(t, unmarshal(y, &fromYAML), "yaml:\n%s", y)
