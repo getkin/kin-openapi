@@ -326,17 +326,20 @@ func prepareScalars(n *yaml.Node) error {
 	return nil
 }
 
-// stripTimestamp retags an implicitly-resolved date-shaped scalar as a string.
+// stripTimestamp retags a date-shaped scalar as a string.
 //
 // YAML 1.1 resolves an untagged scalar such as 2020-06-11T16:32:50-03:00 to a
 // timestamp, which would make an OpenAPI `example` of that shape decode to a
-// time.Time and fail validation as an unhandled type. An explicit !!timestamp
-// tag is a deliberate request for a time.Time and is left alone.
+// time.Time: not a type the document's own data model has, and one that
+// marshals to text that reads back as a string, so the document would not
+// survive a round trip. A tag written out asks for the same type and cannot
+// have it either, so it is retagged too, which is what the json path does with
+// such a scalar.
 //
 // Interim: https://github.com/yaml/go-yaml/issues/452 asks for an option to
 // leave such a scalar a string, which removes this.
 func stripTimestamp(n *yaml.Node) {
-	if n.Tag == "!!timestamp" && n.Style != yaml.TaggedStyle {
+	if n.Tag == "!!timestamp" {
 		n.Tag = "!!str"
 	}
 }
