@@ -86,6 +86,14 @@ func normalizeDecoded(v any) any {
 // Merge semantics: an explicit key wins over a merged one, and among merged
 // sources an earlier one wins, per the YAML merge key spec.
 func mappingPairs(node *yaml.Node) [][2]*yaml.Node {
+	return mappingPairsOf(node, nil)
+}
+
+// mappingPairsOf is mappingPairs carrying the mappings whose merges are being
+// expanded, so a mapping that merges itself through an alias contributes
+// nothing instead of recursing until the stack ends. The set is allocated only
+// for a mapping that has a merge key at all.
+func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*yaml.Node {
 	pairs := make([][2]*yaml.Node, 0, len(node.Content)/2)
 	var merged [][2]*yaml.Node
 	seen := make(map[string]struct{}, len(node.Content)/2)
@@ -93,7 +101,11 @@ func mappingPairs(node *yaml.Node) [][2]*yaml.Node {
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		k, v := node.Content[i], node.Content[i+1]
 		if k.Tag == mergeKeyTag || k.Value == mergeKey {
-			merged = append(merged, mergeSourcePairs(v)...)
+			if expanding == nil {
+				expanding = make(map[*yaml.Node]struct{}, 1)
+			}
+			expanding[node] = struct{}{}
+			merged = append(merged, mergeSourcePairs(v, expanding)...)
 			continue
 		}
 		pairs = append(pairs, [2]*yaml.Node{k, v})
@@ -113,7 +125,7 @@ func mappingPairs(node *yaml.Node) [][2]*yaml.Node {
 // mergeSourcePairs returns the pairs a merge key's value contributes: one
 // mapping, or a sequence of them in precedence order. Anything else is not a
 // valid merge source and contributes nothing.
-func mergeSourcePairs(v *yaml.Node) [][2]*yaml.Node {
+func mergeSourcePairs(v *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*yaml.Node {
 	if v.Kind == yaml.AliasNode {
 		v = v.Alias
 	}
@@ -122,11 +134,14 @@ func mergeSourcePairs(v *yaml.Node) [][2]*yaml.Node {
 	}
 	switch v.Kind {
 	case yaml.MappingNode:
-		return mappingPairs(v)
+		if _, ok := expanding[v]; ok {
+			return nil
+		}
+		return mappingPairsOf(v, expanding)
 	case yaml.SequenceNode:
 		var out [][2]*yaml.Node
 		for _, e := range v.Content {
-			out = append(out, mergeSourcePairs(e)...)
+			out = append(out, mergeSourcePairs(e, expanding)...)
 		}
 		return out
 	}
