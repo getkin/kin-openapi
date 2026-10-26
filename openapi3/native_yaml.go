@@ -105,7 +105,7 @@ func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*ya
 
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		k, v := node.Content[i], node.Content[i+1]
-		if k.Tag == mergeKeyTag || k.Value == mergeKey {
+		if isMergeKey(k) {
 			if expanding == nil {
 				expanding = make(map[*yaml.Node]struct{}, 1)
 			}
@@ -145,6 +145,16 @@ func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
 		}
 	}
 	return nil, nil
+}
+
+// isMergeKey reports whether k is a merge key rather than an ordinary one.
+// Only a plain << merges; quoted, it is a member actually named "<<", which
+// the json path keeps and so must this.
+func isMergeKey(k *yaml.Node) bool {
+	if k.Tag == mergeKeyTag {
+		return true
+	}
+	return k.Value == mergeKey && k.Style == 0 && (k.Tag == "" || k.Tag == "!!str")
 }
 
 // mergeSourcePairs returns the pairs a merge key's value contributes: one
