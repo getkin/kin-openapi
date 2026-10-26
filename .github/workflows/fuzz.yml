@@ -92,13 +92,20 @@ jobs:
 
     # -run='^$' skips the ordinary tests: the seed corpus is already replayed by
     # `go test ./...` in the go workflow, so this job only spends time fuzzing.
+    #
+    # The minimize budget is small on purpose. A minimize that cannot finish
+    # inside it writes the candidate it had and the job fails with "fuzzing
+    # process hung or terminated unexpectedly while minimizing", whose
+    # candidate then passes on replay: a red build and nothing to act on. The
+    # budget only decides how small the saved input gets, so spending less of
+    # it costs a larger seed and buys a signal that means what it says.
     - name: Fuzz ${{ matrix.target }}
       run: |
         go test \
           -run='^$' \
           -fuzz='^${{ matrix.target }}$' \
           -fuzztime='${{ steps.budget.outputs.fuzztime }}' \
-          -fuzzminimizetime=60s \
+          -fuzzminimizetime=10s \
           ${{ matrix.package }}
 
     # A failing input is written next to the package it broke. Upload it so the
