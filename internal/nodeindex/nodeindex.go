@@ -63,7 +63,54 @@ func New(root *yaml.Node, data []byte) *Index {
 	}
 	ix.measure(root)
 	_ = ix.extend(root)
+	ix.separate(root)
 	return ix
+}
+
+// separate holds each entry of a block collection to its own lines: an entry
+// ends before the next one starts.
+//
+// measure and extend work from a node and the lines under it, which is enough
+// for the common document and not enough in general: a flow collection written
+// across lines, an entry whose value is indented back to the key's column, a
+// comment between entries. Rather than keep refining what the two passes guess,
+// the bound they must respect is applied here, because an entry that runs into
+// its sibling is wrong whatever produced it, and a shorter end is the safe
+// direction. A flow collection is exempt, its entries sharing lines by design.
+func (ix *Index) separate(n *yaml.Node) {
+	for _, c := range n.Content {
+		ix.separate(c)
+	}
+	if n.Style&yaml.FlowStyle != 0 {
+		return
+	}
+	if n.Kind != yaml.MappingNode && n.Kind != yaml.SequenceNode {
+		return
+	}
+	step := 1
+	if n.Kind == yaml.MappingNode {
+		step = 2 // a key and its value belong to the same entry
+	}
+	for i := 0; i+step < len(n.Content); i += step {
+		cur, next := n.Content[i], n.Content[i+step]
+		if next.Line <= cur.Line {
+			continue
+		}
+		for _, part := range n.Content[i : i+step] {
+			ix.clamp(part, next.Line-1)
+		}
+	}
+}
+
+// clamp holds n and everything inside it to line at the latest. A bound on an
+// entry binds its contents too, or the entry would end before what it contains.
+func (ix *Index) clamp(n *yaml.Node, line int) {
+	if end, ok := ix.end[n]; ok && end > line {
+		ix.end[n] = line
+	}
+	for _, c := range n.Content {
+		ix.clamp(c, line)
+	}
 }
 
 // splitLines cuts data where the parser does. YAML breaks a line on a line
