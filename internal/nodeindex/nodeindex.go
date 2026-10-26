@@ -55,7 +55,7 @@ func New(root *yaml.Node, data []byte) *Index {
 		}
 	}
 	ix.measure(root)
-	ix.extend(root)
+	_ = ix.extend(root)
 	return ix
 }
 
@@ -69,11 +69,18 @@ func New(root *yaml.Node, data []byte) *Index {
 //
 // A blank line is included only when the block resumes below it, which is what
 // separates a gap inside a block scalar from the gap after the block.
-func (ix *Index) extend(n *yaml.Node) {
-	for _, c := range n.Content {
-		ix.extend(c)
-	}
+func (ix *Index) extend(n *yaml.Node) int {
 	e := ix.end[n]
+	// A child's extended end carries up: measure took the largest line among
+	// descendants, but extend can push a child past it, and a node cannot end
+	// before what it contains. The node's own column decides nothing here,
+	// which matters for a tagged node, whose column is the tag's and can sit
+	// deeper than the block it heads.
+	for _, c := range n.Content {
+		if ce := ix.extend(c); ce > e {
+			e = ce
+		}
+	}
 	for {
 		if ind := ix.indentOf(e); ind > n.Column-1 { // line e+1 is index e
 			e++
@@ -91,6 +98,7 @@ func (ix *Index) extend(n *yaml.Node) {
 		break
 	}
 	ix.end[n] = e
+	return e
 }
 
 // indentOf returns the indentation of the given 0-based line, or -1 when the
