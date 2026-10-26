@@ -115,3 +115,94 @@ paths:
 		}
 	}
 }
+
+func TestValidateUploadBinaryFileOpenAPI31(t *testing.T) {
+	t.Parallel()
+
+	// OpenAPI 3.1 describes binary data with contentMediaType instead of format: binary.
+	const spec = `
+openapi: 3.1.0
+info:
+  title: 'Validator'
+  version: 0.0.1
+paths:
+  /test:
+    post:
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  contentMediaType: image/png
+                typedImage:
+                  type: string
+                  contentMediaType: image/png
+                encodedImage:
+                  type: string
+                  contentMediaType: image/png
+                  contentEncoding: base64
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Created
+`
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	err = doc.Validate(loader.Context)
+	require.NoError(t, err)
+
+	router, err := gorillamux.NewRouter(doc)
+	require.NoError(t, err)
+
+	tests := []struct {
+		part, data, wantErr string
+	}{
+		{part: "image", data: "\x89PNG\r\n\x1a\n"},
+		{part: "typedImage", data: "\x89PNG\r\n\x1a\n"},
+		{part: "encodedImage", data: "iVBORw0KGgo="},
+		{part: "text", data: "\x89PNG\r\n\x1a\n", wantErr: `unsupported content type "image/png"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.part, func(t *testing.T) {
+			body := &bytes.Buffer{}
+			writer := multipart.NewWriter(body)
+			h := make(textproto.MIMEHeader)
+			h.Set("Content-Disposition", `form-data; name="`+tt.part+`"; filename="image.png"`)
+			h.Set("Content-Type", "image/png")
+			fw, err := writer.CreatePart(h)
+			require.NoError(t, err)
+			_, err = fw.Write([]byte(tt.data))
+			require.NoError(t, err)
+			require.NoError(t, writer.Close())
+
+			req, err := http.NewRequest(http.MethodPost, "/test", body)
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", writer.FormDataContentType())
+
+			route, pathParams, err := router.FindRoute(req)
+			require.NoError(t, err)
+
+			err = openapi3filter.ValidateRequestBody(
+				t.Context(),
+				&openapi3filter.RequestValidationInput{
+					Request:    req,
+					PathParams: pathParams,
+					Route:      route,
+				},
+				route.Operation.RequestBody.Value,
+			)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
