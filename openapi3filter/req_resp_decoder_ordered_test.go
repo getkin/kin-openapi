@@ -26,4 +26,9 @@ func TestOrderedJSONBodyDecoder(t *testing.T) {
 	require.Error(t, err)
 	_, err = OrderedJSONBodyDecoder(strings.NewReader(`{"a": 1} 2`), nil, nil, nil)
 	require.Error(t, err)
+
+	_, err = OrderedJSONBodyDecoder(strings.NewReader(strings.Repeat("[", 10000)+strings.Repeat("]", 10000)), nil, nil, nil)
+	require.NoError(t, err)
+	_, err = OrderedJSONBodyDecoder(strings.NewReader(strings.Repeat("[", 10001)+strings.Repeat("]", 10001)), nil, nil, nil)
+	require.ErrorContains(t, err, "exceeded max depth")
 }

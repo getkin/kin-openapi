@@ -3,6 +3,8 @@ package openapi3
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
+	"reflect"
 	"slices"
 )
 
@@ -68,6 +70,7 @@ func (o *OrderedObject) MarshalJSON() ([]byte, error) {
 }
 
 // unordered returns value with every OrderedObject in it replaced by a map.
+// It copies only what contains an OrderedObject.
 func unordered(value any) any {
 	switch value := value.(type) {
 	case *OrderedObject:
@@ -77,17 +80,47 @@ func unordered(value any) any {
 		}
 		return m
 	case []any:
-		s := make([]any, len(value))
+		var s []any
 		for i, item := range value {
-			s[i] = unordered(item)
+			if u := unordered(item); s != nil || !sameJSONValue(u, item) {
+				if s == nil {
+					s = slices.Clone(value[:i])
+				}
+				s = append(s, u)
+			}
+		}
+		if s == nil {
+			return value
 		}
 		return s
 	case map[string]any:
-		m := make(map[string]any, len(value))
+		var m map[string]any
 		for name, member := range value {
-			m[name] = unordered(member)
+			if u := unordered(member); !sameJSONValue(u, member) {
+				if m == nil {
+					m = maps.Clone(value)
+				}
+				m[name] = u
+			}
+		}
+		if m == nil {
+			return value
 		}
 		return m
 	}
 	return value
+}
+
+// sameJSONValue reports whether unordered returned value unchanged.
+func sameJSONValue(u, value any) bool {
+	switch value := value.(type) {
+	case *OrderedObject:
+		return false
+	case []any:
+		u := u.([]any)
+		return len(value) == 0 || &u[0] == &value[0]
+	case map[string]any:
+		return reflect.ValueOf(u).Pointer() == reflect.ValueOf(value).Pointer()
+	}
+	return true
 }

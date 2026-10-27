@@ -933,10 +933,10 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 			if f := settings.defaultsSet; f != nil && value[propName] == nil {
 				if dflt := propSchema.Value.Default; dflt != nil && !reqRO && !repWO {
-					value[propName] = deepCopyJSONValue(dflt)
-					if names != nil {
+					if _, ok := value[propName]; !ok && names != nil {
 						*names = append(*names, propName)
 					}
+					value[propName] = deepCopyJSONValue(dflt)
 					settings.onceSettingDefaults.Do(f)
 				}
 			}

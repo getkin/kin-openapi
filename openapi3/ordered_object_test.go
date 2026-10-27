@@ -80,6 +80,27 @@ func TestOrderedObjectValidation(t *testing.T) {
 		require.Equal(t, "d", b)
 	})
 
+	t.Run("default for a null member keeps its place", func(t *testing.T) {
+		schema := openapi3.NewObjectSchema().
+			WithProperty("a", openapi3.NewStringSchema().WithDefault("d")).
+			WithProperty("b", openapi3.NewStringSchema())
+		value := obj("a", nil, "b", "x")
+		require.NoError(t, schema.VisitJSON(value, openapi3.VisitAsRequest(), openapi3.DefaultsSet(func() {})))
+		require.Equal(t, []string{"a", "b"}, value.Names())
+	})
+
+	t.Run("JSON Schema 2020-12", func(t *testing.T) {
+		schema := openapi3.NewObjectSchema().
+			WithProperty("a", openapi3.NewIntegerSchema()).
+			WithRequired([]string{"a"})
+		require.NoError(t, schema.VisitJSON(obj("a", 1), openapi3.EnableJSONSchema2020()))
+		items := openapi3.NewArraySchema().WithItems(schema)
+		require.NoError(t, items.VisitJSON([]any{obj("a", 1)}, openapi3.EnableJSONSchema2020()))
+		require.Error(t, items.VisitJSON([]any{obj("a", "x")}, openapi3.EnableJSONSchema2020()))
+		require.Error(t, schema.VisitJSON(obj("a", "x"), openapi3.EnableJSONSchema2020()))
+		require.Error(t, schema.VisitJSON(obj("b", 1), openapi3.EnableJSONSchema2020()))
+	})
+
 	t.Run("marshals in order", func(t *testing.T) {
 		b, err := obj("b", 1, "a", obj("z", true, "y", nil)).MarshalJSON()
 		require.NoError(t, err)

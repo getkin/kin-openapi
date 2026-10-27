@@ -16,7 +16,7 @@ import (
 func OrderedJSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error) {
 	dec := json.NewDecoder(body)
 	dec.UseNumber()
-	value, err := decodeOrderedJSON(dec)
+	value, err := decodeOrderedJSON(dec, 0)
 	if err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
@@ -26,7 +26,10 @@ func OrderedJSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3
 	return value, nil
 }
 
-func decodeOrderedJSON(dec *json.Decoder) (any, error) {
+// maxOrderedJSONDepth is the nesting limit of encoding/json.
+const maxOrderedJSONDepth = 10000
+
+func decodeOrderedJSON(dec *json.Decoder, depth int) (any, error) {
 	tok, err := dec.Token()
 	if err != nil {
 		return nil, err
@@ -34,6 +37,9 @@ func decodeOrderedJSON(dec *json.Decoder) (any, error) {
 	delim, ok := tok.(json.Delim)
 	if !ok {
 		return tok, nil
+	}
+	if depth++; depth > maxOrderedJSONDepth {
+		return nil, fmt.Errorf("exceeded max depth")
 	}
 	switch delim {
 	case '{':
@@ -43,7 +49,7 @@ func decodeOrderedJSON(dec *json.Decoder) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			value, err := decodeOrderedJSON(dec)
+			value, err := decodeOrderedJSON(dec, depth)
 			if err != nil {
 				return nil, err
 			}
@@ -54,7 +60,7 @@ func decodeOrderedJSON(dec *json.Decoder) (any, error) {
 	case '[':
 		items := []any{}
 		for dec.More() {
-			item, err := decodeOrderedJSON(dec)
+			item, err := decodeOrderedJSON(dec, depth)
 			if err != nil {
 				return nil, err
 			}
