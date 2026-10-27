@@ -3179,6 +3179,22 @@ func (e *SchemaItemsRequired) As(target any) bool
 
 func (e *SchemaItemsRequired) Code() string
 
+type SchemaMultipleOfNotPositiveError struct {
+	// MultipleOf is the rejected `multipleOf` value.
+	MultipleOf float64
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaMultipleOfNotPositiveError clusters "multipleOf must be greater
+    than zero" failures. The value of a schema's `multipleOf` MUST be strictly
+    greater than 0 (JSON Schema 2020-12 §6.2.1 for OpenAPI 3.1, draft-04 for
+    OpenAPI 3.0).
+
+func (e *SchemaMultipleOfNotPositiveError) Code() string
+
+func (e *SchemaMultipleOfNotPositiveError) Error() string
+
 type SchemaPatternRegexError struct {
 	// Pattern is the schema's `pattern:` value that failed to compile.
 	Pattern string

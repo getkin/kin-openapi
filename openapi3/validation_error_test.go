@@ -2404,6 +2404,53 @@ components:
 	require.ErrorContains(t, dup, `duplicate field "id" in required`)
 }
 
+func TestValidationError_SchemaMultipleOfNotPositiveError(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		version    string
+		multipleOf string
+		expected   float64
+	}{
+		{version: "3.0.3", multipleOf: "0", expected: 0},
+		{version: "3.0.3", multipleOf: "-2", expected: -2},
+		{version: "3.1.0", multipleOf: "0", expected: 0},
+		{version: "3.1.0", multipleOf: "-0.5", expected: -0.5},
+	} {
+		t.Run(tc.version+" "+tc.multipleOf, func(t *testing.T) {
+			doc := loadDocFromYAML(t, `
+openapi: `+tc.version+`
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: number
+      multipleOf: `+tc.multipleOf+`
+`)
+			err := doc.Validate(t.Context())
+			require.Error(t, err)
+
+			var nonPositive *openapi3.SchemaMultipleOfNotPositiveError
+			require.True(t, errors.As(err, &nonPositive))
+			require.Equal(t, tc.expected, nonPositive.MultipleOf)
+			require.ErrorContains(t, nonPositive, "multipleOf must be greater than zero, got "+tc.multipleOf)
+		})
+	}
+
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Good:
+      type: number
+      multipleOf: 0.01
+`)
+	require.NoError(t, doc.Validate(t.Context()))
+}
+
 func TestValidationError_DuplicateTagError(t *testing.T) {
 	t.Parallel()
 
