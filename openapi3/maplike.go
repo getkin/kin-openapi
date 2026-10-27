@@ -102,8 +102,6 @@ func (responses *Responses) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets Responses to a copy of data.
 func (responses *Responses) UnmarshalJSON(data []byte) (err error) {
-	// Each member is decoded from its own bytes, rather than decoded into a
-	// map and encoded again.
 	m := make(map[string][]byte)
 	if err = jsonMembers(data, func(k string, v []byte) error {
 		m[k] = v
@@ -236,8 +234,6 @@ func (callback *Callback) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets Callback to a copy of data.
 func (callback *Callback) UnmarshalJSON(data []byte) (err error) {
-	// Each member is decoded from its own bytes, rather than decoded into a
-	// map and encoded again.
 	m := make(map[string][]byte)
 	if err = jsonMembers(data, func(k string, v []byte) error {
 		m[k] = v
@@ -370,8 +366,6 @@ func (paths *Paths) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets Paths to a copy of data.
 func (paths *Paths) UnmarshalJSON(data []byte) (err error) {
-	// Each member is decoded from its own bytes, rather than decoded into a
-	// map and encoded again.
 	m := make(map[string][]byte)
 	if err = jsonMembers(data, func(k string, v []byte) error {
 		m[k] = v

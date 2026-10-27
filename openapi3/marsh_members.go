@@ -13,10 +13,7 @@ var (
 	errFound         = errors.New("found")
 )
 
-// unmarshalExtensions decodes the members of the JSON object data whose names
-// are not in known, and returns nil if there are none. The other members are
-// skipped without being decoded. Decoding the whole object into a map instead
-// decodes every object nested in a document again for each object around it.
+// unmarshalExtensions decodes the members of data whose names are not in known.
 func unmarshalExtensions(data []byte, known ...string) map[string]any {
 	var extensions map[string]any
 	_ = jsonMembers(data, func(name string, value []byte) error {
@@ -36,9 +33,7 @@ func unmarshalExtensions(data []byte, known ...string) map[string]any {
 	return extensions
 }
 
-// unmarshalRef decodes data into ref if data has a "$ref" member. Every
-// component is checked for being a reference before it is decoded, and
-// decoding one that is not into a Ref still reads all of it.
+// unmarshalRef decodes data into ref only if data has a "$ref" member.
 func unmarshalRef(data []byte, ref *Ref) error {
 	found := false
 	_ = jsonMembers(data, func(name string, _ []byte) error {
@@ -67,9 +62,7 @@ func jsonMemberIsNull(data []byte, name string) bool {
 	return null
 }
 
-// jsonMembers calls f with the name and the value of each member of the JSON
-// object data, in order. A JSON null has no members. data is valid JSON, as
-// an UnmarshalJSON method receives it; anything else ends with an error.
+// jsonMembers calls f with the name and value of each member of the JSON object data.
 func jsonMembers(data []byte, f func(name string, value []byte) error) error {
 	i := skipJSONSpace(data, 0)
 	if bytes.HasPrefix(data[i:], []byte("null")) {
@@ -116,7 +109,7 @@ func jsonMembers(data []byte, f func(name string, value []byte) error) error {
 	return errNotJSONObject
 }
 
-// jsonMemberName decodes a member name, a JSON string.
+// jsonMemberName decodes the JSON string quoted.
 func jsonMemberName(quoted []byte) (string, error) {
 	if s := quoted[1 : len(quoted)-1]; bytes.IndexByte(s, '\\') < 0 && utf8.Valid(s) {
 		return string(s), nil

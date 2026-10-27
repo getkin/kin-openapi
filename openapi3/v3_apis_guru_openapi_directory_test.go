@@ -89,27 +89,25 @@ func apisGuruDirectory() (commit, dirName, targetDir string) {
 	return
 }
 
-func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
+// apisGuruAPIs downloads APIs Guru's documents if needed and returns the
+// directory holding them.
+func apisGuruAPIs(tb testing.TB) string {
 	if testing.Short() {
-		t.Skip("skipping APIs Guru's large sets of documents")
+		tb.Skip("skipping APIs Guru's large sets of documents")
 	}
-	if !openapi3.UsingJSONv2 {
-		t.Skip("skipping as goldens record errors from encoding/json/v2 (Go 1.27+)")
-	}
-	t.Parallel()
 
 	commit, dirName, targetDir := apisGuruDirectory()
 
 	if _, err := os.Stat(targetDir); errors.Is(err, os.ErrNotExist) {
-		req, err := http.NewRequestWithContext(t.Context(), "GET", "https://github.com/APIs-guru/openapi-directory/tarball/"+commit, nil)
-		require.NoError(t, err)
+		req, err := http.NewRequestWithContext(tb.Context(), "GET", "https://github.com/APIs-guru/openapi-directory/tarball/"+commit, nil)
+		require.NoError(tb, err)
 		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
+		require.NoError(tb, err)
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(tb, http.StatusOK, resp.StatusCode)
 
 		gzr, err := gzip.NewReader(resp.Body)
-		require.NoError(t, err)
+		require.NoError(tb, err)
 		defer gzr.Close()
 		tr := tar.NewReader(gzr)
 
@@ -118,30 +116,39 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 			if err == io.EOF {
 				break
 			}
-			require.NoError(t, err)
+			require.NoError(tb, err)
 
 			target := filepath.Join(targetDir, header.Name)
 			switch header.Typeflag {
 			case tar.TypeDir:
 				err := os.MkdirAll(target, 0755)
-				require.NoError(t, err)
+				require.NoError(tb, err)
 			case tar.TypeReg:
 				err := os.MkdirAll(filepath.Dir(target), 0755)
-				require.NoError(t, err)
+				require.NoError(tb, err)
 
 				func() {
 					f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-					require.NoError(t, err)
+					require.NoError(tb, err)
 					defer f.Close()
 
 					_, err = io.Copy(f, tr)
-					require.NoError(t, err)
+					require.NoError(tb, err)
 				}()
 			}
 		}
 	}
 
-	root := filepath.Join(targetDir, dirName, "APIs")
+	return filepath.Join(targetDir, dirName, "APIs")
+}
+
+func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
+	if !openapi3.UsingJSONv2 {
+		t.Skip("skipping as goldens record errors from encoding/json/v2 (Go 1.27+)")
+	}
+	t.Parallel()
+
+	root := apisGuruAPIs(t)
 
 	underscorer := newUnderscorer()
 	var checkedMu sync.Mutex
@@ -217,14 +224,8 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 	}
 }
 
-// BenchmarkV3ApisGuruOpenapiDirectory loads every OpenAPI 3 document that
-// TestV3ApisGuruOpenapiDirectory downloads, and skips if it has not run.
 func BenchmarkV3ApisGuruOpenapiDirectory(b *testing.B) {
-	_, dirName, targetDir := apisGuruDirectory()
-	root := filepath.Join(targetDir, dirName, "APIs")
-	if _, err := os.Stat(root); err != nil {
-		b.Skip("run TestV3ApisGuruOpenapiDirectory first to download APIs Guru's documents")
-	}
+	root := apisGuruAPIs(b)
 
 	var paths []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {

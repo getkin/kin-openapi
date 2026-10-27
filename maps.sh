@@ -212,8 +212,6 @@ func (${name} ${type}) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets ${type#'*'} to a copy of data.
 func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
-	// Each member is decoded from its own bytes, rather than decoded into a
-	// map and encoded again.
 	m := make(map[string][]byte)
 	if err = jsonMembers(data, func(k string, v []byte) error {
 		m[k] = v
