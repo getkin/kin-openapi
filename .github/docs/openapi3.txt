@@ -2062,6 +2062,11 @@ type OperationValidationError struct {
 
     Use errors.As(err, &ove) to extract the method from a validation error chain
     without parsing the rendered message.
+
+func (e *OperationValidationError) Error() string
+
+func (e *OperationValidationError) Unwrap() error
+
 type OrderedObject struct {
 	// Has unexported fields.
 }
@@ -2086,11 +2091,6 @@ func (o *OrderedObject) Names() []string
 
 func (o *OrderedObject) Set(name string, value any)
     Set sets the member name to value, adding it after the others if it is new.
-
-
-func (e *OperationValidationError) Error() string
-
-func (e *OperationValidationError) Unwrap() error
 
 type Origin struct {
 	Key       *Location             `json:"key,omitempty,case:strict" yaml:"key,omitempty"`
