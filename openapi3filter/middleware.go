@@ -173,7 +173,8 @@ type responseWrapper interface {
 	// not yet been written.
 	flushBodyContents() error
 
-	// statusCode returns the response status code, 0 if not set yet.
+	// statusCode returns the response status code, 200 if not set, as
+	// net/http sends for a handler that writes neither a status nor a body.
 	statusCode() int
 
 	// bodyContents returns the buffered
@@ -234,6 +235,9 @@ func (wr *warnResponseWrapper) flushBodyContents() error {
 }
 
 func (wr *warnResponseWrapper) statusCode() int {
+	if !wr.headerWritten {
+		return http.StatusOK
+	}
 	return wr.status
 }
 
@@ -270,12 +274,15 @@ func (wr *strictResponseWrapper) Header() http.Header {
 }
 
 func (wr *strictResponseWrapper) flushBodyContents() error {
-	wr.w.WriteHeader(wr.status)
+	wr.w.WriteHeader(wr.statusCode())
 	_, err := wr.w.Write(wr.body.Bytes())
 	return err
 }
 
 func (wr *strictResponseWrapper) statusCode() int {
+	if !wr.headerWritten {
+		return http.StatusOK
+	}
 	return wr.status
 }
 

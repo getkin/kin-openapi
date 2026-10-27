@@ -401,6 +401,53 @@ func TestValidator(t *testing.T) {
 	}
 }
 
+func TestValidatorHandlerWithoutStatus(t *testing.T) {
+	t.Parallel()
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(`
+openapi: 3.0.0
+info:
+  title: 'Validator'
+  version: '0.0.0'
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          description: pong
+`[1:]))
+	require.NoError(t, err)
+	require.NoError(t, doc.Validate(loader.Context))
+
+	router, err := gorillamux.NewRouter(doc)
+	require.NoError(t, err)
+
+	// net/http sends a 200 for a handler that writes neither a status nor a body.
+	handler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+
+	for _, strict := range []bool{true, false} {
+		for _, includeResponseStatus := range []bool{true, false} {
+			t.Run(fmt.Sprintf("strict=%v includeResponseStatus=%v", strict, includeResponseStatus), func(t *testing.T) {
+				var logged []string
+				v := openapi3filter.NewValidator(router,
+					openapi3filter.Strict(strict),
+					openapi3filter.ValidationOptions(openapi3filter.Options{IncludeResponseStatus: includeResponseStatus}),
+					openapi3filter.OnLog(func(_ context.Context, message string, err error) {
+						logged = append(logged, fmt.Sprintf("%s: %v", message, err))
+					}),
+				)
+
+				w := httptest.NewRecorder()
+				v.Middleware(handler).ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/ping", nil))
+				require.Empty(t, logged)
+				require.Equal(t, http.StatusOK, w.Code)
+				require.Empty(t, w.Body.String())
+			})
+		}
+	}
+}
+
 func ExampleValidator() {
 	// OpenAPI specification for a simple service that squares integers, with
 	// some limitations.
