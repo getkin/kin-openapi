@@ -9,8 +9,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// Members are checked in map order, which Go varies from run to run, but
-// their errors must still come out in order of member name.
+// The errors come out in order of member name, not in map order.
 func TestObjectMemberErrorsInNameOrder(t *testing.T) {
 	t.Parallel()
 
@@ -44,8 +43,7 @@ func TestObjectMemberErrorsInNameOrder(t *testing.T) {
 	}
 }
 
-// An unsupported member and a member that does not fit its property are
-// ordered together by name.
+// Unsupported members and members that do not fit are ordered together by name.
 func TestObjectUnsupportedMemberErrorsInNameOrder(t *testing.T) {
 	t.Parallel()
 
@@ -65,8 +63,7 @@ func TestObjectUnsupportedMemberErrorsInNameOrder(t *testing.T) {
 	}
 }
 
-// An unresolved reference is reported rather than the errors of members
-// that come before it, whichever order the members are checked in.
+// An unresolved reference is reported whichever order the members are checked in.
 func TestObjectUnresolvedMemberErrorInNameOrder(t *testing.T) {
 	t.Parallel()
 
