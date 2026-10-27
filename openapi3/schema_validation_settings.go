@@ -43,27 +43,22 @@ type schemaValidationSettings struct {
 	visitedSchemas []*Schema
 	visitedBase    int
 
-	// visited records whether a nested object or array fits a schema, so
-	// that a value which several "anyOf", "oneOf" or "allOf" subschemas lead
-	// to again is checked once. A recursive schema whose subschemas each
-	// recurse otherwise costs time exponential in the value's depth.
+	// visited records whether an object or array fits a schema, so that it is
+	// checked once per schema, not once per path leading to it.
 	visited map[visitKey]bool
-	// inSubschema counts the "allOf", "anyOf", "oneOf" and "not" subschemas
-	// being visited: only through one can a value meet the same schema
-	// twice, so results are recorded only then.
+	// inSubschema counts the allOf, anyOf, oneOf and not subschemas being visited.
+	// Only inside one can a value meet the same schema twice.
 	inSubschema int
 }
 
-// visitKey is a schema and the identity of an object or array: within one
-// validation the value does not change, unless defaults are being set.
+// visitKey identifies an object or array by its address, so it must not be copied or changed.
 type visitKey struct {
 	schema *Schema
 	value  uintptr
 	n      int
 }
 
-// visitKeyOf is the key value's result against schema is recorded under,
-// if it is recorded.
+// visitKeyOf returns the key to record the result of visiting value with schema, if there is one.
 func (s *schemaValidationSettings) visitKeyOf(schema *Schema, value any) (visitKey, bool) {
 	if s.inSubschema == 0 || s.setsDefaults() {
 		return visitKey{}, false
@@ -77,7 +72,8 @@ func (s *schemaValidationSettings) visitKeyOf(schema *Schema, value any) (visitK
 	return visitKey{}, false
 }
 
-// setsDefaults is whether the visit writes defaults into the value.
+// setsDefaults says whether the visit writes defaults into the value.
+// If not, anyOf and oneOf need not copy it, and copying would change its address.
 func (s *schemaValidationSettings) setsDefaults() bool {
 	return s.defaultsSet != nil && (s.asreq || s.asrep)
 }

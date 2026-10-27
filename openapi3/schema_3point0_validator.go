@@ -444,10 +444,8 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 	return
 }
 
-// visitAnyOfBranch reports whether value fits one "anyOf" subschema. The
-// errors of a subschema that does not fit are not reported, so unless
-// defaults are being set, where the subschema runs as it always did, it stops
-// at the first one.
+// visitAnyOfBranch visits one anyOf subschema, stopping at its first error as
+// its errors are not reported, unless defaults are being set.
 func (schema *Schema) visitAnyOfBranch(settings *schemaValidationSettings, value any) error {
 	if settings.failfast || settings.setsDefaults() {
 		return schema.visitJSON(settings, value)
