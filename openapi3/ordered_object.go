@@ -16,13 +16,16 @@ type OrderedObject struct {
 	members map[string]any
 }
 
-// NewOrderedObject returns an empty OrderedObject.
+// NewOrderedObject returns an empty OrderedObject. The zero value is also empty.
 func NewOrderedObject() *OrderedObject {
 	return &OrderedObject{members: make(map[string]any)}
 }
 
 // Set sets the member name to value, adding it after the others if it is new.
 func (o *OrderedObject) Set(name string, value any) {
+	if o.members == nil {
+		o.members = make(map[string]any)
+	}
 	if _, ok := o.members[name]; !ok {
 		o.names = append(o.names, name)
 	}

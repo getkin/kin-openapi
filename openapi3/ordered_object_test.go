@@ -101,6 +101,16 @@ func TestOrderedObjectValidation(t *testing.T) {
 		require.Error(t, schema.VisitJSON(obj("b", 1), openapi3.EnableJSONSchema2020()))
 	})
 
+	t.Run("zero and nil values", func(t *testing.T) {
+		var o openapi3.OrderedObject
+		o.Set("a", 1)
+		require.Equal(t, []string{"a"}, o.Names())
+
+		var nilObject *openapi3.OrderedObject
+		require.NoError(t, openapi3.NewObjectSchema().VisitJSON(nilObject))
+		require.Error(t, openapi3.NewStringSchema().VisitJSON(nilObject))
+	})
+
 	t.Run("marshals in order", func(t *testing.T) {
 		b, err := obj("b", 1, "a", obj("z", true, "y", nil)).MarshalJSON()
 		require.NoError(t, err)

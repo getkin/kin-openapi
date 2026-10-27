@@ -2075,7 +2075,8 @@ type OrderedObject struct {
     errors of its members in that order.
 
 func NewOrderedObject() *OrderedObject
-    NewOrderedObject returns an empty OrderedObject.
+    NewOrderedObject returns an empty OrderedObject. The zero value is also
+    empty.
 
 func (o *OrderedObject) Get(name string) (any, bool)
     Get returns the member name.

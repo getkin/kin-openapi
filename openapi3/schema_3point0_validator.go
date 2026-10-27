@@ -139,6 +139,9 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	case map[string]any:
 		return schema.visitJSONObject(settings, value, nil)
 	case *OrderedObject:
+		if value == nil { // Like a nil map
+			return schema.visitJSONObject(settings, map[string]any{}, nil)
+		}
 		return schema.visitJSONObject(settings, value.members, &value.names)
 	case map[any]any: // for YAML cf. issue https://github.com/getkin/kin-openapi/issues/444
 		values := make(map[string]any, len(value))

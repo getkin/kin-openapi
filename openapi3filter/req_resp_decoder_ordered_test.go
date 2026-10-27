@@ -24,8 +24,9 @@ func TestOrderedJSONBodyDecoder(t *testing.T) {
 
 	_, err = OrderedJSONBodyDecoder(strings.NewReader(`{"a": 1`), nil, nil, nil)
 	require.Error(t, err)
-	_, err = OrderedJSONBodyDecoder(strings.NewReader(`{"a": 1} 2`), nil, nil, nil)
-	require.Error(t, err)
+	_, err = OrderedJSONBodyDecoder(strings.NewReader(`{"a": 1, "a": 2}`), nil, nil, nil)
+	_, plainErr := JSONBodyDecoder(strings.NewReader(`{"a": 1, "a": 2}`), nil, nil, nil)
+	require.Equal(t, plainErr != nil, err != nil)
 
 	_, err = OrderedJSONBodyDecoder(strings.NewReader(strings.Repeat("[", 10000)+strings.Repeat("]", 10000)), nil, nil, nil)
 	require.NoError(t, err)

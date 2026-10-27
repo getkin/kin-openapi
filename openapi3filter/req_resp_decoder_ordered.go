@@ -20,9 +20,6 @@ func OrderedJSONBodyDecoder(body io.Reader, header http.Header, schema *openapi3
 	if err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
-	if _, err := dec.Token(); err != io.EOF {
-		return nil, &ParseError{Kind: KindInvalidFormat, Cause: fmt.Errorf("unexpected data after the top-level value")}
-	}
 	return value, nil
 }
 
@@ -48,6 +45,9 @@ func decodeOrderedJSON(dec *json.Decoder, depth int) (any, error) {
 			name, err := dec.Token()
 			if err != nil {
 				return nil, err
+			}
+			if _, ok := obj.Get(name.(string)); ok && rejectDuplicateNames {
+				return nil, fmt.Errorf("duplicate object member name %q", name)
 			}
 			value, err := decodeOrderedJSON(dec, depth)
 			if err != nil {

@@ -7,6 +7,9 @@ import (
 	"io"
 )
 
+// rejectDuplicateNames is whether decodeJSON rejects duplicate member names.
+const rejectDuplicateNames = false
+
 // decodeJSON rejects duplicate member names only with encoding/json/v2.
 func decodeJSON(body io.Reader) (any, error) {
 	var value any
