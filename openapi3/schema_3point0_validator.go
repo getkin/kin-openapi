@@ -995,7 +995,8 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		case propertyRef != nil:
 			p := propertyRef.Value
 			if p == nil {
-				return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
+				failed = append(failed, memberError{k, newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)})
+				continue
 			}
 			err = p.visitChildJSON(settings, v)
 		case schema.AdditionalProperties.Has == nil || *schema.AdditionalProperties.Has:
@@ -1020,7 +1021,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	}
 	slices.SortFunc(failed, func(a, b memberError) int { return strings.Compare(a.key, b.key) })
 	for _, f := range failed {
-		if !settings.multiError {
+		if _, ok := f.err.(*UnresolvedRefError); ok || !settings.multiError {
 			return f.err
 		}
 		if v, ok := f.err.(MultiError); ok {

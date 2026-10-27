@@ -65,6 +65,33 @@ func TestObjectUnsupportedMemberErrorsInNameOrder(t *testing.T) {
 	}
 }
 
+// An unresolved reference is reported rather than the errors of members
+// that come before it, whichever order the members are checked in.
+func TestObjectUnresolvedMemberErrorInNameOrder(t *testing.T) {
+	t.Parallel()
+
+	schema := openapi3.NewObjectSchema().
+		WithProperty("a", openapi3.NewIntegerSchema()).
+		WithProperty("z", openapi3.NewIntegerSchema())
+	schema.Properties["m"] = &openapi3.SchemaRef{Ref: "#/components/schemas/Missing"}
+	value := map[string]any{"a": "x", "m": 1, "z": "x"}
+
+	for range 50 {
+		for _, opts := range [][]openapi3.SchemaValidationOption{nil, {openapi3.MultiErrors()}} {
+			err := schema.VisitJSON(value, opts...)
+			var ur *openapi3.UnresolvedRefError
+			if len(opts) > 0 {
+				require.ErrorAs(t, err, &ur)
+			} else {
+				// "a" comes before "m", so its error is the one returned.
+				var se *openapi3.SchemaError
+				require.ErrorAs(t, err, &se)
+				require.Equal(t, []string{"a"}, se.JSONPointer())
+			}
+		}
+	}
+}
+
 func BenchmarkVisitJSONObject(b *testing.B) {
 	item := openapi3.NewObjectSchema()
 	for i := range 12 {
