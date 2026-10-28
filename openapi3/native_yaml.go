@@ -3,6 +3,7 @@ package openapi3
 //go:generate go run nativeyamlgenerator.go
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -280,9 +281,28 @@ func normalizeAnyFields(out any) {
 
 // decodeMapping decodes node into a method-less view of the target, supplied by
 // the caller as a locally-declared shadow type, and returns the keys the target
-// does not declare.
-func decodeMapping[S any](node *yaml.Node, shadow *S) (map[string]any, error) {
-	return decodeStructWithExtensions(node, shadow)
+// does not declare. T is the target itself, named so that an error reports the
+// type the document was read into.
+func decodeMapping[T, S any](node *yaml.Node, shadow *S) (map[string]any, error) {
+	ext, err := decodeStructWithExtensions(node, shadow)
+	if err != nil {
+		return nil, targetTypeError[T, S](err)
+	}
+	return ext, nil
+}
+
+// targetTypeError names T where a decoder error names the shadow type S, which
+// exists only to stop the decode recursing and means nothing to a reader.
+func targetTypeError[T, S any](err error) error {
+	var typeErr *yaml.TypeError
+	if !errors.As(err, &typeErr) {
+		return err
+	}
+	shadow, target := reflect.TypeFor[S]().String(), reflect.TypeFor[T]().String()
+	for i, message := range typeErr.Errors {
+		typeErr.Errors[i] = strings.ReplaceAll(message, shadow, target)
+	}
+	return typeErr
 }
 
 // decodeStructWithExtensions decodes node into out and returns the mapping keys

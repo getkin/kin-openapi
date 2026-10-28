@@ -15,7 +15,7 @@ import (
 // UnmarshalYAML sets Components from node.
 func (components *Components) UnmarshalYAML(node *yaml.Node) error {
 	type bis Components
-	ext, err := decodeMapping(node, (*bis)(components))
+	ext, err := decodeMapping[Components](node, (*bis)(components))
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func (components *Components) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Contact from node.
 func (contact *Contact) UnmarshalYAML(node *yaml.Node) error {
 	type bis Contact
-	ext, err := decodeMapping(node, (*bis)(contact))
+	ext, err := decodeMapping[Contact](node, (*bis)(contact))
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (contact *Contact) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Discriminator from node.
 func (discriminator *Discriminator) UnmarshalYAML(node *yaml.Node) error {
 	type bis Discriminator
-	ext, err := decodeMapping(node, (*bis)(discriminator))
+	ext, err := decodeMapping[Discriminator](node, (*bis)(discriminator))
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (discriminator *Discriminator) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Encoding from node.
 func (encoding *Encoding) UnmarshalYAML(node *yaml.Node) error {
 	type bis Encoding
-	ext, err := decodeMapping(node, (*bis)(encoding))
+	ext, err := decodeMapping[Encoding](node, (*bis)(encoding))
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (encoding *Encoding) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Example from node.
 func (example *Example) UnmarshalYAML(node *yaml.Node) error {
 	type bis Example
-	ext, err := decodeMapping(node, (*bis)(example))
+	ext, err := decodeMapping[Example](node, (*bis)(example))
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (example *Example) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets ExternalDocs from node.
 func (e *ExternalDocs) UnmarshalYAML(node *yaml.Node) error {
 	type bis ExternalDocs
-	ext, err := decodeMapping(node, (*bis)(e))
+	ext, err := decodeMapping[ExternalDocs](node, (*bis)(e))
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (e *ExternalDocs) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Info from node.
 func (info *Info) UnmarshalYAML(node *yaml.Node) error {
 	type bis Info
-	ext, err := decodeMapping(node, (*bis)(info))
+	ext, err := decodeMapping[Info](node, (*bis)(info))
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (info *Info) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets License from node.
 func (license *License) UnmarshalYAML(node *yaml.Node) error {
 	type bis License
-	ext, err := decodeMapping(node, (*bis)(license))
+	ext, err := decodeMapping[License](node, (*bis)(license))
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (license *License) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Link from node.
 func (link *Link) UnmarshalYAML(node *yaml.Node) error {
 	type bis Link
-	ext, err := decodeMapping(node, (*bis)(link))
+	ext, err := decodeMapping[Link](node, (*bis)(link))
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (link *Link) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets MediaType from node.
 func (mediaType *MediaType) UnmarshalYAML(node *yaml.Node) error {
 	type bis MediaType
-	ext, err := decodeMapping(node, (*bis)(mediaType))
+	ext, err := decodeMapping[MediaType](node, (*bis)(mediaType))
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (mediaType *MediaType) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets OAuthFlow from node.
 func (flow *OAuthFlow) UnmarshalYAML(node *yaml.Node) error {
 	type bis OAuthFlow
-	ext, err := decodeMapping(node, (*bis)(flow))
+	ext, err := decodeMapping[OAuthFlow](node, (*bis)(flow))
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (flow *OAuthFlow) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets OAuthFlows from node.
 func (flows *OAuthFlows) UnmarshalYAML(node *yaml.Node) error {
 	type bis OAuthFlows
-	ext, err := decodeMapping(node, (*bis)(flows))
+	ext, err := decodeMapping[OAuthFlows](node, (*bis)(flows))
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (flows *OAuthFlows) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Parameter from node.
 func (parameter *Parameter) UnmarshalYAML(node *yaml.Node) error {
 	type bis Parameter
-	ext, err := decodeMapping(node, (*bis)(parameter))
+	ext, err := decodeMapping[Parameter](node, (*bis)(parameter))
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (parameter *Parameter) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets PathItem from node.
 func (pathItem *PathItem) UnmarshalYAML(node *yaml.Node) error {
 	type bis PathItem
-	ext, err := decodeMapping(node, (*bis)(pathItem))
+	ext, err := decodeMapping[PathItem](node, (*bis)(pathItem))
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (pathItem *PathItem) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets RequestBody from node.
 func (requestBody *RequestBody) UnmarshalYAML(node *yaml.Node) error {
 	type bis RequestBody
-	ext, err := decodeMapping(node, (*bis)(requestBody))
+	ext, err := decodeMapping[RequestBody](node, (*bis)(requestBody))
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (requestBody *RequestBody) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Response from node.
 func (response *Response) UnmarshalYAML(node *yaml.Node) error {
 	type bis Response
-	ext, err := decodeMapping(node, (*bis)(response))
+	ext, err := decodeMapping[Response](node, (*bis)(response))
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (response *Response) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets SecurityScheme from node.
 func (ss *SecurityScheme) UnmarshalYAML(node *yaml.Node) error {
 	type bis SecurityScheme
-	ext, err := decodeMapping(node, (*bis)(ss))
+	ext, err := decodeMapping[SecurityScheme](node, (*bis)(ss))
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (ss *SecurityScheme) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Server from node.
 func (server *Server) UnmarshalYAML(node *yaml.Node) error {
 	type bis Server
-	ext, err := decodeMapping(node, (*bis)(server))
+	ext, err := decodeMapping[Server](node, (*bis)(server))
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (server *Server) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets ServerVariable from node.
 func (serverVariable *ServerVariable) UnmarshalYAML(node *yaml.Node) error {
 	type bis ServerVariable
-	ext, err := decodeMapping(node, (*bis)(serverVariable))
+	ext, err := decodeMapping[ServerVariable](node, (*bis)(serverVariable))
 	if err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ func (serverVariable *ServerVariable) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets Tag from node.
 func (t *Tag) UnmarshalYAML(node *yaml.Node) error {
 	type bis Tag
-	ext, err := decodeMapping(node, (*bis)(t))
+	ext, err := decodeMapping[Tag](node, (*bis)(t))
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (t *Tag) UnmarshalYAML(node *yaml.Node) error {
 // UnmarshalYAML sets XML from node.
 func (xml *XML) UnmarshalYAML(node *yaml.Node) error {
 	type bis XML
-	ext, err := decodeMapping(node, (*bis)(xml))
+	ext, err := decodeMapping[XML](node, (*bis)(xml))
 	if err != nil {
 		return err
 	}

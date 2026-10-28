@@ -105,7 +105,7 @@ func (schema *Schema) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	type bis Schema
-	ext, err := decodeMapping(node, (*bis)(schema))
+	ext, err := decodeMapping[Schema](node, (*bis)(schema))
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (eb *ExclusiveBound) UnmarshalYAML(node *yaml.Node) error {
 // the flag.
 func (operation *Operation) UnmarshalYAML(node *yaml.Node) error {
 	type bis Operation
-	ext, err := decodeMapping(node, (*bis)(operation))
+	ext, err := decodeMapping[Operation](node, (*bis)(operation))
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (operation *Operation) UnmarshalYAML(node *yaml.Node) error {
 
 func (doc *T) UnmarshalYAML(node *yaml.Node) error {
 	type bis T
-	ext, err := decodeMapping(node, (*bis)(doc))
+	ext, err := decodeMapping[T](node, (*bis)(doc))
 	if err != nil {
 		return err
 	}
