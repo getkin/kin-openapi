@@ -62,3 +62,22 @@ func yamlToJSON(src string) ([]byte, error) {
 	}
 	return json.Marshal(v)
 }
+
+// A type error names the OpenAPI type the document was read into, not the
+// shadow type that only exists to stop the decode recursing.
+func TestNativeStock_TypeErrorNamesTheTarget(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		target any
+		expect string
+	}{
+		{"document", &T{}, "openapi3.T"},
+		{"info", &Info{}, "openapi3.Info"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := goyaml.Unmarshal([]byte("GET /anything\n"), test.target)
+			require.ErrorContains(t, err, test.expect)
+			require.NotContains(t, err.Error(), "bis")
+		})
+	}
+}

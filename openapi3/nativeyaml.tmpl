@@ -15,7 +15,7 @@ import (
 // UnmarshalYAML sets {{ $type.Name }} from node.
 func ({{ $type.Recv }} *{{ $type.Name }}) UnmarshalYAML(node *yaml.Node) error {
 	type bis {{ $type.Name }}
-	ext, err := decodeMapping(node, (*bis)({{ $type.Recv }}))
+	ext, err := decodeMapping[{{ $type.Name }}](node, (*bis)({{ $type.Recv }}))
 	if err != nil {
 		return err
 	}
