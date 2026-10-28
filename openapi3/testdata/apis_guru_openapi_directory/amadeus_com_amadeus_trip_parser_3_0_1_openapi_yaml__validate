@@ -1,0 +1,11 @@
+invalid components: schema "car": invalid example: string doesn't match the regular expression "{0-9]{1,15}"
+Schema:
+  {
+    "description": "Phone number. Composed of digits only. The number of digits depends on the country.",
+    "example": "0336123123",
+    "pattern": "{0-9]{1,15}",
+    "type": "string"
+  }
+
+Value:
+  "0336123123"

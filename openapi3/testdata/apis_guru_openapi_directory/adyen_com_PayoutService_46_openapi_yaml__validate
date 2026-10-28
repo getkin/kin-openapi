@@ -1,0 +1,10 @@
+invalid components: schema "BrowserInfo": invalid default: value must be a boolean
+Schema:
+  {
+    "default": "true",
+    "description": "Boolean value indicating if the shopper's browser is able to execute JavaScript. A default 'true' value is assumed if the field is not present.",
+    "type": "boolean"
+  }
+
+Value:
+  "true"
