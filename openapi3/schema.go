@@ -1861,15 +1861,6 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 					}
 				}
 			}
-			if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" {
-				// Only successfully compiled patterns are cached.
-				// The cache does not record which compiler was used, so a custom one always compiles.
-				if _, ok := compiledPatterns.Load(schema.Pattern); !ok || validationOpts.regexCompilerFunc != nil {
-					if _, err := schema.compilePattern(nil, validationOpts.regexCompilerFunc); err != nil {
-						return visited, err
-					}
-				}
-			}
 		case TypeArray:
 			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
 				return visited, newSchemaItemsRequired(schema.Origin)
@@ -1881,6 +1872,18 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 			}
 		default:
 			return visited, newSchemaTypeError(schemaType, schema.Origin)
+		}
+	}
+
+	// `pattern` applies to every string value, also when `type` is omitted.
+	if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" &&
+		(schema.Type.IsEmpty() || schema.Type.Includes(TypeString)) {
+		// Only successfully compiled patterns are cached.
+		// The cache does not record which compiler was used, so a custom one always compiles.
+		if _, ok := compiledPatterns.Load(schema.Pattern); !ok || validationOpts.regexCompilerFunc != nil {
+			if _, err := schema.compilePattern(nil, validationOpts.regexCompilerFunc); err != nil {
+				return visited, err
+			}
 		}
 	}
 
