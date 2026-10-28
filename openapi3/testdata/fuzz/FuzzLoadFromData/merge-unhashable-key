@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("<<:\n  ? [1]\n  : v\n1: x\n")
