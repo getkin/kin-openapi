@@ -127,3 +127,49 @@ func TestSchemaRefSiblingsAreIgnoredIn30(t *testing.T) {
 	require.Same(t, doc.Components.Schemas["Base"].Value, value)
 	require.NoError(t, value.VisitJSON("abc"))
 }
+
+// An extension next to a $ref describes the member that carries it, so it
+// reaches the schema the member resolves to. A tool reading x-sunset off a
+// property finds it whether the property is written inline or as a $ref.
+func TestSchemaRefSiblingExtensionsReachTheSchema(t *testing.T) {
+	t.Parallel()
+	doc := loadSchemaRefSiblings(t, "3.1.0", `{
+    "Nickname": {"type": "string", "x-owner": "identity"},
+    "User": {"type": "object", "properties": {
+      "nickname": {"$ref": "#/components/schemas/Nickname", "x-sunset": "2099-12-31"}
+    }}
+  }`)
+
+	nickname := doc.Components.Schemas["User"].Value.Properties["nickname"]
+	require.Equal(t, "2099-12-31", nickname.Value.Extensions["x-sunset"])
+	require.Equal(t, "identity", nickname.Value.Extensions["x-owner"], "the referenced schema's own extensions are kept")
+	require.Empty(t, doc.Components.Schemas["Nickname"].Value.Extensions["x-sunset"], "the referenced schema is not written to")
+}
+
+// The nearer extension wins, as a sibling annotation does.
+func TestSchemaRefSiblingExtensionOverridesTheReferenced(t *testing.T) {
+	t.Parallel()
+	doc := loadSchemaRefSiblings(t, "3.1.0", `{
+    "Nickname": {"type": "string", "x-sunset": "2030-01-01"},
+    "User": {"type": "object", "properties": {
+      "nickname": {"$ref": "#/components/schemas/Nickname", "x-sunset": "2099-12-31"}
+    }}
+  }`)
+
+	require.Equal(t, "2099-12-31", doc.Components.Schemas["User"].Value.Properties["nickname"].Value.Extensions["x-sunset"])
+	require.Equal(t, "2030-01-01", doc.Components.Schemas["Nickname"].Value.Extensions["x-sunset"])
+}
+
+// In 3.0 a $ref replaces its whole object, siblings included, so an extension
+// next to it is ignored like every other sibling.
+func TestSchemaRefSiblingExtensionsIgnoredIn30(t *testing.T) {
+	t.Parallel()
+	doc := loadSchemaRefSiblings(t, "3.0.3", `{
+    "Nickname": {"type": "string"},
+    "User": {"type": "object", "properties": {
+      "nickname": {"$ref": "#/components/schemas/Nickname", "x-sunset": "2099-12-31"}
+    }}
+  }`)
+
+	require.Empty(t, doc.Components.Schemas["User"].Value.Properties["nickname"].Value.Extensions["x-sunset"])
+}
