@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -77,7 +78,7 @@ func TestNativeStock_TypeErrorNamesTheTarget(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			err := goyaml.Unmarshal([]byte("GET /anything\n"), test.target)
 			require.ErrorContains(t, err, test.expect)
-			require.NotContains(t, err.Error(), "bis")
+			require.NotContains(t, fmt.Sprint(err), "bis", "the shadow type is an implementation detail")
 		})
 	}
 }
