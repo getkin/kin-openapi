@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/url"
 	"os"
 	"path"
@@ -1627,12 +1628,23 @@ var refSiblingAnnotations = map[string]struct{}{
 //
 // It works on a copy so a schema shared by other references is not mutated.
 func (component *SchemaRef) applyRefSiblings(isOpenAPI31OrLater bool) {
-	if !isOpenAPI31OrLater || component.sibling == nil || component.Value == nil {
+	if !isOpenAPI31OrLater || component.Value == nil {
+		return
+	}
+	// An extension can be the only thing written next to the $ref, in which
+	// case there is no sibling schema but there is still something to apply.
+	if component.sibling == nil && len(component.Extensions) == 0 {
 		return
 	}
 	component.target = component.Value
 	var annotations, assertions []string
 	for _, field := range component.extra {
+		// An extension describes the member carrying the $ref and asserts
+		// nothing about the value, so it belongs on the copy rather than in
+		// a conjunct, and applySiblingSchemaFields has no field to set for it.
+		if strings.HasPrefix(field, "x-") {
+			continue
+		}
 		if _, ok := refSiblingAnnotations[field]; ok {
 			annotations = append(annotations, field)
 		} else {
@@ -1640,8 +1652,17 @@ func (component *SchemaRef) applyRefSiblings(isOpenAPI31OrLater bool) {
 		}
 	}
 	schemaCopy := *component.Value
-	applySiblingSchemaFields(&schemaCopy, component.sibling, annotations)
-	if len(assertions) != 0 {
+	if component.sibling != nil {
+		applySiblingSchemaFields(&schemaCopy, component.sibling, annotations)
+	}
+	if len(component.Extensions) != 0 {
+		extensions := make(map[string]any, len(schemaCopy.Extensions)+len(component.Extensions))
+		maps.Copy(extensions, schemaCopy.Extensions)
+		// The nearer extension wins, as the annotations above do.
+		maps.Copy(extensions, component.Extensions)
+		schemaCopy.Extensions = extensions
+	}
+	if component.sibling != nil && len(assertions) != 0 {
 		// The siblings sit in the same object as the $ref, so they share its origin.
 		conjunct := Schema{Origin: component.Origin}
 		applySiblingSchemaFields(&conjunct, component.sibling, assertions)
