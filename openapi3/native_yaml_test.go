@@ -81,3 +81,18 @@ func TestNativeStock_TypeErrorNamesTheTarget(t *testing.T) {
 		})
 	}
 }
+
+// A key YAML 1.1 reads as an int, such as an age bucket written 18_24, stays
+// the string it was written as, so a $ref naming it still points at it.
+func TestNativeStock_UnderscoredKeyStaysAString(t *testing.T) {
+	const src = `schemas:
+  18_24:
+    type: object
+  25_34:
+    type: object
+`
+	var components Components
+	require.NoError(t, goyaml.Unmarshal([]byte(src), &components))
+	require.Contains(t, components.Schemas, "18_24")
+	require.Contains(t, components.Schemas, "25_34")
+}
