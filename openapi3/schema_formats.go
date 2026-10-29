@@ -5,6 +5,7 @@ import (
 	"math"
 	"net/netip"
 	"regexp"
+	"time"
 )
 
 // FormatValidator is an interface for custom format validators.
@@ -50,13 +51,13 @@ const (
 	FormatOfStringDate = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$`
 
 	// FormatOfStringDateTime is a RFC3339 date-time format regexp, for example "2017-07-21T17:32:28Z".
-	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$`
+	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)([0-1][0-9]|2[0-3]):[0-5][0-9])$`
 )
 
 func init() {
 	DefineStringFormatValidator("byte", NewRegexpFormatValidator(FormatOfStringByte))
-	DefineStringFormatValidator("date", NewRegexpFormatValidator(FormatOfStringDate))
-	DefineStringFormatValidator("date-time", NewRegexpFormatValidator(FormatOfStringDateTime))
+	DefineStringFormatValidator("date", newDateFormatValidator(FormatOfStringDate))
+	DefineStringFormatValidator("date-time", newDateFormatValidator(FormatOfStringDateTime))
 	DefineIntegerFormatValidator("int32", NewRangeFormatValidator(int64(math.MinInt32), int64(math.MaxInt32)))
 	DefineIntegerFormatValidator("int64", NewRangeFormatValidator(int64(math.MinInt64), int64(math.MaxInt64)))
 }
@@ -127,6 +128,19 @@ func NewRegexpFormatValidator(pattern string) StringFormatValidator {
 		panic(err)
 	}
 	return stringRegexpFormatValidator{re: re}
+}
+
+// newDateFormatValidator matches the value against pattern, which only matches strings starting with
+// a YYYY-MM-DD date, then checks that its month has this day, as RFC 3339 requires (section 5.7).
+func newDateFormatValidator(pattern string) StringFormatValidator {
+	re := NewRegexpFormatValidator(pattern)
+	return NewCallbackValidator(func(value string) error {
+		if err := re.Validate(value); err != nil {
+			return err
+		}
+		_, err := time.Parse(time.DateOnly, value[:len(time.DateOnly)])
+		return err
+	})
 }
 
 // NewCallbackValidator creates a new FormatValidator that uses a callback function to validate the value.

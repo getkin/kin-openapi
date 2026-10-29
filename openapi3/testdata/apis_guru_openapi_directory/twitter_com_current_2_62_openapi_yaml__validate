@@ -1,4 +1,4 @@
-invalid components: schema "Expansions": invalid example: Error at "/created_at": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$" | Error at "/edit_history_tweet_ids": property "edit_history_tweet_ids" is missing
+invalid components: schema "Expansions": invalid example: Error at "/created_at": string doesn't match the format "date-time": string doesn't match pattern "^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)([0-1][0-9]|2[0-3]):[0-5][0-9])$" | Error at "/edit_history_tweet_ids": property "edit_history_tweet_ids" is missing
 Schema:
   {
     "example": {

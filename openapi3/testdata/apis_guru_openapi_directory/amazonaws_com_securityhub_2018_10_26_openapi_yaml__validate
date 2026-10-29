@@ -1,1 +1,1 @@
-invalid components: schema "TagKey": error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+invalid components: schema "GetFindingHistoryResponse": invalid example: Error at "/Records": doesn't match schema due to: Error at "/0/UpdateTime": doesn't match schema due to: string doesn't match the format "date-time": parsing time "2021-09-31": day out of range
