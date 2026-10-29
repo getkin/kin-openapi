@@ -1306,7 +1306,13 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRefV2, parameterV2 := FromV3SchemaRef(schemaRef, components)
 		if schemaRefV2 == nil {
-			return parameterV2, nil
+			if parameter.In == "formData" {
+				return parameterV2, nil
+			}
+			// A binary schema converts to a formData file, which only a
+			// request body property may become. Anywhere else the parameter
+			// keeps its location and name and stays a binary string.
+			return fromV3BinaryParameter(result, schemaRef, components), nil
 		}
 		if ref := schemaRefV2.Ref; ref != "" {
 			result.Schema = &openapi2.SchemaRef{Ref: FromV3Ref(ref)}
@@ -1338,6 +1344,34 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		}
 	}
 	return result, nil
+}
+
+// fromV3BinaryParameter fills result, a parameter outside formData, from its
+// binary schema. Swagger 2.0 allows type file only in formData, so the schema
+// is kept as a string of format binary.
+func fromV3BinaryParameter(result *openapi2.Parameter, schemaRef *openapi3.SchemaRef, components *openapi3.Components) *openapi2.Parameter {
+	schema := schemaRef.Value
+	if schema == nil && components != nil {
+		if val, ok := components.Schemas[getParameterNameFromNewRef(schemaRef.Ref)]; ok && val != nil {
+			schema = val.Value
+		}
+	}
+	result.Type = &openapi3.Types{"string"}
+	result.Format = "binary"
+	if schema == nil {
+		return result
+	}
+	result.Enum = schema.Enum
+	result.Minimum = effectiveMin(schema.Min, schema.ExclusiveMin)
+	result.Maximum = effectiveMax(schema.Max, schema.ExclusiveMax)
+	result.ExclusiveMin = exclusiveBoundToBool(schema.ExclusiveMin)
+	result.ExclusiveMax = exclusiveBoundToBool(schema.ExclusiveMax)
+	result.MinLength = schema.MinLength
+	result.MaxLength = schema.MaxLength
+	result.Pattern = schema.Pattern
+	result.Default = schema.Default
+	result.AllowEmptyValue = schema.AllowEmptyValue
+	return result
 }
 
 // fromV3QueryStyle maps a query parameter's explicit style and explode to the equivalent collectionFormat.
