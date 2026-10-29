@@ -1284,7 +1284,8 @@ func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema {
 
 func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema {
 	n := uint64(i)
-	schema.MinLength = (n*8 + 5) / 6
+	v := (n*8 + 5) / 6
+	schema.MaxLength = &v
 	return schema
 }
 

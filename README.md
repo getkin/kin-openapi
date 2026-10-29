@@ -333,6 +333,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 * `openapi3filter` now parses `number` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as decimal numbers only, so Go float literals such as `0x1p4`, `1_000`, `Inf`, `-infinity` or `NaN` are now rejected as invalid numbers.
 * `(*openapi3.Schema).Validate(..)` (hence `(*openapi3.T).Validate(..)`) now rejects a `multipleOf` of zero or less (`openapi3.SchemaMultipleOfNotPositiveError`), as JSON Schema requires it to be strictly greater than 0. Such a schema used to pass validation and then reject every value with `multipleOf must be greater than zero`.
 * `(*openapi3.Schema).Validate(..)` now also compiles the `pattern` of a schema without `type`, as it does for `type: string`, and rejects one that does not compile with `openapi3.SchemaPatternRegexError`. Such a schema used to pass validation and then fail on every string value it was given.
+* `(*openapi3.Schema).WithMaxLengthDecodedBase64(..)` now sets `maxLength`. It used to set `minLength` instead, overwriting any minimum and leaving the length unbounded.
 
 ### v0.152.0
 * JSON keys of OpenAPI documents only fill the field of the same case (`json:",case:strict"`) when `encoding/json` is implemented with `encoding/json/v2` (by default from Go 1.27, and on Go 1.25 and 1.26 with `GOEXPERIMENT=jsonv2`): a key such as `"Components"` (not `"components"`) is kept as an extension instead of filling `openapi3.T.Components`. Other builds still match keys case-insensitively, as `encoding/json` v1 does.
