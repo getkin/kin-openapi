@@ -109,8 +109,12 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) (map[string
 		if _, ok := refs[ref.Ref]; ok {
 			return nil
 		}
+		resolved := ref.Value
+		if ref.target != nil {
+			resolved = ref.target
+		}
 		var target any
-		bytes, err := json.Marshal(ref.Value)
+		bytes, err := json.Marshal(resolved)
 		if err != nil {
 			return err
 		}
@@ -118,7 +122,7 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) (map[string
 			return err
 		}
 		refs[ref.Ref] = target
-		values[ref.Ref] = ref.Value
+		values[ref.Ref] = resolved
 		return nil
 	})
 	if err != nil {
