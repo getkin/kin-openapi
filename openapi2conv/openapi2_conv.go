@@ -1306,26 +1306,27 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRefV2, parameterV2 := FromV3SchemaRef(schemaRef, components)
 		if schemaRefV2 == nil {
-			if parameterV2 == nil || parameterV2.Ref != "" {
+			if parameterV2 == nil {
+				return nil, nil
+			}
+			// A $ref to a binary component answers with a reference to the v2
+			// parameter FromV3Schemas writes for that component. That is a
+			// shape Swagger 2.0 has, so keep it rather than inlining a copy of
+			// the component at each place it is used.
+			if parameterV2.Ref != "" {
 				return parameterV2, nil
 			}
 			// A binary schema is how a file upload is written as a property of
 			// a form body, so FromV3SchemaRef answers one with the formData
-			// parameter that property stands for. Here the schema belongs to a
-			// parameter that already says what it is called and where it sits,
-			// and OpenAPI 3 has no formData location, so keep the parameter and
-			// take only the constraints from the stand-in. Returning the
-			// stand-in as it came dropped the name and moved the parameter.
-			parameterV2.In = result.In
-			parameterV2.Name = result.Name
-			parameterV2.Required = result.Required
-			parameterV2.Extensions = result.Extensions
-			if result.Description != "" {
-				parameterV2.Description = result.Description
+			// parameter that property stands for. Only a request body property
+			// may become that, and OpenAPI 3 has no formData location, so
+			// anywhere else the parameter keeps its name and location and its
+			// schema stays a binary string. Returning the stand-in as it came
+			// dropped the name and moved the parameter.
+			if parameter.In == "formData" {
+				return parameterV2, nil
 			}
-			parameterV2.Type = &openapi3.Types{"string"}
-			parameterV2.Format = "binary"
-			return parameterV2, nil
+			return fromV3BinaryParameter(result, schemaRef.Value, components), nil
 		}
 		if ref := schemaRefV2.Ref; ref != "" {
 			result.Schema = &openapi2.SchemaRef{Ref: FromV3Ref(ref)}
@@ -1357,6 +1358,40 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		}
 	}
 	return result, nil
+}
+
+// fromV3BinaryParameter fills result, a parameter outside formData, from its
+// binary schema. Swagger 2.0 allows type file only in formData, so the schema
+// is kept as a string of format binary.
+func fromV3BinaryParameter(result *openapi2.Parameter, schema *openapi3.Schema, components *openapi3.Components) *openapi2.Parameter {
+	result.Type = &openapi3.Types{"string"}
+	result.Format = "binary"
+	if schema == nil {
+		return result
+	}
+	result.Enum = schema.Enum
+	result.Minimum = effectiveMin(schema.Min, schema.ExclusiveMin)
+	result.Maximum = effectiveMax(schema.Max, schema.ExclusiveMax)
+	result.ExclusiveMin = exclusiveBoundToBool(schema.ExclusiveMin)
+	result.ExclusiveMax = exclusiveBoundToBool(schema.ExclusiveMax)
+	result.MinLength = schema.MinLength
+	result.MaxLength = schema.MaxLength
+	result.Pattern = schema.Pattern
+	result.Default = schema.Default
+	result.AllowEmptyValue = schema.AllowEmptyValue
+	// The keywords below assert nothing about a string, but a schema may carry
+	// them all the same, and the conversion below this one carries them over.
+	// Which branch converted the parameter is no reason to drop them.
+	result.MultipleOf = schema.MultipleOf
+	result.UniqueItems = schema.UniqueItems
+	result.MinItems = schema.MinItems
+	result.MaxItems = schema.MaxItems
+	if schema.Items != nil {
+		result.Items, _ = FromV3SchemaRef(schema.Items, components)
+	}
+	// collectionFormat is left out on purpose: the conversion below sets it
+	// only for an array in the query, and this type is a string.
+	return result
 }
 
 // fromV3QueryStyle maps a query parameter's explicit style and explode to the equivalent collectionFormat.
