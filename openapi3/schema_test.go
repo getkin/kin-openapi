@@ -1655,7 +1655,7 @@ func TestSchemaMultipleOfAcrossMagnitudes(t *testing.T) {
 func TestSchemaLengthDecodedBase64(t *testing.T) {
 	t.Parallel()
 
-	encoded := func(n int) string { return base64.RawStdEncoding.EncodeToString(make([]byte, n)) }
+	encoded := func(n int) string { return base64.RawStdEncoding.EncodeToString(make([]byte /*,*/, n)) }
 
 	t.Run("min", func(t *testing.T) {
 		schema := NewBytesSchema().WithMinLengthDecodedBase64(3)
