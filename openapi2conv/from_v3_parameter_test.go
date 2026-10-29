@@ -29,6 +29,31 @@ func TestFromV3ParameterSchemas(t *testing.T) {
 		require.Equal(t, &openapi2.Parameter{Ref: "#/parameters/File"}, got)
 	})
 
+	t.Run("inline binary schema", func(t *testing.T) {
+		t.Parallel()
+
+		param := &openapi3.ParameterRef{Value: &openapi3.Parameter{
+			Name:        "token",
+			In:          "query",
+			Description: "an opaque blob",
+			Required:    true,
+			Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{
+				Type:   &openapi3.Types{"string"},
+				Format: "binary",
+			}},
+		}}
+		got, err := openapi2conv.FromV3Parameter(param, nil)
+		require.NoError(t, err)
+		require.Equal(t, &openapi2.Parameter{
+			Name:        "token",
+			In:          "query",
+			Description: "an opaque blob",
+			Required:    true,
+			Type:        &openapi3.Types{"string"},
+			Format:      "binary",
+		}, got)
+	})
+
 	t.Run("schema without a value", func(t *testing.T) {
 		t.Parallel()
 

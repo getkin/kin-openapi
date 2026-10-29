@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"swagger\":\"2.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":{\"/f\":{\"post\":{\"consumes\":[\"multipart/form-data\"],\"parameters\":[{\"name\":\"file\",\"in\":\"fromData\",\"type\":\"file\",\"description\":\"the upload\"}],\"responses\":{\"200\":{\"description\":\"ok\"}}}}}}")

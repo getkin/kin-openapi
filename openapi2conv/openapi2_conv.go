@@ -1306,6 +1306,25 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRefV2, parameterV2 := FromV3SchemaRef(schemaRef, components)
 		if schemaRefV2 == nil {
+			if parameterV2 == nil || parameterV2.Ref != "" {
+				return parameterV2, nil
+			}
+			// A binary schema is how a file upload is written as a property of
+			// a form body, so FromV3SchemaRef answers one with the formData
+			// parameter that property stands for. Here the schema belongs to a
+			// parameter that already says what it is called and where it sits,
+			// and OpenAPI 3 has no formData location, so keep the parameter and
+			// take only the constraints from the stand-in. Returning the
+			// stand-in as it came dropped the name and moved the parameter.
+			parameterV2.In = result.In
+			parameterV2.Name = result.Name
+			parameterV2.Required = result.Required
+			parameterV2.Extensions = result.Extensions
+			if result.Description != "" {
+				parameterV2.Description = result.Description
+			}
+			parameterV2.Type = &openapi3.Types{"string"}
+			parameterV2.Format = "binary"
 			return parameterV2, nil
 		}
 		if ref := schemaRefV2.Ref; ref != "" {
