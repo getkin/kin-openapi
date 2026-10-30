@@ -413,7 +413,8 @@ func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, valu
 		return schema.visitJSON(settings, value)
 	}
 
-	return validator.validate(settings, value)
+	// The validator only knows maps.
+	return validator.validate(settings, unordered(value))
 }
 
 // schemaUsesJSONSchema2020Features checks the keywords that guard the legacy

@@ -3,6 +3,7 @@ package openapi3
 import (
 	"encoding/json"
 	"fmt"
+	"iter"
 	"maps"
 	"math"
 	"math/big"
@@ -136,7 +137,12 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 	case []any:
 		return schema.visitJSONArray(settings, value)
 	case map[string]any:
-		return schema.visitJSONObject(settings, value)
+		return schema.visitJSONObject(settings, value, nil)
+	case *OrderedObject:
+		if value == nil { // Like a nil map
+			return schema.visitJSONObject(settings, map[string]any{}, nil)
+		}
+		return schema.visitJSONObject(settings, value.members, &value.names)
 	case map[any]any: // for YAML cf. issue https://github.com/getkin/kin-openapi/issues/444
 		values := make(map[string]any, len(value))
 		for key, v := range value {
@@ -145,7 +151,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 			}
 		}
 		if len(value) == len(values) {
-			return schema.visitJSONObject(settings, values)
+			return schema.visitJSONObject(settings, values, nil)
 		}
 	}
 
@@ -184,6 +190,12 @@ func (schema *Schema) visitEnumOperation(settings *schemaValidationSettings, val
 
 // Helps with `1 == json.Number("1")`
 func equalJSONValues(a, b any) bool {
+	if o, ok := a.(*OrderedObject); ok {
+		a = o.members
+	}
+	if o, ok := b.(*OrderedObject); ok {
+		b = o.members
+	}
 	if x, ok := jsonNumberAsFloat64(a); ok {
 		y, ok := jsonNumberAsFloat64(b)
 		return ok && x == y
@@ -258,6 +270,9 @@ func (schema *Schema) resolveDiscriminatorRef(settings *schemaValidationSettings
 	}
 	pn := schema.Discriminator.PropertyName
 	valuemap, okcheck := value.(map[string]any)
+	if o, ok := value.(*OrderedObject); ok {
+		valuemap, okcheck = o.members, true
+	}
 	if !okcheck {
 		return "", nil
 	}
@@ -901,17 +916,19 @@ func (schema *Schema) visitJSONArray(settings *schemaValidationSettings, value [
 
 func (schema *Schema) VisitJSONObject(value map[string]any) error {
 	settings := newSchemaValidationSettings()
-	return schema.visitJSONObject(settings, value)
+	return schema.visitJSONObject(settings, value, nil)
 }
 
-func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]any) error {
+// visitJSONObject validates value. If names is not nil, it is the order of the
+// members of value, and it is added to when a default is set.
+func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value map[string]any, names *[]string) error {
 	if !schema.Type.Permits(TypeObject) {
 		return schema.expectedType(settings, value)
 	}
 
 	var me MultiError
 
-	if settings.asreq || settings.asrep {
+	if (settings.asreq || settings.asrep) && schema.propertiesNeedVisit(settings) {
 		for _, propName := range componentNames(schema.Properties) {
 			propSchema := schema.Properties[propName]
 			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
@@ -919,6 +936,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 
 			if f := settings.defaultsSet; f != nil && value[propName] == nil {
 				if dflt := propSchema.Value.Default; dflt != nil && !reqRO && !repWO {
+					if _, ok := value[propName]; !ok && names != nil {
+						*names = append(*names, propName)
+					}
 					value[propName] = deepCopyJSONValue(dflt)
 					settings.onceSettingDefaults.Do(f)
 				}
@@ -981,61 +1001,55 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if ref := schema.AdditionalProperties.Schema; ref != nil {
 		additionalProperties = ref.Value
 	}
-	for _, k := range componentNames(value) {
-		v := value[k]
-		if properties != nil {
-			propertyRef := properties[k]
-			if propertyRef != nil {
-				p := propertyRef.Value
-				if p == nil {
-					return newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)
-				}
-				if err := p.visitChildJSON(settings, v); err != nil {
-					if settings.failfast {
-						return errSchema
-					}
-					err = markSchemaErrorKey(err, k)
-					if !settings.multiError {
-						return err
-					}
-					if v, ok := err.(MultiError); ok {
-						me = append(me, v...)
-						continue
-					}
-					me = append(me, err)
-				}
+	// Members are checked in map order and the errors sorted by member name,
+	// unless the value is ordered. Only members that fail are sorted.
+	type memberError struct {
+		key string
+		err error
+	}
+	var failed []memberError
+	for k, v := range objectMembers(value, names) {
+		var err error
+		switch propertyRef := properties[k]; {
+		case propertyRef != nil:
+			p := propertyRef.Value
+			if p == nil {
+				failed = append(failed, memberError{k, newUnresolvedRef(propertyRef.Ref, propertyRef.Origin)})
 				continue
 			}
-		}
-		if allowed := schema.AdditionalProperties.Has; allowed == nil || *allowed {
+			err = p.visitChildJSON(settings, v)
+		case schema.AdditionalProperties.Has == nil || *schema.AdditionalProperties.Has:
 			if additionalProperties != nil {
-				if err := additionalProperties.visitChildJSON(settings, v); err != nil {
-					if settings.failfast {
-						return errSchema
-					}
-					err = markSchemaErrorKey(err, k)
-					if !settings.multiError {
-						return err
-					}
-					if v, ok := err.(MultiError); ok {
-						me = append(me, v...)
-						continue
-					}
-					me = append(me, err)
-				}
+				err = additionalProperties.visitChildJSON(settings, v)
 			}
+		default:
+			if settings.failfast {
+				return errSchema
+			}
+			failed = append(failed, memberError{k, settings.newSchemaError(schema, value).
+				withField("properties").
+				withReason(fmt.Sprintf("property %q is unsupported", k))})
 			continue
 		}
-		if settings.failfast {
-			return errSchema
+		if err != nil {
+			if settings.failfast {
+				return errSchema
+			}
+			failed = append(failed, memberError{k, markSchemaErrorKey(err, k)})
 		}
-		err := settings.newSchemaError(schema, value).
-			withField("properties").
-			withReason(fmt.Sprintf("property %q is unsupported", k))
-		if !settings.multiError {
-			return err
+	}
+	if names == nil {
+		slices.SortFunc(failed, func(a, b memberError) int { return strings.Compare(a.key, b.key) })
+	}
+	for _, f := range failed {
+		if _, ok := f.err.(*UnresolvedRefError); ok || !settings.multiError {
+			return f.err
 		}
-		me = append(me, err)
+		if v, ok := f.err.(MultiError); ok {
+			me = append(me, v...)
+			continue
+		}
+		me = append(me, f.err)
 	}
 
 	// "required"
@@ -1140,7 +1154,7 @@ func isSliceOfUniqueItems(xs []any) bool {
 	for _, x := range xs {
 		// The input slice is converted from a JSON string, there shall
 		// have no error when convert it back.
-		key, _ := json.Marshal(&x)
+		key, _ := json.Marshal(unordered(x))
 		m[string(key)] = struct{}{}
 	}
 	return s == len(m)
@@ -1171,6 +1185,12 @@ func unsupportedFormat(format string) error {
 
 func deepCopyJSONValue(v any) any {
 	switch v := v.(type) {
+	case *OrderedObject:
+		cp := &OrderedObject{names: slices.Clone(v.names), members: make(map[string]any, len(v.members))}
+		for k, val := range v.members {
+			cp.members[k] = deepCopyJSONValue(val)
+		}
+		return cp
 	case map[string]any:
 		cp := make(map[string]any, len(v))
 		for k, val := range v {
@@ -1186,4 +1206,32 @@ func deepCopyJSONValue(v any) any {
 	default:
 		return v // string, float64, bool, nil — all immutable
 	}
+}
+
+// objectMembers returns the members of value in the order of names, or in map order if names is nil.
+func objectMembers(value map[string]any, names *[]string) iter.Seq2[string, any] {
+	if names == nil {
+		return maps.All(value)
+	}
+	return func(yield func(string, any) bool) {
+		for _, name := range *names {
+			if !yield(name, value[name]) {
+				return
+			}
+		}
+	}
+}
+
+// propertiesNeedVisit says whether the readOnly, writeOnly and default pass has anything to do.
+func (schema *Schema) propertiesNeedVisit(settings *schemaValidationSettings) bool {
+	for _, ref := range schema.Properties {
+		p := ref.Value
+		if p == nil ||
+			settings.asreq && p.ReadOnly && !settings.readOnlyValidationDisabled ||
+			settings.asrep && p.WriteOnly && !settings.writeOnlyValidationDisabled ||
+			settings.defaultsSet != nil && p.Default != nil {
+			return true
+		}
+	}
+	return false
 }

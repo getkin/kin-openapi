@@ -2080,6 +2080,32 @@ func (e *OperationValidationError) Error() string
 
 func (e *OperationValidationError) Unwrap() error
 
+type OrderedObject struct {
+	// Has unexported fields.
+}
+    OrderedObject is a JSON object that keeps the order of its members. Schema
+    validation accepts it wherever it accepts a map[string]any, and reports the
+    errors of its members in that order.
+
+func NewOrderedObject() *OrderedObject
+    NewOrderedObject returns an empty OrderedObject. The zero value is also
+    empty.
+
+func (o *OrderedObject) Get(name string) (any, bool)
+    Get returns the member name.
+
+func (o *OrderedObject) Len() int
+    Len returns the number of members.
+
+func (o *OrderedObject) MarshalJSON() ([]byte, error)
+    MarshalJSON encodes the members in order.
+
+func (o *OrderedObject) Names() []string
+    Names returns the names of the members in order.
+
+func (o *OrderedObject) Set(name string, value any)
+    Set sets the member name to value, adding it after the others if it is new.
+
 type Origin struct {
 	Key       *Location             `json:"key,omitempty,case:strict" yaml:"key,omitempty"`
 	Fields    FieldLocations        `json:"fields,omitempty,case:strict" yaml:"fields,omitempty"`
