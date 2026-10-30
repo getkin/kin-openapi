@@ -29,7 +29,7 @@ func newUnderscorer() *strings.Replacer {
 	return strings.NewReplacer(chars...)
 }
 
-func isOpenAPIVersion(t *testing.T, path, str string) bool {
+func isOpenAPIVersion(t testing.TB, path, str string) bool {
 	file, err := os.Open(path)
 	require.NoError(t, err)
 	defer file.Close()
@@ -77,32 +77,37 @@ func golden(t *testing.T, e error, shortName, task string) {
 	}
 }
 
-func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping APIs Guru's large sets of documents")
-	}
-	if !openapi3.UsingJSONv2 {
-		t.Skip("skipping as goldens record errors from encoding/json/v2 (Go 1.27+)")
-	}
-	t.Parallel()
-
-	commit := os.Getenv("APISGURU_COMMIT")
+// apisGuruDirectory returns the commit of APIs Guru's documents to use, and
+// the directories they are downloaded to.
+func apisGuruDirectory() (commit, dirName, targetDir string) {
+	commit = os.Getenv("APISGURU_COMMIT")
 	if commit == "" {
 		commit = "f7207cf0a5c56081d275ebae4cf615249323385d" // On 2026-04-19
 	}
-	dirName := "APIs-guru-openapi-directory-" + commit[0:7]
-	targetDir := filepath.Join("testdata", dirName)
+	dirName = "APIs-guru-openapi-directory-" + commit[0:7]
+	targetDir = filepath.Join("testdata", dirName)
+	return
+}
+
+// apisGuruAPIs downloads APIs Guru's documents if needed and returns the
+// directory holding them.
+func apisGuruAPIs(tb testing.TB) string {
+	if testing.Short() {
+		tb.Skip("skipping APIs Guru's large sets of documents")
+	}
+
+	commit, dirName, targetDir := apisGuruDirectory()
 
 	if _, err := os.Stat(targetDir); errors.Is(err, os.ErrNotExist) {
-		req, err := http.NewRequestWithContext(t.Context(), "GET", "https://github.com/APIs-guru/openapi-directory/tarball/"+commit, nil)
-		require.NoError(t, err)
+		req, err := http.NewRequestWithContext(tb.Context(), "GET", "https://github.com/APIs-guru/openapi-directory/tarball/"+commit, nil)
+		require.NoError(tb, err)
 		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
+		require.NoError(tb, err)
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(tb, http.StatusOK, resp.StatusCode)
 
 		gzr, err := gzip.NewReader(resp.Body)
-		require.NoError(t, err)
+		require.NoError(tb, err)
 		defer gzr.Close()
 		tr := tar.NewReader(gzr)
 
@@ -111,30 +116,39 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 			if err == io.EOF {
 				break
 			}
-			require.NoError(t, err)
+			require.NoError(tb, err)
 
 			target := filepath.Join(targetDir, header.Name)
 			switch header.Typeflag {
 			case tar.TypeDir:
 				err := os.MkdirAll(target, 0755)
-				require.NoError(t, err)
+				require.NoError(tb, err)
 			case tar.TypeReg:
 				err := os.MkdirAll(filepath.Dir(target), 0755)
-				require.NoError(t, err)
+				require.NoError(tb, err)
 
 				func() {
 					f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-					require.NoError(t, err)
+					require.NoError(tb, err)
 					defer f.Close()
 
 					_, err = io.Copy(f, tr)
-					require.NoError(t, err)
+					require.NoError(tb, err)
 				}()
 			}
 		}
 	}
 
-	root := filepath.Join(targetDir, dirName, "APIs")
+	return filepath.Join(targetDir, dirName, "APIs")
+}
+
+func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
+	if !openapi3.UsingJSONv2 {
+		t.Skip("skipping as goldens record errors from encoding/json/v2 (Go 1.27+)")
+	}
+	t.Parallel()
+
+	root := apisGuruAPIs(t)
 
 	underscorer := newUnderscorer()
 	var checkedMu sync.Mutex
@@ -208,6 +222,28 @@ func TestV3ApisGuruOpenapiDirectory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkV3ApisGuruOpenapiDirectory(b *testing.B) {
+	root := apisGuruAPIs(b)
+
+	var paths []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() && isOpenAPIVersion(b, path, "openapi: 3") {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	require.NoError(b, err)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		for _, path := range paths {
+			loader := openapi3.NewLoader()
+			_, _ = loader.LoadFromFile(path)
+		}
+	}
+	b.ReportMetric(float64(len(paths)), "documents")
 }
 
 func disabled(shortName string) bool {

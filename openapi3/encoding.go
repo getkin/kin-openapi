@@ -82,16 +82,7 @@ func (encoding *Encoding) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-
-	delete(x.Extensions, "contentType")
-	delete(x.Extensions, "headers")
-	delete(x.Extensions, "style")
-	delete(x.Extensions, "explode")
-	delete(x.Extensions, "allowReserved")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "contentType", "headers", "style", "explode", "allowReserved")
 	*encoding = Encoding(x)
 	return nil
 }

@@ -212,8 +212,15 @@ func (${name} ${type}) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets ${type#'*'} to a copy of data.
 func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
-	var m map[string]any
-	if err = unmarshalJSON(data, &m); err != nil {
+	m := make(map[string][]byte)
+	if err = jsonMembers(data, func(k string, v []byte) error {
+		m[k] = v
+		return nil
+	}); err != nil {
+		var m map[string]any // Reports non-object values as before
+		if err = unmarshalJSON(data, &m); err == nil {
+			err = errNotJSONObject
+		}
 		return
 	}
 
@@ -225,16 +232,16 @@ func (${name} ${type}) UnmarshalJSON(data []byte) (err error) {
 	for _, k := range componentNames(m) {
 		v := m[k]
 		if strings.HasPrefix(k, "x-") {
-			x.Extensions[k] = v
+			var extension any
+			if err = unmarshalJSON(v, &extension); err != nil {
+				return
+			}
+			x.Extensions[k] = extension
 			continue
 		}
 
-		var data []byte
-		if data, err = json.Marshal(v); err != nil {
-			return
-		}
 		var vv ${value_type#'*'}
-		if err = vv.UnmarshalJSON(data); err != nil {
+		if err = vv.UnmarshalJSON(v); err != nil {
 			return
 		}
 		x.m[k] = &vv

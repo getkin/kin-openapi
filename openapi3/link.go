@@ -63,17 +63,7 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-
-	delete(x.Extensions, "operationRef")
-	delete(x.Extensions, "operationId")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "parameters")
-	delete(x.Extensions, "server")
-	delete(x.Extensions, "requestBody")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "operationRef", "operationId", "description", "parameters", "server", "requestBody")
 	*link = Link(x)
 	return nil
 }
