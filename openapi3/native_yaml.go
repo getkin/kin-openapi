@@ -25,17 +25,21 @@ func knownYAMLFields(t reflect.Type) map[string]struct{} {
 		if !f.IsExported() {
 			continue
 		}
-		name, _, _ := strings.Cut(f.Tag.Get("yaml"), ",")
-		if name == "" {
-			name = strings.ToLower(f.Name)
+		if name := yamlKey(f); name != "-" {
+			known[name] = struct{}{}
 		}
-		if name == "-" {
-			continue
-		}
-		known[name] = struct{}{}
 	}
 	knownYAMLFieldsCache.Store(t, known)
 	return known
+}
+
+// yamlKey is the document key a struct field is written under.
+func yamlKey(f reflect.StructField) string {
+	name, _, _ := strings.Cut(f.Tag.Get("yaml"), ",")
+	if name == "" {
+		name = strings.ToLower(f.Name)
+	}
+	return name
 }
 
 // normalizeDecoded gives a decoded any the shape the JSON round trip used to
@@ -49,30 +53,60 @@ func knownYAMLFields(t reflect.Type) map[string]struct{} {
 //
 // Applied only to any-typed values. A declared integer field keeps its own
 // type and its full range, which a blanket conversion would cost beyond 2^53.
-func normalizeDecoded(v any) any {
+func normalizeDecoded(v any) (any, error) {
 	switch t := v.(type) {
 	case int:
-		return float64(t)
+		return float64(t), nil
 	case int64:
-		return float64(t)
+		return float64(t), nil
 	case uint64:
-		return float64(t)
+		return float64(t), nil
 	case map[string]any:
 		for k, e := range t {
-			t[k] = normalizeDecoded(e)
+			n, err := normalizeDecoded(e)
+			if err != nil {
+				return nil, err
+			}
+			t[k] = n
 		}
 	case map[any]any:
 		m := make(map[string]any, len(t))
 		for k, e := range t {
-			m[fmt.Sprintf("%v", k)] = normalizeDecoded(e)
+			name, err := keyName(k)
+			if err != nil {
+				return nil, err
+			}
+			n, err := normalizeDecoded(e)
+			if err != nil {
+				return nil, err
+			}
+			m[name] = n
 		}
-		return m
+		return m, nil
 	case []any:
 		for i, e := range t {
-			t[i] = normalizeDecoded(e)
+			n, err := normalizeDecoded(e)
+			if err != nil {
+				return nil, err
+			}
+			t[i] = n
 		}
 	}
-	return v
+	return v, nil
+}
+
+// keyName is the name a non-string key is written under. YAML resolves a key
+// the way it resolves any scalar, and a document's names are strings, so a
+// scalar key is spelled out.
+//
+// A null key spells nothing. It names no member of the document, and the json
+// path has no key to decode it into, so a document that uses one is refused
+// rather than given a made-up name.
+func keyName(k any) (string, error) {
+	if k == nil {
+		return "", errors.New("mapping key is null, so it names nothing")
+	}
+	return fmt.Sprintf("%v", k), nil
 }
 
 // mappingPairs returns node's effective key/value node pairs, applying YAML
@@ -155,7 +189,7 @@ func isMergeKey(k *yaml.Node) bool {
 	if k.Tag == mergeKeyTag {
 		return true
 	}
-	return k.Value == mergeKey && k.Style == 0 && (k.Tag == "" || k.Tag == "!!str")
+	return k.Value == mergeKey && k.Style == 0 && (k.Tag == "" || k.Tag == strTag)
 }
 
 // mergeSourcePairs returns the pairs a merge key's value contributes: one
@@ -185,8 +219,11 @@ func mergeSourcePairs(v *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*yam
 }
 
 const (
-	mergeKey    = "<<"
-	mergeKeyTag = "!!merge"
+	mergeKey     = "<<"
+	mergeKeyTag  = "!!merge"
+	strTag       = "!!str"
+	nullTag      = "!!null"
+	timestampTag = "!!timestamp"
 )
 
 // decodeAny decodes a value node into an any and normalizes it. Every path that
@@ -197,7 +234,7 @@ func decodeAny(node *yaml.Node) (any, error) {
 	if err := node.Decode(&v); err != nil {
 		return nil, err
 	}
-	return normalizeDecoded(v), nil
+	return normalizeDecoded(v)
 }
 
 // collectExtensions returns the mapping keys of node that known does not
@@ -234,16 +271,16 @@ func collectExtensions(node *yaml.Node, known map[string]struct{}) (map[string]a
 // element type is any. Missing the slice case left an integer example as a
 // float64 and the enum it must match as an int, so a schema failed against its
 // own allowed values.
-func normalizeAnyFields(out any) {
+func normalizeAnyFields(out any) error {
 	v := reflect.ValueOf(out)
 	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
-			return
+			return nil
 		}
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {
-		return
+		return nil
 	}
 	for i := range v.NumField() {
 		f := v.Field(i)
@@ -252,9 +289,14 @@ func normalizeAnyFields(out any) {
 		}
 		switch f.Kind() {
 		case reflect.Interface:
-			if !f.IsNil() {
-				f.Set(reflect.ValueOf(normalizeDecoded(f.Interface())))
+			if f.IsNil() {
+				continue
 			}
+			n, err := normalizeDecoded(f.Interface())
+			if err != nil {
+				return err
+			}
+			f.Set(reflect.ValueOf(n))
 		case reflect.Slice, reflect.Map:
 			// []any and map[string]any: normalise the elements in place.
 			if f.Type().Elem().Kind() != reflect.Interface || f.IsNil() {
@@ -263,20 +305,31 @@ func normalizeAnyFields(out any) {
 			if f.Kind() == reflect.Slice {
 				for j := range f.Len() {
 					e := f.Index(j)
-					if !e.IsNil() {
-						e.Set(reflect.ValueOf(normalizeDecoded(e.Interface())))
+					if e.IsNil() {
+						continue
 					}
+					n, err := normalizeDecoded(e.Interface())
+					if err != nil {
+						return err
+					}
+					e.Set(reflect.ValueOf(n))
 				}
 				continue
 			}
 			for _, k := range f.MapKeys() {
 				e := f.MapIndex(k)
-				if !e.IsNil() {
-					f.SetMapIndex(k, reflect.ValueOf(normalizeDecoded(e.Interface())))
+				if e.IsNil() {
+					continue
 				}
+				n, err := normalizeDecoded(e.Interface())
+				if err != nil {
+					return err
+				}
+				f.SetMapIndex(k, reflect.ValueOf(n))
 			}
 		}
 	}
+	return nil
 }
 
 // decodeMapping decodes node into a method-less view of the target, supplied by
@@ -318,12 +371,154 @@ func decodeStructWithExtensions(node *yaml.Node, out any) (map[string]any, error
 	if node.Kind != yaml.MappingNode {
 		return nil, nil
 	}
+	if err := checkDeclaredFields(node, out); err != nil {
+		return nil, err
+	}
 	ext, _, err := collectExtensions(node, knownYAMLFields(reflect.TypeOf(out).Elem()))
 	if err != nil {
 		return nil, err
 	}
-	normalizeAnyFields(out)
+	if err := normalizeAnyFields(out); err != nil {
+		return nil, err
+	}
 	return ext, nil
+}
+
+// checkDeclaredFields holds out's declared fields to the values a JSON
+// document would carry, which the decoder is laxer than on two counts.
+//
+// A scalar's text goes into a string field whatever the scalar resolved to, so
+// `title: 1` reads as "1" where the json path refuses the document. And a
+// sequence element the target cannot hold is dropped, so `required: [a, null,
+// b]` reads as two entries where the json path keeps the null's place as an
+// empty string. A document that changes meaning with the decoder is worse than
+// one that is refused, so a scalar that resolved to something other than a
+// string is refused here, and a null in a list of strings keeps its place.
+//
+// Only out's own fields. A field whose type has an UnmarshalYAML of its own is
+// held to this when the decoder reaches that type.
+func checkDeclaredFields(node *yaml.Node, out any) error {
+	if node.Kind != yaml.MappingNode {
+		return nil
+	}
+	v := reflect.ValueOf(out).Elem()
+	t := v.Type()
+	for i := range t.NumField() {
+		f := t.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		key := yamlKey(f)
+		if key == "-" {
+			continue
+		}
+		value := mappingValue(node, key)
+		if value == nil {
+			continue
+		}
+		if err := checkFieldValue(v.Field(i), value, key); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// checkFieldValue applies checkDeclaredFields to one field: the string slots
+// are a string field, a list of strings, and a map whose values are written as
+// text. Anything else is the decoder's business.
+func checkFieldValue(field reflect.Value, node *yaml.Node, key string) error {
+	for field.Kind() == reflect.Pointer {
+		if field.IsNil() {
+			return nil
+		}
+		field = field.Elem()
+	}
+	switch {
+	case field.Kind() == reflect.String:
+		return requireStringScalar(node, key)
+	case field.Kind() == reflect.Slice && field.Type().Elem().Kind() == reflect.String:
+		return setStringList(field, node, key)
+	case field.Kind() == reflect.Map && writtenAsText(field.Type().Elem()):
+		for _, kv := range mappingPairs(node) {
+			if err := requireStringScalar(kv[1], kv[0].Value); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// writtenAsText reports whether a value of type t is written as a scalar
+// string, either because it is one or because it decodes from text.
+func writtenAsText(t reflect.Type) bool {
+	if t.Kind() == reflect.String {
+		return true
+	}
+	return reflect.PointerTo(t).Implements(reflect.TypeFor[interface{ UnmarshalText(text []byte) error }]())
+}
+
+// setStringList sets a list of strings from node. The field may be any type
+// whose underlying type is a list of strings, such as Types.
+func setStringList(field reflect.Value, node *yaml.Node, key string) error {
+	list, ok, err := stringList(node, key)
+	if err != nil || !ok {
+		return err
+	}
+	field.Set(reflect.ValueOf(list).Convert(field.Type()))
+	return nil
+}
+
+// stringList is the list of strings node holds, keeping the place of a null as
+// the empty string. The decoder drops such an element, since a string cannot
+// hold nil, which shortens the list without saying so.
+//
+// ok is false for a node that is not a sequence: one value where a list is
+// allowed, as in `type: string`, and anything the decode reports itself.
+func stringList(node *yaml.Node, key string) ([]string, bool, error) {
+	if node.Kind == yaml.AliasNode {
+		node = node.Alias
+	}
+	if node.Kind == yaml.ScalarNode {
+		return nil, false, requireStringScalar(node, key)
+	}
+	if node.Kind != yaml.SequenceNode {
+		return nil, false, nil
+	}
+
+	list := make([]string, len(node.Content))
+	for i, e := range node.Content {
+		if e.Kind == yaml.AliasNode {
+			e = e.Alias
+		}
+		if err := requireStringScalar(e, key); err != nil {
+			return nil, false, err
+		}
+		if e.Kind != yaml.ScalarNode {
+			return nil, false, nil
+		}
+		if e.Tag != nullTag {
+			list[i] = e.Value
+		}
+	}
+	return list, true, nil
+}
+
+// requireStringScalar refuses a scalar that resolved to something other than a
+// string where a string belongs.
+//
+// A null is allowed: a string cannot hold nil, so the json path reads it as the
+// empty string, and so does setStringList. A date-shaped scalar is allowed
+// because it is a string in this document's data model, which is what
+// stripTimestamp says.
+func requireStringScalar(node *yaml.Node, key string) error {
+	if node.Kind != yaml.ScalarNode {
+		return nil
+	}
+	switch node.Tag {
+	case "", strTag, nullTag, timestampTag:
+		return nil
+	}
+	return fmt.Errorf("yaml: line %d: cannot unmarshal %s into string field %q", node.Line, node.Tag, key)
 }
 
 // prepareScalars walks the tree once, which is the one place every scalar is
@@ -353,14 +548,14 @@ func prepareScalars(n *yaml.Node) error {
 // time.Time: not a type the document's own data model has, and one that
 // marshals to text that reads back as a string, so the document would not
 // survive a round trip. A tag written out asks for the same type and cannot
-// have it either, so it is retagged too, which is what the json path does with
-// such a scalar.
+// have it either, so it is retagged too, and the scalar keeps the text the
+// document gave it rather than the time it names.
 //
 // Interim: https://github.com/yaml/go-yaml/issues/452 asks for an option to
 // leave such a scalar a string, which removes this.
 func stripTimestamp(n *yaml.Node) {
-	if n.Tag == "!!timestamp" {
-		n.Tag = "!!str"
+	if n.Tag == timestampTag {
+		n.Tag = strTag
 	}
 }
 
