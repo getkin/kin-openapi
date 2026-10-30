@@ -57,7 +57,13 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 		// allows a relative server URL. Emit the base path on its own rather
 		// than dropping it: with no servers the default server URL of "/" is
 		// assumed, so `/v1` used to disappear (issue #1284).
-		doc3.AddServer(&openapi3.Server{URL: basePath})
+		//
+		// The path goes through url.URL, as it does when there is a host, so
+		// that it is escaped the same way in both cases. Written out as it
+		// came, a base path holding a percent-escape or a control character
+		// made a server URL that reads back as a different path, or as no
+		// path at all because it no longer parses.
+		doc3.AddServer(&openapi3.Server{URL: (&url.URL{Path: basePath}).String()})
 	}
 
 	doc3.Components.Schemas = make(map[string]*openapi3.SchemaRef)
@@ -795,18 +801,27 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 	isHTTP := false
 	servers := doc3.Servers
 	for i, server := range servers {
-		if parsedURL, err := url.Parse(server.URL); err == nil {
-			switch parsedURL.Scheme {
-			case "https":
-				isHTTPS = true
-			case "http":
-				isHTTP = true
-			}
-			// The first server is assumed to provide the base path
+		parsedURL, err := url.Parse(server.URL)
+		if err != nil {
+			// A URL that does not parse is still the only thing said about
+			// where the API lives, and basePath is the one field of the two
+			// that can hold it as it was written. Dropping it lost the server
+			// altogether, and converting back then produced no server at all.
 			if i == 0 {
-				doc2.Host = parsedURL.Host
-				doc2.BasePath = parsedURL.Path
+				doc2.BasePath = server.URL
 			}
+			continue
+		}
+		switch parsedURL.Scheme {
+		case "https":
+			isHTTPS = true
+		case "http":
+			isHTTP = true
+		}
+		// The first server is assumed to provide the base path
+		if i == 0 {
+			doc2.Host = parsedURL.Host
+			doc2.BasePath = parsedURL.Path
 		}
 	}
 
