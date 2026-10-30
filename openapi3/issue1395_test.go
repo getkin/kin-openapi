@@ -65,7 +65,8 @@ func TestInternalizeRefsDottedFilenames(t *testing.T) {
 			data, err := doc.MarshalJSON()
 			require.NoError(t, err)
 			// A fresh loader cannot read external files: the bundle must stand alone.
-			reloaded, err := openapi3.NewLoader().LoadFromData(data)
+			reloadLoader := openapi3.NewLoader()
+			reloaded, err := reloadLoader.LoadFromData(data)
 			require.NoError(t, err)
 			require.NoError(t, reloaded.Validate(t.Context()))
 			operation := reloaded.Paths.Value("/p").Get
