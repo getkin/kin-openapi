@@ -1159,18 +1159,27 @@ nameSearch:
 
 func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameters {
 	parameters := openapi2.Parameters{}
-	for propName, schemaRef := range mediaType.Schema.Value.Properties {
+	schema := mediaType.Schema.Value
+	for propName, schemaRef := range schema.Properties {
 		if ref := schemaRef.Ref; ref != "" {
 			v2Ref := strings.Replace(ref, "#/components/schemas/", "#/parameters/", 1)
 			parameters = append(parameters, &openapi2.Parameter{Ref: v2Ref})
 			continue
 		}
 		val := schemaRef.Value
-		typ := val.Type
+		typ, format := val.Type, val.Format
 		if val.Format == "binary" {
-			typ = &openapi3.Types{"file"}
+			// Swagger 2.0 writes a file upload as type file, which has no
+			// format of its own, so the format is spent on naming the type.
+			typ, format = &openapi3.Types{"file"}, ""
 		}
-		required := slices.Contains(val.Required, propName)
+		// required lists the names of the required properties and belongs to
+		// the object holding them, which is where ToV3 puts it. Reading only
+		// the property's own list therefore lost the flag on the way back. A
+		// document that does carry it on the property is still honoured, as
+		// that is how a form field kept in components records it.
+		required := slices.Contains(schema.Required, propName) ||
+			slices.Contains(val.Required, propName)
 
 		var v2Items *openapi2.SchemaRef
 		if val.Items != nil {
@@ -1181,7 +1190,7 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			Description:  val.Description,
 			Type:         typ,
 			In:           "formData",
-			Extensions:   stripNonExtensions(val.Extensions),
+			Extensions:   formFieldExtensions(val.Extensions),
 			Enum:         val.Enum,
 			ExclusiveMin: exclusiveBoundToBool(val.ExclusiveMin),
 			ExclusiveMax: exclusiveBoundToBool(val.ExclusiveMax),
@@ -1194,8 +1203,8 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			Maximum:      effectiveMax(val.Max, val.ExclusiveMax),
 			Minimum:      effectiveMin(val.Min, val.ExclusiveMin),
 			Pattern:      val.Pattern,
+			Format:       format,
 			// CollectionFormat: val.CollectionFormat,
-			// Format:          val.Format,
 			AllowEmptyValue: val.AllowEmptyValue,
 			Required:        required,
 			UniqueItems:     val.UniqueItems,
@@ -1529,6 +1538,25 @@ var attemptedBodyParameterNames = []string{
 }
 
 // stripNonExtensions removes invalid extensions: those not prefixed by "x-" and returns them
+// formFieldExtensions returns the extensions of a form field without
+// x-formData-name, which names the field for the conversion to OpenAPI 3,
+// where the name has nowhere else to live, and is not part of the document
+// being converted. A field kept in components keeps the marker, as the
+// conversion back reads the name from it.
+//
+// The map is built fresh rather than filtered in place, so the schema the
+// extensions came from keeps its own.
+func formFieldExtensions(extensions map[string]any) map[string]any {
+	result := make(map[string]any, len(extensions))
+	for name, value := range extensions {
+		if !strings.HasPrefix(name, "x-") || name == "x-formData-name" {
+			continue
+		}
+		result[name] = value
+	}
+	return result
+}
+
 func stripNonExtensions(extensions map[string]any) map[string]any {
 	for extName := range extensions {
 		if !strings.HasPrefix(extName, "x-") {
