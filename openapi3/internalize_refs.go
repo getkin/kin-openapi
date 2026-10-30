@@ -561,4 +561,5 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, Comp
 	}
 
 	doc.derefPaths(doc.Paths.Map(), refNameResolver, false)
+	doc.derefPaths(doc.Webhooks, refNameResolver, false)
 }
