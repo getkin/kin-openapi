@@ -69,7 +69,7 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 		}
 
 		// Trim the common prefix with the root doc path.
-		if doc.url != nil {
+		if doc.url != nil && filePath != "" {
 			for commonDir := path.Dir(doc.url.Path); /*no common prefix*/ commonDir != "."; commonDir = path.Dir(commonDir) {
 				if p, found := cutDirectories(filePath, commonDir); found {
 					filePath = p
@@ -533,6 +533,11 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, Comp
 			}
 		}
 		doc.derefHeaders(components.Headers, refNameResolver, false)
+		for _, name := range componentNames(components.Headers) {
+			if h := components.Headers[name]; h != nil {
+				h.Ref = "" // always dereference the top level
+			}
+		}
 		for _, name := range componentNames(components.RequestBodies) {
 			req := components.RequestBodies[name]
 			isExternal := doc.addRequestBodyToSpec(req, refNameResolver, false)
@@ -542,12 +547,30 @@ func (doc *T) InternalizeRefs(ctx context.Context, refNameResolver func(*T, Comp
 			}
 		}
 		doc.derefResponseBodies(components.Responses, refNameResolver, false)
+		for _, name := range componentNames(components.Responses) {
+			if r := components.Responses[name]; r != nil {
+				r.Ref = "" // always dereference the top level
+			}
+		}
 		for _, name := range componentNames(components.SecuritySchemes) {
 			ss := components.SecuritySchemes[name]
 			doc.addSecuritySchemeToSpec(ss, refNameResolver, false)
+			if ss != nil {
+				ss.Ref = "" // always dereference the top level
+			}
 		}
 		doc.derefExamples(components.Examples, refNameResolver, false)
+		for _, name := range componentNames(components.Examples) {
+			if e := components.Examples[name]; e != nil {
+				e.Ref = "" // always dereference the top level
+			}
+		}
 		doc.derefLinks(components.Links, refNameResolver, false)
+		for _, name := range componentNames(components.Links) {
+			if l := components.Links[name]; l != nil {
+				l.Ref = "" // always dereference the top level
+			}
+		}
 
 		for _, name := range componentNames(components.Callbacks) {
 			cb := components.Callbacks[name]
