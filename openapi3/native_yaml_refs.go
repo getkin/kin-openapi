@@ -23,7 +23,7 @@ func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **strin
 	// A $ref is a string. A null, a number or a collection is not a reference,
 	// so the object decodes as an ordinary value, which is what the json path
 	// does with a $ref that will not decode into a string.
-	if refNode == nil || refNode.Kind != yaml.ScalarNode || refNode.Tag != "!!str" || refNode.Value == "" {
+	if refNode == nil || refNode.Kind != yaml.ScalarNode || refNode.Tag != strTag || refNode.Value == "" {
 		return false
 	}
 	*ref = refNode.Value

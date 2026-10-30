@@ -91,7 +91,7 @@ func (types *Types) UnmarshalYAML(node *yaml.Node) error {
 // BoolSchema is `true`/`false` or a schema.
 func (bs *BoolSchema) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind == yaml.ScalarNode {
-		if node.Tag == "!!null" {
+		if node.Tag == nullTag {
 			return nil
 		}
 		var b bool
@@ -136,7 +136,7 @@ func (schema *Schema) UnmarshalYAML(node *yaml.Node) error {
 // ExclusiveBound is a bool in OAS 3.0, where it modifies minimum/maximum, or a
 // number in 3.1, where it is the bound itself.
 func (eb *ExclusiveBound) UnmarshalYAML(node *yaml.Node) error {
-	if node.Kind != yaml.ScalarNode || node.Tag == "!!null" {
+	if node.Kind != yaml.ScalarNode || node.Tag == nullTag {
 		return nil
 	}
 	var b bool
@@ -163,7 +163,7 @@ func (operation *Operation) UnmarshalYAML(node *yaml.Node) error {
 		return err
 	}
 	operation.Extensions, operation.Origin = ext, originFromNode(node, nativeOriginFile())
-	if v := mappingValue(node, "responses"); v != nil && v.Tag == "!!null" {
+	if v := mappingValue(node, "responses"); v != nil && v.Tag == nullTag {
 		operation.Responses = &Responses{explicitlyNull: true}
 	}
 	setChildOriginKeys(node, operation, nativeOriginFile())
@@ -189,5 +189,29 @@ func (doc *T) UnmarshalYAML(node *yaml.Node) error {
 		}
 	}
 	setChildOriginKeys(node, doc, nativeOriginFile())
+	return nil
+}
+
+// UnmarshalYAML sets SecurityRequirement from node.
+//
+// A scheme's scopes are a list of strings, and decoding one directly drops a
+// null from it rather than keeping its place, which is what stringList is for.
+func (sr *SecurityRequirement) UnmarshalYAML(node *yaml.Node) error {
+	type bis SecurityRequirement
+	if err := node.Decode((*bis)(sr)); err != nil {
+		return err
+	}
+	if node.Kind == yaml.AliasNode {
+		node = node.Alias
+	}
+	for _, kv := range mappingPairs(node) {
+		scopes, ok, err := stringList(kv[1], kv[0].Value)
+		if err != nil {
+			return err
+		}
+		if ok {
+			(*sr)[kv[0].Value] = scopes
+		}
+	}
 	return nil
 }

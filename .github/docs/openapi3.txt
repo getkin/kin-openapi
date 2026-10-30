@@ -3543,6 +3543,12 @@ func NewSecurityRequirement() SecurityRequirement
 
 func (security SecurityRequirement) Authenticate(provider string, scopes ...string) SecurityRequirement
 
+func (sr *SecurityRequirement) UnmarshalYAML(node *yaml.Node) error
+    UnmarshalYAML sets SecurityRequirement from node.
+
+    A scheme's scopes are a list of strings, and decoding one directly drops a
+    null from it rather than keeping its place, which is what stringList is for.
+
 func (security *SecurityRequirement) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if SecurityRequirement does not comply with the
     OpenAPI spec.
