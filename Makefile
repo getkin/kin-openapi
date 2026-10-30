@@ -32,6 +32,7 @@ fuzz:
 	go test -run='^$$' -fuzz='^FuzzYAMLMatchesJSON$$' -fuzztime=$(FUZZTIME) ./openapi3
 	go test -run='^$$' -fuzz='^FuzzSchemaVisitJSON$$' -fuzztime=$(FUZZTIME) ./openapi3
 	go test -run='^$$' -fuzz='^FuzzUnmarshalFromData$$' -fuzztime=$(FUZZTIME) ./openapi2
+	go test -run='^$$' -fuzz='^FuzzNew$$' -fuzztime=$(FUZZTIME) ./internal/nodeindex
 	go test -run='^$$' -fuzz='^FuzzToV3$$' -fuzztime=$(FUZZTIME) ./openapi2conv
 	go test -run='^$$' -fuzz='^FuzzValidateRequest$$' -fuzztime=$(FUZZTIME) ./openapi3filter
 
