@@ -1,0 +1,4 @@
+go test fuzz v1
+[]byte("{\"info\":{\"title\":A,\"version\":0A},\"openapi\":0A,\"paths\":{\"/{external1}\":{\"get\":{\"responses\":{0: {\"description\":A}}},\"parameters\":[{\"in\":\"path\",\"name\":\"external1\",\"required\":true,\"schema\":{}}]}}}")
+string("")
+string("/ ")
