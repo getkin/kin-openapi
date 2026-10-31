@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -793,12 +794,20 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		}
 		loader.visitRef("Header", ref)
 		if isSingleRefElement(ref) {
-			var header Header
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
+			var resolved HeaderRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &header
-			component.setRefPath(documentPath)
+			// The file holds the Header itself or a $ref to it, to follow from there.
+			if err := loader.resolveHeaderRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTHeader {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved HeaderRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -865,12 +874,20 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		}
 		loader.visitRef("Parameter", ref)
 		if isSingleRefElement(ref) {
-			var param Parameter
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
+			var resolved ParameterRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &param
-			component.setRefPath(documentPath)
+			// The file holds the Parameter itself or a $ref to it, to follow from there.
+			if err := loader.resolveParameterRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTParameter {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved ParameterRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -945,19 +962,27 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		}
 		loader.visitRef("RequestBody", ref)
 		if isSingleRefElement(ref) {
-			var requestBody RequestBody
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
+			var resolved RequestBodyRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &requestBody
-			component.setRefPath(documentPath)
+			// The file holds the RequestBody itself or a $ref to it, to follow from there.
+			if err := loader.resolveRequestBodyRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTRequestBody {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved RequestBodyRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			if err = loader.resolveRequestBodyRef(doc, &resolved, componentPath); err != nil {
+			if err := loader.resolveRequestBodyRef(doc, &resolved, componentPath); err != nil {
 				if err == errMUSTRequestBody {
 					return nil
 				}
@@ -1012,12 +1037,20 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		}
 		loader.visitRef("Response", ref)
 		if isSingleRefElement(ref) {
-			var resp Response
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
+			var resolved ResponseRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &resp
-			component.setRefPath(documentPath)
+			// The file holds the Response itself or a $ref to it, to follow from there.
+			if err := loader.resolveResponseRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTResponse {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved ResponseRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1119,12 +1152,20 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}
 		loader.visitRef("Schema", ref)
 		if isSingleRefElement(ref) {
-			var schema Schema
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
+			var resolved SchemaRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &schema
-			component.setRefPath(documentPath)
+			// The file holds the Schema itself or a $ref to it, to follow from there.
+			if err := loader.resolveSchemaRef(doc, &resolved, documentPath, visited); err != nil {
+				if err == errMUSTSchema {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved SchemaRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1313,12 +1354,20 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		}
 		loader.visitRef("SecurityScheme", ref)
 		if isSingleRefElement(ref) {
-			var scheme SecurityScheme
-			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
+			var resolved SecuritySchemeRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &scheme
-			component.setRefPath(documentPath)
+			// The file holds the SecurityScheme itself or a $ref to it, to follow from there.
+			if err := loader.resolveSecuritySchemeRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTSecurityScheme {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved SecuritySchemeRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1375,12 +1424,20 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 		}
 		loader.visitRef("Example", ref)
 		if isSingleRefElement(ref) {
-			var example Example
-			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
+			var resolved ExampleRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &example
-			component.setRefPath(documentPath)
+			// The file holds the Example itself or a $ref to it, to follow from there.
+			if err := loader.resolveExampleRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTExample {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved ExampleRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1421,19 +1478,27 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		}
 		loader.visitRef("Callback", ref)
 		if isSingleRefElement(ref) {
-			var resolved Callback
+			var resolved CallbackRef
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &resolved
-			component.setRefPath(documentPath)
+			// The file holds the Callback itself or a $ref to it, to follow from there.
+			if err := loader.resolveCallbackRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTCallback {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved CallbackRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			if err = loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
+			if err := loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
 				if err == errMUSTCallback {
 					return nil
 				}
@@ -1489,12 +1554,20 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		}
 		loader.visitRef("Link", ref)
 		if isSingleRefElement(ref) {
-			var link Link
-			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
+			var resolved LinkRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &link
-			component.setRefPath(documentPath)
+			// The file holds the Link itself or a $ref to it, to follow from there.
+			if err := loader.resolveLinkRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTLink {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved LinkRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)

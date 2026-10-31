@@ -26,14 +26,6 @@
         "example": "bar",
         "type": "string"
       },
-      "components_Cat": {
-        "properties": {
-          "cat": {
-            "$ref": "#/components/schemas/components_Cat"
-          }
-        },
-        "type": "object"
-      },
       "components_Foo": {
         "properties": {
           "bar": {
@@ -77,7 +69,7 @@
       "Cat": {
         "properties": {
           "cat": {
-            "$ref": "#/components/schemas/components_Cat"
+            "$ref": "#/components/schemas/Cat"
           }
         },
         "type": "object"
