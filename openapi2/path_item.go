@@ -66,7 +66,9 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 	delete(x.Extensions, "$ref")
 	delete(x.Extensions, "delete")
 	delete(x.Extensions, "get")

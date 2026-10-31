@@ -90,7 +90,9 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 	delete(x.Extensions, "schemas")
 	delete(x.Extensions, "parameters")
 	delete(x.Extensions, "headers")

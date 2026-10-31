@@ -56,7 +56,9 @@ func (x *SchemaRef) UnmarshalJSON(data []byte) error {
 	var refOnly Ref
 	if err := unmarshalJSON(data, &refOnly); err == nil && refOnly.Ref != "" {
 		extra := map[string]any{}
-		_ = unmarshalJSON(data, &extra)
+		if err := unmarshalJSON(data, &extra); err != nil {
+			return unmarshalError(err)
+		}
 		delete(extra, "$ref")
 		x.Ref = refOnly.Ref
 		if len(extra) != 0 {
