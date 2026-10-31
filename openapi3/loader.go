@@ -488,6 +488,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	}
 
 	drill := func(cursor any) (any, error) {
+		var err error // not the named result, which a failed drill must not clear
 		for pathPart := range strings.SplitSeq(fragment[1:], "/") {
 			pathPart = unescapeRefString(pathPart)
 			attempted := false
