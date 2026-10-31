@@ -756,6 +756,19 @@ func (e *DependentSchemasFieldFor31Plus) As(target any) bool
 
 func (e *DependentSchemasFieldFor31Plus) Code() string
 
+type DisallowedExternalRefError struct {
+	// Ref is the $ref value as it appears in the document, e.g.
+	// "other.yaml#/components/schemas/Thing".
+	Ref string
+}
+    DisallowedExternalRefError is returned for a $ref to another document
+    encountered while Loader.IsExternalRefsAllowed is false. A caller that tells
+    a refused $ref apart from a document that failed to load for another reason,
+    to report the setting as the remedy or to map it to its own error, matches
+    this type with errors.As rather than the message text.
+
+func (e *DisallowedExternalRefError) Error() string
+
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
 	Origin     *Origin        `json:"-" yaml:"-"`
@@ -3266,6 +3279,22 @@ type SchemaItemsRequired struct{ ValidationError }
 func (e *SchemaItemsRequired) As(target any) bool
 
 func (e *SchemaItemsRequired) Code() string
+
+type SchemaMultipleOfNotPositiveError struct {
+	// MultipleOf is the rejected `multipleOf` value.
+	MultipleOf float64
+	// Origin is the source location of the offending schema when the
+	// document was loaded with Loader.IncludeOrigin = true.
+	Origin *Origin
+}
+    SchemaMultipleOfNotPositiveError clusters "multipleOf must be greater
+    than zero" failures. The value of a schema's `multipleOf` MUST be strictly
+    greater than 0 (JSON Schema 2020-12 §6.2.1 for OpenAPI 3.1, draft-04 for
+    OpenAPI 3.0).
+
+func (e *SchemaMultipleOfNotPositiveError) Code() string
+
+func (e *SchemaMultipleOfNotPositiveError) Error() string
 
 type SchemaPatternRegexError struct {
 	// Pattern is the schema's `pattern:` value that failed to compile.
