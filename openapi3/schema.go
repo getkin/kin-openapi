@@ -729,7 +729,17 @@ func (schema Schema) MarshalYAML() (any, error) {
 		m["else"] = x
 	}
 	if x := schema.DependentRequired; len(x) != 0 {
-		m["dependentRequired"] = x
+		// A nil list of names is written null, as JSON writes it, rather
+		// than the "[]" YAML would make of it.
+		dr := make(map[string]any, len(x))
+		for name, names := range x {
+			if names == nil {
+				dr[name] = nil
+			} else {
+				dr[name] = names
+			}
+		}
+		m["dependentRequired"] = dr
 	}
 	if x := schema.Defs; len(x) != 0 {
 		m["$defs"] = x
