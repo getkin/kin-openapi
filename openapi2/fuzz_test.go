@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/oasdiff/yaml"
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 )
@@ -67,7 +67,10 @@ definitions:
 		if fuzzing.LosesInYAML(generic) {
 			return
 		}
-		y, err := yaml.Marshal(&doc)
+		// Emitted from the generic form: going through JSON and back, as
+		// oasdiff/yaml's Marshal does, refuses keys longer than YAML allows
+		// implicit keys to be, which the emitter writes as explicit "? " keys.
+		y, err := yaml.Marshal(generic)
 		require.NoError(t, err)
 		var fromYAML T
 		require.NoError(t, unmarshal(y, &fromYAML), "yaml:\n%s", y)
