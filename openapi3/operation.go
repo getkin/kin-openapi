@@ -116,7 +116,11 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 
-	_ = unmarshalJSON(data, &x.Extensions)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+
+		return unmarshalError(err)
+
+	}
 	if value, present := x.Extensions["responses"]; present && value == nil {
 		x.Responses = &Responses{explicitlyNull: true}
 	}
