@@ -97,6 +97,11 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 	// Replace invalid characters in component fixed field names.
 	internalizedName = InvalidIdentifierCharRegExp.ReplaceAllString(internalizedName, "_")
 
+	// Nothing is left of a ref to the directory itself, such as "/" or "./".
+	if internalizedName == "" {
+		internalizedName = ref.CollectionName()
+	}
+
 	return internalizedName
 }
 
