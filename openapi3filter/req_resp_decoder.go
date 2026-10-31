@@ -1515,6 +1515,60 @@ func YamlBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 	if err := yaml.NewDecoder(body).Decode(&value); err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
+	value, err := yamlToJSONValue(value)
+	if err != nil {
+		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
+	}
+	return value, nil
+}
+
+// yamlToJSONValue turns the mappings YAML decodes with keys other than
+// strings, such as "1: a" or "? : a", into the map[string]any a BodyDecoder
+// returns. A scalar key is written the way JSON would write it, and a mapping
+// or sequence as a key is refused: no JSON object can hold it.
+func yamlToJSONValue(value any) (any, error) {
+	switch v := value.(type) {
+	case map[string]any:
+		for k, e := range v {
+			e, err := yamlToJSONValue(e)
+			if err != nil {
+				return nil, err
+			}
+			v[k] = e
+		}
+	case map[any]any:
+		m := make(map[string]any, len(v))
+		for k, e := range v {
+			var key string
+			switch k := k.(type) {
+			case nil:
+				key = "null"
+			case string:
+				key = k
+			case bool, int, int64, uint64, float64:
+				key = fmt.Sprint(k)
+			default:
+				return nil, fmt.Errorf("unsupported mapping key of type %T", k)
+			}
+			if _, ok := m[key]; ok {
+				return nil, fmt.Errorf("duplicate mapping key %q", key)
+			}
+			e, err := yamlToJSONValue(e)
+			if err != nil {
+				return nil, err
+			}
+			m[key] = e
+		}
+		return m, nil
+	case []any:
+		for i, e := range v {
+			e, err := yamlToJSONValue(e)
+			if err != nil {
+				return nil, err
+			}
+			v[i] = e
+		}
+	}
 	return value, nil
 }
 
