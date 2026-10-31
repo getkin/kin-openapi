@@ -1535,7 +1535,7 @@ func UrlencodedBodyDecoder(body io.Reader, header http.Header, schema *openapi3.
 	// Validate schema of request body.
 	// By the OpenAPI 3 specification request body's schema must have type "object".
 	// Properties of the schema describes individual parts of request body.
-	if !schema.Value.Type.Is("object") {
+	if schema == nil || schema.Value == nil || !schema.Value.Type.Is("object") {
 		return nil, errors.New("unsupported schema of request body")
 	}
 	propNames := make([]string, 0, len(schema.Value.Properties))
@@ -1649,7 +1649,7 @@ func decodeProperty(dec valueDecoder, name string, prop *openapi3.SchemaRef, enc
 }
 
 func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (any, error) {
-	if !schema.Value.Type.Is("object") {
+	if schema == nil || schema.Value == nil || !schema.Value.Type.Is("object") {
 		return nil, errors.New("unsupported schema of request body")
 	}
 
