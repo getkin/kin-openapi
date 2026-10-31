@@ -223,3 +223,40 @@ func FuzzInternalizeRefsKeepsMeaning(f *testing.F) {
 		}
 	})
 }
+
+// Whatever names a resolver hands out, colliding, empty or invalid ones
+// included, internalizing does not panic and leaves only local refs behind.
+func FuzzInternalizeRefsCustomResolver(f *testing.F) {
+	for _, pair := range internalizeSeeds {
+		root, err := os.ReadFile(pair[0])
+		require.NoError(f, err)
+		other, err := os.ReadFile(pair[1])
+		require.NoError(f, err)
+		f.Add(root, other, "a,a,b,,#/x,~1")
+	}
+
+	f.Fuzz(func(t *testing.T, root, other []byte, names string) {
+		if len(root)+len(other)+len(names) > maxFuzzInput {
+			t.Skip()
+		}
+		doc, err := newTwoDocLoader(root, other).LoadFromDataWithPath(root, fuzzRootURL)
+		if err != nil {
+			return
+		}
+		given := strings.Split(names, ",")
+		calls := 0
+		doc.InternalizeRefs(t.Context(), func(*openapi3.T, openapi3.ComponentRef) string {
+			name := given[calls%len(given)]
+			calls++
+			return name
+		})
+		forEachRef(doc, func(site refSite) {
+			if site.Mapping && !strings.Contains(site.Ref, "/") || site.Unfollowed {
+				return
+			}
+			require.True(t, site.Ref == "" || strings.HasPrefix(site.Ref, "#"), "external ref left: %q", site.Ref)
+		})
+		_, err = doc.MarshalJSON()
+		require.NoError(t, err)
+	})
+}
