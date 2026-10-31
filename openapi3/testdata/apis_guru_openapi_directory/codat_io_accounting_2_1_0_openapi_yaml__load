@@ -1,1 +1,1 @@
-bad data in "#/components/schemas/Item/definitions/itemType" (expecting ref to schema object)
+failed to unmarshal data: json error: jsontext: invalid character 'o' at start of value, yaml error: yaml: line 43981: found a tab character where an indentation space is expected

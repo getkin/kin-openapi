@@ -6,8 +6,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/oasdiff/yaml"
-
+	"github.com/getkin/kin-openapi/internal/yamlconv"
 	"github.com/getkin/kin-openapi/openapi2"
 )
 
@@ -37,12 +36,12 @@ func Example() {
 		fmt.Println("objects doc & docAgainFromJSON should be the same")
 	}
 
-	outputYAML, err := yaml.Marshal(doc)
+	outputYAML, err := yamlconv.Marshal(doc)
 	if err != nil {
 		panic(err)
 	}
 	var docAgainFromYAML openapi2.T
-	if _, err = yaml.Unmarshal(outputYAML, &docAgainFromYAML, yaml.DecodeOpts{DisableTimestamps: true}); err != nil {
+	if err = yamlconv.Unmarshal(outputYAML, &docAgainFromYAML); err != nil {
 		panic(err)
 	}
 	if !reflect.DeepEqual(doc, docAgainFromYAML) {

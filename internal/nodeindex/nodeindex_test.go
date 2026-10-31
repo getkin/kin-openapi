@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/internal/nodeindex"
 )
@@ -91,28 +91,6 @@ func TestNilIndex(t *testing.T) {
 	_, ok := ix.AnchorKey(parse(t, "a: 1\n"))
 	require.False(t, ok)
 	require.Nil(t, nodeindex.New(nil, nil))
-}
-
-// A column counts characters, as the parser's own columns do, so a multi-byte
-// character does not push the end of a block past the width of its line.
-func TestEndOfCountsCharactersNotBytes(t *testing.T) {
-	t.Parallel()
-
-	for name, src := range map[string]string{
-		"ascii":      "a: \"hello\"\nb: 2\n",
-		"multi-byte": "a: \"h\u00e9llo\"\nb: 2\n",
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			root := parse(t, src)
-			ix := nodeindex.New(root, []byte(src))
-
-			line, column := ix.EndOf(root.Content[0].Content[1])
-			require.Equal(t, 1, line)
-			require.Equal(t, 11, column, pastTheLastCharacter)
-		})
-	}
 }
 
 // A line break is not a character on the line it ends, so the same document

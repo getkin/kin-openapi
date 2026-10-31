@@ -9,8 +9,8 @@ import (
 // plus extensions.
 //
 // The local shadow type is what stops the decoder recursing into this method;
-// converting the receiver to it decodes in place, so only the field the decoder
-// skips is set afterwards. Everything else is in decodeMapping.
+// converting the receiver to it decodes in place, so only the two fields the
+// decoder skips are set afterwards. Everything else is in decodeMapping.
 
 // UnmarshalYAML sets Components from node.
 func (components *Components) UnmarshalYAML(node *yaml.Node) error {
@@ -19,7 +19,8 @@ func (components *Components) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	components.Extensions = ext
+	components.Extensions, components.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, components, nativeOriginFile())
 	return nil
 }
 
@@ -30,7 +31,8 @@ func (contact *Contact) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	contact.Extensions = ext
+	contact.Extensions, contact.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, contact, nativeOriginFile())
 	return nil
 }
 
@@ -41,7 +43,8 @@ func (discriminator *Discriminator) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	discriminator.Extensions = ext
+	discriminator.Extensions, discriminator.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, discriminator, nativeOriginFile())
 	return nil
 }
 
@@ -52,7 +55,8 @@ func (encoding *Encoding) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	encoding.Extensions = ext
+	encoding.Extensions, encoding.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, encoding, nativeOriginFile())
 	return nil
 }
 
@@ -63,7 +67,8 @@ func (example *Example) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	example.Extensions = ext
+	example.Extensions, example.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, example, nativeOriginFile())
 	return nil
 }
 
@@ -74,7 +79,8 @@ func (e *ExternalDocs) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	e.Extensions = ext
+	e.Extensions, e.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, e, nativeOriginFile())
 	return nil
 }
 
@@ -85,7 +91,8 @@ func (info *Info) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	info.Extensions = ext
+	info.Extensions, info.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, info, nativeOriginFile())
 	return nil
 }
 
@@ -96,7 +103,8 @@ func (license *License) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	license.Extensions = ext
+	license.Extensions, license.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, license, nativeOriginFile())
 	return nil
 }
 
@@ -107,7 +115,8 @@ func (link *Link) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	link.Extensions = ext
+	link.Extensions, link.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, link, nativeOriginFile())
 	return nil
 }
 
@@ -118,7 +127,8 @@ func (mediaType *MediaType) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	mediaType.Extensions = ext
+	mediaType.Extensions, mediaType.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, mediaType, nativeOriginFile())
 	return nil
 }
 
@@ -129,7 +139,8 @@ func (flow *OAuthFlow) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	flow.Extensions = ext
+	flow.Extensions, flow.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, flow, nativeOriginFile())
 	return nil
 }
 
@@ -140,7 +151,8 @@ func (flows *OAuthFlows) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	flows.Extensions = ext
+	flows.Extensions, flows.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, flows, nativeOriginFile())
 	return nil
 }
 
@@ -151,7 +163,8 @@ func (parameter *Parameter) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	parameter.Extensions = ext
+	parameter.Extensions, parameter.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, parameter, nativeOriginFile())
 	return nil
 }
 
@@ -162,7 +175,8 @@ func (pathItem *PathItem) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	pathItem.Extensions = ext
+	pathItem.Extensions, pathItem.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, pathItem, nativeOriginFile())
 	return nil
 }
 
@@ -173,7 +187,8 @@ func (requestBody *RequestBody) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	requestBody.Extensions = ext
+	requestBody.Extensions, requestBody.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, requestBody, nativeOriginFile())
 	return nil
 }
 
@@ -184,7 +199,8 @@ func (response *Response) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	response.Extensions = ext
+	response.Extensions, response.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, response, nativeOriginFile())
 	return nil
 }
 
@@ -195,7 +211,8 @@ func (ss *SecurityScheme) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	ss.Extensions = ext
+	ss.Extensions, ss.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, ss, nativeOriginFile())
 	return nil
 }
 
@@ -206,7 +223,8 @@ func (server *Server) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	server.Extensions = ext
+	server.Extensions, server.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, server, nativeOriginFile())
 	return nil
 }
 
@@ -217,7 +235,8 @@ func (serverVariable *ServerVariable) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	serverVariable.Extensions = ext
+	serverVariable.Extensions, serverVariable.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, serverVariable, nativeOriginFile())
 	return nil
 }
 
@@ -228,7 +247,8 @@ func (t *Tag) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	t.Extensions = ext
+	t.Extensions, t.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, t, nativeOriginFile())
 	return nil
 }
 
@@ -239,6 +259,7 @@ func (xml *XML) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	xml.Extensions = ext
+	xml.Extensions, xml.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, xml, nativeOriginFile())
 	return nil
 }

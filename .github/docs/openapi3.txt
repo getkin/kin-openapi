@@ -4014,6 +4014,8 @@ func (doc *T) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets T to a copy of data.
 
 func (doc *T) UnmarshalYAML(node *yaml.Node) error
+    T is the document root, so no parent stamps its Origin.Key. It takes its own
+    first key instead, the same rule a sequence item follows.
 
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if T does not comply with the OpenAPI spec.
@@ -4250,12 +4252,10 @@ func (types *Types) Slice() []string
 
 func (types *Types) UnmarshalJSON(data []byte) error
 
-func (types *Types) UnmarshalYAML(unmarshal func(any) error) error
-    UnmarshalYAML accepts a single type as well as a sequence of types,
-    mirroring UnmarshalJSON. Swagger 2 and OpenAPI 3.0 documents always
-    write `type` as a scalar, so decoding such a document into openapi2.T or
-    openapi3.T straight from YAML would otherwise fail with "cannot unmarshal
-    !!str into Types".
+func (types *Types) UnmarshalYAML(node *yaml.Node) error
+    Types is a string or a list of strings. Swagger 2 and OpenAPI 3.0 documents
+    always write `type` as a scalar, so the single-string case is what decoding
+    such a document into openapi2.T or openapi3.T relies on.
 
 func (types *Types) With(typs ...string)
     With adds the given types to the receiver, skipping those already present.

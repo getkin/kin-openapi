@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/oasdiff/yaml"
+	yaml "go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -53,7 +53,7 @@ func main() {
 		OpenAPI string `json:"openapi" yaml:"openapi"`
 		Swagger string `json:"swagger" yaml:"swagger"`
 	}
-	if _, err := yaml.Unmarshal(data, &vd, yaml.DecodeOpts{DisableTimestamps: true}); err != nil {
+	if err := yaml.Unmarshal(data, &vd); err != nil {
 		log.Fatal(err)
 	}
 
@@ -109,7 +109,7 @@ func main() {
 		}
 
 		var doc openapi2.T
-		if _, err := yaml.Unmarshal(data, &doc, yaml.DecodeOpts{DisableTimestamps: true}); err != nil {
+		if err := openapi2.UnmarshalFromData(data, &doc); err != nil {
 			log.Fatalln("Loading error:", err)
 		}
 

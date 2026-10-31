@@ -162,26 +162,6 @@ func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*ya
 	return pairs
 }
 
-// mappingValue returns the value node for key, or nil.
-func mappingValue(node *yaml.Node, key string) *yaml.Node {
-	_, v := mappingEntry(node, key)
-	return v
-}
-
-// mappingEntry returns both halves of a mapping entry. Merge keys are applied,
-// so a field a merge brought in is found here the same as one written in place.
-func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
-	if node.Kind != yaml.MappingNode {
-		return nil, nil
-	}
-	for _, kv := range mappingPairs(node) {
-		if kv[0].Value == key {
-			return kv[0], kv[1]
-		}
-	}
-	return nil, nil
-}
-
 // isMergeKey reports whether k is a merge key rather than an ordinary one.
 // Only a plain << merges; quoted, it is a member actually named "<<", which
 // the json path keeps and so must this.

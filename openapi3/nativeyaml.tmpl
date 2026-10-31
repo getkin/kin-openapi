@@ -9,8 +9,8 @@ import (
 // plus extensions.
 //
 // The local shadow type is what stops the decoder recursing into this method;
-// converting the receiver to it decodes in place, so only the field the decoder
-// skips is set afterwards. Everything else is in decodeMapping.
+// converting the receiver to it decodes in place, so only the two fields the
+// decoder skips are set afterwards. Everything else is in decodeMapping.
 {{ range $type := .Types }}
 // UnmarshalYAML sets {{ $type.Name }} from node.
 func ({{ $type.Recv }} *{{ $type.Name }}) UnmarshalYAML(node *yaml.Node) error {
@@ -19,7 +19,8 @@ func ({{ $type.Recv }} *{{ $type.Name }}) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	{{ $type.Recv }}.Extensions = ext
+	{{ $type.Recv }}.Extensions, {{ $type.Recv }}.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, {{ $type.Recv }}, nativeOriginFile())
 	return nil
 }
 {{ end -}}

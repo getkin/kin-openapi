@@ -42,11 +42,9 @@ paths:
 		sl := openapi3.NewLoader()
 
 		_, err := sl.LoadFromData(spec)
-		if openapi3.UsingJSONv2 {
-			require.ErrorContains(t, err, `json: cannot unmarshal object into Go struct field .paths.~1categories.get.responses.200.content.application~1json.schema.allOf of type openapi3.SchemaRefs`)
-		} else {
-			require.ErrorContains(t, err, `json: cannot unmarshal object into field Schema.allOf of type openapi3.SchemaRefs`)
-		}
+		// The parser reports the line, having decoded the document itself
+		// rather than a json rendering of it. It does not name the field.
+		require.ErrorContains(t, err, `line 24: cannot unmarshal !!map into openapi3.SchemaRefs`)
 	}
 
 	spec := []byte(`

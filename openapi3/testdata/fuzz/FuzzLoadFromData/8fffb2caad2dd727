@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("openapi: 0\ncomponents:\n  schemas:\n   00:\n      type: string\n      example: !!timestamp 0000-1-10")

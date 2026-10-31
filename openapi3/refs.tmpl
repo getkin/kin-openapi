@@ -126,6 +126,7 @@ func (x {{ $type.Name }}Ref) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets {{ $type.Name }}Ref from node.
 func (x *{{ $type.Name }}Ref) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref{{ if ne $type.Name "Schema" }}, &x.Summary, &x.Description{{ else }}, nil, nil{{ end }}, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}

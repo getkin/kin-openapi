@@ -635,14 +635,14 @@ components:
 	loader := openapi3.NewLoader()
 	loader.IncludeOrigin = true
 
-	_, err := loader.LoadFromData([]byte(data))
-	require.Error(t, err)
-	jsonErr := `invalid character 'p' looking for beginning of value`
-	if openapi3.UsingJSONv2 {
-		jsonErr = `jsontext: invalid character 'p' at start of value after offset 1`
-	}
-	require.Equal(t, `failed to unmarshal data: json error: `+jsonErr+`, yaml error: error converting YAML to JSON: yaml: unmarshal errors:
-  line 0: mapping key "__origin__" already defined at line 17`, err.Error())
+	doc, err := loader.LoadFromData([]byte(data))
+	require.NoError(t, err)
+
+	// "__origin__" is an ordinary property name: positions travel beside the
+	// document rather than inside it, so no key is reserved.
+	properties := doc.Components.Schemas["Foo"].Value.Properties
+	require.Contains(t, properties, "__origin__")
+	require.True(t, properties["__origin__"].Value.Type.Is("string"))
 }
 
 // TestOrigin_ExtensionValuesStripped verifies that __origin__ metadata injected

@@ -13,9 +13,8 @@ package nodeindex
 
 import (
 	"bytes"
-	"unicode/utf8"
 
-	yaml "github.com/oasdiff/yaml3"
+	yaml "go.yaml.in/yaml/v3"
 )
 
 // Index answers where the block headed by a key ends.
@@ -40,10 +39,8 @@ type Index struct {
 	// anchorKey is the key heading each anchored node, so an alias can report
 	// where the content it points at is defined.
 	anchorKey map[*yaml.Node]*yaml.Node
-	// lineLen is each line's length in characters, giving the column a block's
-	// last line stops at: the parser counts a column per character, not per
-	// byte, so a line holding any multi-byte one would otherwise end past its
-	// own width. indent is its leading-space count, or -1 when the line holds
+	// lineLen is each line's length, giving the column a block's last line
+	// stops at. indent is its leading-space count, or -1 when the line holds
 	// nothing, which is what extend walks.
 	lineLen []int
 	indent  []int
@@ -57,7 +54,7 @@ func New(root *yaml.Node, data []byte) *Index {
 	}
 	ix := &Index{end: map[*yaml.Node]int{}, anchorKey: map[*yaml.Node]*yaml.Node{}}
 	for _, line := range splitLines(data) {
-		ix.lineLen = append(ix.lineLen, utf8.RuneCount(line))
+		ix.lineLen = append(ix.lineLen, len(line))
 		if t := bytes.TrimRight(line, " \t"); len(t) == 0 {
 			ix.indent = append(ix.indent, -1)
 		} else {

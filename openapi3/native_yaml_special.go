@@ -4,6 +4,7 @@ package openapi3
 // rather than declared fields, and for the union-typed values.
 
 import (
+	"reflect"
 	"strings"
 
 	yaml "go.yaml.in/yaml/v3"
@@ -33,6 +34,8 @@ func unmarshalMaplikeYAML[V any](node *yaml.Node, ext *map[string]any, out *map[
 			return err
 		}
 		(*out)[k] = &vv
+		// The key node is in hand here, so no reflection is needed to find it.
+		setOriginKey(reflect.ValueOf(&vv), kv[0], kv[1], nativeOriginFile())
 	}
 	return nil
 }
@@ -69,6 +72,22 @@ func (header *Header) UnmarshalYAML(node *yaml.Node) error {
 	return header.Parameter.UnmarshalYAML(node)
 }
 
+// Types is a string or a list of strings. Swagger 2 and OpenAPI 3.0 documents
+// always write `type` as a scalar, so the single-string case is what decoding
+// such a document into openapi2.T or openapi3.T relies on.
+func (types *Types) UnmarshalYAML(node *yaml.Node) error {
+	var list []string
+	if err := node.Decode(&list); err != nil {
+		var s string
+		if err := node.Decode(&s); err != nil {
+			return err
+		}
+		list = []string{s}
+	}
+	*types = list
+	return nil
+}
+
 // BoolSchema is `true`/`false` or a schema.
 func (bs *BoolSchema) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind == yaml.ScalarNode {
@@ -100,7 +119,7 @@ func (schema *Schema) UnmarshalYAML(node *yaml.Node) error {
 		if err := node.Decode(&b); err != nil {
 			return err
 		}
-		schema.Always = &b
+		schema.Always, schema.Origin = &b, originFromNode(node, nativeOriginFile())
 		return nil
 	}
 
@@ -109,7 +128,8 @@ func (schema *Schema) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	schema.Extensions = ext
+	schema.Extensions, schema.Origin = ext, originFromNode(node, nativeOriginFile())
+	setChildOriginKeys(node, schema, nativeOriginFile())
 	return nil
 }
 
@@ -142,20 +162,33 @@ func (operation *Operation) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	operation.Extensions = ext
+	operation.Extensions, operation.Origin = ext, originFromNode(node, nativeOriginFile())
 	if v := mappingValue(node, "responses"); v != nil && v.Tag == nullTag {
 		operation.Responses = &Responses{explicitlyNull: true}
 	}
+	setChildOriginKeys(node, operation, nativeOriginFile())
 	return nil
 }
 
+// T is the document root, so no parent stamps its Origin.Key. It takes its own
+// first key instead, the same rule a sequence item follows.
 func (doc *T) UnmarshalYAML(node *yaml.Node) error {
 	type bis T
 	ext, err := decodeMapping[T](node, (*bis)(doc))
 	if err != nil {
 		return err
 	}
-	doc.Extensions = ext
+	doc.Extensions, doc.Origin = ext, originFromNode(node, nativeOriginFile())
+	if doc.Origin != nil && node.Kind == yaml.MappingNode && len(node.Content) > 0 {
+		first := node.Content[0]
+		doc.Origin.Key = &Location{
+			File:   nativeOriginFile(),
+			Line:   first.Line,
+			Column: first.Column,
+			Name:   first.Value,
+		}
+	}
+	setChildOriginKeys(node, doc, nativeOriginFile())
 	return nil
 }
 

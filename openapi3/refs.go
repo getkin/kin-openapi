@@ -91,6 +91,7 @@ func (x CallbackRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets CallbackRef from node.
 func (x *CallbackRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -264,6 +265,7 @@ func (x ExampleRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets ExampleRef from node.
 func (x *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -437,6 +439,7 @@ func (x HeaderRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets HeaderRef from node.
 func (x *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -610,6 +613,7 @@ func (x LinkRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets LinkRef from node.
 func (x *LinkRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -783,6 +787,7 @@ func (x ParameterRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets ParameterRef from node.
 func (x *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -956,6 +961,7 @@ func (x RequestBodyRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets RequestBodyRef from node.
 func (x *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -1129,6 +1135,7 @@ func (x ResponseRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets ResponseRef from node.
 func (x *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -1323,6 +1330,7 @@ func (x SchemaRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets SchemaRef from node.
 func (x *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, nil, nil, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}
@@ -1528,6 +1536,7 @@ func (x SecuritySchemeRef) MarshalJSON() ([]byte, error) {
 
 // UnmarshalYAML sets SecuritySchemeRef from node.
 func (x *SecuritySchemeRef) UnmarshalYAML(node *yaml.Node) error {
+	x.Origin = originFromNode(node, nativeOriginFile())
 	if !unmarshalRefYAML(node, &x.Ref, &x.Summary, &x.Description, &x.Extensions, &x.extra, &x.siblingExtras) {
 		return node.Decode(&x.Value)
 	}

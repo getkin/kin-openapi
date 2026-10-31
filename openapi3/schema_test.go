@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v3"
 )
 
 type schemaExample struct {

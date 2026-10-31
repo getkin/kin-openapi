@@ -1,1 +1,2 @@
-failed to unmarshal data: json error: jsontext: invalid character 'o' at start of value, yaml error: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal object into Go struct field .components.schemas.ExcelStatus.examples of type []interface {}
+failed to unmarshal data: json error: jsontext: invalid character 'o' at start of value, yaml error: yaml: unmarshal errors:
+  line 4692: cannot unmarshal !!map into []interface {}
