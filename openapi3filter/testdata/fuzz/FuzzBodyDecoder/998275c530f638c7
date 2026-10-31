@@ -1,0 +1,5 @@
+go test fuzz v1
+byte('\x02')
+string("applicatiw-formon/x-www-form-urlencoded")
+[]byte("a=1")
+[]byte("")

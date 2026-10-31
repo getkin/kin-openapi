@@ -1,0 +1,5 @@
+go test fuzz v1
+byte('¹')
+string("0")
+[]byte("?")
+[]byte("")
