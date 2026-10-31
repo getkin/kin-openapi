@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -213,5 +214,35 @@ func FuzzSchemaVisitJSON(f *testing.F) {
 		_ = schema.VisitJSON(value)
 		_ = schema.VisitJSON(value, openapi3.EnableFormatValidation())
 		_ = schema.VisitJSON(value, openapi3.EnableJSONSchema2020())
+	})
+}
+
+// A document written out as YAML by its own MarshalYAML loads back to itself.
+func FuzzMarshalYAML(f *testing.F) {
+	seedFromTestdata(f)
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		if len(data) > maxFuzzInput {
+			t.Skip()
+		}
+		doc, err := newFuzzLoader().LoadFromData(data)
+		if err != nil {
+			return
+		}
+		j, err := doc.MarshalJSON()
+		require.NoError(t, err)
+		var generic any
+		require.NoError(t, json.Unmarshal(j, &generic))
+		if fuzzing.LosesInYAML(generic) {
+			return
+		}
+
+		y, err := yaml.Marshal(doc)
+		require.NoError(t, err)
+		back, err := newFuzzLoader().LoadFromData(y)
+		require.NoError(t, err, "yaml:\n%s", y)
+		j2, err := back.MarshalJSON()
+		require.NoError(t, err)
+		require.JSONEq(t, string(j), string(j2), "yaml:\n%s", y)
 	})
 }
