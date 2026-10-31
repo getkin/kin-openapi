@@ -42,6 +42,7 @@ jobs:
         - {package: ./openapi3, target: FuzzInternalizeRefsKeepsMeaning}
         - {package: ./openapi3, target: FuzzValidateOptions}
         - {package: ./openapi3, target: FuzzInternalizeRefsCustomResolver}
+        - {package: ./openapi3, target: FuzzMarshalYAML}
         - {package: ./openapi2, target: FuzzUnmarshalFromData}
         - {package: ./internal/nodeindex, target: FuzzNew}
         - {package: ./openapi2conv, target: FuzzToV3}
