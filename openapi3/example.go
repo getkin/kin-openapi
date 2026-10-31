@@ -57,14 +57,7 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "summary")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "value")
-	delete(x.Extensions, "externalValue")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "summary", "description", "value", "externalValue")
 	*example = Example(x)
 	return nil
 }

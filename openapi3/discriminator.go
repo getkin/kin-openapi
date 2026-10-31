@@ -57,13 +57,7 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-
-	delete(x.Extensions, "propertyName")
-	delete(x.Extensions, "mapping")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "propertyName", "mapping")
 	*discriminator = Discriminator(x)
 	return nil
 }

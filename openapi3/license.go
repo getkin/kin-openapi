@@ -51,13 +51,7 @@ func (license *License) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "name")
-	delete(x.Extensions, "url")
-	delete(x.Extensions, "identifier")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "name", "url", "identifier")
 	*license = License(x)
 	return nil
 }

@@ -101,18 +101,16 @@ func (ss *SecurityScheme) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "type")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "name")
-	delete(x.Extensions, "in")
-	delete(x.Extensions, "scheme")
-	delete(x.Extensions, "bearerFormat")
-	delete(x.Extensions, "flows")
-	delete(x.Extensions, "openIdConnectUrl")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data,
+		"type",
+		"description",
+		"name",
+		"in",
+		"scheme",
+		"bearerFormat",
+		"flows",
+		"openIdConnectUrl",
+	)
 	*ss = SecurityScheme(x)
 	return nil
 }
@@ -290,14 +288,7 @@ func (flows *OAuthFlows) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "implicit")
-	delete(x.Extensions, "password")
-	delete(x.Extensions, "clientCredentials")
-	delete(x.Extensions, "authorizationCode")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "implicit", "password", "clientCredentials", "authorizationCode")
 	*flows = OAuthFlows(x)
 	return nil
 }
@@ -378,15 +369,7 @@ func (flow *OAuthFlow) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-
-	delete(x.Extensions, "authorizationUrl")
-	delete(x.Extensions, "tokenUrl")
-	delete(x.Extensions, "refreshUrl")
-	delete(x.Extensions, "scopes")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "authorizationUrl", "tokenUrl", "refreshUrl", "scopes")
 	*flow = OAuthFlow(x)
 	return nil
 }

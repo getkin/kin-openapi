@@ -65,17 +65,15 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "title")
-	delete(x.Extensions, "summary")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "termsOfService")
-	delete(x.Extensions, "contact")
-	delete(x.Extensions, "license")
-	delete(x.Extensions, "version")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data,
+		"title",
+		"summary",
+		"description",
+		"termsOfService",
+		"contact",
+		"license",
+		"version",
+	)
 	*info = Info(x)
 	return nil
 }

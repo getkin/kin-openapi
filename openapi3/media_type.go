@@ -101,15 +101,7 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "schema")
-	delete(x.Extensions, "itemSchema")
-	delete(x.Extensions, "example")
-	delete(x.Extensions, "examples")
-	delete(x.Extensions, "encoding")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "schema", "itemSchema", "example", "examples", "encoding")
 	*mediaType = MediaType(x)
 	return nil
 }

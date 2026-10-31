@@ -116,24 +116,22 @@ func (operation *Operation) UnmarshalJSON(data []byte) error {
 		return unmarshalError(err)
 	}
 
-	_ = unmarshalJSON(data, &x.Extensions)
-	if value, present := x.Extensions["responses"]; present && value == nil {
+	x.Extensions = unmarshalExtensions(data,
+		"tags",
+		"summary",
+		"description",
+		"operationId",
+		"parameters",
+		"requestBody",
+		"responses",
+		"callbacks",
+		"deprecated",
+		"security",
+		"servers",
+		"externalDocs",
+	)
+	if x.Responses == nil && jsonMemberIsNull(data, "responses") {
 		x.Responses = &Responses{explicitlyNull: true}
-	}
-	delete(x.Extensions, "tags")
-	delete(x.Extensions, "summary")
-	delete(x.Extensions, "description")
-	delete(x.Extensions, "operationId")
-	delete(x.Extensions, "parameters")
-	delete(x.Extensions, "requestBody")
-	delete(x.Extensions, "responses")
-	delete(x.Extensions, "callbacks")
-	delete(x.Extensions, "deprecated")
-	delete(x.Extensions, "security")
-	delete(x.Extensions, "servers")
-	delete(x.Extensions, "externalDocs")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
 	}
 	*operation = Operation(x)
 	return nil

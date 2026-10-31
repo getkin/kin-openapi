@@ -57,15 +57,7 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = unmarshalJSON(data, &x.Extensions)
-	delete(x.Extensions, "name")
-	delete(x.Extensions, "namespace")
-	delete(x.Extensions, "prefix")
-	delete(x.Extensions, "attribute")
-	delete(x.Extensions, "wrapped")
-	if len(x.Extensions) == 0 {
-		x.Extensions = nil
-	}
+	x.Extensions = unmarshalExtensions(data, "name", "namespace", "prefix", "attribute", "wrapped")
 	*xml = XML(x)
 	return nil
 }
