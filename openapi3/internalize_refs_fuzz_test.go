@@ -1,6 +1,7 @@
 package openapi3_test
 
 import (
+	"encoding/json"
 	"net/url"
 	"os"
 	"path"
@@ -163,4 +164,62 @@ func forEachRef(v any, fn func(refSite)) {
 		}
 	}
 	walk(reflect.ValueOf(v))
+}
+
+// Internalizing changes where schemas live, not what they mean: each schema
+// of the root's components accepts the same values before and after.
+func FuzzInternalizeRefsKeepsMeaning(f *testing.F) {
+	for _, pair := range internalizeSeeds {
+		root, err := os.ReadFile(pair[0])
+		require.NoError(f, err)
+		other, err := os.ReadFile(pair[1])
+		require.NoError(f, err)
+		for _, value := range []string{`{}`, `null`, `"s"`, `1`, `[{"cat":{}}]`, `{"foo":{"bar":"x"},"cat":{"cat":1}}`} {
+			f.Add(root, other, []byte(value))
+		}
+	}
+	f.Add(
+		[]byte(`{"openapi":"3.0.0","info":{"title":"t","version":"1"},"paths":{},"components":{"schemas":{"A":{"type":"object","properties":{"b":{"$ref":"other.yaml#/components/schemas/B"}}}}}}`),
+		[]byte(`{"components":{"schemas":{"B":{"type":"array","items":{"$ref":"#/components/schemas/C"}},"C":{"type":"integer","maximum":3}}}}`),
+		[]byte(`{"b":[1,2,4]}`),
+	)
+
+	f.Fuzz(func(t *testing.T, root, other, value []byte) {
+		if len(root)+len(other)+len(value) > maxFuzzInput {
+			t.Skip()
+		}
+		var v any
+		if json.Unmarshal(value, &v) != nil {
+			t.Skip()
+		}
+
+		doc, err := newTwoDocLoader(root, other).LoadFromDataWithPath(root, fuzzRootURL)
+		if err != nil || doc.Components == nil {
+			return
+		}
+		if doc.Validate(t.Context()) != nil {
+			return
+		}
+		before := make(map[string]bool, len(doc.Components.Schemas))
+		for name, schema := range doc.Components.Schemas {
+			if schema != nil && schema.Value != nil {
+				before[name] = schema.Value.VisitJSON(v) == nil
+			}
+		}
+
+		doc.InternalizeRefs(t.Context(), nil)
+		once, err := doc.MarshalJSON()
+		require.NoError(t, err)
+		loader := openapi3.NewLoader()
+		reloaded, err := loader.LoadFromData(once)
+		if err != nil {
+			return // FuzzInternalizeRefs covers this
+		}
+		for name, accepted := range before {
+			schema := reloaded.Components.Schemas[name]
+			require.NotNil(t, schema, name)
+			require.NotNil(t, schema.Value, name)
+			require.Equal(t, accepted, schema.Value.VisitJSON(v) == nil, "schema %q, value %s\nonce: %s", name, value, once)
+		}
+	})
 }
