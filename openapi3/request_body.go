@@ -93,8 +93,12 @@ func (requestBody RequestBody) MarshalYAML() (any, error) {
 	if x := requestBody.Required; x {
 		m["required"] = x
 	}
-	if x := requestBody.Content; true {
+	// Required, so written even when missing. A nil map would be written
+	// "null" as JSON and "{}" as YAML: write null both ways.
+	if x := requestBody.Content; x != nil {
 		m["content"] = x
+	} else {
+		m["content"] = nil
 	}
 	return m, nil
 }

@@ -371,7 +371,13 @@ func (flow OAuthFlow) MarshalYAML() (any, error) {
 	if x := flow.RefreshURL; x != "" {
 		m["refreshUrl"] = x
 	}
-	m["scopes"] = flow.Scopes
+	// Required, so written even when missing: as null, not as the "{}" YAML
+	// would make of a nil map.
+	if x := flow.Scopes; x != nil {
+		m["scopes"] = x
+	} else {
+		m["scopes"] = nil
+	}
 	return m, nil
 }
 
