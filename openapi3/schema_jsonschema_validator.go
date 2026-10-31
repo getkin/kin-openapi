@@ -109,8 +109,16 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) (map[string
 		if _, ok := refs[ref.Ref]; ok {
 			return nil
 		}
+		// A $ref with OpenAPI 3.1 siblings has a copy of its target as Value,
+		// with those siblings applied. They are already written next to the
+		// $ref, so copy the referenced schema itself: another $ref to the same
+		// schema shares this entry and must not inherit these siblings.
+		value := ref.Value
+		if ref.target != nil {
+			value = ref.target
+		}
 		var target any
-		bytes, err := json.Marshal(ref.Value)
+		bytes, err := json.Marshal(value)
 		if err != nil {
 			return err
 		}
@@ -118,7 +126,7 @@ func addInternalSchemaRefs(schemaMap map[string]any, schema *Schema) (map[string
 			return err
 		}
 		refs[ref.Ref] = target
-		values[ref.Ref] = ref.Value
+		values[ref.Ref] = value
 		return nil
 	})
 	if err != nil {
