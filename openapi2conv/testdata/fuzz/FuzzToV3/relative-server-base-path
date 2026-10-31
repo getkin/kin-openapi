@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"basePath\":\"0%00\",\"info\":{\"title\":\"0\",\"version\":\"0\"},\"paths\":{\"/\":{}}}")

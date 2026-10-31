@@ -1651,3 +1651,41 @@ func TestSchemaMultipleOfAcrossMagnitudes(t *testing.T) {
 		require.Equal(t, "number must be a multiple of 0.01", schemaErr.Reason)
 	})
 }
+
+func TestSchemaLengthDecodedBase64(t *testing.T) {
+	t.Parallel()
+
+	encoded := func(n int) string { return base64.RawStdEncoding.EncodeToString(make([]byte /*,*/, n)) }
+
+	t.Run("min", func(t *testing.T) {
+		schema := NewBytesSchema().WithMinLengthDecodedBase64(3)
+		require.Equal(t, uint64(4), schema.MinLength)
+		require.Nil(t, schema.MaxLength)
+		require.NoError(t, schema.VisitJSON(encoded(3)))
+		require.ErrorContains(t, schema.VisitJSON(encoded(2)), "minimum string length is 4")
+	})
+
+	t.Run("max", func(t *testing.T) {
+		schema := NewBytesSchema().WithMaxLengthDecodedBase64(3)
+		require.Zero(t, schema.MinLength)
+		require.NotNil(t, schema.MaxLength)
+		require.Equal(t, uint64(4), *schema.MaxLength)
+		require.NoError(t, schema.VisitJSON(encoded(3)))
+		require.NoError(t, schema.VisitJSON(""))
+		require.ErrorContains(t, schema.VisitJSON(encoded(6)), "maximum string length is 4")
+	})
+
+	t.Run("min and max", func(t *testing.T) {
+		schema := NewBytesSchema().WithMinLengthDecodedBase64(1).WithMaxLengthDecodedBase64(3)
+		require.Equal(t, uint64(2), schema.MinLength)
+		require.NotNil(t, schema.MaxLength)
+		require.Equal(t, uint64(4), *schema.MaxLength)
+	})
+
+	t.Run("exact", func(t *testing.T) {
+		schema := NewBytesSchema().WithLengthDecodedBase64(3)
+		require.Equal(t, uint64(4), schema.MinLength)
+		require.NotNil(t, schema.MaxLength)
+		require.Equal(t, uint64(4), *schema.MaxLength)
+	})
+}

@@ -1317,6 +1317,54 @@ components:
 	require.Equal(t, "pattern", se.SchemaField)
 }
 
+// `pattern` applies to string values whether or not `type` says string, so
+// an uncompilable one is rejected on any schema that accepts strings.
+func TestValidationError_SchemaPatternRegex_WithoutStringType(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		version string
+		typ     string
+	}{
+		{version: "3.0.3"},
+		{version: "3.1.0"},
+		{version: "3.1.0", typ: "type: [string, 'null']"},
+		{version: "3.1.0", typ: "type: [integer, string]"},
+	} {
+		t.Run(tc.version+" "+tc.typ, func(t *testing.T) {
+			doc := loadDocFromYAML(t, `
+openapi: `+tc.version+`
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      `+tc.typ+`
+      pattern: "(?!foo)bar"
+`)
+			err := doc.Validate(t.Context())
+			require.Error(t, err)
+
+			var spre *openapi3.SchemaPatternRegexError
+			require.True(t, errors.As(err, &spre))
+			require.Equal(t, "(?!foo)bar", spre.Pattern)
+		})
+	}
+
+	// A schema that never sees a string never runs its pattern.
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Number:
+      type: integer
+      pattern: "(?!foo)bar"
+`)
+	require.NoError(t, doc.Validate(t.Context()))
+}
+
 // Origin tracking for SchemaPatternRegexError.
 func TestValidationError_SchemaPatternRegex_CarriesOrigin(t *testing.T) {
 	t.Parallel()
@@ -2402,6 +2450,53 @@ components:
 	require.True(t, errors.As(err, &dup))
 	require.Equal(t, "id", dup.Field)
 	require.ErrorContains(t, dup, `duplicate field "id" in required`)
+}
+
+func TestValidationError_SchemaMultipleOfNotPositiveError(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		version    string
+		multipleOf string
+		expected   float64
+	}{
+		{version: "3.0.3", multipleOf: "0", expected: 0},
+		{version: "3.0.3", multipleOf: "-2", expected: -2},
+		{version: "3.1.0", multipleOf: "0", expected: 0},
+		{version: "3.1.0", multipleOf: "-0.5", expected: -0.5},
+	} {
+		t.Run(tc.version+" "+tc.multipleOf, func(t *testing.T) {
+			doc := loadDocFromYAML(t, `
+openapi: `+tc.version+`
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Bad:
+      type: number
+      multipleOf: `+tc.multipleOf+`
+`)
+			err := doc.Validate(t.Context())
+			require.Error(t, err)
+
+			var nonPositive *openapi3.SchemaMultipleOfNotPositiveError
+			require.True(t, errors.As(err, &nonPositive))
+			require.Equal(t, tc.expected, nonPositive.MultipleOf)
+			require.ErrorContains(t, nonPositive, "multipleOf must be greater than zero, got "+tc.multipleOf)
+		})
+	}
+
+	doc := loadDocFromYAML(t, `
+openapi: 3.0.3
+info: { title: t, version: "1" }
+paths: {}
+components:
+  schemas:
+    Good:
+      type: number
+      multipleOf: 0.01
+`)
+	require.NoError(t, doc.Validate(t.Context()))
 }
 
 func TestValidationError_DuplicateTagError(t *testing.T) {

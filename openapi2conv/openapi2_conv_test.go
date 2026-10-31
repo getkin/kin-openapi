@@ -525,7 +525,6 @@ const exampleV2 = `
 						"in": "formData",
 						"name": "fileUpload",
 						"type": "file",
-						"x-formData-name": "fileUpload",
 						"x-mimetype": "text/plain"
 					},
 					{
@@ -538,8 +537,7 @@ const exampleV2 = `
 						"description": "Description of file contents",
 						"in": "formData",
 						"name": "note",
-						"type": "integer",
-						"x-formData-name": "note"
+						"type": "integer"
 					}
 				],
 				"responses": {

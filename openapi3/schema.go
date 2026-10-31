@@ -1266,7 +1266,8 @@ func (schema *Schema) WithMinLengthDecodedBase64(i int64) *Schema {
 
 func (schema *Schema) WithMaxLengthDecodedBase64(i int64) *Schema {
 	n := uint64(i)
-	schema.MinLength = (n*8 + 5) / 6
+	v := (n*8 + 5) / 6
+	schema.MaxLength = &v
 	return schema
 }
 
@@ -1554,6 +1555,12 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 		}
 	}
 
+	// The value of `multipleOf` MUST be strictly greater than 0 (JSON Schema
+	// 2020-12 §6.2.1 for OAS 3.1, draft-04 for OAS 3.0).
+	if x := schema.MultipleOf; x != nil && *x <= 0 {
+		return visited, &SchemaMultipleOfNotPositiveError{MultipleOf: *x, Origin: schema.Origin}
+	}
+
 	// Reject fields that only exist in OAS 3.1 / JSON Schema 2020-12 when the
 	// document is OAS 3.0. Fields explicitly allowed via AllowExtraSiblingFields
 	// are skipped (opt-in escape hatch for 3.0 docs that reference external
@@ -1837,15 +1844,6 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 					}
 				}
 			}
-			if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" {
-				// Only successfully compiled patterns are cached.
-				// The cache does not record which compiler was used, so a custom one always compiles.
-				if _, ok := compiledPatterns.Load(schema.Pattern); !ok || validationOpts.regexCompilerFunc != nil {
-					if _, err := schema.compilePattern(nil, validationOpts.regexCompilerFunc); err != nil {
-						return visited, err
-					}
-				}
-			}
 		case TypeArray:
 			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
 				return visited, newSchemaItemsRequired(schema.Origin)
@@ -1857,6 +1855,18 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 			}
 		default:
 			return visited, newSchemaTypeError(schemaType, schema.Origin)
+		}
+	}
+
+	// `pattern` applies to every string value, also when `type` is omitted.
+	if !validationOpts.schemaPatternValidationDisabled && schema.Pattern != "" &&
+		(schema.Type.IsEmpty() || schema.Type.Includes(TypeString)) {
+		// Only successfully compiled patterns are cached.
+		// The cache does not record which compiler was used, so a custom one always compiles.
+		if _, ok := compiledPatterns.Load(schema.Pattern); !ok || validationOpts.regexCompilerFunc != nil {
+			if _, err := schema.compilePattern(nil, validationOpts.regexCompilerFunc); err != nil {
+				return visited, err
+			}
 		}
 	}
 

@@ -57,7 +57,13 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 		// allows a relative server URL. Emit the base path on its own rather
 		// than dropping it: with no servers the default server URL of "/" is
 		// assumed, so `/v1` used to disappear (issue #1284).
-		doc3.AddServer(&openapi3.Server{URL: basePath})
+		//
+		// The path goes through url.URL, as it does when there is a host, so
+		// that it is escaped the same way in both cases. Written out as it
+		// came, a base path holding a percent-escape or a control character
+		// made a server URL that reads back as a different path, or as no
+		// path at all because it no longer parses.
+		doc3.AddServer(&openapi3.Server{URL: (&url.URL{Path: basePath}).String()})
 	}
 
 	doc3.Components.Schemas = make(map[string]*openapi3.SchemaRef)
@@ -127,6 +133,9 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 }
 
 func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *openapi2.PathItem, consumes []string) (*openapi3.PathItem, error) {
+	if pathItem == nil {
+		return nil, nil
+	}
 	doc3 := &openapi3.PathItem{
 		Extensions: stripNonExtensions(pathItem.Extensions),
 	}
@@ -245,7 +254,11 @@ func inheritedRequestBodyParams(components *openapi3.Components, pathItem *opena
 
 // parameterIdentity returns the key a parameter is known by inside a path item:
 // a reference keeps its reference, an inline parameter its location and name.
+// A parameter written as null has no identity and overrides nothing.
 func parameterIdentity(parameter *openapi2.Parameter) string {
+	if parameter == nil {
+		return ""
+	}
 	if parameter.Ref != "" {
 		return parameter.Ref
 	}
@@ -260,6 +273,9 @@ func getParameterNameFromOldRef(ref string) string {
 }
 
 func ToV3Parameter(components *openapi3.Components, parameter *openapi2.Parameter, consumes []string) (*openapi3.ParameterRef, *openapi3.RequestBodyRef, map[string]*openapi3.SchemaRef, error) {
+	if parameter == nil {
+		return nil, nil, nil, nil
+	}
 	if ref := parameter.Ref; ref != "" {
 		if strings.HasPrefix(ref, "#/parameters/") {
 			name := getParameterNameFromOldRef(ref)
@@ -487,6 +503,9 @@ func onlyOneReqBodyParam(bodies []*openapi3.RequestBodyRef, formDataSchemas map[
 }
 
 func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.ResponseRef, error) {
+	if response == nil {
+		return nil, nil
+	}
 	if ref := response.Ref; ref != "" {
 		return &openapi3.ResponseRef{Ref: ToV3Ref(ref)}, nil
 	}
@@ -527,16 +546,27 @@ func ToV3Response(response *openapi2.Response, produces []string) (*openapi3.Res
 func ToV3Headers(defs map[string]*openapi2.Header) openapi3.Headers {
 	headers := make(openapi3.Headers, len(defs))
 	for name, header := range defs {
-		header.In = ""
-		header.Name = ""
-		if ref := header.Ref; ref != "" {
-			headers[name] = &openapi3.HeaderRef{Ref: ToV3Ref(ref)}
-		} else {
-			parameter, _, _, _ := ToV3Parameter(nil, &header.Parameter, nil)
-			headers[name] = &openapi3.HeaderRef{Value: &openapi3.Header{
-				Parameter: *parameter.Value,
-			}}
+		if header == nil {
+			headers[name] = nil
+			continue
 		}
+		// On a copy: a header's in and name are dropped on the way to a
+		// v3 header, and the document being converted keeps its own.
+		h := *header
+		h.In = ""
+		h.Name = ""
+		if ref := h.Ref; ref != "" {
+			headers[name] = &openapi3.HeaderRef{Ref: ToV3Ref(ref)}
+			continue
+		}
+		parameter, _, _, _ := ToV3Parameter(nil, &h.Parameter, nil)
+		if parameter == nil || parameter.Value == nil {
+			headers[name] = nil
+			continue
+		}
+		headers[name] = &openapi3.HeaderRef{Value: &openapi3.Header{
+			Parameter: *parameter.Value,
+		}}
 	}
 	return headers
 }
@@ -771,18 +801,27 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 	isHTTP := false
 	servers := doc3.Servers
 	for i, server := range servers {
-		if parsedURL, err := url.Parse(server.URL); err == nil {
-			switch parsedURL.Scheme {
-			case "https":
-				isHTTPS = true
-			case "http":
-				isHTTP = true
-			}
-			// The first server is assumed to provide the base path
+		parsedURL, err := url.Parse(server.URL)
+		if err != nil {
+			// A URL that does not parse is still the only thing said about
+			// where the API lives, and basePath is the one field of the two
+			// that can hold it as it was written. Dropping it lost the server
+			// altogether, and converting back then produced no server at all.
 			if i == 0 {
-				doc2.Host = parsedURL.Host
-				doc2.BasePath = parsedURL.Path
+				doc2.BasePath = server.URL
 			}
+			continue
+		}
+		switch parsedURL.Scheme {
+		case "https":
+			isHTTPS = true
+		case "http":
+			isHTTP = true
+		}
+		// The first server is assumed to provide the base path
+		if i == 0 {
+			doc2.Host = parsedURL.Host
+			doc2.BasePath = parsedURL.Path
 		}
 	}
 
@@ -1135,18 +1174,27 @@ nameSearch:
 
 func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameters {
 	parameters := openapi2.Parameters{}
-	for propName, schemaRef := range mediaType.Schema.Value.Properties {
+	schema := mediaType.Schema.Value
+	for propName, schemaRef := range schema.Properties {
 		if ref := schemaRef.Ref; ref != "" {
 			v2Ref := strings.Replace(ref, "#/components/schemas/", "#/parameters/", 1)
 			parameters = append(parameters, &openapi2.Parameter{Ref: v2Ref})
 			continue
 		}
 		val := schemaRef.Value
-		typ := val.Type
+		typ, format := val.Type, val.Format
 		if val.Format == "binary" {
-			typ = &openapi3.Types{"file"}
+			// Swagger 2.0 writes a file upload as type file, which has no
+			// format of its own, so the format is spent on naming the type.
+			typ, format = &openapi3.Types{"file"}, ""
 		}
-		required := slices.Contains(val.Required, propName)
+		// required lists the names of the required properties and belongs to
+		// the object holding them, which is where ToV3 puts it. Reading only
+		// the property's own list therefore lost the flag on the way back. A
+		// document that does carry it on the property is still honoured, as
+		// that is how a form field kept in components records it.
+		required := slices.Contains(schema.Required, propName) ||
+			slices.Contains(val.Required, propName)
 
 		var v2Items *openapi2.SchemaRef
 		if val.Items != nil {
@@ -1157,7 +1205,7 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			Description:  val.Description,
 			Type:         typ,
 			In:           "formData",
-			Extensions:   stripNonExtensions(val.Extensions),
+			Extensions:   formFieldExtensions(val.Extensions),
 			Enum:         val.Enum,
 			ExclusiveMin: exclusiveBoundToBool(val.ExclusiveMin),
 			ExclusiveMax: exclusiveBoundToBool(val.ExclusiveMax),
@@ -1170,8 +1218,8 @@ func FromV3RequestBodyFormData(mediaType *openapi3.MediaType) openapi2.Parameter
 			Maximum:      effectiveMax(val.Max, val.ExclusiveMax),
 			Minimum:      effectiveMin(val.Min, val.ExclusiveMin),
 			Pattern:      val.Pattern,
+			Format:       format,
 			// CollectionFormat: val.CollectionFormat,
-			// Format:          val.Format,
 			AllowEmptyValue: val.AllowEmptyValue,
 			Required:        required,
 			UniqueItems:     val.UniqueItems,
@@ -1282,7 +1330,13 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 	if schemaRef := parameter.Schema; schemaRef != nil {
 		schemaRefV2, parameterV2 := FromV3SchemaRef(schemaRef, components)
 		if schemaRefV2 == nil {
-			return parameterV2, nil
+			if parameter.In == "formData" {
+				return parameterV2, nil
+			}
+			// A binary schema converts to a formData file, which only a
+			// request body property may become. Anywhere else the parameter
+			// keeps its location and name and stays a binary string.
+			return fromV3BinaryParameter(result, schemaRef, components), nil
 		}
 		if ref := schemaRefV2.Ref; ref != "" {
 			result.Schema = &openapi2.SchemaRef{Ref: FromV3Ref(ref)}
@@ -1314,6 +1368,34 @@ func FromV3Parameter(ref *openapi3.ParameterRef, components *openapi3.Components
 		}
 	}
 	return result, nil
+}
+
+// fromV3BinaryParameter fills result, a parameter outside formData, from its
+// binary schema. Swagger 2.0 allows type file only in formData, so the schema
+// is kept as a string of format binary.
+func fromV3BinaryParameter(result *openapi2.Parameter, schemaRef *openapi3.SchemaRef, components *openapi3.Components) *openapi2.Parameter {
+	schema := schemaRef.Value
+	if schema == nil && components != nil {
+		if val, ok := components.Schemas[getParameterNameFromNewRef(schemaRef.Ref)]; ok && val != nil {
+			schema = val.Value
+		}
+	}
+	result.Type = &openapi3.Types{"string"}
+	result.Format = "binary"
+	if schema == nil {
+		return result
+	}
+	result.Enum = schema.Enum
+	result.Minimum = effectiveMin(schema.Min, schema.ExclusiveMin)
+	result.Maximum = effectiveMax(schema.Max, schema.ExclusiveMax)
+	result.ExclusiveMin = exclusiveBoundToBool(schema.ExclusiveMin)
+	result.ExclusiveMax = exclusiveBoundToBool(schema.ExclusiveMax)
+	result.MinLength = schema.MinLength
+	result.MaxLength = schema.MaxLength
+	result.Pattern = schema.Pattern
+	result.Default = schema.Default
+	result.AllowEmptyValue = schema.AllowEmptyValue
+	return result
 }
 
 // fromV3QueryStyle maps a query parameter's explicit style and explode to the equivalent collectionFormat.
@@ -1471,6 +1553,25 @@ var attemptedBodyParameterNames = []string{
 }
 
 // stripNonExtensions removes invalid extensions: those not prefixed by "x-" and returns them
+// formFieldExtensions returns the extensions of a form field without
+// x-formData-name, which names the field for the conversion to OpenAPI 3,
+// where the name has nowhere else to live, and is not part of the document
+// being converted. A field kept in components keeps the marker, as the
+// conversion back reads the name from it.
+//
+// The map is built fresh rather than filtered in place, so the schema the
+// extensions came from keeps its own.
+func formFieldExtensions(extensions map[string]any) map[string]any {
+	result := make(map[string]any, len(extensions))
+	for name, value := range extensions {
+		if !strings.HasPrefix(name, "x-") || name == "x-formData-name" {
+			continue
+		}
+		result[name] = value
+	}
+	return result
+}
+
 func stripNonExtensions(extensions map[string]any) map[string]any {
 	for extName := range extensions {
 		if !strings.HasPrefix(extName, "x-") {

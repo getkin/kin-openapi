@@ -338,6 +338,11 @@ func decodeValueGuarded(dec valueDecoder, param string, sm *openapi3.Serializati
 		return nil, found, errors.New("not implemented: decoding 'not'")
 	}
 
+	if schema.Value.Type == nil && (schema.Value.Const != nil || len(schema.Value.Enum) > 0) {
+		// Typeless const/enum schema (#1367): decode as a primitive.
+		return dec.DecodePrimitive(param, sm, schema)
+	}
+
 	if schema.Value.Type != nil {
 		var decodeFn func(param string, sm *openapi3.SerializationMethod, schema *openapi3.SchemaRef) (any, bool, error)
 		switch {
@@ -1232,7 +1237,13 @@ func parseArray(raw []string, schemaRef *openapi3.SchemaRef) ([]any, error) {
 // that is specified by a schema. The function returns nil when the source string is empty and the type is not "string".
 // The function panics when a schema has a non-primitive type.
 func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
-	for _, typ := range schema.Value.Type.Slice() {
+	typs := schema.Value.Type.Slice()
+	constrainedTypeless := len(typs) == 0 && (schema.Value.Const != nil || len(schema.Value.Enum) > 0)
+	if constrainedTypeless {
+		// No type: derive the candidate types from the const/enum values (#1367).
+		typs = constraintTypes(schema)
+	}
+	for _, typ := range typs {
 		if raw == "" && typ != openapi3.TypeString {
 			return nil, nil
 		}
@@ -1240,7 +1251,55 @@ func parsePrimitive(raw string, schema *openapi3.SchemaRef) (v any, err error) {
 			return
 		}
 	}
+	if constrainedTypeless {
+		return raw, nil
+	}
 	return
+}
+
+// constraintTypes returns the types of the const/enum values of a schema,
+// with boolean and number before string so that "42" decodes to 42.
+// It makes a single pass over the values, then keeps the seen types only,
+// reducing the worst case from O(5 x values) hash lookups to O(values).
+func constraintTypes(schema *openapi3.SchemaRef) []string {
+	seen := make(map[string]struct{}, 5)
+	consider := func(value any) {
+		switch value.(type) {
+		case bool:
+			seen[openapi3.TypeBoolean] = struct{}{}
+		case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
+			seen[openapi3.TypeNumber] = struct{}{}
+		case string:
+			seen[openapi3.TypeString] = struct{}{}
+		case []any:
+			seen[openapi3.TypeArray] = struct{}{}
+		case map[string]any:
+			seen[openapi3.TypeObject] = struct{}{}
+		}
+	}
+	for _, value := range schema.Value.Enum {
+		consider(value)
+	}
+	if schema.Value.Const != nil {
+		consider(schema.Value.Const)
+	}
+	typs := make([]string, 0, 5)
+	if _, ok := seen[openapi3.TypeBoolean]; ok {
+		typs = append(typs, openapi3.TypeBoolean)
+	}
+	if _, ok := seen[openapi3.TypeNumber]; ok {
+		typs = append(typs, openapi3.TypeNumber)
+	}
+	if _, ok := seen[openapi3.TypeString]; ok {
+		typs = append(typs, openapi3.TypeString)
+	}
+	if _, ok := seen[openapi3.TypeArray]; ok {
+		typs = append(typs, openapi3.TypeArray)
+	}
+	if _, ok := seen[openapi3.TypeObject]; ok {
+		typs = append(typs, openapi3.TypeObject)
+	}
+	return typs
 }
 
 func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any, error) {
