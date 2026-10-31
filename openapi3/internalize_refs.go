@@ -389,7 +389,7 @@ func (doc *T) derefHeaders(hs Headers, refNameResolver RefNameResolver, parentIs
 	for _, name := range componentNames(hs) {
 		h := hs[name]
 		isExternal := doc.addHeaderToSpec(h, refNameResolver, parentIsExternal)
-		if doc.isVisitedHeader(h.Value) {
+		if h == nil || h.Value == nil || doc.isVisitedHeader(h.Value) {
 			continue
 		}
 		doc.derefParameter(h.Value.Parameter, refNameResolver, parentIsExternal || isExternal)
@@ -406,6 +406,9 @@ func (doc *T) derefExamples(es Examples, refNameResolver RefNameResolver, parent
 func (doc *T) derefContent(c Content, refNameResolver RefNameResolver, parentIsExternal bool) {
 	for _, name := range componentNames(c) {
 		mediatype := c[name]
+		if mediatype == nil {
+			continue
+		}
 		isExternal := doc.addSchemaToSpec(mediatype.Schema, refNameResolver, parentIsExternal)
 		if mediatype.Schema != nil {
 			doc.derefSchema(mediatype.Schema.Value, refNameResolver, isExternal || parentIsExternal)
@@ -413,6 +416,9 @@ func (doc *T) derefContent(c Content, refNameResolver RefNameResolver, parentIsE
 		doc.derefExamples(mediatype.Examples, refNameResolver, parentIsExternal)
 		for _, name := range componentNames(mediatype.Encoding) {
 			e := mediatype.Encoding[name]
+			if e == nil {
+				continue
+			}
 			doc.derefHeaders(e.Headers, refNameResolver, parentIsExternal)
 		}
 	}
@@ -426,6 +432,9 @@ func (doc *T) derefLinks(ls Links, refNameResolver RefNameResolver, parentIsExte
 }
 
 func (doc *T) derefResponse(r *ResponseRef, refNameResolver RefNameResolver, parentIsExternal bool) {
+	if r == nil {
+		return
+	}
 	isExternal := doc.addResponseToSpec(r, refNameResolver, parentIsExternal)
 	if v := r.Value; v != nil {
 		doc.derefHeaders(v.Headers, refNameResolver, isExternal || parentIsExternal)
@@ -460,6 +469,9 @@ func (doc *T) derefRequestBody(r RequestBody, refNameResolver RefNameResolver, p
 func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameResolver, parentIsExternal bool) {
 	for _, name := range componentNames(paths) {
 		ops := paths[name]
+		if ops == nil {
+			continue
+		}
 		pathIsExternal := isExternalRef(ops.Ref, parentIsExternal)
 		// inline full operations
 		ops.Ref = ""
