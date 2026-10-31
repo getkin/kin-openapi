@@ -48,6 +48,7 @@ jobs:
         - {package: ./openapi2conv, target: FuzzToV3}
         - {package: ./openapi3filter, target: FuzzValidateRequest}
         - {package: ./openapi3filter, target: FuzzValidateResponse}
+        - {package: ./openapi3filter, target: FuzzBodyDecoder}
     steps:
 
     - uses: actions/setup-go@v6
