@@ -3572,6 +3572,11 @@ func NewSecurityRequirement() SecurityRequirement
 
 func (security SecurityRequirement) Authenticate(provider string, scopes ...string) SecurityRequirement
 
+func (security SecurityRequirement) MarshalYAML() (any, error)
+    MarshalYAML returns the YAML encoding of SecurityRequirement. A nil
+    SecurityRequirement or list of scopes is written null, as JSON writes it,
+    rather than the "{}" or "[]" YAML would make of it.
+
 func (sr *SecurityRequirement) UnmarshalYAML(node *yaml.Node) error
     UnmarshalYAML sets SecurityRequirement from node.
 

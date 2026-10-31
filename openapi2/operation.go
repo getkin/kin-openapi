@@ -49,7 +49,13 @@ func (operation Operation) MarshalJSON() ([]byte, error) {
 	if x := operation.Parameters; len(x) != 0 {
 		m["parameters"] = x
 	}
-	m["responses"] = operation.Responses
+	// Required, so written even when missing: as null, not as the "{}" YAML
+	// would make of a nil map.
+	if x := operation.Responses; x != nil {
+		m["responses"] = x
+	} else {
+		m["responses"] = nil
+	}
 	if x := operation.Consumes; len(x) != 0 {
 		m["consumes"] = x
 	}
