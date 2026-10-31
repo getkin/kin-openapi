@@ -1689,3 +1689,15 @@ func TestSchemaLengthDecodedBase64(t *testing.T) {
 		require.Equal(t, uint64(4), *schema.MaxLength)
 	})
 }
+
+func TestSchemaIsEmptyCyclic(t *testing.T) {
+	// a: {oneOf: [b]}, b: {oneOf: [a]} constrains nothing, and must not
+	// recurse forever finding that out.
+	a, b := &Schema{}, &Schema{}
+	a.OneOf = SchemaRefs{{Value: b}}
+	b.OneOf = SchemaRefs{{Value: a}}
+	require.True(t, a.IsEmpty())
+
+	b.OneOf = append(b.OneOf, &SchemaRef{Value: &Schema{Type: &Types{TypeString}}})
+	require.False(t, a.IsEmpty())
+}
