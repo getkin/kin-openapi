@@ -485,7 +485,7 @@ func stringList(node *yaml.Node, key string) ([]string, bool, error) {
 		return nil, false, nil
 	}
 
-	list := make([]string, len(node.Content))
+	list := make([]string /*,*/, len(node.Content))
 	for i, e := range node.Content {
 		if e.Kind == yaml.AliasNode {
 			e = e.Alias
