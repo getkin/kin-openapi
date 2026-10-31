@@ -277,14 +277,13 @@ func requireRecorded(t *testing.T, extra []string, name string) {
 
 func requireValidateFails(t *testing.T, doc *T, name string) {
 	t.Helper()
-	err := doc.Validate(context.Background())
-	if err == nil {
-		t.Errorf("undeclared sibling %q was accepted", name)
+	if err := doc.Validate(context.Background()); err != nil {
+		if want := fmt.Sprintf("[%s]", name); !strings.Contains(err.Error(), want) {
+			t.Errorf("validate reported %v, want it to name %s", err, want)
+		}
 		return
 	}
-	if want := fmt.Sprintf("[%s]", name); !strings.Contains(err.Error(), want) {
-		t.Errorf("validate reported %v, want it to name %s", err, want)
-	}
+	t.Errorf("undeclared sibling %q was accepted", name)
 }
 
 func requireFloat(t *testing.T, v any) {
