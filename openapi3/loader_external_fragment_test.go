@@ -27,11 +27,11 @@ func TestExternalFragmentRefToBareSchemaFileResolvedOnce(t *testing.T) {
 		for _, s := range []string{"A", "B"} {
 			schema := "type: string"
 			if k < layers-1 {
-				schema = fmt.Sprintf("type: object\n  properties:\n    a: {$ref: './L%d.yaml#/A'}\n    b: {$ref: './L%d.yaml#/B'}", k+1, k+1)
+				schema = fmt.Sprintf("type: object\n  properties:\n    a: {$ref: './layer%d.yaml#/A'}\n    b: {$ref: './layer%d.yaml#/B'}", k+1, k+1)
 			}
 			content += s + ":\n  " + schema + "\n"
 		}
-		require.NoError(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("L%d.yaml", k)), []byte(content), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("layer%d.yaml", k)), []byte(content), 0o644))
 	}
 	root := `openapi: 3.0.3
 info: {title: t, version: '1'}
@@ -39,7 +39,7 @@ paths: {}
 components:
   schemas:
     Root:
-      $ref: './L0.yaml#/A'
+      $ref: './layer0.yaml#/A'
 `
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "openapi.yaml"), []byte(root), 0o644))
 
