@@ -52,11 +52,13 @@ jobs:
         - {package: ./routers, target: FuzzRoutersAgree}
     steps:
 
+    # Checked out first: setup-go keys its module and build cache on go.sum,
+    # and without one it caches nothing.
+    - uses: actions/checkout@v6
+
     - uses: actions/setup-go@v6
       with:
         go-version: stable
-
-    - uses: actions/checkout@v6
 
     # The APIs-guru corpus seeds the fuzzers alongside testdata. The go
     # workflow caches it, so fetch it only when that cache is missing.
@@ -81,7 +83,7 @@ jobs:
     # carries the run id so each run writes a fresh entry, and restore-keys
     # falls back to the most recent one for this target.
     - name: Fuzzing corpus cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/go-build/fuzz
         key: fuzz-${{ matrix.target }}-${{ github.run_id }}

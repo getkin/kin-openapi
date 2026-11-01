@@ -25,6 +25,10 @@ jobs:
     name: ${{ matrix.go }} on ${{ matrix.os }}
     steps:
 
+    # Checked out first: setup-go keys its module and build cache on go.sum,
+    # and without one it caches nothing.
+    - uses: actions/checkout@v6
+
     - uses: actions/setup-go@v6
       with:
         go-version: ${{ matrix.go }}
@@ -32,10 +36,8 @@ jobs:
     - if: runner.os == 'Linux'
       run: sudo apt install silversearcher-ag
 
-    - uses: actions/checkout@v6
-
     - name: Test suite fixtures cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           openapi2/testdata/APIs-guru-openapi-directory-*
