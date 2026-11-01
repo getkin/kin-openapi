@@ -67,7 +67,14 @@ type Loader struct {
 
 	visitedRefs map[string]struct{}
 	visitedPath []string
-	backtrack   map[string][]func(value any)
+
+	// externalFragmentSchemas holds the schema each $ref to a fragment of
+	// another file resolved to, keyed by externalFragmentSchemaKey. A $ref into
+	// a file of bare schemas, which is not an OpenAPI document, otherwise
+	// decodes a fresh copy every time, so a schema reached along many paths
+	// would be read, decoded and resolved once per path.
+	externalFragmentSchemas map[string]externalFragmentSchema
+	backtrack               map[string][]func(value any)
 
 	// rootDoc is the document whose refs are being resolved, as opposed to
 	// the documents it refers to, and resolvingDepth how deep in these the
@@ -88,6 +95,27 @@ func (loader *Loader) resetVisitedPathItemRefs() {
 	loader.visitedRefs = make(map[string]struct{})
 	loader.visitedPath = nil
 	loader.backtrack = make(map[string][]func(value any))
+	loader.externalFragmentSchemas = nil
+}
+
+// externalFragmentSchema is what a $ref to a fragment of another file resolved to.
+type externalFragmentSchema struct {
+	value   *Schema
+	refPath *url.URL
+}
+
+// externalFragmentSchemaKey identifies the file and fragment a $ref to another
+// file points to. A file of bare schemas follows the OpenAPI version of the
+// document that refers to it, so that version is part of the key.
+func (loader *Loader) externalFragmentSchemaKey(doc *T, ref string, documentPath *url.URL) (string, bool) {
+	if ref == "" || ref[0] == '#' {
+		return "", false
+	}
+	resolvedPath, err := loader.resolvePathWithRef(ref, documentPath)
+	if err != nil {
+		return "", false
+	}
+	return fmt.Sprintf("%t %s", loader.isOpenAPI31OrLater(doc), resolvedPath), true
 }
 
 // LoadFromURI loads a spec from a remote URL
@@ -1151,6 +1179,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return nil
 		}
 		loader.visitRef("Schema", ref)
+		key, keyed := loader.externalFragmentSchemaKey(doc, ref, documentPath)
 		if isSingleRefElement(ref) {
 			var resolved SchemaRef
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
@@ -1172,6 +1201,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			if component.Value = resolved.Value; component.Value != nil {
 				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
 			}
+		} else if cached, ok := loader.externalFragmentSchemas[key]; ok && keyed {
+			// Already resolved along another path to the same file and fragment.
+			component.Value = cached.value
+			component.setRefPath(cached.refPath)
 		} else {
 			var resolved SchemaRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1186,6 +1219,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			if component.Value = resolved.Value; component.Value != nil {
 				component.setRefPath(resolved.RefPath())
+				if keyed {
+					if loader.externalFragmentSchemas == nil {
+						loader.externalFragmentSchemas = make(map[string]externalFragmentSchema)
+					}
+					loader.externalFragmentSchemas[key] = externalFragmentSchema{value: component.Value, refPath: resolved.RefPath()}
+				}
 			}
 		}
 		defer loader.unvisitRef("Schema", ref, component.Value)
