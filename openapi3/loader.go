@@ -74,7 +74,12 @@ type Loader struct {
 
 	visitedRefs map[string]struct{}
 	visitedPath []string
-	backtrack   map[string][]func(value any)
+
+	// singleFileSchemas holds the schema each whole-file $ref (one without a
+	// "#") resolved to, keyed by singleFileSchemaKey, so a file reached along
+	// many paths is read, decoded and resolved once rather than once per path.
+	singleFileSchemas map[string]singleFileSchema
+	backtrack         map[string][]func(value any)
 
 	// rootDoc is the document whose refs are being resolved, as opposed to
 	// the documents it refers to, and resolvingDepth how deep in these the
@@ -95,6 +100,25 @@ func (loader *Loader) resetVisitedPathItemRefs() {
 	loader.visitedRefs = make(map[string]struct{})
 	loader.visitedPath = nil
 	loader.backtrack = make(map[string][]func(value any))
+	loader.singleFileSchemas = nil
+}
+
+// singleFileSchema is what a whole-file schema $ref resolved to.
+type singleFileSchema struct {
+	value   *Schema
+	refPath *url.URL
+	path    *url.URL
+}
+
+// singleFileSchemaKey identifies the file a whole-file schema $ref points to.
+// A file of bare schemas follows the OpenAPI version of the document that
+// refers to it, so that version is part of the key.
+func (loader *Loader) singleFileSchemaKey(doc *T, ref string, documentPath *url.URL) (string, bool) {
+	resolvedPath, err := loader.resolvePathWithRef(ref, documentPath)
+	if err != nil {
+		return "", false
+	}
+	return fmt.Sprintf("%t %s", loader.isOpenAPI31OrLater(doc), resolvedPath), true
 }
 
 // LoadFromURI loads a spec from a remote URL
@@ -1192,25 +1216,40 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}
 		loader.visitRef("Schema", ref)
 		if isSingleRefElement(ref) {
-			var resolved SchemaRef
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
-				return err
-			}
-			if strings.HasPrefix(resolved.Ref, "#") {
-				// Local fragments belong to the referenced file, not the referring document.
-				if doc, err = loader.loadFromURIInternal(documentPath); err != nil {
+			key, cacheable := loader.singleFileSchemaKey(doc, ref, documentPath)
+			if cached, ok := loader.singleFileSchemas[key]; cacheable && ok {
+				// Already resolved along another path to the same file.
+				documentPath = cached.path
+				component.Value = cached.value
+				component.setRefPath(cached.refPath)
+			} else {
+				var resolved SchemaRef
+				if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 					return err
 				}
-			}
-			// The file holds the Schema itself or a $ref to it, to follow from there.
-			if err := loader.resolveSchemaRef(doc, &resolved, documentPath, visited); err != nil {
-				if err == errMUSTSchema {
-					return nil
+				if strings.HasPrefix(resolved.Ref, "#") {
+					// Local fragments belong to the referenced file, not the referring document.
+					if doc, err = loader.loadFromURIInternal(documentPath); err != nil {
+						return err
+					}
 				}
-				return err
-			}
-			if component.Value = resolved.Value; component.Value != nil {
-				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+				// The file holds the Schema itself or a $ref to it, to follow from there.
+				if err := loader.resolveSchemaRef(doc, &resolved, documentPath, visited); err != nil {
+					if err == errMUSTSchema {
+						return nil
+					}
+					return err
+				}
+				if component.Value = resolved.Value; component.Value != nil {
+					refPath := cmp.Or(resolved.RefPath(), documentPath)
+					component.setRefPath(refPath)
+					if cacheable {
+						if loader.singleFileSchemas == nil {
+							loader.singleFileSchemas = make(map[string]singleFileSchema)
+						}
+						loader.singleFileSchemas[key] = singleFileSchema{value: component.Value, refPath: refPath, path: documentPath}
+					}
+				}
 			}
 		} else {
 			var resolved SchemaRef
