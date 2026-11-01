@@ -1790,6 +1790,20 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 		}
 	}
 
+	if d := schema.Discriminator; d != nil {
+		if err := d.Validate(ctx); err != nil {
+			return visited, err
+		}
+		for _, k := range componentNames(d.Mapping) {
+			if v := d.Mapping[k].Value; v != nil {
+				var err error
+				if visited, err = v.validate(ctx, visited); err != nil {
+					return visited, err
+				}
+			}
+		}
+	}
+
 	if ref := schema.Not; ref != nil {
 		v := ref.Value
 		if v == nil {
