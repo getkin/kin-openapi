@@ -1156,6 +1156,12 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
+			if strings.HasPrefix(resolved.Ref, "#") {
+				// Local fragments belong to the referenced file, not the referring document.
+				if doc, err = loader.loadFromURIInternal(documentPath); err != nil {
+					return err
+				}
+			}
 			// The file holds the Schema itself or a $ref to it, to follow from there.
 			if err := loader.resolveSchemaRef(doc, &resolved, documentPath, visited); err != nil {
 				if err == errMUSTSchema {
