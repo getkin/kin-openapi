@@ -25,9 +25,9 @@ func TestIssue1391WholeFileRefReadOncePerFile(t *testing.T) {
 		for _, s := range []string{"a", "b"} {
 			content := "type: string\n"
 			if k < layers-1 {
-				content = fmt.Sprintf("type: object\nproperties:\n  a:\n    $ref: './L%d_a.yaml'\n  b:\n    $ref: './L%d_b.yaml'\n", k+1, k+1)
+				content = fmt.Sprintf("type: object\nproperties:\n  a:\n    $ref: './layer%d_a.yaml'\n  b:\n    $ref: './layer%d_b.yaml'\n", k+1, k+1)
 			}
-			require.NoError(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("L%d_%s.yaml", k, s)), []byte(content), 0o644))
+			require.NoError(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("layer%d_%s.yaml", k, s)), []byte(content), 0o644))
 		}
 	}
 	root := `openapi: 3.0.3
@@ -36,7 +36,7 @@ paths: {}
 components:
   schemas:
     Root:
-      $ref: './L0_a.yaml'
+      $ref: './layer0_a.yaml'
 `
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "openapi.yaml"), []byte(root), 0o644))
 
@@ -50,7 +50,7 @@ components:
 	doc, err := loader.LoadFromFile(filepath.Join(dir, "openapi.yaml"))
 	require.NoError(t, err)
 
-	// The root and every schema file but L0_b, which nothing refers to.
+	// The root and every schema file but layer0_b, which nothing refers to.
 	require.Len(t, reads, 2*layers)
 	for location, n := range reads {
 		require.Equal(t, 1, n, "%s read %d times", location, n)
