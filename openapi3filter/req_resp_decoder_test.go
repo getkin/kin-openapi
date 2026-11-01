@@ -1057,6 +1057,27 @@ func TestDecodeParameter(t *testing.T) {
 					found: true,
 				},
 				{
+					name:  "deepObject explode array - negative index",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", integerArraySchema)},
+					query: "param[items][-1]=123",
+					found: true,
+					err:   &ParseError{path: []any{"items"}, Kind: KindInvalidFormat, Reason: "could not convert value map to array: array indexes must not be negative: -1"},
+				},
+				{
+					name:  "deepObject explode array - sparse index within limit",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", integerArraySchema)},
+					query: "param[items][2]=123",
+					want:  map[string]any{"items": []any{nil, nil, int64(123)}},
+					found: true,
+				},
+				{
+					name:  "deepObject explode array - too sparse index",
+					param: &openapi3.Parameter{Name: "param", In: "query", Style: "deepObject", Explode: explode, Schema: objectOf("items", integerArraySchema)},
+					query: "param[items][99999999]=123",
+					found: true,
+					err:   &ParseError{path: []any{"items"}, Kind: KindInvalidFormat, Reason: "could not convert value map to array: array index 99999999 is too sparse relative to the 1 supplied items"},
+				},
+				{
 					name: "deepObject explode nested object additionalProperties",
 					param: &openapi3.Parameter{
 						Name: "param", In: "query", Style: "deepObject", Explode: explode,
