@@ -351,7 +351,7 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 		return
 	}
 
-	for _, list := range []SchemaRefs{s.AllOf, s.AnyOf, s.OneOf} {
+	for _, list := range []SchemaRefs{s.AllOf, s.AnyOf, s.OneOf, s.PrefixItems} {
 		for _, s2 := range list {
 			isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)
 			if s2 != nil {
@@ -379,14 +379,20 @@ func (doc *T) derefSchema(s *Schema, refNameResolver RefNameResolver, parentIsEx
 		}
 	}
 
-	for _, name := range componentNames(s.Properties) {
-		s2 := s.Properties[name]
-		isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)
-		if s2 != nil {
-			doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
+	for _, schemas := range []Schemas{s.Properties, s.PatternProperties, s.DependentSchemas, s.Defs} {
+		for _, name := range componentNames(schemas) {
+			s2 := schemas[name]
+			isExternal := doc.addSchemaToSpec(s2, refNameResolver, parentIsExternal)
+			if s2 != nil {
+				doc.derefSchema(s2.Value, refNameResolver, isExternal || parentIsExternal)
+			}
 		}
 	}
-	for _, ref := range []*SchemaRef{s.Not, s.AdditionalProperties.Schema, s.Items} {
+	for _, ref := range []*SchemaRef{
+		s.Not, s.AdditionalProperties.Schema, s.Items,
+		s.Contains, s.PropertyNames, s.If, s.Then, s.Else, s.ContentSchema,
+		s.UnevaluatedItems.Schema, s.UnevaluatedProperties.Schema,
+	} {
 		isExternal := doc.addSchemaToSpec(ref, refNameResolver, parentIsExternal)
 		if ref != nil {
 			doc.derefSchema(ref.Value, refNameResolver, isExternal || parentIsExternal)
