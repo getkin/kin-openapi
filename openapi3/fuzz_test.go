@@ -2,6 +2,7 @@ package openapi3_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
@@ -73,8 +74,11 @@ func FuzzLoadFromData(f *testing.F) {
 
 		require.JSONEq(t, string(once), string(twice))
 
-		// Validation should be deterministic
-		require.Equal(t, valid, reloaded.Validate(t.Context()))
+		// Validation should be deterministic. The errors are compared by what
+		// they say: one can carry the schema it is about, and the round trip
+		// writes an empty map such as properties: {} as absent, which changes
+		// the value it carries but not what the error says.
+		require.Equal(t, fmt.Sprint(valid), fmt.Sprint(reloaded.Validate(t.Context())))
 	})
 }
 
