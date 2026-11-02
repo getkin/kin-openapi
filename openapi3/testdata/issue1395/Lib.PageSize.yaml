@@ -1,0 +1,4 @@
+name: page_size
+in: query
+schema:
+  type: integer

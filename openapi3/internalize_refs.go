@@ -63,8 +63,12 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 			filePath = ""
 		}
 
-		// Remove the path extensions to make this JSON/YAML agnostic.
-		for ext := path.Ext(filePath); len(ext) > 0; ext = path.Ext(filePath) {
+		// Remove the path extension to make this JSON/YAML agnostic. Only
+		// the last one is stripped: earlier dots belong to the file name
+		// itself (e.g. "Lib.AccountId.yaml" must stay "Lib.AccountId"),
+		// otherwise two files like "Lib.AccountId.yaml" and
+		// "Lib.PageSize.yaml" would collapse to the same name.
+		if ext := path.Ext(filePath); len(ext) > 0 {
 			filePath = strings.TrimSuffix(filePath, ext)
 		}
 
