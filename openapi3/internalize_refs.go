@@ -21,7 +21,7 @@ type RefNameResolver func(*T, ComponentRef) string
 //
 // The transformation involves:
 //   - Cutting the "#/components/<type>" part.
-//   - Cutting the file extensions (.yaml/.json) from documents.
+//   - Cutting the final document extension (.yaml/.yml/.json).
 //   - Trimming the common directory with the root spec.
 //   - Replace invalid characters with underscores.
 //
@@ -63,8 +63,10 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 			filePath = ""
 		}
 
-		// Remove the path extensions to make this JSON/YAML agnostic.
-		for ext := path.Ext(filePath); len(ext) > 0; ext = path.Ext(filePath) {
+		// Remove only the document extension, preserving dots in component names.
+		ext := path.Ext(filePath)
+		switch strings.ToLower(ext) {
+		case ".yaml", ".yml", ".json":
 			filePath = strings.TrimSuffix(filePath, ext)
 		}
 

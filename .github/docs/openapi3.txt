@@ -163,7 +163,7 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string
 
     The transformation involves:
       - Cutting the "#/components/<type>" part.
-      - Cutting the file extensions (.yaml/.json) from documents.
+      - Cutting the final document extension (.yaml/.yml/.json).
       - Trimming the common directory with the root spec.
       - Replace invalid characters with underscores.
 
