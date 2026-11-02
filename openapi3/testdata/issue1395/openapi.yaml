@@ -1,0 +1,13 @@
+openapi: "3.1.0"
+info:
+  title: Parameters from files that carry dots in their name.
+  version: "1.0.0"
+paths:
+  /p:
+    get:
+      parameters:
+        - $ref: './Lib.AccountId.yaml'
+        - $ref: './Lib.PageSize.yaml'
+      responses:
+        200:
+          description: OK

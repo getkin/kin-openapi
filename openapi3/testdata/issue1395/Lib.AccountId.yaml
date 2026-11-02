@@ -1,0 +1,4 @@
+name: account_id
+in: query
+schema:
+  type: string
