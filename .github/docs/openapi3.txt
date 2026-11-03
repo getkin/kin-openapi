@@ -124,7 +124,7 @@ var (
 	// SchemaIntegerFormats is a map of custom integer format validators.
 	SchemaIntegerFormats = make(map[string]IntegerFormatValidator)
 )
-var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
+var DefaultReadFromURI = URIMapCache(defaultReadFromURIReader)
     DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
     HTTP URIs and local file URIs.
 
