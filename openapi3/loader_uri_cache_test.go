@@ -22,11 +22,13 @@ func TestNewLoaderSeesEditedFile(t *testing.T) {
 	}
 
 	write("first")
-	_, err := openapi3.NewLoader().LoadFromFile(p)
+	loader := openapi3.NewLoader()
+	_, err := loader.LoadFromFile(p)
 	require.NoError(t, err)
 
 	write("second")
-	doc, err := openapi3.NewLoader().LoadFromFile(p)
+	loader = openapi3.NewLoader()
+	doc, err := loader.LoadFromFile(p)
 	require.NoError(t, err)
 	require.Equal(t, "second", doc.Info.Title)
 }
