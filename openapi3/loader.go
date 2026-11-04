@@ -833,6 +833,11 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		return nil
 	}
 
+	for _, name := range componentNames(value.Content) {
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
+		}
+	}
 	if schema := value.Schema; schema != nil {
 		if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
 			return err
