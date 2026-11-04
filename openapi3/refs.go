@@ -1258,6 +1258,11 @@ type SchemaRef struct {
 	// siblingErr is why the siblings could not be read as a Schema. OAS 3.1
 	// reports it, while OAS 3.0 ignores the fields next to a $ref anyway.
 	siblingErr error
+	// Sibling is an exported field that allows setting sibling keywords (e.g. deprecated,
+	// readOnly, description) next to a $ref when building a SchemaRef in Go code.
+	// Marshalling will write these fields next to the $ref, so built and loaded refs
+	// behave the same. See: https://github.com/getkin/kin-openapi/issues/1376
+	Sibling *Schema
 	// target is the referenced schema, which Value is a copy of once siblings
 	// are applied to it.
 	target *Schema
@@ -1315,6 +1320,15 @@ func (x SchemaRef) MarshalYAML() (any, error) {
 							m[k] = v
 						}
 					}
+				}
+			}
+			if x.Sibling != nil {
+				current, err := x.Sibling.MarshalYAML()
+				if err != nil {
+					return nil, err
+				}
+				if current, ok := current.(map[string]any); ok {
+					maps.Copy(m, current)
 				}
 			}
 		}
