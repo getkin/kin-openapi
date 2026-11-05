@@ -3,9 +3,6 @@
     "schemas": {
       "AnotherTestSchema": {
         "type": "string"
-      },
-      "components.openapi_Name": {
-        "type": "string"
       }
     }
   },
@@ -14,6 +11,5 @@
     "version": "1"
   },
   "openapi": "3.0.0",
-  "paths": {
-  }
+  "paths": {}
 }

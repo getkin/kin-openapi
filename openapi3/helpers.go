@@ -232,12 +232,9 @@ func ReferencesComponentInRootDocument(doc *T, ref ComponentRef) (string, bool) 
 	// Something like: ../openapi.yaml#/components/schemas/myElement
 	for _, name := range componentNames(components) {
 		s := components[name]
-		// Must be a reference to a YAML file.
-		if !isWholeDocumentReference(s.RefString()) {
-			continue
-		}
 
-		// Is the schema a ref to the same resource.
+		// The resolved path retains the target and fragment even when
+		// internalization has cleared or rewritten the component's Ref.
 		if !refersToSameDocument(s, ref) {
 			continue
 		}
