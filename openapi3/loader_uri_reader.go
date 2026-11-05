@@ -43,7 +43,11 @@ func ReadFromURIs(readers ...ReadFromURIFunc) ReadFromURIFunc {
 
 // DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
 // HTTP URIs and local file URIs.
-var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
+var DefaultReadFromURI = URIMapCache(defaultReadFromURIReader)
+
+// defaultReadFromURIReader returns a ReadFromURIFunc which can read remote
+// HTTP URIs and local file URIs, without any caching.
+var defaultReadFromURIReader = ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile)
 
 // ReadFromHTTP returns a ReadFromURIFunc which uses the given http.Client to
 // read the contents from a remote HTTP URI. This client may be customized to

@@ -55,6 +55,11 @@ type Loader struct {
 	rootDir      string
 	rootLocation string
 
+	// defaultReadFromURIFunc caches reads of the default reader chain for this
+	// loader alone, so repeated reads during one load stay fast while a fresh
+	// Loader re-reads files that may have changed since.
+	defaultReadFromURIFunc ReadFromURIFunc
+
 	visitedPathItemRefs map[string]struct{}
 
 	visitedDocuments map[string]*T
@@ -196,7 +201,10 @@ func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
 	if f := loader.ReadFromURIFunc; f != nil {
 		return f(loader, location)
 	}
-	return DefaultReadFromURI(loader, location)
+	if loader.defaultReadFromURIFunc == nil {
+		loader.defaultReadFromURIFunc = URIMapCache(defaultReadFromURIReader)
+	}
+	return loader.defaultReadFromURIFunc(loader, location)
 }
 
 // LoadFromStdin loads a spec from stdin
