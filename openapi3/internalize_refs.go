@@ -74,7 +74,8 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 
 		// Trim the common prefix with the root doc path.
 		if doc.url != nil && filePath != "" {
-			for commonDir := path.Dir(doc.url.Path); /*no common prefix*/ commonDir != "."; commonDir = path.Dir(commonDir) {
+			// path.Dir of an absolute path ends at "/", never at ".".
+			for commonDir := path.Dir(doc.url.Path); /*no common prefix*/ commonDir != "." && commonDir != "/"; commonDir = path.Dir(commonDir) {
 				if p, found := cutDirectories(filePath, commonDir); found {
 					filePath = p
 					break
