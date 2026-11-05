@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -178,4 +179,39 @@ components:
 			}
 		}
 	}
+}
+
+func TestInternalizeRefsAbsolutePath(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+
+	filename, err := filepath.Abs("testdata/recursiveRef/openapi.yml")
+	require.NoError(t, err)
+
+	sl := openapi3.NewLoader()
+	sl.IsExternalRefsAllowed = true
+	doc, err := sl.LoadFromFile(filename)
+	require.NoError(t, err, "loading test file")
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		doc.InternalizeRefs(ctx, nil)
+	}()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("InternalizeRefs did not return for a document loaded from an absolute path")
+	}
+
+	err = doc.Validate(ctx)
+	require.NoError(t, err, "validating internalized spec")
+
+	actual, err := doc.MarshalJSON()
+	require.NoError(t, err, "marshaling internalized spec")
+
+	expected, err := os.ReadFile("testdata/recursiveRef/openapi.yml.internalized.yml")
+	require.NoError(t, err)
+	require.JSONEq(t, string(expected), string(actual))
 }
