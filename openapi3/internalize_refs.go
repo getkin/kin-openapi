@@ -483,6 +483,7 @@ func (doc *T) derefResponseBodies(es ResponseBodies, refNameResolver RefNameReso
 }
 
 func (doc *T) derefParameter(p Parameter, refNameResolver RefNameResolver, parentIsExternal bool) {
+	doc.derefExamples(p.Examples, refNameResolver, parentIsExternal)
 	doc.derefContent(p.Content, refNameResolver, parentIsExternal)
 	doc.derefSchemaRef(p.Schema, refNameResolver, parentIsExternal)
 }
