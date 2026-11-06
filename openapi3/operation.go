@@ -199,6 +199,11 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 // Validate returns an error if Operation does not comply with the OpenAPI spec.
 func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	return operation.validate(ctx, nil)
+}
+
+// validate passes visiting on to Callback.validate.
+func (operation *Operation) validate(ctx context.Context, visiting map[*Callback]struct{}) error {
 	me := newErrCollector(ctx)
 
 	if v := operation.Parameters; v != nil {
@@ -219,6 +224,15 @@ func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOpti
 		}
 	} else if v != nil || !getValidationOptions(ctx).isOpenAPI31OrLater {
 		if err := me.emit(newOperationResponsesRequired(operation.Origin)); err != nil {
+			return err
+		}
+	}
+
+	for _, name := range componentNames(operation.Callbacks) {
+		wrap := func(e error) error {
+			return &SectionValidationError{Section: "callback " + strconv.Quote(name), Cause: e}
+		}
+		if err := me.emitWrapped(wrap, operation.Callbacks[name].validate(ctx, visiting)); err != nil {
 			return err
 		}
 	}
