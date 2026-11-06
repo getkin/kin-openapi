@@ -1,0 +1,4 @@
+go test fuzz v1
+[]byte("openapi: 3.1.0\ncomponents:\n schemas:\n  0:\n      $ref: A\n      properties:\n       0:\n        $ref: 0A")
+[]byte("{}")
+string("0")
