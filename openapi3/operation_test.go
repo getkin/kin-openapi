@@ -213,3 +213,97 @@ func TestOperationMissingResponsesWithMultiError(t *testing.T) {
 	var target *openapi3.OperationResponsesRequired
 	require.ErrorAs(t, err, &target)
 }
+
+func TestOperationValidatesCallbacks(t *testing.T) {
+	for _, tc := range []struct {
+		name, spec, err string
+	}{
+		{
+			name: "invalid schema under a callback",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /a:
+    post:
+      responses: {"200": {description: d}}
+      callbacks:
+        cb:
+          '{$request.body#/url}':
+            post:
+              requestBody:
+                content:
+                  application/json:
+                    schema: {type: string, bogus: true}
+              responses: {"200": {description: d}}
+`,
+			err: "extra sibling fields: [bogus]",
+		},
+		{
+			name: "callback naming itself among its operation's callbacks",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /a:
+    post:
+      responses: {"200": {description: d}}
+      callbacks:
+        cb: {$ref: '#/components/callbacks/CB'}
+components:
+  callbacks:
+    CB:
+      '{$request.body#/url}':
+        post:
+          responses: {"200": {description: d}}
+          callbacks:
+            again: {$ref: '#/components/callbacks/CB'}
+`,
+		},
+		{
+			name: "invalid schema under two callbacks naming each other",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /a:
+    post:
+      responses: {"200": {description: d}}
+      callbacks:
+        cb: {$ref: '#/components/callbacks/A'}
+components:
+  callbacks:
+    A:
+      '{$request.body#/url}':
+        post:
+          responses: {"200": {description: d}}
+          callbacks:
+            toB: {$ref: '#/components/callbacks/B'}
+    B:
+      '{$request.body#/url}':
+        post:
+          requestBody:
+            content:
+              application/json:
+                schema: {type: string, bogus: true}
+          responses: {"200": {description: d}}
+          callbacks:
+            toA: {$ref: '#/components/callbacks/A'}
+`,
+			err: "extra sibling fields: [bogus]",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			doc, err := loader.LoadFromData([]byte(tc.spec))
+			require.NoError(t, err)
+			err = doc.Validate(t.Context())
+			if tc.err == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorContains(t, err, `invalid callback "`)
+			require.ErrorContains(t, err, tc.err)
+		})
+	}
+}
