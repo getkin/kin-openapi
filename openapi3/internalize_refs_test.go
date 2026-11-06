@@ -182,6 +182,40 @@ components:
 	}
 }
 
+func TestInternalizeRefsParameterAndHeaderExamples(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	root := `{"openapi": "3.0.3", "info": {"title": "t", "version": "1"},
+"paths": {"/a": {"get": {
+  "parameters": [{"name": "q", "in": "query", "schema": {"type": "string"}, "examples": {"e": {"$ref": "other.json#/components/examples/P"}}}],
+  "responses": {"200": {"description": "d", "headers": {"h": {"schema": {"type": "string"}, "examples": {"e": {"$ref": "other.json#/components/examples/H"}}}}}}}}},
+"components": {"headers": {"H": {"schema": {"type": "string"}, "examples": {"e": {"$ref": "other.json#/components/examples/C"}}}}}}`
+	other := `{"components": {"examples": {"P": {"value": "p"}, "H": {"value": "h"}, "C": {"value": "c"}}}}`
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "openapi.json"), []byte(root), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "other.json"), []byte(other), 0o644))
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile(filepath.Join(dir, "openapi.json"))
+	require.NoError(t, err)
+	doc.InternalizeRefs(t.Context(), nil)
+
+	op := doc.Paths.Value("/a").Get
+	require.Equal(t, "#/components/examples/other_P", op.Parameters[0].Value.Examples["e"].Ref)
+	require.Equal(t, "#/components/examples/other_H", op.Responses.Value("200").Value.Headers["h"].Value.Examples["e"].Ref)
+	require.Equal(t, "#/components/examples/other_C", doc.Components.Headers["H"].Value.Examples["e"].Ref)
+	for _, name := range []string{"other_P", "other_H", "other_C"} {
+		require.Contains(t, doc.Components.Examples, name)
+	}
+
+	data, err := doc.MarshalJSON()
+	require.NoError(t, err)
+	strict := openapi3.NewLoader()
+	_, err = strict.LoadFromData(data)
+	require.NoError(t, err)
+}
+
 func TestInternalizeRefsAbsolutePath(t *testing.T) {
 	t.Parallel()
 
