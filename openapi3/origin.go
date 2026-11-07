@@ -205,6 +205,26 @@ func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
 	if node.Kind != yaml.MappingNode {
 		return nil, nil
 	}
+
+	// The entries written in place take precedence over anything a merge
+	// brings in, so they answer first, read straight off the node. Decoding a
+	// struct asks this for every field it declares, and expanding the pairs
+	// each time was 39% of everything a load allocated.
+	merges := false
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		k := node.Content[i]
+		if isMergeKey(k) {
+			merges = true
+			continue
+		}
+		if k.Value == key {
+			return k, node.Content[i+1]
+		}
+	}
+	if !merges {
+		return nil, nil
+	}
+
 	for _, kv := range mappingPairs(node) {
 		if kv[0].Value == key {
 			return kv[0], kv[1]
