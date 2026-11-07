@@ -1,6 +1,7 @@
 package openapi3_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -83,4 +84,45 @@ paths:
 
 	err = doc.Validate(sl.Context)
 	require.NoError(t, err)
+}
+
+func TestUnmarshalErrorWrapsTheDecodersTried(t *testing.T) {
+	t.Parallel()
+
+	const yamlSpec = `
+openapi: 3.0.3
+info: {title: t, version: v}
+paths: {}
+components:
+  schemas:
+    A:
+      type: 123
+`
+	const jsonSpec = `
+{"openapi": "3.0.3", "info": {"title": "t", "version": "v"}, "paths": {},
+ "components": {"schemas": {"A": {"type": 123}}}}
+`
+
+	t.Run("yaml is not tried as json", func(t *testing.T) {
+		t.Parallel()
+
+		loader := openapi3.NewLoader()
+		_, err := loader.LoadFromData([]byte(yamlSpec))
+		require.ErrorContains(t, err, "failed to unmarshal data: yaml error: ")
+		msg := err.Error()
+		require.NotContains(t, msg, "json error")
+		require.Error(t, errors.Unwrap(err))
+	})
+
+	t.Run("json reports both decoders", func(t *testing.T) {
+		t.Parallel()
+
+		loader := openapi3.NewLoader()
+		_, err := loader.LoadFromData([]byte(jsonSpec))
+		require.ErrorContains(t, err, "failed to unmarshal data: json error: ")
+		require.ErrorContains(t, err, ", yaml error: ")
+		var wrapped interface{ Unwrap() []error }
+		require.ErrorAs(t, err, &wrapped)
+		require.Len(t, wrapped.Unwrap(), 2)
+	})
 }
