@@ -3,8 +3,8 @@ package openapi2_test
 import (
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -51,7 +51,7 @@ func TestIssue1135MarshalYAML(t *testing.T) {
 	t.Parallel()
 
 	types := &openapi3.Types{"string"}
-	data, err := yaml.Marshal(types)
+	data, err := yaml.Dump(types)
 	require.NoError(t, err)
 	require.Equal(t, "string\n", string(data))
 

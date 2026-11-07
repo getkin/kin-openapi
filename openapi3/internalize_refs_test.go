@@ -1,9 +1,13 @@
 package openapi3_test
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -71,6 +75,227 @@ func TestInternalizeRefs(t *testing.T) {
 			expected, err := os.ReadFile(test.filename + ".internalized.yml")
 			require.NoError(t, err)
 			require.JSONEq(t, string(expected), string(actual))
+		})
+	}
+}
+
+func TestInternalizeRefsReusesRootSchema(t *testing.T) {
+	t.Parallel()
+
+	for _, version := range []string{"3.0.3", "3.1.0"} {
+		for _, fragment := range []bool{false, true} {
+			for _, wrapper := range []string{"Box", "Wrapper"} {
+				t.Run(fmt.Sprintf("%s/fragment=%t/%s", version, fragment, wrapper), func(t *testing.T) {
+					t.Parallel()
+
+					dir := t.TempDir()
+					itemRef, wrapperRef := "./schemas/Item.yaml", "./schemas/Wrapper.yaml"
+					files := map[string]string{
+						"schemas/Item.yaml": "type: string\n",
+						"schemas/Wrapper.yaml": `type: object
+properties:
+  item:
+    $ref: ./Item.yaml
+`,
+					}
+					if fragment {
+						itemRef = "./common.yaml#/components/schemas/Item"
+						wrapperRef = "./common.yaml#/components/schemas/Wrapper"
+						files = map[string]string{
+							"common.yaml": `components:
+  schemas:
+    Item:
+      type: string
+    Wrapper:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/Item'
+`,
+						}
+					}
+					files["openapi.yaml"] = fmt.Sprintf(`openapi: %s
+info:
+  title: Root component references
+  version: "1"
+paths:
+  /item:
+    get:
+      responses:
+        "200":
+          description: An item
+          content:
+            application/json:
+              schema:
+                $ref: %s
+        "201":
+          description: A wrapper
+          content:
+            application/json:
+              schema:
+                $ref: %s
+components:
+  schemas:
+    Item:
+      $ref: %s
+    %s:
+      $ref: %s
+`, version, itemRef, wrapperRef, itemRef, wrapper, wrapperRef)
+					for name, data := range files {
+						filename := filepath.Join(dir, name)
+						require.NoError(t, os.MkdirAll(filepath.Dir(filename), 0o700))
+						require.NoError(t, os.WriteFile(filename, []byte(data), 0o600))
+					}
+
+					loader := openapi3.NewLoader()
+					loader.IsExternalRefsAllowed = true
+					doc, err := loader.LoadFromFile(filepath.Join(dir, "openapi.yaml"))
+					require.NoError(t, err)
+					require.NoError(t, doc.Validate(t.Context()))
+
+					doc.InternalizeRefs(t.Context(), nil)
+
+					require.Len(t, doc.Components.Schemas, 2)
+					require.Empty(t, doc.Components.Schemas["Item"].Ref)
+					require.Empty(t, doc.Components.Schemas[wrapper].Ref)
+					require.Equal(t, "#/components/schemas/Item", doc.Components.Schemas[wrapper].Value.Properties["item"].Ref)
+					responseSchema := doc.Paths.Value("/item").Get.Responses.Status(200).Value.Content.Get("application/json").Schema
+					require.Equal(t, "#/components/schemas/Item", responseSchema.Ref)
+					wrapperSchema := doc.Paths.Value("/item").Get.Responses.Status(201).Value.Content.Get("application/json").Schema
+					require.Equal(t, "#/components/schemas/"+wrapper, wrapperSchema.Ref)
+					require.NoError(t, doc.Validate(t.Context()))
+
+					data, err := doc.MarshalJSON()
+					require.NoError(t, err)
+					internalLoader := openapi3.NewLoader()
+					reloaded, err := internalLoader.LoadFromData(data)
+					require.NoError(t, err)
+					require.NoError(t, reloaded.Validate(t.Context()))
+
+					doc.InternalizeRefs(t.Context(), nil)
+					again, err := doc.MarshalJSON()
+					require.NoError(t, err)
+					require.JSONEq(t, string(data), string(again))
+				})
+			}
+		}
+	}
+}
+
+func TestInternalizeRefsParameterAndHeaderExamples(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	root := `{"openapi": "3.0.3", "info": {"title": "t", "version": "1"},
+"paths": {"/a": {"get": {
+  "parameters": [{"name": "q", "in": "query", "schema": {"type": "string"}, "examples": {"e": {"$ref": "other.json#/components/examples/P"}}}],
+  "responses": {"200": {"description": "d", "headers": {"h": {"schema": {"type": "string"}, "examples": {"e": {"$ref": "other.json#/components/examples/H"}}}}}}}}},
+"components": {"headers": {"H": {"schema": {"type": "string"}, "examples": {"e": {"$ref": "other.json#/components/examples/C"}}}}}}`
+	other := `{"components": {"examples": {"P": {"value": "p"}, "H": {"value": "h"}, "C": {"value": "c"}}}}`
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "openapi.json"), []byte(root), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "other.json"), []byte(other), 0o644))
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	doc, err := loader.LoadFromFile(filepath.Join(dir, "openapi.json"))
+	require.NoError(t, err)
+	doc.InternalizeRefs(t.Context(), nil)
+
+	op := doc.Paths.Value("/a").Get
+	require.Equal(t, "#/components/examples/other_P", op.Parameters[0].Value.Examples["e"].Ref)
+	require.Equal(t, "#/components/examples/other_H", op.Responses.Value("200").Value.Headers["h"].Value.Examples["e"].Ref)
+	require.Equal(t, "#/components/examples/other_C", doc.Components.Headers["H"].Value.Examples["e"].Ref)
+	for _, name := range []string{"other_P", "other_H", "other_C"} {
+		require.Contains(t, doc.Components.Examples, name)
+	}
+
+	data, err := doc.MarshalJSON()
+	require.NoError(t, err)
+	strict := openapi3.NewLoader()
+	_, err = strict.LoadFromData(data)
+	require.NoError(t, err)
+}
+
+func TestInternalizeRefsAbsolutePath(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+
+	filename, err := filepath.Abs("testdata/recursiveRef/openapi.yml")
+	require.NoError(t, err)
+
+	sl := openapi3.NewLoader()
+	sl.IsExternalRefsAllowed = true
+	doc, err := sl.LoadFromFile(filename)
+	require.NoError(t, err, "loading test file")
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		doc.InternalizeRefs(ctx, nil)
+	}()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("InternalizeRefs did not return for a document loaded from an absolute path")
+	}
+
+	err = doc.Validate(ctx)
+	require.NoError(t, err, "validating internalized spec")
+
+	actual, err := doc.MarshalJSON()
+	require.NoError(t, err, "marshaling internalized spec")
+
+	expected, err := os.ReadFile("testdata/recursiveRef/openapi.yml.internalized.yml")
+	require.NoError(t, err)
+	require.JSONEq(t, string(expected), string(actual))
+}
+
+// In OpenAPI 3.1 the fields next to a $ref are written out next to it, so the
+// refs within them are internalized too, whether or not they constrain
+// anything, and they keep naming schemas of the document holding the $ref.
+func TestInternalizeRefsUnderRefSiblings(t *testing.T) {
+	t.Parallel()
+
+	for name, tc := range map[string]struct{ property, want string }{
+		"sibling constraining nothing": {
+			property: `{"$ref": "other.json#/Obj", "properties": {"q": {"$ref": "other.json#/Any"}}}`,
+			want:     `{"$ref": "#/components/schemas/other_Obj", "properties": {"q": {"$ref": "#/components/schemas/other_Any"}}}`,
+		},
+		"sibling next to an annotation": {
+			property: `{"$ref": "other.json#/Obj", "description": "d", "properties": {"q": {"$ref": "other.json#/Any"}}}`,
+			want:     `{"$ref": "#/components/schemas/other_Obj", "description": "d", "properties": {"q": {"$ref": "#/components/schemas/other_Any"}}}`,
+		},
+		"sibling naming a schema of the root": {
+			property: `{"$ref": "other.json#/Obj", "properties": {"q": {"$ref": "#/components/schemas/Str"}}}`,
+			want:     `{"$ref": "#/components/schemas/other_Obj", "properties": {"q": {"$ref": "#/components/schemas/Str"}}}`,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			root := `{"openapi": "3.1.0", "info": {"title": "t", "version": "1"}, "paths": {},
+"components": {"schemas": {"Str": {"type": "string"}, "X": {"properties": {"p": ` + tc.property + `}}}}}`
+			require.NoError(t, os.WriteFile(filepath.Join(dir, "openapi.json"), []byte(root), 0o644))
+			require.NoError(t, os.WriteFile(filepath.Join(dir, "other.json"), []byte(`{"Obj": {"type": "object"}, "Any": {}}`), 0o644))
+
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			doc, err := loader.LoadFromFile(filepath.Join(dir, "openapi.json"))
+			require.NoError(t, err)
+			doc.InternalizeRefs(t.Context(), nil)
+
+			got, err := json.Marshal(doc.Components.Schemas["X"].Value.Properties["p"])
+			require.NoError(t, err)
+			require.JSONEq(t, tc.want, string(got))
+			require.NotContains(t, doc.Components.Schemas, "openapi_Str")
+
+			strict := openapi3.NewLoader()
+			data, err := doc.MarshalJSON()
+			require.NoError(t, err)
+			_, err = strict.LoadFromData(data)
+			require.NoError(t, err)
 		})
 	}
 }

@@ -78,7 +78,7 @@ const (
 	FormatOfStringDate = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$`
 
 	// FormatOfStringDateTime is a RFC3339 date-time format regexp, for example "2017-07-21T17:32:28Z".
-	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)[0-9]{2}:[0-9]{2})$`
+	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)([0-1][0-9]|2[0-3]):[0-5][0-9])$`
 )
 const (
 	SerializationSimple         = "simple"
@@ -4019,6 +4019,8 @@ func (doc *T) UnmarshalJSON(data []byte) error
     UnmarshalJSON sets T to a copy of data.
 
 func (doc *T) UnmarshalYAML(node *yaml.Node) error
+    T is the document root, so no parent stamps its Origin.Key. It takes its own
+    first key instead, the same rule a sequence item follows.
 
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error
     Validate returns an error if T does not comply with the OpenAPI spec.
@@ -4255,12 +4257,10 @@ func (types *Types) Slice() []string
 
 func (types *Types) UnmarshalJSON(data []byte) error
 
-func (types *Types) UnmarshalYAML(unmarshal func(any) error) error
-    UnmarshalYAML accepts a single type as well as a sequence of types,
-    mirroring UnmarshalJSON. Swagger 2 and OpenAPI 3.0 documents always
-    write `type` as a scalar, so decoding such a document into openapi2.T or
-    openapi3.T straight from YAML would otherwise fail with "cannot unmarshal
-    !!str into Types".
+func (types *Types) UnmarshalYAML(node *yaml.Node) error
+    Types is a string or a list of strings. Swagger 2 and OpenAPI 3.0 documents
+    always write `type` as a scalar, so the single-string case is what decoding
+    such a document into openapi2.T or openapi3.T relies on.
 
 func (types *Types) With(typs ...string)
     With adds the given types to the receiver, skipping those already present.

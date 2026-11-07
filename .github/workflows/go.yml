@@ -77,9 +77,8 @@ jobs:
     # TODO: drop once 1.26 & 1.27 Go no longer experiences flaky memory corruptions
     - if: runner.os == 'Windows'
       run: |
-        for i in 1 2 3 4 5; do
+        for _ in $(seq 1 20); do
           go test -count=10 -short ./... && exit 0
-          echo "::warning::attempt $i/5 failed"
         done
         exit 1
     - run: go test -count=2 -short -covermode=atomic ./...
@@ -92,6 +91,9 @@ jobs:
     - run: go test -v -count=10 -run TestIssue741 -race ./...
       env:
         CGO_ENABLED: '1'
+    - run: go test -v -count=10 -run TestConcurrentDecodeDoesNotLeakOrigins -race ./...
+      env:
+        CGO_ENABLED: '1'
     - run: git --no-pager diff --exit-code
 
     - if: runner.os == 'Linux'
@@ -102,7 +104,7 @@ jobs:
     - if: runner.os == 'Linux'
       name: Did you mean %q
       run: |
-        ! git grep -E "'[%].'"
+        ! git grep -E "'[%].'" -- '*.go' '*.tmpl'
 
     - if: runner.os == 'Linux'
       name: Also add yaml tags

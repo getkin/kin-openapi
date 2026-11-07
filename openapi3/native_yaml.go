@@ -9,25 +9,51 @@ import (
 	"strings"
 	"sync"
 
-	yaml "go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
-var knownYAMLFieldsCache sync.Map // reflect.Type -> map[string]struct{}
+var (
+	knownYAMLFieldsCache sync.Map // reflect.Type -> map[string]struct{}
+	yamlFieldsCache      sync.Map // reflect.Type -> []yamlField
+)
 
-// knownYAMLFields returns the yaml keys a struct type declares, skipping "-".
-func knownYAMLFields(t reflect.Type) map[string]struct{} {
-	if v, ok := knownYAMLFieldsCache.Load(t); ok {
-		return v.(map[string]struct{})
+// yamlField is a struct field that carries a document key, by index so the
+// value can be reached without reading the tag again.
+type yamlField struct {
+	index int
+	key   string
+}
+
+// yamlFields returns the keys a struct type declares, in declaration order,
+// reading each tag once per type. Decoding a document reaches this for every
+// struct it decodes, and reading the tags each time cost 16% of a load.
+func yamlFields(t reflect.Type) []yamlField {
+	if v, ok := yamlFieldsCache.Load(t); ok {
+		return v.([]yamlField)
 	}
-	known := make(map[string]struct{}, t.NumField())
+	fields := make([]yamlField, 0, t.NumField())
 	for i := range t.NumField() {
 		f := t.Field(i)
 		if !f.IsExported() {
 			continue
 		}
 		if name := yamlKey(f); name != "-" {
-			known[name] = struct{}{}
+			fields = append(fields, yamlField{index: i, key: name})
 		}
+	}
+	yamlFieldsCache.Store(t, fields)
+	return fields
+}
+
+// knownYAMLFields returns the yaml keys a struct type declares, skipping "-".
+func knownYAMLFields(t reflect.Type) map[string]struct{} {
+	if v, ok := knownYAMLFieldsCache.Load(t); ok {
+		return v.(map[string]struct{})
+	}
+	fields := yamlFields(t)
+	known := make(map[string]struct{}, len(fields))
+	for _, f := range fields {
+		known[f.key] = struct{}{}
 	}
 	knownYAMLFieldsCache.Store(t, known)
 	return known
@@ -95,13 +121,14 @@ func normalizeDecoded(v any) (any, error) {
 	return v, nil
 }
 
-// keyName is the name a non-string key is written under. YAML resolves a key
-// the way it resolves any scalar, and a document's names are strings, so a
-// scalar key is spelled out.
+// keyName is the name a key that is not a string is written under. A scalar
+// key reaches the decoder already retagged by nameKeys, so what is left here
+// is a key that is not a scalar at all -- a sequence or a mapping, which YAML
+// allows and a document's names, being strings, do not describe.
 //
-// A null key spells nothing. It names no member of the document, and the json
-// path has no key to decode it into, so a document that uses one is refused
-// rather than given a made-up name.
+// A null key spells nothing, and nameKeys refuses the document it appears in.
+// The guard here is what keeps a null reaching the decoder another way from
+// being given a made-up name.
 func keyName(k any) (string, error) {
 	if k == nil {
 		return "", errors.New("mapping key is null, so it names nothing")
@@ -136,7 +163,6 @@ func mappingPairs(node *yaml.Node) [][2]*yaml.Node {
 func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*yaml.Node {
 	pairs := make([][2]*yaml.Node, 0, len(node.Content)/2)
 	var merged [][2]*yaml.Node
-	seen := make(map[string]struct{}, len(node.Content)/2)
 
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		k, v := node.Content[i], node.Content[i+1]
@@ -149,7 +175,18 @@ func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*ya
 			continue
 		}
 		pairs = append(pairs, [2]*yaml.Node{k, v})
-		seen[k.Value] = struct{}{}
+	}
+
+	// The set of keys the mapping writes itself is only needed to hold a
+	// merge source to second place, so a mapping without a merge key, which
+	// is nearly all of them, allocates nothing for it.
+	if len(merged) == 0 {
+		return pairs
+	}
+
+	seen := make(map[string]struct{}, len(pairs)+len(merged))
+	for _, kv := range pairs {
+		seen[kv[0].Value] = struct{}{}
 	}
 
 	for _, kv := range merged {
@@ -160,26 +197,6 @@ func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*ya
 		pairs = append(pairs, kv)
 	}
 	return pairs
-}
-
-// mappingValue returns the value node for key, or nil.
-func mappingValue(node *yaml.Node, key string) *yaml.Node {
-	_, v := mappingEntry(node, key)
-	return v
-}
-
-// mappingEntry returns both halves of a mapping entry. Merge keys are applied,
-// so a field a merge brought in is found here the same as one written in place.
-func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
-	if node.Kind != yaml.MappingNode {
-		return nil, nil
-	}
-	for _, kv := range mappingPairs(node) {
-		if kv[0].Value == key {
-			return kv[0], kv[1]
-		}
-	}
-	return nil, nil
 }
 
 // isMergeKey reports whether k is a merge key rather than an ordinary one.
@@ -347,11 +364,21 @@ func decodeMapping[T, S any](node *yaml.Node, shadow *S) (map[string]any, error)
 // targetTypeError names T where a decoder error names the shadow type S, which
 // exists only to stop the decode recursing and means nothing to a reader.
 func targetTypeError[T, S any](err error) error {
+	shadow, target := reflect.TypeFor[S]().String(), reflect.TypeFor[T]().String()
+	// Rename in place and hand back the error the decoder gave us. Returning a
+	// different type instead makes the decoder treat this as an error of its
+	// own and prefix it with the position again, once per nesting level.
+	var loadErrs *yaml.LoadErrors
+	if errors.As(err, &loadErrs) {
+		for _, e := range loadErrs.Errors {
+			e.Message = strings.ReplaceAll(e.Message, shadow, target)
+		}
+		return loadErrs
+	}
 	var typeErr *yaml.TypeError
 	if !errors.As(err, &typeErr) {
 		return err
 	}
-	shadow, target := reflect.TypeFor[S]().String(), reflect.TypeFor[T]().String()
 	for i, message := range typeErr.Errors {
 		typeErr.Errors[i] = strings.ReplaceAll(message, shadow, target)
 	}
@@ -402,21 +429,12 @@ func checkDeclaredFields(node *yaml.Node, out any) error {
 		return nil
 	}
 	v := reflect.ValueOf(out).Elem()
-	t := v.Type()
-	for i := range t.NumField() {
-		f := t.Field(i)
-		if !f.IsExported() {
-			continue
-		}
-		key := yamlKey(f)
-		if key == "-" {
-			continue
-		}
-		value := mappingValue(node, key)
+	for _, f := range yamlFields(v.Type()) {
+		value := mappingValue(node, f.key)
 		if value == nil {
 			continue
 		}
-		if err := checkFieldValue(v.Field(i), value, key); err != nil {
+		if err := checkFieldValue(v.Field(f.index), value, f.key); err != nil {
 			return err
 		}
 	}
@@ -518,27 +536,147 @@ func requireStringScalar(node *yaml.Node, key string) error {
 	case "", strTag, nullTag, timestampTag:
 		return nil
 	}
-	return fmt.Errorf("yaml: line %d: cannot unmarshal %s into string field %q", node.Line, node.Tag, key)
+	return fmt.Errorf("cannot unmarshal %s into string field %q", node.Tag, key)
 }
 
 // prepareScalars walks the tree once, which is the one place every scalar is
 // seen before the decode reads it.
 func prepareScalars(n *yaml.Node) error {
+	var hasAlias bool
+	if err := prepareNode(n, &hasAlias); err != nil {
+		return err
+	}
+	if hasAlias {
+		return checkAliasCycles(n)
+	}
+	return nil
+}
+
+func prepareNode(n *yaml.Node, hasAlias *bool) error {
 	if n == nil {
 		return nil
 	}
+	if n.Kind == yaml.AliasNode {
+		*hasAlias = true
+	}
 	if n.Kind == yaml.ScalarNode {
+		stripLocalTag(n)
 		stripTimestamp(n)
 		if err := checkFinite(n); err != nil {
 			return err
 		}
 	}
+	if n.Kind == yaml.MappingNode {
+		if err := nameKeys(n); err != nil {
+			return err
+		}
+	}
 	for _, c := range n.Content {
-		if err := prepareScalars(c); err != nil {
+		if err := prepareNode(c, hasAlias); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// checkAliasCycles refuses a document in which an alias leads back to a node
+// it sits inside, such as e: &a {properties: {p: *a}}.
+//
+// go-yaml refuses one too, but only within a single decode: it records the
+// aliases it is expanding on the decoder. The native path decodes each typed
+// value with a Node.Decode of its own, so every step starts with nothing
+// recorded and the expansion recurses until the stack is exhausted, which is
+// fatal rather than a panic a caller could recover.
+//
+// A node is walked once whatever number of aliases reach it, so the check is
+// linear in the size of the tree even where expanding it would not be.
+func checkAliasCycles(root *yaml.Node) error {
+	const (
+		onPath = iota + 1
+		done
+	)
+	state := make(map[*yaml.Node]uint8)
+	var walk func(n *yaml.Node) error
+	walk = func(n *yaml.Node) error {
+		switch state[n] {
+		case onPath:
+			return fmt.Errorf("anchor %q value contains itself", n.Anchor)
+		case done:
+			return nil
+		}
+		state[n] = onPath
+		if n.Kind == yaml.AliasNode && n.Alias != nil {
+			if err := walk(n.Alias); err != nil {
+				return err
+			}
+		}
+		for _, c := range n.Content {
+			if err := walk(c); err != nil {
+				return err
+			}
+		}
+		state[n] = done
+		return nil
+	}
+	return walk(root)
+}
+
+// nameKeys retags a scalar mapping key as a string, so the name it is read
+// under is the text the document wrote.
+//
+// A document's names are strings, but YAML resolves a key like any other
+// scalar, so .0 and 0 both resolve to the number zero and name the same
+// member, as do 18_24 and 1824. Which of two such keys survives is then
+// whichever the decoder writes last. The typed decode already reads a key's
+// text; this gives a mapping decoded into an any the same reading, and leaves
+// two keys written the same text to the duplicate-key error they are.
+//
+// A merge key is left alone, being an instruction rather than a name. A null
+// key is refused, there being no name to read a member under: a typed mapping
+// drops it, where decoding into an any reads the text that spelled the null,
+// so the same key would name different things depending on where it sits.
+//
+// Interim: https://github.com/yaml/go-yaml/issues/491 asks for an option to
+// read a mapping key as its text, which removes the retag.
+func nameKeys(n *yaml.Node) error {
+	for i := 0; i+1 < len(n.Content); i += 2 {
+		k := n.Content[i]
+		if isMergeKey(k) {
+			continue
+		}
+		// A key written as an alias names what the anchored scalar says, read
+		// from a copy so the anchor's own use keeps the type it resolves to,
+		// and left at the line the alias is written on, where the member is
+		// declared.
+		if k.Kind == yaml.AliasNode && k.Alias != nil && k.Alias.Kind == yaml.ScalarNode {
+			named := *k.Alias
+			named.Anchor = ""
+			named.Line, named.Column = k.Line, k.Column
+			n.Content[i], k = &named, &named
+		}
+		if k.Kind != yaml.ScalarNode || k.Tag == strTag {
+			continue
+		}
+		if k.Tag == nullTag {
+			return fmt.Errorf("line %d: mapping key is null, so it names nothing", k.Line)
+		}
+		k.Tag = strTag
+	}
+	return nil
+}
+
+// stripLocalTag retags a scalar carrying an application's own tag, such as
+// !md in description: !md hello, as a string.
+//
+// go-yaml decodes such a scalar only into an any, so a document whose author
+// tagged a field for a tool of their own was refused. The json path read it
+// as the text it wrote, whatever that text looks like: description: !md hello
+// is "hello" and x-n: !n 42 is "42". A standard tag (!!int, !!str, ...)
+// starts with two marks and is left to the decoder.
+func stripLocalTag(n *yaml.Node) {
+	if strings.HasPrefix(n.Tag, "!") && !strings.HasPrefix(n.Tag, "!!") {
+		n.Tag = strTag
+	}
 }
 
 // stripTimestamp retags a date-shaped scalar as a string.

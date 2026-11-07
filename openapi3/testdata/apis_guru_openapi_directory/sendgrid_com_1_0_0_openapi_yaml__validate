@@ -1,0 +1,328 @@
+invalid components: schema "full-segment": invalid example: doesn't match schema due to: Error at "/contacts_sample/0/city": string doesn't match the regular expression "^[a-zA-Z\u0080-\u024F\s\/\-\)\(\`\.\"\']+$"
+Schema:
+  {
+    "description": "City associated with the contact. This is a reserved field.",
+    "pattern": "^[a-zA-Z\\u0080-\\u024F\\s\\/\\-\\)\\(\\`\\.\\\"\\']+$",
+    "type": "string"
+  }
+
+Value:
+  "ȎţȸÛ\tč\u000bCŁ"
+ | Error at "/contacts_sample/0/id": property "id" is missing
+Schema:
+  {
+    "example": {
+      "address_line_1": "street address / P.O. box / CompanyName / c/o",
+      "address_line_2": "apartment, suite, unit, building, floor etc",
+      "alternate_emails": [
+        "abcd@yahoo.com",
+        "abcd@hotmail.com"
+      ],
+      "city": "Redwood City",
+      "country": "USA",
+      "custom_fields": {
+        "custom_field_name1": "custom_field_value1",
+        "custom_field_name2": "custom_field_value2"
+      },
+      "email": "abcd@gmail.com",
+      "first_name": "Ab",
+      "id": "47d23ab0-d895-4359-a0d1-ffc7a6fc7e70",
+      "last_name": "Cd",
+      "postal_code": 94063,
+      "state_province_region": "CA"
+    },
+    "properties": {
+      "address_line_1": {
+        "description": "First line of address of the contact. This is a reserved field.",
+        "type": "string"
+      },
+      "address_line_2": {
+        "description": "Second line of address of the contact. This is a reserved field.",
+        "type": "string"
+      },
+      "alternate_emails": {
+        "description": "Alternate emails of the contact. This is a reserved field.",
+        "items": {
+          "format": "email",
+          "maxLength": 254,
+          "minLength": 3,
+          "type": "string"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "city": {
+        "description": "City associated with the contact. This is a reserved field.",
+        "pattern": "^[a-zA-Z\\u0080-\\u024F\\s\\/\\-\\)\\(\\`\\.\\\"\\']+$",
+        "type": "string"
+      },
+      "country": {
+        "description": "Country associated with the address of the contact. This is a reserved field.",
+        "type": "string"
+      },
+      "custom_fields": {
+        "description": "The user may choose to create up to 120 custom fields or none at all. This is not a reserved field.",
+        "properties": {
+          "": {
+            "type": "string"
+          },
+          "custom_field_name1": {
+            "type": "string"
+          },
+          "custom_field_name2": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "email": {
+        "description": "Email of the contact. This is a reserved field.",
+        "format": "email",
+        "maxLength": 254,
+        "minLength": 3,
+        "type": "string"
+      },
+      "first_name": {
+        "description": "First name of the contact. This is a reserved field.",
+        "minLength": 1,
+        "type": "string"
+      },
+      "id": {
+        "description": "ID assigned to a contact when added to the system.",
+        "format": "uuid",
+        "maxLength": 36,
+        "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+        "type": "string"
+      },
+      "last_name": {
+        "description": "Last name of the contact. This is a reserved field.",
+        "minLength": 1,
+        "type": "string"
+      },
+      "list_ids": {
+        "description": "IDs of all lists the contact is part of",
+        "items": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "postal_code": {
+        "description": "Zipcode associated with the address of the contact. This is a reserved field.",
+        "type": "integer"
+      },
+      "segment_ids": {
+        "description": "IDs of all segments the contact is part of",
+        "items": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "state_province_region": {
+        "description": "State associated with the contact. This is a reserved field.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "email",
+      "alternate_emails",
+      "first_name",
+      "last_name",
+      "address_line_1",
+      "address_line_2",
+      "city",
+      "state_province_region",
+      "postal_code",
+      "country",
+      "custom_fields"
+    ],
+    "title": "contact_response",
+    "type": "object"
+  }
+
+Value:
+  {
+    "address_line_1": "sunt aliqua",
+    "address_line_2": "sit proident Lorem veniam labore",
+    "alternate_emails": [
+      "yKDUP11FDch@QoU.vwy",
+      "ZNSN5@czAMqPi.at",
+      "7wr51kFVVKlcBSH@DWxOueOZepetzBrku.qosk",
+      "iib-ObtO7Fxz5@vLJPRIFKPOqJGCEqcIDab.ypn"
+    ],
+    "city": "ȎţȸÛ\tč\u000bCŁ",
+    "contact_id": "c1183ada-b784-49ac-9b1f-50e73578a6dc",
+    "country": "do reprehenderit qui",
+    "custom_fields": {
+      "custom_field_name1": "esse",
+      "custom_field_name2": "in consectetur ut aliqua sint"
+    },
+    "first_name": "est",
+    "last_name": "eiusmod in laboris velit cupidatat",
+    "postal_code": 30296612,
+    "primary_email": "ft88@d.izxx",
+    "state_province_region": "ut proident"
+  }
+ | Error at "/contacts_sample/0/email": property "email" is missing
+Schema:
+  {
+    "example": {
+      "address_line_1": "street address / P.O. box / CompanyName / c/o",
+      "address_line_2": "apartment, suite, unit, building, floor etc",
+      "alternate_emails": [
+        "abcd@yahoo.com",
+        "abcd@hotmail.com"
+      ],
+      "city": "Redwood City",
+      "country": "USA",
+      "custom_fields": {
+        "custom_field_name1": "custom_field_value1",
+        "custom_field_name2": "custom_field_value2"
+      },
+      "email": "abcd@gmail.com",
+      "first_name": "Ab",
+      "id": "47d23ab0-d895-4359-a0d1-ffc7a6fc7e70",
+      "last_name": "Cd",
+      "postal_code": 94063,
+      "state_province_region": "CA"
+    },
+    "properties": {
+      "address_line_1": {
+        "description": "First line of address of the contact. This is a reserved field.",
+        "type": "string"
+      },
+      "address_line_2": {
+        "description": "Second line of address of the contact. This is a reserved field.",
+        "type": "string"
+      },
+      "alternate_emails": {
+        "description": "Alternate emails of the contact. This is a reserved field.",
+        "items": {
+          "format": "email",
+          "maxLength": 254,
+          "minLength": 3,
+          "type": "string"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "city": {
+        "description": "City associated with the contact. This is a reserved field.",
+        "pattern": "^[a-zA-Z\\u0080-\\u024F\\s\\/\\-\\)\\(\\`\\.\\\"\\']+$",
+        "type": "string"
+      },
+      "country": {
+        "description": "Country associated with the address of the contact. This is a reserved field.",
+        "type": "string"
+      },
+      "custom_fields": {
+        "description": "The user may choose to create up to 120 custom fields or none at all. This is not a reserved field.",
+        "properties": {
+          "": {
+            "type": "string"
+          },
+          "custom_field_name1": {
+            "type": "string"
+          },
+          "custom_field_name2": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "email": {
+        "description": "Email of the contact. This is a reserved field.",
+        "format": "email",
+        "maxLength": 254,
+        "minLength": 3,
+        "type": "string"
+      },
+      "first_name": {
+        "description": "First name of the contact. This is a reserved field.",
+        "minLength": 1,
+        "type": "string"
+      },
+      "id": {
+        "description": "ID assigned to a contact when added to the system.",
+        "format": "uuid",
+        "maxLength": 36,
+        "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+        "type": "string"
+      },
+      "last_name": {
+        "description": "Last name of the contact. This is a reserved field.",
+        "minLength": 1,
+        "type": "string"
+      },
+      "list_ids": {
+        "description": "IDs of all lists the contact is part of",
+        "items": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "postal_code": {
+        "description": "Zipcode associated with the address of the contact. This is a reserved field.",
+        "type": "integer"
+      },
+      "segment_ids": {
+        "description": "IDs of all segments the contact is part of",
+        "items": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "state_province_region": {
+        "description": "State associated with the contact. This is a reserved field.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "email",
+      "alternate_emails",
+      "first_name",
+      "last_name",
+      "address_line_1",
+      "address_line_2",
+      "city",
+      "state_province_region",
+      "postal_code",
+      "country",
+      "custom_fields"
+    ],
+    "title": "contact_response",
+    "type": "object"
+  }
+
+Value:
+  {
+    "address_line_1": "sunt aliqua",
+    "address_line_2": "sit proident Lorem veniam labore",
+    "alternate_emails": [
+      "yKDUP11FDch@QoU.vwy",
+      "ZNSN5@czAMqPi.at",
+      "7wr51kFVVKlcBSH@DWxOueOZepetzBrku.qosk",
+      "iib-ObtO7Fxz5@vLJPRIFKPOqJGCEqcIDab.ypn"
+    ],
+    "city": "ȎţȸÛ\tč\u000bCŁ",
+    "contact_id": "c1183ada-b784-49ac-9b1f-50e73578a6dc",
+    "country": "do reprehenderit qui",
+    "custom_fields": {
+      "custom_field_name1": "esse",
+      "custom_field_name2": "in consectetur ut aliqua sint"
+    },
+    "first_name": "est",
+    "last_name": "eiusmod in laboris velit cupidatat",
+    "postal_code": 30296612,
+    "primary_email": "ft88@d.izxx",
+    "state_province_region": "ut proident"
+  }

@@ -22,38 +22,26 @@
       }
     },
     "schemas": {
-      "components_Bar": {
-        "example": "bar",
-        "type": "string"
-      },
-      "components_Foo": {
-        "properties": {
-          "bar": {
-            "$ref": "#/components/schemas/components_Bar"
-          }
-        },
-        "type": "object"
-      },
-      "components_Foo_Foo2": {
-        "properties": {
-          "foo": {
-            "$ref": "#/components/schemas/components_Foo"
-          }
-        },
-        "type": "object"
-      },
       "Bar": {
         "example": "bar",
         "type": "string"
       },
-      "Error":{
-        "title":"ErrorDetails",
-        "type":"object"
+      "Cat": {
+        "properties": {
+          "cat": {
+            "$ref": "#/components/schemas/Cat"
+          }
+        },
+        "type": "object"
+      },
+      "Error": {
+        "title": "ErrorDetails",
+        "type": "object"
       },
       "Foo": {
         "properties": {
           "bar": {
-            "$ref": "#/components/schemas/components_Bar"
+            "$ref": "#/components/schemas/Bar"
           }
         },
         "type": "object"
@@ -61,15 +49,7 @@
       "Foo2": {
         "properties": {
           "foo": {
-            "$ref": "#/components/schemas/components_Foo"
-          }
-        },
-        "type": "object"
-      },
-      "Cat": {
-        "properties": {
-          "cat": {
-            "$ref": "#/components/schemas/Cat"
+            "$ref": "#/components/schemas/Foo"
           }
         },
         "type": "object"
@@ -102,7 +82,7 @@
                 "schema": {
                   "properties": {
                     "foo2": {
-                      "$ref": "#/components/schemas/components_Foo_Foo2"
+                      "$ref": "#/components/schemas/Foo2"
                     }
                   },
                   "type": "object"

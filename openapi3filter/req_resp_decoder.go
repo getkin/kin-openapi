@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	yaml "github.com/oasdiff/yaml3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -1459,7 +1459,8 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 		// A binary part with no registered decoder (e.g. image/png) is read as
 		// raw bytes: encoding.contentType restricts the accepted media types but
 		// does not require a registered decoder.
-		if isBinary(schema) {
+		// OpenAPI 3.1 describes such data with contentMediaType instead.
+		if isBinary(schema) || (schema != nil && schema.Value != nil && schema.Value.ContentMediaType != "") {
 			value, err := FileBodyDecoder(body, header, schema, encFn)
 			return mediaType, value, err
 		}

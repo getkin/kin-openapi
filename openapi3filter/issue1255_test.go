@@ -22,6 +22,7 @@ paths:
         - name: flag
           in: query
           required: false
+          allowEmptyValue: true
           schema:
             type: boolean
             default: false
