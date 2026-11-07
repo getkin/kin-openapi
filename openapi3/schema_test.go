@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 )
 
 type schemaExample struct {
@@ -75,7 +75,7 @@ func validateSchemaJSON(t *testing.T, schema *Schema, value any, opts ...SchemaV
 }
 
 func validateSchemaYAML(t *testing.T, schema *Schema, value any, opts ...SchemaValidationOption) error {
-	data, err := yaml.Marshal(value)
+	data, err := yaml.Dump(value)
 	require.NoError(t, err)
 	var val any
 	err = yaml.Unmarshal(data, &val)

@@ -3,8 +3,8 @@ package openapi3_test
 import (
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/assert"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -63,7 +63,7 @@ info:
 			assert.NoError(t, err)
 		}
 
-		txt, err := yaml.Marshal(doc)
+		txt, err := yaml.Dump(doc)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, txt)
 	}

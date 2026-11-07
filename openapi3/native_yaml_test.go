@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	goyaml "go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 const nativeSrc = `"200":
@@ -32,7 +32,7 @@ func TestNativeStock_MatchesJSONPath(t *testing.T) {
 	require.NoError(t, json.Unmarshal(jsonBytes, &viaJSON))
 
 	var viaNode Responses
-	require.NoError(t, goyaml.Unmarshal([]byte(nativeSrc), &viaNode))
+	require.NoError(t, yaml.Unmarshal([]byte(nativeSrc), &viaNode))
 
 	want, err := json.Marshal(&viaJSON)
 	require.NoError(t, err)
@@ -58,7 +58,7 @@ func TestNativeStock_OriginsAtDepth(t *testing.T) {
 
 func yamlToJSON(src string) ([]byte, error) {
 	var v any
-	if err := goyaml.Unmarshal([]byte(src), &v); err != nil {
+	if err := yaml.Unmarshal([]byte(src), &v); err != nil {
 		return nil, err
 	}
 	return json.Marshal(v)
@@ -76,7 +76,7 @@ func TestNativeStock_TypeErrorNamesTheTarget(t *testing.T) {
 		{"info", &Info{}, "openapi3.Info"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			err := goyaml.Unmarshal([]byte("GET /anything\n"), test.target)
+			err := yaml.Unmarshal([]byte("GET /anything\n"), test.target)
 			require.ErrorContains(t, err, test.expect)
 			require.NotContains(t, fmt.Sprint(err), "bis", "the shadow type is an implementation detail")
 		})
@@ -93,7 +93,7 @@ func TestNativeStock_UnderscoredKeyStaysAString(t *testing.T) {
     type: object
 `
 	var components Components
-	require.NoError(t, goyaml.Unmarshal([]byte(src), &components))
+	require.NoError(t, yaml.Unmarshal([]byte(src), &components))
 	require.Contains(t, components.Schemas, "18_24")
 	require.Contains(t, components.Schemas, "25_34")
 }

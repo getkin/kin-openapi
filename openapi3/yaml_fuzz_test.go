@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	yaml "go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 )
@@ -91,7 +91,7 @@ components:
       format: date-time
       example: 2020-06-11T16:32:50-03:00
       x-ts: !!timestamp 2001-01-01
-      x-keys: {18_24: a, 0x2A: b, 1.5: c, true: d}
+      x-keys: {18_24: a, 0x2A: b, 1.5: c, true: d, .0: e, 0: f}
     I:
       type: integer
       enum: [0x2A, 4_2, 052, 42]
@@ -212,7 +212,7 @@ func FuzzYAMLMatchesJSON(f *testing.F) {
 		if fuzzing.LosesInYAML(generic) {
 			return
 		}
-		y, err := yaml.Marshal(generic)
+		y, err := yaml.Dump(generic)
 		require.NoError(t, err)
 
 		var back T
