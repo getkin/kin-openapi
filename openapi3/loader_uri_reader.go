@@ -43,11 +43,50 @@ func ReadFromURIs(readers ...ReadFromURIFunc) ReadFromURIFunc {
 
 // DefaultReadFromURI returns a caching ReadFromURIFunc which can read remote
 // HTTP URIs and local file URIs.
-var DefaultReadFromURI = URIMapCache(defaultReadFromURIReader)
+//
+// Its cache is shared by every Loader in the process and is never cleared, so
+// an absolute file path or HTTP URI read once keeps returning the same bytes
+// even from a new Loader. To re-read documents that may have changed between
+// loads, set Loader.ReadFromURIFunc to ReadFromURIPerLoader instead.
+var DefaultReadFromURI = URIMapCache(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
 
-// defaultReadFromURIReader returns a ReadFromURIFunc which can read remote
-// HTTP URIs and local file URIs, without any caching.
-var defaultReadFromURIReader = ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile)
+// ReadFromURIPerLoader is an alternative to DefaultReadFromURI which reads the
+// same remote HTTP URIs and local file URIs, but caches what it reads on the
+// Loader it is called with rather than for the whole process. Repeated reads
+// during one load are served from the cache, while a new Loader reads every
+// document again, and the cached bytes are released along with the Loader.
+var ReadFromURIPerLoader = URIMapCachePerLoader(ReadFromURIs(ReadFromHTTP(http.DefaultClient), ReadFromFile))
+
+// URIMapCachePerLoader returns a ReadFromURIFunc that caches the contents read
+// from URIs on the Loader it is called with, so each Loader starts with an
+// empty cache. Relative file paths are not cached, as with URIMapCache.
+func URIMapCachePerLoader(reader ReadFromURIFunc) ReadFromURIFunc {
+	return func(loader *Loader, location *url.URL) ([]byte, error) {
+		if location.Scheme == "" || location.Scheme == "file" {
+			if !filepath.IsAbs(location.Path) {
+				return reader(loader, location)
+			}
+		}
+		uri := location.String()
+		uriMu.RLock()
+		buf, ok := loader.uriCache[uri]
+		uriMu.RUnlock()
+		if ok {
+			return buf, nil
+		}
+		buf, err := reader(loader, location)
+		if err != nil {
+			return nil, err
+		}
+		uriMu.Lock()
+		defer uriMu.Unlock()
+		if loader.uriCache == nil {
+			loader.uriCache = map[string][]byte{}
+		}
+		loader.uriCache[uri] = buf
+		return buf, nil
+	}
+}
 
 // ReadFromHTTP returns a ReadFromURIFunc which uses the given http.Client to
 // read the contents from a remote HTTP URI. This client may be customized to
