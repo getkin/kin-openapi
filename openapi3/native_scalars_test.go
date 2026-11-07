@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	goyaml "go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // YAML resolves more scalar forms than JSON does, so a value reaching an
@@ -22,8 +22,8 @@ x-nested: {n: 7, list: [1, 2]}
 example: 42
 default: 0x10
 `
-	var node goyaml.Node
-	require.NoError(t, goyaml.Unmarshal([]byte(src), &node))
+	var node yaml.Node
+	require.NoError(t, yaml.Unmarshal([]byte(src), &node))
 	require.NoError(t, prepareScalars(&node))
 
 	var s Schema
@@ -57,8 +57,8 @@ default: 0x10
 // did not.
 func TestNativeScalars_DeclaredIntegerFieldsKeepPrecision(t *testing.T) {
 	const src = "type: integer\nmaxLength: 9007199254740993\n"
-	var node goyaml.Node
-	require.NoError(t, goyaml.Unmarshal([]byte(src), &node))
+	var node yaml.Node
+	require.NoError(t, yaml.Unmarshal([]byte(src), &node))
 
 	var s Schema
 	require.NoError(t, node.Content[0].Decode(&s))
@@ -70,8 +70,8 @@ func TestNativeScalars_DeclaredIntegerFieldsKeepPrecision(t *testing.T) {
 // a time.Time would marshal to text that reads back as a string.
 func TestNativeScalars_Timestamps(t *testing.T) {
 	const src = "example: 2020-06-11T16:32:50Z\n"
-	var node goyaml.Node
-	require.NoError(t, goyaml.Unmarshal([]byte(src), &node))
+	var node yaml.Node
+	require.NoError(t, yaml.Unmarshal([]byte(src), &node))
 	require.NoError(t, prepareScalars(&node))
 
 	var s Schema
@@ -79,8 +79,8 @@ func TestNativeScalars_Timestamps(t *testing.T) {
 	require.IsType(t, "", s.Example, "a date-shaped example stays a string")
 
 	const tagged = "example: !!timestamp 2020-06-11T16:32:50Z\n"
-	var taggedNode goyaml.Node
-	require.NoError(t, goyaml.Unmarshal([]byte(tagged), &taggedNode))
+	var taggedNode yaml.Node
+	require.NoError(t, yaml.Unmarshal([]byte(tagged), &taggedNode))
 	require.NoError(t, prepareScalars(&taggedNode))
 
 	var ts Schema
@@ -92,8 +92,8 @@ func TestNativeScalars_Timestamps(t *testing.T) {
 func decodeNative(t *testing.T, src string, v any) error {
 	t.Helper()
 
-	var node goyaml.Node
-	require.NoError(t, goyaml.Unmarshal([]byte(src), &node))
+	var node yaml.Node
+	require.NoError(t, yaml.Unmarshal([]byte(src), &node))
 	if err := prepareScalars(&node); err != nil {
 		return err
 	}
@@ -160,11 +160,76 @@ func TestNativeScalars_NullKeyNamesNothing(t *testing.T) {
 	var extension, example Schema
 	require.ErrorContains(t, decodeNative(t, "x-k: {null: a}\n", &extension), "mapping key is null")
 	require.ErrorContains(t, decodeNative(t, "example: {null: a}\n", &example), "mapping key is null")
+}
 
-	// Every other scalar has a name.
+// A null key is refused wherever it is written, not only where the mapping it
+// sits in is decoded into an any. A mapping decoded into a map[string]T drops
+// the member silently, which would let a document load holding less than it
+// says, and a struct's extensions would record the text that spells the null
+// as a name. The key's own line is what the error names.
+func TestNativeScalars_NullKeyIsRefusedWhereverItIsWritten(t *testing.T) {
+	const head = "openapi: 3.0.0\ninfo: {title: t, version: \"1\"}\npaths: {}\n"
+	for _, test := range []struct {
+		name, src, want string
+	}{
+		{"in an extension", head + "x-a: {null: 1}\n", "line 4: mapping key is null"},
+		{"at the top level", head + "null: 1\n", "line 4: mapping key is null"},
+		{
+			"under properties",
+			head + "components:\n  schemas:\n    A:\n      properties:\n        null: {}\n",
+			"line 8: mapping key is null",
+		},
+		{
+			"beside a property named null",
+			head + "components:\n  schemas:\n    A:\n      properties:\n        ~: {}\n        \"null\": {type: string}\n",
+			"line 8: mapping key is null",
+		},
+		{"written as a bare colon", ":", "line 1: mapping key is null"},
+		{"on its own line", head + "x-a:\n  : 1\n", "line 5: mapping key is null"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			loader := NewLoader()
+			_, err := loader.LoadFromData([]byte(test.src))
+			require.ErrorContains(t, err, test.want)
+		})
+	}
+}
+
+// A field error says what is wrong and the decoder says where, so the message
+// carries the position once.
+func TestNativeScalars_StringFieldErrorCarriesOnePosition(t *testing.T) {
+	var s Schema
+	require.EqualError(t, decodeNative(t, "type: 7\n", &s),
+		`yaml: construct errors: line 1: cannot unmarshal !!int into string field "type"`)
+}
+
+// A key names the text the document wrote it as, wherever it is read: the
+// components a $ref addresses by name, and a mapping decoded into an any.
+func TestNativeScalars_KeysAreTheirText(t *testing.T) {
 	var named Schema
 	require.NoError(t, decodeNative(t, "x-k: {1: a, true: b, 1.5: c, 0x2A: d}\n", &named))
-	require.Equal(t, map[string]any{"1": "a", "true": "b", "1.5": "c", "42": "d"}, named.Extensions["x-k"])
+	require.Equal(t, map[string]any{"1": "a", "true": "b", "1.5": "c", "0x2A": "d"}, named.Extensions["x-k"])
+
+	// Read as the value it resolves to instead, a key would name whatever
+	// another notation of the same number names, and the two would be one
+	// member with no telling which value it holds.
+	var same Schema
+	require.NoError(t, decodeNative(t, "x-k: {.0: a, 0: b, 18_24: c, 1824: d}\n", &same))
+	require.Equal(t, map[string]any{".0": "a", "0": "b", "18_24": "c", "1824": "d"}, same.Extensions["x-k"])
+
+	// A key written as an alias says what the anchored scalar says, while the
+	// anchor's own use keeps the value it resolves to.
+	var aliased Schema
+	require.NoError(t, decodeNative(t, "x-a: &a 0x2A\nx-k:\n  *a: v\n", &aliased))
+	require.Equal(t, map[string]any{"0x2A": "v"}, aliased.Extensions["x-k"])
+	require.Equal(t, float64(42), aliased.Extensions["x-a"])
+
+	// Two keys written the same text are the duplicate they are, through an
+	// alias as much as written out.
+	var dup, dupAlias Schema
+	require.ErrorContains(t, decodeNative(t, "x-k: {0: a, '0': b}\n", &dup), `mapping key "0" already defined`)
+	require.ErrorContains(t, decodeNative(t, "x-a: &a 18_24\nx-k:\n  *a: v\n  18_24: w\n", &dupAlias),
+		`mapping key "18_24" already defined`)
 }
 
 // A requirement written as an alias is the mapping it points at, so a null in

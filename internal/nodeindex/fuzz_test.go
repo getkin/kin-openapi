@@ -3,8 +3,8 @@ package nodeindex_test
 import (
 	"testing"
 
-	yaml "github.com/oasdiff/yaml3"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 	"github.com/getkin/kin-openapi/internal/nodeindex"

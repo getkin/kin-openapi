@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	yaml "github.com/oasdiff/yaml3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )

@@ -5,7 +5,7 @@ package openapi3
 import (
 	"strings"
 
-	yaml "go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // refYAMLFields are the keys the wrapper declares itself, so they are not

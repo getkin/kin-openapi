@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	yaml "go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/getkin/kin-openapi/internal/fuzzing"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -241,7 +241,7 @@ func FuzzMarshalYAML(f *testing.F) {
 			return
 		}
 
-		y, err := yaml.Marshal(doc)
+		y, err := yaml.Dump(doc)
 		require.NoError(t, err)
 		back, err := newFuzzLoader().LoadFromData(y)
 		require.NoError(t, err, "yaml:\n%s", y)
