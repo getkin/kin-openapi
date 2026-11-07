@@ -76,6 +76,19 @@ func (header *Header) UnmarshalYAML(node *yaml.Node) error {
 // always write `type` as a scalar, so the single-string case is what decoding
 // such a document into openapi2.T or openapi3.T relies on.
 func (types *Types) UnmarshalYAML(node *yaml.Node) error {
+	// One type, which is how nearly every schema writes it. Asking for a list
+	// first makes the decoder build an error per schema only to discard it,
+	// which was 15% of the objects a load allocated. A null is left to the
+	// list below, where it decodes to no types rather than to one empty name.
+	if node.Kind == yaml.ScalarNode && node.Tag != nullTag {
+		var s string
+		if err := node.Decode(&s); err != nil {
+			return err
+		}
+		*types = []string{s}
+		return nil
+	}
+
 	var list []string
 	if err := node.Decode(&list); err != nil {
 		var s string

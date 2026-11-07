@@ -12,22 +12,48 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
-var knownYAMLFieldsCache sync.Map // reflect.Type -> map[string]struct{}
+var (
+	knownYAMLFieldsCache sync.Map // reflect.Type -> map[string]struct{}
+	yamlFieldsCache      sync.Map // reflect.Type -> []yamlField
+)
 
-// knownYAMLFields returns the yaml keys a struct type declares, skipping "-".
-func knownYAMLFields(t reflect.Type) map[string]struct{} {
-	if v, ok := knownYAMLFieldsCache.Load(t); ok {
-		return v.(map[string]struct{})
+// yamlField is a struct field that carries a document key, by index so the
+// value can be reached without reading the tag again.
+type yamlField struct {
+	index int
+	key   string
+}
+
+// yamlFields returns the keys a struct type declares, in declaration order,
+// reading each tag once per type. Decoding a document reaches this for every
+// struct it decodes, and reading the tags each time cost 16% of a load.
+func yamlFields(t reflect.Type) []yamlField {
+	if v, ok := yamlFieldsCache.Load(t); ok {
+		return v.([]yamlField)
 	}
-	known := make(map[string]struct{}, t.NumField())
+	fields := make([]yamlField, 0, t.NumField())
 	for i := range t.NumField() {
 		f := t.Field(i)
 		if !f.IsExported() {
 			continue
 		}
 		if name := yamlKey(f); name != "-" {
-			known[name] = struct{}{}
+			fields = append(fields, yamlField{index: i, key: name})
 		}
+	}
+	yamlFieldsCache.Store(t, fields)
+	return fields
+}
+
+// knownYAMLFields returns the yaml keys a struct type declares, skipping "-".
+func knownYAMLFields(t reflect.Type) map[string]struct{} {
+	if v, ok := knownYAMLFieldsCache.Load(t); ok {
+		return v.(map[string]struct{})
+	}
+	fields := yamlFields(t)
+	known := make(map[string]struct{}, len(fields))
+	for _, f := range fields {
+		known[f.key] = struct{}{}
 	}
 	knownYAMLFieldsCache.Store(t, known)
 	return known
@@ -137,7 +163,6 @@ func mappingPairs(node *yaml.Node) [][2]*yaml.Node {
 func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*yaml.Node {
 	pairs := make([][2]*yaml.Node, 0, len(node.Content)/2)
 	var merged [][2]*yaml.Node
-	seen := make(map[string]struct{}, len(node.Content)/2)
 
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		k, v := node.Content[i], node.Content[i+1]
@@ -150,7 +175,18 @@ func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*ya
 			continue
 		}
 		pairs = append(pairs, [2]*yaml.Node{k, v})
-		seen[k.Value] = struct{}{}
+	}
+
+	// The set of keys the mapping writes itself is only needed to hold a
+	// merge source to second place, so a mapping without a merge key, which
+	// is nearly all of them, allocates nothing for it.
+	if len(merged) == 0 {
+		return pairs
+	}
+
+	seen := make(map[string]struct{}, len(pairs)+len(merged))
+	for _, kv := range pairs {
+		seen[kv[0].Value] = struct{}{}
 	}
 
 	for _, kv := range merged {
@@ -393,21 +429,12 @@ func checkDeclaredFields(node *yaml.Node, out any) error {
 		return nil
 	}
 	v := reflect.ValueOf(out).Elem()
-	t := v.Type()
-	for i := range t.NumField() {
-		f := t.Field(i)
-		if !f.IsExported() {
-			continue
-		}
-		key := yamlKey(f)
-		if key == "-" {
-			continue
-		}
-		value := mappingValue(node, key)
+	for _, f := range yamlFields(v.Type()) {
+		value := mappingValue(node, f.key)
 		if value == nil {
 			continue
 		}
-		if err := checkFieldValue(v.Field(i), value, key); err != nil {
+		if err := checkFieldValue(v.Field(f.index), value, f.key); err != nil {
 			return err
 		}
 	}
