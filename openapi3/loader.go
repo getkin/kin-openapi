@@ -60,6 +60,7 @@ type Loader struct {
 	visitedPathItemRefs map[string]struct{}
 
 	visitedDocuments map[string]*T
+	wholeFileSchemas map[string]*SchemaRef
 
 	// originTrees retains a loaded document's parsed node tree, keyed by the
 	// document itself so insert and lookup cannot disagree. Populated only for
@@ -279,6 +280,7 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 
 	if loader.resolvingDepth == 0 {
 		loader.rootDoc = doc
+		loader.wholeFileSchemas = make(map[string]*SchemaRef)
 	}
 	loader.resolvingDepth++
 	defer func() { loader.resolvingDepth-- }()
@@ -1176,6 +1178,20 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 		}
+		refKey := ref
+		if isSingleRefElement(ref) {
+			refPath, err := loader.resolveRefPath(ref, documentPath)
+			if err != nil {
+				return err
+			}
+			refKey = refPath.String()
+			if resolved := loader.wholeFileSchemas[refKey]; resolved != nil && resolved.Value != nil {
+				component.Value = resolved.Value
+				component.setRefPath(cmp.Or(resolved.RefPath(), refPath))
+				component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
+				return nil
+			}
+		}
 		if !loader.shouldVisitRef("Schema", ref, func(value any) {
 			component.Value = value.(*Schema)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
@@ -1193,6 +1209,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
+			// Share decoded targets even while their children are being resolved.
+			loader.wholeFileSchemas[refKey] = &resolved
 			if strings.HasPrefix(resolved.Ref, "#") {
 				// Local fragments belong to the referenced file, not the referring document.
 				if doc, err = loader.loadFromURIInternal(documentPath); err != nil {
@@ -1208,6 +1226,10 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			if component.Value = resolved.Value; component.Value != nil {
 				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
+			// Reuse the resolved target, before applying this reference's siblings.
+			if resolved.Value != nil {
+				resolved.setRefPath(documentPath)
 			}
 		} else {
 			var resolved SchemaRef
