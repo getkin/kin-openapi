@@ -1185,14 +1185,14 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			refKey = refPath.String()
-			if resolved := loader.wholeFileSchemas[refKey]; resolved != nil {
+			if resolved := loader.wholeFileSchemas[refKey]; resolved != nil && resolved.Value != nil {
 				component.Value = resolved.Value
-				component.setRefPath(resolved.RefPath())
+				component.setRefPath(cmp.Or(resolved.RefPath(), refPath))
 				component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
 				return nil
 			}
 		}
-		if !loader.shouldVisitRef("Schema", refKey, func(value any) {
+		if !loader.shouldVisitRef("Schema", ref, func(value any) {
 			component.Value = value.(*Schema)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
@@ -1203,12 +1203,14 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}) {
 			return nil
 		}
-		loader.visitRef("Schema", refKey)
+		loader.visitRef("Schema", ref)
 		if isSingleRefElement(ref) {
 			var resolved SchemaRef
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
+			// Share decoded targets even while their children are being resolved.
+			loader.wholeFileSchemas[refKey] = &resolved
 			if strings.HasPrefix(resolved.Ref, "#") {
 				// Local fragments belong to the referenced file, not the referring document.
 				if doc, err = loader.loadFromURIInternal(documentPath); err != nil {
@@ -1228,7 +1230,6 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			// Reuse the resolved target, before applying this reference's siblings.
 			if resolved.Value != nil {
 				resolved.setRefPath(documentPath)
-				loader.wholeFileSchemas[refKey] = &resolved
 			}
 		} else {
 			var resolved SchemaRef
@@ -1246,7 +1247,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				component.setRefPath(resolved.RefPath())
 			}
 		}
-		defer loader.unvisitRef("Schema", refKey, component.Value)
+		defer loader.unvisitRef("Schema", ref, component.Value)
 
 		// OAS 3.1 / JSON Schema 2020-12: apply sibling keywords from the original schema
 		// object on top of the resolved $ref value. In 3.1, siblings are not ignored —

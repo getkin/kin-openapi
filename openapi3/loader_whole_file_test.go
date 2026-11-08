@@ -127,3 +127,21 @@ func TestLoaderWholeFileSchemaCacheDoesNotInheritFragmentPath(t *testing.T) {
 	require.Error(t, doc.Components.Schemas["Alias"].Value.VisitJSON("abc"))
 	require.Equal(t, "target.yaml", refPath.String())
 }
+
+func TestLoaderWholeFileSchemaRepeatedRelativeRef(t *testing.T) {
+	t.Parallel()
+	loader := NewLoader()
+	reads := 0
+	loader.ReadFromURIFunc = func(_ *Loader, _ *url.URL) ([]byte, error) {
+		reads++
+		if reads > 3 {
+			return nil, fmt.Errorf("repeated relative reference did not terminate")
+		}
+		return []byte(`{type: object, properties: {next: {$ref: './sub/schema.yaml'}}}`), nil
+	}
+	doc, err := loader.LoadFromDataWithPath([]byte(`{openapi: 3.0.3, info: {title: t, version: '1'}, paths: {}, components: {schemas: {Root: {$ref: './sub/schema.yaml'}}}}`), &url.URL{Path: "/spec/root.yaml"})
+	require.NoError(t, err)
+	root := doc.Components.Schemas["Root"].Value
+	require.Same(t, root, root.Properties["next"].Value)
+	require.Equal(t, 1, reads)
+}
