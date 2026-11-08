@@ -60,6 +60,7 @@ type Loader struct {
 	visitedPathItemRefs map[string]struct{}
 
 	visitedDocuments map[string]*T
+	wholeFileSchemas map[string]*SchemaRef
 
 	// originTrees retains a loaded document's parsed node tree, keyed by the
 	// document itself so insert and lookup cannot disagree. Populated only for
@@ -279,6 +280,7 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 
 	if loader.resolvingDepth == 0 {
 		loader.rootDoc = doc
+		loader.wholeFileSchemas = make(map[string]*SchemaRef)
 	}
 	loader.resolvingDepth++
 	defer func() { loader.resolvingDepth-- }()
@@ -1176,7 +1178,21 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 		}
-		if !loader.shouldVisitRef("Schema", ref, func(value any) {
+		refKey := ref
+		if isSingleRefElement(ref) {
+			refPath, err := loader.resolveRefPath(ref, documentPath)
+			if err != nil {
+				return err
+			}
+			refKey = refPath.String()
+			if resolved := loader.wholeFileSchemas[refKey]; resolved != nil {
+				component.Value = resolved.Value
+				component.setRefPath(resolved.RefPath())
+				component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
+				return nil
+			}
+		}
+		if !loader.shouldVisitRef("Schema", refKey, func(value any) {
 			component.Value = value.(*Schema)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
@@ -1187,7 +1203,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}) {
 			return nil
 		}
-		loader.visitRef("Schema", ref)
+		loader.visitRef("Schema", refKey)
 		if isSingleRefElement(ref) {
 			var resolved SchemaRef
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
@@ -1209,6 +1225,11 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			if component.Value = resolved.Value; component.Value != nil {
 				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
 			}
+			// Reuse the resolved target, before applying this reference's siblings.
+			if resolved.Value != nil {
+				resolved.setRefPath(documentPath)
+				loader.wholeFileSchemas[refKey] = &resolved
+			}
 		} else {
 			var resolved SchemaRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1225,7 +1246,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				component.setRefPath(resolved.RefPath())
 			}
 		}
-		defer loader.unvisitRef("Schema", ref, component.Value)
+		defer loader.unvisitRef("Schema", refKey, component.Value)
 
 		// OAS 3.1 / JSON Schema 2020-12: apply sibling keywords from the original schema
 		// object on top of the resolved $ref value. In 3.1, siblings are not ignored —
