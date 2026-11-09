@@ -57,6 +57,9 @@ type Loader struct {
 	rootDir      string
 	rootLocation string
 
+	// uriCache holds what URIMapCachePerLoader has read for this loader.
+	uriCache map[string][]byte
+
 	visitedPathItemRefs map[string]struct{}
 
 	visitedDocuments map[string]*T
