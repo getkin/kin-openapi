@@ -286,7 +286,7 @@ type ServerVariable struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Enum        []string `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
-	Default     string   `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Default     string   `json:"default,case:strict" yaml:"default"`
 	Description string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 }
 
@@ -306,9 +306,7 @@ func (serverVariable ServerVariable) MarshalYAML() (any, error) {
 	if x := serverVariable.Enum; len(x) != 0 {
 		m["enum"] = x
 	}
-	if x := serverVariable.Default; x != "" {
-		m["default"] = x
-	}
+	m["default"] = serverVariable.Default
 	if x := serverVariable.Description; x != "" {
 		m["description"] = x
 	}

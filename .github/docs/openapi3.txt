@@ -3863,7 +3863,7 @@ type ServerVariable struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Enum        []string `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
-	Default     string   `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Default     string   `json:"default,case:strict" yaml:"default"`
 	Description string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 }
 

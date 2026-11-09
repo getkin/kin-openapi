@@ -22,7 +22,7 @@ func TestValidateNullEntries(t *testing.T) {
 		{
 			name: "server variable",
 			spec: "servers:\n- url: 'http://x/{v}'\n  variables:\n    v:\n",
-			err:  `invalid servers: field default is required in {}`,
+			err:  `invalid servers: field default is required in {"default":""}`,
 		},
 		{
 			name: "tag",
