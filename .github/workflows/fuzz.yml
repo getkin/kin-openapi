@@ -110,13 +110,19 @@ jobs:
     # candidate then passes on replay: a red build and nothing to act on. The
     # budget only decides how small the saved input gets, so spending less of
     # it costs a larger seed and buys a signal that means what it says.
+    #
+    # It also bounds the shrinking of every input that finds new coverage,
+    # which stalls the worker doing it: at 10s, a 90s run of
+    # FuzzInternalizeRefsKeepsMeaning on a fresh corpus spent most of its
+    # time minimizing; at 1s it finds several times more new inputs. A crasher
+    # can be shrunk further after the fact: see ./fetch-fuzz-crashers.sh.
     - name: Fuzz ${{ matrix.target }}
       run: |
         go test \
           -run='^$' \
           -fuzz='^${{ matrix.target }}$' \
           -fuzztime='${{ steps.budget.outputs.fuzztime }}' \
-          -fuzzminimizetime=10s \
+          -fuzzminimizetime=1s \
           ${{ matrix.package }}
 
     # A failing input is written next to the package it broke. Upload it so the
