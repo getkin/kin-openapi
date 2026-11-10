@@ -16,8 +16,16 @@
 # functions, a timeout stuck in the same place, or a test failure reported
 # from the same line with the same message (numbers and quoted text ignored).
 #
-# Usage: ./fetch-fuzz-crashers.sh [--days N]
-#   --days N    look back N days (default 30; GitHub keeps artifacts 90 days)
+# CI keeps its minimize budget small, so each kept input is then shrunk
+# further by `go test -fuzz` for up to T, and replaced by the smaller one if
+# that still fails the same way. Timeouts are left as they are: the fuzzer
+# cannot tell a hang from a slow input.
+#
+# Usage: ./fetch-fuzz-crashers.sh [--days N] [-fuzzminimizetime T]
+#   --days N               look back N days (default 30; GitHub keeps
+#                          artifacts 90 days)
+#   -fuzzminimizetime T    go test -fuzzminimizetime syntax, e.g. 30s or
+#                          1000x (default 1s; 0 keeps the inputs as fetched)
 #
 # Env: REPO (getkin/kin-openapi), TEST_TIMEOUT (60s), GITHUB_TOKEN (optional)
 # Requires: bash 4+, curl, jq, unzip, go. Run from the root of a kin-openapi
@@ -28,6 +36,7 @@ set -euo pipefail
 REPO=${REPO:-getkin/kin-openapi}
 TEST_TIMEOUT=${TEST_TIMEOUT:-60s}
 DAYS=30
+MINIMIZE=1s
 MODULE=github.com/getkin/kin-openapi/
 
 log()   { printf '\033[1;34m==>\033[0m %s\n' "$*" >&2; }
@@ -46,11 +55,16 @@ usage() { sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 while (($#)); do
   case $1 in
     --days) [[ ${2:-} =~ ^[0-9]+$ ]] || die "--days needs a number"; DAYS=$2; shift ;;
+    -fuzzminimizetime|--fuzzminimizetime) (($# > 1)) || die "$1 needs a value"; MINIMIZE=$2; shift ;;
+    -fuzzminimizetime=*|--fuzzminimizetime=*) MINIMIZE=${1#*=} ;;
     -h|--help) usage ;;
     *) warn "unknown argument: $1"; usage 1 ;;
   esac
   shift
 done
+
+[[ $MINIMIZE =~ ^([0-9]+x|0|([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+)$ ]] \
+  || die "-fuzzminimizetime needs a duration (e.g. 30s) or a count (e.g. 1000x)"
 
 for bin in curl jq unzip go; do
   command -v "$bin" >/dev/null || die "missing dependency: $bin"
@@ -233,6 +247,76 @@ while IFS=$'\t' read -r id name run created; do
     rmdir -p "${dest%/*}" 2>/dev/null || true # if we just created it empty
   done < <(find "$d/x" -type f -path '*testdata/fuzz/*' -print0)
 done <"$tmp/artifacts.tsv"
+
+# ------------------------------------------------------- minimize ----
+# -fuzztime for a minimizing run: the minimize budget plus room for the
+# baseline coverage pass, since a fuzz run that ends while minimizing writes
+# the input unshrunk. A count budget gets a fixed bound.
+fuzztime_for() { # $1 -fuzzminimizetime
+  if [[ $1 == *x ]]; then echo 10m; return; fi
+  awk -v d="$1" 'BEGIN {
+    split("h m s ms us µs ns", u, " "); split("3600 60 1 0.001 0.000001 0.000001 0.000000001", f, " ")
+    while (match(d, /^[0-9.]+/)) {
+      n = substr(d, 1, RLENGTH); d = substr(d, RLENGTH + 1)
+      for (i = 1; i <= 7; i++) if (index(d, u[i]) == 1 && (i != 2 || substr(d, 2, 1) != "s")) break
+      t += n * f[i]; d = substr(d, length(u[i]) + 1)
+    }
+    printf "%ds\n", t + 61 }'
+}
+
+# Shrink $1 with go test -fuzz: print the path of what it shrank to, nothing
+# if it found nothing smaller, and return 1 if the run did not fail. The
+# fuzzer only minimizes failures it finds outside testdata/fuzz, so the input
+# goes into a scratch -test.fuzzcachedir, and the kept inputs of the same
+# target leave testdata/fuzz meanwhile: a failing seed would stop the run.
+minimize() { # $1 kept input  $2 pkg  $3 target  $4 logfile
+  local dir=$tmp/min/${1//\//_} stash=$tmp/stash/${1//\//_} k new rc=0
+  mkdir -p "$dir/$3" "$stash"
+  cp "$1" "$dir/$3/"
+  for k in "${keep_of[@]}"; do
+    [[ ${k%/*} == "${1%/*}" ]] && mv "$k" "$stash/"
+  done
+  local args=(go test -short -run '^$' -fuzz "^$3\$" -fuzztime "$(fuzztime_for "$MINIMIZE")"
+              -fuzzminimizetime "$MINIMIZE" "./$2" -args -test.fuzzcachedir="$dir")
+  cmd "${args[@]}"
+  "${args[@]}" >"$4" 2>&1 || rc=$?
+  new=$(sed -nE "s|^ *Failing input written to (testdata/fuzz/$3/[0-9a-f]+)\$|\1|p" "$4" | head -n 1)
+  [[ -n $new && -e $2/$new && $2/$new != "$1" ]] && mv "$2/$new" "$dir/"
+  mv "$stash"/* "${1%/*}/"
+  ((rc)) && [[ -n $new ]] || return 1
+  [[ ! -e $dir/${new##*/} ]] || printf '%s\n' "$dir/${new##*/}"
+}
+
+if [[ $MINIMIZE =~ ^0+([a-zµ]*|x)$ ]]; then
+  log "not minimizing (-fuzzminimizetime $MINIMIZE)"
+elif ((${#keep_of[@]})); then
+  log "minimizing each kept input for up to $MINIMIZE"
+  for sig in "${!keep_of[@]}"; do
+    dest=${keep_of[$sig]}; target=${dest%/*}; target=${target##*/}; pkg=${dest%/testdata/fuzz/*}
+    if [[ $sig == timeout\ * ]]; then
+      log "  $dest: a timeout, left as it is"; continue
+    fi
+    log "  $dest  (${size_of[$sig]} bytes)"
+    rc=0; small=$(minimize "$dest" "$pkg" "$target" "$tmp/min.log") || rc=$?
+    if ((rc)); then
+      warn "  could not minimize $dest:"; tail -n 15 "$tmp/min.log" | sed 's/^/     /' >&2; continue
+    fi
+    [[ -n $small ]] || { log "  no smaller input found"; continue; }
+    size=$(wc -c <"$small" | tr -d ' ')
+    ((size < size_of[$sig])) || { log "  no smaller input found"; continue; }
+    # The fuzzer keeps any failure while shrinking: make sure it is this one.
+    smaller=${dest%/*}/${small##*/}
+    [[ ! -e $smaller ]] || { log "  shrinks to $smaller, which is already here"; continue; }
+    cp "$small" "$smaller"
+    rc=0; replay "$pkg" "$target" "${smaller##*/}" "$tmp/min.log" || rc=$?
+    if ((rc == 0)) && [[ $(signature "$tmp/min.log" "$target") == "$sig" ]]; then
+      crash "$smaller  ($size bytes, was ${size_of[$sig]})"
+      rm -f "$dest"; keep_of[$sig]=$smaller; size_of[$sig]=$size
+    else
+      log "  the smaller input fails differently, kept $dest"; rm -f "$smaller"
+    fi
+  done
+fi
 
 echo >&2
 log "${#keep_of[@]} distinct reproducing crashers ($dupes duplicates, $dropped no longer failing, $skipped skipped)"
