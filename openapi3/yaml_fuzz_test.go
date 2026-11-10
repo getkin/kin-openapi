@@ -171,8 +171,23 @@ func requireSameDoc(t *testing.T, expected, actual *T, msgAndArgs ...any) {
 	require.JSONEq(t, string(e), string(a), msgAndArgs...)
 }
 
+// A json document holding a raw U+0085, which yaml would fold into a space,
+// loads through the json path, so FuzzYAMLMatchesJSON does not hold the yaml
+// path to it.
+func TestReadAsJSONOnARawNextLine(t *testing.T) {
+	require.True(t, readAsJSON([]byte(`{"`+"\u0085"+`":{}}`)))
+	require.False(t, readAsJSON([]byte(`{"\u0085":{}}`)), "escaped")
+	require.False(t, readAsJSON([]byte(`a: "`+"\u0085"+`"`)), "not json")
+
+	var doc T
+	_, err := unmarshal([]byte("{\"\u0085\":{}}"), &doc, true, nil)
+	require.NoError(t, err)
+	require.Contains(t, doc.Extensions, "\u0085")
+}
+
 // The YAML decode path must agree with the JSON one:
-//   - a JSON document both paths accept decodes to the same thing, and
+//   - a JSON document both paths accept decodes to the same thing, unless the
+//     loader reads it as JSON anyway (see readAsJSON), and
 //   - any document, re-encoded as block YAML, decodes back to itself.
 func FuzzYAMLMatchesJSON(f *testing.F) {
 	for _, seed := range yamlFuzzSeeds {
@@ -194,7 +209,7 @@ func FuzzYAMLMatchesJSON(f *testing.F) {
 			t.Skip()
 		}
 
-		if json.Valid(data) {
+		if json.Valid(data) && !readAsJSON(data) {
 			var viaJSON, viaYAML T
 			if unmarshalJSON(data, &viaJSON) == nil && decodeYAML(data, &viaYAML) == nil {
 				requireSameDoc(t, &viaJSON, &viaYAML, "data:\n%s", data)

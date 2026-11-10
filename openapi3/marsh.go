@@ -30,12 +30,7 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 		file = location.String()
 	}
 
-	// A raw U+0085 is a character to json and a line break to yaml, which
-	// folds it into a space, so a json document holding one is read by the
-	// json path and carries no origins. It is the only character json leaves
-	// raw that yaml breaks a line on: json escapes every other one, U+2028
-	// included, and yaml reads U+00A0 as content.
-	if bytes.Contains(data, []byte("\u0085")) && mayBeJSON(data) {
+	if readAsJSON(data) {
 		if unmarshalJSON(data, v) == nil {
 			return nil, nil
 		}
@@ -58,6 +53,16 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) (*orig
 
 	// Every attempt failed: return what each one said
 	return nil, unmarshalErrors(jsonErr, yamlErr)
+}
+
+// readAsJSON reports whether data, if it is json, is to be read by the json
+// path even though it parses as yaml. A raw U+0085 is a character to json and
+// a line break to yaml, which folds it into a space, so a json document
+// holding one is read as json and carries no origins. It is the only
+// character json leaves raw that yaml breaks a line on: json escapes every
+// other one, U+2028 included, and yaml reads U+00A0 as content.
+func readAsJSON(data []byte) bool {
+	return bytes.Contains(data, []byte("\u0085")) && mayBeJSON(data)
 }
 
 // mayBeJSON reports whether data could hold a JSON value: whether its first
