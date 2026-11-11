@@ -114,7 +114,7 @@ func TestServerValidationUnusedVariables(t *testing.T) {
 			&Server{
 				URL: "https://api.example.com/v1",
 				Variables: ServerVariables{
-					"region": &ServerVariable{Default: "us-east"},
+					"region": &ServerVariable{Default: Ptr("us-east")},
 				},
 			},
 			"server has unused variable region",
@@ -124,8 +124,8 @@ func TestServerValidationUnusedVariables(t *testing.T) {
 			&Server{
 				URL: "https://{x}.example.com",
 				Variables: ServerVariables{
-					"x": &ServerVariable{Default: "www"},
-					"y": &ServerVariable{Default: "com"},
+					"x": &ServerVariable{Default: Ptr("www")},
+					"y": &ServerVariable{Default: Ptr("com")},
 				},
 			},
 			"server has unused variable y",
@@ -135,9 +135,9 @@ func TestServerValidationUnusedVariables(t *testing.T) {
 			&Server{
 				URL: "https://api.example.com/{x}",
 				Variables: ServerVariables{
-					"x": &ServerVariable{Default: "www"},
-					"y": &ServerVariable{Default: "com"},
-					"z": &ServerVariable{Default: "net"},
+					"x": &ServerVariable{Default: Ptr("www")},
+					"y": &ServerVariable{Default: Ptr("com")},
+					"z": &ServerVariable{Default: Ptr("net")},
 				},
 			},
 			"server has unused variable y",
@@ -147,7 +147,7 @@ func TestServerValidationUnusedVariables(t *testing.T) {
 			&Server{
 				URL: "https://{y}.example.com",
 				Variables: ServerVariables{
-					"x": &ServerVariable{Default: "www"},
+					"x": &ServerVariable{Default: Ptr("www")},
 				},
 			},
 			"server has undeclared variables",
@@ -157,7 +157,7 @@ func TestServerValidationUnusedVariables(t *testing.T) {
 			&Server{
 				URL: "https://{x}.example.com/{x}",
 				Variables: ServerVariables{
-					"x": &ServerVariable{Default: "www"},
+					"x": &ServerVariable{Default: Ptr("www")},
 				},
 			},
 			"",
@@ -241,7 +241,7 @@ func TestServersBasePath(t *testing.T) {
 				Variables: map[string]*ServerVariable{
 					"scheme": {
 						Enum:    []string{"http", "https"},
-						Default: "https",
+						Default: Ptr("https"),
 					},
 				},
 			}},
@@ -253,7 +253,7 @@ func TestServersBasePath(t *testing.T) {
 				URL: "http://example.com/b/{var1}/a",
 				Variables: map[string]*ServerVariable{
 					"var1": {
-						Default: "lllll",
+						Default: Ptr("lllll"),
 					},
 				},
 			}},
@@ -266,7 +266,7 @@ func TestServersBasePath(t *testing.T) {
 					URL: "http://example.com/b/{var2}/a",
 					Variables: map[string]*ServerVariable{
 						"var2": {
-							Default: "LLLLL",
+							Default: Ptr("LLLLL"),
 						},
 					},
 				},
@@ -274,7 +274,7 @@ func TestServersBasePath(t *testing.T) {
 					URL: "https://example.com/b/{var1}/a",
 					Variables: map[string]*ServerVariable{
 						"var1": {
-							Default: "lllll",
+							Default: Ptr("lllll"),
 						},
 					},
 				},

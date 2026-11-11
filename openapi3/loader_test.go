@@ -770,9 +770,9 @@ servers:
 		`{url: "http://{x.example.com"}`:      "invalid servers: server URL has mismatched { and }",
 		`{url: "http://{x}.example.com", variables: {x: {default: "www"}}}`:                "",
 		`{url: "http://{x}.example.com", variables: {x: {default: "www", enum: ["www"]}}}`: "",
-		`{url: "http://{x}.example.com", variables: {x: {default: ""}}}`:                   `invalid servers: field default is required in {"default":""}`,
-		`{url: "http://{x}.example.com", variables: {x: {}}}`:                              `invalid servers: field default is required in {"default":""}`,
-		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 `invalid servers: field default is required in {"default":"","enum":["www"]}`,
+		`{url: "http://{x}.example.com", variables: {x: {default: ""}}}`:                   "",
+		`{url: "http://{x}.example.com", variables: {x: {}}}`:                              `invalid servers: field default is required in {}`,
+		`{url: "http://{x}.example.com", variables: {x: {enum: ["www"]}}}`:                 `invalid servers: field default is required in {"enum":["www"]}`,
 		`{url: "http://www.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has unused variable x",
 		`{url: "http://{y}.example.com", variables: {x: {enum: ["www"]}}}`:                 "invalid servers: server has undeclared variables",
 	} {

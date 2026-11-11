@@ -17,7 +17,7 @@ func TestServerVariableMarshalDefault(t *testing.T) {
 	for _, value := range []string{"", "v1"} {
 		for _, metadata := range []bool{false, true} {
 			t.Run(fmt.Sprintf("default=%q/metadata=%t", value, metadata), func(t *testing.T) {
-				variable := &openapi3.ServerVariable{Default: value}
+				variable := &openapi3.ServerVariable{Default: openapi3.Ptr(value)}
 				expected := fmt.Sprintf(`{"default":%q}`, value)
 				if metadata {
 					variable.Enum = []string{"", "v1"}
@@ -60,7 +60,7 @@ paths:
 `, value)
 			servers := openapi3.Servers{&openapi3.Server{
 				URL:       "https://example.com/{prefix}",
-				Variables: openapi3.ServerVariables{"prefix": {Default: value}},
+				Variables: openapi3.ServerVariables{"prefix": {Default: openapi3.Ptr(value)}},
 			}}
 			operation := &openapi3.Operation{Servers: &servers}
 			operation.AddResponse(200, openapi3.NewResponse().WithDescription("OK"))
@@ -93,4 +93,61 @@ paths:
 			}
 		})
 	}
+}
+
+func TestServerVariableDefaultPresence(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, variable, path string
+		valid                bool
+		value                *string
+	}{
+		{name: "missing", variable: `{}`},
+		{name: "empty", variable: `{"default":""}`, path: "/", valid: true, value: openapi3.Ptr("")},
+		{name: "nonempty", variable: `{"default":"v1"}`, path: "/v1", valid: true, value: openapi3.Ptr("v1")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			input := fmt.Sprintf(`{"openapi":"3.0.3","info":{"title":"Prefix API","version":"1"},"paths":{},"servers":[{"url":"https://example.com/{prefix}","variables":{"prefix":%s}}]}`, tc.variable)
+			for _, format := range []string{"JSON", "YAML"} {
+				t.Run(format, func(t *testing.T) {
+					data := []byte(input)
+					if format == "YAML" {
+						var value any
+						require.NoError(t, json.Unmarshal(data, &value))
+						var err error
+						data, err = yaml.Marshal(value)
+						require.NoError(t, err)
+					}
+					loader := openapi3.NewLoader()
+					doc, err := loader.LoadFromData(data)
+					require.NoError(t, err)
+					require.Equal(t, tc.value, doc.Servers[0].Variables["prefix"].Default)
+					if !tc.valid {
+						require.ErrorContains(t, doc.Validate(t.Context()), "field default is required")
+						return
+					}
+					require.NoError(t, doc.Validate(t.Context()))
+					path, err := doc.Servers.BasePath()
+					require.NoError(t, err)
+					require.Equal(t, tc.path, path)
+					encoded, err := json.Marshal(doc.Servers[0].Variables["prefix"])
+					require.NoError(t, err)
+					require.JSONEq(t, tc.variable, string(encoded))
+				})
+			}
+		})
+	}
+}
+
+func TestServerVariableMissingDefaultMarshal(t *testing.T) {
+	t.Parallel()
+	variable := &openapi3.ServerVariable{}
+	require.Nil(t, variable.Default)
+	require.ErrorContains(t, variable.Validate(t.Context()), "field default is required")
+	data, err := json.Marshal(variable)
+	require.NoError(t, err)
+	require.JSONEq(t, `{}`, string(data))
+	data, err = yaml.Marshal(variable)
+	require.NoError(t, err)
+	require.YAMLEq(t, `{}`, string(data))
 }

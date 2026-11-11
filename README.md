@@ -330,6 +330,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 ## CHANGELOG: Sub-v1 breaking API changes
 
 ### v0.153.0
+* `openapi3.ServerVariable.Default` changed from `string` to `*string` to distinguish a missing default from an explicitly empty string. Use `openapi3.Ptr(value)` when constructing a server variable.
 * `openapi3filter` now parses `number` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as decimal numbers only, so Go float literals such as `0x1p4`, `1_000`, `Inf`, `-infinity` or `NaN` are now rejected as invalid numbers.
 * `(*openapi3.Schema).Validate(..)` (hence `(*openapi3.T).Validate(..)`) now rejects a `multipleOf` of zero or less (`openapi3.SchemaMultipleOfNotPositiveError`), as JSON Schema requires it to be strictly greater than 0. Such a schema used to pass validation and then reject every value with `multipleOf must be greater than zero`.
 * `(*openapi3.Schema).Validate(..)` now also compiles the `pattern` of a schema without `type`, as it does for `type: string`, and rejects one that does not compile with `openapi3.SchemaPatternRegexError`. Such a schema used to pass validation and then fail on every string value it was given.

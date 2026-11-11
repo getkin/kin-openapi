@@ -744,7 +744,7 @@ func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
 	t.Run("undeclared variables (name mismatch)", func(t *testing.T) {
 		s := &openapi3.Server{
 			URL:       "https://example.com/{x}",
-			Variables: map[string]*openapi3.ServerVariable{"y": {Default: "z"}},
+			Variables: map[string]*openapi3.ServerVariable{"y": {Default: openapi3.Ptr("z")}},
 		}
 		err := s.Validate(t.Context())
 		require.EqualError(t, err, "server has undeclared variables")
@@ -756,7 +756,7 @@ func TestValidationError_ServerURLTemplateLeaves(t *testing.T) {
 	t.Run("unused variables", func(t *testing.T) {
 		s := &openapi3.Server{
 			URL:       "https://api.example.com/v1",
-			Variables: map[string]*openapi3.ServerVariable{"region": {Default: "us-east"}},
+			Variables: map[string]*openapi3.ServerVariable{"region": {Default: openapi3.Ptr("us-east")}},
 		}
 		err := s.Validate(t.Context())
 		require.EqualError(t, err, "server has unused variable region")
