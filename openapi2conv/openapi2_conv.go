@@ -994,7 +994,15 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 			}
 		}
 
-		return &openapi2.SchemaRef{Ref: FromV3Ref(ref)}, nil
+		// OpenAPI 2 can only point at its definitions: a reference into any
+		// other part of the document, e.g. the schema of a request body
+		// under #/components/requestBodies, would dangle once converted, so
+		// the schema it resolves to is inlined. References to other
+		// documents are left alone.
+		if schema.Value == nil || !strings.HasPrefix(ref, "#/") || strings.HasPrefix(ref, "#/components/schemas/") {
+			return &openapi2.SchemaRef{Ref: FromV3Ref(ref)}, nil
+		}
+		schema = &openapi3.SchemaRef{Value: schema.Value, Extensions: schema.Extensions}
 	}
 	if schema.Value == nil {
 		return &openapi2.SchemaRef{

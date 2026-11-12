@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"openapi\":\"3.0.3\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":{\"/foo\":{\"post\":{\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/requestBodies/test/content/application~1json/schema\"}}}},\"responses\":{\"200\":{\"description\":\"ok\"}}}}},\"components\":{\"requestBodies\":{\"test\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"string\"}}}}}}}")
