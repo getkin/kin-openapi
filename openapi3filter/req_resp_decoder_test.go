@@ -282,6 +282,41 @@ func TestDeepSet(t *testing.T) {
 	}
 }
 
+func TestParsePrimitiveCaseBooleanSpellings(t *testing.T) {
+	t.Parallel()
+
+	// An OpenAPI boolean is a JSON boolean: only "true" and "false" are
+	// valid.
+	for _, tc := range []struct {
+		raw  string
+		want any
+		err  bool
+	}{
+		{raw: "true", want: true},
+		{raw: "false", want: false},
+		{raw: "1", err: true},
+		{raw: "0", err: true},
+		{raw: "t", err: true},
+		{raw: "f", err: true},
+		{raw: "T", err: true},
+		{raw: "F", err: true},
+		{raw: "TRUE", err: true},
+		{raw: "FALSE", err: true},
+		{raw: "True", err: true},
+		{raw: "False", err: true},
+	} {
+		t.Run(tc.raw, func(t *testing.T) {
+			value, err := parsePrimitiveCase(tc.raw, booleanSchema, "boolean")
+			if tc.err {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, value)
+		})
+	}
+}
+
 func TestDecodeParameter(t *testing.T) {
 	t.Parallel()
 

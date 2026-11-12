@@ -1330,11 +1330,18 @@ func parsePrimitiveCase(raw string, schema *openapi3.SchemaRef, typ string) (any
 		}
 		return v, nil
 	case "boolean":
-		v, err := strconv.ParseBool(raw)
-		if err != nil {
-			return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + typ, Cause: err.(*strconv.NumError).Err}
+		// An OpenAPI boolean is a JSON boolean, so only "true" and "false"
+		// are valid. strconv.ParseBool also accepts 1, 0, t, f, T, F, TRUE,
+		// FALSE, True and False, which a client would not send as a JSON
+		// boolean and which a backend that reads the raw query itself does
+		// not see as one either.
+		switch raw {
+		case "true":
+			return true, nil
+		case "false":
+			return false, nil
 		}
-		return v, nil
+		return nil, &ParseError{Kind: KindInvalidFormat, Value: raw, Reason: "an invalid " + typ, Cause: strconv.ErrSyntax}
 	case "string":
 		return raw, nil
 	default:
