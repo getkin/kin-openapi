@@ -35,7 +35,8 @@ func (servers Servers) BasePath() (string, error) {
 
 func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) {
 	rawURL := parsedURL.String()
-	if i := strings.IndexByte(rawURL, '?'); i >= 0 {
+	// Neither the query nor the fragment is part of the path to match.
+	if i := strings.IndexAny(rawURL, "?#"); i >= 0 {
 		rawURL = rawURL[:i]
 	}
 	for _, server := range servers {
