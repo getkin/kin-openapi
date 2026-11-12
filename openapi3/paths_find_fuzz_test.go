@@ -1,4 +1,4 @@
-package openapi3
+package openapi3_test
 
 import (
 	"maps"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // FuzzPathsFind builds a Paths object from arbitrary keys (one per line) and
@@ -24,11 +26,10 @@ func FuzzPathsFind(f *testing.F) {
 		if len(keys) > 8<<10 || len(query) > 1<<10 {
 			t.Skip()
 		}
-		paths := NewPaths()
-		items := map[string]*PathItem{}
-		for key := range strings.SplitSeq(keys, "
-") {
-			item := &PathItem{Summary: key}
+		paths := openapi3.NewPaths()
+		items := map[string]*openapi3.PathItem{}
+		for key := range strings.SplitSeq(keys, "\n") {
+			item := &openapi3.PathItem{Summary: key}
 			paths.Set(key, item)
 			items[key] = item
 		}

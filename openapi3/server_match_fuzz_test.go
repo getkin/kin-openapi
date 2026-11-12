@@ -1,10 +1,12 @@
-package openapi3
+package openapi3_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // FuzzServerMatchRawURL matches arbitrary URLs against arbitrary server URL
@@ -23,7 +25,7 @@ func FuzzServerMatchRawURL(f *testing.F) {
 		if len(template) > 1<<10 || len(input) > 4<<10 {
 			t.Skip()
 		}
-		params, remaining, ok := Server{URL: template}.MatchRawURL(input)
+		params, remaining, ok := openapi3.Server{URL: template}.MatchRawURL(input)
 		if !ok {
 			require.Nil(t, params)
 			return
