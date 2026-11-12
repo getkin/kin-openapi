@@ -975,15 +975,28 @@ func deepGet(m map[string]any, keys ...string) (any, bool) {
 	return m, true
 }
 
-func deepSet(m map[string]any, keys []string, value any) {
+// deepSet stores value under keys, creating the objects on the way. It reports
+// false, and stores nothing more, when a key already holds a value that is not
+// an object, or when the last one already holds an object: one property cannot
+// be both a value and the parent of other properties.
+func deepSet(m map[string]any, keys []string, value any) bool {
 	for i := 0; i < len(keys)-1; i++ {
 		key := keys[i]
 		if _, ok := m[key]; !ok {
 			m[key] = make(map[string]any)
 		}
-		m = m[key].(map[string]any)
+		next, ok := m[key].(map[string]any)
+		if !ok {
+			return false
+		}
+		m = next
 	}
-	m[keys[len(keys)-1]] = value
+	last := keys[len(keys)-1]
+	if _, isObject := m[last].(map[string]any); isObject {
+		return false
+	}
+	m[last] = value
+	return true
 }
 
 // makeObject returns an object that contains properties from props.
@@ -997,7 +1010,9 @@ func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string
 			p := pathFromKeys(keys)
 			return nil, &ParseError{path: p, Kind: KindInvalidFormat, Reason: "array items must be set with indexes"}
 		}
-		deepSet(mobj, keys, value)
+		if !deepSet(mobj, keys, value) {
+			return nil, &ParseError{path: pathFromKeys(keys), Kind: KindInvalidFormat, Reason: "a property cannot be both a value and an object"}
+		}
 	}
 	r, err := buildResObj(mobj, nil, "", schema)
 	if err != nil {

@@ -1,0 +1,7 @@
+go test fuzz v1
+byte('ñ')
+byte('\x00')
+byte('\x05')
+bool(true)
+string("\x1f\x1f&\x1f")
+string("0")
