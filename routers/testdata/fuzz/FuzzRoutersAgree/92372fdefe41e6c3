@@ -1,0 +1,4 @@
+go test fuzz v1
+[]byte("\nopenapi: 3.0.0\ninfo: {title: t, version: \"1\"}\nservers:\n- url: http://example.com/api/{v}\n  variables: {v: {default: v1, enum: [v1, v2]}}\n- url: /\npaths:\n  /items: {get: {responses: {\"200\": {description: ok}}}}\n  /items/{id}: {get: {parameters: [{name: id, in: path, required: true, schema: {type: string}}], responses: {\"200\": {description: ok}}}}\n  /items/{id}/tags/{tag}: {delete: {parameters: [{name: id, in: path, required: true, schema: {type: string}}, {name: tag, in: path, required: true, schema: {type: string}}], responses: {\"200\": {description: ok}}}}\n  /files/{name}.{ext}: {get: {parameters: [{name: name, in: path, required: true, schema: {type: string}}, {name: ext, in: path, required: true, schema: {type: string}}], responses: {\"200\": {description: ok}}}}\n")
+string("")
+string("/items/\xbb#2d2F\x00\x01gta")
