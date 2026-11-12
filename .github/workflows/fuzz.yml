@@ -50,6 +50,11 @@ jobs:
         - {package: ./openapi3filter, target: FuzzValidateResponse}
         - {package: ./openapi3filter, target: FuzzBodyDecoder}
         - {package: ./routers, target: FuzzRoutersAgree}
+        - {package: ./openapi3, target: FuzzServerMatchRawURL}
+        - {package: ./openapi3, target: FuzzPathsFind}
+        - {package: ./openapi2conv, target: FuzzFromV3}
+        - {package: ./routers/legacy/pathpattern, target: FuzzPathPattern}
+        - {package: ./openapi3filter, target: FuzzValidateParameter}
     steps:
 
     # Checked out first: setup-go keys its module and build cache on go.sum,

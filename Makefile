@@ -47,6 +47,11 @@ fuzz:
 	go test -run='^$$' -fuzz='^FuzzValidateResponse$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./openapi3filter
 	go test -run='^$$' -fuzz='^FuzzBodyDecoder$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./openapi3filter
 	go test -run='^$$' -fuzz='^FuzzRoutersAgree$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./routers
+	go test -run='^$$' -fuzz='^FuzzServerMatchRawURL$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzPathsFind$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./openapi3
+	go test -run='^$$' -fuzz='^FuzzFromV3$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./openapi2conv
+	go test -run='^$$' -fuzz='^FuzzPathPattern$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./routers/legacy/pathpattern
+	go test -run='^$$' -fuzz='^FuzzValidateParameter$$' -fuzztime=$(FUZZTIME) -fuzzminimizetime=$(FUZZMINIMIZETIME) ./openapi3filter
 
 ## help: list targets
 help:
