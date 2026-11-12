@@ -732,15 +732,13 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 			return propsFromString(values[0], delim, delim)
 		}
 	case "deepObject":
-		// Compile the parameter-name prefix matcher once: it depends only on
-		// param (constant for the whole loop), not on the loop variable. Doing
-		// this inside the loop recompiles it once per query key, turning an
-		// attacker-controlled key count into proportional CPU.
-		paramPrefixRE := regexp.MustCompile(fmt.Sprintf(`^%s\[`, regexp.QuoteMeta(param)))
+		// A plain prefix test: a regexp built from the parameter name cannot
+		// compile when the name is not valid UTF-8.
+		paramPrefix := param + "["
 		propsFn = func(params url.Values) (map[string]string, error) {
 			props := make(map[string]string)
 			for key, values := range params {
-				if !paramPrefixRE.MatchString(key) {
+				if !strings.HasPrefix(key, paramPrefix) {
 					continue
 				}
 				matches := deepObjectBracketRE.FindAllStringSubmatch(key, -1)

@@ -1,0 +1,7 @@
+go test fuzz v1
+byte('\x01')
+byte('\a')
+byte('\x05')
+bool(true)
+string("0")
+string("\xff")
