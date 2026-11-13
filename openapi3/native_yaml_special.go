@@ -191,7 +191,8 @@ func (doc *T) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	doc.Extensions, doc.Origin = ext, originFromNode(node, nativeOriginFile())
+	doc.Extensions = ext
+	doc.Origin = originFromNode(node, nativeOriginFile())
 	if doc.Origin != nil && node.Kind == yaml.MappingNode && len(node.Content) > 0 {
 		first := node.Content[0]
 		doc.Origin.Key = &Location{
