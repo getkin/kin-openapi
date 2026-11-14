@@ -254,6 +254,12 @@ func decodeAny(node *yaml.Node) (any, error) {
 	return normalizeDecoded(v)
 }
 
+// isStringScalar tells whether a node is a scalar that reads as a string. A
+// scalar with another tag, such as the number in "!0 0", is not one.
+func isStringScalar(node *yaml.Node) bool {
+	return node.Kind == yaml.ScalarNode && node.Tag == strTag
+}
+
 // collectExtensions returns the mapping keys of node that known does not
 // declare, decoded and normalized, along with their names in document order.
 // The names are every undeclared sibling, including x- ones; callers that keep
@@ -268,6 +274,15 @@ func collectExtensions(node *yaml.Node, known map[string]struct{}) (map[string]a
 	for _, kv := range mappingPairs(node) {
 		key := kv[0].Value
 		if _, ok := known[key]; ok {
+			continue
+		}
+		if key == "$ref" && !isStringScalar(kv[1]) {
+			// A $ref is a reference when its value is a string, and the
+			// reference types declare it themselves. It is only undeclared
+			// here when the value was not a string, so the reader did not
+			// take it for a reference either. Keeping it would write it back
+			// as one, and the document would no longer read the way it was
+			// written.
 			continue
 		}
 		v, err := decodeAny(kv[1])
