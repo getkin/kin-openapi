@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"reflect"
 	"sync"
 )
 
@@ -41,6 +42,40 @@ type schemaValidationSettings struct {
 	// Only visitedSchemas[visitedSchemasStart:] were visited for the current value.
 	visitedSchemas []*Schema
 	visitedBase    int
+
+	// visited records whether an object or array fits a schema, so that it is
+	// checked once per schema, not once per path leading to it.
+	visited map[visitKey]bool
+	// inSubschema counts the allOf, anyOf, oneOf and not subschemas being visited.
+	// Only inside one can a value meet the same schema twice.
+	inSubschema int
+}
+
+// visitKey identifies an object or array by its address, so it must not be copied or changed.
+type visitKey struct {
+	schema *Schema
+	value  uintptr
+	n      int
+}
+
+// visitKeyOf returns the key to record the result of visiting value with schema, if there is one.
+func (s *schemaValidationSettings) visitKeyOf(schema *Schema, value any) (visitKey, bool) {
+	if s.inSubschema == 0 || s.setsDefaults() {
+		return visitKey{}, false
+	}
+	switch v := value.(type) {
+	case map[string]any:
+		return visitKey{schema: schema, value: reflect.ValueOf(v).Pointer()}, true
+	case []any:
+		return visitKey{schema: schema, value: reflect.ValueOf(v).Pointer(), n: len(v)}, true
+	}
+	return visitKey{}, false
+}
+
+// setsDefaults says whether the visit writes defaults into the value.
+// If not, anyOf and oneOf need not copy it, and copying would change its address.
+func (s *schemaValidationSettings) setsDefaults() bool {
+	return s.defaultsSet != nil && (s.asreq || s.asrep)
 }
 
 // FailFast returns schema validation errors quicker.
