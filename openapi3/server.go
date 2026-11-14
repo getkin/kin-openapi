@@ -68,7 +68,7 @@ func (server *Server) BasePath() (string, error) {
 
 	uri := server.URL
 	for _, name := range componentNames(server.Variables) {
-		uri = strings.ReplaceAll(uri, "{"+name+"}", server.Variables[name].Default)
+		uri = strings.ReplaceAll(uri, "{"+name+"}", *server.Variables[name].Default)
 	}
 
 	u, err := url.ParseRequestURI(uri)
@@ -287,7 +287,7 @@ type ServerVariable struct {
 	Origin     *Origin        `json:"-" yaml:"-"`
 
 	Enum        []string `json:"enum,omitempty,case:strict" yaml:"enum,omitempty"`
-	Default     string   `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
+	Default     *string  `json:"default,omitempty,case:strict" yaml:"default,omitempty"`
 	Description string   `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
 }
 
@@ -307,8 +307,8 @@ func (serverVariable ServerVariable) MarshalYAML() (any, error) {
 	if x := serverVariable.Enum; len(x) != 0 {
 		m["enum"] = x
 	}
-	if x := serverVariable.Default; x != "" {
-		m["default"] = x
+	if x := serverVariable.Default; x != nil {
+		m["default"] = *x
 	}
 	if x := serverVariable.Description; x != "" {
 		m["description"] = x
@@ -343,7 +343,7 @@ func (serverVariable *ServerVariable) Validate(ctx context.Context, opts ...Vali
 	}
 	ctx = WithValidationOptions(ctx, opts...)
 
-	if serverVariable.Default == "" {
+	if serverVariable.Default == nil {
 		data, err := serverVariable.MarshalJSON()
 		if err != nil {
 			return err
