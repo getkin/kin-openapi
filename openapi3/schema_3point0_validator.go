@@ -756,8 +756,12 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 
 	// "pattern"
 	if !settings.patternValidationDisabled && schema.Pattern != "" {
-		cpiface, _ := compiledPatterns.Load(schema.Pattern)
-		cp, _ := cpiface.(RegexMatcher)
+		var cp RegexMatcher
+		// The cache does not record which compiler was used, so a custom one always compiles.
+		if settings.regexCompiler == nil {
+			cpiface, _ := compiledPatterns.Load(schema.Pattern)
+			cp, _ = cpiface.(RegexMatcher)
+		}
 		if cp == nil {
 			var err error
 			if cp, err = schema.compilePattern(settings, settings.regexCompiler); err != nil {

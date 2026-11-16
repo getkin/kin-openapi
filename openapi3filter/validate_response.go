@@ -71,6 +71,9 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if options.ExcludeWriteOnlyValidations {
 		opts = append(opts, openapi3.DisableWriteOnlyValidation())
 	}
+	if options.RegexCompiler != nil {
+		opts = append(opts, openapi3.SetSchemaRegexCompiler(options.RegexCompiler))
+	}
 	// Append additional schema validation options (e.g., document-scoped format validators)
 	opts = append(opts, options.SchemaValidationOptions...)
 	if route.Spec.IsOpenAPI31OrLater() {

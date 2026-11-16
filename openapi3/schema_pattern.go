@@ -32,6 +32,11 @@ func (schema *Schema) compilePattern(settings *schemaValidationSettings, c Regex
 		return
 	}
 
-	compiledPatterns.Store(pattern, cp)
+	// compiledPatterns is keyed by the pattern alone and records nothing about the
+	// compiler, so only the default compiler's matchers may go in it. Caching a
+	// custom compiler's matcher would hand it to callers that did not ask for one.
+	if c == nil {
+		compiledPatterns.Store(pattern, cp)
+	}
 	return
 }
