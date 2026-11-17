@@ -2,12 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package openapi3
+package openapi3_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // A $ref whose value does not read as a string is not a reference. The yaml
@@ -25,16 +28,18 @@ components:
     S:
       $ref: !!0 0
 `)
-	loader := NewLoader()
+	loader := openapi3.NewLoader()
 	got, err := loader.LoadFromData(doc)
 	require.NoError(t, err)
+	require.NoError(t, got.Validate(context.Background()))
 
 	once, err := got.MarshalJSON()
 	require.NoError(t, err)
 	require.NotContains(t, string(once), `"$ref":"0"`)
 
 	// The document reads back the way it was written.
-	strict := NewLoader()
-	_, err = strict.LoadFromData(once)
+	strict := openapi3.NewLoader()
+	got, err = strict.LoadFromData(once)
 	require.NoError(t, err)
+	require.NoError(t, got.Validate(context.Background()))
 }
