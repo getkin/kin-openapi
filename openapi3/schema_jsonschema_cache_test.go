@@ -37,7 +37,8 @@ func TestJSONSchema2020CacheReusesCompiledValidator(t *testing.T) {
 	bad := map[string]any{"name": ""}
 	uncached := schema.VisitJSON(bad, EnableJSONSchema2020())
 	require.Error(t, uncached)
-	require.Equal(t, uncached.Error(), schema.VisitJSON(bad, opts...).Error())
+	want := uncached.Error()
+	require.EqualError(t, schema.VisitJSON(bad, opts...), want)
 }
 
 func TestJSONSchema2020CacheKeepsBuiltInFallback(t *testing.T) {
