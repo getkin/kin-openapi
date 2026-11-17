@@ -51,7 +51,8 @@ const (
 	FormatOfStringDate = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])$`
 
 	// FormatOfStringDateTime is a RFC3339 date-time format regexp, for example "2017-07-21T17:32:28Z".
-	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])T([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)([0-1][0-9]|2[0-3]):[0-5][0-9])$`
+	// RFC 3339 section 5.6 allows the "T" and "Z" separators to alternatively be lowercase.
+	FormatOfStringDateTime = `^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|[12][0-9]|3[01])[Tt]([0-1][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?([Zz]|(\+|-)([0-1][0-9]|2[0-3]):[0-5][0-9])$`
 )
 
 func init() {
