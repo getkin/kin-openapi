@@ -32,3 +32,19 @@ components:
 	require.JSONEq(t, `{"title":"t","version":"1","description":"hello","x-n":"42","x-m":{"a":"true"},"x-s":[1,"x"]}`, string(info))
 	require.True(t, got.Components.Schemas["S"].Value.Type.Is("string"))
 }
+
+// A key written twice is refused next to a $ref as it is anywhere else.
+func TestNativeYAMLDuplicateKeyNextToRef(t *testing.T) {
+	loader := NewLoader()
+	doc := []byte(`components:
+  schemas:
+    A:
+      $ref: '#/components/schemas/B'
+      type: object
+      $ref: '#/components/schemas/A'
+    B:
+      type: string
+`)
+	_, err := loader.LoadFromData(doc)
+	require.ErrorContains(t, err, "already defined")
+}

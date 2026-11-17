@@ -639,6 +639,7 @@ func checkAliasCycles(root *yaml.Node) error {
 // Interim: https://github.com/yaml/go-yaml/issues/491 asks for an option to
 // read a mapping key as its text, which removes the retag.
 func nameKeys(n *yaml.Node) error {
+	var seen map[string]int
 	for i := 0; i+1 < len(n.Content); i += 2 {
 		k := n.Content[i]
 		if isMergeKey(k) {
@@ -661,6 +662,23 @@ func nameKeys(n *yaml.Node) error {
 			return fmt.Errorf("line %d: mapping key is null, so it names nothing", k.Line)
 		}
 		k.Tag = strTag
+	}
+	// The decoder refuses a key written twice, but a $ref object reads its
+	// $ref and siblings without it, and only a 3.1 document ever looks at
+	// why the siblings failed to decode: in a 3.0 one the duplicate went
+	// unseen, and the document did not survive being written out and read back.
+	for i := 0; i+1 < len(n.Content); i += 2 {
+		k := n.Content[i]
+		if k.Kind != yaml.ScalarNode || isMergeKey(k) {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[string]int, len(n.Content)/2)
+		}
+		if line, ok := seen[k.Value]; ok {
+			return fmt.Errorf("line %d: mapping key %q already defined at line %d", k.Line, k.Value, line)
+		}
+		seen[k.Value] = k.Line
 	}
 	return nil
 }
