@@ -1,0 +1,4 @@
+go test fuzz v1
+[]byte("openapi: 3.1.0\ninfo:\n  title: recursive discriminated union\n  version: 1.0.0\npaths: {}\ncomponents:\n  schemas:\n    Comp:\n      oneOf:\n        - $ref: 'riminype:at#/components/schemas/Container'\n      discriminator:\n        propertyName:")
+[]byte("openapi: 3.1.0\ninfo:\n  title: recursive discriminated union\n  version: 1.0.0\npaths: {}\ncomponents:\n  schemas:\n    Comp:\n      oneOf:\n        - $ref: 'riminype:at#/components/schemas/Container'\n      discriminator:\n        propertyName: type\n        mapping:\n          container: '#/components/schemas/Container'\n    Container:\n      type: object\n      required: [type]\n      properties:\n        type:\n          type: string\n        chilfren:\n          type: array\n          items:\n     \r      $ref: '#/components/schemas/Comp'")
+[]byte("\"\x85\"")

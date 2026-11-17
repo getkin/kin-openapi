@@ -299,3 +299,18 @@ func TestInternalizeRefsUnderRefSiblings(t *testing.T) {
 		})
 	}
 }
+
+// A document named by no path, as urn:x:y is, is not the root document: its
+// components do not take the names of the root's.
+func TestInternalizeRefsPathlessDocument(t *testing.T) {
+	root := []byte(`{"openapi":"3.0.0","info":{"title":"t","version":"1"},"paths":{},"components":{"schemas":{"Comp":{"oneOf":[{"$ref":"x:y#/components/schemas/Container"}]}}}}`)
+	other := []byte(`{"components":{"schemas":{"Comp":{"type":"string"},"Container":{"type":"object","properties":{"c":{"$ref":"#/components/schemas/Comp"}}}}}}`)
+
+	doc, err := newTwoDocLoader(root, other).LoadFromDataWithPath(root, fuzzRootURL)
+	require.NoError(t, err)
+	doc.InternalizeRefs(t.Context(), nil)
+
+	require.Equal(t, "string", doc.Components.Schemas["y_Comp"].Value.Type.Slice()[0])
+	require.Equal(t, "#/components/schemas/y_Comp", doc.Components.Schemas["y_Container"].Value.Properties["c"].Ref)
+	require.Empty(t, doc.Components.Schemas["Comp"].Value.Type.Slice())
+}

@@ -50,6 +50,15 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 	}
 
 	filePath, componentPath := name.Path, name.Fragment
+	// A document named by no path, such as urn:x:y or http://example.com, is
+	// not the root document: name it by what it has, or its components would
+	// take the names of the root's.
+	if filePath == "" && (doc.url == nil || name.Opaque != doc.url.Opaque || name.Host != doc.url.Host) {
+		filePath = name.Opaque
+		if filePath == "" {
+			filePath = name.Host
+		}
+	}
 
 	// Cut out the "#/components/<type>" to make the names shorter.
 	// XXX(percivalalb): This might cause collisions but is worth the brevity.
