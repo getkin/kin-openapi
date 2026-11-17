@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("oprnapi: 3.1.0\ninfo:\n  title: rec rsive discriminateud nion\n  version: 1.0.0\npaths: {}\ncomponents:\n  schemas:\n    Comp:\n      oneOf:\n      $ref: 'y/components/schemas/Container'\n      discriminator:\n        pr||||WWWW|||ame: t_pe\n        mapping:\n          container7 '#/components/schemr:\n      type: object\n      required: [type]\n      properties:\n        type:\n          type: string\n        children:\n          type: arra#\n        items:\n      !     $ref: '#/components/schemas/Comp'")
