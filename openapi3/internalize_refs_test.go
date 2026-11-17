@@ -332,3 +332,16 @@ func TestInternalizeRefsExternalCallbackBody(t *testing.T) {
 	_, err = loader.LoadFromData(once)
 	require.NoError(t, err)
 }
+
+// A discriminator mapping in a pathless document is written against that
+// document, so it is rewritten with the rest of it.
+func TestInternalizeRefsPathlessDocumentDiscriminator(t *testing.T) {
+	root := []byte(`{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"components":{"schemas":{"Comp":{"oneOf":[{"$ref":"x:y#/components/schemas/Container"}]}}}}`)
+	other := []byte(`{"components":{"schemas":{"Dog":{"type":"object"},"Container":{"discriminator":{"propertyName":"k","mapping":{"d":"#/components/schemas/Dog"}},"oneOf":[{"$ref":"#/components/schemas/Dog"}]}}}}`)
+
+	doc, err := newTwoDocLoader(root, other).LoadFromDataWithPath(root, fuzzRootURL)
+	require.NoError(t, err)
+	doc.InternalizeRefs(t.Context(), nil)
+
+	require.Equal(t, "#/components/schemas/y_Dog", doc.Components.Schemas["y_Container"].Value.Discriminator.Mapping["d"].Ref)
+}
