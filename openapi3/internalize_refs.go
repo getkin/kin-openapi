@@ -507,7 +507,9 @@ func (doc *T) derefPaths(paths map[string]*PathItem, refNameResolver RefNameReso
 		if ops == nil {
 			continue
 		}
-		pathIsExternal := isExternalRef(ops.Ref, parentIsExternal)
+		// A path item written inline, as in a callback, has no $ref of its own but
+		// lives where its parent does.
+		pathIsExternal := parentIsExternal || isExternalRef(ops.Ref, parentIsExternal)
 		// inline full operations
 		ops.Ref = ""
 

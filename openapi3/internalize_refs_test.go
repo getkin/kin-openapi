@@ -314,3 +314,21 @@ func TestInternalizeRefsPathlessDocument(t *testing.T) {
 	require.Equal(t, "#/components/schemas/y_Comp", doc.Components.Schemas["y_Container"].Value.Properties["c"].Ref)
 	require.Empty(t, doc.Components.Schemas["Comp"].Value.Type.Slice())
 }
+
+// The operations of an external callback live in the same document as the
+// callback, so what they refer to is internalized too.
+func TestInternalizeRefsExternalCallbackBody(t *testing.T) {
+	root := []byte(`{"openapi":"3.0.0","info":{"title":"t","version":"1"},"paths":{"/a":{"post":{"responses":{"200":{"description":"d"}},"callbacks":{"e":{"$ref":"d.yml#/components/callbacks/CB"}}}}}}`)
+	other := []byte(`{"components":{"schemas":{"S":{"type":"string"}},"callbacks":{"CB":{"{$request.query.u}":{"post":{"responses":{"200":{"description":"d","content":{"application/json":{"schema":{"$ref":"#/components/schemas/S"}}}}}}}}}}}`)
+
+	doc, err := newTwoDocLoader(root, other).LoadFromDataWithPath(root, fuzzRootURL)
+	require.NoError(t, err)
+	doc.InternalizeRefs(t.Context(), nil)
+
+	require.Contains(t, doc.Components.Schemas, "d_S")
+	once, err := doc.MarshalJSON()
+	require.NoError(t, err)
+	loader := openapi3.NewLoader()
+	_, err = loader.LoadFromData(once)
+	require.NoError(t, err)
+}
