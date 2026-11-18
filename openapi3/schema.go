@@ -1843,45 +1843,16 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 		switch schemaType {
 		case TypeBoolean:
 		case TypeNumber:
-			if format := schema.Format; len(format) > 0 {
-				switch format {
-				case "float", "double":
-				default:
-					if _, ok := SchemaNumberFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-						return visited, unsupportedFormat(format)
-					}
-				}
+			if format := schema.Format; len(format) > 0 && !isNumberFormat(format) && validationOpts.schemaFormatValidationEnabled {
+				return visited, unsupportedFormat(format)
 			}
 		case TypeInteger:
-			if format := schema.Format; len(format) > 0 {
-				switch format {
-				case "int32", "int64":
-				default:
-					if _, ok := SchemaIntegerFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-						return visited, unsupportedFormat(format)
-					}
-				}
+			if format := schema.Format; len(format) > 0 && !isIntegerFormat(format) && validationOpts.schemaFormatValidationEnabled {
+				return visited, unsupportedFormat(format)
 			}
 		case TypeString:
-			if format := schema.Format; len(format) > 0 {
-				switch format {
-				// Supported by OpenAPIv3.0.3:
-				// https://spec.openapis.org/oas/v3.0.3
-				case "byte", "binary", "date", "date-time", "password":
-				// In JSON Draft-07 (not validated yet though):
-				// https://json-schema.org/draft-07/json-schema-release-notes.html#formats
-				case "iri", "iri-reference", "uri-template", "idn-email", "idn-hostname":
-				case "json-pointer", "relative-json-pointer", "regex", "time":
-				// In JSON Draft 2019-09 (not validated yet though):
-				// https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
-				case "duration", "uuid":
-				// Defined in some other specification
-				case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
-				default:
-					if _, ok := SchemaStringFormats[format]; !ok && validationOpts.schemaFormatValidationEnabled {
-						return visited, unsupportedFormat(format)
-					}
-				}
+			if format := schema.Format; len(format) > 0 && !isStringFormat(format) && validationOpts.schemaFormatValidationEnabled {
+				return visited, unsupportedFormat(format)
 			}
 		case TypeArray:
 			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
@@ -1895,6 +1866,12 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 		default:
 			return visited, newSchemaTypeError(schemaType, schema.Origin)
 		}
+	}
+
+	// Without `type`, `format` may apply to a number, an integer or a string.
+	if format := schema.Format; len(format) > 0 && schema.Type.IsEmpty() && validationOpts.schemaFormatValidationEnabled &&
+		!isNumberFormat(format) && !isIntegerFormat(format) && !isStringFormat(format) {
+		return visited, unsupportedFormat(format)
 	}
 
 	// `pattern` applies to every string value, also when `type` is omitted.

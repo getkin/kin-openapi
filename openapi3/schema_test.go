@@ -1200,6 +1200,27 @@ var typeExamples = []schemaTypeExample{
 	},
 }
 
+func TestSchemaFormatValidationWithoutType(t *testing.T) {
+	t.Parallel()
+
+	for _, opts := range [][]ValidationOption{
+		{EnableSchemaFormatValidation()},
+		{EnableSchemaFormatValidation(), IsOpenAPI31OrLater()},
+	} {
+		ctx := WithValidationOptions(t.Context(), opts...)
+
+		// A format known for any type is fine when `type` is omitted.
+		for _, format := range []string{"date-time", "uri", "double", "int64"} {
+			require.NoError(t, (&Schema{Format: format}).Validate(ctx), format)
+		}
+
+		err := (&Schema{Format: "code/golang"}).Validate(ctx)
+		require.EqualError(t, err, `unsupported 'format' value "code/golang"`)
+	}
+
+	require.NoError(t, (&Schema{Format: "code/golang"}).Validate(t.Context()))
+}
+
 func TestSchemaErrors(t *testing.T) {
 	t.Parallel()
 
