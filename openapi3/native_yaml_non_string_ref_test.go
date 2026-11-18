@@ -27,7 +27,8 @@ components:
     S:
       $ref: ` + value + `
 `)
-			_, err := openapi3.NewLoader().LoadFromData(doc)
+			loader := openapi3.NewLoader()
+			_, err := loader.LoadFromData(doc)
 			require.ErrorContains(t, err, "$ref must be a string")
 		})
 	}
