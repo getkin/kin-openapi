@@ -277,13 +277,10 @@ func collectExtensions(node *yaml.Node, known map[string]struct{}) (map[string]a
 			continue
 		}
 		if key == "$ref" && !isStringScalar(kv[1]) {
-			// A $ref is a reference when its value is a string, and the
-			// reference types declare it themselves. It is only undeclared
-			// here when the value was not a string, so the reader did not
-			// take it for a reference either. Keeping it would write it back
-			// as one, and the document would no longer read the way it was
-			// written.
-			continue
+			// A $ref is a directive and must be a string. A scalar with
+			// another tag reads as its text, so keeping the key would write
+			// back a reference the document did not contain.
+			return nil, nil, fmt.Errorf("line %d: $ref must be a string, got %s", kv[1].Line, kv[1].Tag)
 		}
 		v, err := decodeAny(kv[1])
 		if err != nil {

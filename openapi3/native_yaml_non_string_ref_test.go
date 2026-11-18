@@ -5,7 +5,6 @@
 package openapi3_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,12 +12,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// A $ref whose value does not read as a string is not a reference. The yaml
-// path reads such a value as its text, so keeping the key would write back a
-// reference that the reader takes for an external one, and the document would
-// no longer read the way it was written.
-func TestNativeYAMLNonStringRef(t *testing.T) {
-	doc := []byte(`openapi: 3.0.0
+// A $ref whose value does not read as a string is not a reference. It must be
+// rejected at load instead of being written back as one and read differently.
+func TestNativeYAMLNonStringRefIsRejected(t *testing.T) {
+	for _, value := range []string{"!!0 0", "0", "true", "1.5", "{}", "[]", "null"} {
+		t.Run(value, func(t *testing.T) {
+			doc := []byte(`openapi: 3.0.0
 info:
   title: t
   version: '1'
@@ -26,20 +25,10 @@ paths: {}
 components:
   schemas:
     S:
-      $ref: !!0 0
+      $ref: ` + value + `
 `)
-	loader := openapi3.NewLoader()
-	got, err := loader.LoadFromData(doc)
-	require.NoError(t, err)
-	require.NoError(t, got.Validate(context.Background()))
-
-	once, err := got.MarshalJSON()
-	require.NoError(t, err)
-	require.NotContains(t, string(once), `"$ref":"0"`)
-
-	// The document reads back the way it was written.
-	strict := openapi3.NewLoader()
-	got, err = strict.LoadFromData(once)
-	require.NoError(t, err)
-	require.NoError(t, got.Validate(context.Background()))
+			_, err := openapi3.NewLoader().LoadFromData(doc)
+			require.ErrorContains(t, err, "$ref must be a string")
+		})
+	}
 }
