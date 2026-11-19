@@ -951,3 +951,115 @@ func TestSchemaCustomizerRecursiveTypeDescriptionIsDeterministic(t *testing.T) {
 		}
 	}
 }
+
+type mutualFirstRef struct {
+	Ref   string           `json:"ref"`
+	Value *mutualSecondRef `json:"value"`
+}
+
+type mutualSecondRef struct {
+	Ref   string          `json:"ref"`
+	Value *mutualFirstRef `json:"value"`
+}
+
+// A type whose name ends in "Ref" and that has Ref and Value fields is handled like openapi3.SchemaRef.
+// When such a type contains itself, the cycle has to become a reference to the type, not a nil schema.
+func TestCyclicRefLikeTypes(t *testing.T) {
+	// Not parallel: NewSchemaRefForValue clears the Ref of the shared openapi3gen.RefSchemaRef.
+	type selfRef struct {
+		Self  *selfRef `json:"self"`
+		Ref   *selfRef `json:"ref"`
+		Value *selfRef `json:"value"`
+	}
+	type sliceRef struct {
+		Ref   string      `json:"ref"`
+		Value []*sliceRef `json:"value"`
+	}
+	type mapRef struct {
+		Ref   string             `json:"ref"`
+		Value map[string]*mapRef `json:"value"`
+	}
+
+	type holder struct {
+		Item *selfRef `json:"item"`
+	}
+
+	// oneOfValue returns the second alternative of a Ref-like schema: the first one is the {"$ref": ...} object.
+	oneOfValue := func(t *testing.T, schemaRef *openapi3.SchemaRef) *openapi3.SchemaRef {
+		t.Helper()
+		require.NotNil(t, schemaRef.Value)
+		require.Len(t, schemaRef.Value.OneOf, 2)
+		return schemaRef.Value.OneOf[1]
+	}
+
+	for _, tc := range []struct {
+		name  string
+		typ   reflect.Type
+		check func(t *testing.T, schemaRef *openapi3.SchemaRef)
+	}{
+		{
+			name: "pointer to itself",
+			typ:  reflect.TypeFor[*selfRef](),
+			check: func(t *testing.T, schemaRef *openapi3.SchemaRef) {
+				require.Equal(t, "#/components/schemas/selfRef", schemaRef.Ref)
+			},
+		},
+		{
+			name: "slice of itself",
+			typ:  reflect.TypeFor[*sliceRef](),
+			check: func(t *testing.T, schemaRef *openapi3.SchemaRef) {
+				items := oneOfValue(t, schemaRef)
+				require.Equal(t, &openapi3.Types{"array"}, items.Value.Type)
+				require.Equal(t, "#/components/schemas/sliceRef", items.Value.Items.Ref)
+			},
+		},
+		{
+			name: "map of itself",
+			typ:  reflect.TypeFor[*mapRef](),
+			check: func(t *testing.T, schemaRef *openapi3.SchemaRef) {
+				values := oneOfValue(t, schemaRef)
+				require.Equal(t, &openapi3.Types{"object"}, values.Value.Type)
+				require.Equal(t, "#/components/schemas/mapRef", values.Value.AdditionalProperties.Schema.Ref)
+			},
+		},
+		{
+			name: "field of another struct",
+			typ:  reflect.TypeFor[*holder](),
+			check: func(t *testing.T, schemaRef *openapi3.SchemaRef) {
+				require.NotNil(t, schemaRef.Value)
+				item := schemaRef.Value.Properties["item"]
+				require.NotNil(t, item)
+				require.Equal(t, "#/components/schemas/selfRef", item.Ref)
+			},
+		},
+		{
+			name: "two types containing each other",
+			typ:  reflect.TypeFor[*mutualFirstRef](),
+			check: func(t *testing.T, schemaRef *openapi3.SchemaRef) {
+				require.Equal(t, "#/components/schemas/mutualFirstRef", oneOfValue(t, schemaRef).Ref)
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
+			schemaRef, err := generator.GenerateSchemaRef(tc.typ)
+			require.NoError(t, err)
+			require.NotNil(t, schemaRef)
+			tc.check(t, schemaRef)
+			for tracked := range generator.SchemaRefs {
+				require.NotNil(t, tracked)
+			}
+
+			schemas := make(openapi3.Schemas)
+			schemaRef, err = openapi3gen.NewSchemaRefForValue(reflect.New(tc.typ.Elem()).Interface(), schemas, openapi3gen.UseAllExportedFields())
+			require.NoError(t, err)
+			tc.check(t, schemaRef)
+
+			// With ThrowErrorOnCycle the cycle is still reported as an error.
+			generator = openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields(), openapi3gen.ThrowErrorOnCycle())
+			_, err = generator.GenerateSchemaRef(tc.typ)
+			var cycleErr *openapi3gen.CycleError
+			require.ErrorAs(t, err, &cycleErr)
+		})
+	}
+}
