@@ -180,6 +180,15 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*doc = T(x)
+
+	// Populate the Value of references that point inside this document, so
+	// that a document built by unmarshalling behaves like one built by
+	// LoadFromData: for example the schema of a request body's properties
+	// can be inspected without a separate ResolveRefsIn call. References to
+	// external documents are left unresolved — resolving them needs a
+	// Loader with a location and permission to read them — and never make
+	// unmarshalling itself fail.
+	_ = NewLoader().resolveRefsIn(doc, nil, true)
 	return nil
 }
 

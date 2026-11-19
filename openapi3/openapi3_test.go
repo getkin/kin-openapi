@@ -518,3 +518,78 @@ func TestOpenAPIMajorMinor(t *testing.T) {
 		})
 	}
 }
+
+func TestUnmarshalJSONResolvesInternalRefs(t *testing.T) {
+	t.Parallel()
+
+	// A document that went through a JSON round trip must expose the same
+	// resolved values as one built by the loader: refs pointing inside the
+	// document get their Value populated by UnmarshalJSON itself.
+	spec := []byte(`{
+		"openapi": "3.0.3",
+		"info": {"title": "t", "version": "1"},
+		"components": {"schemas": {
+			"Name": {"type": "string"},
+			"Holder": {"type": "object", "properties": {
+				"inner": {"$ref": "#/components/schemas/Name"}
+			}}
+		}},
+		"paths": {"/things": {"post": {
+			"requestBody": {"required": true, "content": {"application/json": {"schema": {
+				"type": "object",
+				"properties": {"name": {"$ref": "#/components/schemas/Name"}}
+			}}}},
+			"responses": {"200": {"description": "ok", "content": {"application/json": {
+				"schema": {"$ref": "#/components/schemas/Holder"}
+			}}}}
+		}}}
+	}`)
+
+	loaded, err := openapi3.NewLoader().LoadFromData(spec)
+	require.NoError(t, err)
+
+	data, err := json.Marshal(loaded)
+	require.NoError(t, err)
+
+	var doc openapi3.T
+	require.NoError(t, json.Unmarshal(data, &doc))
+
+	op := doc.Paths.Value("/things").Post
+	prop := op.RequestBody.Value.Content.Get("application/json").Schema.Value.Properties["name"]
+	require.NotNil(t, prop.Value, "request body property ref must be resolved")
+	assert.Equal(t, loaded.Components.Schemas["Name"].Value, prop.Value)
+
+	respSchema := op.Responses.Status(200).Value.Content.Get("application/json").Schema
+	require.NotNil(t, respSchema.Value, "response schema ref must be resolved")
+
+	inner := doc.Components.Schemas["Holder"].Value.Properties["inner"]
+	require.NotNil(t, inner.Value, "components-internal ref must be resolved")
+}
+
+func TestUnmarshalJSONLeavesExternalRefsUnresolved(t *testing.T) {
+	t.Parallel()
+
+	// Refs to other documents are not resolved by UnmarshalJSON (that needs
+	// a Loader), but they must not make unmarshalling fail, and internal
+	// refs elsewhere in the same document are still resolved.
+	spec := []byte(`{
+		"openapi": "3.0.3",
+		"info": {"title": "t", "version": "1"},
+		"components": {"schemas": {
+			"Local": {"type": "string"},
+			"External": {"$ref": "other.yaml#/components/schemas/Thing"},
+			"UsesLocal": {"type": "object", "properties": {
+				"loc": {"$ref": "#/components/schemas/Local"}
+			}}
+		}},
+		"paths": {}
+	}`)
+
+	var doc openapi3.T
+	require.NoError(t, json.Unmarshal(spec, &doc))
+
+	assert.Nil(t, doc.Components.Schemas["External"].Value)
+	usesLocal := doc.Components.Schemas["UsesLocal"].Value
+	require.NotNil(t, usesLocal)
+	assert.NotNil(t, usesLocal.Properties["loc"].Value)
+}
