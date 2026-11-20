@@ -813,6 +813,12 @@ func applyHeaderRefMetadata(value *Header, component *HeaderRef, isOpenAPI31OrLa
 		return
 	}
 
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
+
 	value.Description = *component.Description
 }
 
@@ -897,6 +903,12 @@ func applyParameterRefMetadata(value *Parameter, component *ParameterRef, isOpen
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
 		return
 	}
+
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
 
 	value.Description = *component.Description
 }
@@ -986,6 +998,12 @@ func applyRequestBodyRefMetadata(value *RequestBody, component *RequestBodyRef, 
 		return
 	}
 
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
+
 	value.Description = *component.Description
 }
 
@@ -1060,6 +1078,12 @@ func applyResponseRefMetadata(value *Response, component *ResponseRef, isOpenAPI
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
 		return
 	}
+
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
 
 	value.Description = component.Description
 }
@@ -1384,6 +1408,12 @@ func applySecuritySchemeRefMetadata(value *SecurityScheme, component *SecuritySc
 		return
 	}
 
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
+
 	value.Description = *component.Description
 }
 
@@ -1448,6 +1478,12 @@ func applyExampleRefMetadata(value *Example, component *ExampleRef, isOpenAPI31O
 	if !isOpenAPI31OrLater || value == nil || (component.Summary == nil && component.Description == nil) {
 		return
 	}
+
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
 
 	if component.Summary != nil {
 		value.Summary = *component.Summary
@@ -1583,6 +1619,12 @@ func applyLinkRefMetadata(value *Link, component *LinkRef, isOpenAPI31OrLater bo
 	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
 		return
 	}
+
+	// The target is shared with every other $ref to it: what is written next
+	// to this one applies to a copy, as the Reference Object says.
+	copied := *value
+	value = &copied
+	component.Value = value
 
 	value.Description = *component.Description
 }
