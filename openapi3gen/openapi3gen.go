@@ -237,6 +237,7 @@ func (g *Generator) generateWithoutSaving(parents []*theTypeInfo, t reflect.Type
 			vs, err := g.generateSchemaRefFor(parents, v.Type, name, tag)
 			if err != nil {
 				if _, ok := err.(*CycleError); ok && !g.opts.throwErrorOnCycle {
+					vs = g.generateCycleSchemaRef(v.Type, &openapi3.Schema{})
 					g.trackSchemaRef(vs)
 					return vs, nil
 				}
