@@ -737,10 +737,13 @@ func (d *urlValuesDecoder) DecodeObject(param string, sm *openapi3.Serialization
 		paramPrefix := param + "["
 		propsFn = func(params url.Values) (map[string]string, error) {
 			props := make(map[string]string)
-			for key, values := range params {
+			// Sorted, as distinct keys may name the same property
+			// ("p[a]" and "p[a]b]"): the last one must always win.
+			for _, key := range slices.Sorted(maps.Keys(params)) {
 				if !strings.HasPrefix(key, paramPrefix) {
 					continue
 				}
+				values := params[key]
 				matches := deepObjectBracketRE.FindAllStringSubmatch(key, -1)
 				switch l := len(matches); {
 				case l == 0:
