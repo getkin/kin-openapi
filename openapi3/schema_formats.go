@@ -163,6 +163,48 @@ func DefineIntegerFormatValidator(name string, validator IntegerFormatValidator)
 	SchemaIntegerFormats[name] = validator
 }
 
+func isNumberFormat(format string) bool {
+	switch format {
+	case "float", "double":
+		return true
+	}
+	_, ok := SchemaNumberFormats[format]
+	return ok
+}
+
+func isIntegerFormat(format string) bool {
+	switch format {
+	case "int32", "int64":
+		return true
+	}
+	_, ok := SchemaIntegerFormats[format]
+	return ok
+}
+
+func isStringFormat(format string) bool {
+	switch format {
+	// Supported by OpenAPIv3.0.3:
+	// https://spec.openapis.org/oas/v3.0.3
+	case "byte", "binary", "date", "date-time", "password":
+		return true
+	// In JSON Draft-07 (not validated yet though):
+	// https://json-schema.org/draft-07/json-schema-release-notes.html#formats
+	case "iri", "iri-reference", "uri-template", "idn-email", "idn-hostname":
+		return true
+	case "json-pointer", "relative-json-pointer", "regex", "time":
+		return true
+	// In JSON Draft 2019-09 (not validated yet though):
+	// https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
+	case "duration", "uuid":
+		return true
+	// Defined in some other specification
+	case "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference":
+		return true
+	}
+	_, ok := SchemaStringFormats[format]
+	return ok
+}
+
 // DefineStringFormat defines a regexp pattern for a given string format
 //
 // Deprecated: Use openapi3.DefineStringFormatValidator(name, NewRegexpFormatValidator(pattern)) instead.
