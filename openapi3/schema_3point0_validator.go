@@ -102,7 +102,15 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value any) (
 		return
 	}
 	var run bool
-	if err, run = schema.visitXOFOperations(settings, value); err != nil || !run {
+	if err, run = schema.visitXOFOperations(settings, value); err != nil {
+		return
+	}
+	if !run {
+		// null matched the oneOf, anyOf or allOf. A type of this schema's own
+		// still has to permit it.
+		if schema.Type != nil && len(*schema.Type) != 0 {
+			return schema.visitJSONNull(settings)
+		}
 		return
 	}
 	if err = schema.visitEnumOperation(settings, value); err != nil {
