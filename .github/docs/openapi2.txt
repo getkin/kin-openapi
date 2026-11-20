@@ -302,6 +302,8 @@ func (securityScheme *SecurityScheme) UnmarshalJSON(data []byte) error
 
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	// PathsExtensions holds the x- fields of the Paths Object, alongside its routes.
+	PathsExtensions map[string]any `json:"-" yaml:"-"`
 
 	Swagger             string                     `json:"swagger,case:strict" yaml:"swagger"` // required
 	Info                openapi3.Info              `json:"info,case:strict" yaml:"info"`       // required
