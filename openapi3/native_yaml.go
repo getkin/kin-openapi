@@ -254,6 +254,12 @@ func decodeAny(node *yaml.Node) (any, error) {
 	return normalizeDecoded(v)
 }
 
+// isStringScalar tells whether a node is a scalar that reads as a string. A
+// scalar with another tag, such as the number in "!0 0", is not one.
+func isStringScalar(node *yaml.Node) bool {
+	return node.Kind == yaml.ScalarNode && node.Tag == strTag
+}
+
 // collectExtensions returns the mapping keys of node that known does not
 // declare, decoded and normalized, along with their names in document order.
 // The names are every undeclared sibling, including x- ones; callers that keep
@@ -269,6 +275,12 @@ func collectExtensions(node *yaml.Node, known map[string]struct{}) (map[string]a
 		key := kv[0].Value
 		if _, ok := known[key]; ok {
 			continue
+		}
+		if key == "$ref" && !isStringScalar(kv[1]) {
+			// A $ref is a directive and must be a string. A scalar with
+			// another tag reads as its text, so keeping the key would write
+			// back a reference the document did not contain.
+			return nil, nil, fmt.Errorf("line %d: $ref must be a string, got %s", kv[1].Line, kv[1].Tag)
 		}
 		v, err := decodeAny(kv[1])
 		if err != nil {
@@ -639,6 +651,7 @@ func checkAliasCycles(root *yaml.Node) error {
 // Interim: https://github.com/yaml/go-yaml/issues/491 asks for an option to
 // read a mapping key as its text, which removes the retag.
 func nameKeys(n *yaml.Node) error {
+	var seen map[string]int
 	for i := 0; i+1 < len(n.Content); i += 2 {
 		k := n.Content[i]
 		if isMergeKey(k) {
@@ -661,6 +674,23 @@ func nameKeys(n *yaml.Node) error {
 			return fmt.Errorf("line %d: mapping key is null, so it names nothing", k.Line)
 		}
 		k.Tag = strTag
+	}
+	// The decoder refuses a key written twice, but a $ref object reads its
+	// $ref and siblings without it, and only a 3.1 document ever looks at
+	// why the siblings failed to decode: in a 3.0 one the duplicate went
+	// unseen, and the document did not survive being written out and read back.
+	for i := 0; i+1 < len(n.Content); i += 2 {
+		k := n.Content[i]
+		if k.Kind != yaml.ScalarNode || isMergeKey(k) {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[string]int, len(n.Content)/2)
+		}
+		if line, ok := seen[k.Value]; ok {
+			return fmt.Errorf("line %d: mapping key %q already defined at line %d", k.Line, k.Value, line)
+		}
+		seen[k.Value] = k.Line
 	}
 	return nil
 }

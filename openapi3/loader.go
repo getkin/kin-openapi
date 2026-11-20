@@ -239,6 +239,14 @@ func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	return doc, nil
 }
 
+// documentIdentity names the document a location is in, which is the location
+// without its fragment: a document may have no path at all, as urn:x:y has not.
+func documentIdentity(location *url.URL) string {
+	u := *location
+	u.Fragment, u.RawFragment = "", ""
+	return u.String()
+}
+
 // LoadFromDataWithPath takes the OpenAPI document data in bytes and a path where the resolver can find referred
 // elements and returns a *T with all resolved data or an error if unable to load data or resolve refs.
 func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, error) {
@@ -249,7 +257,7 @@ func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, 
 func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.URL) (*T, error) {
 	if loader.visitedDocuments == nil {
 		loader.visitedDocuments = make(map[string]*T)
-		loader.rootLocation = location.Path
+		loader.rootLocation = documentIdentity(location)
 	}
 	uri := location.String()
 	if doc, ok := loader.visitedDocuments[uri]; ok {
@@ -1283,7 +1291,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	// ref objects but are plain strings that reference schema objects.
 	// Plain schema names like "Dog" are not references and are left alone.
 	if value.Discriminator != nil {
-		inExternalDoc := documentPath != nil && documentPath.Path != "" && documentPath.Path != loader.rootLocation
+		inExternalDoc := documentPath != nil && documentIdentity(documentPath) != loader.rootLocation
 		for _, k := range componentNames(value.Discriminator.Mapping) {
 			v := value.Discriminator.Mapping[k]
 			if !strings.Contains(v.Ref, "/") {
