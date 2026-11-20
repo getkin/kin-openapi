@@ -40,12 +40,12 @@ func unmarshalRefYAML(node *yaml.Node, ref *string, summary, description **strin
 		switch k, v := kv[0].Value, kv[1]; {
 		case k == "summary" && summary != nil:
 			var str string
-			if v.Decode(&str) == nil {
+			if v.Tag != nullTag && v.Decode(&str) == nil {
 				*summary = &str
 			}
 		case k == "description" && description != nil:
 			var str string
-			if v.Decode(&str) == nil {
+			if v.Tag != nullTag && v.Decode(&str) == nil {
 				*description = &str
 			}
 		}

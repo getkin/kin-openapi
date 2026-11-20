@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("openapi: 3.1.0\ninfg: {title: t, version: \"1\"}\npaths:\n  x-p: 1\n  /r:\n    $ref: '#/components/pathItems/R'\n    summary: s\ncomponents:\n  pathItems:\n    R:\n      get:\n        responses:\n          x-r: 2\n          \"200\": {$ref: '#/components/responses/OK', description}\n        callbacks:\n          cb:\n            x-c: 3\n      '   {   $request.body#/u}': {post: {responses: {\"200\": {description: ok}}}}\n  responses:\n    OK: {description: ok}\n")
