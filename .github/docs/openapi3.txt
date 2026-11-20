@@ -1563,6 +1563,16 @@ func (e *ItemSchemaFieldFor32Plus) As(target any) bool
 
 func (e *ItemSchemaFieldFor32Plus) Code() string
 
+type JSONSchema2020Cache struct {
+	// Has unexported fields.
+}
+    JSONSchema2020Cache keeps the validators that EnableJSONSchema2020 compiles,
+    one per *Schema, so that each schema is compiled once rather than on every
+    validation. The caller decides its lifetime: a cache holds on to every
+    schema it was used with until the cache itself is dropped. A schema must not
+    be modified once it was validated through a cache. The zero value is ready
+    to use. A JSONSchema2020Cache is safe for concurrent use.
+
 type JSONSchemaDialectAbsoluteURIRequired struct{ ValidationError }
 
 func (e *JSONSchemaDialectAbsoluteURIRequired) As(target any) bool
@@ -3504,6 +3514,12 @@ func WithIntegerFormatValidators(validators map[string]IntegerFormatValidator) S
     WithIntegerFormatValidators adds per-validation integer format validators.
     These validators are checked before global SchemaIntegerFormats and allow
     different validations for the same format name across different specs.
+
+func WithJSONSchema2020Cache(cache *JSONSchema2020Cache) SchemaValidationOption
+    WithJSONSchema2020Cache makes EnableJSONSchema2020 validation reuse the
+    validators kept in cache. It has no effect together with per-validation
+    format validators (WithStringFormatValidator and the like). With
+    openapi3filter, pass it in Options.SchemaValidationOptions.
 
 func WithNumberFormatValidator(name string, validator NumberFormatValidator) SchemaValidationOption
     WithNumberFormatValidator adds a single per-validation number format

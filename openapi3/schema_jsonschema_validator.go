@@ -398,26 +398,53 @@ func valueAt(root any, location []string) (any, bool) {
 
 // useJSONSchema2020 validates using the JSON Schema 2020-12 validator
 func (schema *Schema) useJSONSchema2020(settings *schemaValidationSettings, value any) error {
+	cache := settings.jsonSchema2020Cache
+	if cache != nil && settings.hasPerValidationFormats() {
+		// The compiled validator closes over these format validators.
+		cache = nil
+	}
+	if cache != nil {
+		if cached, ok := cache.validators.Load(schema); ok {
+			if validator := cached.(*jsonSchemaValidator); validator != nil {
+				return validator.validate(settings, value)
+			}
+			return schema.visitJSON(settings, value)
+		}
+	}
+	validator, err := schema.compileJSONSchema2020(settings)
+	if err != nil {
+		return err
+	}
+	if cache != nil {
+		cache.validators.Store(schema, validator)
+	}
+	if validator == nil {
+		return schema.visitJSON(settings, value)
+	}
+	return validator.validate(settings, value)
+}
+
+// compileJSONSchema2020 returns a nil validator when the built-in validator is to be used instead.
+func (schema *Schema) compileJSONSchema2020(settings *schemaValidationSettings) (*jsonSchemaValidator, error) {
 	usesJSONSchema2020Features := schemaUsesJSONSchema2020Features(schema)
 	validator, err := newJSONSchemaValidator(schema, settings)
 	if err != nil {
 		if !usesJSONSchema2020Features {
-			return schema.visitJSON(settings, value)
+			return nil, nil
 		}
 		// A resolved OpenAPI component reference can be registered above. If a
 		// reference still cannot be resolved, do not silently drop its constraints.
 		// Keep the existing fallback for other compiler limitations (for example,
 		// regex syntax accepted by OpenAPI but rejected by Go's regexp package).
 		if strings.Contains(err.Error(), "json-pointer") && strings.Contains(err.Error(), "not found") {
-			return err
+			return nil, err
 		}
-		return schema.visitJSON(settings, value)
+		return nil, nil
 	}
 	if validator.hasInternalRefs && !usesJSONSchema2020Features {
-		return schema.visitJSON(settings, value)
+		return nil, nil
 	}
-
-	return validator.validate(settings, value)
+	return validator, nil
 }
 
 // schemaUsesJSONSchema2020Features checks the keywords that guard the legacy

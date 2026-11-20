@@ -22,6 +22,7 @@ type schemaValidationSettings struct {
 	readOnlyValidationDisabled  bool
 	writeOnlyValidationDisabled bool
 	useJSONSchema2020           bool // Use JSON Schema 2020-12 validator for OpenAPI 3.1
+	jsonSchema2020Cache         *JSONSchema2020Cache
 
 	regexCompiler RegexCompilerFunc
 
@@ -178,6 +179,28 @@ func WithIntegerFormatValidator(name string, validator IntegerFormatValidator) S
 // the built-in validator.
 func EnableJSONSchema2020() SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.useJSONSchema2020 = true }
+}
+
+// JSONSchema2020Cache keeps the validators that EnableJSONSchema2020 compiles,
+// one per *Schema, so that each schema is compiled once rather than on every
+// validation. The caller decides its lifetime: a cache holds on to every schema
+// it was used with until the cache itself is dropped. A schema must not be
+// modified once it was validated through a cache.
+// The zero value is ready to use. A JSONSchema2020Cache is safe for concurrent use.
+type JSONSchema2020Cache struct {
+	validators sync.Map // map[*Schema]*jsonSchemaValidator, nil for the built-in validator
+}
+
+// WithJSONSchema2020Cache makes EnableJSONSchema2020 validation reuse the
+// validators kept in cache. It has no effect together with per-validation
+// format validators (WithStringFormatValidator and the like).
+// With openapi3filter, pass it in Options.SchemaValidationOptions.
+func WithJSONSchema2020Cache(cache *JSONSchema2020Cache) SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.jsonSchema2020Cache = cache }
+}
+
+func (s *schemaValidationSettings) hasPerValidationFormats() bool {
+	return len(s.stringFormats) != 0 || len(s.numberFormats) != 0 || len(s.integerFormats) != 0
 }
 
 func newSchemaValidationSettings(opts ...SchemaValidationOption) *schemaValidationSettings {
