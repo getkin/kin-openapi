@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # fetch-fuzz-crashers.sh — pull the failing inputs that the `fuzz` workflow
-# uploaded (artifacts named crashers-<FuzzTarget>) for runs on master, drop
+# uploaded (artifacts named crashers-<FuzzTarget>) for runs of any kind (master,
+# other branches, pull requests, forks', scheduled runs), drop
 # each one into <pkg>/testdata/fuzz/<FuzzTarget>/, and keep only those that
 # still fail on the current checkout, one per distinct failure.
 #
@@ -84,9 +85,11 @@ tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 
 # ------------------------------------------------------------ list ----
 # Repo-wide artifact list, newest first: stop paging once past $since.
-# Keep crashers-* from runs on master of this repo itself (fork PRs from a
-# branch that happens to be called master have a different head repo).
-log "listing crashers-* artifacts from master since $since"
+# Keep every crashers-* artifact, whatever the run: pushes to master or to
+# any branch, pull requests (also from forks) and scheduled runs. What they
+# carry is only ever read as fuzz corpus files (see the checks below) and
+# replayed by go test, never executed.
+log "listing crashers-* artifacts from all runs since $since"
 : >"$tmp/artifacts.tsv"
 page=1
 while :; do
@@ -94,10 +97,8 @@ while :; do
     || die "GitHub API request failed (anonymous rate limit is 60/hour; set GITHUB_TOKEN?)"
   jq -r --arg since "$since" '.artifacts[]
     | select(.created_at >= $since and (.expired | not)
-             and (.name | startswith("crashers-"))
-             and .workflow_run.head_branch == "master"
-             and .workflow_run.head_repository_id == .workflow_run.repository_id)
-    | [.id, .name, .workflow_run.id, .created_at] | @tsv' <<<"$json" >>"$tmp/artifacts.tsv"
+             and (.name | startswith("crashers-")))
+    | [.id, .name, .workflow_run.id, .created_at, (.workflow_run.head_branch // "?")] | @tsv' <<<"$json" >>"$tmp/artifacts.tsv"
   # The order is only roughly by date: page on until a whole page is too old.
   n=$(jq '.artifacts | length' <<<"$json")
   newest=$(jq -r '[.artifacts[].created_at] | max // ""' <<<"$json")
@@ -190,8 +191,8 @@ signature() { # $1 logfile  $2 target
 in_git=0; git rev-parse --verify -q HEAD >/dev/null 2>&1 && in_git=1
 declare -A seen=() keep_of=() size_of=()
 dropped=0 dupes=0 skipped=0
-while IFS=$'\t' read -r id name run created; do
-  log "$name (run $run, $created)"
+while IFS=$'\t' read -r id name run created branch; do
+  log "$name (run $run on $branch, $created)"
   d=$tmp/$id; mkdir -p "$d/x"
   if ! download "$id" "$d/a.zip"; then
     warn "  download failed: https://github.com/$REPO/actions/runs/$run"; continue
