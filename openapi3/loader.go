@@ -284,8 +284,25 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 
 // ResolveRefsIn expands references if for instance spec was just unmarshaled
 func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
+	return loader.resolveRefsIn(doc, location, false)
+}
+
+// resolveRefsIn is ResolveRefsIn's implementation. In tolerant mode a
+// component that cannot be resolved — for example because it references an
+// external document — is skipped instead of aborting the walk, and no error
+// is returned; everything that can be resolved still is.
+func (loader *Loader) resolveRefsIn(doc *T, location *url.URL, tolerant bool) (err error) {
 	if loader.Context == nil {
 		loader.Context = context.Background()
+	}
+
+	// report turns a resolution failure into the walk's result: the error
+	// itself in strict mode, nil in tolerant mode so the walk continues.
+	report := func(e error) error {
+		if e == nil || tolerant {
+			return nil
+		}
+		return e
 	}
 
 	if loader.resolvingDepth == 0 {
@@ -301,55 +318,55 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	if components := doc.Components; components != nil {
 		for _, name := range componentNames(components.Headers) {
 			component := components.Headers[name]
-			if err = loader.resolveHeaderRef(doc, component, location); err != nil {
+			if err = report(loader.resolveHeaderRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.Parameters) {
 			component := components.Parameters[name]
-			if err = loader.resolveParameterRef(doc, component, location); err != nil {
+			if err = report(loader.resolveParameterRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.RequestBodies) {
 			component := components.RequestBodies[name]
-			if err = loader.resolveRequestBodyRef(doc, component, location); err != nil {
+			if err = report(loader.resolveRequestBodyRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.Responses) {
 			component := components.Responses[name]
-			if err = loader.resolveResponseRef(doc, component, location); err != nil {
+			if err = report(loader.resolveResponseRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.Schemas) {
 			component := components.Schemas[name]
-			if err = loader.resolveSchemaRef(doc, component, location, []string{}); err != nil {
+			if err = report(loader.resolveSchemaRef(doc, component, location, []string{})); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.SecuritySchemes) {
 			component := components.SecuritySchemes[name]
-			if err = loader.resolveSecuritySchemeRef(doc, component, location); err != nil {
+			if err = report(loader.resolveSecuritySchemeRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.Examples) {
 			component := components.Examples[name]
-			if err = loader.resolveExampleRef(doc, component, location); err != nil {
+			if err = report(loader.resolveExampleRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.Links) {
 			component := components.Links[name]
-			if err = loader.resolveLinkRef(doc, component, location); err != nil {
+			if err = report(loader.resolveLinkRef(doc, component, location)); err != nil {
 				return
 			}
 		}
 		for _, name := range componentNames(components.Callbacks) {
 			component := components.Callbacks[name]
-			if err = loader.resolveCallbackRef(doc, component, location); err != nil {
+			if err = report(loader.resolveCallbackRef(doc, component, location)); err != nil {
 				return
 			}
 		}
@@ -362,14 +379,14 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		if pathItem == nil {
 			continue
 		}
-		if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
+		if err = report(loader.resolvePathItemRef(doc, pathItem, location)); err != nil {
 			return
 		}
 	}
 
 	for _, name := range componentNames(doc.Webhooks) {
 		if pathItem := doc.Webhooks[name]; pathItem != nil {
-			if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
+			if err = report(loader.resolvePathItemRef(doc, pathItem, location)); err != nil {
 				return
 			}
 		}
