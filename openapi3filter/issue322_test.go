@@ -28,6 +28,8 @@ func TestIssue322(t *testing.T) {
 		{name: "duplicate name", body: `{"role":"admin","role":"user"}`, wantErr: true},
 		{name: "duplicate escaped name", body: `{"role":"admin","\u0072ole":"user"}`, wantErr: true},
 		{name: "duplicate in array item", body: `{"items":[{"a":1,"a":2}]}`, wantErr: true},
+		{name: "duplicate invalid UTF-8 names", body: "{\"\xff\":1,\"\xfe\":2}", wantErr: true},
+		{name: "duplicate lone surrogate names", body: `{"\ud800":1,"\udc00":2}`, wantErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, "/test", strings.NewReader(tc.body))
