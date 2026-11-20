@@ -325,8 +325,17 @@ func (v *jsonSchemaValidator) formatValidationError(settings *schemaValidationSe
 
 	// If there are sub-errors, format them too
 	if len(verr.Causes) > 0 {
+		// The library reports the causes in the random order of its maps
+		// of properties: sort them, by where they are and what they say.
+		causes := slices.Clone(verr.Causes)
+		slices.SortStableFunc(causes, func(a, b *jsonschema.ValidationError) int {
+			if c := slices.Compare(a.InstanceLocation, b.InstanceLocation); c != 0 {
+				return c
+			}
+			return strings.Compare(a.Error(), b.Error())
+		})
 		var subErrors MultiError
-		for _, cause := range verr.Causes {
+		for _, cause := range causes {
 			if subErr := v.formatValidationError(settings, cause, path, root); subErr != nil {
 				subErrors = append(subErrors, subErr)
 			}
