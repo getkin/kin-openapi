@@ -284,23 +284,17 @@ components:
 				})
 			}
 
-			// Aliases retain the referenced value and apply metadata to it in place.
-			require.Same(t, doc.Components.Examples["Base"].Value, doc.Components.Examples["Alias"].Value)
-			require.Same(t, doc.Components.Headers["Base"].Value, doc.Components.Headers["Alias"].Value)
-			require.Same(t, doc.Components.Parameters["Base"].Value, doc.Components.Parameters["Alias"].Value)
-			require.Same(t, doc.Components.RequestBodies["Base"].Value, doc.Components.RequestBodies["Alias"].Value)
-			require.Same(t, doc.Components.Responses["Base"].Value, doc.Components.Responses["Alias"].Value)
-			require.Same(t, doc.Components.Links["Base"].Value, doc.Components.Responses["Base"].Value.Links["Alias"].Value)
-			require.Same(t, doc.Components.SecuritySchemes["Base"].Value, doc.Components.SecuritySchemes["Alias"].Value)
-
-			require.Equal(t, test.wantSummary, doc.Components.Examples["Base"].Value.Summary)
-			require.Equal(t, test.wantDescription, doc.Components.Examples["Base"].Value.Description)
-			require.Equal(t, test.wantDescription, doc.Components.Headers["Base"].Value.Description)
-			require.Equal(t, test.wantDescription, doc.Components.Parameters["Base"].Value.Description)
-			require.Equal(t, test.wantDescription, doc.Components.RequestBodies["Base"].Value.Description)
-			require.Equal(t, test.wantDescription, *doc.Components.Responses["Base"].Value.Description)
-			require.Equal(t, test.wantDescription, doc.Components.Links["Base"].Value.Description)
-			require.Equal(t, test.wantDescription, doc.Components.SecuritySchemes["Base"].Value.Description)
+			// The metadata next to a $ref applies to that reference only: the
+			// component it points to is shared and keeps its own.
+			wantBaseSummary, wantBaseDescription := "component summary", "component description"
+			require.Equal(t, wantBaseSummary, doc.Components.Examples["Base"].Value.Summary)
+			require.Equal(t, wantBaseDescription, doc.Components.Examples["Base"].Value.Description)
+			require.Equal(t, wantBaseDescription, doc.Components.Headers["Base"].Value.Description)
+			require.Equal(t, wantBaseDescription, doc.Components.Parameters["Base"].Value.Description)
+			require.Equal(t, wantBaseDescription, doc.Components.RequestBodies["Base"].Value.Description)
+			require.Equal(t, wantBaseDescription, *doc.Components.Responses["Base"].Value.Description)
+			require.Equal(t, wantBaseDescription, doc.Components.Links["Base"].Value.Description)
+			require.Equal(t, wantBaseDescription, doc.Components.SecuritySchemes["Base"].Value.Description)
 		})
 	}
 }
