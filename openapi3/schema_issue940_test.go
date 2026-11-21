@@ -59,7 +59,9 @@ func TestOneOfErrorPreserved(t *testing.T) {
 
 	require.Equal(t, "oneOf", schemaErr.SchemaField)
 	require.Equal(t, `value doesn't match any schema from "oneOf"`, schemaErr.Reason)
-	require.EqualError(t, schemaErr, `Error at "/foo": doesn't match schema due to: value must be a number Or value must be a string`)
+	require.EqualError(t, schemaErr, `Error at "/foo": value doesn't match any schema from "oneOf":
+  oneOf[0]: Error at "/foo": value must be a number
+  oneOf[1]: Error at "/foo": value must be a string`)
 
 	var me multiErrorForOneOf
 	ok = errors.As(err, &me)
