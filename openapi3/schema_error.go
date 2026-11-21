@@ -77,12 +77,30 @@ func (err *SchemaError) JSONPointer() []string {
 }
 
 func (err *SchemaError) Error() string {
-	if err.customizeMessageError != nil {
-		if msg := err.customizeMessageError(err); msg != "" {
-			return msg
-		}
+	if msg := err.customizedMessage(); msg != "" {
+		return msg
 	}
+	return err.render(!err.detailsDisabled)
+}
 
+// brief renders the error like Error but without the "Schema:"/"Value:"
+// details, for listing this error among the branch errors of a combinator
+// (oneOf/anyOf/allOf) error message.
+func (err *SchemaError) brief() string {
+	if msg := err.customizedMessage(); msg != "" {
+		return msg
+	}
+	return err.render(false)
+}
+
+func (err *SchemaError) customizedMessage() string {
+	if err.customizeMessageError != nil {
+		return err.customizeMessageError(err)
+	}
+	return ""
+}
+
+func (err *SchemaError) render(includeDetails bool) string {
 	buf := bytes.NewBuffer(make([]byte, 0, 256))
 
 	// The Reason of an error converted from the JSON Schema 2020-12 validator
@@ -98,7 +116,11 @@ func (err *SchemaError) Error() string {
 	}
 
 	if err.Origin != nil {
-		buf.WriteString(err.Origin.Error())
+		if includeDetails {
+			buf.WriteString(err.Origin.Error())
+		} else {
+			buf.WriteString(briefError(err.Origin))
+		}
 
 		return buf.String()
 	}
@@ -112,7 +134,7 @@ func (err *SchemaError) Error() string {
 		buf.WriteString(reason)
 	}
 
-	if !err.detailsDisabled {
+	if includeDetails {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("  ", "  ")

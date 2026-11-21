@@ -287,6 +287,21 @@ func (schema *Schema) resolveDiscriminatorRef(settings *schemaValidationSettings
 	}
 }
 
+// oneOfBranchLabel describes the idx-th branch of a oneOf in an error
+// message: its index within the oneOf, plus its $ref or title when it has
+// one, so each listed branch error says which branch produced it.
+func oneOfBranchLabel(idx int, ref *SchemaRef) string {
+	label := fmt.Sprintf("oneOf[%d]", idx)
+	switch {
+	case ref.Ref != "":
+		return fmt.Sprintf("%s ($ref %q)", label, ref.Ref)
+	case ref.Value != nil && ref.Value.Title != "":
+		return fmt.Sprintf("%s (title %q)", label, ref.Value.Title)
+	default:
+		return label
+	}
+}
+
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
@@ -298,6 +313,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		var (
 			ok                  = 0
 			validationErrors    = multiErrorForOneOf{}
+			branchLabels        = make([]string, 0, len(v))
 			matchedOneOfIndices = make([]int, 0)
 			tempValue           = value
 		)
@@ -318,6 +334,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 
 			if err := v.visitJSON(settings, tempValue); err != nil {
 				validationErrors = append(validationErrors, err)
+				branchLabels = append(branchLabels, oneOfBranchLabel(idx, item))
 				continue
 			}
 
@@ -332,10 +349,10 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			e := settings.newSchemaError(schema, value).withField("oneOf")
 			if ok > 1 {
 				e.withReason(fmt.Sprintf(`value matches more than one schema from "oneOf" (matches schemas at indices %v)`, matchedOneOfIndices)).
-					withOrigin(ErrOneOfConflict)
+					withOrigin(&oneOfConflictError{indices: matchedOneOfIndices})
 			} else {
 				e.withReason(`value doesn't match any schema from "oneOf"`).
-					withOrigin(fmt.Errorf("doesn't match schema due to: %w", validationErrors))
+					withOrigin(&oneOfNoMatchError{branches: validationErrors, labels: branchLabels})
 			}
 
 			return e, false

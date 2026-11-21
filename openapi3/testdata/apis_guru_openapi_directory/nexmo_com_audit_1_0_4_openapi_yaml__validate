@@ -1,1 +1,1 @@
-invalid components: schema "AuditEvent": invalid example: input matches more than one oneOf schemas
+invalid components: schema "AuditEvent": invalid example: value matches more than one schema from "oneOf" (matches schemas at indices [0 1 2])

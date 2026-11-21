@@ -82,13 +82,13 @@ paths:
 			name:   "failed oneof string pattern match",
 			spec:   oneOfArraySpec,
 			req:    `/items?test=def`,
-			errStr: `parameter "test" in query has an error: doesn't match schema due to: string doesn't match the regular expression`,
+			errStr: `parameter "test" in query has an error: value doesn't match any schema from "oneOf":` + "\n" + `  oneOf[0]: string doesn't match the regular expression`,
 		},
 		{
 			name:   "failed oneof string pattern match",
 			spec:   oneOfArraySpec,
 			req:    `/items?test=foo bar`,
-			errStr: `parameter "test" in query has an error: input matches more than one oneOf schemas`,
+			errStr: `parameter "test" in query has an error: value matches more than one schema from "oneOf" (matches schemas at indices [1 2])`,
 		},
 	}
 
