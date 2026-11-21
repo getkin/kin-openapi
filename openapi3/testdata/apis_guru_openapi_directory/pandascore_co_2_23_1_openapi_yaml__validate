@@ -17,7 +17,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/game_advantage": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -32,7 +32,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/begin_at": doesn't match schema due to: Value is not nullable
@@ -42,7 +42,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/end_at": doesn't match schema due to: Value is not nullable
@@ -52,7 +52,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/length": doesn't match schema due to: Value is not nullable
@@ -61,7 +61,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minimum": 0,
         "type": "integer"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/video_url": doesn't match schema due to: Value is not nullable
@@ -70,7 +70,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/winner/id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -85,7 +85,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/winner/type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -97,7 +97,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/0/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -109,7 +109,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/begin_at": doesn't match schema due to: Value is not nullable
@@ -119,7 +119,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/end_at": doesn't match schema due to: Value is not nullable
@@ -129,7 +129,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/length": doesn't match schema due to: Value is not nullable
@@ -138,7 +138,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minimum": 0,
         "type": "integer"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/video_url": doesn't match schema due to: Value is not nullable
@@ -147,7 +147,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/winner/id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -162,7 +162,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/winner/type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -174,7 +174,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/1/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -186,7 +186,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/begin_at": doesn't match schema due to: Value is not nullable
@@ -196,7 +196,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/end_at": doesn't match schema due to: Value is not nullable
@@ -206,7 +206,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/length": doesn't match schema due to: Value is not nullable
@@ -215,7 +215,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minimum": 0,
         "type": "integer"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/video_url": doesn't match schema due to: Value is not nullable
@@ -224,7 +224,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/winner/id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -239,7 +239,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/winner/type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -251,7 +251,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/2/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -263,7 +263,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/begin_at": doesn't match schema due to: Value is not nullable
@@ -273,7 +273,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/end_at": doesn't match schema due to: Value is not nullable
@@ -283,7 +283,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/length": doesn't match schema due to: Value is not nullable
@@ -292,7 +292,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minimum": 0,
         "type": "integer"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/video_url": doesn't match schema due to: Value is not nullable
@@ -301,7 +301,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/winner/id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -316,7 +316,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/winner/type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -328,7 +328,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/3/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -340,7 +340,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/begin_at": doesn't match schema due to: Value is not nullable
@@ -350,7 +350,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/end_at": doesn't match schema due to: Value is not nullable
@@ -360,7 +360,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/length": doesn't match schema due to: Value is not nullable
@@ -369,7 +369,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minimum": 0,
         "type": "integer"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/video_url": doesn't match schema due to: Value is not nullable
@@ -378,7 +378,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/winner/id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -393,7 +393,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/winner/type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -405,7 +405,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/games/4/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -417,7 +417,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/league/url": doesn't match schema due to: Value is not nullable
@@ -426,7 +426,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/live/opens_at": doesn't match schema due to: Value is not nullable
@@ -436,7 +436,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/live/url": doesn't match schema due to: Value is not nullable
@@ -445,7 +445,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/description": doesn't match schema due to: Value is not nullable
@@ -453,7 +453,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
       {
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/end_at": doesn't match schema due to: Value is not nullable
@@ -463,7 +463,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/name": doesn't match schema due to: Value is not nullable
@@ -471,7 +471,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
       {
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/season": doesn't match schema due to: Value is not nullable
@@ -479,7 +479,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
       {
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/winner_id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -494,7 +494,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -506,7 +506,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/tournament/winner_id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -521,7 +521,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/videogame_version": doesn't match schema due to: Value is not nullable
@@ -542,7 +542,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "object"
       }
-    
+
     Value:
       null
      | Error at "/0/object/winner": doesn't match schema due to: value doesn't match any schema from "oneOf":
@@ -559,10 +559,10 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
-    
+
   oneOf[2] ($ref "#/components/schemas/IncidentOfTypePlayer"): Error at "/0/object": property "begin_at" is unsupported | Error at "/0/object": property "detailed_stats" is unsupported | Error at "/0/object": property "draw" is unsupported | Error at "/0/object": property "end_at" is unsupported | Error at "/0/object": property "forfeit" is unsupported | Error at "/0/object": property "game_advantage" is unsupported | Error at "/0/object": property "games" is unsupported | Error at "/0/object": property "league" is unsupported | Error at "/0/object": property "league_id" is unsupported | Error at "/0/object": property "live" is unsupported | Error at "/0/object": property "live_embed_url" is unsupported | Error at "/0/object": property "match_type" is unsupported | Error at "/0/object": property "modified_at" is unsupported | Error at "/0/object": property "number_of_games" is unsupported | Error at "/0/object": property "official_stream_url" is unsupported | Error at "/0/object": property "opponents" is unsupported | Error at "/0/object": property "original_scheduled_at" is unsupported | Error at "/0/object": property "rescheduled" is unsupported | Error at "/0/object": property "results" is unsupported | Error at "/0/object": property "scheduled_at" is unsupported | Error at "/0/object": property "serie" is unsupported | Error at "/0/object": property "serie_id" is unsupported | Error at "/0/object": property "status" is unsupported | Error at "/0/object": property "streams" is unsupported | Error at "/0/object": property "streams_list" is unsupported | Error at "/0/object": property "tournament" is unsupported | Error at "/0/object": property "tournament_id" is unsupported | Error at "/0/object": property "videogame" is unsupported | Error at "/0/object": property "videogame_version" is unsupported | Error at "/0/object": property "winner" is unsupported | Error at "/0/object": property "winner_id" is unsupported | Error at "/0/object/current_team": property "current_team" is missing | Error at "/0/object/current_videogame": property "current_videogame" is missing | Error at "/0/object/first_name": property "first_name" is missing | Error at "/0/object/hometown": property "hometown" is missing | Error at "/0/object/image_url": property "image_url" is missing | Error at "/0/object/last_name": property "last_name" is missing | Error at "/0/object/nationality": property "nationality" is missing | Error at "/0/object/role": property "role" is missing | Error at "/0/type": value is not one of the allowed values ["player"]
   oneOf[3] ($ref "#/components/schemas/IncidentOfTypeSerie"): Error at "/0/object": property "detailed_stats" is unsupported | Error at "/0/object": property "draw" is unsupported | Error at "/0/object/end_at": doesn't match schema due to: Value is not nullable
     Schema:
@@ -571,7 +571,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object": property "forfeit" is unsupported | Error at "/0/object": property "game_advantage" is unsupported | Error at "/0/object": property "games" is unsupported | Error at "/0/object/league/url": doesn't match schema due to: Value is not nullable
@@ -580,7 +580,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object": property "live" is unsupported | Error at "/0/object": property "live_embed_url" is unsupported | Error at "/0/object": property "match_type" is unsupported | Error at "/0/object": property "number_of_games" is unsupported | Error at "/0/object": property "official_stream_url" is unsupported | Error at "/0/object": property "opponents" is unsupported | Error at "/0/object": property "original_scheduled_at" is unsupported | Error at "/0/object": property "rescheduled" is unsupported | Error at "/0/object": property "results" is unsupported | Error at "/0/object": property "scheduled_at" is unsupported | Error at "/0/object": property "serie" is unsupported | Error at "/0/object": property "serie_id" is unsupported | Error at "/0/object": property "status" is unsupported | Error at "/0/object": property "streams" is unsupported | Error at "/0/object": property "streams_list" is unsupported | Error at "/0/object": property "tournament" is unsupported | Error at "/0/object": property "tournament_id" is unsupported | Error at "/0/object": property "videogame_version" is unsupported | Error at "/0/object": property "winner" is unsupported | Error at "/0/object/winner_id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -595,7 +595,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/description": property "description" is missing | Error at "/0/object/full_name": property "full_name" is missing | Error at "/0/object/season": property "season" is missing | Error at "/0/object/tier": property "tier" is missing | Error at "/0/object/tournaments": property "tournaments" is missing | Error at "/0/object/videogame_title": property "videogame_title" is missing | Error at "/0/object/winner_type": property "winner_type" is missing | Error at "/0/object/year": property "year" is missing | Error at "/0/type": value is not one of the allowed values ["serie"]
@@ -607,7 +607,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object": property "forfeit" is unsupported | Error at "/0/object": property "game_advantage" is unsupported | Error at "/0/object": property "games" is unsupported | Error at "/0/object/league/url": doesn't match schema due to: Value is not nullable
@@ -616,7 +616,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "format": "uri",
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object": property "live" is unsupported | Error at "/0/object": property "live_embed_url" is unsupported | Error at "/0/object": property "match_type" is unsupported | Error at "/0/object": property "number_of_games" is unsupported | Error at "/0/object": property "official_stream_url" is unsupported | Error at "/0/object": property "opponents" is unsupported | Error at "/0/object": property "original_scheduled_at" is unsupported | Error at "/0/object": property "rescheduled" is unsupported | Error at "/0/object": property "results" is unsupported | Error at "/0/object": property "scheduled_at" is unsupported | Error at "/0/object/serie/description": doesn't match schema due to: Value is not nullable
@@ -624,7 +624,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
       {
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/end_at": doesn't match schema due to: Value is not nullable
@@ -634,7 +634,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         "minLength": 1,
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/name": doesn't match schema due to: Value is not nullable
@@ -642,7 +642,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
       {
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/season": doesn't match schema due to: Value is not nullable
@@ -650,7 +650,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
       {
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/winner_id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -665,7 +665,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/serie/winner_type": doesn't match schema due to: value is not one of the allowed values ["Player","Team"]
@@ -677,7 +677,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
         ],
         "type": "string"
       }
-    
+
     Value:
       null
      | Error at "/0/object": property "status" is unsupported | Error at "/0/object": property "streams" is unsupported | Error at "/0/object": property "streams_list" is unsupported | Error at "/0/object": property "tournament" is unsupported | Error at "/0/object": property "tournament_id" is unsupported | Error at "/0/object": property "videogame_version" is unsupported | Error at "/0/object": property "winner" is unsupported | Error at "/0/object/winner_id": doesn't match schema due to: doesn't match any schema from "anyOf"
@@ -692,7 +692,7 @@ invalid components: response "AdditionIncidents": invalid example: example /addi
           }
         ]
       }
-    
+
     Value:
       null
      | Error at "/0/object/expected_roster": property "expected_roster" is missing | Error at "/0/object/live_supported": property "live_supported" is missing | Error at "/0/object/matches": property "matches" is missing | Error at "/0/object/prizepool": property "prizepool" is missing | Error at "/0/object/teams": property "teams" is missing | Error at "/0/object/winner_type": property "winner_type" is missing | Error at "/0/type": value is not one of the allowed values ["tournament"]

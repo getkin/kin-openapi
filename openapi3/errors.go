@@ -91,9 +91,15 @@ func (e *oneOfNoMatchError) Error() string {
 	}
 	for i, branch := range e.branches {
 		// Indent continuation lines of nested combinator errors so the
-		// branch list stays readable.
-		msg := strings.ReplaceAll(briefError(branch), "\n", "\n    ")
-		fmt.Fprintf(&sb, "\n  %s: %s", e.labels[i], msg)
+		// branch list stays readable. Empty lines stay empty so the message
+		// never carries trailing whitespace.
+		lines := strings.Split(branchBriefError(branch), "\n")
+		for j, line := range lines {
+			if j > 0 && line != "" {
+				lines[j] = "    " + line
+			}
+		}
+		fmt.Fprintf(&sb, "\n  %s: %s", e.labels[i], strings.Join(lines, "\n"))
 	}
 	return sb.String()
 }
@@ -123,17 +129,62 @@ func briefError(err error) string {
 	switch e := err.(type) {
 	case *SchemaError:
 		return e.brief()
+	case *oneOfNoMatchError, *oneOfConflictError:
+		// Their own rendering is already a compact branch list.
+		return e.Error()
+	case *messageError:
+		// Its message was precomputed to be detail-free.
+		return e.Error()
 	case multiErrorForOneOf:
-		return briefError(MultiError(e))
+		return joinBriefErrors(e, " Or ")
 	case multiErrorForAllOf:
-		return briefError(MultiError(e))
+		return joinBriefErrors(e, " And ")
 	case MultiError:
-		msgs := make([]string, 0, len(e))
-		for _, sub := range e {
-			msgs = append(msgs, briefError(sub))
-		}
-		return strings.Join(msgs, " | ")
+		return joinBriefErrors(e, " | ")
 	default:
+		// Unwrap wrappers (e.g. fmt.Errorf("...: %w", sub)) so nested
+		// *SchemaError values render briefly too, keeping the wrapper's own
+		// message as a prefix when it can be recovered.
+		if sub := errors.Unwrap(err); sub != nil {
+			if _, ok := sub.(*SchemaError); ok {
+				if msg, subMsg := err.Error(), sub.Error(); strings.HasSuffix(msg, subMsg) {
+					return strings.TrimSuffix(msg, subMsg) + briefError(sub)
+				}
+			}
+		}
 		return err.Error()
 	}
+}
+
+// joinBriefErrors renders each of errs briefly, joined with sep.
+func joinBriefErrors(errs []error, sep string) string {
+	msgs := make([]string, 0, len(errs))
+	for _, sub := range errs {
+		msgs = append(msgs, briefError(sub))
+	}
+	return strings.Join(msgs, sep)
+}
+
+// branchBriefError renders a oneOf branch's error for the oneOf branch list:
+// like briefError, but a branch whose Origin wraps a MultiError (e.g. an allOf
+// failure reported as "doesn't match schema due to: ...") renders as just the
+// multi's brief list. The wrapper's literal prefix cannot be recovered (its
+// message is frozen at wrap time, while a *SchemaError's message keeps gaining
+// path segments as it propagates), and the branch label already carries that
+// context.
+func branchBriefError(err error) string {
+	if se, ok := err.(*SchemaError); ok && se.Origin != nil {
+		switch se.Origin.(type) {
+		case *oneOfNoMatchError, *oneOfConflictError:
+			// Already compact; briefError renders it as is.
+		default:
+			if sub := errors.Unwrap(se.Origin); sub != nil {
+				switch sub.(type) {
+				case multiErrorForOneOf, multiErrorForAllOf, MultiError:
+					return se.briefWithOriginBrief(briefError(sub))
+				}
+			}
+		}
+	}
+	return briefError(err)
 }

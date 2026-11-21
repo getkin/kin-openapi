@@ -2,6 +2,7 @@ package openapi3_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -327,4 +328,114 @@ func TestIssue1048_OneOfNoMatchDetailsDisabled(t *testing.T) {
 	var me openapi3.MultiError
 	require.ErrorAs(t, err, &me)
 	require.Len(t, me, 4)
+}
+
+// TestIssue1048_OneOfBranchWrappedErrorsStayCompact is a regression test:
+// a branch error whose Origin wraps a MultiError (e.g. an unsupported
+// property under additionalProperties: false) used to be rendered inside the
+// oneOf branch list with its full "Schema:"/"Value:" dumps, and indenting
+// those multi-line dumps turned blank lines into trailing whitespace, which
+// the project's CI rejects (`git grep -IErn '\s$'`). Branch errors must
+// render compactly and the message must not contain trailing whitespace.
+func TestIssue1048_OneOfBranchWrappedErrorsStayCompact(t *testing.T) {
+	t.Parallel()
+
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+components:
+  schemas:
+    Outer:
+      oneOf:
+        - $ref: "#/components/schemas/A"
+        - $ref: "#/components/schemas/B"
+    A:
+      type: object
+      properties:
+        a:
+          type: string
+      additionalProperties: false
+    B:
+      type: object
+      properties:
+        b:
+          type: string
+      additionalProperties: false
+`[1:])
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+	require.NoError(t, doc.Validate(loader.Context))
+
+	// "c" is supported by neither branch.
+	err = doc.Components.Schemas["Outer"].Value.VisitJSON(map[string]any{"c": 1})
+	require.Error(t, err)
+
+	msg := err.Error()
+	require.ErrorContains(t, err, `value doesn't match any schema from "oneOf":`)
+	require.ErrorContains(t, err, `oneOf[0] ($ref "#/components/schemas/A"):`)
+	require.ErrorContains(t, err, `oneOf[1] ($ref "#/components/schemas/B"):`)
+	require.Contains(t, msg, `property "c" is unsupported`)
+
+	// Branch errors are rendered compactly: no per-branch schema/value dump.
+	require.NotContains(t, msg, "Schema:")
+	require.NotContains(t, msg, "Value:")
+
+	// No line of the rendered message carries trailing whitespace.
+	for line := range strings.Lines(msg) {
+		require.NotRegexp(t, `[ \t]+$`, line, "trailing whitespace in oneOf error message:\n%s", msg)
+	}
+
+	// The branch errors remain reachable programmatically as a MultiError.
+	var me openapi3.MultiError
+	require.ErrorAs(t, err, &me)
+	require.Len(t, me, 2)
+}
+
+// TestIssue1048_NestedOneOfMessageHasNoTrailingWhitespace is a regression
+// test: indenting the continuation lines of a nested oneOf branch list must
+// not leave trailing whitespace on blank lines.
+func TestIssue1048_NestedOneOfMessageHasNoTrailingWhitespace(t *testing.T) {
+	t.Parallel()
+
+	spec := []byte(`
+openapi: 3.0.1
+paths: {}
+info:
+  version: 1.1.1
+  title: title
+components:
+  schemas:
+    Outer:
+      oneOf:
+        - $ref: "#/components/schemas/Inner"
+        - type: object
+          properties:
+            name:
+              type: string
+          required:
+            - name
+    Inner:
+      oneOf:
+        - type: string
+          minLength: 5
+        - type: integer
+`[1:])
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(spec)
+	require.NoError(t, err)
+	require.NoError(t, doc.Validate(loader.Context))
+
+	err = doc.Components.Schemas["Outer"].Value.VisitJSON(true)
+	require.Error(t, err)
+
+	msg := err.Error()
+	for line := range strings.Lines(msg) {
+		require.NotRegexp(t, `[ \t]+$`, line, "trailing whitespace in oneOf error message:\n%s", msg)
+	}
 }

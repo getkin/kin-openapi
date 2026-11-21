@@ -93,6 +93,16 @@ func (err *SchemaError) brief() string {
 	return err.render(false)
 }
 
+// briefWithOriginBrief renders the error like brief, but with originMsg in
+// place of the Origin's own rendering: used to list a oneOf branch whose
+// Origin wraps a MultiError, rendering just the multi's brief list.
+func (err *SchemaError) briefWithOriginBrief(originMsg string) string {
+	if msg := err.customizedMessage(); msg != "" {
+		return msg
+	}
+	return err.renderWithOriginBrief(originMsg)
+}
+
 func (err *SchemaError) customizedMessage() string {
 	if err.customizeMessageError != nil {
 		return err.customizeMessageError(err)
@@ -100,9 +110,8 @@ func (err *SchemaError) customizedMessage() string {
 	return ""
 }
 
-func (err *SchemaError) render(includeDetails bool) string {
-	buf := bytes.NewBuffer(make([]byte, 0, 256))
-
+// writePathPrefix writes the `Error at "/path": ` prefix of the error, if any.
+func (err *SchemaError) writePathPrefix(buf *bytes.Buffer) {
 	// The Reason of an error converted from the JSON Schema 2020-12 validator
 	// already names the path.
 	if len(err.reversePath) > 0 && err.cause == nil {
@@ -114,6 +123,11 @@ func (err *SchemaError) render(includeDetails bool) string {
 		}
 		buf.WriteString(`": `)
 	}
+}
+
+func (err *SchemaError) render(includeDetails bool) string {
+	buf := bytes.NewBuffer(make([]byte, 0, 256))
+	err.writePathPrefix(buf)
 
 	if err.Origin != nil {
 		if includeDetails {
@@ -146,6 +160,23 @@ func (err *SchemaError) render(includeDetails bool) string {
 			panic(err)
 		}
 	}
+
+	return buf.String()
+}
+
+// renderWithOriginBrief renders the error like brief, but with originMsg in
+// place of the Origin's own rendering: used to list a oneOf branch whose
+// Origin wraps a MultiError, rendering just the multi's brief list. A path
+// prefix the Origin may have gained since (path segments are prepended as the
+// error propagates) is not repeated.
+func (err *SchemaError) renderWithOriginBrief(originMsg string) string {
+	buf := bytes.NewBuffer(make([]byte, 0, 256))
+	err.writePathPrefix(buf)
+
+	if prefix := buf.String(); prefix != "" && strings.HasPrefix(originMsg, prefix) {
+		originMsg = originMsg[len(prefix):]
+	}
+	buf.WriteString(originMsg)
 
 	return buf.String()
 }
