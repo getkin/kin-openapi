@@ -524,13 +524,22 @@ func (schema *Schema) VisitJSONNumber(value float64) error {
 	return schema.visitJSONNumber(settings, value)
 }
 
+// isIntegerValue reports whether value is an integer, as big.Float.IsInt does,
+// without allocating a big.Float.
+func isIntegerValue(value float64) bool {
+	if math.IsNaN(value) {
+		return big.NewFloat(value).IsInt() // panics, as before
+	}
+	return value == math.Trunc(value) && !math.IsInf(value, 0)
+}
+
 func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value float64) error {
 	var me MultiError
 	schemaType := schema.Type
 	requireInteger := false
 	if schemaType.Permits(TypeInteger) && !schemaType.Permits(TypeNumber) {
 		requireInteger = true
-		if bigFloat := big.NewFloat(value); !bigFloat.IsInt() {
+		if !isIntegerValue(value) {
 			if settings.failfast {
 				return errSchema
 			}
