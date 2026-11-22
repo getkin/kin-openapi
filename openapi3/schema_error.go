@@ -77,14 +77,41 @@ func (err *SchemaError) JSONPointer() []string {
 }
 
 func (err *SchemaError) Error() string {
-	if err.customizeMessageError != nil {
-		if msg := err.customizeMessageError(err); msg != "" {
-			return msg
-		}
+	if msg := err.customizedMessage(); msg != "" {
+		return msg
 	}
+	return err.render(!err.detailsDisabled)
+}
 
-	buf := bytes.NewBuffer(make([]byte, 0, 256))
+// brief renders the error like Error but without the "Schema:"/"Value:"
+// details, for listing this error among the branch errors of a combinator
+// (oneOf/anyOf/allOf) error message.
+func (err *SchemaError) brief() string {
+	if msg := err.customizedMessage(); msg != "" {
+		return msg
+	}
+	return err.render(false)
+}
 
+// briefWithOriginBrief renders the error like brief, but with originMsg in
+// place of the Origin's own rendering: used to list a oneOf branch whose
+// Origin wraps a MultiError, rendering just the multi's brief list.
+func (err *SchemaError) briefWithOriginBrief(originMsg string) string {
+	if msg := err.customizedMessage(); msg != "" {
+		return msg
+	}
+	return err.renderWithOriginBrief(originMsg)
+}
+
+func (err *SchemaError) customizedMessage() string {
+	if err.customizeMessageError != nil {
+		return err.customizeMessageError(err)
+	}
+	return ""
+}
+
+// writePathPrefix writes the `Error at "/path": ` prefix of the error, if any.
+func (err *SchemaError) writePathPrefix(buf *bytes.Buffer) {
 	// The Reason of an error converted from the JSON Schema 2020-12 validator
 	// already names the path.
 	if len(err.reversePath) > 0 && err.cause == nil {
@@ -96,9 +123,18 @@ func (err *SchemaError) Error() string {
 		}
 		buf.WriteString(`": `)
 	}
+}
+
+func (err *SchemaError) render(includeDetails bool) string {
+	buf := bytes.NewBuffer(make([]byte, 0, 256))
+	err.writePathPrefix(buf)
 
 	if err.Origin != nil {
-		buf.WriteString(err.Origin.Error())
+		if includeDetails {
+			buf.WriteString(err.Origin.Error())
+		} else {
+			buf.WriteString(briefError(err.Origin))
+		}
 
 		return buf.String()
 	}
@@ -112,7 +148,7 @@ func (err *SchemaError) Error() string {
 		buf.WriteString(reason)
 	}
 
-	if !err.detailsDisabled {
+	if includeDetails {
 		buf.WriteString("\nSchema:\n  ")
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("  ", "  ")
@@ -124,6 +160,23 @@ func (err *SchemaError) Error() string {
 			panic(err)
 		}
 	}
+
+	return buf.String()
+}
+
+// renderWithOriginBrief renders the error like brief, but with originMsg in
+// place of the Origin's own rendering: used to list a oneOf branch whose
+// Origin wraps a MultiError, rendering just the multi's brief list. A path
+// prefix the Origin may have gained since (path segments are prepended as the
+// error propagates) is not repeated.
+func (err *SchemaError) renderWithOriginBrief(originMsg string) string {
+	buf := bytes.NewBuffer(make([]byte, 0, 256))
+	err.writePathPrefix(buf)
+
+	if prefix := buf.String(); prefix != "" && strings.HasPrefix(originMsg, prefix) {
+		originMsg = originMsg[len(prefix):]
+	}
+	buf.WriteString(originMsg)
 
 	return buf.String()
 }

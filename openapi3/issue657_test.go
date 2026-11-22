@@ -53,7 +53,9 @@ components:
 			name:  "no valid value",
 			value: "ABCDE",
 			checkErr: func(t require.TestingT, err error, i ...any) {
-				require.ErrorContains(t, err, "doesn't match schema due to: minimum string length is 10")
+				require.ErrorContains(t, err, `value doesn't match any schema from "oneOf":`)
+				require.ErrorContains(t, err, `oneOf[0] (title "First rule"): minimum string length is 10`)
+				require.ErrorContains(t, err, `oneOf[1] (title "Second rule"): minimum string length is 15`)
 
 				wErr := &openapi3.MultiError{}
 				require.ErrorAs(t, err, wErr)

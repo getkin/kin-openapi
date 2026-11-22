@@ -213,6 +213,9 @@ func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
 	merges := false
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		k := node.Content[i]
+		if k == nil {
+			continue
+		}
 		if isMergeKey(k) {
 			merges = true
 			continue
@@ -226,7 +229,7 @@ func mappingEntry(node *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
 	}
 
 	for _, kv := range mappingPairs(node) {
-		if kv[0].Value == key {
+		if kv[0] != nil && kv[0].Value == key {
 			return kv[0], kv[1]
 		}
 	}
