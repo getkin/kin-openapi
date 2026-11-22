@@ -166,6 +166,9 @@ func mappingPairsOf(node *yaml.Node, expanding map[*yaml.Node]struct{}) [][2]*ya
 
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		k, v := node.Content[i], node.Content[i+1]
+		if k == nil {
+			continue
+		}
 		if isMergeKey(k) {
 			if expanding == nil {
 				expanding = make(map[*yaml.Node]struct{}, 1)
