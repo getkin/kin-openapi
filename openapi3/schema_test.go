@@ -264,6 +264,82 @@ var schemaExamples = []schemaExample{
 	},
 
 	{
+		Title: "ALLOF NULLABLE CHILD UNDER A TYPE",
+		Schema: &Schema{
+			Type:  &Types{TypeBoolean},
+			AllOf: SchemaRefs{NewBoolSchema().WithNullable().NewRef()},
+		},
+		Serialization: map[string]any{
+			"type": "boolean",
+			"allOf": []any{
+				map[string]any{"type": "boolean", "nullable": true},
+			},
+		},
+		AllValid: []any{
+			true,
+			false,
+		},
+		AllInvalid: []any{
+			nil,
+			2,
+			"bla",
+		},
+	},
+
+	{
+		Title: "ANYOF NULLABLE CHILD UNDER A TYPE",
+		Schema: &Schema{
+			Type: &Types{TypeInteger},
+			AnyOf: SchemaRefs{
+				NewIntegerSchema().WithNullable().NewRef(),
+				NewIntegerSchema().WithMin(10).NewRef(),
+			},
+		},
+		Serialization: map[string]any{
+			"type": "integer",
+			"anyOf": []any{
+				map[string]any{"type": "integer", "nullable": true},
+				map[string]any{"type": "integer", "minimum": 10},
+			},
+		},
+		AllValid: []any{
+			42,
+		},
+		AllInvalid: []any{
+			nil,
+			"bla",
+		},
+	},
+
+	{
+		Title: "ONEOF NULLABLE CHILD UNDER A NULLABLE TYPE",
+		Schema: &Schema{
+			Type:     &Types{TypeInteger},
+			Nullable: true,
+			OneOf: SchemaRefs{
+				NewIntegerSchema().WithNullable().NewRef(),
+				NewStringSchema().NewRef(),
+			},
+		},
+		Serialization: map[string]any{
+			"type":     "integer",
+			"nullable": true,
+			"oneOf": []any{
+				map[string]any{"type": "integer", "nullable": true},
+				map[string]any{"type": "string"},
+			},
+		},
+		AllValid: []any{
+			nil,
+			42,
+		},
+		AllInvalid: []any{
+			"bla",
+			true,
+		},
+	},
+
+	{
 		Title: "ANYOF WITH PARENT CONSTRAINTS",
 		Schema: NewAnyOfSchema(
 			NewObjectSchema().WithRequired([]string{"stringProp"}),
