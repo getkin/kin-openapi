@@ -12,6 +12,9 @@ import (
 	"io"
 )
 
+// rejectDuplicateNames is whether decodeJSON rejects duplicate member names.
+const rejectDuplicateNames = true
+
 // decodeJSON decodes like json.Decoder with UseNumber, but also rejects
 // objects with duplicate member names.
 // See https://github.com/getkin/kin-openapi/issues/322
