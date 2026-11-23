@@ -286,17 +286,20 @@ func decodeValueGuarded(dec valueDecoder, param string, sm *openapi3.Serializati
 	seen = append(seen, schema.Value)
 
 	if len(schema.Value.AllOf) > 0 {
+		// Keep the first decoded value: a subschema that decodes nothing, such
+		// as {minimum: 3} or {default: 1}, must not discard what another did.
 		var value any
-		var err error
 		for _, sr := range schema.Value.AllOf {
-			var f bool
-			value, f, err = decodeValueGuarded(dec, param, sm, sr, required, seen)
+			v, f, err := decodeValueGuarded(dec, param, sm, sr, required, seen)
 			found = found || f
-			if value == nil || err != nil {
-				break
+			if err != nil {
+				return nil, found, err
+			}
+			if value == nil {
+				value = v
 			}
 		}
-		return value, found, err
+		return value, found, nil
 	}
 
 	if len(schema.Value.AnyOf) > 0 {
@@ -626,15 +629,18 @@ func (d *urlValuesDecoder) parseArray(raw []string, schemaRef *openapi3.SchemaRe
 
 func parseValue(v string, schema *openapi3.SchemaRef) (any, error) {
 	if len(schema.Value.AllOf) > 0 {
+		// Keep the first parsed value, see decodeValueGuarded.
 		var value any
-		var err error
 		for _, sr := range schema.Value.AllOf {
-			value, err = parseValue(v, sr)
-			if value == nil || err != nil {
-				break
+			item, err := parseValue(v, sr)
+			if err != nil {
+				return nil, err
+			}
+			if value == nil {
+				value = item
 			}
 		}
-		return value, err
+		return value, nil
 	}
 
 	if len(schema.Value.AnyOf) > 0 {
