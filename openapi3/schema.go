@@ -1841,19 +1841,7 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 
 	for _, schemaType := range schema.Type.Slice() {
 		switch schemaType {
-		case TypeBoolean:
-		case TypeNumber:
-			if format := schema.Format; len(format) > 0 && !isNumberFormat(format) && validationOpts.schemaFormatValidationEnabled {
-				return visited, unsupportedFormat(format)
-			}
-		case TypeInteger:
-			if format := schema.Format; len(format) > 0 && !isIntegerFormat(format) && validationOpts.schemaFormatValidationEnabled {
-				return visited, unsupportedFormat(format)
-			}
-		case TypeString:
-			if format := schema.Format; len(format) > 0 && !isStringFormat(format) && validationOpts.schemaFormatValidationEnabled {
-				return visited, unsupportedFormat(format)
-			}
+		case TypeBoolean, TypeNumber, TypeInteger, TypeString:
 		case TypeArray:
 			if schema.Items == nil && !validationOpts.jsonSchema2020ValidationEnabled && len(schema.PrefixItems) == 0 {
 				return visited, newSchemaItemsRequired(schema.Origin)
@@ -1868,10 +1856,17 @@ func (schema *Schema) validate(ctx context.Context, visited map[*Schema]struct{}
 		}
 	}
 
-	// Without `type`, `format` may apply to a number, an integer or a string.
-	if format := schema.Format; len(format) > 0 && schema.Type.IsEmpty() && validationOpts.schemaFormatValidationEnabled &&
-		!isNumberFormat(format) && !isIntegerFormat(format) && !isStringFormat(format) {
-		return visited, unsupportedFormat(format)
+	// `format` only applies to values of the types it is defined for, so it has to be known for one of
+	// the number, integer and string types listed, or for any of them when `type` is omitted.
+	if format := schema.Format; len(format) > 0 && validationOpts.schemaFormatValidationEnabled {
+		anyType := schema.Type.IsEmpty()
+		number := anyType || schema.Type.Includes(TypeNumber)
+		integer := anyType || schema.Type.Includes(TypeInteger)
+		str := anyType || schema.Type.Includes(TypeString)
+		if (number || integer || str) &&
+			!(number && isNumberFormat(format)) && !(integer && isIntegerFormat(format)) && !(str && isStringFormat(format)) {
+			return visited, unsupportedFormat(format)
+		}
 	}
 
 	// `pattern` applies to every string value, also when `type` is omitted.

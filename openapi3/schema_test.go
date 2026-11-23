@@ -1221,6 +1221,33 @@ func TestSchemaFormatValidationWithoutType(t *testing.T) {
 	require.NoError(t, (&Schema{Format: "code/golang"}).Validate(t.Context()))
 }
 
+func TestSchemaFormatValidationWithTypeArray(t *testing.T) {
+	t.Parallel()
+
+	ctx := WithValidationOptions(t.Context(), EnableSchemaFormatValidation(), IsOpenAPI31OrLater())
+
+	// A format only has to be known for one of the types it may apply to.
+	for _, schema := range []*Schema{
+		{Type: &Types{TypeString, TypeInteger}, Format: "int32"},
+		{Type: &Types{TypeInteger, TypeString}, Format: "date-time"},
+		{Type: &Types{TypeString, TypeNumber}, Format: "double"},
+		{Type: &Types{TypeNumber, TypeInteger}, Format: "int64"},
+		{Type: &Types{TypeString, TypeNull}, Format: "date"},
+		{Type: &Types{TypeBoolean, TypeObject}, Format: "code/golang"},
+	} {
+		require.NoError(t, schema.Validate(ctx), "%v %s", schema.Type.Slice(), schema.Format)
+	}
+
+	for _, schema := range []*Schema{
+		{Type: &Types{TypeString, TypeInteger}, Format: "code/golang"},
+		{Type: &Types{TypeNumber, TypeNull}, Format: "date-time"},
+		{Type: &Types{TypeBoolean, TypeString}, Format: "int32"},
+	} {
+		err := schema.Validate(ctx)
+		require.EqualError(t, err, fmt.Sprintf(`unsupported 'format' value %q`, schema.Format))
+	}
+}
+
 func TestSchemaErrors(t *testing.T) {
 	t.Parallel()
 
