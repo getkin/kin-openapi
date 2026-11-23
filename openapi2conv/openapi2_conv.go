@@ -87,8 +87,10 @@ func ToV3WithLoader(doc2 *openapi2.T, loader *openapi3.Loader, location *url.URL
 		}
 	}
 
-	if paths := doc2.Paths; len(paths) != 0 {
+	pathsExtensions := stripNonExtensions(maps.Clone(doc2.PathsExtensions))
+	if paths := doc2.Paths; len(paths) != 0 || len(pathsExtensions) != 0 {
 		doc3.Paths = openapi3.NewPathsWithCapacity(len(paths))
+		doc3.Paths.Extensions = pathsExtensions
 		for path, pathItem := range paths {
 			r, err := ToV3PathItem(doc2, doc3.Components, pathItem, doc2.Consumes)
 			if err != nil {
@@ -832,6 +834,9 @@ func FromV3(doc3 *openapi3.T) (*openapi2.T, error) {
 		doc2.Schemes = append(doc2.Schemes, "http")
 	}
 
+	if doc3.Paths != nil {
+		doc2.PathsExtensions = stripNonExtensions(maps.Clone(doc3.Paths.Extensions))
+	}
 	for path, pathItem := range doc3.Paths.Map() {
 		if pathItem == nil {
 			continue

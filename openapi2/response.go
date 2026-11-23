@@ -2,9 +2,7 @@ package openapi2
 
 import (
 	"encoding/json"
-	"fmt"
 	"maps"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -122,40 +120,10 @@ func (responses *Responses) Map() map[string]*Response {
 
 // MarshalJSON returns the JSON encoding of Responses.
 func (responses Responses) MarshalJSON() ([]byte, error) {
-	m := make(map[string]any, len(responses.m)+len(responses.Extensions))
-	maps.Copy(m, responses.Extensions)
-	for k, v := range responses.m {
-		m[k] = v
-	}
-	return json.Marshal(m)
+	return mapWithExtensions[Response](responses).MarshalJSON()
 }
 
 // UnmarshalJSON sets Responses to a copy of data.
 func (responses *Responses) UnmarshalJSON(data []byte) error {
-	var m map[string]json.RawMessage
-	if err := unmarshalJSON(data, &m); err != nil {
-		return unmarshalError(err)
-	}
-	x := Responses{m: make(map[string]*Response, len(m))}
-	for k, v := range m {
-		if strings.HasPrefix(k, "x-") {
-			if x.Extensions == nil {
-				x.Extensions = make(map[string]any)
-			}
-			var ext any
-			if err := unmarshalJSON(v, &ext); err != nil {
-				return unmarshalError(err)
-			}
-			x.Extensions[k] = ext
-			continue
-		}
-		var response *Response
-		if err := unmarshalJSON(v, &response); err != nil {
-			// Decoding the member on its own loses its key from the error: add it back.
-			return fmt.Errorf("response %q: %w", k, err)
-		}
-		x.m[k] = response
-	}
-	*responses = x
-	return nil
+	return (*mapWithExtensions[Response])(responses).unmarshalJSON(data, "response")
 }

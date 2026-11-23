@@ -11,24 +11,32 @@ import (
 	"strings"
 )
 
-var _ jsonv2.UnmarshalerFrom = (*Responses)(nil)
+var (
+	_ jsonv2.UnmarshalerFrom = (*Responses)(nil)
+	_ jsonv2.UnmarshalerFrom = (*pathsObject)(nil)
+)
 
 // UnmarshalJSONFrom sets Responses to the next JSON value read from dec.
 // Decoding each member from dec (rather than from a copy of its bytes)
 // keeps the member's key in the path of any error.
 func (responses *Responses) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return (*mapWithExtensions[Response])(responses).UnmarshalJSONFrom(dec)
+}
+
+// UnmarshalJSONFrom keeps the member name in errors from decoding its value.
+func (obj *mapWithExtensions[V]) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	if dec.PeekKind() != jsontext.KindBeginObject {
 		var m map[string]jsontext.Value // Reports non-object values as UnmarshalJSON does
 		if err := jsonv2.UnmarshalDecode(dec, &m); err != nil {
 			return err
 		}
-		*responses = Responses{m: make(map[string]*Response)}
+		*obj = mapWithExtensions[V]{m: make(map[string]*V)}
 		return nil
 	}
 	if _, err := dec.ReadToken(); err != nil {
 		return err
 	}
-	x := Responses{m: make(map[string]*Response)}
+	x := mapWithExtensions[V]{m: make(map[string]*V)}
 	for dec.PeekKind() != jsontext.KindEndObject {
 		tok, err := dec.ReadToken()
 		if err != nil {
@@ -46,15 +54,15 @@ func (responses *Responses) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 			x.Extensions[k] = ext
 			continue
 		}
-		var response *Response
-		if err := jsonv2.UnmarshalDecode(dec, &response); err != nil {
+		var value *V
+		if err := jsonv2.UnmarshalDecode(dec, &value); err != nil {
 			return err
 		}
-		x.m[k] = response
+		x.m[k] = value
 	}
 	if _, err := dec.ReadToken(); err != nil {
 		return err
 	}
-	*responses = x
+	*obj = x
 	return nil
 }

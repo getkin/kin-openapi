@@ -3,6 +3,7 @@ package openapi2
 import (
 	"encoding/json"
 	"maps"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -10,6 +11,8 @@ import (
 // T is the root of an OpenAPI v2 document
 type T struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
+	// PathsExtensions holds the x- fields of the Paths Object, alongside its routes.
+	PathsExtensions map[string]any `json:"-" yaml:"-"`
 
 	Swagger             string                     `json:"swagger,case:strict" yaml:"swagger"` // required
 	Info                openapi3.Info              `json:"info,case:strict" yaml:"info"`       // required
@@ -52,8 +55,10 @@ func (doc T) MarshalJSON() ([]byte, error) {
 	if x := doc.BasePath; x != "" {
 		m["basePath"] = x
 	}
-	if x := doc.Paths; len(x) != 0 {
-		m["paths"] = x
+	if len(doc.PathsExtensions) != 0 {
+		m["paths"] = mapWithExtensions[PathItem]{m: doc.Paths, Extensions: doc.PathsExtensions}
+	} else if len(doc.Paths) != 0 {
+		m["paths"] = doc.Paths
 	}
 	if x := doc.Definitions; len(x) != 0 {
 		m["definitions"] = x
@@ -80,11 +85,28 @@ func (doc T) MarshalJSON() ([]byte, error) {
 func (doc *T) UnmarshalJSON(data []byte) error {
 	type TBis T
 	var x TBis
-	if err := unmarshalJSON(data, &x); err != nil {
-		return unmarshalError(err)
+	// The extension pass already reads every Paths key. Ordinary documents
+	// can keep decoding their routes straight into the public map.
+	extensionsErr := unmarshalJSON(data, &x.Extensions)
+	var fieldsErr error
+	if pathsHaveExtensions(x.Extensions) {
+		wire := struct {
+			*TBis
+			Paths *pathsObject `json:"paths,case:strict" yaml:"paths"`
+		}{TBis: &x}
+		fieldsErr = unmarshalJSON(data, &wire)
+		if wire.Paths != nil {
+			x.Paths = wire.Paths.m
+			x.PathsExtensions = wire.Paths.Extensions
+		}
+	} else {
+		fieldsErr = unmarshalJSON(data, &x)
 	}
-	if err := unmarshalJSON(data, &x.Extensions); err != nil {
-		return unmarshalError(err)
+	if fieldsErr != nil {
+		return unmarshalError(fieldsErr)
+	}
+	if extensionsErr != nil {
+		return unmarshalError(extensionsErr)
 	}
 	delete(x.Extensions, "swagger")
 	delete(x.Extensions, "info")
@@ -106,6 +128,21 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 	}
 	*doc = T(x)
 	return nil
+}
+
+func pathsHaveExtensions(fields map[string]any) bool {
+	for name, value := range fields {
+		// encoding/json v1 also matches the paths field case-insensitively.
+		if strings.EqualFold(name, "paths") {
+			paths, _ := value.(map[string]any)
+			for key := range paths {
+				if strings.HasPrefix(key, "x-") {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {
