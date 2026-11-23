@@ -163,12 +163,12 @@ func TestRouter(t *testing.T) {
 	doc.Servers = []*openapi3.Server{
 		{URL: "https://www.example.com/api/v1"},
 		{URL: "{scheme}://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
-			"d0":     {Default: "www"},
-			"d1":     {Default: "example", Enum: []string{"example"}},
-			"scheme": {Default: "https", Enum: []string{"https", "http"}},
+			"d0":     {Default: openapi3.Ptr("www")},
+			"d1":     {Default: openapi3.Ptr("example"), Enum: []string{"example"}},
+			"scheme": {Default: openapi3.Ptr("https"), Enum: []string{"https", "http"}},
 		}},
 		{URL: "http://127.0.0.1:{port}/api/v1", Variables: map[string]*openapi3.ServerVariable{
-			"port": {Default: "8000"},
+			"port": {Default: openapi3.Ptr("8000")},
 		}},
 	}
 	err = doc.Validate(t.Context())
@@ -192,7 +192,7 @@ func TestRouter(t *testing.T) {
 
 	doc.Servers = []*openapi3.Server{
 		{URL: "{server}", Variables: map[string]*openapi3.ServerVariable{
-			"server": {Default: "/api/v1"},
+			"server": {Default: openapi3.Ptr("/api/v1")},
 		}},
 	}
 	err = doc.Validate(t.Context())
@@ -219,10 +219,10 @@ func TestPermuteScheme(t *testing.T) {
 
 	scheme0 := "{sche}{me}"
 	server := &openapi3.Server{URL: scheme0 + "://{d0}.{d1}.com/api/v1/", Variables: map[string]*openapi3.ServerVariable{
-		"d0":   {Default: "www"},
-		"d1":   {Default: "example", Enum: []string{"example"}},
-		"sche": {Default: "http"},
-		"me":   {Default: "s", Enum: []string{"", "s"}},
+		"d0":   {Default: openapi3.Ptr("www")},
+		"d1":   {Default: openapi3.Ptr("example"), Enum: []string{"example"}},
+		"sche": {Default: openapi3.Ptr("http")},
+		"me":   {Default: openapi3.Ptr("s"), Enum: []string{"", "s"}},
 	}}
 	err := server.Validate(t.Context())
 	require.NoError(t, err)
@@ -570,7 +570,7 @@ func newServerWithVariables(url string, variables map[string]string) *openapi3.S
 func newServerVariable(defaultValue string) *openapi3.ServerVariable {
 	return &openapi3.ServerVariable{
 		Enum:        nil,
-		Default:     defaultValue,
+		Default:     openapi3.Ptr(defaultValue),
 		Description: "",
 	}
 }
