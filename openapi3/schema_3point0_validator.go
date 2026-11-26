@@ -1030,6 +1030,9 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 			}
 			continue
 		}
+		if schema.propertyInAllOf(settings, k) {
+			continue
+		}
 		if settings.failfast {
 			return errSchema
 		}
@@ -1091,6 +1094,41 @@ func (schema *Schema) readOnlyOrWriteOnlyInAllOf(settings *schemaValidationSetti
 	}
 	for _, s := range settings.visitedSchemas[settings.visitedBase:] {
 		if s.declaresReadOnlyOrWriteOnly(settings, k, &seen) {
+			return true
+		}
+	}
+	return false
+}
+
+// propertyInAllOf reports whether the property named k is declared by a
+// schema that applies to the current value along with this one:
+// this schema's "allOf" subschemas, the schemas this one is visited as a
+// subschema of, and their own "allOf" subschemas.
+// Such a property is known to the composed schema, so it must not be
+// rejected by this schema's "additionalProperties: false".
+func (schema *Schema) propertyInAllOf(settings *schemaValidationSettings, k string) bool {
+	var seen []*Schema
+	if schema.declaresProperty(k, &seen) {
+		return true
+	}
+	for _, s := range settings.visitedSchemas[settings.visitedBase:] {
+		if s.declaresProperty(k, &seen) {
+			return true
+		}
+	}
+	return false
+}
+
+func (schema *Schema) declaresProperty(k string, seen *[]*Schema) bool {
+	if schema == nil || slices.Contains(*seen, schema) {
+		return false
+	}
+	*seen = append(*seen, schema)
+	if schema.Properties[k] != nil {
+		return true
+	}
+	for _, item := range schema.AllOf {
+		if item.Value.declaresProperty(k, seen) {
 			return true
 		}
 	}

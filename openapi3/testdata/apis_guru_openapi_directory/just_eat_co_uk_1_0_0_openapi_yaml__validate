@@ -1,302 +1,73 @@
-invalid components: schema "ActiveConsumerOffersByRestaurant": invalid example: Error at "/offers/0": doesn't match schema due to: doesn't match schema due to: property "amount" is unsupported
+invalid components: schema "ConsumerOffer_Bogof": invalid example: doesn't match schema due to: Error at "/priority": property "priority" is missing
 Schema:
   {
     "additionalProperties": false,
     "properties": {
-      "Type": {
-        "description": "Contains the offer data type name",
+      "campaignId": {
+        "description": "The unique identifier of the offer campaign.",
+        "nullable": true,
         "type": "string"
       },
+      "consumerSegment": {
+        "$ref": "#/components/schemas/ConsumerSegment",
+        "description": "Consumer Segment to which offer applies",
+        "nullable": false
+      },
       "offerId": {
-        "description": "Unique Identifier for Offer",
+        "description": "The unique identifier of the offer.",
+        "type": "string"
+      },
+      "offerType": {
+        "$ref": "#/components/schemas/ConsumerOfferType",
+        "description": "The type of the offer.",
+        "nullable": false
+      },
+      "priority": {
+        "$ref": "#/components/schemas/ConsumerOffersPriority",
+        "description": "The offers priority dictates the order and combination approach when multiple offers are executed together.",
+        "nullable": false
+      },
+      "qualifyingConditions": {
+        "$ref": "#/components/schemas/ConsumerOfferQualifyingConditions",
+        "description": "Conditions that must be met in order to get the offer.",
+        "nullable": true
+      },
+      "restaurantId": {
+        "description": "The unique identifier of the restaurant providing the offers.",
         "type": "string"
       }
     },
     "required": [
-      "Type",
-      "offerId"
+      "offerId",
+      "restaurantId",
+      "offerType",
+      "consumerSegment",
+      "priority"
     ],
+    "title": "ConsumerOffer",
     "type": "object"
   }
 
 Value:
   {
-    "Type": "Percent",
-    "amount": 20,
-    "maxQualifyingValue": 45000,
+    "campaignId": "freeIceCream",
+    "consumerSegment": "All",
     "offerId": "12345sd",
-    "qualifyingValue": 15000
-  }
- | property "maxQualifyingValue" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "Type": {
-        "description": "Contains the offer data type name",
-        "type": "string"
+    "offerType": "Bogof",
+    "products": [
+      {
+        "id": "iceCreamA"
       },
-      "offerId": {
-        "description": "Unique Identifier for Offer",
-        "type": "string"
+      {
+        "id": "iceCreamB"
+      },
+      {
+        "id": "iceCreamC"
       }
-    },
-    "required": [
-      "Type",
-      "offerId"
     ],
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 20,
-    "maxQualifyingValue": 45000,
-    "offerId": "12345sd",
-    "qualifyingValue": 15000
-  }
- | property "qualifyingValue" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "Type": {
-        "description": "Contains the offer data type name",
-        "type": "string"
-      },
-      "offerId": {
-        "description": "Unique Identifier for Offer",
-        "type": "string"
-      }
+    "prompt": {
+      "description": "Ice Cream for free when you order Ice Cream",
+      "title": "Nice! You get this free with your order"
     },
-    "required": [
-      "Type",
-      "offerId"
-    ],
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 20,
-    "maxQualifyingValue": 45000,
-    "offerId": "12345sd",
-    "qualifyingValue": 15000
-  }
- And property "Type" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "amount": {
-        "description": "The percentage value discount",
-        "format": "decimal",
-        "type": "number"
-      },
-      "maxQualifyingValue": {
-        "description": "The maximum order value required to be eligible for the offer",
-        "format": "decimal",
-        "type": "number"
-      },
-      "qualifyingValue": {
-        "description": "The minimum order value required to be eligible for the Offer",
-        "format": "decimal",
-        "type": "number"
-      }
-    },
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 20,
-    "maxQualifyingValue": 45000,
-    "offerId": "12345sd",
-    "qualifyingValue": 15000
-  }
- | property "offerId" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "amount": {
-        "description": "The percentage value discount",
-        "format": "decimal",
-        "type": "number"
-      },
-      "maxQualifyingValue": {
-        "description": "The maximum order value required to be eligible for the offer",
-        "format": "decimal",
-        "type": "number"
-      },
-      "qualifyingValue": {
-        "description": "The minimum order value required to be eligible for the Offer",
-        "format": "decimal",
-        "type": "number"
-      }
-    },
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 20,
-    "maxQualifyingValue": 45000,
-    "offerId": "12345sd",
-    "qualifyingValue": 15000
-  }
- | Error at "/offers/1": doesn't match schema due to: doesn't match schema due to: property "amount" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "Type": {
-        "description": "Contains the offer data type name",
-        "type": "string"
-      },
-      "offerId": {
-        "description": "Unique Identifier for Offer",
-        "type": "string"
-      }
-    },
-    "required": [
-      "Type",
-      "offerId"
-    ],
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 15,
-    "maxQualifyingValue": 70000,
-    "offerId": "45sd345",
-    "qualifyingValue": 35000
-  }
- | property "maxQualifyingValue" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "Type": {
-        "description": "Contains the offer data type name",
-        "type": "string"
-      },
-      "offerId": {
-        "description": "Unique Identifier for Offer",
-        "type": "string"
-      }
-    },
-    "required": [
-      "Type",
-      "offerId"
-    ],
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 15,
-    "maxQualifyingValue": 70000,
-    "offerId": "45sd345",
-    "qualifyingValue": 35000
-  }
- | property "qualifyingValue" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "Type": {
-        "description": "Contains the offer data type name",
-        "type": "string"
-      },
-      "offerId": {
-        "description": "Unique Identifier for Offer",
-        "type": "string"
-      }
-    },
-    "required": [
-      "Type",
-      "offerId"
-    ],
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 15,
-    "maxQualifyingValue": 70000,
-    "offerId": "45sd345",
-    "qualifyingValue": 35000
-  }
- And property "Type" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "amount": {
-        "description": "The percentage value discount",
-        "format": "decimal",
-        "type": "number"
-      },
-      "maxQualifyingValue": {
-        "description": "The maximum order value required to be eligible for the offer",
-        "format": "decimal",
-        "type": "number"
-      },
-      "qualifyingValue": {
-        "description": "The minimum order value required to be eligible for the Offer",
-        "format": "decimal",
-        "type": "number"
-      }
-    },
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 15,
-    "maxQualifyingValue": 70000,
-    "offerId": "45sd345",
-    "qualifyingValue": 35000
-  }
- | property "offerId" is unsupported
-Schema:
-  {
-    "additionalProperties": false,
-    "properties": {
-      "amount": {
-        "description": "The percentage value discount",
-        "format": "decimal",
-        "type": "number"
-      },
-      "maxQualifyingValue": {
-        "description": "The maximum order value required to be eligible for the offer",
-        "format": "decimal",
-        "type": "number"
-      },
-      "qualifyingValue": {
-        "description": "The minimum order value required to be eligible for the Offer",
-        "format": "decimal",
-        "type": "number"
-      }
-    },
-    "type": "object"
-  }
-
-Value:
-  {
-    "Type": "Percent",
-    "amount": 15,
-    "maxQualifyingValue": 70000,
-    "offerId": "45sd345",
-    "qualifyingValue": 35000
+    "restaurantId": "1234sd"
   }
