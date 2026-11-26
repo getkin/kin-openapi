@@ -3,8 +3,9 @@ package openapi3_test
 import (
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // TestIssue958: a property declared by an "allOf" subschema must not be
@@ -79,7 +80,7 @@ components:
 	// A property declared by no subschema is still unsupported.
 	err = schema.VisitJSON(map[string]any{"nope": 1}, openapi3.VisitAsRequest())
 	require.Error(t, err)
-	require.Contains(t, err.Error(), `property "nope" is unsupported`)
+	require.ErrorContains(t, err, `property "nope" is unsupported`)
 
 	// A property declared by a subschema is still validated against it.
 	err = schema.VisitJSON(map[string]any{"category": 42}, openapi3.VisitAsRequest())
