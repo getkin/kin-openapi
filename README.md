@@ -331,6 +331,7 @@ for _, path := range doc.Paths.InMatchingOrder() {
 
 ### v0.154.0
 * With `openapi3.EnableSchemaFormatValidation()`, `(*openapi3.Schema).Validate(..)` now also rejects an unknown `format` on a schema without `type`, as it does for `type: string`, `number` and `integer`. A format known for any of these types is still accepted.
+* `openapi3filter.ValidateParameter` (hence `ValidateRequest` and `Validator.Middleware`) now ignores a header parameter named `Accept`, `Content-Type` or `Authorization`, as every version's Parameter Object says it "SHALL be ignored". Such a parameter used to be enforced: a request was rejected when one was `required` and absent, or when its value did not match the parameter's schema, and the `default` of one was added to the request the handler received. The name is compared canonically, as the header decoder already does, so `content-type` names the same header as `Content-Type`.
 
 ### v0.153.0
 * `openapi3filter` now parses `number` values of parameters and `application/x-www-form-urlencoded`/`multipart/form-data` bodies as decimal numbers only, so Go float literals such as `0x1p4`, `1_000`, `Inf`, `-infinity` or `NaN` are now rejected as invalid numbers.
