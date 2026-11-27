@@ -162,12 +162,43 @@ func populateDefaultQueryParameters(q url.Values, parameterName string, value an
 	}
 }
 
+// ignoredHeaderParameters are the header parameter names whose definition the
+// OpenAPI specification requires to be ignored. From the name field of the
+// Parameter Object, worded identically in 3.0.4 and 3.1.1: if in is "header"
+// and the name field is "Accept", "Content-Type" or "Authorization", the
+// parameter definition SHALL be ignored.
+var ignoredHeaderParameters = map[string]struct{}{
+	"Accept":        {},
+	"Content-Type":  {},
+	"Authorization": {},
+}
+
+// isIgnoredHeaderParameter reports whether the specification requires this
+// parameter definition to be ignored. The name is canonicalized because the
+// header decoder also resolves a parameter name through
+// http.CanonicalHeaderKey, so "content-type" names the same header as
+// "Content-Type".
+func isIgnoredHeaderParameter(parameter *openapi3.Parameter) bool {
+	if parameter.In != openapi3.ParameterInHeader {
+		return false
+	}
+	_, ok := ignoredHeaderParameters[http.CanonicalHeaderKey(parameter.Name)]
+	return ok
+}
+
 // ValidateParameter validates a parameter's value by JSON schema.
 // The function returns RequestError with a ParseError cause when unable to parse a value.
 // The function returns RequestError with ErrInvalidRequired cause when a value of a required parameter is not defined.
 // The function returns RequestError with ErrInvalidEmptyValue cause when a value of a required parameter is not defined.
 // The function returns RequestError with a openapi3.SchemaError cause when a value is invalid by JSON schema.
+//
+// A header parameter named "Accept", "Content-Type" or "Authorization" is
+// ignored, as the specification requires.
 func ValidateParameter(ctx context.Context, input *RequestValidationInput, parameter *openapi3.Parameter) error {
+	if isIgnoredHeaderParameter(parameter) {
+		return nil
+	}
+
 	if parameter.Schema == nil && parameter.Content == nil {
 		// We have no schema for the parameter. Assume that everything passes
 		// a schema-less check, but this could also be an error. The OpenAPI
