@@ -3,6 +3,7 @@ package openapi3_test
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -344,4 +345,62 @@ func TestInternalizeRefsPathlessDocumentDiscriminator(t *testing.T) {
 	doc.InternalizeRefs(t.Context(), nil)
 
 	require.Equal(t, "#/components/schemas/y_Dog", doc.Components.Schemas["y_Container"].Value.Discriminator.Mapping["d"].Ref)
+}
+
+func TestInternalizeRefsLoadFromDataRootComponent(t *testing.T) {
+	t.Parallel()
+
+	root := []byte(`
+openapi: 3.0.3
+info: {title: t, version: '1'}
+paths:
+  /items:
+    get:
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Item
+components:
+  schemas:
+    ItemID:
+      $ref: common.yaml#/components/schemas/ID
+`)
+	common := []byte(`
+components:
+  schemas:
+    ID:
+      type: string
+    Item:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ID'
+`)
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+		if location.String() == "common.yaml" {
+			return common, nil
+		}
+		return nil, fmt.Errorf("not found: %s", location)
+	}
+
+	doc, err := loader.LoadFromData(root)
+	require.NoError(t, err)
+	doc.InternalizeRefs(t.Context(), nil)
+	require.NoError(t, doc.Validate(t.Context()))
+
+	require.Contains(t, doc.Components.Schemas, "common_Item")
+	require.Equal(t, "#/components/schemas/ItemID", doc.Components.Schemas["common_Item"].Value.Properties["id"].Ref)
+	require.Equal(t, "string", doc.Components.Schemas["ItemID"].Value.Type.Slice()[0])
+
+	data, err := doc.MarshalJSON()
+	require.NoError(t, err)
+	reloaded, err := openapi3.NewLoader().LoadFromData(data)
+	require.NoError(t, err)
+	require.NoError(t, reloaded.Validate(t.Context()))
 }

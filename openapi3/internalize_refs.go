@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"net/url"
 	"path"
 	"strings"
 )
@@ -45,6 +46,9 @@ func DefaultRefNameResolver(doc *T, ref ComponentRef) string {
 		nameInRoot = strings.TrimPrefix(nameInRoot, "#")
 
 		rootCompURI := copyURI(doc.url)
+		if rootCompURI == nil {
+			rootCompURI = &url.URL{}
+		}
 		rootCompURI.Fragment = nameInRoot
 		name = rootCompURI
 	}
