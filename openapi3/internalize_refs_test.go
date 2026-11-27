@@ -400,7 +400,8 @@ components:
 
 	data, err := doc.MarshalJSON()
 	require.NoError(t, err)
-	reloaded, err := openapi3.NewLoader().LoadFromData(data)
+	strict := openapi3.NewLoader()
+	reloaded, err := strict.LoadFromData(data)
 	require.NoError(t, err)
 	require.NoError(t, reloaded.Validate(t.Context()))
 }
