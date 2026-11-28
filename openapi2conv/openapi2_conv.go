@@ -140,6 +140,13 @@ func ToV3PathItem(doc2 *openapi2.T, components *openapi3.Components, pathItem *o
 		Extensions: stripNonExtensions(pathItem.Extensions),
 	}
 	for method, operation := range pathItem.Operations() {
+		// The produces of the document applies to an operation declaring
+		// none. An empty list clears it.
+		if operation.Produces == nil && doc2 != nil {
+			inherited := *operation
+			inherited.Produces = doc2.Produces
+			operation = &inherited
+		}
 		doc3Operation, err := ToV3Operation(components, pathItem, operation, consumes)
 		if err != nil {
 			return nil, err
