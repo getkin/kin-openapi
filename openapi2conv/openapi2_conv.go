@@ -660,35 +660,60 @@ func ToV3SchemaRef(schema *openapi2.SchemaRef) *openapi3.SchemaRef {
 }
 
 func toV3AdditionalProperties(from openapi3.AdditionalProperties) openapi3.AdditionalProperties {
+	return convertAdditionalPropertiesRefs(from, ToV3Ref)
+}
+
+// convertAdditionalPropertiesRefs returns a copy of from in which every
+// reference, however deeply nested, is rewritten by convert. The schema of
+// additionalProperties is of the same type in both versions, so its references
+// are all there is to convert.
+func convertAdditionalPropertiesRefs(from openapi3.AdditionalProperties, convert func(string) string) openapi3.AdditionalProperties {
 	return openapi3.AdditionalProperties{
 		Has:    from.Has,
-		Schema: convertRefsInV3SchemaRef(from.Schema),
+		Schema: convertRefsInV3SchemaRef(from.Schema, convert),
 	}
 }
 
-func convertRefsInV3SchemaRef(from *openapi3.SchemaRef) *openapi3.SchemaRef {
+func convertRefsInV3SchemaRef(from *openapi3.SchemaRef, convert func(string) string) *openapi3.SchemaRef {
 	if from == nil {
 		return nil
 	}
 	to := *from
-	to.Ref = ToV3Ref(to.Ref)
+	if to.Ref != "" {
+		// The target is converted where it is defined. Walking into it
+		// would never end on a recursive schema.
+		to.Ref = convert(to.Ref)
+		return &to
+	}
 	if to.Value != nil {
 		v := *from.Value
 		to.Value = &v
-		if to.Value.Items != nil {
-			to.Value.Items.Ref = ToV3Ref(to.Value.Items.Ref)
-		}
-		to.Value.AdditionalProperties = toV3AdditionalProperties(to.Value.AdditionalProperties)
-
-		if len(to.Value.AllOf) > 0 {
-			allOf := make(openapi3.SchemaRefs, len(to.Value.AllOf))
-			for i, schemaRef := range to.Value.AllOf {
-				allOf[i] = convertRefsInV3SchemaRef(schemaRef)
+		v.Items = convertRefsInV3SchemaRef(v.Items, convert)
+		v.Not = convertRefsInV3SchemaRef(v.Not, convert)
+		v.AllOf = convertRefsInV3SchemaRefs(v.AllOf, convert)
+		v.AnyOf = convertRefsInV3SchemaRefs(v.AnyOf, convert)
+		v.OneOf = convertRefsInV3SchemaRefs(v.OneOf, convert)
+		if v.Properties != nil {
+			properties := make(openapi3.Schemas, len(v.Properties))
+			for name, property := range v.Properties {
+				properties[name] = convertRefsInV3SchemaRef(property, convert)
 			}
-			to.Value.AllOf = allOf
+			v.Properties = properties
 		}
+		v.AdditionalProperties = convertAdditionalPropertiesRefs(v.AdditionalProperties, convert)
 	}
 	return &to
+}
+
+func convertRefsInV3SchemaRefs(from openapi3.SchemaRefs, convert func(string) string) openapi3.SchemaRefs {
+	if from == nil {
+		return nil
+	}
+	to := make(openapi3.SchemaRefs, len(from))
+	for i, schemaRef := range from {
+		to[i] = convertRefsInV3SchemaRef(schemaRef, convert)
+	}
+	return to
 }
 
 var ref2To3 = map[string]string{
@@ -1073,7 +1098,7 @@ func FromV3SchemaRef(schema *openapi3.SchemaRef, components *openapi3.Components
 		MaxProps:             schema.Value.MaxProps,
 		Properties:           make(openapi2.Schemas),
 		AllOf:                make(openapi2.SchemaRefs, len(schema.Value.AllOf)),
-		AdditionalProperties: schema.Value.AdditionalProperties,
+		AdditionalProperties: convertAdditionalPropertiesRefs(schema.Value.AdditionalProperties, FromV3Ref),
 	}
 
 	if v := schema.Value.Items; v != nil {
